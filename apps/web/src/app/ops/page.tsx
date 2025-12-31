@@ -146,6 +146,7 @@ export default function OpsPage() {
   const selectedEntry = useMemo(() => {
     return history.find((entry) => entry.id === selectedId) ?? history[0] ?? null;
   }, [history, selectedId]);
+  const meta = selectedEntry?.response?.meta;
 
   const handleModeSelection = useCallback((modeId: UiMode) => {
     setUiMode(modeId);
@@ -156,7 +157,7 @@ export default function OpsPage() {
     UI_MODES.find((entry) => entry.id === (selectedEntry?.uiMode ?? uiMode))?.label ?? currentModeDefinition.label;
 
   const canFullScreen =
-    selectedEntry?.backendMode === "graph" || selectedEntry?.response.meta?.route === "graph";
+    selectedEntry?.backendMode === "graph" || meta?.route === "graph";
 
   const runQuery = useCallback(async () => {
     if (!question.trim() || isRunning) {
@@ -366,23 +367,22 @@ export default function OpsPage() {
             <summary className="cursor-pointer text-[11px] uppercase tracking-[0.3em] text-slate-500">
               Meta · used tools · timing
             </summary>
-            {selectedEntry?.response?.meta ? (
+            {meta ? (
               <div className="mt-2 space-y-1">
                 <p>
-                  Route: <span className="font-semibold text-white">{selectedEntry.response.meta.route}</span>
+                  Route: <span className="font-semibold text-white">{meta.route}</span>
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  Reason: {selectedEntry.response.meta.route_reason}
+                  Reason: {meta.route_reason}
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  Timing: {selectedEntry.response.meta.timing_ms} ms · Used tools:{" "}
-                  {selectedEntry.response.meta.used_tools.join(", ") || "N/A"}
+                  Timing: {meta.timing_ms} ms · Used tools: {meta.used_tools.join(", ") || "N/A"}
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  Fallback: {selectedEntry.response.meta.fallback ? "yes" : "no"}
+                  Fallback: {meta.fallback ? "yes" : "no"}
                 </p>
-                {selectedEntry.response.meta.error ? (
-                  <p className="text-[11px] text-rose-300">Error: {selectedEntry.response.meta.error}</p>
+                {meta.error ? (
+                  <p className="text-[11px] text-rose-300">Error: {meta.error}</p>
                 ) : null}
                 {selectedEntry.errorDetails ? (
                   <details className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-300">
