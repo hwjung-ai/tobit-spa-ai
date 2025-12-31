@@ -153,6 +153,19 @@ export default function OpsPage() {
     setIsFullScreen(false);
   }, []);
 
+  const handleRemoveHistory = useCallback(
+    (id: string) => {
+      setHistory((prev) => {
+        const filtered = prev.filter((entry) => entry.id !== id);
+        if (id === selectedId) {
+          setSelectedId(filtered[0]?.id ?? null);
+        }
+        return filtered;
+      });
+    },
+    [selectedId]
+  );
+
   const selectedLabel =
     UI_MODES.find((entry) => entry.id === (selectedEntry?.uiMode ?? uiMode))?.label ?? currentModeDefinition.label;
 
@@ -248,15 +261,18 @@ export default function OpsPage() {
                     const isSelected = entry.id === selectedEntry?.id;
                     const label = UI_MODES.find((item) => item.id === entry.uiMode)?.label ?? entry.uiMode;
                     return (
-                      <button
+                      <div
                         key={entry.id}
-                        onClick={() => setSelectedId(entry.id)}
-                        className={`group flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition ${
+                        className={`group relative flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition ${
                           isSelected
                             ? "border-sky-500 bg-sky-500/10 text-white"
                             : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-600"
                         }`}
                       >
+                        <button
+                          onClick={() => setSelectedId(entry.id)}
+                          className="text-left"
+                        >
                         <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
                           <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-200">
                             {label}
@@ -275,11 +291,22 @@ export default function OpsPage() {
                         >
                           {entry.summary}
                         </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                        </button>
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            event.preventDefault();
+                            handleRemoveHistory(entry.id);
+                          }}
+                          className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400 bg-slate-900 text-[10px] text-rose-400 transition group-hover:flex"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                  );
+                })}
+              </div>
+            )}
             </div>
           </div>
           <div className="flex flex-[0.45] flex-col rounded-3xl border border-slate-800 bg-slate-950/60 p-4">
