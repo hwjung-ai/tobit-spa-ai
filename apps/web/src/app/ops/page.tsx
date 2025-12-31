@@ -148,24 +148,10 @@ export default function OpsPage() {
   }, [history, selectedId]);
   const meta = selectedEntry?.response?.meta;
 
-  const handleModeSelection = useCallback(
-    (modeId: UiMode) => {
-      setUiMode(modeId);
-      setIsFullScreen(false);
-      const definition = UI_MODES.find((item) => item.id === modeId);
-      if (!definition) {
-        return;
-      }
-      setSelectedId((prev) => {
-        const candidate = history.find((entry) => entry.backendMode === definition.backend);
-        if (candidate) {
-          return candidate.id;
-        }
-        return prev;
-      });
-    },
-    [history]
-  );
+  const handleModeSelection = useCallback((modeId: UiMode) => {
+    setUiMode(modeId);
+    setIsFullScreen(false);
+  }, []);
 
   const selectedLabel =
     UI_MODES.find((entry) => entry.id === (selectedEntry?.uiMode ?? uiMode))?.label ?? currentModeDefinition.label;
