@@ -1024,7 +1024,7 @@ export default function CepBuilderPage() {
   );
 
   const rightPane = (
-    <div className="space-y-4">
+    <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
       <BuilderCopilotPanel
         builderSlug="cep-builder"
         instructionPrompt={COPILOT_INSTRUCTION}
@@ -1045,9 +1045,10 @@ export default function CepBuilderPage() {
             Draft is outdated. Apply again or regenerate.
           </div>
         ) : null}
-        <div className="grid gap-2 sm:grid-cols-2">
-          <button
-            onClick={handlePreviewDraft}
+        <div className="sticky bottom-0 w-full bg-slate-950/80 pt-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button
+              onClick={handlePreviewDraft}
             className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-sky-500"
           >
             Preview
@@ -1065,13 +1066,14 @@ export default function CepBuilderPage() {
           >
             Apply
           </button>
-          <button
-            onClick={handleSaveDraft}
-            className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
-            disabled={!draftApi || draftTestOk !== true}
-          >
-            Save
-          </button>
+            <button
+              onClick={handleSaveDraft}
+              className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
+              disabled={!draftApi || draftTestOk !== true}
+            >
+              Save
+            </button>
+          </div>
         </div>
         {!draftApi && (
           <p className="text-xs text-slate-400">
