@@ -1315,24 +1315,25 @@ export default function ApiManagerPage() {
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
               Logic ({logicTypeLabels[logicType]})
             </p>
-            <div className="flex flex-wrap gap-2">
-              {(["sql", "workflow", "python", "script"] as LogicType[]).map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setLogicType(type)}
-                  className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
-                    logicType === type
-                      ? "border-sky-500 bg-sky-500/10 text-white"
-                      : "border-slate-800 bg-slate-950 text-slate-400"
-                  }`}
-                  disabled={isSystemScope}
-                >
-                  {logicTypeLabels[type]}
-                </button>
-              ))}
-            </div>
+            {!isSystemScope ? (
+              <div className="flex flex-wrap gap-2">
+                {(["sql", "workflow", "python", "script"] as LogicType[]).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setLogicType(type)}
+                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
+                      logicType === type
+                        ? "border-sky-500 bg-sky-500/10 text-white"
+                        : "border-slate-800 bg-slate-950 text-slate-400"
+                    }`}
+                  >
+                    {logicTypeLabels[type]}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
-          {logicType === "script" ? (
+          {logicType === "script" && !isSystemScope ? (
             <label className="text-xs uppercase tracking-[0.3em] text-slate-500 flex flex-col gap-2">
               Script language
               <select
@@ -1341,7 +1342,6 @@ export default function ApiManagerPage() {
                   setScriptLanguage(event.target.value as "python" | "javascript")
                 }
                 className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-                disabled={isSystemScope}
               >
                 <option value="python">Python</option>
                 <option value="javascript">JavaScript</option>
