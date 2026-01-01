@@ -71,6 +71,14 @@ export default function ChatExperience({
 
   const addAssistantMessage = useRef<string | null>(null);
   const lastAssistantText = useRef<string>("");
+  const notifyAssistant = (text: string) => {
+    if (!onAssistantMessage) {
+      return;
+    }
+    queueMicrotask(() => {
+      onAssistantMessage(text);
+    });
+  };
 
   const removeMessage = (id: string) => {
     setMessages((prev) => prev.filter((message) => message.id !== id));
@@ -96,6 +104,9 @@ export default function ChatExperience({
       try {
         const payload = JSON.parse(event.data);
       if (payload.type === "answer") {
+        const chunkText = typeof payload.text === "string" ? payload.text : "";
+        const nextText = `${lastAssistantText.current}${chunkText}`;
+        lastAssistantText.current = nextText;
         setMessages((prev) => {
           const lastAssistantIdx = prev.findIndex(
             (item) => item.role === "assistant" && item.id === addAssistantMessage.current
@@ -104,19 +115,16 @@ export default function ChatExperience({
             const updated = [...prev];
             updated[lastAssistantIdx] = {
               ...updated[lastAssistantIdx],
-              text: updated[lastAssistantIdx].text + payload.text,
+              text: nextText,
             };
-            onAssistantMessage?.(updated[lastAssistantIdx].text);
-            lastAssistantText.current = updated[lastAssistantIdx].text;
             return updated;
           }
           const id = `${payload.thread_id ?? "assistant"}-${Date.now()}`;
           addAssistantMessage.current = id;
-          const newMessage = { id, role: "assistant" as ChatRole, text: payload.text };
-          lastAssistantText.current = payload.text;
-          onAssistantMessage?.(newMessage.text);
+          const newMessage = { id, role: "assistant" as ChatRole, text: nextText };
           return [...prev, newMessage];
         });
+        notifyAssistant(nextText);
       }
       if (payload.type === "done") {
         setStatus("idle");
