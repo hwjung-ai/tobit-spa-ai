@@ -168,6 +168,9 @@ const extractFirstJsonObject = (text: string) => {
       }
     }
   }
+  if (depth > 0 && !inString) {
+    return text.slice(startIdx) + "}".repeat(depth);
+  }
   throw new Error("JSON 객체를 추출하지 못했습니다.");
 };
 
@@ -415,10 +418,11 @@ type DraftStatus =
   | "testing"
   | "applied"
   | "saved"
+  | "outdated"
   | "error";
 
 const DRAFT_STORAGE_PREFIX = "api-manager:draft:";
-const FINAL_STORAGE_PREFIX = "api-manager:apis:";
+const FINAL_STORAGE_PREFIX = "api-manager:api:";
 
 const tabOptions: { id: CenterTab; label: string }[] = [
   { id: "definition", label: "Definition" },
@@ -433,6 +437,7 @@ const draftStatusLabels: Record<DraftStatus, string> = {
   testing: "테스트 중",
   applied: "폼 적용됨",
   saved: "로컬 저장됨",
+  outdated: "드래프트 오래됨",
   error: "오류 발생",
 };
 
@@ -445,6 +450,7 @@ export default function ApiManagerPage() {
   const [draftNotes, setDraftNotes] = useState<string | null>(null);
   const [draftErrors, setDraftErrors] = useState<string[]>([]);
   const [draftWarnings, setDraftWarnings] = useState<string[]>([]);
+  const [draftTestOk, setDraftTestOk] = useState<boolean | null>(null);
   const [previewJson, setPreviewJson] = useState<string | null>(null);
   const [previewSummary, setPreviewSummary] = useState<string | null>(null);
   const [draftDiff, setDraftDiff] = useState<string[] | null>(null);
@@ -481,6 +487,9 @@ export default function ApiManagerPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [logicFilter, setLogicFilter] = useState<"all" | LogicType>("all");
+  const [formDirty, setFormDirty] = useState(false);
+  const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
+  const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
 
   const buildDraftFromForm = useCallback((): ApiDraft => {
     return {
@@ -497,9 +506,17 @@ export default function ApiManagerPage() {
     };
   }, [definitionDraft, logicBody, paramSchemaText]);
 
+  const buildFormSnapshot = useCallback(() => {
+    return JSON.stringify({
+      ...buildDraftFromForm(),
+      logic_type: logicType,
+      runtime_policy: safeParseJson(runtimePolicyText),
+    });
+  }, [buildDraftFromForm, logicType, runtimePolicyText]);
+
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
-const draftStorageId = selectedId ?? "new";
-  const finalStorageId = selectedId ?? "new";
+  const draftStorageId = selectedId ?? "new";
+  const finalStorageId = selectedId ?? (definitionDraft.endpoint || "new");
 
   const selectedApi = useMemo(
     () => apis.find((api) => api.api_id === selectedId) ?? null,
@@ -579,6 +596,8 @@ const draftStorageId = selectedId ?? "new";
       const parsed = JSON.parse(raw) as ApiDraft;
       setDraftApi(parsed);
       setDraftStatus("draft_ready");
+      setDraftNotes("미적용 드래프트가 있습니다.");
+      setDraftTestOk(null);
       setPreviewJson(JSON.stringify(parsed, null, 2));
       setPreviewSummary(`${parsed.method} ${parsed.endpoint}`);
     } catch {
@@ -598,6 +617,24 @@ const draftStorageId = selectedId ?? "new";
   }, [draftApi, draftStorageId]);
 
   useEffect(() => {
+    const key = `${FINAL_STORAGE_PREFIX}${finalStorageId}`;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) {
+      return;
+    }
+    try {
+      const parsed = JSON.parse(raw) as ApiDraft;
+      applyFinalToForm(parsed);
+      setFormDirty(false);
+      setFormBaselineSnapshot(JSON.stringify(parsed));
+      setAppliedDraftSnapshot(null);
+      setStatusMessage("로컬 저장된 API 정의를 불러왔습니다.");
+    } catch {
+      window.localStorage.removeItem(key);
+    }
+  }, [finalStorageId]);
+
+  useEffect(() => {
     if (!draftApi) {
       setDraftDiff(null);
       return;
@@ -606,6 +643,19 @@ const draftStorageId = selectedId ?? "new";
     const diffSummary = computeDraftDiff(draftApi, baseline);
     setDraftDiff(diffSummary.length ? diffSummary : ["변경 사항이 없습니다."]);
   }, [draftApi, selectedApi, buildDraftFromForm]);
+
+  useEffect(() => {
+    const currentSnapshot = buildFormSnapshot();
+    if (formBaselineSnapshot === null) {
+      setFormBaselineSnapshot(currentSnapshot);
+      return;
+    }
+    setFormDirty(currentSnapshot !== formBaselineSnapshot);
+    if (draftApi && appliedDraftSnapshot && currentSnapshot !== appliedDraftSnapshot) {
+      setDraftStatus("outdated");
+      setDraftNotes("폼이 변경되어 드래프트가 오래되었습니다.");
+    }
+  }, [buildFormSnapshot, formBaselineSnapshot, draftApi, appliedDraftSnapshot]);
 
   useEffect(() => {
     if (!selectedApi) {
@@ -619,6 +669,9 @@ const draftStorageId = selectedId ?? "new";
         created_by: "",
       });
       setLogicBody("");
+      setLogicType("sql");
+      setParamSchemaText("{}");
+      setRuntimePolicyText("{}");
       setActiveTab(DEFAULT_TAB);
       setStatusMessage(null);
       setExecutionResult(null);
@@ -627,6 +680,8 @@ const draftStorageId = selectedId ?? "new";
       setExecLogs([]);
       setWorkflowResult(null);
       setTestInput("{}");
+      setFormDirty(false);
+      setFormBaselineSnapshot(JSON.stringify(buildDraftFromForm()));
       return;
     }
     setDefinitionDraft({
@@ -653,6 +708,9 @@ const draftStorageId = selectedId ?? "new";
     setWorkflowResult(null);
     setTestInput("{}");
     fetchExecLogs();
+    const baseline = apiToDraft(selectedApi);
+    setFormBaselineSnapshot(JSON.stringify(baseline));
+    setFormDirty(false);
   }, [selectedApi, fetchExecLogs]);
 
   const filteredApis = useMemo(() => {
@@ -766,10 +824,11 @@ const draftStorageId = selectedId ?? "new";
     setDraftErrors(validation.errors);
     setDraftWarnings(validation.warnings);
     setDraftNotes(validation.ok ? "테스트 통과" : "테스트 실패");
+    setDraftTestOk(validation.ok);
     setDraftStatus(validation.ok ? "draft_ready" : "error");
   };
 
-  const applyDraftToForm = (draft: ApiDraft) => {
+  const applyFinalToForm = (draft: ApiDraft) => {
     setDefinitionDraft((prev) => ({
       ...prev,
       api_name: draft.api_name,
@@ -781,9 +840,15 @@ const draftStorageId = selectedId ?? "new";
     setLogicType("sql");
     setLogicBody(draft.logic.query);
     setParamSchemaText(JSON.stringify(draft.params_schema ?? {}, null, 2));
+  };
+
+  const applyDraftToForm = (draft: ApiDraft) => {
+    applyFinalToForm(draft);
     setDraftStatus("applied");
-    setDraftNotes("드래프트가 폼에 적용되었습니다.");
-    setStatusMessage("Draft가 폼으로 적용되었습니다.");
+    setDraftNotes("드래프트가 폼에 적용되었습니다. 저장 전입니다.");
+    setStatusMessage("Draft applied to editor (not saved).");
+    setFormDirty(true);
+    setAppliedDraftSnapshot(JSON.stringify(draft));
   };
 
   const handleApplyDraft = () => {
@@ -801,11 +866,19 @@ const draftStorageId = selectedId ?? "new";
       setDraftErrors(["AI 드래프트가 없습니다."]);
       return;
     }
+    const finalPayload = buildDraftFromForm();
     const key = `${FINAL_STORAGE_PREFIX}${finalStorageId}`;
-    window.localStorage.setItem(key, JSON.stringify(draftApi));
+    window.localStorage.setItem(key, JSON.stringify(finalPayload));
+    setDraftApi(null);
     setDraftStatus("saved");
-    setDraftNotes("Draft가 로컬에 저장되었습니다.");
-    setStatusMessage("Draft가 로컬에 저장되었습니다.");
+    setDraftNotes("API가 로컬에 저장되었습니다.");
+    setStatusMessage("API saved successfully.");
+    setDraftTestOk(null);
+    setFormDirty(false);
+    setFormBaselineSnapshot(JSON.stringify(finalPayload));
+    setAppliedDraftSnapshot(null);
+    const draftKey = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
+    window.localStorage.removeItem(draftKey);
   };
 
   const handleNew = () => {
@@ -825,6 +898,9 @@ const draftStorageId = selectedId ?? "new";
     setParamSchemaText("{}");
     setRuntimePolicyText("{}");
     setStatusMessage("새 API 정의를 작성하세요.");
+    setFormDirty(false);
+    setFormBaselineSnapshot(JSON.stringify(buildDraftFromForm()));
+    setAppliedDraftSnapshot(null);
   };
 
   const handleExecute = async () => {
@@ -1438,6 +1514,7 @@ const draftStorageId = selectedId ?? "new";
         setDraftNotes((prev) => prev ?? "AI 드래프트가 준비되었습니다.");
         setDraftErrors([]);
         setDraftWarnings([]);
+        setDraftTestOk(null);
         setPreviewJson(JSON.stringify(result.draft, null, 2));
         setPreviewSummary(`${result.draft.method} ${result.draft.endpoint}`);
       } else {
@@ -1446,6 +1523,7 @@ const draftStorageId = selectedId ?? "new";
         setPreviewSummary(null);
         setDraftStatus("error");
         setDraftNotes(result.error ?? "AI 드래프트를 해석할 수 없습니다.");
+        setDraftTestOk(false);
       }
     },
     [draftApi, selectedApi, buildDraftFromForm]
@@ -1487,6 +1565,11 @@ const draftStorageId = selectedId ?? "new";
             ))}
           </ul>
         ) : null}
+        {draftStatus === "outdated" ? (
+          <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+            Draft is outdated. Apply again or regenerate.
+          </div>
+        ) : null}
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             onClick={handlePreviewDraft}
@@ -1503,12 +1586,14 @@ const draftStorageId = selectedId ?? "new";
           <button
             onClick={handleApplyDraft}
             className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
+            disabled={!draftApi || draftTestOk === false}
           >
             Apply
           </button>
           <button
             onClick={handleSaveLocalDraft}
             className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
+            disabled={!draftApi || draftTestOk === false}
           >
             Save (Local)
           </button>
@@ -1544,7 +1629,7 @@ const draftStorageId = selectedId ?? "new";
         ) : null}
         <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
           <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
-            DEV debug
+            Debug
           </summary>
           <div className="mt-2 space-y-1">
             <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected API</p>
