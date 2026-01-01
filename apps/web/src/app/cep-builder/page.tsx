@@ -505,7 +505,11 @@ export default function CepBuilderPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.detail ?? "Unable to save rule");
+        const errorDetail =
+          typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail ?? data ?? "Unable to save rule");
+        throw new Error(errorDetail);
       }
       const saved: CepRule = data.data.rule;
       setSelectedId(saved.rule_id);
@@ -1023,6 +1027,8 @@ export default function CepBuilderPage() {
     [processAssistantDraft]
   );
 
+  const showDebug = process.env.NODE_ENV !== "production";
+
   const rightPane = (
     <div className="space-y-4">
       <BuilderCopilotPanel
@@ -1102,37 +1108,39 @@ export default function CepBuilderPage() {
             </pre>
           </div>
         ) : null}
-        <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
-            Debug
-          </summary>
-          <div className="mt-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              Save target: {saveTarget ?? "none"}
-            </p>
-            {lastSaveError ? <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p> : null}
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected rule</p>
-            <p className="text-[11px] text-slate-200">
-              {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
-            </p>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              Parse status: {lastParseStatus}
-            </p>
-            {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
-            <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
-              {lastAssistantRaw || "없음"}
-            </pre>
-            {draftApi ? (
-              <>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
-                <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
-                  {JSON.stringify(draftApi, null, 2)}
-                </pre>
-              </>
-            ) : null}
-          </div>
-        </details>
+        {showDebug ? (
+          <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+            <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
+              Debug
+            </summary>
+            <div className="mt-2 space-y-1">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                Save target: {saveTarget ?? "none"}
+              </p>
+              {lastSaveError ? <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p> : null}
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected rule</p>
+              <p className="text-[11px] text-slate-200">
+                {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                Parse status: {lastParseStatus}
+              </p>
+              {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
+              <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                {lastAssistantRaw || "없음"}
+              </pre>
+              {draftApi ? (
+                <>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
+                  <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                    {JSON.stringify(draftApi, null, 2)}
+                  </pre>
+                </>
+              ) : null}
+            </div>
+          </details>
+        ) : null}
       </div>
     </div>
   );
