@@ -924,7 +924,11 @@ export default function UiCreatorPage() {
       });
       const result = await response.json();
       if (!response.ok) {
-        throw new Error(result.message ?? result.detail ?? "Unable to save UI");
+        const errorDetail =
+          typeof result.message === "string"
+            ? result.message
+            : JSON.stringify(result.message ?? result.detail ?? result ?? "Unable to save UI");
+        throw new Error(errorDetail);
       }
       const savedId = result.data?.ui?.ui_id;
       setStatusMessage(selectedId ? "UI updated" : "UI created");
