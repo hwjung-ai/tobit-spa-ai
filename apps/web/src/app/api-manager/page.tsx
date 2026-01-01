@@ -1403,7 +1403,7 @@ export default function ApiManagerPage() {
             <textarea
               value={paramSchemaText}
               onChange={(event) => setParamSchemaText(event.target.value)}
-              className="mt-2 h-40 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              className="mt-2 h-64 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
               disabled={isSystemScope}
             />
           </label>
@@ -1766,7 +1766,7 @@ export default function ApiManagerPage() {
         <>
           <p className="text-xs uppercase tracking-normal text-slate-500">Metadata</p>
           {selectedApi ? (
-            <div className="max-h-32 overflow-auto space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
+            <div className="max-h-20 overflow-auto space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
               <p>
                 Endpoint: <span className="text-slate-100">{selectedApi.endpoint}</span>
               </p>
