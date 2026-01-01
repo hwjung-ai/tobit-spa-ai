@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveApiWithFallback } from "../../lib/apiManagerSave";
@@ -475,6 +475,7 @@ export default function ApiManagerPage() {
   const [systemError, setSystemError] = useState<string | null>(null);
   const [systemFetchStatus, setSystemFetchStatus] = useState<"idle" | "ok" | "error">("idle");
   const [systemFetchAt, setSystemFetchAt] = useState<string | null>(null);
+  const skipAutoSelectRef = useRef(false);
   const [systemView, setSystemView] = useState<SystemView>("discovered");
   const [discoveredEndpoints, setDiscoveredEndpoints] = useState<DiscoveredEndpoint[]>([]);
   const [discoveredError, setDiscoveredError] = useState<string | null>(null);
@@ -755,6 +756,10 @@ export default function ApiManagerPage() {
         const payload = await response.json();
         const items: ApiDefinitionItem[] = payload.data?.apis ?? [];
         setApis(items);
+        if (skipAutoSelectRef.current) {
+          skipAutoSelectRef.current = false;
+          return;
+        }
         setSelectedId((prev) => {
           if (preferredId) {
             return preferredId;
@@ -1184,6 +1189,7 @@ export default function ApiManagerPage() {
       return;
     }
     const imported = apiToDraft(selectedApi);
+    skipAutoSelectRef.current = true;
     setScope("custom");
     setSelectedId(null);
     applyFinalToForm(imported);
@@ -1218,6 +1224,7 @@ export default function ApiManagerPage() {
         query: "SELECT 1",
       },
     };
+    skipAutoSelectRef.current = true;
     setScope("custom");
     setSelectedId(null);
     applyFinalToForm(draft);
