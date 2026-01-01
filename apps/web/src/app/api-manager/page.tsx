@@ -1776,7 +1776,7 @@ export default function ApiManagerPage() {
         <>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              <span>System APIs</span>
+              <span>System (Discovered / Registered)</span>
               <div className="flex items-center gap-2">
                 {(["discovered", "registered"] as SystemView[]).map((view) => (
                   <button
