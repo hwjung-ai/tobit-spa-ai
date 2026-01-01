@@ -7,6 +7,7 @@ interface BuilderCopilotPanelProps {
   instructionPrompt?: string;
   onAssistantMessage?: (text: string) => void;
   onAssistantMessageComplete?: (text: string) => void;
+  inputPlaceholder?: string;
 }
 
 export default function BuilderCopilotPanel({
@@ -14,6 +15,7 @@ export default function BuilderCopilotPanel({
   instructionPrompt,
   onAssistantMessage,
   onAssistantMessageComplete,
+  inputPlaceholder,
 }: BuilderCopilotPanelProps) {
   return (
     <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300 shadow-inner shadow-black/40">
@@ -24,6 +26,7 @@ export default function BuilderCopilotPanel({
         instructionPrompt={instructionPrompt}
         onAssistantMessage={onAssistantMessage}
         onAssistantMessageComplete={onAssistantMessageComplete}
+        inputPlaceholder={inputPlaceholder}
       />
     </div>
   );

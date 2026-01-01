@@ -494,6 +494,11 @@ export default function ApiManagerPage() {
   const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
 
+  const selectedApi = useMemo(
+    () => apis.find((api) => api.api_id === selectedId) ?? null,
+    [apis, selectedId]
+  );
+
   const buildDraftFromForm = useCallback((): ApiDraft => {
     return {
       api_name: definitionDraft.api_name,
@@ -574,6 +579,8 @@ export default function ApiManagerPage() {
     });
   }, [buildDraftFromForm, logicType, runtimePolicyText]);
 
+  const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+
   const saveApiToServer = useCallback(
     async (payload: Record<string, unknown>) => {
       const target = selectedApi
@@ -597,15 +604,8 @@ export default function ApiManagerPage() {
     },
     [apiBaseUrl, selectedApi]
   );
-
-  const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const draftStorageId = selectedId ?? "new";
   const finalStorageId = selectedId ?? (definitionDraft.endpoint || "new");
-
-  const selectedApi = useMemo(
-    () => apis.find((api) => api.api_id === selectedId) ?? null,
-    [apis, selectedId]
-  );
 
   const loadApis = useCallback(
     async (preferredId?: string) => {
@@ -1625,6 +1625,7 @@ export default function ApiManagerPage() {
         instructionPrompt={COPILOT_INSTRUCTION}
         onAssistantMessage={handleAssistantMessage}
         onAssistantMessageComplete={handleAssistantMessageComplete}
+        inputPlaceholder="API 드래프트를 설명해 주세요..."
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
         <div className="flex items-center justify-between">

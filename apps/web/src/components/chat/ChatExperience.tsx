@@ -18,6 +18,7 @@ interface ChatExperienceProps {
   onAssistantMessage?: (text: string) => void;
   onAssistantMessageComplete?: (text: string) => void;
   instructionPrompt?: string;
+  inputPlaceholder?: string;
 }
 
 const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
@@ -27,6 +28,8 @@ export default function ChatExperience({
   inline = false,
   onAssistantMessage,
   onAssistantMessageComplete,
+  instructionPrompt,
+  inputPlaceholder = "메시지를 입력하세요.",
 }: ChatExperienceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -68,6 +71,10 @@ export default function ChatExperience({
 
   const addAssistantMessage = useRef<string | null>(null);
   const lastAssistantText = useRef<string>("");
+
+  const removeMessage = (id: string) => {
+    setMessages((prev) => prev.filter((message) => message.id !== id));
+  };
 
   const handleStream = (prompt: string) => {
     const key = Date.now().toString();
@@ -154,11 +161,21 @@ export default function ChatExperience({
           <p className="text-xs text-slate-500">질문을 입력하면 AI가 응답합니다.</p>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className="mb-2">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                {message.role === "user" ? "User" : "Assistant"}
-              </span>
-              <p className="text-sm text-slate-200">{message.text}</p>
+            <div key={message.id} className="group mb-2 relative flex items-start gap-2 pr-8">
+              <div className="flex-1">
+                <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                  {message.role === "user" ? "User" : "Assistant"}
+                </span>
+                <p className="text-sm text-slate-200">{message.text}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeMessage(message.id)}
+                className="absolute right-1 top-1 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400 bg-slate-900 text-[10px] text-rose-300 transition group-hover:flex"
+                aria-label="Delete message"
+              >
+                ✕
+              </button>
             </div>
           ))
         )}
@@ -169,7 +186,7 @@ export default function ChatExperience({
           value={inputValue}
           onChange={(event) => setInputValue(event.target.value)}
           className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-          placeholder="Ask about API drafts..."
+          placeholder={inputPlaceholder}
         />
         <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-400">
           <span>{status === "streaming" ? "Streaming…" : status === "error" ? "Error" : "Ready"}</span>
