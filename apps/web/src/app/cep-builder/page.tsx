@@ -1049,23 +1049,23 @@ export default function CepBuilderPage() {
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               onClick={handlePreviewDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-sky-500"
-          >
-            Preview
-          </button>
-          <button
-            onClick={handleTestDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-emerald-400"
-          >
-            Test
-          </button>
-          <button
-            onClick={handleApplyDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
-            disabled={!draftApi || draftTestOk !== true}
-          >
-            Apply
-          </button>
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-sky-500"
+            >
+              Preview
+            </button>
+            <button
+              onClick={handleTestDraft}
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-emerald-400"
+            >
+              Test
+            </button>
+            <button
+              onClick={handleApplyDraft}
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
+              disabled={!draftApi || draftTestOk !== true}
+            >
+              Apply
+            </button>
             <button
               onClick={handleSaveDraft}
               className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
