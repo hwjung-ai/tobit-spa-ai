@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
+import { saveApiWithFallback } from "../../lib/apiManagerSave";
 import Editor from "@monaco-editor/react";
 
 type ScopeType = "system" | "custom";
@@ -490,6 +491,8 @@ export default function ApiManagerPage() {
   const [formDirty, setFormDirty] = useState(false);
   const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
+  const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
+  const [lastSaveError, setLastSaveError] = useState<string | null>(null);
 
   const buildDraftFromForm = useCallback((): ApiDraft => {
     return {
@@ -506,6 +509,63 @@ export default function ApiManagerPage() {
     };
   }, [definitionDraft, logicBody, paramSchemaText]);
 
+  const buildSavePayload = useCallback(() => {
+    if (scope === "system" && !selectedApi) {
+      setStatusMessage("System APIs can only be updated (select one from the list).");
+      return null;
+    }
+    if (scope === "custom" && !logicBody.trim()) {
+      setStatusMessage("Logic body is required for custom APIs.");
+      return null;
+    }
+    const parseOrFail = (text: string, label: string) => {
+      try {
+        return parseJsonObject(text, label);
+      } catch (error) {
+        setStatusMessage(error instanceof Error ? error.message : `Invalid ${label}`);
+        return null;
+      }
+    };
+    const parsedParamSchema = parseOrFail(paramSchemaText, "param schema");
+    if (parsedParamSchema === null) return null;
+    const parsedRuntimePolicy = parseOrFail(runtimePolicyText, "runtime policy");
+    if (parsedRuntimePolicy === null) return null;
+    let logicSpecPayload: Record<string, unknown> = {};
+    if (logicType === "workflow") {
+      const parsedLogicSpec = parseOrFail(logicBody, "workflow spec");
+      if (parsedLogicSpec === null) return null;
+      logicSpecPayload = parsedLogicSpec;
+    } else if (logicType === "script") {
+      logicSpecPayload = { language: scriptLanguage };
+    } else if (logicType === "python") {
+      logicSpecPayload = { language: "python" };
+    }
+    return {
+      api_name: definitionDraft.api_name.trim(),
+      api_type: scope,
+      method: definitionDraft.method.toUpperCase(),
+      endpoint: definitionDraft.endpoint.trim(),
+      description: definitionDraft.description.trim() || null,
+      tags: parseTags(definitionDraft.tags),
+      logic_type: logicType,
+      logic_body: logicBody.trim(),
+      param_schema: parsedParamSchema,
+      runtime_policy: parsedRuntimePolicy,
+      logic_spec: logicSpecPayload,
+      is_active: definitionDraft.is_active,
+      created_by: definitionDraft.created_by || "ops-builder",
+    };
+  }, [
+    scope,
+    selectedApi,
+    logicBody,
+    paramSchemaText,
+    runtimePolicyText,
+    logicType,
+    scriptLanguage,
+    definitionDraft,
+  ]);
+
   const buildFormSnapshot = useCallback(() => {
     return JSON.stringify({
       ...buildDraftFromForm(),
@@ -513,6 +573,30 @@ export default function ApiManagerPage() {
       runtime_policy: safeParseJson(runtimePolicyText),
     });
   }, [buildDraftFromForm, logicType, runtimePolicyText]);
+
+  const saveApiToServer = useCallback(
+    async (payload: Record<string, unknown>) => {
+      const target = selectedApi
+        ? `${apiBaseUrl}/api-manager/apis/${selectedApi.api_id}`
+        : `${apiBaseUrl}/api-manager/apis`;
+      const method = selectedApi ? "PUT" : "POST";
+      try {
+        const response = await fetch(target, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          return { ok: false, error: result?.message ?? "Failed to save API definition", details: result };
+        }
+        return { ok: true, data: result?.data?.api ?? null };
+      } catch (error) {
+        return { ok: false, error: error instanceof Error ? error.message : "Network error", details: error };
+      }
+    },
+    [apiBaseUrl, selectedApi]
+  );
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const draftStorageId = selectedId ?? "new";
@@ -731,73 +815,29 @@ export default function ApiManagerPage() {
   }, [apis, searchTerm, logicFilter]);
 
   const handleSave = async () => {
-    if (scope === "system" && !selectedApi) {
-      setStatusMessage("System APIs can only be updated (select one from the list).");
+    const payload = buildSavePayload();
+    if (!payload) {
       return;
     }
-    if (scope === "custom" && !logicBody.trim()) {
-      setStatusMessage("Logic body is required for custom APIs.");
-      return;
-    }
-    const parseOrFail = (text: string, label: string) => {
-      try {
-        return parseJsonObject(text, label);
-      } catch (error) {
-        setStatusMessage(error instanceof Error ? error.message : `Invalid ${label}`);
-        return null;
-      }
-    };
-    const parsedParamSchema = parseOrFail(paramSchemaText, "param schema");
-    if (parsedParamSchema === null) return;
-    const parsedRuntimePolicy = parseOrFail(runtimePolicyText, "runtime policy");
-    if (parsedRuntimePolicy === null) return;
-    let logicSpecPayload: Record<string, unknown> = {};
-    if (logicType === "workflow") {
-      const parsedLogicSpec = parseOrFail(logicBody, "workflow spec");
-      if (parsedLogicSpec === null) return;
-      logicSpecPayload = parsedLogicSpec;
-    } else if (logicType === "script") {
-      logicSpecPayload = { language: scriptLanguage };
-    } else if (logicType === "python") {
-      logicSpecPayload = { language: "python" };
-    }
-    const payload = {
-      api_name: definitionDraft.api_name.trim(),
-      api_type: scope,
-      method: definitionDraft.method.toUpperCase(),
-      endpoint: definitionDraft.endpoint.trim(),
-      description: definitionDraft.description.trim() || null,
-      tags: parseTags(definitionDraft.tags),
-      logic_type: logicType,
-      logic_body: logicBody.trim(),
-      param_schema: parsedParamSchema,
-      runtime_policy: parsedRuntimePolicy,
-      logic_spec: logicSpecPayload,
-      is_active: definitionDraft.is_active,
-      created_by: definitionDraft.created_by || "ops-builder",
-    };
     setIsSaving(true);
+    setSaveTarget(null);
+    setLastSaveError(null);
     try {
-      const target = selectedApi
-        ? `${apiBaseUrl}/api-manager/apis/${selectedApi.api_id}`
-        : `${apiBaseUrl}/api-manager/apis`;
-      const method = selectedApi ? "PUT" : "POST";
-      const response = await fetch(target, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to save API definition");
+      const result = await saveApiToServer(payload);
+      if (!result.ok) {
+        setLastSaveError(result.error ?? "Failed to save API definition");
+        setStatusMessage(result.error ?? "Save failed. 확인 로그를 참고하세요.");
+        return;
       }
-      const result = await response.json();
-      const saved: ApiDefinitionItem = result.data.api;
+      const saved = result.data as ApiDefinitionItem | null;
       setStatusMessage(selectedApi ? "API updated" : "API created");
-      setSelectedId(saved.api_id);
-      await loadApis(saved.api_id);
-    } catch (error) {
-      console.error("Save failed", error);
-      setStatusMessage("Save failed. 확인 로그를 참고하세요.");
+      setSaveTarget("server");
+      if (saved?.api_id) {
+        setSelectedId(saved.api_id);
+        await loadApis(saved.api_id);
+      } else {
+        await loadApis(selectedId ?? undefined);
+      }
     } finally {
       setIsSaving(false);
     }
@@ -866,19 +906,55 @@ export default function ApiManagerPage() {
       setDraftErrors(["AI 드래프트가 없습니다."]);
       return;
     }
+    if (draftTestOk !== true) {
+      setDraftErrors(["테스트를 통과한 뒤 저장할 수 있습니다."]);
+      return;
+    }
     const finalPayload = buildDraftFromForm();
-    const key = `${FINAL_STORAGE_PREFIX}${finalStorageId}`;
-    window.localStorage.setItem(key, JSON.stringify(finalPayload));
-    setDraftApi(null);
-    setDraftStatus("saved");
-    setDraftNotes("API가 로컬에 저장되었습니다.");
-    setStatusMessage("API saved successfully.");
-    setDraftTestOk(null);
-    setFormDirty(false);
-    setFormBaselineSnapshot(JSON.stringify(finalPayload));
-    setAppliedDraftSnapshot(null);
-    const draftKey = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
-    window.localStorage.removeItem(draftKey);
+    const storageKey = `${FINAL_STORAGE_PREFIX}${finalStorageId}`;
+    setIsSaving(true);
+    setSaveTarget(null);
+    setLastSaveError(null);
+    saveApiWithFallback({
+      payload: finalPayload,
+      saveApiToServer,
+      storage: window.localStorage,
+      storageKey,
+    })
+      .then(async (result) => {
+        setSaveTarget(result.target);
+        if (result.target === "server") {
+          setStatusMessage("Saved to server.");
+          setDraftNotes("서버에 저장되었습니다.");
+          const saved = result.data as ApiDefinitionItem | null;
+          if (saved?.api_id) {
+            setSelectedId(saved.api_id);
+            await loadApis(saved.api_id);
+          } else {
+            await loadApis(selectedId ?? undefined);
+          }
+          window.localStorage.removeItem(storageKey);
+        } else {
+          setStatusMessage("Saved locally (server unavailable).");
+          setDraftNotes("서버 저장 실패로 로컬에 저장했습니다.");
+        }
+        setDraftApi(null);
+        setDraftStatus("saved");
+        setDraftTestOk(null);
+        setFormDirty(false);
+        setFormBaselineSnapshot(JSON.stringify(finalPayload));
+        setAppliedDraftSnapshot(null);
+        const draftKey = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
+        window.localStorage.removeItem(draftKey);
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : "Save failed";
+        setLastSaveError(message);
+        setStatusMessage(message);
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
   };
 
   const handleNew = () => {
@@ -1586,14 +1662,14 @@ export default function ApiManagerPage() {
           <button
             onClick={handleApplyDraft}
             className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
-            disabled={!draftApi || draftTestOk === false}
+            disabled={!draftApi || draftTestOk !== true}
           >
             Apply
           </button>
           <button
             onClick={handleSaveLocalDraft}
             className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
-            disabled={!draftApi || draftTestOk === false}
+            disabled={!draftApi || draftTestOk !== true}
           >
             Save (Local)
           </button>
@@ -1632,6 +1708,12 @@ export default function ApiManagerPage() {
             Debug
           </summary>
           <div className="mt-2 space-y-1">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              Save target: {saveTarget ?? "none"}
+            </p>
+            {lastSaveError ? (
+              <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p>
+            ) : null}
             <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected API</p>
             <p className="text-[11px] text-slate-200">
               {selectedApi ? `${selectedApi.api_name} (${selectedApi.api_id})` : "새 API"}
