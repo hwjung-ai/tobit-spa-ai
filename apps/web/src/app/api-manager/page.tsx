@@ -1340,7 +1340,7 @@ export default function ApiManagerPage() {
     <div className="space-y-4">
       {activeTab === "definition" && (
         <div className="space-y-3">
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
             API Name
             <input
               value={definitionDraft.api_name}
@@ -1352,7 +1352,7 @@ export default function ApiManagerPage() {
             />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+            <label className="text-xs uppercase tracking-normal text-slate-500">
               Method
               <select
                 value={definitionDraft.method}
@@ -1366,7 +1366,7 @@ export default function ApiManagerPage() {
                 <option value="POST">POST</option>
               </select>
             </label>
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+            <label className="text-xs uppercase tracking-normal text-slate-500">
               Endpoint
               <input
                 value={definitionDraft.endpoint}
@@ -1378,7 +1378,7 @@ export default function ApiManagerPage() {
               />
             </label>
           </div>
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
             Description
               <textarea
                 value={definitionDraft.description}
@@ -1389,7 +1389,7 @@ export default function ApiManagerPage() {
                 disabled={isSystemScope}
               />
           </label>
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
             Tags (comma separated)
             <input
               value={definitionDraft.tags}
@@ -1398,7 +1398,7 @@ export default function ApiManagerPage() {
               disabled={isSystemScope}
             />
           </label>
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
             Param Schema (JSON)
             <textarea
               value={paramSchemaText}
@@ -1407,7 +1407,7 @@ export default function ApiManagerPage() {
               disabled={isSystemScope}
             />
           </label>
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
             Runtime Policy (JSON)
             <textarea
               value={runtimePolicyText}
@@ -1416,7 +1416,7 @@ export default function ApiManagerPage() {
               disabled={isSystemScope}
             />
           </label>
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500 flex items-center gap-2">
+          <label className="text-xs uppercase tracking-normal text-slate-500 flex items-center gap-2">
             <input
               type="checkbox"
               checked={definitionDraft.is_active}
@@ -1428,7 +1428,7 @@ export default function ApiManagerPage() {
             />
             Active
           </label>
-          <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
             Created by
             <input
               value={definitionDraft.created_by}
@@ -1445,7 +1445,7 @@ export default function ApiManagerPage() {
       {activeTab === "logic" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-xs uppercase tracking-normal text-slate-500">
               Logic ({logicTypeLabels[logicType]})
             </p>
             {!isSystemScope ? (
@@ -1454,7 +1454,7 @@ export default function ApiManagerPage() {
                   <button
                     key={type}
                     onClick={() => setLogicType(type)}
-                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
+                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal ${
                       logicType === type
                         ? "border-sky-500 bg-sky-500/10 text-white"
                         : "border-slate-800 bg-slate-950 text-slate-400"
@@ -1467,7 +1467,7 @@ export default function ApiManagerPage() {
             ) : null}
           </div>
           {logicType === "script" && !isSystemScope ? (
-            <label className="text-xs uppercase tracking-[0.3em] text-slate-500 flex flex-col gap-2">
+            <label className="text-xs uppercase tracking-normal text-slate-500 flex flex-col gap-2">
               Script language
               <select
                 value={scriptLanguage}
@@ -1498,12 +1498,12 @@ export default function ApiManagerPage() {
         </div>
       )}
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
+        <span className="text-[11px] uppercase tracking-normal text-slate-500">
           {statusMessage ?? "정의/로직 저장"}
         </span>
         <button
           onClick={handleSave}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
           disabled={isSaving || isSystemScope}
         >
           {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
@@ -1525,7 +1525,7 @@ export default function ApiManagerPage() {
           </span>
         </p>
       ) : null}
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+      <label className="text-xs uppercase tracking-normal text-slate-500">
         Params JSON
         <textarea
           value={testParams}
@@ -1534,7 +1534,7 @@ export default function ApiManagerPage() {
         />
       </label>
       {isWorkflowApi ? (
-        <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <label className="text-xs uppercase tracking-normal text-slate-500">
           Input JSON (optional)
           <textarea
             value={testInput}
@@ -1544,7 +1544,7 @@ export default function ApiManagerPage() {
         </label>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <label className="text-xs uppercase tracking-normal text-slate-500">
           Limit
           <input
             type="number"
@@ -1555,7 +1555,7 @@ export default function ApiManagerPage() {
             className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
           />
         </label>
-        <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <label className="text-xs uppercase tracking-normal text-slate-500">
           Executed by
           <input
             value={executedBy}
@@ -1567,7 +1567,7 @@ export default function ApiManagerPage() {
         <div className="flex items-end">
           <button
             onClick={handleExecute}
-            className="w-full rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+            className="w-full rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-sky-400 disabled:bg-slate-700"
             disabled={
               !selectedId || isExecuting || (!isSqlApi && !isWorkflowApi)
             }
@@ -1591,7 +1591,7 @@ export default function ApiManagerPage() {
 
   const testResultsArea = (
     <div className="space-y-4">
-      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Execution result</p>
+      <p className="text-xs uppercase tracking-normal text-slate-500">Execution result</p>
       {selectedApi?.logic_type === "workflow" ? (
         workflowResult ? (
           <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
@@ -1606,7 +1606,7 @@ export default function ApiManagerPage() {
                       [{step.node_type}] {step.node_id}
                     </span>
                     <span
-                      className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.3em] ${
+                      className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-normal ${
                         step.status === "success"
                           ? "border-emerald-400 text-emerald-300"
                           : "border-rose-500 text-rose-300"
@@ -1625,11 +1625,11 @@ export default function ApiManagerPage() {
               ))}
             </div>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Final output</p>
+              <p className="text-xs uppercase tracking-normal text-slate-500">Final output</p>
               <pre className="mt-2 max-h-60 overflow-auto rounded-xl bg-slate-950/70 p-3 text-xs text-slate-100">
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
-              <p className="mt-2 text-[10px] uppercase tracking-[0.3em] text-slate-400">
+              <p className="mt-2 text-[10px] uppercase tracking-normal text-slate-400">
                 References: {workflowResult.references.length}
               </p>
             </div>
@@ -1646,7 +1646,7 @@ export default function ApiManagerPage() {
             </div>
             <button
               onClick={() => setShowJsonResult((prev) => !prev)}
-              className="text-[10px] uppercase tracking-[0.3em] text-slate-400 underline"
+              className="text-[10px] uppercase tracking-normal text-slate-400 underline"
             >
               {showJsonResult ? "Hide JSON" : "Show JSON"}
             </button>
@@ -1665,7 +1665,7 @@ export default function ApiManagerPage() {
                     {executionResult.columns.map((column) => (
                       <th
                         key={column}
-                        className="border-b border-slate-800 px-2 py-1 uppercase tracking-[0.3em] text-slate-500"
+                        className="border-b border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
                       >
                         {column}
                       </th>
@@ -1695,8 +1695,8 @@ export default function ApiManagerPage() {
       )}
       <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Execution logs</p>
-          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">
+          <p className="text-xs uppercase tracking-normal text-slate-500">Execution logs</p>
+          <span className="text-[10px] uppercase tracking-normal text-slate-400">
             {execLogs.length} entries
           </span>
         </div>
@@ -1744,7 +1744,7 @@ export default function ApiManagerPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
+            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal ${
               activeTab === tab.id
                 ? "border-sky-500 bg-sky-500/10 text-white"
                 : "border-slate-800 bg-slate-950 text-slate-400"
@@ -1764,7 +1764,7 @@ export default function ApiManagerPage() {
         testResultsArea
       ) : (
         <>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Metadata</p>
+          <p className="text-xs uppercase tracking-normal text-slate-500">Metadata</p>
           {selectedApi ? (
             <div className="max-h-32 overflow-auto space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
               <p>
@@ -1786,8 +1786,8 @@ export default function ApiManagerPage() {
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs uppercase tracking-[0.3em] text-slate-500">API 목록</h3>
-        <div className="flex gap-2 text-[10px] uppercase tracking-[0.3em]">
+        <h3 className="text-xs uppercase tracking-normal text-slate-500">API 목록</h3>
+        <div className="flex gap-2 text-[10px] uppercase tracking-normal">
           {(["custom"] as ScopeType[])
             .concat(enableSystemApis ? (["system"] as ScopeType[]) : [])
             .map((item) => (
@@ -1808,14 +1808,14 @@ export default function ApiManagerPage() {
       {scope === "system" && enableSystemApis ? (
         <>
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-normal text-slate-500">
               <span>System (Discovered / Registered)</span>
               <div className="flex items-center gap-2">
                 {(["discovered", "registered"] as SystemView[]).map((view) => (
                   <button
                     key={view}
                     onClick={() => setSystemView(view)}
-                    className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.3em] transition ${
+                    className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-normal transition ${
                       systemView === view
                         ? "border-sky-500 bg-sky-500/10 text-white"
                         : "border-slate-700 bg-slate-950 text-slate-400"
@@ -1832,7 +1832,7 @@ export default function ApiManagerPage() {
                 <p className="text-[11px] text-slate-500">
                   Discovered from source (OpenAPI). These are not DB-registered APIs.
                 </p>
-                <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                <div className="text-[10px] uppercase tracking-normal text-slate-500">
                   Last fetch:{" "}
                   <span className="text-slate-300">
                     {discoveredFetchAt
@@ -1859,7 +1859,7 @@ export default function ApiManagerPage() {
                     Server list unavailable. Showing local cache only.
                   </div>
                 ) : null}
-                <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                <div className="text-[10px] uppercase tracking-normal text-slate-500">
                   Last fetch:{" "}
                   <span className="text-slate-300">
                     {systemFetchAt
@@ -1888,7 +1888,7 @@ export default function ApiManagerPage() {
                 />
                 <button
                   onClick={loadDiscoveredEndpoints}
-                  className="ml-2 rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-slate-400 transition hover:border-slate-500"
+                  className="ml-2 rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-normal text-slate-400 transition hover:border-slate-500"
                 >
                   Refresh
                 </button>
@@ -1901,7 +1901,7 @@ export default function ApiManagerPage() {
                       {["method", "path", "summary", "tags", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-[0.3em] text-slate-500"
+                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-normal text-slate-500"
                         >
                           {column}
                         </th>
@@ -1944,7 +1944,7 @@ export default function ApiManagerPage() {
                           <td className="px-2 py-2">{endpoint.summary ?? "-"}</td>
                           <td className="px-2 py-2">{endpoint.tags?.join(", ") || "-"}</td>
                           <td className="px-2 py-2">
-                            <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                            <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-normal text-slate-400">
                               {endpoint.source}
                             </span>
                           </td>
@@ -1957,10 +1957,10 @@ export default function ApiManagerPage() {
               {selectedDiscovered ? (
                 <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Details</p>
+                    <p className="text-xs uppercase tracking-normal text-slate-500">Details</p>
                     <button
                       onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
-                      className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] uppercase tracking-[0.3em] text-slate-300 transition hover:border-slate-500"
+                      className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] uppercase tracking-normal text-slate-300 transition hover:border-slate-500"
                     >
                       Import to Custom
                     </button>
@@ -1997,14 +1997,14 @@ export default function ApiManagerPage() {
                 <div className="ml-2 flex items-center gap-2">
                   <button
                     onClick={handleImportSystemApi}
-                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-slate-300 transition hover:border-slate-500 disabled:opacity-60"
+                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-normal text-slate-300 transition hover:border-slate-500 disabled:opacity-60"
                     disabled={!selectedApi}
                   >
                     Import
                   </button>
                   <button
                     onClick={() => loadApis(selectedId ?? undefined)}
-                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-slate-400 transition hover:border-slate-500"
+                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-normal text-slate-400 transition hover:border-slate-500"
                   >
                     Refresh
                   </button>
@@ -2018,7 +2018,7 @@ export default function ApiManagerPage() {
                       {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-[0.3em] text-slate-500"
+                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-normal text-slate-500"
                         >
                           {column}
                         </th>
@@ -2056,7 +2056,7 @@ export default function ApiManagerPage() {
                             {new Date(api.updated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
                           </td>
                           <td className="px-2 py-2">
-                            <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                            <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-normal text-slate-400">
                               {api.source}
                             </span>
                           </td>
@@ -2071,7 +2071,7 @@ export default function ApiManagerPage() {
         </>
       ) : (
         <>
-          <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em]">
+          <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-normal">
             {[
               { id: "all", label: "All" },
               { id: "sql", label: "SQL" },
@@ -2112,7 +2112,7 @@ export default function ApiManagerPage() {
                       : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
                   }`}
                 >
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">{api.method}</p>
+                  <p className="text-[10px] uppercase tracking-normal text-slate-500">{api.method}</p>
                   <p className="font-semibold">{api.api_name}</p>
                   <p className="text-[11px] text-slate-400">{api.endpoint}</p>
                 </button>
@@ -2123,7 +2123,7 @@ export default function ApiManagerPage() {
       )}
       <button
         onClick={handleNew}
-        className={`w-full rounded-2xl border px-3 py-2 text-[10px] uppercase tracking-[0.3em] transition ${
+        className={`w-full rounded-2xl border px-3 py-2 text-[10px] uppercase tracking-normal transition ${
           scope === "system"
             ? "border-slate-700 bg-slate-900 text-slate-600 cursor-not-allowed"
             : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600"
@@ -2192,7 +2192,7 @@ export default function ApiManagerPage() {
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-500">Draft status</span>
+          <span className="text-xs uppercase tracking-normal text-slate-500">Draft status</span>
           <span className="text-sm font-semibold text-white">
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
@@ -2213,26 +2213,26 @@ export default function ApiManagerPage() {
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             onClick={handlePreviewDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-sky-500"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-sky-500"
           >
             Preview
           </button>
           <button
             onClick={handleTestDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-emerald-400"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-emerald-400"
           >
             Test (Dry-run)
           </button>
           <button
             onClick={handleApplyDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-indigo-400"
             disabled={!draftApi || draftTestOk !== true}
           >
             Apply
           </button>
           <button
             onClick={handleSaveLocalDraft}
-            className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
+            className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400"
             disabled={!draftApi || draftTestOk !== true}
           >
             Save (Local)
@@ -2260,7 +2260,7 @@ export default function ApiManagerPage() {
         )}
         {previewSummary && previewJson ? (
           <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
+            <p className="text-xs uppercase tracking-normal text-slate-500">Preview</p>
             <p className="text-sm text-white">{previewSummary}</p>
             <pre className="max-h-48 overflow-auto rounded-xl bg-slate-900/50 p-2 text-[11px] text-slate-300">
               {previewJson}
@@ -2269,33 +2269,33 @@ export default function ApiManagerPage() {
         ) : null}
         {showDebug ? (
           <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
-            <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
+            <summary className="cursor-pointer text-xs uppercase tracking-normal text-slate-400">
               Debug
             </summary>
             <div className="mt-2 space-y-1">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">
                 Save target: {saveTarget ?? "none"}
               </p>
               {lastSaveError ? (
                 <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p>
               ) : null}
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected API</p>
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">Selected API</p>
               <p className="text-[11px] text-slate-200">
                 {selectedApi ? `${selectedApi.api_name} (${selectedApi.api_id})` : "새 API"}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">
                 Parse status: {lastParseStatus}
               </p>
               {lastParseError ? (
                 <p className="text-[11px] text-rose-300">Error: {lastParseError}</p>
               ) : null}
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">Last assistant raw</p>
               <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
                 {lastAssistantRaw || "없음"}
               </pre>
               {draftApi ? (
                 <>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
+                  <p className="text-[10px] uppercase tracking-normal text-slate-500">Draft JSON</p>
                   <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
                     {JSON.stringify(draftApi, null, 2)}
                   </pre>
