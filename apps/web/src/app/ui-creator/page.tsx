@@ -1007,6 +1007,19 @@ export default function UiCreatorPage() {
     setIsPreviewLoading(true);
     setPreviewError(null);
     try {
+      const runExecute = async (apiId: string) => {
+        const response = await fetch(`${apiBaseUrl}/api-manager/apis/${apiId}/execute`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Executed-By": "ui-creator",
+          },
+          body: JSON.stringify({ params: runtimeParams, limit: 200 }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        return { response, payload };
+      };
+
       const runFetch = async (target: string) => {
         if (method === "GET") {
           const url = new URL(target);
@@ -1036,6 +1049,18 @@ export default function UiCreatorPage() {
       if (!response.ok && response.status === 404 && alternateRuntimeEndpoint) {
         const alternateEndpoint = `${apiBaseUrl}${alternateRuntimeEndpoint}`;
         ({ response, payload } = await runFetch(alternateEndpoint));
+      }
+      if (!response.ok && response.status === 404) {
+        const listResponse = await fetch(`${apiBaseUrl}/api-manager/apis`);
+        if (listResponse.ok) {
+          const listPayload = await listResponse.json().catch(() => ({}));
+          const items = (listPayload.data?.apis ?? []) as Array<{ api_id: string; endpoint: string }>;
+          const candidates = new Set([endpoint, runtimeEndpoint, alternateRuntimeEndpoint].filter(Boolean) as string[]);
+          const match = items.find((item) => candidates.has(item.endpoint));
+          if (match?.api_id) {
+            ({ response, payload } = await runExecute(match.api_id));
+          }
+        }
       }
       if (!response.ok) {
         throw new Error(payload.message ?? payload.detail ?? "Preview failed");
