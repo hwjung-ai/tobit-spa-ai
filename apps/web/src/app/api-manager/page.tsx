@@ -783,7 +783,13 @@ export default function ApiManagerPage() {
     try {
       const response = await fetch(`${apiBaseUrl}/api-manager/system/endpoints`);
       if (!response.ok) {
-        throw new Error("Failed to load discovered endpoints");
+        const payload = await response.json().catch(() => ({}));
+        const detail = (payload as { detail?: string }).detail;
+        throw new Error(
+          detail
+            ? `Failed to load discovered endpoints (${response.status}): ${detail}`
+            : `Failed to load discovered endpoints (${response.status})`
+        );
       }
       const payload = await response.json();
       setDiscoveredEndpoints(payload.data?.endpoints ?? []);
