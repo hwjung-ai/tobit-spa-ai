@@ -1241,6 +1241,26 @@ export default function ApiManagerPage() {
     setDraftNotes(null);
   }, []);
 
+  const buildDraftFromDiscovered = useCallback((endpoint: DiscoveredEndpoint): ApiDraft => {
+    return {
+      api_name: endpoint.summary?.toString().trim() || `${endpoint.method} ${endpoint.path}`,
+      method: endpoint.method === "POST" ? "POST" : "GET",
+      endpoint: endpoint.path,
+      description: endpoint.description?.toString() ?? "",
+      tags: endpoint.tags ?? [],
+      params_schema: {
+        parameters: endpoint.parameters ?? [],
+        requestBody: endpoint.requestBody ?? null,
+        responses: endpoint.responses ?? null,
+        source: "discovered",
+      },
+      logic: {
+        type: "sql",
+        query: "SELECT 1",
+      },
+    };
+  }, []);
+
   const handleExecute = async () => {
     if (!selectedId || !selectedApi) {
       setTestError("선택된 API가 없습니다.");
@@ -1905,7 +1925,19 @@ export default function ApiManagerPage() {
                               ? "bg-sky-500/10 text-white"
                               : "hover:bg-slate-900/60"
                           }`}
-                          onClick={() => setSelectedDiscovered(endpoint)}
+                          onClick={() => {
+                            setSelectedDiscovered(endpoint);
+                            setSelectedId(null);
+                            const draft = buildDraftFromDiscovered(endpoint);
+                            applyFinalToForm(draft);
+                            setStatusMessage("Discovered endpoint loaded (read-only).");
+                            setFormDirty(false);
+                            setFormBaselineSnapshot(JSON.stringify(draft));
+                            setAppliedDraftSnapshot(null);
+                            setDraftApi(null);
+                            setDraftStatus("idle");
+                            setDraftNotes(null);
+                          }}
                         >
                           <td className="px-2 py-2">{endpoint.method}</td>
                           <td className="px-2 py-2">{endpoint.path}</td>
