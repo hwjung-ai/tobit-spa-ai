@@ -367,8 +367,20 @@ const useWidgetData = ({
       setLoading(true);
       setError(null);
       try {
-        const normalized =
-          endpoint.startsWith("http") ? endpoint : `${normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)}${endpoint}`;
+        const baseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+        const normalized = (() => {
+          if (endpoint.startsWith("http")) {
+            return endpoint;
+          }
+          const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+          if (path.startsWith("/runtime/")) {
+            return `${baseUrl}${path}`;
+          }
+          if (path.startsWith("/api-manager/")) {
+            return `${baseUrl}/runtime${path.replace("/api-manager", "")}`;
+          }
+          return `${baseUrl}/runtime${path}`;
+        })();
         const url = new URL(normalized);
         let options: RequestInit | undefined;
         if (method === "GET") {
