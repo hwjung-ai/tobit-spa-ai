@@ -29,6 +29,12 @@ interface ApiDefinitionItem {
   logic_spec: Record<string, unknown>;
 }
 
+type ApiSource = "server" | "local";
+
+interface SystemApiItem extends ApiDefinitionItem {
+  source: ApiSource;
+}
+
 interface ExecuteResult {
   executed_sql: string;
   params: Record<string, unknown>;
@@ -69,6 +75,10 @@ interface WorkflowExecuteResult {
 
 const DEFAULT_SCOPE: ScopeType = "custom";
 const DEFAULT_TAB: CenterTab = "definition";
+const SCOPE_LABELS: Record<ScopeType, string> = {
+  custom: "custom",
+  system: "registered",
+};
 
 const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
 
@@ -443,9 +453,16 @@ const draftStatusLabels: Record<DraftStatus, string> = {
 };
 
 export default function ApiManagerPage() {
+  const enableSystemApis = process.env.NEXT_PUBLIC_ENABLE_SYSTEM_APIS === "true";
   const [scope, setScope] = useState<ScopeType>(DEFAULT_SCOPE);
+  const isSystemScope = enableSystemApis && scope === "system";
   const [apis, setApis] = useState<ApiDefinitionItem[]>([]);
+  const [systemApis, setSystemApis] = useState<SystemApiItem[]>([]);
+  const [systemError, setSystemError] = useState<string | null>(null);
+  const [systemFetchStatus, setSystemFetchStatus] = useState<"idle" | "ok" | "error">("idle");
+  const [systemFetchAt, setSystemFetchAt] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [systemSearchTerm, setSystemSearchTerm] = useState("");
   const [draftApi, setDraftApi] = useState<ApiDraft | null>(null);
   const [draftStatus, setDraftStatus] = useState<DraftStatus>("idle");
   const [draftNotes, setDraftNotes] = useState<string | null>(null);
@@ -494,10 +511,18 @@ export default function ApiManagerPage() {
   const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
 
-  const selectedApi = useMemo(
-    () => apis.find((api) => api.api_id === selectedId) ?? null,
-    [apis, selectedId]
-  );
+  useEffect(() => {
+    if (!enableSystemApis && scope === "system") {
+      setScope("custom");
+    }
+  }, [enableSystemApis, scope]);
+
+  const selectedApi = useMemo(() => {
+    if (scope === "system" && enableSystemApis) {
+      return systemApis.find((api) => api.api_id === selectedId) ?? null;
+    }
+    return apis.find((api) => api.api_id === selectedId) ?? null;
+  }, [apis, systemApis, selectedId, scope, enableSystemApis]);
 
   const buildDraftFromForm = useCallback((): ApiDraft => {
     return {
@@ -515,8 +540,8 @@ export default function ApiManagerPage() {
   }, [definitionDraft, logicBody, paramSchemaText]);
 
   const buildSavePayload = useCallback(() => {
-    if (scope === "system" && !selectedApi) {
-      setStatusMessage("System APIs can only be updated (select one from the list).");
+    if (isSystemScope) {
+      setStatusMessage("System APIs are read-only. Import to Custom to edit.");
       return null;
     }
     if (scope === "custom" && !logicBody.trim()) {
@@ -561,7 +586,7 @@ export default function ApiManagerPage() {
       created_by: definitionDraft.created_by || "ops-builder",
     };
   }, [
-    scope,
+    isSystemScope,
     selectedApi,
     logicBody,
     paramSchemaText,
@@ -607,8 +632,96 @@ export default function ApiManagerPage() {
   const draftStorageId = selectedId ?? "new";
   const finalStorageId = selectedId ?? (definitionDraft.endpoint || "new");
 
+  const getLocalSystemApis = useCallback(() => {
+    if (typeof window === "undefined") {
+      return [] as SystemApiItem[];
+    }
+    const items: SystemApiItem[] = [];
+    for (let i = 0; i < window.localStorage.length; i += 1) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith(FINAL_STORAGE_PREFIX)) {
+        continue;
+      }
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        continue;
+      }
+      try {
+        const payload = JSON.parse(raw) as Record<string, unknown>;
+        const apiName = (payload.api_name as string) ?? "Local API";
+        const endpoint = (payload.endpoint as string) ?? "";
+        const apiId = `local:${endpoint || apiName}`;
+        items.push({
+          api_id: apiId,
+          api_name: apiName,
+          api_type: "system",
+          method: (payload.method as "GET" | "POST") ?? "GET",
+          endpoint,
+          logic_type: (payload.logic_type as LogicType) ?? "sql",
+          logic_body: (payload.logic_body as string) ?? "",
+          description: (payload.description as string) ?? null,
+          tags: (payload.tags as string[]) ?? [],
+          is_active: true,
+          created_by: "local",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          param_schema: (payload.param_schema as Record<string, unknown>) ?? {},
+          runtime_policy: (payload.runtime_policy as Record<string, unknown>) ?? {},
+          logic_spec: (payload.logic_spec as Record<string, unknown>) ?? {},
+          source: "local",
+        });
+      } catch {
+        // ignore malformed local entries
+      }
+    }
+    return items;
+  }, []);
+
   const loadApis = useCallback(
     async (preferredId?: string) => {
+      if (scope === "system" && enableSystemApis) {
+        setSystemError(null);
+        setSystemFetchStatus("idle");
+        setSystemFetchAt(new Date().toISOString());
+        try {
+          const url = new URL(`${apiBaseUrl}/api-manager/apis`);
+          const response = await fetch(url.toString());
+          if (!response.ok) {
+            throw new Error("Failed to load system APIs");
+          }
+          const payload = await response.json();
+          const items: ApiDefinitionItem[] = payload.data?.apis ?? [];
+          const normalized = items.map((item) => ({ ...item, source: "server" as const }));
+          setSystemApis(normalized);
+          setSystemFetchStatus("ok");
+          setSelectedId((prev) => {
+            if (preferredId) {
+              return preferredId;
+            }
+            if (prev && normalized.some((item) => item.api_id === prev)) {
+              return prev;
+            }
+            return normalized[0]?.api_id ?? null;
+          });
+        } catch (error) {
+          console.error("Unable to fetch system APIs", error);
+          const message = error instanceof Error ? error.message : "Failed to load system APIs";
+          setSystemError(message);
+          setSystemFetchStatus("error");
+          const localItems = getLocalSystemApis();
+          setSystemApis(localItems);
+          setSelectedId((prev) => {
+            if (preferredId) {
+              return preferredId;
+            }
+            if (prev && localItems.some((item) => item.api_id === prev)) {
+              return prev;
+            }
+            return localItems[0]?.api_id ?? null;
+          });
+        }
+        return;
+      }
       try {
         const url = new URL(`${apiBaseUrl}/api-manager/apis`);
         if (scope) {
@@ -636,7 +749,7 @@ export default function ApiManagerPage() {
         setSelectedId(null);
       }
     },
-    [apiBaseUrl, scope]
+    [apiBaseUrl, scope, enableSystemApis, getLocalSystemApis]
   );
 
   const fetchExecLogs = useCallback(async () => {
@@ -810,9 +923,24 @@ export default function ApiManagerPage() {
       (api) =>
         api.api_name.toLowerCase().includes(lower) ||
         api.endpoint.toLowerCase().includes(lower) ||
-        api.method.toLowerCase().includes(lower)
+        api.method.toLowerCase().includes(lower) ||
+        api.tags.join(",").toLowerCase().includes(lower)
     );
   }, [apis, searchTerm, logicFilter]);
+
+  const filteredSystemApis = useMemo(() => {
+    if (!systemSearchTerm.trim()) {
+      return systemApis;
+    }
+    const lower = systemSearchTerm.toLowerCase();
+    return systemApis.filter(
+      (api) =>
+        api.api_name.toLowerCase().includes(lower) ||
+        api.endpoint.toLowerCase().includes(lower) ||
+        api.method.toLowerCase().includes(lower) ||
+        api.tags.join(",").toLowerCase().includes(lower)
+    );
+  }, [systemApis, systemSearchTerm]);
 
   const handleSave = async () => {
     const payload = buildSavePayload();
@@ -979,6 +1107,27 @@ export default function ApiManagerPage() {
     setAppliedDraftSnapshot(null);
   };
 
+  const handleImportSystemApi = useCallback(() => {
+    if (!selectedApi) {
+      return;
+    }
+    const imported = apiToDraft(selectedApi);
+    setScope("custom");
+    setSelectedId(null);
+    applyFinalToForm(imported);
+    setDefinitionDraft((prev) => ({
+      ...prev,
+      created_by: "imported",
+    }));
+    setStatusMessage("System API imported into Custom (unsaved).");
+    setFormDirty(true);
+    setFormBaselineSnapshot(JSON.stringify(imported));
+    setAppliedDraftSnapshot(null);
+    setDraftApi(null);
+    setDraftStatus("idle");
+    setDraftNotes(null);
+  }, [selectedApi]);
+
   const handleExecute = async () => {
     if (!selectedId || !selectedApi) {
       setTestError("선택된 API가 없습니다.");
@@ -1066,6 +1215,7 @@ export default function ApiManagerPage() {
                 setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
               }
               className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              disabled={isSystemScope}
             />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -1077,7 +1227,7 @@ export default function ApiManagerPage() {
                   setDefinitionDraft((prev) => ({ ...prev, method: event.target.value as "GET" | "POST" }))
                 }
                 className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-                disabled={scope === "system"}
+                disabled={isSystemScope}
               >
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
@@ -1091,19 +1241,20 @@ export default function ApiManagerPage() {
                   setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
                 }
                 className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-                disabled={scope === "system"}
+                disabled={isSystemScope}
               />
             </label>
           </div>
           <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
             Description
-            <textarea
-              value={definitionDraft.description}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
-              }
-              className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-            />
+              <textarea
+                value={definitionDraft.description}
+                onChange={(event) =>
+                  setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
+                }
+                className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                disabled={isSystemScope}
+              />
           </label>
           <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
             Tags (comma separated)
@@ -1111,6 +1262,7 @@ export default function ApiManagerPage() {
               value={definitionDraft.tags}
               onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
               className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              disabled={isSystemScope}
             />
           </label>
           <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -1119,6 +1271,7 @@ export default function ApiManagerPage() {
               value={paramSchemaText}
               onChange={(event) => setParamSchemaText(event.target.value)}
               className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              disabled={isSystemScope}
             />
           </label>
           <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -1127,6 +1280,7 @@ export default function ApiManagerPage() {
               value={runtimePolicyText}
               onChange={(event) => setRuntimePolicyText(event.target.value)}
               className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              disabled={isSystemScope}
             />
           </label>
           <label className="text-xs uppercase tracking-[0.3em] text-slate-500 flex items-center gap-2">
@@ -1137,6 +1291,7 @@ export default function ApiManagerPage() {
                 setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
               }
               className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
+              disabled={isSystemScope}
             />
             Active
           </label>
@@ -1149,6 +1304,7 @@ export default function ApiManagerPage() {
               }
               className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
               placeholder="ops-builder"
+              disabled={isSystemScope}
             />
           </label>
         </div>
@@ -1169,6 +1325,7 @@ export default function ApiManagerPage() {
                       ? "border-sky-500 bg-sky-500/10 text-white"
                       : "border-slate-800 bg-slate-950 text-slate-400"
                   }`}
+                  disabled={isSystemScope}
                 >
                   {logicTypeLabels[type]}
                 </button>
@@ -1184,6 +1341,7 @@ export default function ApiManagerPage() {
                   setScriptLanguage(event.target.value as "python" | "javascript")
                 }
                 className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                disabled={isSystemScope}
               >
                 <option value="python">Python</option>
                 <option value="javascript">JavaScript</option>
@@ -1200,7 +1358,7 @@ export default function ApiManagerPage() {
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
-                readOnly: scope === "system",
+                readOnly: isSystemScope,
               }}
             />
           </div>
@@ -1213,7 +1371,7 @@ export default function ApiManagerPage() {
         <button
           onClick={handleSave}
           className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
-          disabled={isSaving || (scope === "system" && !selectedApi)}
+          disabled={isSaving || isSystemScope}
         >
           {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
         </button>
@@ -1497,69 +1655,179 @@ export default function ApiManagerPage() {
       <div className="flex items-center justify-between">
         <h3 className="text-xs uppercase tracking-[0.3em] text-slate-500">API 목록</h3>
         <div className="flex gap-2 text-[10px] uppercase tracking-[0.3em]">
-          {["system", "custom"].map((item) => (
-            <button
-              key={item}
-              onClick={() => setScope(item as ScopeType)}
-              className={`rounded-full border px-3 py-1 transition ${
-                scope === item
-                  ? "border-sky-500 bg-sky-500/10 text-white"
-                  : "border-slate-700 bg-slate-950 text-slate-400"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
+          {(["custom"] as ScopeType[])
+            .concat(enableSystemApis ? (["system"] as ScopeType[]) : [])
+            .map((item) => (
+              <button
+                key={item}
+                onClick={() => setScope(item as ScopeType)}
+                className={`rounded-full border px-3 py-1 transition ${
+                  scope === item
+                    ? "border-sky-500 bg-sky-500/10 text-white"
+                    : "border-slate-700 bg-slate-950 text-slate-400"
+                }`}
+              >
+                {SCOPE_LABELS[item]}
+              </button>
+            ))}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em]">
-        {[
-          { id: "all", label: "All" },
-          { id: "sql", label: "SQL" },
-          { id: "workflow", label: "Workflow" },
-          { id: "python", label: "Python" },
-          { id: "script", label: "Script" },
-        ].map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setLogicFilter(item.id as "all" | LogicType)}
-            className={`rounded-full border px-3 py-1 transition ${
-              logicFilter === item.id
-                ? "border-sky-500 bg-sky-500/10 text-white"
-                : "border-slate-700 bg-slate-950 text-slate-400"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-      <input
-        value={searchTerm}
-        onChange={(event) => setSearchTerm(event.target.value)}
-        placeholder="검색"
-        className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-      />
-      <div className="space-y-2 max-h-[360px] overflow-y-auto">
-        {filteredApis.length === 0 ? (
-          <p className="text-xs text-slate-500">검색 결과 없음</p>
-        ) : (
-          filteredApis.map((api) => (
-            <button
-              key={api.api_id}
-              onClick={() => setSelectedId(api.api_id)}
-              className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${
-                selectedApi?.api_id === api.api_id
-                  ? "border-sky-400 bg-sky-500/10 text-white"
-                  : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
-              }`}
-            >
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">{api.method}</p>
-              <p className="font-semibold">{api.api_name}</p>
-              <p className="text-[11px] text-slate-400">{api.endpoint}</p>
-            </button>
-          ))
-        )}
-      </div>
+      {scope === "system" && enableSystemApis ? (
+        <>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              <span>Registered APIs</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleImportSystemApi}
+                  className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-300 transition hover:border-slate-500 disabled:opacity-60"
+                  disabled={!selectedApi}
+                >
+                  Import to Custom
+                </button>
+                <button
+                  onClick={() => loadApis(selectedId ?? undefined)}
+                  className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-400 transition hover:border-slate-500"
+                >
+                  Refresh
+                </button>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400">Registered APIs are read-only.</p>
+            {systemFetchStatus === "error" ? (
+              <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+                Server list unavailable. Showing local cache only.
+              </div>
+            ) : null}
+            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              Last fetch:{" "}
+              <span className="text-slate-300">
+                {systemFetchAt ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "-"}
+              </span>{" "}
+              · Status:{" "}
+              <span className={systemFetchStatus === "error" ? "text-rose-300" : "text-slate-300"}>
+                {systemFetchStatus}
+              </span>
+              {systemError ? (
+                <span className="ml-2 text-rose-300">Error: {systemError}</span>
+              ) : null}
+            </div>
+          </div>
+          <input
+            value={systemSearchTerm}
+            onChange={(event) => setSystemSearchTerm(event.target.value)}
+            placeholder="검색"
+            className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          />
+          {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
+          <div className="max-h-[420px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+            <table className="min-w-full text-left text-xs text-slate-200">
+              <thead className="sticky top-0 bg-slate-950/90">
+                <tr>
+                  {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map((column) => (
+                    <th
+                      key={column}
+                      className="border-b border-slate-800 px-2 py-2 uppercase tracking-[0.3em] text-slate-500"
+                    >
+                      {column}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredSystemApis.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-3 py-3 text-slate-500">
+                      No system APIs found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSystemApis.map((api) => (
+                    <tr
+                      key={api.api_id}
+                      className={`cursor-pointer border-b border-slate-900/60 ${
+                        selectedApi?.api_id === api.api_id
+                          ? "bg-sky-500/10 text-white"
+                          : "hover:bg-slate-900/60"
+                      }`}
+                      onClick={() => {
+                        setSelectedId(api.api_id);
+                        setDraftApi(null);
+                        setDraftStatus("idle");
+                        setDraftNotes(null);
+                      }}
+                    >
+                      <td className="px-2 py-2">{api.method}</td>
+                      <td className="px-2 py-2">{api.endpoint}</td>
+                      <td className="px-2 py-2">{api.api_name}</td>
+                      <td className="px-2 py-2">{api.tags.join(", ") || "-"}</td>
+                      <td className="px-2 py-2">
+                        {new Date(api.updated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
+                      </td>
+                      <td className="px-2 py-2">
+                        <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                          {api.source}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.3em]">
+            {[
+              { id: "all", label: "All" },
+              { id: "sql", label: "SQL" },
+              { id: "workflow", label: "Workflow" },
+              { id: "python", label: "Python" },
+              { id: "script", label: "Script" },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setLogicFilter(item.id as "all" | LogicType)}
+                className={`rounded-full border px-3 py-1 transition ${
+                  logicFilter === item.id
+                    ? "border-sky-500 bg-sky-500/10 text-white"
+                    : "border-slate-700 bg-slate-950 text-slate-400"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <input
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="검색"
+            className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          />
+          <div className="space-y-2 max-h-[360px] overflow-y-auto">
+            {filteredApis.length === 0 ? (
+              <p className="text-xs text-slate-500">검색 결과 없음</p>
+            ) : (
+              filteredApis.map((api) => (
+                <button
+                  key={api.api_id}
+                  onClick={() => setSelectedId(api.api_id)}
+                  className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${
+                    selectedApi?.api_id === api.api_id
+                      ? "border-sky-400 bg-sky-500/10 text-white"
+                      : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                  }`}
+                >
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">{api.method}</p>
+                  <p className="font-semibold">{api.api_name}</p>
+                  <p className="text-[11px] text-slate-400">{api.endpoint}</p>
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      )}
       <button
         onClick={handleNew}
         className={`w-full rounded-2xl border px-3 py-2 text-[10px] uppercase tracking-[0.3em] transition ${
@@ -1618,6 +1886,8 @@ export default function ApiManagerPage() {
     },
     [processAssistantDraft]
   );
+
+  const showDebug = process.env.NODE_ENV !== "production";
 
   const rightPane = (
     <div className="space-y-4">
@@ -1704,41 +1974,43 @@ export default function ApiManagerPage() {
             </pre>
           </div>
         ) : null}
-        <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
-            Debug
-          </summary>
-          <div className="mt-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              Save target: {saveTarget ?? "none"}
-            </p>
-            {lastSaveError ? (
-              <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p>
-            ) : null}
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected API</p>
-            <p className="text-[11px] text-slate-200">
-              {selectedApi ? `${selectedApi.api_name} (${selectedApi.api_id})` : "새 API"}
-            </p>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              Parse status: {lastParseStatus}
-            </p>
-            {lastParseError ? (
-              <p className="text-[11px] text-rose-300">Error: {lastParseError}</p>
-            ) : null}
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
-            <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
-              {lastAssistantRaw || "없음"}
-            </pre>
-            {draftApi ? (
-              <>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
-                <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
-                  {JSON.stringify(draftApi, null, 2)}
-                </pre>
-              </>
-            ) : null}
-          </div>
-        </details>
+        {showDebug ? (
+          <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+            <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
+              Debug
+            </summary>
+            <div className="mt-2 space-y-1">
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                Save target: {saveTarget ?? "none"}
+              </p>
+              {lastSaveError ? (
+                <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p>
+              ) : null}
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected API</p>
+              <p className="text-[11px] text-slate-200">
+                {selectedApi ? `${selectedApi.api_name} (${selectedApi.api_id})` : "새 API"}
+              </p>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                Parse status: {lastParseStatus}
+              </p>
+              {lastParseError ? (
+                <p className="text-[11px] text-rose-300">Error: {lastParseError}</p>
+              ) : null}
+              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
+              <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                {lastAssistantRaw || "없음"}
+              </pre>
+              {draftApi ? (
+                <>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
+                  <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                    {JSON.stringify(draftApi, null, 2)}
+                  </pre>
+                </>
+              ) : null}
+            </div>
+          </details>
+        ) : null}
       </div>
     </div>
   );
