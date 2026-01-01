@@ -9,6 +9,7 @@ import Editor from "@monaco-editor/react";
 type ScopeType = "system" | "custom";
 type CenterTab = "definition" | "logic" | "test";
 type LogicType = "sql" | "workflow" | "python" | "script";
+type SystemView = "discovered" | "registered";
 
 interface ApiDefinitionItem {
   api_id: string;
@@ -33,6 +34,19 @@ type ApiSource = "server" | "local";
 
 interface SystemApiItem extends ApiDefinitionItem {
   source: ApiSource;
+}
+
+interface DiscoveredEndpoint {
+  method: string;
+  path: string;
+  operationId?: string | null;
+  summary?: string | null;
+  description?: string | null;
+  tags?: string[];
+  parameters?: unknown[];
+  requestBody?: Record<string, unknown> | null;
+  responses?: Record<string, unknown> | null;
+  source: "openapi" | "router";
 }
 
 interface ExecuteResult {
@@ -77,7 +91,7 @@ const DEFAULT_SCOPE: ScopeType = "custom";
 const DEFAULT_TAB: CenterTab = "definition";
 const SCOPE_LABELS: Record<ScopeType, string> = {
   custom: "custom",
-  system: "registered",
+  system: "system",
 };
 
 const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
@@ -461,6 +475,13 @@ export default function ApiManagerPage() {
   const [systemError, setSystemError] = useState<string | null>(null);
   const [systemFetchStatus, setSystemFetchStatus] = useState<"idle" | "ok" | "error">("idle");
   const [systemFetchAt, setSystemFetchAt] = useState<string | null>(null);
+  const [systemView, setSystemView] = useState<SystemView>("discovered");
+  const [discoveredEndpoints, setDiscoveredEndpoints] = useState<DiscoveredEndpoint[]>([]);
+  const [discoveredError, setDiscoveredError] = useState<string | null>(null);
+  const [discoveredFetchStatus, setDiscoveredFetchStatus] = useState<"idle" | "ok" | "error">("idle");
+  const [discoveredFetchAt, setDiscoveredFetchAt] = useState<string | null>(null);
+  const [discoveredSearchTerm, setDiscoveredSearchTerm] = useState("");
+  const [selectedDiscovered, setSelectedDiscovered] = useState<DiscoveredEndpoint | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [systemSearchTerm, setSystemSearchTerm] = useState("");
   const [draftApi, setDraftApi] = useState<ApiDraft | null>(null);
@@ -752,6 +773,29 @@ export default function ApiManagerPage() {
     [apiBaseUrl, scope, enableSystemApis, getLocalSystemApis]
   );
 
+  const loadDiscoveredEndpoints = useCallback(async () => {
+    if (!isSystemScope) {
+      return;
+    }
+    setDiscoveredError(null);
+    setDiscoveredFetchStatus("idle");
+    setDiscoveredFetchAt(new Date().toISOString());
+    try {
+      const response = await fetch(`${apiBaseUrl}/api-manager/system/endpoints`);
+      if (!response.ok) {
+        throw new Error("Failed to load discovered endpoints");
+      }
+      const payload = await response.json();
+      setDiscoveredEndpoints(payload.data?.endpoints ?? []);
+      setDiscoveredFetchStatus("ok");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load discovered endpoints";
+      setDiscoveredError(message);
+      setDiscoveredFetchStatus("error");
+      setDiscoveredEndpoints([]);
+    }
+  }, [apiBaseUrl, isSystemScope]);
+
   const fetchExecLogs = useCallback(async () => {
     if (!selectedId) {
       setExecLogs([]);
@@ -777,6 +821,12 @@ export default function ApiManagerPage() {
     setSelectedId(null);
     loadApis();
   }, [loadApis]);
+
+  useEffect(() => {
+    if (isSystemScope && systemView === "discovered") {
+      loadDiscoveredEndpoints();
+    }
+  }, [isSystemScope, systemView, loadDiscoveredEndpoints]);
 
   useEffect(() => {
     const key = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
@@ -941,6 +991,22 @@ export default function ApiManagerPage() {
         api.tags.join(",").toLowerCase().includes(lower)
     );
   }, [systemApis, systemSearchTerm]);
+
+  const filteredDiscoveredEndpoints = useMemo(() => {
+    if (!discoveredSearchTerm.trim()) {
+      return discoveredEndpoints;
+    }
+    const lower = discoveredSearchTerm.toLowerCase();
+    return discoveredEndpoints.filter((endpoint) => {
+      const tags = endpoint.tags?.join(",") ?? "";
+      return (
+        endpoint.path.toLowerCase().includes(lower) ||
+        endpoint.method.toLowerCase().includes(lower) ||
+        (endpoint.summary ?? "").toLowerCase().includes(lower) ||
+        tags.toLowerCase().includes(lower)
+      );
+    });
+  }, [discoveredEndpoints, discoveredSearchTerm]);
 
   const handleSave = async () => {
     const payload = buildSavePayload();
@@ -1127,6 +1193,40 @@ export default function ApiManagerPage() {
     setDraftStatus("idle");
     setDraftNotes(null);
   }, [selectedApi]);
+
+  const handleImportDiscoveredEndpoint = useCallback((endpoint: DiscoveredEndpoint) => {
+    const draft: ApiDraft = {
+      api_name: endpoint.summary?.toString().trim() || `Imported ${endpoint.method} ${endpoint.path}`,
+      method: endpoint.method === "POST" ? "POST" : "GET",
+      endpoint: `/api-manager/imported${endpoint.path}`,
+      description: `Imported from discovered endpoint ${endpoint.method} ${endpoint.path}`,
+      tags: endpoint.tags ?? [],
+      params_schema: {
+        parameters: endpoint.parameters ?? [],
+        requestBody: endpoint.requestBody ?? null,
+        responses: endpoint.responses ?? null,
+        source: "discovered",
+      },
+      logic: {
+        type: "sql",
+        query: "SELECT 1",
+      },
+    };
+    setScope("custom");
+    setSelectedId(null);
+    applyFinalToForm(draft);
+    setDefinitionDraft((prev) => ({
+      ...prev,
+      created_by: "imported",
+    }));
+    setStatusMessage("System API imported into Custom (unsaved).");
+    setFormDirty(true);
+    setFormBaselineSnapshot(JSON.stringify(draft));
+    setAppliedDraftSnapshot(null);
+    setDraftApi(null);
+    setDraftStatus("idle");
+    setDraftNotes(null);
+  }, []);
 
   const handleExecute = async () => {
     if (!selectedId || !selectedApi) {
@@ -1676,108 +1776,253 @@ export default function ApiManagerPage() {
         <>
           <div className="space-y-2">
             <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              <span>Registered APIs</span>
+              <span>System APIs</span>
               <div className="flex items-center gap-2">
+                {(["discovered", "registered"] as SystemView[]).map((view) => (
+                  <button
+                    key={view}
+                    onClick={() => setSystemView(view)}
+                    className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-[0.3em] transition ${
+                      systemView === view
+                        ? "border-sky-500 bg-sky-500/10 text-white"
+                        : "border-slate-700 bg-slate-950 text-slate-400"
+                    }`}
+                  >
+                    {view}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {systemView === "discovered" ? (
+              <>
+                <p className="text-[11px] text-slate-400">Discovered endpoints are read-only.</p>
+                <p className="text-[11px] text-slate-500">
+                  Discovered from source (OpenAPI). These are not DB-registered APIs.
+                </p>
+                <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                  Last fetch:{" "}
+                  <span className="text-slate-300">
+                    {discoveredFetchAt
+                      ? new Date(discoveredFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
+                      : "-"}
+                  </span>{" "}
+                  · Status:{" "}
+                  <span className={discoveredFetchStatus === "error" ? "text-rose-300" : "text-slate-300"}>
+                    {discoveredFetchStatus}
+                  </span>
+                  {discoveredError ? (
+                    <span className="ml-2 text-rose-300">Error: {discoveredError}</span>
+                  ) : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[11px] text-slate-400">Registered APIs are read-only.</p>
+                <p className="text-[11px] text-slate-500">
+                  Registered APIs (from DB). Code-defined endpoints are not listed here.
+                </p>
+                {systemFetchStatus === "error" ? (
+                  <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+                    Server list unavailable. Showing local cache only.
+                  </div>
+                ) : null}
+                <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                  Last fetch:{" "}
+                  <span className="text-slate-300">
+                    {systemFetchAt
+                      ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
+                      : "-"}
+                  </span>{" "}
+                  · Status:{" "}
+                  <span className={systemFetchStatus === "error" ? "text-rose-300" : "text-slate-300"}>
+                    {systemFetchStatus}
+                  </span>
+                  {systemError ? (
+                    <span className="ml-2 text-rose-300">Error: {systemError}</span>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </div>
+          {systemView === "discovered" ? (
+            <>
+              <div className="flex items-center justify-between">
+                <input
+                  value={discoveredSearchTerm}
+                  onChange={(event) => setDiscoveredSearchTerm(event.target.value)}
+                  placeholder="검색"
+                  className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                />
                 <button
-                  onClick={handleImportSystemApi}
-                  className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-300 transition hover:border-slate-500 disabled:opacity-60"
-                  disabled={!selectedApi}
-                >
-                  Import to Custom
-                </button>
-                <button
-                  onClick={() => loadApis(selectedId ?? undefined)}
-                  className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-400 transition hover:border-slate-500"
+                  onClick={loadDiscoveredEndpoints}
+                  className="ml-2 rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-slate-400 transition hover:border-slate-500"
                 >
                   Refresh
                 </button>
               </div>
-            </div>
-            <p className="text-[11px] text-slate-400">Registered APIs are read-only.</p>
-            <p className="text-[11px] text-slate-500">
-              Registered APIs (from DB). Code-defined endpoints are not listed here.
-            </p>
-            {systemFetchStatus === "error" ? (
-              <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-                Server list unavailable. Showing local cache only.
-              </div>
-            ) : null}
-            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-              Last fetch:{" "}
-              <span className="text-slate-300">
-                {systemFetchAt ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) : "-"}
-              </span>{" "}
-              · Status:{" "}
-              <span className={systemFetchStatus === "error" ? "text-rose-300" : "text-slate-300"}>
-                {systemFetchStatus}
-              </span>
-              {systemError ? (
-                <span className="ml-2 text-rose-300">Error: {systemError}</span>
-              ) : null}
-            </div>
-          </div>
-          <input
-            value={systemSearchTerm}
-            onChange={(event) => setSystemSearchTerm(event.target.value)}
-            placeholder="검색"
-            className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-          />
-          {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
-          <div className="max-h-[420px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/40">
-            <table className="min-w-full text-left text-xs text-slate-200">
-              <thead className="sticky top-0 bg-slate-950/90">
-                <tr>
-                  {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map((column) => (
-                    <th
-                      key={column}
-                      className="border-b border-slate-800 px-2 py-2 uppercase tracking-[0.3em] text-slate-500"
-                    >
-                      {column}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredSystemApis.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-3 text-slate-500">
-                      No system APIs found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredSystemApis.map((api) => (
-                    <tr
-                      key={api.api_id}
-                      className={`cursor-pointer border-b border-slate-900/60 ${
-                        selectedApi?.api_id === api.api_id
-                          ? "bg-sky-500/10 text-white"
-                          : "hover:bg-slate-900/60"
-                      }`}
-                      onClick={() => {
-                        setSelectedId(api.api_id);
-                        setDraftApi(null);
-                        setDraftStatus("idle");
-                        setDraftNotes(null);
-                      }}
-                    >
-                      <td className="px-2 py-2">{api.method}</td>
-                      <td className="px-2 py-2">{api.endpoint}</td>
-                      <td className="px-2 py-2">{api.api_name}</td>
-                      <td className="px-2 py-2">{api.tags.join(", ") || "-"}</td>
-                      <td className="px-2 py-2">
-                        {new Date(api.updated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
-                      </td>
-                      <td className="px-2 py-2">
-                        <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                          {api.source}
-                        </span>
-                      </td>
+              {discoveredError ? <p className="text-xs text-rose-400">{discoveredError}</p> : null}
+              <div className="max-h-[420px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                <table className="min-w-full text-left text-xs text-slate-200">
+                  <thead className="sticky top-0 bg-slate-950/90">
+                    <tr>
+                      {["method", "path", "summary", "tags", "source"].map((column) => (
+                        <th
+                          key={column}
+                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-[0.3em] text-slate-500"
+                        >
+                          {column}
+                        </th>
+                      ))}
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody>
+                    {filteredDiscoveredEndpoints.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-3 py-3 text-slate-500">
+                          No discovered endpoints found.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredDiscoveredEndpoints.map((endpoint) => (
+                        <tr
+                          key={`${endpoint.method}-${endpoint.path}`}
+                          className={`cursor-pointer border-b border-slate-900/60 ${
+                            selectedDiscovered?.path === endpoint.path &&
+                            selectedDiscovered?.method === endpoint.method
+                              ? "bg-sky-500/10 text-white"
+                              : "hover:bg-slate-900/60"
+                          }`}
+                          onClick={() => setSelectedDiscovered(endpoint)}
+                        >
+                          <td className="px-2 py-2">{endpoint.method}</td>
+                          <td className="px-2 py-2">{endpoint.path}</td>
+                          <td className="px-2 py-2">{endpoint.summary ?? "-"}</td>
+                          <td className="px-2 py-2">{endpoint.tags?.join(", ") || "-"}</td>
+                          <td className="px-2 py-2">
+                            <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                              {endpoint.source}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              {selectedDiscovered ? (
+                <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Details</p>
+                    <button
+                      onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
+                      className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] uppercase tracking-[0.3em] text-slate-300 transition hover:border-slate-500"
+                    >
+                      Import to Custom
+                    </button>
+                  </div>
+                  <p className="text-sm text-white">
+                    {selectedDiscovered.method} {selectedDiscovered.path}
+                  </p>
+                  {selectedDiscovered.description ? (
+                    <p className="text-[11px] text-slate-400">{selectedDiscovered.description}</p>
+                  ) : null}
+                  <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                    {JSON.stringify(
+                      {
+                        parameters: selectedDiscovered.parameters ?? [],
+                        requestBody: selectedDiscovered.requestBody ?? null,
+                        responses: selectedDiscovered.responses ?? null,
+                      },
+                      null,
+                      2
+                    )}
+                  </pre>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <input
+                  value={systemSearchTerm}
+                  onChange={(event) => setSystemSearchTerm(event.target.value)}
+                  placeholder="검색"
+                  className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                />
+                <div className="ml-2 flex items-center gap-2">
+                  <button
+                    onClick={handleImportSystemApi}
+                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-slate-300 transition hover:border-slate-500 disabled:opacity-60"
+                    disabled={!selectedApi}
+                  >
+                    Import
+                  </button>
+                  <button
+                    onClick={() => loadApis(selectedId ?? undefined)}
+                    className="rounded-full border border-slate-700 bg-slate-950 px-3 py-2 text-[10px] uppercase tracking-[0.3em] text-slate-400 transition hover:border-slate-500"
+                  >
+                    Refresh
+                  </button>
+                </div>
+              </div>
+              {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
+              <div className="max-h-[420px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/40">
+                <table className="min-w-full text-left text-xs text-slate-200">
+                  <thead className="sticky top-0 bg-slate-950/90">
+                    <tr>
+                      {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map((column) => (
+                        <th
+                          key={column}
+                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-[0.3em] text-slate-500"
+                        >
+                          {column}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSystemApis.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-3 py-3 text-slate-500">
+                          No registered APIs found.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredSystemApis.map((api) => (
+                        <tr
+                          key={api.api_id}
+                          className={`cursor-pointer border-b border-slate-900/60 ${
+                            selectedApi?.api_id === api.api_id
+                              ? "bg-sky-500/10 text-white"
+                              : "hover:bg-slate-900/60"
+                          }`}
+                          onClick={() => {
+                            setSelectedId(api.api_id);
+                            setDraftApi(null);
+                            setDraftStatus("idle");
+                            setDraftNotes(null);
+                          }}
+                        >
+                          <td className="px-2 py-2">{api.method}</td>
+                          <td className="px-2 py-2">{api.endpoint}</td>
+                          <td className="px-2 py-2">{api.api_name}</td>
+                          <td className="px-2 py-2">{api.tags.join(", ") || "-"}</td>
+                          <td className="px-2 py-2">
+                            {new Date(api.updated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
+                          </td>
+                          <td className="px-2 py-2">
+                            <span className="rounded-full border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                              {api.source}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </>
       ) : (
         <>
