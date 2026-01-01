@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BuilderShell from "../../components/builder/BuilderShell";
@@ -138,8 +138,27 @@ interface UiDraft {
 }
 
 type DraftStatus = "idle" | "draft_ready" | "previewing" | "testing" | "applied" | "saved" | "outdated" | "error";
+type PreviewMode = "layout" | "runtime";
 
 const DEFAULT_PARAMS_TEXT = JSON.stringify(DEFAULT_SCHEMA.data_source.default_params, null, 2);
+const DEFAULT_MOCK_COLUMNS = ["col1", "col2", "col3"];
+
+const buildMockRows = (columns: string[], count = 8) => {
+  return Array.from({ length: count }, (_, idx) => {
+    const row: Record<string, unknown> = {};
+    columns.forEach((column, colIndex) => {
+      row[column] = colIndex === 0 ? `row-${idx + 1}` : idx * 10 + colIndex;
+    });
+    return row;
+  });
+};
+
+const buildMockChartRows = (xKey: string, yKey: string, count = 12) => {
+  return Array.from({ length: count }, (_, idx) => ({
+    [xKey]: `T${idx + 1}`,
+    [yKey]: (idx + 1) * 5,
+  }));
+};
 const DRAFT_STORAGE_PREFIX = "ui-creator:draft:";
 const FINAL_STORAGE_PREFIX = "ui-creator:ui:";
 
@@ -282,7 +301,7 @@ const GridPreview = ({ columns, rows }: PreviewResult) => {
             {displayColumns.map((column) => (
               <th
                 key={column}
-                className="border-b border-slate-800 px-2 py-1 text-left uppercase tracking-[0.3em] text-slate-500"
+                className="border-b border-slate-800 px-2 py-1 text-left uppercase tracking-normal text-slate-500"
               >
                 {column}
               </th>
@@ -550,17 +569,78 @@ const DashboardLayoutSkeleton = ({
               gridRow: `${y + 1} / span ${h}`,
             }}
           >
-            <div className="mb-3 flex items-center justify-between gap-2 text-[10px] uppercase tracking-[0.3em] text-slate-500">
+            <div className="mb-3 flex items-center justify-between gap-2 text-[10px] uppercase tracking-normal text-slate-500">
               <span>{lastUpdatedLabel}</span>
               <button
                 onClick={refetch}
                 disabled={loading}
-                className="rounded-full border border-slate-700 bg-slate-900/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-300 transition hover:border-slate-500 hover:bg-slate-900/80 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full border border-slate-700 bg-slate-900/40 px-2 py-1 text-[10px] font-semibold uppercase tracking-normal text-slate-300 transition hover:border-slate-500 hover:bg-slate-900/80 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 REFRESH
               </button>
             </div>
             <p className="text-[12px] font-semibold text-white">{title}</p>
+            {content}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+const DashboardLayoutMock = ({ widgets }: { widgets: Record<string, unknown>[] }) => {
+  if (!widgets.length) {
+    return <p className="text-xs text-slate-400">No widgets defined yet.</p>;
+  }
+  return (
+    <div className="grid grid-cols-12 gap-4">
+      {widgets.map((widget) => {
+        const layout = widget.layout as Record<string, number> | undefined;
+        const title = (widget.title as string) ?? (widget.id as string) ?? "Widget";
+        const x = Math.max(0, layout?.x ?? 0);
+        const y = Math.max(0, layout?.y ?? 0);
+        const w = Math.min(Math.max(layout?.w ?? 4, 1), 12);
+        const h = Math.max(layout?.h ?? 2, 1);
+        const render = (widget.render as Record<string, unknown> | undefined) ?? {};
+        const renderType = render.type as string | undefined;
+        let content: React.ReactNode = null;
+        if (renderType === "grid") {
+          const columns = (render.columns as string[]) ?? DEFAULT_MOCK_COLUMNS;
+          const rows = buildMockRows(columns, 6);
+          content = <GridPreview columns={columns} rows={rows} row_count={rows.length} duration_ms={0} />;
+        } else if (renderType === "chart_line") {
+          const xKey = (render.xKey as string | undefined) ?? "time";
+          const yKey = (render.yKey as string | undefined) ?? "value";
+          const rows = buildMockChartRows(xKey, yKey, 10);
+          content = <ChartWidgetContent rows={rows} layout={{ xKey, yKey }} />;
+        } else if (renderType === "stat") {
+          content = (
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+              <p className="text-[11px] text-slate-400">{render.label ?? "Metric"}</p>
+              <p className="text-2xl font-semibold text-white">42</p>
+            </div>
+          );
+        } else if (renderType === "json") {
+          content = (
+            <pre className="max-h-40 overflow-auto rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-[11px] text-slate-100">
+              {JSON.stringify({ sample: true, widget: title }, null, 2)}
+            </pre>
+          );
+        } else {
+          content = <p className="text-[11px] text-slate-400">Layout preview (mock).</p>;
+        }
+        return (
+          <div
+            key={title}
+            className="rounded-3xl border border-slate-800 bg-slate-900/40 p-4"
+            style={{
+              gridColumn: `${x + 1} / span ${w}`,
+              gridRow: `${y + 1} / span ${h}`,
+            }}
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs uppercase text-slate-500">{title}</p>
+            </div>
             {content}
           </div>
         );
@@ -587,6 +667,7 @@ export default function UiCreatorPage() {
   const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewMeta, setPreviewMeta] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("layout");
   const [globalWidgetReload, setGlobalWidgetReload] = useState(0);
   const [draftApi, setDraftApi] = useState<UiDraft | null>(null);
   const [draftStatus, setDraftStatus] = useState<DraftStatus>("idle");
@@ -1116,6 +1197,34 @@ export default function UiCreatorPage() {
     }
   };
 
+  const handleLayoutPreview = () => {
+    const schema = tryParseJson(schemaText);
+    if (!schema) {
+      setPreviewError("Schema must be valid JSON before previewing.");
+      return;
+    }
+    setPreviewMode("layout");
+    setPreviewError(null);
+    setPreviewMeta("Layout preview (mock data)");
+    if (layoutType === "dashboard") {
+      setPreviewResult(null);
+      return;
+    }
+    const columns = DEFAULT_MOCK_COLUMNS;
+    const rows = buildMockRows(columns, 6);
+    setPreviewResult({
+      columns,
+      rows,
+      row_count: rows.length,
+      duration_ms: 0,
+    });
+  };
+
+  const handleRuntimePreview = () => {
+    setPreviewMode("runtime");
+    handlePreview();
+  };
+
   const parsedSchema = useMemo(() => tryParseJson(schemaText), [schemaText]);
   const runtimeInfo = parsedSchema && parsedSchema.data_source ? `${parsedSchema.data_source.method ?? "GET"} ${parsedSchema.data_source.endpoint ?? ""}` : "Schema missing runtime target";
   const layoutType = (parsedSchema?.layout?.type as UiType) ?? "grid";
@@ -1136,13 +1245,13 @@ export default function UiCreatorPage() {
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
         >
           {isSaving ? "Saving…" : selectedId ? "Update UI" : "Create UI"}
         </button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <label className="text-xs uppercase tracking-normal text-slate-500">
           UI Name
           <input
             value={uiName}
@@ -1150,7 +1259,7 @@ export default function UiCreatorPage() {
             className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
           />
         </label>
-        <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+        <label className="text-xs uppercase tracking-normal text-slate-500">
           UI Type
           <select
             value={uiType}
@@ -1165,7 +1274,7 @@ export default function UiCreatorPage() {
           </select>
         </label>
       </div>
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+      <label className="text-xs uppercase tracking-normal text-slate-500">
         Description
         <textarea
           value={description}
@@ -1173,7 +1282,7 @@ export default function UiCreatorPage() {
           className="mt-2 h-20 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
         />
       </label>
-      <label className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+      <label className="flex items-center gap-2 text-xs uppercase tracking-normal text-slate-500">
         <input
           type="checkbox"
           checked={isActive}
@@ -1182,7 +1291,7 @@ export default function UiCreatorPage() {
         />
         Active
       </label>
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+      <label className="text-xs uppercase tracking-normal text-slate-500">
         Tags (JSON)
         <textarea
           value={tagsText}
@@ -1190,11 +1299,11 @@ export default function UiCreatorPage() {
           className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
         />
       </label>
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-500">
+      <div className="flex items-center justify-between text-[11px] uppercase tracking-normal text-slate-500">
         <span>Schema</span>
         <button
           onClick={handleInsertMetricPollingTemplate}
-          className="rounded-2xl border border-slate-800 bg-emerald-600/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-500"
+          className="rounded-2xl border border-slate-800 bg-emerald-600/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-500"
         >
           Insert Metric Polling Template
         </button>
@@ -1209,7 +1318,7 @@ export default function UiCreatorPage() {
           options={{ minimap: { enabled: false }, fontSize: 13 }}
         />
       </div>
-      <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">{statusMessage ?? "Status"}</p>
+      <p className="text-[11px] uppercase tracking-normal text-slate-500">{statusMessage ?? "Status"}</p>
     </div>
   );
 
@@ -1217,27 +1326,52 @@ export default function UiCreatorPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
+          <p className="text-xs uppercase tracking-normal text-slate-500">Preview</p>
           <p className="text-[11px] text-slate-400">Runtime: {runtimeInfo}</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-2 rounded-full border border-slate-800 bg-slate-950/60 p-1 text-[10px] uppercase tracking-normal text-slate-400">
+            {(["layout", "runtime"] as PreviewMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setPreviewMode(mode)}
+                className={`rounded-full px-3 py-1 transition ${
+                  previewMode === mode
+                    ? "bg-sky-500/80 text-white"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                {mode}
+              </button>
+            ))}
+          </div>
           <button
-            onClick={handlePreview}
+            onClick={handleLayoutPreview}
             disabled={isPreviewLoading}
-            className="rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+            className="rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-sky-400 disabled:bg-slate-700"
           >
-            {isPreviewLoading ? "Loading…" : "Refresh preview"}
+            {isPreviewLoading ? "Loading…" : "Layout Preview"}
           </button>
           <button
-            onClick={() => setGlobalWidgetReload((prev) => prev + 1)}
+            onClick={() => {
+              setPreviewMode("runtime");
+              setGlobalWidgetReload((prev) => prev + 1);
+            }}
             disabled={isPreviewLoading}
-            className="rounded-2xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-slate-600 hover:bg-slate-800 disabled:opacity-40"
+            className="rounded-2xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-slate-600 hover:bg-slate-800 disabled:opacity-40"
           >
-            Refresh all widgets
+            Runtime Preview (All Widgets)
+          </button>
+          <button
+            onClick={handleRuntimePreview}
+            disabled={isPreviewLoading}
+            className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          >
+            Runtime Preview
           </button>
         </div>
       </div>
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
+      <label className="text-xs uppercase tracking-normal text-slate-500">
         Params override (JSON)
         <textarea
           value={paramsText}
@@ -1246,10 +1380,22 @@ export default function UiCreatorPage() {
         />
       </label>
       <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-        <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Preview result</p>
+        <p className="text-[11px] uppercase tracking-normal text-slate-500">Preview result</p>
         {previewMeta ? <p className="text-xs text-slate-400">{previewMeta}</p> : null}
         {previewError ? <p className="text-xs text-rose-400">{previewError}</p> : null}
-        {layoutType === "dashboard" ? (
+        {previewMode === "layout" ? (
+          layoutType === "dashboard" ? (
+            <DashboardLayoutMock widgets={(parsedSchema?.widgets as Record<string, unknown>[]) ?? []} />
+          ) : previewResult ? (
+            layoutType === "chart" ? (
+              <ChartPreview {...previewResult} layout={parsedSchema?.layout ?? {}} />
+            ) : (
+              <GridPreview {...previewResult} />
+            )
+          ) : (
+            <p className="text-xs text-slate-400">Run the layout preview to render mock data.</p>
+          )
+        ) : layoutType === "dashboard" ? (
           <DashboardLayoutSkeleton
             widgets={(parsedSchema?.widgets as Record<string, unknown>[]) ?? []}
             globalReloadTrigger={globalWidgetReload}
@@ -1261,7 +1407,7 @@ export default function UiCreatorPage() {
             <GridPreview {...previewResult} />
           )
         ) : (
-          <p className="text-xs text-slate-400">Run the preview to render data.</p>
+          <p className="text-xs text-slate-400">Run the runtime preview to render data.</p>
         )}
       </div>
     </div>
@@ -1270,10 +1416,10 @@ export default function UiCreatorPage() {
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">UI definitions</p>
+        <p className="text-xs uppercase tracking-normal text-slate-500">UI definitions</p>
         <button
           onClick={handleNew}
-          className="text-[10px] uppercase tracking-[0.3em] text-slate-400 underline"
+          className="text-[10px] uppercase tracking-normal text-slate-400 underline"
         >
           New
         </button>
@@ -1362,7 +1508,7 @@ export default function UiCreatorPage() {
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-500">Draft status</span>
+          <span className="text-xs uppercase tracking-normal text-slate-500">Draft status</span>
           <span className="text-sm font-semibold text-white">
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
@@ -1376,26 +1522,26 @@ export default function UiCreatorPage() {
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             onClick={handlePreviewDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-sky-500"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-sky-500"
           >
             Preview
           </button>
           <button
             onClick={handleTestDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-emerald-400"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-emerald-400"
           >
             Test
           </button>
           <button
             onClick={handleApplyDraft}
-            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
+            className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-indigo-400"
             disabled={!draftApi || draftTestOk !== true}
           >
             Apply
           </button>
           <button
             onClick={handleSaveDraft}
-            className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
+            className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400"
             disabled={!draftApi || draftTestOk !== true}
           >
             Save
@@ -1423,7 +1569,7 @@ export default function UiCreatorPage() {
         )}
         {draftPreviewSummary && draftPreviewJson ? (
           <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
+            <p className="text-xs uppercase tracking-normal text-slate-500">Preview</p>
             <p className="text-sm text-white">{draftPreviewSummary}</p>
             <pre className="max-h-48 overflow-auto rounded-xl bg-slate-900/50 p-2 text-[11px] text-slate-300">
               {draftPreviewJson}
@@ -1432,29 +1578,29 @@ export default function UiCreatorPage() {
         ) : null}
         {showDebug ? (
           <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
-            <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
+            <summary className="cursor-pointer text-xs uppercase tracking-normal text-slate-400">
               Debug
             </summary>
             <div className="mt-2 space-y-1">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">
                 Save target: {saveTarget ?? "none"}
               </p>
               {lastSaveError ? <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p> : null}
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected UI</p>
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">Selected UI</p>
               <p className="text-[11px] text-slate-200">
                 {selectedUi ? `${selectedUi.ui_name} (${selectedUi.ui_id})` : "새 UI"}
               </p>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">
                 Parse status: {lastParseStatus}
               </p>
               {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">Last assistant raw</p>
               <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
                 {lastAssistantRaw || "없음"}
               </pre>
               {draftApi ? (
                 <>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
+                  <p className="text-[10px] uppercase tracking-normal text-slate-500">Draft JSON</p>
                   <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
                     {JSON.stringify(draftApi, null, 2)}
                   </pre>
