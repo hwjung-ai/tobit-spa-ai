@@ -847,8 +847,19 @@ export default function UiCreatorPage() {
   const applyUiDraftToForm = (draft: UiDraft) => {
     setUiName(draft.ui_name);
     setDescription(draft.description ?? "");
+    const currentSchema = tryParseJson(schemaText) ?? {};
+    const draftLayout = draft.layout ?? {};
+    const draftType = (draftLayout as { type?: UiType }).type;
+    if (draftType) {
+      setUiType(draftType);
+    }
     const schemaPayload = {
-      ...(draft.layout ?? {}),
+      data_source:
+        (draftLayout as { data_source?: Record<string, unknown> }).data_source ??
+        (draft as { data_source?: Record<string, unknown> }).data_source ??
+        (currentSchema as { data_source?: Record<string, unknown> }).data_source ??
+        DEFAULT_SCHEMA.data_source,
+      layout: draftLayout,
       ...(draft.data_bindings ? { data_bindings: draft.data_bindings } : {}),
       ...(draft.actions ? { actions: draft.actions } : {}),
     };
