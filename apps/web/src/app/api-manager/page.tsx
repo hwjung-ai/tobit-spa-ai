@@ -1694,6 +1694,9 @@ export default function ApiManagerPage() {
               </div>
             </div>
             <p className="text-[11px] text-slate-400">Registered APIs are read-only.</p>
+            <p className="text-[11px] text-slate-500">
+              Registered APIs (from DB). Code-defined endpoints are not listed here.
+            </p>
             {systemFetchStatus === "error" ? (
               <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
                 Server list unavailable. Showing local cache only.
