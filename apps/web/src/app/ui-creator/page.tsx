@@ -990,6 +990,9 @@ export default function UiCreatorPage() {
     }
     const endpoint = dataSource.endpoint.startsWith("/") ? dataSource.endpoint : `/${dataSource.endpoint}`;
     const runtimeEndpoint = endpoint.startsWith("/runtime/") ? endpoint : `/runtime${endpoint}`;
+    const alternateRuntimeEndpoint = endpoint.startsWith("/api-manager/")
+      ? `/runtime${endpoint.replace("/api-manager", "")}`
+      : null;
     const method = dataSource.method.toUpperCase();
     const defaultParams = (dataSource.default_params ?? {}) as Record<string, unknown>;
     let parsedParams: Record<string, unknown> = {};
@@ -1004,18 +1007,20 @@ export default function UiCreatorPage() {
     setIsPreviewLoading(true);
     setPreviewError(null);
     try {
-      let response;
-      if (method === "GET") {
-        const url = new URL(baseEndpoint);
-        Object.entries(runtimeParams).forEach(([key, value]) => {
-          url.searchParams.set(key, value == null ? "" : String(value));
-        });
-        response = await fetch(url.toString(), {
-          method: "GET",
-          headers: { "X-Executed-By": "ui-creator" },
-        });
-      } else {
-        response = await fetch(baseEndpoint, {
+      const runFetch = async (target: string) => {
+        if (method === "GET") {
+          const url = new URL(target);
+          Object.entries(runtimeParams).forEach(([key, value]) => {
+            url.searchParams.set(key, value == null ? "" : String(value));
+          });
+          const response = await fetch(url.toString(), {
+            method: "GET",
+            headers: { "X-Executed-By": "ui-creator" },
+          });
+          const payload = await response.json().catch(() => ({}));
+          return { response, payload };
+        }
+        const response = await fetch(target, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -1023,8 +1028,15 @@ export default function UiCreatorPage() {
           },
           body: JSON.stringify({ params: runtimeParams }),
         });
+        const payload = await response.json().catch(() => ({}));
+        return { response, payload };
+      };
+
+      let { response, payload } = await runFetch(baseEndpoint);
+      if (!response.ok && response.status === 404 && alternateRuntimeEndpoint) {
+        const alternateEndpoint = `${apiBaseUrl}${alternateRuntimeEndpoint}`;
+        ({ response, payload } = await runFetch(alternateEndpoint));
       }
-      const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message ?? payload.detail ?? "Preview failed");
       }
