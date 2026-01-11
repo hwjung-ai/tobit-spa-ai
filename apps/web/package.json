@@ -7,9 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test src/lib/apiManagerSave.test.js"
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "test": "node --test src/lib/apiManagerSave.test.js",
+    "dev:log": "node -e \"require('fs').mkdirSync('logs', { recursive: true })\" && next dev > logs/web.log 2>&1"
   },
   "dependencies": {
+    "ag-grid-community": "^33.2.0",
+    "ag-grid-react": "^33.2.0",
+    "@tanstack/react-query": "^5.52.2",
     "@monaco-editor/react": "^4.7.0",
     "next": "16.1.1",
     "pdfjs-dist": "^5.4.296",
@@ -28,6 +33,8 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

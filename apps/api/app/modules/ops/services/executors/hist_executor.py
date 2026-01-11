@@ -1,0 +1,164 @@
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Iterable, List, Tuple
+
+from core.db_pg import get_pg_connection
+from schemas import (
+    AnswerBlock,
+    GraphBlock,
+    MarkdownBlock,
+    ReferenceItem,
+    ReferencesBlock,
+    TableBlock,
+)
+
+from ..resolvers import resolve_ci, resolve_time_range
+
+
+def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+    ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
+    if not ci_hits:
+        raise ValueError("CI not found")
+    ci = ci_hits[0]
+    time_range = resolve_time_range(question, datetime.now(timezone.utc))
+    work_rows = _fetch_history(
+        """
+        SELECT start_time, work_type, impact_level, result, summary
+        FROM work_history
+        WHERE tenant_id = %s AND ci_id = %s AND start_time >= %s AND start_time < %s
+        ORDER BY start_time DESC
+        LIMIT 50
+        """,
+        (tenant_id, ci.ci_id, time_range.start, time_range.end),
+    )
+    maint_rows = _fetch_history(
+        """
+        SELECT start_time, maint_type, duration_min, result, summary
+        FROM maintenance_history
+        WHERE tenant_id = %s AND ci_id = %s AND start_time >= %s AND start_time < %s
+        ORDER BY start_time DESC
+        LIMIT 50
+        """,
+        (tenant_id, ci.ci_id, time_range.start, time_range.end),
+    )
+    event_rows = _fetch_history(
+        """
+        SELECT time, severity, event_type, source, title
+        FROM event_log
+        WHERE tenant_id = %s AND ci_id = %s AND time >= %s AND time < %s
+        ORDER BY severity DESC, time DESC
+        LIMIT 50
+        """,
+        (tenant_id, ci.ci_id, time_range.start, time_range.end),
+    )
+    stats = {
+        "work": len(work_rows),
+        "maint": len(maint_rows),
+        "events": len(event_rows),
+        "max_severity": max((row[1] for row in event_rows), default=0),
+    }
+    blocks = _build_blocks(ci, time_range, stats, work_rows, maint_rows, event_rows)
+    references = _build_references(work_rows, maint_rows, event_rows, tenant_id, ci, time_range)
+    blocks.append(references)
+    return blocks, ["postgres", "timescale"]
+
+
+def _fetch_history(query: str, params: Iterable) -> list[tuple]:
+    with get_pg_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, tuple(params))
+            return cur.fetchall()
+
+
+def _build_blocks(
+    ci,
+    time_range,
+    stats,
+    work_rows: list[tuple],
+    maint_rows: list[tuple],
+    event_rows: list[tuple],
+) -> list[AnswerBlock]:
+    markdown = MarkdownBlock(
+        type="markdown",
+        title="History summary",
+        content=(
+            f"CI: {ci.ci_code} ({ci.ci_name})\n"
+            f"Range: {time_range.start.isoformat()} ~ {time_range.end.isoformat()}\n"
+            f"Work: {stats['work']} jobs, Maintenance: {stats['maint']} entries, "
+            f"Events: {stats['events']} records (max severity {stats['max_severity']})"
+        ),
+    )
+    tables: list[TableBlock] = []
+    tables.append(
+        TableBlock(
+            type="table",
+            title="Work history",
+            columns=["start_time", "work_type", "impact_level", "result", "summary"],
+            rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in work_rows],
+        )
+    )
+    tables.append(
+        TableBlock(
+            type="table",
+            title="Maintenance history",
+            columns=["start_time", "maint_type", "duration_min", "result", "summary"],
+            rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in maint_rows],
+        )
+    )
+    tables.append(
+        TableBlock(
+            type="table",
+            title="Event log",
+            columns=["time", "severity", "event_type", "source", "title"],
+            rows=[[str(row[0]), str(row[1]), row[2], row[3], row[4] or ""] for row in event_rows],
+        )
+    )
+    return [markdown] + tables
+
+
+def _build_references(
+    work_rows: list[tuple],
+    maint_rows: list[tuple],
+    event_rows: list[tuple],
+    tenant_id: str,
+    ci,
+    time_range,
+) -> ReferencesBlock:
+    items = []
+    if work_rows:
+        items.append(
+            ReferenceItem(
+                kind="sql",
+                title="work history query",
+                payload={
+                    "sql": "SELECT start_time,... FROM work_history ...",
+                    "params": [tenant_id, ci.ci_id, time_range.start, time_range.end],
+                },
+            )
+        )
+    if maint_rows:
+        items.append(
+            ReferenceItem(
+                kind="sql",
+                title="maintenance history query",
+                payload={
+                    "sql": "SELECT start_time,... FROM maintenance_history ...",
+                    "params": [tenant_id, ci.ci_id, time_range.start, time_range.end],
+                },
+            )
+        )
+    if event_rows:
+        items.append(
+            ReferenceItem(
+                kind="sql",
+                title="event log query",
+                payload={
+                    "sql": "SELECT time,... FROM event_log ...",
+                    "params": [tenant_id, ci.ci_id, time_range.start, time_range.end],
+                },
+            )
+        )
+    return ReferencesBlock(type="references", title="History queries", items=items or [
+        ReferenceItem(kind="sql", title="history query", payload={"sql": "No rows returned", "params": []})
+    ])

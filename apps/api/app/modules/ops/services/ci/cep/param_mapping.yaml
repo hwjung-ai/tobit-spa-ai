@@ -1,0 +1,18 @@
+allowed_params:
+  ci_id: "ci.ci_id"
+  ci_code: "ci.ci_code"
+  system: "ci.tags.system"
+  host_server: "ci.tags.host_server"
+  runs_on: "ci.tags.runs_on"
+  location: "ci.location"
+  owner: "ci.owner"
+  ci_type: "ci.ci_type"
+  ci_subtype: "ci.ci_subtype"
+blocked_params:
+  - token
+  - authorization
+  - api_key
+  - password
+  - secret
+limits:
+  max_param_bytes: 2048

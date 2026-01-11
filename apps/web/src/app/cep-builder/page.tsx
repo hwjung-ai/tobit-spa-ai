@@ -715,32 +715,31 @@ export default function CepBuilderPage() {
 
   const definitionContent = (
     <div className="space-y-4">
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-        Rule name
+      <div className="flex flex-col gap-2">
+        <span className="text-xs uppercase tracking-wider text-slate-500">Rule name</span>
         <input
           value={ruleName}
           onChange={(event) => setRuleName(event.target.value)}
-          className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
         />
-      </label>
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-        Description
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-xs uppercase tracking-wider text-slate-500">Description</span>
         <textarea
           value={ruleDescription}
           onChange={(event) => setRuleDescription(event.target.value)}
-          className="mt-2 h-20 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="h-20 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
         />
-      </label>
-      <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+      </div>
+      <div className="flex items-center gap-1 text-xs uppercase tracking-wider text-slate-500">
         {(["metric", "event", "schedule"] as TriggerType[]).map((type) => (
           <button
             key={type}
             onClick={() => setTriggerType(type)}
-            className={`rounded-full border px-3 py-1 ${
-              triggerType === type
-                ? "border-sky-500 bg-sky-500/10 text-white"
-                : "border-slate-800 bg-slate-950/60 text-slate-400"
-            }`}
+            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider transition ${triggerType === type
+              ? "border-sky-500 bg-sky-500/10 text-white"
+              : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
+              }`}
           >
             {type}
           </button>
@@ -748,82 +747,82 @@ export default function CepBuilderPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trigger spec (JSON)</p>
-          <div className="h-40 rounded-2xl border border-slate-800 bg-slate-950/60">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500">Trigger spec (JSON)</p>
+          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60">
             <Editor
               height="100%"
               defaultLanguage="json"
               value={triggerSpecText}
               onChange={(value) => setTriggerSpecText(value ?? "")}
               theme="vs-dark"
-              options={{ minimap: { enabled: false }, fontSize: 13 }}
+              options={{ minimap: { enabled: false }, fontSize: 13, automaticLayout: true }}
             />
           </div>
         </div>
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Action spec (JSON)</p>
-          <div className="h-40 rounded-2xl border border-slate-800 bg-slate-950/60">
+          <p className="text-[10px] uppercase tracking-wider text-slate-500">Action spec (JSON)</p>
+          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60">
             <Editor
               height="100%"
               defaultLanguage="json"
               value={actionSpecText}
               onChange={(value) => setActionSpecText(value ?? "")}
               theme="vs-dark"
-              options={{ minimap: { enabled: false }, fontSize: 13 }}
+              options={{ minimap: { enabled: false }, fontSize: 13, automaticLayout: true }}
             />
           </div>
         </div>
       </div>
-      <label className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+      <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white">
+        <span className="text-[11px] uppercase tracking-wider text-slate-500">
+          {statusMessage}
+        </span>
+        <button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+        >
+          {isSaving ? "Saving…" : selectedRule ? "Update rule" : "Create rule"}
+        </button>
+      </div>
+      <label className="flex items-center gap-2 text-xs text-slate-500">
         <input
           type="checkbox"
           checked={isActive}
           onChange={(event) => setIsActive(event.target.checked)}
           className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
         />
-        Active rule
+        <span className="uppercase tracking-wider">Active rule</span>
       </label>
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
-          {statusMessage}
-        </span>
-        <button
-          onClick={handleSave}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
-          disabled={isSaving}
-        >
-          {isSaving ? "Saving…" : selectedRule ? "Update rule" : "Create rule"}
-        </button>
-      </div>
       {statusError ? <p className="text-xs text-rose-400">{statusError}</p> : null}
     </div>
   );
 
   const testContent = (
     <div className="space-y-4">
-      <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">
+      <p className="text-[11px] uppercase tracking-wider text-slate-500">
         Action endpoint:&nbsp;
         <span className="font-mono text-[10px] text-slate-200">{actionEndpointLabel}</span>
       </p>
-      <label className="text-xs uppercase tracking-[0.3em] text-slate-500">
-        Payload
+      <div className="flex flex-col gap-2">
+        <span className="text-xs uppercase tracking-wider text-slate-500">Payload</span>
         <textarea
           value={payloadText}
           onChange={(event) => setPayloadText(event.target.value)}
-          className="mt-2 h-32 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="h-32 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
         />
-      </label>
+      </div>
       <div className="flex flex-wrap gap-3">
         <button
           onClick={handleSimulate}
-          className="rounded-2xl border border-slate-800 bg-sky-500/90 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-800 bg-sky-500/90 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-white transition hover:bg-sky-400 disabled:bg-slate-700"
           disabled={!selectedRule || isSimulating}
         >
           {isSimulating ? "Simulating…" : "Simulate"}
         </button>
         <button
           onClick={handleTrigger}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
           disabled={!selectedRule || isTriggering}
         >
           {isTriggering ? "Triggering…" : "Manual trigger"}
@@ -848,13 +847,12 @@ export default function CepBuilderPage() {
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>{new Date(log.triggered_at).toLocaleString("ko-KR")}</span>
               <span
-                className={`rounded-full border px-2 py-0.5 uppercase tracking-[0.3em] ${
-                  log.status === "success"
-                    ? "border-emerald-400 text-emerald-300"
-                    : log.status === "dry_run"
+                className={`rounded-full border px-2 py-0.5 uppercase tracking-wider ${log.status === "success"
+                  ? "border-emerald-400 text-emerald-300"
+                  : log.status === "dry_run"
                     ? "border-slate-500 text-slate-300"
                     : "border-rose-500 text-rose-300"
-                }`}
+                  }`}
               >
                 {log.status}
               </span>
@@ -878,11 +876,10 @@ export default function CepBuilderPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
-              activeTab === tab.id
-                ? "border-sky-500 bg-sky-500/10 text-white"
-                : "border-slate-800 bg-slate-950 text-slate-400"
-            }`}
+            className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider ${activeTab === tab.id
+              ? "border-sky-500 bg-sky-500/10 text-white"
+              : "border-slate-800 bg-slate-950 text-slate-400"
+              }`}
           >
             {tab.label}
           </button>
@@ -891,16 +888,16 @@ export default function CepBuilderPage() {
       {activeTab === "definition"
         ? definitionContent
         : activeTab === "test"
-        ? testContent
-        : logsContent}
+          ? testContent
+          : logsContent}
     </div>
   );
 
   const centerBottom = (
     <div className="space-y-3">
       {activeTab === "definition" ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Metadata</p>
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200">
+          <p className="text-[11px] uppercase tracking-wider text-slate-500">Metadata</p>
           {selectedRule ? (
             <div className="mt-2 space-y-1 text-[11px] text-slate-400">
               <p>Trigger type: {selectedRule.trigger_type}</p>
@@ -913,13 +910,13 @@ export default function CepBuilderPage() {
       ) : activeTab === "test" ? (
         <div className="space-y-3">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Simulation result</p>
+            <p className="text-[11px] uppercase tracking-wider text-slate-500">Simulation result</p>
             <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200">
               {simulateResult ? JSON.stringify(simulateResult, null, 2) : "Run a simulation to inspect the payload."}
             </pre>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Manual trigger result</p>
+            <p className="text-[11px] uppercase tracking-wider text-slate-500">Manual trigger result</p>
             <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200">
               {triggerResult ? JSON.stringify(triggerResult, null, 2) : "Trigger once to record an execution log."}
             </pre>
@@ -927,22 +924,23 @@ export default function CepBuilderPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Logs</p>
+          <p className="text-[11px] uppercase tracking-wider text-slate-500">Logs</p>
           <p className="mt-2 text-[11px] text-slate-400">
             Click reload to refresh logs or trigger a rule to write entries.
           </p>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">CEP rules</p>
+        <p className="text-xs uppercase tracking-wider text-slate-500">CEP rules</p>
         <button
           onClick={handleNew}
-          className="text-[10px] uppercase tracking-[0.3em] text-slate-400 underline"
+          className="text-[10px] uppercase tracking-wider text-slate-400 underline"
         >
           New
         </button>
@@ -964,14 +962,13 @@ export default function CepBuilderPage() {
                 setSelectedId(rule.rule_id);
                 setActiveTab("definition");
               }}
-              className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${
-                selectedId === rule.rule_id
-                  ? "border-sky-400 bg-sky-500/10 text-white"
-                  : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
-              }`}
+              className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${selectedId === rule.rule_id
+                ? "border-sky-400 bg-sky-500/10 text-white"
+                : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                }`}
             >
               <p className="font-semibold">{rule.rule_name}</p>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">{rule.trigger_type}</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">{rule.trigger_type}</p>
             </button>
           ))
         )}
@@ -979,8 +976,31 @@ export default function CepBuilderPage() {
     </div>
   );
 
-  const COPILOT_INSTRUCTION =
-    "Return ONLY one JSON object. type=cep_draft. No markdown. Example: {\"type\":\"cep_draft\",\"draft\":{\"rule_name\":\"...\",\"description\":\"...\",\"trigger\":{\"type\":\"metric\"},\"conditions\":[],\"actions\":[]}}";
+  const COPILOT_INSTRUCTION = `
+Return ONLY one JSON object. type=cep_draft. No markdown.
+Include a trigger_spec with value_path, for example:
+
+{
+  "type":"cep_draft",
+  "draft":{
+    "rule_name":"CPU Usage Alert",
+    "description":"Alert when CPU usage exceeds threshold",
+    "trigger":{
+      "type":"metric",
+      "metric":"cpu_usage",
+      "operator":">",
+      "threshold":80,
+      "value_path":"data.result.rows.0.value",
+      "duration":"5m",
+      "aggregation":"avg"
+    },
+    "conditions":[],
+    "actions":[]
+  }
+}
+
+Only output JSON without additional explanation.
+`;
 
   const processAssistantDraft = useCallback(
     (messageText: string) => {
@@ -1034,7 +1054,7 @@ export default function CepBuilderPage() {
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-[0.3em] text-slate-500">Draft status</span>
+          <span className="text-xs uppercase tracking-wider text-slate-500">Draft status</span>
           <span className="text-sm font-semibold text-white">
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
@@ -1049,26 +1069,26 @@ export default function CepBuilderPage() {
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               onClick={handlePreviewDraft}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-sky-500"
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-sky-500"
             >
               Preview
             </button>
             <button
               onClick={handleTestDraft}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-emerald-400"
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-emerald-400"
             >
               Test
             </button>
             <button
               onClick={handleApplyDraft}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-indigo-400"
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-indigo-400"
               disabled={!draftApi || draftTestOk !== true}
             >
               Apply
             </button>
             <button
               onClick={handleSaveDraft}
-              className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400"
+              className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400"
               disabled={!draftApi || draftTestOk !== true}
             >
               Save
@@ -1097,7 +1117,7 @@ export default function CepBuilderPage() {
         )}
         {draftPreviewSummary && draftPreviewJson ? (
           <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Preview</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500">Preview</p>
             <p className="text-sm text-white">{draftPreviewSummary}</p>
             <pre className="max-h-48 overflow-auto rounded-xl bg-slate-900/50 p-2 text-[11px] text-slate-300">
               {draftPreviewJson}
@@ -1105,29 +1125,29 @@ export default function CepBuilderPage() {
           </div>
         ) : null}
         <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.3em] text-slate-400">
+          <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-400">
             Debug
           </summary>
           <div className="mt-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">
               Save target: {saveTarget ?? "none"}
             </p>
             {lastSaveError ? <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p> : null}
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Selected rule</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Selected rule</p>
             <p className="text-[11px] text-slate-200">
               {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
             </p>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">
               Parse status: {lastParseStatus}
             </p>
             {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Last assistant raw</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Last assistant raw</p>
             <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
               <>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Draft JSON</p>
+                <p className="text-[10px] uppercase tracking-wider text-slate-500">Draft JSON</p>
                 <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
@@ -1140,7 +1160,7 @@ export default function CepBuilderPage() {
   );
 
   return (
-    <div className="py-6">
+    <div className="py-6 tracking-tight builder-shell builder-text">
       <h1 className="text-2xl font-semibold text-white">CEP Builder</h1>
       <p className="mb-6 text-sm text-slate-400">
         Define, simulate, and trigger complex CEP rules that orchestrate runtime APIs.

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import uuid
 from datetime import datetime
 from typing import Any, Dict, Literal
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, validator
 
 
 class CepRuleBase(BaseModel):
@@ -49,8 +50,13 @@ class CepRuleRead(CepRuleBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+    @validator("rule_id", pre=True, always=True)
+    def normalize_rule_id(cls, value: Any) -> str:
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        return value
 
 
 class CepSimulateRequest(BaseModel):
@@ -84,14 +90,20 @@ class CepExecLogRead(BaseModel):
     error_message: str | None
     references: Dict[str, Any]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+    @validator("exec_id", "rule_id", pre=True, always=True)
+    def normalize_exec_ids(cls, value: Any) -> str:
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        return value
 
 
 class CepNotificationBase(BaseModel):
     name: str
     channel: Literal["webhook"]
     webhook_url: str
+    rule_id: str | None = None
     headers: Dict[str, Any] = Field(default_factory=dict)
     trigger: Dict[str, Any] = Field(default_factory=dict)
     policy: Dict[str, Any] = Field(default_factory=dict)
@@ -133,6 +145,14 @@ class CepNotificationRead(CepNotificationBase):
     created_at: datetime
     updated_at: datetime
 
+    model_config = ConfigDict(from_attributes=True)
+
+    @validator("notification_id", pre=True, always=True)
+    def normalize_notification_id(cls, value: Any) -> str:
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        return value
+
 
 class CepNotificationLogRead(BaseModel):
     log_id: str
@@ -144,3 +164,51 @@ class CepNotificationLogRead(BaseModel):
     response_status: int | None
     response_body: str | None
     dedup_key: str | None
+    ack: bool
+    ack_at: datetime | None
+    ack_by: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @validator("log_id", "notification_id", pre=True, always=True)
+    def normalize_notification_ids(cls, value: Any) -> str:
+        if isinstance(value, uuid.UUID):
+            return str(value)
+        return value
+
+
+class CepEventRead(BaseModel):
+    event_id: str
+    triggered_at: datetime
+    status: str
+    summary: str
+    severity: str
+    ack: bool
+    ack_at: datetime | None = None
+    rule_id: str | None
+    rule_name: str | None
+    notification_id: str
+
+
+class CepEventDetail(BaseModel):
+    event_id: str
+    triggered_at: datetime
+    status: str
+    reason: str | None
+    summary: str
+    severity: str
+    ack: bool
+    ack_at: datetime | None
+    ack_by: str | None
+    notification_id: str
+    rule_id: str | None
+    rule_name: str | None
+    payload: Dict[str, Any]
+    condition_evaluated: bool | None = None
+    extracted_value: Any | None = None
+    exec_log: Dict[str, Any] | None = None
+
+
+class CepEventSummary(BaseModel):
+    unacked_count: int
+    by_severity: Dict[str, int]

@@ -13,7 +13,14 @@ dist/
 .env.*
 !.env.example
 
+# CI discovery catalog outputs
+ops/ci/catalog/*.json
+
 # Editor/OS
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Logs
+apps/api/logs/
+apps/web/logs/

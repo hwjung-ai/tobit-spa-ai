@@ -24,3 +24,176 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.builder-text,
+.builder-shell,
+.builder-center {
+  letter-spacing: 0.01em;
+}
+
+.builder-json-shell {
+  border: 1px solid #1f2937;
+  background: rgba(2, 6, 23, 0.6);
+}
+
+.builder-json-shell .monaco-editor,
+.builder-json-shell .monaco-editor-background,
+.builder-json-shell .monaco-editor .margin {
+  background-color: transparent !important;
+}
+
+.ag-theme-cep {
+  --ag-background-color: #0b1220;
+  --ag-foreground-color: #e2e8f0;
+  --ag-border-color: #1f2937;
+  --ag-header-background-color: #0b1220;
+  --ag-header-height: 40px;
+  --ag-odd-row-background-color: #0b1220;
+  --ag-row-background-color: #0b1220;
+  --ag-row-hover-color: rgba(56, 189, 248, 0.05);
+  --ag-selected-row-background-color: rgba(56, 189, 248, 0.12);
+  --ag-header-foreground-color: #64748b;
+  /* slate-500 */
+  --ag-row-border-color: #111827;
+  --ag-cell-horizontal-padding: 12px;
+  /* Scrollbar styling */
+  --ag-alpine-active-color: #334155;
+  --ag-range-selection-border-color: #334155;
+  --ag-secondary-foreground-color: #94a3b8;
+  --ag-data-color: #e2e8f0;
+}
+
+.ag-theme-cep .ag-root-wrapper,
+.ag-theme-cep .ag-root-wrapper-body,
+.ag-theme-cep .ag-root {
+  background-color: #0b1220;
+  border-radius: 16px;
+}
+
+.ag-theme-cep .ag-header {
+  background-color: #0b1220 !important;
+  border-bottom: 1px solid #1f2937;
+}
+
+.ag-theme-cep .ag-header-cell-label {
+  color: #64748b !important;
+  /* slate-500 */
+}
+
+.ag-theme-cep .ag-header-icon {
+  color: #475569 !important;
+  /* slate-600 */
+}
+
+/* Dragging and ghost header styles */
+.ag-dnd-ghost {
+  background-color: #1e293b !important;
+  /* slate-800 */
+  color: #94a3b8 !important;
+  /* slate-400 */
+  border: 1px solid #334155 !important;
+  border-radius: 8px;
+  padding: 4px 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+.ag-dnd-ghost-icon {
+  margin-right: 8px;
+  color: #64748b !important;
+}
+
+.ag-theme-cep .ag-header-cell-moving {
+  background-color: #0f172a !important;
+  /* slate-900 */
+  opacity: 0.7;
+}
+
+.ag-theme-cep .ag-header-cell-moving .ag-header-cell-label {
+  color: #94a3b8 !important;
+}
+
+.ag-theme-cep .ag-row {
+  background-color: #0b1220;
+  color: #e2e8f0 !important;
+  border-bottom: 1px solid #111827;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.ag-theme-cep .ag-row-odd {
+  background-color: #0b1220;
+}
+
+.ag-theme-cep .ag-row-even {
+  background-color: #0b1220;
+}
+
+.ag-theme-cep .ag-row-hover {
+  background-color: rgba(56, 189, 248, 0.06) !important;
+}
+
+.ag-theme-cep .ag-row-selected {
+  background-color: #020617 !important;
+  /* 거의 검정에 가까운 진한 네이비 */
+  border-left: 4px solid #38bdf8 !important;
+  /* 더 밝은 하늘색으로 강조 */
+  box-shadow: inset 4px 0 20px -10px rgba(56, 189, 248, 0.4);
+}
+
+.ag-theme-cep .ag-row-selected .ag-cell {
+  background-color: transparent !important;
+  font-weight: 500;
+  /* 선택된 행 텍스트 약간 두껍게 */
+}
+
+.ag-theme-cep .ag-cell {
+  display: flex;
+  align-items: center;
+}
+
+/* AG Grid Scrollbar overrides */
+.ag-theme-cep ::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.ag-theme-cep ::-webkit-scrollbar-track {
+  background: #0b1220 !important;
+}
+
+.ag-theme-cep ::-webkit-scrollbar-thumb {
+  background: #1e293b !important;
+  border-radius: 10px !important;
+}
+
+.ag-theme-cep ::-webkit-scrollbar-thumb:hover {
+  background: #334155 !important;
+}
+
+/* Specific horizontal scroll container background for AG Grid */
+.ag-theme-cep .ag-body-horizontal-scroll,
+.ag-theme-cep .ag-horizontal-left-spacer,
+.ag-theme-cep .ag-horizontal-right-spacer,
+.ag-theme-cep .ag-body-horizontal-scroll-container,
+.ag-theme-cep .ag-scroller-corner {
+  background: #0b1220 !important;
+}
+
+/* Custom scrollbar utility for non-grid containers */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0b1220;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}

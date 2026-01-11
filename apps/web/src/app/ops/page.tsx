@@ -1,24 +1,42 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import BlockRenderer, { type AnswerEnvelope } from "../../components/answer/BlockRenderer";
+import BlockRenderer, {
+  type AnswerBlock,
+  type AnswerEnvelope,
+  type AnswerMeta,
+} from "../../components/answer/BlockRenderer";
+import { type NextAction } from "./nextActions";
 
-type BackendMode = "all" | "metric" | "hist" | "graph";
+type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 type UiMode = "ci" | "metric" | "history" | "relation" | "all";
 
 const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
-  { id: "ci", label: "CI", backend: "all" },
-  { id: "metric", label: "Metric", backend: "metric" },
-  { id: "history", label: "History", backend: "hist" },
-  { id: "relation", label: "Relation", backend: "graph" },
-  { id: "all", label: "ALL", backend: "all" },
+  { id: "ci", label: "구성", backend: "config" },
+  { id: "metric", label: "수치", backend: "metric" },
+  { id: "history", label: "이력", backend: "hist" },
+  { id: "relation", label: "연결", backend: "graph" },
+  { id: "all", label: "전체", backend: "all" },
 ];
 
-const HISTORY_STORAGE_KEY = "ops:history:v1";
 const MODE_STORAGE_KEY = "ops:mode";
 const HISTORY_LIMIT = 40;
 
 const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+
+interface CiAnswerPayload {
+  answer: string;
+  blocks: AnswerBlock[];
+  trace?: {
+    plan_validated?: unknown;
+    policy_decisions?: unknown;
+    [key: string]: unknown;
+  };
+  next_actions?: NextAction[];
+  meta?: AnswerMeta;
+}
+
+type OpsResponse = AnswerEnvelope | CiAnswerPayload;
 
 interface OpsHistoryEntry {
   id: string;
@@ -26,10 +44,25 @@ interface OpsHistoryEntry {
   uiMode: UiMode;
   backendMode: BackendMode;
   question: string;
-  response: AnswerEnvelope;
+  response: OpsResponse;
   status: "ok" | "error";
   summary: string;
   errorDetails?: string;
+  trace?: unknown;
+  nextActions?: NextAction[];
+}
+
+interface ServerHistoryEntry {
+  id: string;
+  tenant_id: string;
+  user_id: string;
+  feature: string;
+  question: string;
+  summary: string | null;
+  status: "ok" | "error";
+  response: AnswerEnvelope | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
 }
 
 const formatTimestamp = (value: string) => {
@@ -40,16 +73,58 @@ const formatTimestamp = (value: string) => {
   }
 };
 
+const safeStringify = (value: unknown) => {
+  if (value == null) {
+    return "";
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
+const previewFromBlock = (block: AnswerBlock) => {
+  switch (block.type) {
+    case "markdown":
+      return block.content;
+    case "table":
+      return block.rows?.[0]?.join(" ");
+    case "timeseries":
+      return block.series?.[0]?.name ?? "";
+    case "graph":
+      return block.nodes?.[0]?.data?.label ?? "";
+    case "references":
+      return block.items?.[0]?.title ?? "";
+    case "text":
+      return block.text;
+    case "number":
+      return `${block.label}: ${block.value}`;
+    case "network":
+      return `${block.nodes.length} nodes`;
+    case "path":
+      return `Hops: ${block.hop_count}`;
+    default:
+      return "";
+  }
+};
+
 const extractSummary = (envelope: AnswerEnvelope | null, question: string) => {
   if (!envelope) {
     return question || "(no summary)";
   }
   if (envelope.meta?.summary) {
-    return envelope.meta.summary;
+    return safeStringify(envelope.meta.summary);
   }
-  const markdown = envelope.blocks?.find((block) => block.type === "markdown");
-  if (markdown && "content" in markdown && markdown.content) {
-    return markdown.content.split("\n")[0];
+  const candidate = envelope.blocks?.map(previewFromBlock).find((value) => value);
+  if (candidate) {
+    return candidate.split("\n")[0];
   }
   return question || "(no summary)";
 };
@@ -104,6 +179,39 @@ const genId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
+const hydrateServerEntry = (entry: ServerHistoryEntry): OpsHistoryEntry | null => {
+  const metadata = entry.metadata ?? {};
+  const backendMode =
+    (metadata?.backendMode ||
+      metadata?.backend_mode ||
+      entry.feature ||
+      "config") as BackendMode;
+  const response = entry.response;
+  const envelope =
+    response && Array.isArray(response.blocks)
+      ? response
+      : buildErrorEnvelope(backendMode, "Missing response data from history");
+  if (!envelope.blocks || !Array.isArray(envelope.blocks)) {
+    return null;
+  }
+  const uiMode =
+    (metadata?.uiMode ?? metadata?.ui_mode ?? "ci") as UiMode;
+  const status = entry.status === "error" ? "error" : "ok";
+  return {
+    id: entry.id,
+    createdAt: entry.created_at,
+    uiMode,
+    backendMode,
+    question: entry.question,
+    response: envelope,
+    status,
+    summary: entry.summary ?? extractSummary(envelope, entry.question),
+    errorDetails: metadata?.errorDetails ?? metadata?.error_details,
+    trace: metadata?.trace,
+    nextActions: metadata?.nextActions as NextAction[] | undefined,
+  };
+};
+
 export default function OpsPage() {
   const [history, setHistory] = useState<OpsHistoryEntry[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -111,33 +219,126 @@ export default function OpsPage() {
   const [question, setQuestion] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [traceOpen, setTraceOpen] = useState(false);
+  const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
+  const pushHistoryEntry = useCallback(
+    (entry: OpsHistoryEntry) => {
+      setHistory((prev) => {
+        const next = [entry, ...prev];
+        if (next.length > HISTORY_LIMIT) {
+          return next.slice(0, HISTORY_LIMIT);
+        }
+        return next;
+      });
+      setSelectedId(entry.id);
+    },
+    [setHistory, setSelectedId]
+  );
+
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    try {
+      const response = await fetch(`${apiBaseUrl}/history?feature=ops&limit=${HISTORY_LIMIT}`, {
+        headers: {
+          "X-Tenant-Id": "default",
+          "X-User-Id": "default",
+        },
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Failed to load history");
+      }
+      const rawHistory = (payload?.data?.history ?? []) as ServerHistoryEntry[];
+      const hydrated = rawHistory
+        .map(hydrateServerEntry)
+        .filter((entry): entry is OpsHistoryEntry => Boolean(entry));
+      if (hydrated.length === 0) {
+        setHistory([]);
+        setSelectedId(null);
+      } else {
+        setHistory(hydrated);
+        setSelectedId((prev) =>
+          prev && hydrated.some((item) => item.id === prev) ? prev : hydrated[0].id
+        );
+      }
+    } catch (error: any) {
+      console.error("Failed to load OPS history", error);
+      setHistoryError(error?.message || "Failed to load history");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [apiBaseUrl]);
+
+  const persistHistoryEntry = useCallback(
+    async (entry: OpsHistoryEntry) => {
+      try {
+        await fetch(`${apiBaseUrl}/history`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-Id": "default",
+            "X-User-Id": "default",
+          },
+          body: JSON.stringify({
+            feature: "ops",
+            question: entry.question,
+            summary: entry.summary,
+            status: entry.status,
+            response: entry.response,
+            metadata: {
+              uiMode: entry.uiMode,
+              backendMode: entry.backendMode,
+              trace: entry.trace,
+              nextActions: entry.nextActions,
+              errorDetails: entry.errorDetails,
+            },
+          }),
+        });
+      } catch (error) {
+        console.error("Failed to persist OPS history", error);
+      }
+    },
+    [apiBaseUrl]
+  );
+
+  const deleteHistoryEntry = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/history/${id}`, {
+          method: "DELETE",
+          headers: {
+            "X-Tenant-Id": "default",
+            "X-User-Id": "default",
+          },
+        });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null);
+          console.warn("Failed to delete OPS history entry", payload?.message);
+        }
+      } catch (error) {
+        console.error("Failed to delete OPS history entry", error);
+      }
+    },
+    [apiBaseUrl]
+  );
 
   useEffect(() => {
-    const rawHistory = window.localStorage.getItem(HISTORY_STORAGE_KEY);
-    if (rawHistory) {
-      try {
-        const parsed: OpsHistoryEntry[] = JSON.parse(rawHistory);
-        if (parsed.length > 0) {
-          setHistory(parsed);
-          setSelectedId(parsed[0].id);
-        }
-      } catch {
-        window.localStorage.removeItem(HISTORY_STORAGE_KEY);
-      }
-    }
+    fetchHistory();
+  }, [fetchHistory]);
+
+  useEffect(() => {
     const savedMode = window.localStorage.getItem(MODE_STORAGE_KEY) as UiMode | null;
     if (savedMode && UI_MODES.some((item) => item.id === savedMode)) {
       setUiMode(savedMode);
     }
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
-  }, [history]);
 
   useEffect(() => {
     window.localStorage.setItem(MODE_STORAGE_KEY, uiMode);
@@ -147,11 +348,48 @@ export default function OpsPage() {
     return history.find((entry) => entry.id === selectedId) ?? history[0] ?? null;
   }, [history, selectedId]);
   const meta = selectedEntry?.response?.meta;
+  const traceData = selectedEntry?.trace as
+    | {
+        plan_validated?: unknown;
+        policy_decisions?: Record<string, unknown>;
+        [key: string]: unknown;
+      }
+    | undefined;
+  const traceContents = useMemo(() => (traceData ? JSON.stringify(traceData, null, 2) : ""), [traceData]);
+
+  useEffect(() => {
+    setTraceOpen(false);
+  }, [selectedEntry?.id]);
+
+  useEffect(() => {
+    setTraceCopyStatus("idle");
+  }, [traceContents]);
 
   const handleModeSelection = useCallback((modeId: UiMode) => {
     setUiMode(modeId);
     setIsFullScreen(false);
   }, []);
+
+  const handleCopyTrace = useCallback(async () => {
+    if (!traceContents) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(traceContents);
+      setTraceCopyStatus("copied");
+    } catch {
+      setTraceCopyStatus("failed");
+    }
+  }, [traceContents]);
+
+  const traceCopyLabel =
+    traceCopyStatus === "copied" ? "Copied!" : traceCopyStatus === "failed" ? "Retry" : "Copy";
+  const traceCopyVariantClasses =
+    traceCopyStatus === "copied"
+      ? "border-emerald-500 text-emerald-300 hover:border-emerald-400"
+      : traceCopyStatus === "failed"
+      ? "border-rose-500 text-rose-300 hover:border-rose-400"
+      : "border-slate-800 text-slate-400 hover:border-white hover:text-white";
 
   const handleRemoveHistory = useCallback(
     (id: string) => {
@@ -162,8 +400,9 @@ export default function OpsPage() {
         }
         return filtered;
       });
+      void deleteHistoryEntry(id);
     },
-    [selectedId]
+    [selectedId, deleteHistoryEntry]
   );
 
   const selectedLabel =
@@ -178,26 +417,61 @@ export default function OpsPage() {
     }
     setIsRunning(true);
     setStatusMessage(null);
-    const payload = { mode: currentModeDefinition.backend, question: question.trim() };
+    const requestedMode = currentModeDefinition;
+    const payload = { mode: requestedMode.backend, question: question.trim() };
     let envelope: AnswerEnvelope;
     let status: OpsHistoryEntry["status"] = "ok";
     let errorDetails: string | undefined;
+    let trace: unknown;
+    let nextActions: NextAction[] | undefined;
     try {
-      const response = await fetch(`${apiBaseUrl}/ops/query`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await response.json();
-      console.debug("OPS response", { payload, data });
-      if (!response.ok) {
-        throw response;
+      if (requestedMode.id === "ci") {
+        const response = await fetch(`${apiBaseUrl}/ops/ci/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: question.trim() }),
+        });
+        const data = await response.json();
+        console.debug("CI response", { payload, data });
+        if (!response.ok) {
+          throw new Error(data?.message ?? `${response.status} ${response.statusText}`);
+        }
+        const ciPayload = data.data;
+        if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
+          throw new Error("Invalid CI response format");
+        }
+        const meta =
+          ciPayload.meta ??
+          ({
+            route: "ci",
+            route_reason: "CI tab",
+            timing_ms: 0,
+            summary: ciPayload.answer,
+            used_tools: [],
+          } as AnswerMeta);
+        envelope = {
+          meta,
+          blocks: ciPayload.blocks,
+        };
+        trace = ciPayload.trace;
+        nextActions = ciPayload.next_actions;
+      } else {
+        const response = await fetch(`${apiBaseUrl}/ops/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        console.debug("OPS response", { payload, data });
+        if (!response.ok) {
+          throw new Error(data?.message ?? `${response.status} ${response.statusText}`);
+        }
+        const answer = data.data?.answer as AnswerEnvelope | undefined;
+        if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
+          throw new Error("Invalid OPS response format");
+        }
+        envelope = answer;
       }
-      const answer = data.data?.answer as AnswerEnvelope | undefined;
-      if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
-        throw new Error("Invalid OPS response format");
-      }
-      envelope = answer;
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
       envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
@@ -214,27 +488,157 @@ export default function OpsPage() {
       const entry: OpsHistoryEntry = {
         id: genId(),
         createdAt: new Date().toISOString(),
-        uiMode,
-        backendMode: currentModeDefinition.backend,
+        uiMode: requestedMode.id,
+        backendMode: requestedMode.backend,
         question: question.trim(),
         response: envelope,
         status,
         summary: extractSummary(envelope, question.trim()),
         errorDetails,
+        trace,
+        nextActions,
       };
-      setHistory((prev) => {
-        const next = [entry, ...prev];
-        if (next.length > HISTORY_LIMIT) {
-          return next.slice(0, HISTORY_LIMIT);
-        }
-        return next;
-      });
-      setSelectedId(entry.id);
+      pushHistoryEntry(entry);
+      void persistHistoryEntry(entry);
       setQuestion("");
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [apiBaseUrl, currentModeDefinition.backend, isRunning, question, uiMode]);
+    }, [apiBaseUrl, currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry]);
+
+  const handleNextAction = useCallback(
+    async (action: NextAction) => {
+      if (!selectedEntry) {
+        return;
+      }
+      if (action.type === "open_trace") {
+        setTraceOpen(true);
+        return;
+      }
+      if (action.type === "copy_payload") {
+        const payload =
+          typeof action.payload === "string" ? action.payload : JSON.stringify(action.payload ?? {}, null, 2);
+        try {
+          await navigator.clipboard?.writeText(payload);
+          setStatusMessage("Payload copied to clipboard");
+        } catch {
+          window.prompt("Copy payload", payload);
+        }
+        return;
+      }
+      if (action.type === "open_event_browser") {
+        const params = new URLSearchParams();
+        if (action.payload.exec_log_id) {
+          params.set("exec_log_id", action.payload.exec_log_id);
+        } else if (action.payload.simulation_id) {
+          params.set("simulation_id", action.payload.simulation_id);
+        }
+        const query = params.toString();
+        const url = `/cep-events${query ? `?${query}` : ""}`;
+        window.open(url, "_blank");
+        return;
+      }
+      if (action.type !== "rerun") {
+        return;
+      }
+      const basePlan = selectedEntry.trace?.plan_validated;
+      if (!basePlan) {
+        setStatusMessage("Unable to rerun: missing plan snapshot");
+        return;
+      }
+      setIsRunning(true);
+      setStatusMessage(null);
+      let envelope: AnswerEnvelope;
+      let trace: unknown;
+      let nextActions: NextAction[] | undefined;
+      let status: OpsHistoryEntry["status"] = "ok";
+      let errorDetails: string | undefined;
+      try {
+        const rerunBody: {
+          question: string;
+          rerun: {
+            base_plan: unknown;
+            selected_ci_id?: string;
+            selected_secondary_ci_id?: string;
+            patch?: unknown;
+          };
+        } = {
+          question: selectedEntry.question,
+          rerun: {
+            base_plan: basePlan,
+          },
+        };
+        if (action.payload?.selected_ci_id) {
+          rerunBody.rerun.selected_ci_id = action.payload.selected_ci_id;
+        }
+        if (action.payload?.selected_secondary_ci_id) {
+          rerunBody.rerun.selected_secondary_ci_id = action.payload.selected_secondary_ci_id;
+        }
+        if (action.payload?.patch) {
+          rerunBody.rerun.patch = action.payload.patch;
+        }
+        const response = await fetch(`${apiBaseUrl}/ops/ci/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rerunBody),
+        });
+        const data = await response.json();
+        console.debug("CI rerun", { action, rerunBody, data });
+        if (!response.ok) {
+          throw new Error(data?.message ?? `${response.status} ${response.statusText}`);
+        }
+        const ciPayload = data.data;
+        if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
+          throw new Error("Invalid CI response format");
+        }
+        const meta =
+          ciPayload.meta ??
+          ({
+            route: "ci",
+            route_reason: "CI tab",
+            timing_ms: 0,
+            summary: ciPayload.answer,
+            used_tools: [],
+          } as AnswerMeta);
+        envelope = {
+          meta,
+          blocks: ciPayload.blocks,
+        };
+        trace = ciPayload.trace;
+        nextActions = ciPayload.next_actions;
+      } catch (rawError) {
+        const normalized = await normalizeError(rawError);
+        envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
+        status = "error";
+        if (normalized.details) {
+          errorDetails =
+            typeof normalized.details === "string"
+              ? normalized.details
+              : JSON.stringify(normalized.details, null, 2);
+        }
+        setStatusMessage(`Error: ${normalized.message}`);
+        console.debug("CI rerun error details", normalized.details ?? normalized);
+      } finally {
+        const entry: OpsHistoryEntry = {
+          id: genId(),
+          createdAt: new Date().toISOString(),
+          uiMode: selectedEntry.uiMode ?? "ci",
+          backendMode: selectedEntry.backendMode ?? "config",
+          question: selectedEntry.question,
+          response: envelope,
+          status,
+          summary: extractSummary(envelope, selectedEntry.question),
+          errorDetails,
+          trace,
+          nextActions,
+        };
+        pushHistoryEntry(entry);
+        setIsRunning(false);
+        setTraceOpen(false);
+      }
+    },
+    [apiBaseUrl, currentModeDefinition.backend, pushHistoryEntry, selectedEntry]
+  );
 
   const gridColsClass = isFullScreen
     ? "lg:grid-cols-[minmax(0,1fr)]"
@@ -249,10 +653,18 @@ export default function OpsPage() {
         >
           <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/70 shadow-inner shadow-black/40">
             <div className="border-b border-slate-800 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Query history</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Query history</p>
+                {historyLoading ? (
+                  <span className="text-xs text-slate-400">Loading…</span>
+                ) : null}
+              </div>
               <p className="text-[11px] text-slate-400">최근 실행한 OPS 질의를 선택해 결과를 확인합니다.</p>
+              {historyError ? (
+                <p className="mt-1 text-[11px] text-rose-400">{historyError}</p>
+              ) : null}
             </div>
-            <div className="flex-1 overflow-y-auto px-2 py-2">
+            <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin scrollbar-track-slate-950 scrollbar-thumb-slate-900">
               {history.length === 0 ? (
                 <p className="text-sm text-slate-500">질의를 실행하면 여기에 기록됩니다.</p>
               ) : (
@@ -314,12 +726,12 @@ export default function OpsPage() {
               <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Run OPS query</p>
               <p className="text-[11px] text-slate-400">mode를 선택하고 질문을 작성한 뒤 실행하세요.</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex gap-1 flex-nowrap">
               {UI_MODES.map((modeEntry) => (
                 <button
                   key={modeEntry.id}
                   onClick={() => handleModeSelection(modeEntry.id)}
-                  className={`rounded-full border px-4 py-2 text-[11px] uppercase tracking-[0.3em] transition ${
+                  className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition ${
                     uiMode === modeEntry.id
                       ? "border-sky-500 bg-sky-500/10 text-white"
                       : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
@@ -345,7 +757,7 @@ export default function OpsPage() {
                 className="rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
                 disabled={isRunning || !question.trim()}
               >
-                {isRunning ? "Running…" : "Run query"}
+                {isRunning ? "Running…" : "메시지 전송"}
               </button>
               {statusMessage ? <p className="text-[11px] text-rose-300">{statusMessage}</p> : null}
             </div>
@@ -426,9 +838,41 @@ export default function OpsPage() {
               <p className="mt-2 text-[11px] text-slate-400">No meta available.</p>
             )}
           </details>
+          <details
+            open={traceOpen}
+            onToggle={(event) => setTraceOpen(event.currentTarget.open)}
+            className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[12px] text-slate-300"
+          >
+            <summary className="flex items-center justify-between cursor-pointer text-[11px] uppercase tracking-[0.3em] text-slate-500">
+              <span>Trace · plan / policy</span>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleCopyTrace();
+                }}
+                disabled={!traceContents}
+                className={`rounded-2xl border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition disabled:opacity-60 ${traceCopyVariantClasses}`}
+              >
+                {traceCopyLabel}
+              </button>
+            </summary>
+            {traceData ? (
+              <pre className="mt-2 max-h-64 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-100">
+                {traceContents}
+              </pre>
+            ) : (
+              <p className="mt-2 text-[11px] text-slate-400">No trace captured yet.</p>
+            )}
+          </details>
           <div className="flex-1 overflow-y-auto">
-            {selectedEntry ? (
-              <BlockRenderer blocks={selectedEntry.response.blocks} />
+            {selectedEntry && Array.isArray(selectedEntry.response?.blocks) ? (
+              <BlockRenderer
+                blocks={selectedEntry.response.blocks}
+                nextActions={selectedEntry.nextActions}
+                onAction={handleNextAction}
+              />
             ) : (
               <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
                 <p className="text-sm text-slate-500">Run a query to visualize OPS data.</p>

@@ -1,0 +1,31 @@
+version: 1
+views:
+  SUMMARY:
+    rel_types: []
+  COMPOSITION:
+    rel_types:
+      - COMPOSED_OF
+  DEPENDENCY:
+    rel_types:
+      - DEPENDS_ON
+      - RUNS_ON
+      - DEPLOYED_ON
+      - USES
+      - PROTECTED_BY
+      - CONNECTED_TO
+  IMPACT:
+    rel_types:
+      - DEPENDS_ON
+  PATH:
+    rel_types:
+      - DEPENDS_ON
+      - RUNS_ON
+      - DEPLOYED_ON
+      - USES
+      - PROTECTED_BY
+      - CONNECTED_TO
+  NEIGHBORS:
+    rel_types: []
+exclude_rel_types: []
+notes:
+  impact_definition: "IMPACT는 의존 기반 영향(가정)으로 정의합니다."

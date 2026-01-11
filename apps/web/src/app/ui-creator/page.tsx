@@ -1312,16 +1312,16 @@ export default function UiCreatorPage() {
           Insert Metric Polling Template
         </button>
       </div>
-      <div className="h-64 rounded-2xl border border-slate-800 bg-slate-950/60">
-        <Editor
-          height="100%"
-          defaultLanguage="json"
-          value={schemaText}
-          onChange={(value) => setSchemaText(value ?? "")}
-          theme="vs-dark"
-          options={{ minimap: { enabled: false }, fontSize: 13 }}
-        />
-      </div>
+        <div className="builder-json-shell h-64 resize-y overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+          <Editor
+            height="100%"
+            defaultLanguage="json"
+            value={schemaText}
+            onChange={(value) => setSchemaText(value ?? "")}
+            theme="vs-dark"
+            options={{ minimap: { enabled: false }, fontSize: 13, automaticLayout: true }}
+          />
+        </div>
       <p className="text-[11px] uppercase tracking-normal text-slate-500">{statusMessage ?? "Status"}</p>
     </div>
   );

@@ -14,6 +14,7 @@ class AppSettings(BaseSettings):
     ops_mode: Literal["mock", "real"] = "mock"
     ops_enable_langgraph: bool = False
     enable_system_apis: bool = False
+    enable_data_explorer: bool = False
 
     cep_enable_metric_polling: bool = False
     cep_metric_poll_global_interval_seconds: int = 10
@@ -35,6 +36,12 @@ class AppSettings(BaseSettings):
     neo4j_password: Optional[str] = None
 
     redis_url: Optional[str] = None
+    data_pg_allow_schemas: str = "public"
+    data_pg_allow_tables: str = "tb_cep_*,tb_api_*,ci,ci_ext,event_log"
+    data_redis_allowed_prefixes: str = "cep:"
+    data_max_rows: int = 200
+    data_query_timeout_ms: int = 3000
+    ops_enable_cep_scheduler: bool = False
 
     embed_model: Optional[str] = None
     chat_model: str = "gpt-4o-mini"

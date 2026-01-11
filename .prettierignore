@@ -1,0 +1,7 @@
+node_modules
+.next
+.venv
+apps/api/.venv
+apps/web/.next
+dist
+build

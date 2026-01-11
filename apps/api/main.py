@@ -1,11 +1,72 @@
-from fastapi import FastAPI
+import sys
 from datetime import datetime
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from apps.api.core.logging import configure_logging
+from apps.api.core.middleware import RequestIDMiddleware
+
+from app.modules.api_manager.router import router as api_manager_router
+from app.modules.api_manager.runtime_router import runtime_router
+from app.modules.cep_builder import router as cep_builder_router
+from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+from app.modules.data_explorer import router as data_explorer_router
+from app.modules.ui_creator.router import router as ui_creator_router
+from api.routes.chat import router as chat_router
+from api.routes.documents import router as document_router
+from api.routes.health import router as health_router
+from api.routes.hello import router as hello_router
+from api.routes.history import router as history_router
+from app.modules.ops.router import router as ops_router
+from api.routes.threads import router as thread_router
+from core.config import get_settings
+
+settings = get_settings()
+configure_logging(settings.log_level)
 
 app = FastAPI()
+app.add_middleware(RequestIDMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+app.include_router(health_router)
+app.include_router(hello_router)
+app.include_router(chat_router)
+app.include_router(thread_router)
+app.include_router(document_router)
+app.include_router(ops_router)
+app.include_router(cep_builder_router)
+app.include_router(data_explorer_router)
+app.include_router(api_manager_router)
+app.include_router(runtime_router)
+app.include_router(ui_creator_router)
+app.include_router(history_router)
+
+
+@app.on_event("startup")
+async def _start_cep_scheduler() -> None:
+    start_scheduler()
+
+
+@app.on_event("shutdown")
+async def _stop_cep_scheduler() -> None:
+    stop_scheduler()
+
 
 @app.get("/health")
 def health():
     return {"time": datetime.utcnow().isoformat(), "code": 0, "message": "OK", "data": {"status": "up"}}
+
 
 @app.get("/hello")
 def hello():
