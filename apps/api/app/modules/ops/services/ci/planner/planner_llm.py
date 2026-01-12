@@ -206,7 +206,7 @@ AGG_KEYWORDS = {
 }
 SERIES_KEYWORDS = {"추이", "시계열", "그래프", "trend", "series", "line", "chart"}
 CI_CODE_PATTERN = re.compile(r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE)
-LIST_KEYWORDS = {"list", "목록", "리스트", "show", "view", "전체", "목록을"}
+
 NUMBER_KEYWORDS = {"얼마나", "숫자", "수치", "크다", "얼마나", "얼마", "몇", "count", "total"}
 CEP_KEYWORDS = {"simulate", "시뮬", "시뮬레이션", "규칙", "rule", "cep"}
 UUID_PATTERN = re.compile(
