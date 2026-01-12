@@ -82,11 +82,19 @@ const formatTimestamp = (value?: string | null) => {
   if (!value) {
     return "-";
   }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
+  try {
+    let dateStr = value;
+    if (value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(value)) {
+      dateStr = `${value}Z`;
+    }
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+  } catch {
     return value;
   }
-  return date.toLocaleString();
 };
 
 const normalizeError = (error: unknown) => {
@@ -425,103 +433,103 @@ export default function CepEventBrowserPage() {
             ))
             : null}
         </div>
-          </header>
-          {runLoading ? (
-            <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4">
-              <p className="text-sm text-slate-400">Loading CEP run details …</p>
-            </section>
-          ) : runDetail ? (
-            <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4 space-y-3">
-              {runError ? (
-                <p className="text-sm text-rose-300">
-                  {runError}
-                </p>
-              ) : null}
-              {runDetail.found ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Exec Log ID</p>
-                      <p className="text-slate-100">{runDetail.exec_log_id ?? "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Simulation ID</p>
-                      <p className="text-slate-100">{runDetail.simulation_id ?? "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Rule ID</p>
-                      <p className="text-slate-100">{runDetail.rule_id ?? "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Created</p>
-                      <p className="text-slate-100">{runDetail.created_at ? formatTimestamp(runDetail.created_at) : "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Condition</p>
-                      <p className="text-slate-100">
-                        {runDetail.condition_evaluated == null ? "—" : String(runDetail.condition_evaluated)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Tenant</p>
-                      <p className="text-slate-100">{runDetail.tenant_id ?? "—"}</p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Evidence</p>
-                    <div className="mt-2 overflow-x-auto">
-                      <table className="min-w-full text-left text-xs text-slate-300">
-                        <thead>
-                          <tr>
-                            {["endpoint", "method", "value_path", "op", "threshold", "extracted_value", "evaluated", "status", "error"].map(
-                              (column) => (
-                                <th
-                                  key={column}
-                                  className="border-b border-slate-800 px-2 py-1 font-semibold uppercase tracking-[0.3em] text-slate-500"
-                                >
-                                  {column}
-                                </th>
-                              )
-                            )}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="bg-slate-900/40">
-                            <td className="px-2 py-1">{runDetail.evidence?.runtime_endpoint ?? "—"}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.method ?? "—"}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.value_path ?? "—"}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.op ?? "—"}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.threshold ?? "—"}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.extracted_value ?? "—"}</td>
-                            <td className="px-2 py-1">{String(runDetail.evidence?.condition_evaluated ?? "—")}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.fetch_status ?? "—"}</td>
-                            <td className="px-2 py-1">{runDetail.evidence?.fetch_error ?? "—"}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  {runDetail.raw ? (
-                    <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
-                      <summary className="cursor-pointer uppercase tracking-[0.3em] text-slate-500">
-                        Raw references
-                      </summary>
-                      <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap">{runDetail.raw}</pre>
-                    </details>
-                  ) : null}
-                </>
-              ) : (
-                <div className="text-sm text-slate-400">
-                  <p className="text-slate-100 font-semibold">CEP run not found</p>
-                  <p>
-                    Tenant: {runDetail.tenant_id ?? "unknown"}, exec_log_id: {runDetail.exec_log_id ?? "없음"}, simulation_id:{" "}
-                    {runDetail.simulation_id ?? "없음"}
-                  </p>
-                  {runDetail.message ? <p>{runDetail.message}</p> : null}
-                </div>
-              )}
-            </section>
+      </header>
+      {runLoading ? (
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4">
+          <p className="text-sm text-slate-400">Loading CEP run details …</p>
+        </section>
+      ) : runDetail ? (
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4 space-y-3">
+          {runError ? (
+            <p className="text-sm text-rose-300">
+              {runError}
+            </p>
           ) : null}
+          {runDetail.found ? (
+            <>
+              <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Exec Log ID</p>
+                  <p className="text-slate-100">{runDetail.exec_log_id ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Simulation ID</p>
+                  <p className="text-slate-100">{runDetail.simulation_id ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Rule ID</p>
+                  <p className="text-slate-100">{runDetail.rule_id ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Created</p>
+                  <p className="text-slate-100">{runDetail.created_at ? formatTimestamp(runDetail.created_at) : "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Condition</p>
+                  <p className="text-slate-100">
+                    {runDetail.condition_evaluated == null ? "—" : String(runDetail.condition_evaluated)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Tenant</p>
+                  <p className="text-slate-100">{runDetail.tenant_id ?? "—"}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Evidence</p>
+                <div className="mt-2 overflow-x-auto">
+                  <table className="min-w-full text-left text-xs text-slate-300">
+                    <thead>
+                      <tr>
+                        {["endpoint", "method", "value_path", "op", "threshold", "extracted_value", "evaluated", "status", "error"].map(
+                          (column) => (
+                            <th
+                              key={column}
+                              className="border-b border-slate-800 px-2 py-1 font-semibold uppercase tracking-[0.3em] text-slate-500"
+                            >
+                              {column}
+                            </th>
+                          )
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-slate-900/40">
+                        <td className="px-2 py-1">{runDetail.evidence?.runtime_endpoint ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.method ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.value_path ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.op ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.threshold ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.extracted_value ?? "—"}</td>
+                        <td className="px-2 py-1">{String(runDetail.evidence?.condition_evaluated ?? "—")}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.fetch_status ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.fetch_error ?? "—"}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {runDetail.raw ? (
+                <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+                  <summary className="cursor-pointer uppercase tracking-[0.3em] text-slate-500">
+                    Raw references
+                  </summary>
+                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap">{runDetail.raw}</pre>
+                </details>
+              ) : null}
+            </>
+          ) : (
+            <div className="text-sm text-slate-400">
+              <p className="text-slate-100 font-semibold">CEP run not found</p>
+              <p>
+                Tenant: {runDetail.tenant_id ?? "unknown"}, exec_log_id: {runDetail.exec_log_id ?? "없음"}, simulation_id:{" "}
+                {runDetail.simulation_id ?? "없음"}
+              </p>
+              {runDetail.message ? <p>{runDetail.message}</p> : null}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <div
         className="grid gap-0"

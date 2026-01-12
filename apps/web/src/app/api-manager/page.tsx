@@ -96,17 +96,34 @@ const SCOPE_LABELS: Record<ScopeType, string> = {
 
 const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
 
+const formatTimestamp = (value: string) => {
+  if (!value) return "";
+  try {
+    let dateStr = value;
+    if (value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(value)) {
+      dateStr = `${value}Z`;
+    }
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString("ko-KR", {
+      timeZone: "Asia/Seoul",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return value;
+  }
+};
+
 const buildStatusMessage = (selected: ApiDefinitionItem | null) => {
   if (!selected) {
     return "Select an API to view or edit its definition.";
   }
-  return `Last updated ${new Date(selected.updated_at).toLocaleString("ko-KR", {
-    timeZone: "Asia/Seoul",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  })} by ${selected.created_by ?? "unknown"}`;
+  return `Last updated ${formatTimestamp(selected.updated_at)} by ${selected.created_by ?? "unknown"}`;
 };
 
 const parseTags = (value: string) =>

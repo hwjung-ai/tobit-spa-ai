@@ -146,7 +146,15 @@ const normalizeHeaders = () => ({
 
 const formatTimestamp = (value: string) => {
   try {
-    return new Date(value).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+    let dateStr = value;
+    if (value && value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(value)) {
+      dateStr = `${value}Z`;
+    }
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
   } catch {
     return value;
   }
@@ -459,57 +467,57 @@ export default function DocumentsPage() {
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split(/\r?\n/);
         buffer = lines.pop() ?? "";
-          for (const line of lines) {
-            if (!line.startsWith("data:")) {
-              continue;
-            }
-            const payload = JSON.parse(line.replace(/^data:\s*/, ""));
-            if (payload.type === "answer") {
-              accumulatedAnswer += payload.text;
-            }
-            setStreamChunks((prev) => mergeChunk(payload, prev));
-            if (payload.type === "done") {
-              setStreamStatus("idle");
-              const validReferences = (payload.meta?.references ?? []).filter(
-                (ref: Reference) => {
-                  const id = ref.document_id?.trim();
-                  return Boolean(id && id !== "undefined");
-                }
-              );
-              setReferences(validReferences);
-              const finalAnswer = accumulatedAnswer.trim();
-              const historySummary = summarizeDocAnswer(finalAnswer, questionText);
-              if (documentId) {
-                const historyPayload: DocumentHistoryPayload = {
-                  question: questionText,
-                  answer: finalAnswer,
-                  summary: historySummary,
-                  status: "ok",
-                  documentId,
-                  documentTitle,
-                  references: validReferences,
-                  topK,
-                };
-                const localEntry: DocsHistoryEntry = {
-                  id: generateLocalHistoryId(),
-                  createdAt: new Date().toISOString(),
-                  question: historyPayload.question,
-                  summary: historyPayload.summary,
-                  answer: historyPayload.answer,
-                  status: historyPayload.status,
-                  documentId: historyPayload.documentId,
-                  documentTitle: historyPayload.documentTitle,
-                  references: historyPayload.references,
-                };
-                addDocHistoryEntry(localEntry);
-                void persistDocHistory(historyPayload);
+        for (const line of lines) {
+          if (!line.startsWith("data:")) {
+            continue;
+          }
+          const payload = JSON.parse(line.replace(/^data:\s*/, ""));
+          if (payload.type === "answer") {
+            accumulatedAnswer += payload.text;
+          }
+          setStreamChunks((prev) => mergeChunk(payload, prev));
+          if (payload.type === "done") {
+            setStreamStatus("idle");
+            const validReferences = (payload.meta?.references ?? []).filter(
+              (ref: Reference) => {
+                const id = ref.document_id?.trim();
+                return Boolean(id && id !== "undefined");
               }
-            }
-            if (payload.type === "error") {
-              setStreamStatus("error");
-              setStreamError(payload.text);
+            );
+            setReferences(validReferences);
+            const finalAnswer = accumulatedAnswer.trim();
+            const historySummary = summarizeDocAnswer(finalAnswer, questionText);
+            if (documentId) {
+              const historyPayload: DocumentHistoryPayload = {
+                question: questionText,
+                answer: finalAnswer,
+                summary: historySummary,
+                status: "ok",
+                documentId,
+                documentTitle,
+                references: validReferences,
+                topK,
+              };
+              const localEntry: DocsHistoryEntry = {
+                id: generateLocalHistoryId(),
+                createdAt: new Date().toISOString(),
+                question: historyPayload.question,
+                summary: historyPayload.summary,
+                answer: historyPayload.answer,
+                status: historyPayload.status,
+                documentId: historyPayload.documentId,
+                documentTitle: historyPayload.documentTitle,
+                references: historyPayload.references,
+              };
+              addDocHistoryEntry(localEntry);
+              void persistDocHistory(historyPayload);
             }
           }
+          if (payload.type === "error") {
+            setStreamStatus("error");
+            setStreamError(payload.text);
+          }
+        }
       }
       setStreamStatus("idle");
     } catch (error: any) {
@@ -556,21 +564,21 @@ export default function DocumentsPage() {
   const buildReferenceViewerHref = useCallback(
     (reference: Reference) => {
       const documentId = reference.document_id ?? selectedDocument?.id;
-    if (!documentId) {
-      return undefined;
-    }
-    const params = new URLSearchParams();
-    if (reference.chunk_id) {
-      params.set("chunkId", reference.chunk_id);
-    }
-    if (reference.page != null) {
-      params.set("page", reference.page.toString());
-    }
-    const query = params.toString();
-    return `/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
-  },
-  [selectedDocument]
-);
+      if (!documentId) {
+        return undefined;
+      }
+      const params = new URLSearchParams();
+      if (reference.chunk_id) {
+        params.set("chunkId", reference.chunk_id);
+      }
+      if (reference.page != null) {
+        params.set("page", reference.page.toString());
+      }
+      const query = params.toString();
+      return `/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
+    },
+    [selectedDocument]
+  );
 
   const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -667,13 +675,13 @@ export default function DocumentsPage() {
             <p className="text-xs text-rose-400">{uploadError}</p>
           ) : null}
           <div className="flex items-center justify-between gap-3">
-                <button
-                  type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
-                  disabled={uploading}
-                >
-                  {uploading ? "Uploading…" : "문서 업로드"}
-                </button>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+              disabled={uploading}
+            >
+              {uploading ? "Uploading…" : "문서 업로드"}
+            </button>
             <span className="text-xs uppercase tracking-[0.3em] text-slate-500">
               API: {apiBaseUrl}/documents/upload
             </span>
@@ -699,11 +707,10 @@ export default function DocumentsPage() {
             {documents.map((document) => (
               <div
                 key={document.id}
-                className={`group flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${
-                  selectedDocument?.id === document.id
+                className={`group flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${selectedDocument?.id === document.id
                     ? "border-sky-400 bg-sky-500/10 text-white"
                     : "border-slate-800 bg-slate-900 hover:border-slate-600"
-                }`}
+                  }`}
                 role="button"
                 tabIndex={0}
                 onClick={() => selectDocument(document.id)}
@@ -752,31 +759,31 @@ export default function DocumentsPage() {
                 </span>
               ) : null}
             </div>
-              {selectedDocument ? (
-                <>
-                  <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
-                    <div>
-                      <p>Size: {formattedSize(selectedDocument.size)}</p>
-                      <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
-                      <p>Chunks indexed: {selectedDocument.chunk_count}</p>
-                    </div>
-                    <div>
-                      <p>Updated: {formatTimestamp(selectedDocument.updated_at)}</p>
-                      {selectedDocument.error_message ? (
-                        <p className="text-rose-400">Error: {selectedDocument.error_message}</p>
-                      ) : null}
-                    </div>
+            {selectedDocument ? (
+              <>
+                <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
+                  <div>
+                    <p>Size: {formattedSize(selectedDocument.size)}</p>
+                    <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
+                    <p>Chunks indexed: {selectedDocument.chunk_count}</p>
                   </div>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      className="rounded-2xl border border-rose-400 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-rose-400 transition hover:bg-rose-500/10"
-                      onClick={handleDeleteSelectedDocument}
-                    >
-                      Delete document
-                    </button>
+                  <div>
+                    <p>Updated: {formatTimestamp(selectedDocument.updated_at)}</p>
+                    {selectedDocument.error_message ? (
+                      <p className="text-rose-400">Error: {selectedDocument.error_message}</p>
+                    ) : null}
                   </div>
-                </>
-              ) : null}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <button
+                    className="rounded-2xl border border-rose-400 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-rose-400 transition hover:bg-rose-500/10"
+                    onClick={handleDeleteSelectedDocument}
+                  >
+                    Delete document
+                  </button>
+                </div>
+              </>
+            ) : null}
           </section>
 
           <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
@@ -819,9 +826,8 @@ export default function DocumentsPage() {
                   {streamStatus === "streaming" ? "Streaming…" : "메시지 전송"}
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-[0.3em] ${
-                    streamStatus === "error" ? "text-rose-400" : "text-slate-500"
-                  }`}
+                  className={`text-xs uppercase tracking-[0.3em] ${streamStatus === "error" ? "text-rose-400" : "text-slate-500"
+                    }`}
                 >
                   {streamStatus === "streaming" ? "SSE live" : streamStatus === "idle" ? "Ready" : "Error"}
                 </span>
@@ -887,75 +893,74 @@ export default function DocumentsPage() {
                         </div>
                       );
                     })}
-                    </div>
-                  </section>
-                )}
-            <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Document history</p>
-                  <p className="text-[11px] text-slate-400">Select a prior question to review its answer.</p>
+                  </div>
+                </section>
+              )}
+              <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Document history</p>
+                    <p className="text-[11px] text-slate-400">Select a prior question to review its answer.</p>
+                  </div>
+                  {docHistoryLoading ? <span className="text-xs text-slate-500">Loading…</span> : null}
                 </div>
-                {docHistoryLoading ? <span className="text-xs text-slate-500">Loading…</span> : null}
-              </div>
-              {docHistoryError ? (
-                <p className="mt-2 text-[11px] text-rose-400">{docHistoryError}</p>
-              ) : null}
-              <div className="mt-4 space-y-2">
-                {documentHistoryEntries.length === 0 ? (
-                  <p className="text-sm text-slate-500">
-                    {selectedDocument ? "No documented questions yet." : "Select a document to view history."}
-                  </p>
-                ) : (
-                  documentHistoryEntries.map((entry) => {
-                    const isSelected = entry.id === selectedDocHistoryId;
-                    return (
-                      <button
-                        type="button"
-                        key={entry.id}
-                        onClick={() => setSelectedDocHistoryId(entry.id)}
-                        className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                          isSelected
-                            ? "border-sky-500 bg-sky-500/10 text-white"
-                            : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                          <span>{entry.status === "error" ? "Error" : "OK"}</span>
-                          <span>{formatTimestamp(entry.createdAt)}</span>
-                        </div>
-                        <p className="mt-2 text-sm font-semibold text-white">{entry.question}</p>
-                        <p className="text-[12px] text-slate-400">{entry.summary}</p>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-              {selectedDocHistoryEntry ? (
-                <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Answer</p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-white">
-                    {selectedDocHistoryEntry.answer || "No answer recorded."}
-                  </p>
-                  {selectedDocHistoryEntry.references.length > 0 ? (
-                    <div className="mt-3 text-xs text-slate-400">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">References</p>
-                      <div className="mt-2 space-y-2">
-                        {selectedDocHistoryEntry.references.map((reference) => (
-                          <div
-                            key={`${reference.document_id}-${reference.chunk_id}`}
-                            className="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px]"
-                          >
-                            <p className="text-white">{reference.document_title}</p>
-                            <p className="text-slate-400">{reference.snippet}</p>
+                {docHistoryError ? (
+                  <p className="mt-2 text-[11px] text-rose-400">{docHistoryError}</p>
+                ) : null}
+                <div className="mt-4 space-y-2">
+                  {documentHistoryEntries.length === 0 ? (
+                    <p className="text-sm text-slate-500">
+                      {selectedDocument ? "No documented questions yet." : "Select a document to view history."}
+                    </p>
+                  ) : (
+                    documentHistoryEntries.map((entry) => {
+                      const isSelected = entry.id === selectedDocHistoryId;
+                      return (
+                        <button
+                          type="button"
+                          key={entry.id}
+                          onClick={() => setSelectedDocHistoryId(entry.id)}
+                          className={`w-full rounded-2xl border px-4 py-3 text-left transition ${isSelected
+                              ? "border-sky-500 bg-sky-500/10 text-white"
+                              : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                            }`}
+                        >
+                          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                            <span>{entry.status === "error" ? "Error" : "OK"}</span>
+                            <span>{formatTimestamp(entry.createdAt)}</span>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                          <p className="mt-2 text-sm font-semibold text-white">{entry.question}</p>
+                          <p className="text-[12px] text-slate-400">{entry.summary}</p>
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
-              ) : null}
-            </section>
+                {selectedDocHistoryEntry ? (
+                  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Answer</p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-white">
+                      {selectedDocHistoryEntry.answer || "No answer recorded."}
+                    </p>
+                    {selectedDocHistoryEntry.references.length > 0 ? (
+                      <div className="mt-3 text-xs text-slate-400">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">References</p>
+                        <div className="mt-2 space-y-2">
+                          {selectedDocHistoryEntry.references.map((reference) => (
+                            <div
+                              key={`${reference.document_id}-${reference.chunk_id}`}
+                              className="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px]"
+                            >
+                              <p className="text-white">{reference.document_title}</p>
+                              <p className="text-slate-400">{reference.snippet}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </section>
             </div>
           </section>
         </div>

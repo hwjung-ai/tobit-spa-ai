@@ -66,8 +66,18 @@ interface ServerHistoryEntry {
 }
 
 const formatTimestamp = (value: string) => {
+  if (!value) return "";
   try {
-    return new Date(value).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+    let dateStr = value;
+    // If it looks like an ISO string (has T) but no timezone info (no Z, no +HH:MM/ -HH:MM), treat as UTC
+    if (value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(value)) {
+      dateStr = `${value}Z`;
+    }
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return date.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
   } catch {
     return value;
   }
@@ -666,7 +676,7 @@ export default function OpsPage() {
                 <p className="mt-1 text-[11px] text-rose-400">{historyError}</p>
               ) : null}
             </div>
-            <div className="flex-1 overflow-y-auto px-2 py-2 scrollbar-thin scrollbar-track-slate-950 scrollbar-thumb-slate-900">
+            <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
               {history.length === 0 ? (
                 <p className="text-sm text-slate-500">질의를 실행하면 여기에 기록됩니다.</p>
               ) : (
