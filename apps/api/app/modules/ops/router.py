@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional
 
+import importlib
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 
@@ -162,6 +163,8 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             plan_validated, plan_trace = validator.validate_plan(plan_raw)
             logger.info("ci.runner.validator.done", extra={"phase": "initial"})
         
+        runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
+        logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
         runner = CIOrchestratorRunner(
             plan_validated,
             plan_raw,

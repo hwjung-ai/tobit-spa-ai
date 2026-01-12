@@ -26,7 +26,7 @@ def _collect_path_entities(path) -> tuple[List[Dict[str, Any]], List[Dict[str, A
     edges: List[Dict[str, Any]] = []
     node_ids: List[str] = []
     rel_types: List[str] = []
-    for node in path.nodes:
+    for node in getattr(path, "nodes", []):
         node_id = node.get("ci_id")
         if not node_id:
             continue
@@ -41,7 +41,7 @@ def _collect_path_entities(path) -> tuple[List[Dict[str, Any]], List[Dict[str, A
         )
         if node_id not in node_ids:
             node_ids.append(node_id)
-    for rel in path.relationships:
+    for rel in getattr(path, "relationships", []):
         rel_types.append(rel.type)
         edges.append(
             {

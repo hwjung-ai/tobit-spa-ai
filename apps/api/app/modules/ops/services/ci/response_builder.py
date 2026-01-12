@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, Iterable, List
+
+from apps.api.core.logging import get_logger
 
 from app.modules.ops.services.ci.blocks import (
     network_block,
@@ -84,11 +87,46 @@ def build_aggregate_summary_block(total_count: int) -> Dict[str, Any]:
     )
 
 
+logger = get_logger(__name__)
+
+
 def build_network_blocks(graph_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-    nodes = graph_payload.get("nodes", [])
-    edges = graph_payload.get("edges", [])
-    summary = graph_payload.get("summary", {})
-    truncated = graph_payload.get("truncated", False)
+    logger.info(
+        "ci.graph.response_builder.version",
+        extra={
+            "marker": "RB_PATCH_20260112",
+            "file": __file__,
+            "pid": os.getpid(),
+        },
+    )
+    payload_type = type(graph_payload).__name__
+    if isinstance(graph_payload, dict):
+        nodes = graph_payload.get("nodes", [])
+        edges = graph_payload.get("edges", [])
+        summary = graph_payload.get("summary", {})
+        truncated = graph_payload.get("truncated", False)
+        keys = list(graph_payload.keys())
+    else:
+        nodes = getattr(graph_payload, "nodes", [])
+        edges = getattr(graph_payload, "edges", [])
+        summary = getattr(graph_payload, "summary", {})
+        truncated = getattr(graph_payload, "truncated", False)
+        keys = [attr for attr in dir(graph_payload) if not attr.startswith("_")]
+    logger.info(
+        "ci.graph.network_blocks_payload",
+        extra={
+            "type": payload_type,
+            "keys": keys,
+            "nodes_len": len(nodes) if isinstance(nodes, list) else None,
+            "edges_len": len(edges) if isinstance(edges, list) else None,
+        },
+    )
+    if not isinstance(nodes, list) or not isinstance(edges, list):
+        logger.error(
+            "ci.graph.network_blocks_invalid_payload",
+            extra={"type": payload_type, "nodes": nodes, "edges": edges},
+        )
+        return [text_block("Graph payload malformed", title="Graph expansion")]
     rel_counts = summary.get("rel_type_counts", {})
     blocks: List[Dict[str, Any]] = []
     blocks.append(
@@ -98,6 +136,15 @@ def build_network_blocks(graph_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
             title="Graph expansion",
             truncated=truncated,
         )
+    )
+    block_meta = blocks[0].setdefault("meta", {})
+    block_meta.update(
+        {
+            "response_builder_marker": "RB_PATCH_20260112",
+            "response_builder_file": __file__,
+            "response_builder_pid": os.getpid(),
+            "truncated": truncated,
+        }
     )
     if rel_counts:
         rows = [[rel_type, str(count)] for rel_type, count in rel_counts.items()]

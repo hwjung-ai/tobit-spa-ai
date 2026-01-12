@@ -350,10 +350,10 @@ export default function OpsPage() {
   const meta = selectedEntry?.response?.meta;
   const traceData = selectedEntry?.trace as
     | {
-        plan_validated?: unknown;
-        policy_decisions?: Record<string, unknown>;
-        [key: string]: unknown;
-      }
+      plan_validated?: unknown;
+      policy_decisions?: Record<string, unknown>;
+      [key: string]: unknown;
+    }
     | undefined;
   const traceContents = useMemo(() => (traceData ? JSON.stringify(traceData, null, 2) : ""), [traceData]);
 
@@ -377,8 +377,10 @@ export default function OpsPage() {
     try {
       await navigator.clipboard.writeText(traceContents);
       setTraceCopyStatus("copied");
+      setTimeout(() => setTraceCopyStatus("idle"), 2000);
     } catch {
       setTraceCopyStatus("failed");
+      setTimeout(() => setTraceCopyStatus("idle"), 2000);
     }
   }, [traceContents]);
 
@@ -388,8 +390,8 @@ export default function OpsPage() {
     traceCopyStatus === "copied"
       ? "border-emerald-500 text-emerald-300 hover:border-emerald-400"
       : traceCopyStatus === "failed"
-      ? "border-rose-500 text-rose-300 hover:border-rose-400"
-      : "border-slate-800 text-slate-400 hover:border-white hover:text-white";
+        ? "border-rose-500 text-rose-300 hover:border-rose-400"
+        : "border-slate-800 text-slate-400 hover:border-white hover:text-white";
 
   const handleRemoveHistory = useCallback(
     (id: string) => {
@@ -504,7 +506,7 @@ export default function OpsPage() {
       setIsRunning(false);
       setIsFullScreen(false);
     }
-    }, [apiBaseUrl, currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry]);
+  }, [apiBaseUrl, currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry]);
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {
@@ -675,34 +677,33 @@ export default function OpsPage() {
                     return (
                       <div
                         key={entry.id}
-                        className={`group relative flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition ${
-                          isSelected
-                            ? "border-sky-500 bg-sky-500/10 text-white"
-                            : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-600"
-                        }`}
+                        className={`group relative flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition ${isSelected
+                          ? "border-sky-500 bg-sky-500/10 text-white"
+                          : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-600"
+                          }`}
                       >
                         <button
                           onClick={() => setSelectedId(entry.id)}
                           className="text-left"
                         >
-                        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                          <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-200">
-                            {label}
-                          </span>
-                          <span>{formatTimestamp(entry.createdAt)}</span>
-                        </div>
-                        <p
-                          className="mt-2 text-sm font-semibold leading-snug text-white overflow-hidden"
-                          style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
-                        >
-                          {entry.question}
-                        </p>
-                        <p
-                          className="text-[12px] text-slate-400 overflow-hidden"
-                          style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
-                        >
-                          {entry.summary}
-                        </p>
+                          <div className="flex items-center justify-between pr-8 text-[11px] text-slate-400">
+                            <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-200">
+                              {label}
+                            </span>
+                            <span className="tracking-normal">{formatTimestamp(entry.createdAt)}</span>
+                          </div>
+                          <p
+                            className="mt-2 text-sm font-semibold leading-snug text-white overflow-hidden"
+                            style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
+                          >
+                            {entry.question}
+                          </p>
+                          <p
+                            className="text-[12px] text-slate-400 overflow-hidden"
+                            style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
+                          >
+                            {entry.summary}
+                          </p>
                         </button>
                         <button
                           onClick={(event) => {
@@ -715,10 +716,10 @@ export default function OpsPage() {
                           ✕
                         </button>
                       </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex flex-[0.45] flex-col rounded-3xl border border-slate-800 bg-slate-950/60 p-4">
@@ -731,11 +732,10 @@ export default function OpsPage() {
                 <button
                   key={modeEntry.id}
                   onClick={() => handleModeSelection(modeEntry.id)}
-                  className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition ${
-                    uiMode === modeEntry.id
-                      ? "border-sky-500 bg-sky-500/10 text-white"
-                      : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
-                  }`}
+                  className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition ${uiMode === modeEntry.id
+                    ? "border-sky-500 bg-sky-500/10 text-white"
+                    : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
+                    }`}
                 >
                   {modeEntry.label}
                 </button>
@@ -747,7 +747,7 @@ export default function OpsPage() {
                 rows={4}
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
-                className="mt-2 w-full resize-none rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500"
+                className="mt-2 w-full resize-none rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 tracking-normal"
                 placeholder="예: 최근 배포 중단 이유 알려줘"
               />
             </label>
@@ -783,11 +783,10 @@ export default function OpsPage() {
             <div className="flex items-center gap-2">
               {selectedEntry ? (
                 <span
-                  className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${
-                    selectedEntry.status === "ok"
-                      ? "border border-emerald-400 text-emerald-300"
-                      : "border border-rose-400 text-rose-300"
-                  }`}
+                  className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${selectedEntry.status === "ok"
+                    ? "border border-emerald-400 text-emerald-300"
+                    : "border border-rose-400 text-rose-300"
+                    }`}
                 >
                   {selectedEntry.status.toUpperCase()}
                 </span>

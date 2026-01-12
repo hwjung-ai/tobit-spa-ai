@@ -789,7 +789,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
   ```
   서버는 `apps.api.app.modules.ops.services.ci.planner.validator`를 통해 patched plan을 재검증한 뒤 orchestrator를 실행한다.
 
-### 메트릭 조회 (Step 4A)
+### 메트릭 조회
 
 #### 소스 맵
 - 메트릭 도구: `apps/api/app/modules/ops/services/ci/tools/metric.py`
@@ -1019,7 +1019,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 - exec log가 존재하면 Event Browser는 요약 카드 + 표준 evidence 테이블(`endpoint`, `method`, `value_path` 등)과 큰 JSON을 truncate하는 접이식 raw references snippet을 표시한다.
 - 레코드가 없거나 ID가 없으면 UI는 “not found” 메시지로 대체하되 테넌트/exec/simulation ID를 표시하고 소스 쿼리 확인을 유도한다.
 
-### AUTO 모드 레시피 (Step 5D-2)
+### AUTO 모드 레시피
 
 #### 소스 맵
 - Auto 플랜: `apps/api/app/modules/ops/services/ci/planner/plan_schema.py`, `apps/api/app/modules/ops/services/ci/planner/planner_llm.py`
@@ -1037,7 +1037,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 3. “sys-mon health check”
 4. “sys-erp 진단 rule 123e4567-e89b-12d3-a456-426614174000 simulate” (auto + CEP)
 
-### AUTO 동적 선택 (Step 5D-2-0)
+### AUTO 동적 선택
 
 #### 소스 맵
 - Auto 의도 판단: `apps/api/app/modules/ops/services/ci/planner/plan_schema.py`, `apps/api/app/modules/ops/services/ci/planner/planner_llm.py`
@@ -1058,7 +1058,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 5. “sys-erp rule 123e4567-e89b-12d3-a456-426614174000 simulate” (auto + CEP)
 6. “sys-erp 와 sys-apm 어떻게 연결돼?”
 
-### AUTO PATH 완성 & 그래프 스코프 혼합 (Step 5D-2-0)
+### AUTO PATH 완성 & 그래프 스코프 혼합
 
 #### 소스 맵
 - PATH/그래프 도구: `apps/api/app/modules/ops/services/ci/tools/graph.py`
@@ -1078,7 +1078,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 5. “sys-erp 영향 범위 성능+이벤트 같이”
 6. “sys-erp rule 123e4567-e89b-12d3-a456-426614174000 simulate”
 
-### AUTO 인사이트 & 추천 액션 (Step 5D-2-0)
+### AUTO 인사이트 & 추천 액션
 
 #### 소스 맵
 - 인사이트/추천 생성: `apps/api/app/modules/ops/services/ci/orchestrator/runner.py`

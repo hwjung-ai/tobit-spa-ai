@@ -120,7 +120,6 @@ def _call_output_parser_llm(text: str) -> dict | None:
             model=OUTPUT_PARSER_MODEL,
             input=_build_output_parser_messages(text),
             temperature=0,
-            max_tokens=512,
         )
         elapsed = int((perf_counter() - start) * 1000)
         content = llm.get_output_text(response)
@@ -270,6 +269,8 @@ LIST_KEYWORDS = {
     "출력",
 }
 LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
+CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
+GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
 OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", "gpt-4o-mini")
 OUTPUT_SCHEMA_PROMPT = """
 You are the OPS CI planner's output parser. Read the user's question and respond ONLY with the following JSON schema:
@@ -283,7 +284,7 @@ You are the OPS CI planner's output parser. Read the user's question and respond
     "mode": "aggregate"
   },
   "ambiguity": false,
-  "list": { "enabled": false, "limit": 10, "offset": 0 }
+  "list": { "enabled": false, "limit": 50, "offset": 0 }
 }
 - Always return JSON only, without markdown, bullet points, or text.
 - Use null or empty arrays when the value is not applicable.
@@ -293,7 +294,7 @@ You are the OPS CI planner's output parser. Read the user's question and respond
 - LIST RULES:
   - If the question asks for a list such as “N개/몇 개/목록/리스트/나열/뽑아”, set list.enabled=true.
   - In list mode: output_types must be ["table"] and ci_identifiers may be [].
-  - If N is present (e.g. 10개), set list.limit=N, otherwise default to 10.
+  - If N is present (e.g. 10개), set list.limit=N, otherwise default to 50.
 """
 
 def _determine_intent(text: str) -> Intent:
@@ -343,6 +344,7 @@ def create_plan(question: str) -> Plan:
     plan = Plan()
     plan.mode = _determine_mode(normalized)
     llm_payload = None
+    graph_force = _is_graph_force_query(normalized)
     try:
         llm_payload = _call_output_parser_llm(normalized)
     except Exception:  # pragma: no cover - placeholder
@@ -355,17 +357,38 @@ def create_plan(question: str) -> Plan:
     else:
         output_types = determine_output_types(normalized)
         ci_keywords = ()
+    if graph_force:
+        output_types.add("network")
+        recovered = _extract_identifier_candidates(normalized)
+        if recovered:
+            if ci_keywords:
+                merged = list(ci_keywords)
+                for value in recovered:
+                    if value not in merged:
+                        merged.append(value)
+                ci_keywords = tuple(merged)
+            else:
+                ci_keywords = tuple(recovered)
     plan.intent = derive_intent_from_output(output_types)
     plan.view = _determine_view(normalized, plan.intent)
+    if graph_force:
+        plan.intent = Intent.LOOKUP
+        plan.view = _determine_view(normalized, plan.intent)
 
-    if llm_payload and isinstance(llm_payload.get("list"), dict) and llm_payload["list"].get("enabled") is True:
+    if (
+        llm_payload
+        and isinstance(llm_payload.get("list"), dict)
+        and llm_payload["list"].get("enabled") is True
+        and not graph_force
+        and _has_list_hint(normalized)
+    ):
         list_payload = llm_payload["list"]
-        limit = list_payload.get("limit", 10)
+        limit = list_payload.get("limit", 50)
         offset = list_payload.get("offset", 0)
         try:
             limit_int = int(limit)
         except Exception:
-            limit_int = 10
+            limit_int = 50
         try:
             offset_int = int(offset)
         except Exception:
@@ -483,6 +506,8 @@ def _determine_metric_spec(text: str):
 
 def _determine_list_spec(text: str) -> ListSpec | None:
     normalized = text.lower()
+    if _is_graph_force_query(normalized):
+        return None
     match = LIST_LIMIT_PATTERN.search(normalized)
     has_hint = any(keyword in normalized for keyword in LIST_KEYWORDS)
     if not has_hint and not match:
@@ -491,7 +516,7 @@ def _determine_list_spec(text: str) -> ListSpec | None:
         # Heuristic: if the user asks for N items and mentions CI/names, treat as list.
         if "ci" not in normalized and "이름" not in normalized:
             return None
-    limit = 10
+    limit = 50
     if match:
         limit = int(match.group(1))
     limit = max(1, min(50, limit))
@@ -541,6 +566,34 @@ def _determine_graph_depth(text: str, view: View) -> int:
 def _has_graph_scope_keyword(text: str) -> bool:
     normalized = text.lower()
     return any(keyword in normalized for keyword in GRAPH_SCOPE_KEYWORDS)
+
+
+def _is_graph_force_query(text: str) -> bool:
+    normalized = text.lower()
+    if any(keyword in normalized for keyword in GRAPH_FORCE_KEYWORDS):
+        return True
+    if GRAPH_DEPTH_PATTERN.search(text):
+        return True
+    if "단계" in normalized and "몇" in normalized:
+        return True
+    return False
+
+
+def _extract_identifier_candidates(text: str) -> list[str]:
+    matches = CI_IDENTIFIER_PATTERN.findall(text)
+    deduped: list[str] = []
+    for match in matches:
+        value = match.strip()
+        if value and value not in deduped:
+            deduped.append(value)
+    return deduped[:5]
+
+
+def _has_list_hint(text: str) -> bool:
+    normalized = text.lower()
+    if LIST_LIMIT_PATTERN.search(normalized):
+        return True
+    return any(keyword in normalized for keyword in LIST_KEYWORDS)
 
 
 def _apply_graph_scope(plan: Plan, text: str) -> Plan:

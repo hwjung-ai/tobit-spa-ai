@@ -203,6 +203,30 @@ def validate_plan(plan: Plan) -> Tuple[Plan, Dict[str, Any]]:
     trace: Dict[str, Any] = {
         "policy_decisions": policy.build_policy_trace(graph_view.value, requested_depth)
     }
+    graph_views = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}
+    if normalized.list.enabled and (
+        view in graph_views
+        or graph_view in graph_views
+        or "network" in (normalized.output.blocks or [])
+    ):
+        list_spec = normalized.list
+        normalized = normalized.copy(
+            update={"list": list_spec.copy(update={"enabled": False})}
+        )
+        trace["list"] = {
+            "requested": list_spec.dict(),
+            "applied": normalized.list.dict(),
+            "disabled_for_graph": True,
+        }
+        logger.info(
+            "ci.validator.clamp",
+            extra={
+                "field": "list.enabled",
+                "from": True,
+                "to": False,
+                "policy_code": "list_disabled_for_graph",
+            },
+        )
     list_spec = normalized.list
     if list_spec.enabled:
         limit_applied = _clamp_list_limit(list_spec.limit)

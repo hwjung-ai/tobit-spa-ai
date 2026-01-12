@@ -95,7 +95,8 @@ def test_ops_graph_real_blocks_shape(monkeypatch):
     assert any(getattr(block, "type", None) == "markdown" for block in envelope.blocks)
     graph_blocks = [block for block in envelope.blocks if getattr(block, "type", None) == "graph"]
     assert graph_blocks
-    assert graph_blocks[0].nodes
+    nodes = graph_blocks[0].nodes if hasattr(graph_blocks[0], "nodes") else graph_blocks[0].get("nodes", [])
+    assert nodes
     ref_blocks = [block for block in envelope.blocks if getattr(block, "type", None) == "references"]
     assert ref_blocks
     assert any(item.kind == "cypher" for block in ref_blocks for item in block.items)

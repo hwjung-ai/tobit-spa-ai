@@ -45,4 +45,4 @@ def test_llm_list_default_limit_applies(monkeypatch):
     plan = planner_llm.create_plan("ci 리스트")
     assert plan.intent == Intent.LIST
     assert plan.list.enabled is True
-    assert plan.list.limit == 10
+    assert plan.list.limit == 50

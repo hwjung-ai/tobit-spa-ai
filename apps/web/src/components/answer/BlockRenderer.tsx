@@ -347,107 +347,107 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
             );
           }
 
-        case "chart": {
-          const [series] = block.series ?? [];
-          const points = series?.points ?? [];
-          let chartContent: React.ReactNode;
-          try {
-            const normalizedPoints: ChartPoint[] = points
-              .map(([timestamp, value]) => ({
-                timestamp: String(timestamp),
-                value: Number(value),
-              }))
-              .filter((point) => point.timestamp && !Number.isNaN(point.value));
-            if (normalizedPoints.length <= 1) {
-              throw new Error("Not enough points for chart");
-            }
-            normalizedPoints.sort(
-              (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-            );
-            const width = 600;
-            const height = 220;
-            const padding = 30;
-            const values = normalizedPoints.map((point) => point.value);
-            const minValue = Math.min(...values);
-            const maxValue = Math.max(...values);
-            const minTime = new Date(normalizedPoints[0].timestamp).getTime();
-            const maxTime = new Date(normalizedPoints[normalizedPoints.length - 1].timestamp).getTime();
-            const deltaTime = Math.max(maxTime - minTime, 1);
-            const deltaValue = Math.max(maxValue - minValue, 1);
-            const polylinePoints = normalizedPoints
-              .map((point) => {
-                const x =
-                  padding +
-                  ((new Date(point.timestamp).getTime() - minTime) / deltaTime) *
-                    (width - padding * 2);
-                const y =
-                  height -
-                  padding -
-                  ((point.value - minValue) / deltaValue) * (height - padding * 2);
-                return `${x},${y}`;
-              })
-              .join(" ");
-            chartContent = (
-              <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
-                <polyline
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="3"
-                  points={polylinePoints}
-                  strokeLinecap="round"
-                />
-                <line
-                  x1={padding}
-                  y1={height - padding}
-                  x2={width - padding}
-                  y2={height - padding}
-                  stroke="#0f172a"
-                />
-                <line
-                  x1={padding}
-                  y1={padding}
-                  x2={padding}
-                  y2={height - padding}
-                  stroke="#0f172a"
-                />
-                {normalizedPoints.map((point, idx) => {
+          case "chart": {
+            const [series] = block.series ?? [];
+            const points = series?.points ?? [];
+            let chartContent: React.ReactNode;
+            try {
+              const normalizedPoints: ChartPoint[] = points
+                .map(([timestamp, value]) => ({
+                  timestamp: String(timestamp),
+                  value: Number(value),
+                }))
+                .filter((point) => point.timestamp && !Number.isNaN(point.value));
+              if (normalizedPoints.length <= 1) {
+                throw new Error("Not enough points for chart");
+              }
+              normalizedPoints.sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+              );
+              const width = 600;
+              const height = 220;
+              const padding = 30;
+              const values = normalizedPoints.map((point) => point.value);
+              const minValue = Math.min(...values);
+              const maxValue = Math.max(...values);
+              const minTime = new Date(normalizedPoints[0].timestamp).getTime();
+              const maxTime = new Date(normalizedPoints[normalizedPoints.length - 1].timestamp).getTime();
+              const deltaTime = Math.max(maxTime - minTime, 1);
+              const deltaValue = Math.max(maxValue - minValue, 1);
+              const polylinePoints = normalizedPoints
+                .map((point) => {
                   const x =
                     padding +
                     ((new Date(point.timestamp).getTime() - minTime) / deltaTime) *
-                      (width - padding * 2);
+                    (width - padding * 2);
                   const y =
                     height -
                     padding -
                     ((point.value - minValue) / deltaValue) * (height - padding * 2);
-                  return (
-                    <circle
-                      key={`${point.timestamp}-${idx}`}
-                      cx={x}
-                      cy={y}
-                      r={3}
-                      fill="#38bdf8"
-                    />
-                  );
-                })}
-              </svg>
-            );
-          } catch (error) {
-            chartContent = (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-700/80 bg-slate-950/40 p-4 text-sm text-slate-400">
-                Chart rendering not enabled yet; see the table block below.
-              </div>
+                  return `${x},${y}`;
+                })
+                .join(" ");
+              chartContent = (
+                <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
+                  <polyline
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth="3"
+                    points={polylinePoints}
+                    strokeLinecap="round"
+                  />
+                  <line
+                    x1={padding}
+                    y1={height - padding}
+                    x2={width - padding}
+                    y2={height - padding}
+                    stroke="#0f172a"
+                  />
+                  <line
+                    x1={padding}
+                    y1={padding}
+                    x2={padding}
+                    y2={height - padding}
+                    stroke="#0f172a"
+                  />
+                  {normalizedPoints.map((point, idx) => {
+                    const x =
+                      padding +
+                      ((new Date(point.timestamp).getTime() - minTime) / deltaTime) *
+                      (width - padding * 2);
+                    const y =
+                      height -
+                      padding -
+                      ((point.value - minValue) / deltaValue) * (height - padding * 2);
+                    return (
+                      <circle
+                        key={`${point.timestamp}-${idx}`}
+                        cx={x}
+                        cy={y}
+                        r={3}
+                        fill="#38bdf8"
+                      />
+                    );
+                  })}
+                </svg>
+              );
+            } catch (error) {
+              chartContent = (
+                <div className="mt-4 rounded-2xl border border-dashed border-slate-700/80 bg-slate-950/40 p-4 text-sm text-slate-400">
+                  Chart rendering not enabled yet; see the table block below.
+                </div>
+              );
+            }
+            return (
+              <section
+                key={`${block.type}-${block.id ?? index}`}
+                className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
+              >
+                {title}
+                {chartContent}
+              </section>
             );
           }
-          return (
-            <section
-              key={`${block.type}-${block.id ?? index}`}
-              className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
-            >
-              {title}
-              {chartContent}
-            </section>
-          );
-        }
 
           case "timeseries": {
             const chartData = prepareChartData(block.series);
@@ -518,8 +518,8 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
                     onClose={() => setFullscreenGraph(null)}
                   />
                 ) : null}
-                </section>
-              );
+              </section>
+            );
 
           case "network":
             return (
@@ -597,7 +597,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
               </section>
             );
         }
-        })}
+      })}
       {generalActions.length ? (
         <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4">
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Next actions</p>
@@ -616,9 +616,9 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
           </div>
         </section>
       ) : null}
-      </div>
-    );
-  }
+    </div>
+  );
+}
 
 function seriesKey(series: TimeSeriesSeries, index: number) {
   return series.name ? `series-${series.name}` : `series-${index}`;
@@ -662,50 +662,54 @@ function prepareChartData(series: TimeSeriesSeries[]) {
   });
 }
 
+import Neo4jGraphFlow, {
+  type Neo4jFlowEdge,
+  type Neo4jFlowNode,
+} from "../data/Neo4jGraphFlow";
+
 function GraphFlowRenderer({ block }: { block: GraphBlock }) {
-  const uniqueNodes = useMemo(() => {
-    const seen = new Set<string>();
-    return block.nodes.filter((node, idx) => {
-      const idKey = node.id ?? `node-${idx}`;
-      if (seen.has(idKey)) {
-        return false;
-      }
-      seen.add(idKey);
-      return true;
-    });
-  }, [block.nodes]);
-  const uniqueEdges = useMemo(() => {
-    const seen = new Set<string>();
-    return block.edges.filter((edge, idx) => {
-      const idKey = edge.id ?? `edge-${idx}-${edge.source}-${edge.target}`;
-      if (seen.has(idKey)) {
-        return false;
-      }
-      seen.add(idKey);
-      return true;
-    });
-  }, [block.edges]);
-  const edges = useMemo(
+  const [highlightNodeIds, setHighlightNodeIds] = useState<Set<string>>(new Set());
+  const [highlightEdgeIds, setHighlightEdgeIds] = useState<Set<string>>(new Set());
+
+  const nodes: Neo4jFlowNode[] = useMemo(
     () =>
-      uniqueEdges.map((edge, idx) => ({
-        ...edge,
-        id: edge.id ?? `edge-${idx}-${edge.source}-${edge.target}`,
+      block.nodes.map((node) => ({
+        id: node.id,
+        position: node.position,
+        data: { label: node.data.label },
+        type: node.type,
       })),
-    [uniqueEdges]
+    [block.nodes]
   );
+
+  const edges: Neo4jFlowEdge[] = useMemo(
+    () =>
+      block.edges.map((edge) => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: edge.label,
+      })),
+    [block.edges]
+  );
+
+  const handleNodeClick = (node: Neo4jFlowNode) => {
+    setHighlightNodeIds(new Set([node.id]));
+    const connectedEdges = edges
+      .filter((edge) => edge.source === node.id || edge.target === node.id)
+      .map((edge) => edge.id);
+    setHighlightEdgeIds(new Set(connectedEdges));
+  };
 
   return (
     <div className="h-full w-full">
-      <ReactFlow
-        nodes={uniqueNodes}
+      <Neo4jGraphFlow
+        nodes={nodes}
         edges={edges}
-        fitView
-        fitViewOptions={{ padding: 0.12 }}
-        attributionPosition="bottom-left"
-      >
-        <Background gap={12} size={1} color="#0f172a" />
-        <Controls showInteractive={false} />
-      </ReactFlow>
+        highlightNodeIds={highlightNodeIds}
+        highlightEdgeIds={highlightEdgeIds}
+        onNodeClick={handleNodeClick}
+      />
     </div>
   );
 }

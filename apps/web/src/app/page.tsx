@@ -117,18 +117,18 @@ export default function Home() {
       if (!response.ok) {
         throw new Error("Thread not found");
       }
-    const detail: ThreadDetail = await response.json();
-    setActiveThread(detail);
-    setThreads((prev) => {
-      const existing = prev.find((thread) => thread.id === detail.id);
-      const updated = existing?.updated_at !== detail.updated_at;
-      const filtered = prev.filter((thread) => thread.id !== detail.id);
-      if (updated) {
-        return [detail, ...filtered];
-      }
-      return prev.map((thread) => (thread.id === detail.id ? detail : thread));
-    });
-  },
+      const detail: ThreadDetail = await response.json();
+      setActiveThread(detail);
+      setThreads((prev) => {
+        const existing = prev.find((thread) => thread.id === detail.id);
+        const updated = existing?.updated_at !== detail.updated_at;
+        const filtered = prev.filter((thread) => thread.id !== detail.id);
+        if (updated) {
+          return [detail, ...filtered];
+        }
+        return prev.map((thread) => (thread.id === detail.id ? detail : thread));
+      });
+    },
     [apiBaseUrl]
   );
 
@@ -267,18 +267,18 @@ export default function Home() {
       setActiveThread((prev) =>
         prev
           ? {
-              ...prev,
-              messages: [
-                ...(prev.messages ?? []),
-                {
-                  id: `local-${Date.now()}`,
-                  thread_id: prev.id,
-                  role: "user",
-                  content: trimmedMessage,
-                  created_at: new Date().toISOString(),
-                },
-              ],
-            }
+            ...prev,
+            messages: [
+              ...(prev.messages ?? []),
+              {
+                id: `local-${Date.now()}`,
+                thread_id: prev.id,
+                role: "user",
+                content: trimmedMessage,
+                created_at: new Date().toISOString(),
+              },
+            ],
+          }
           : prev
       );
     }
@@ -318,11 +318,10 @@ export default function Home() {
               {threads.map((thread) => (
                 <div
                   key={thread.id}
-                  className={`group relative flex w-full flex-col rounded-2xl border px-3 py-3 transition ${
-                    activeThread?.id === thread.id
-                      ? "border-sky-400 bg-sky-500/10 text-white"
-                      : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
-                  }`}
+                  className={`group relative flex w-full flex-col rounded-2xl border px-3 py-3 transition ${activeThread?.id === thread.id
+                    ? "border-sky-400 bg-sky-500/10 text-white"
+                    : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                    }`}
                 >
                   <button
                     className="text-left"
@@ -332,7 +331,7 @@ export default function Home() {
                     <p className="text-xs text-slate-500">{formatTimestamp(thread.updated_at)}</p>
                   </button>
                   <button
-                    className="absolute right-3 top-3 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto rounded-full border border-red-400 px-2 py-0.5 text-[10px] uppercase tracking-[0.3em] text-red-400 hover:bg-red-500/10 pointer-events-none"
+                    className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border border-red-400 text-[10px] text-red-400 hover:bg-red-500/10 pointer-events-none"
                     onClick={(event) => {
                       event.stopPropagation();
                       deleteThread(thread.id);
@@ -348,9 +347,8 @@ export default function Home() {
         ) : null}
 
         <main
-          className={`flex flex-1 flex-col gap-6 transition-all ${
-            historyVisible ? "" : "w-full"
-          }`}
+          className={`flex flex-1 flex-col gap-6 transition-all ${historyVisible ? "" : "w-full"
+            }`}
         >
           <div className="flex flex-col gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -396,9 +394,8 @@ export default function Home() {
                   {status === "streaming" ? "Streaming…" : "메시지 전송"}
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-[0.3em] ${
-                    status === "error" ? "text-rose-400" : "text-slate-500"
-                  }`}
+                  className={`text-xs uppercase tracking-[0.3em] ${status === "error" ? "text-rose-400" : "text-slate-500"
+                    }`}
                 >
                   {status === "streaming" ? "SSE live" : status === "idle" ? "Ready" : "Error"}
                 </span>

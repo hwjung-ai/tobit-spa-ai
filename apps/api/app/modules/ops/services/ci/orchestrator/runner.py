@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import re
 
 from contextlib import contextmanager
@@ -7,11 +8,23 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Dict, Iterable, List, Literal, Sequence, Tuple
 
+import os
+import threading
+
 from apps.api.core.logging import get_logger
 from app.modules.ops.services.ci import policy, response_builder
 from app.modules.ops.services.ci.actions import NextAction, RerunPayload
 from app.modules.ops.services.ci.blocks import Block, chart_block, number_block, table_block, text_block
 from app.modules.ops.services.ci.planner.plan_schema import AutoSpec, Intent, MetricSpec, Plan, PlanMode, View
+from app.modules.ops.services.ci.planner.planner_llm import (
+    AGG_KEYWORDS,
+    ISO_DATE_PATTERN,
+    LIST_KEYWORDS,
+    METRIC_ALIASES,
+    METRIC_KEYWORDS,
+    SERIES_KEYWORDS,
+    TIME_RANGE_MAP,
+)
 from app.modules.ops.services.ci.tools import cep as cep_tools
 from app.modules.ops.services.ci.tools import ci as ci_tools
 from app.modules.ops.services.ci.tools import graph as graph_tools
@@ -61,6 +74,24 @@ def _find_exact_candidate(candidates: Sequence[dict], identifiers: Sequence[str]
     return None
 
 
+CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
+
+RUNNER_MARKER = "RUNNER_PATCH_GRAPH_20260112"
+
+
+def _runner_context() -> Dict[str, Any]:
+    return {
+        "marker": RUNNER_MARKER,
+        "file": __file__,
+        "pid": os.getpid(),
+        "thread_id": threading.get_ident(),
+    }
+
+
+MODULE_LOGGER = get_logger(__name__)
+MODULE_LOGGER.info("ci.runner.module_start", extra=_runner_context())
+
+
 class CIOrchestratorRunner:
     def __init__(
         self,
@@ -78,6 +109,7 @@ class CIOrchestratorRunner:
         self.plan_trace = policy_trace
         self.rerun_context = rerun_context or RerunContext()
         self.logger = get_logger(__name__)
+        self.logger.info("ci.runner.instance_start", extra=_runner_context())
         self.tool_calls: List[Dict[str, Any]] = []
         self.errors: List[str] = []
         self.next_actions: List[NextAction] = []
@@ -86,6 +118,12 @@ class CIOrchestratorRunner:
         self.list_paging_info: Dict[str, Any] | None = None
         self.aggregation_summary: Dict[str, Any] | None = None
         self._ci_search_recovery: bool = False
+        self.DEFAULT_OUTPUT_BLOCKS = ("text", "table")
+        self.GRAPH_VIEWS = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS}
+        self.GRAPH_VIEWS_WITH_PATH = self.GRAPH_VIEWS | {View.PATH}
+        self._last_graph_signature: tuple | None = None
+        self.GRAPH_SCOPE_KEYWORDS = ("영향권", "영향", "범위", "의존", "dependency", "impact")
+        self.GRAPH_SCOPE_METRIC_KEYWORDS = ("cpu", "latency", "error", "memory", "disk", "network")
 
     @contextmanager
     def _tool_context(self, tool: str, **meta):
@@ -100,6 +138,16 @@ class CIOrchestratorRunner:
             self.logger.info(f"ci.tool.{tool}.done", extra=meta)
             entry = {"tool": tool, **meta}
             self.tool_calls.append(entry)
+
+    def _log_routing(self, route: str) -> None:
+        self.logger.info(
+            "ci.runner.routing",
+            extra={"intent": self.plan.intent.value if self.plan.intent else None, "metric": bool(self.plan.metric), "route": route},
+        )
+
+    def _log_metric_blocks_return(self, blocks: List[Block]) -> None:
+        types = [block.get("type") if isinstance(block, dict) else getattr(block, "type", None) for block in blocks]
+        self.logger.info("ci.metric.blocks_debug", extra={"types": types, "count": len(blocks)})
 
     def _ci_search(
         self,
@@ -197,6 +245,84 @@ class CIOrchestratorRunner:
             return tuple(unique[:5])
         return None
 
+    def _sanitize_ci_keywords(self, keywords: Sequence[str]) -> List[str]:
+        filtered = set()
+        filtered.update(k.lower() for k in METRIC_KEYWORDS)
+        filtered.update(k.lower() for k in METRIC_ALIASES.keys())
+        filtered.update(k.lower() for k in AGG_KEYWORDS.keys())
+        filtered.update(k.lower() for k in TIME_RANGE_MAP.keys())
+        filtered.update(k.lower() for k in SERIES_KEYWORDS)
+        filtered.update(k.lower() for k in LIST_KEYWORDS)
+        sanitized: List[str] = []
+        for token in keywords:
+            normalized = token.lower().strip()
+            if not normalized:
+                continue
+            if normalized in filtered:
+                continue
+            if ISO_DATE_PATTERN.search(normalized):
+                continue
+            sanitized.append(token)
+            if len(sanitized) >= 5:
+                break
+        return sanitized
+
+    def _build_ci_search_keywords(self) -> tuple[List[str], str, List[str]]:
+        before = list(self.plan.primary.keywords)
+        recovered = self._recover_ci_identifiers()
+        if recovered:
+            return list(recovered[:5]), "recover_ci_identifiers", before
+        primary_sanitized = self._sanitize_ci_keywords(self.plan.primary.keywords)
+        if primary_sanitized:
+            return primary_sanitized, "plan_primary", before
+        secondary_sanitized = self._sanitize_ci_keywords(self.plan.secondary.keywords or [])
+        if secondary_sanitized:
+            return secondary_sanitized, "plan_secondary", before
+        fallback = before[: min(2, len(before))] or (self.plan.secondary.keywords or [])[:2]
+        return fallback, "fallback", before
+
+    def _extract_ci_identifiers(self, keywords: Sequence[str]) -> List[str]:
+        identifiers: List[str] = []
+        for token in keywords:
+            if not token:
+                continue
+            match = CI_IDENTIFIER_PATTERN.fullmatch(token.lower())
+            if match:
+                identifiers.append(token)
+        return identifiers
+
+    def _has_ci_identifier_in_keywords(self) -> bool:
+        if self._extract_ci_identifiers(self.plan.primary.keywords):
+            return True
+        if self._extract_ci_identifiers(self.plan.secondary.keywords or []):
+            return True
+        return False
+
+    def _routing_identifiers(self) -> List[str]:
+        identifiers: List[str] = []
+        for source in (
+            self.plan.primary.keywords,
+            self.plan.secondary.keywords or [],
+            self._recover_ci_identifiers() or (),
+        ):
+            for token in self._extract_ci_identifiers(source):
+                if token not in identifiers:
+                    identifiers.append(token)
+        return identifiers
+
+    def _is_graph_requested(self) -> bool:
+        view = (self.plan.graph.view or self.plan.view) or View.SUMMARY
+        if view in {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}:
+            return True
+        return "network" in (self.plan.output.blocks or [])
+
+    def _should_list_fallthrough_to_lookup(self) -> bool:
+        if not (self.plan.intent == Intent.LIST or self.plan.list.enabled):
+            return False
+        if not self._is_graph_requested():
+            return False
+        return self._has_ci_identifier_in_keywords()
+
     def _ci_get(self, ci_id: str) -> Dict[str, Any] | None:
         with self._tool_context("ci.get", ci_id=ci_id) as meta:
             detail = ci_tools.ci_get(self.tenant_id, ci_id)
@@ -259,11 +385,63 @@ class CIOrchestratorRunner:
 
     def _graph_expand(self, ci_id: str, view: str, depth: int, limits: dict[str, int]) -> Dict[str, Any]:
         with self._tool_context("graph.expand", view=view, depth=depth) as meta:
-            payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
-            meta["node_count"] = len(payload.get("nodes", []))
-            meta["edge_count"] = len(payload.get("edges", []))
-            meta["truncated"] = payload.get("truncated", False)
-        return payload
+            raw_payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
+            payload_type = type(raw_payload).__name__ if raw_payload is not None else "NoneType"
+            raw_extra: Dict[str, Any] = {"type": payload_type, "preview": str(raw_payload)[:200]}
+            if isinstance(raw_payload, dict):
+                raw_extra["keys"] = list(raw_payload.keys())
+            elif isinstance(raw_payload, list):
+                raw_extra["list_len"] = len(raw_payload)
+            else:
+                raw_extra["attrs"] = [attr for attr in dir(raw_payload) if not attr.startswith("_")]
+            self.logger.info("ci.graph.expand_return_debug", extra=raw_extra)
+            normalized = self._normalize_graph_payload(raw_payload, payload_type, meta)
+        return normalized
+
+    def _normalize_graph_payload(self, raw_payload: Any, payload_type: str, meta: Dict[str, Any]) -> Dict[str, Any]:
+        normalized: Dict[str, Any] = {
+            "nodes": [],
+            "edges": [],
+            "summary": {},
+            "meta": {},
+            "truncated": False,
+        }
+        if isinstance(raw_payload, dict):
+            normalized.update(raw_payload)
+        elif isinstance(raw_payload, list):
+            normalized["nodes"] = list(raw_payload)
+        else:
+            normalized.update(
+                {
+                    "nodes": getattr(raw_payload, "nodes", []) or [],
+                    "edges": getattr(raw_payload, "edges", []) or [],
+                    "summary": getattr(raw_payload, "summary", {}) or {},
+                    "meta": getattr(raw_payload, "meta", {}) or {},
+                    "truncated": bool(getattr(raw_payload, "truncated", False)),
+                }
+            )
+        nodes = normalized.get("nodes")
+        normalized["nodes"] = list(nodes) if isinstance(nodes, list) else []
+        edges = normalized.get("edges")
+        normalized["edges"] = list(edges) if isinstance(edges, list) else []
+        summary = normalized.get("summary")
+        normalized["summary"] = summary if isinstance(summary, dict) else {}
+        meta_value = normalized.get("meta")
+        normalized["meta"] = meta_value if isinstance(meta_value, dict) else {}
+        normalized["truncated"] = bool(normalized.get("truncated", False))
+        meta["payload_type"] = payload_type
+        meta["node_count"] = len(normalized["nodes"])
+        meta["edge_count"] = len(normalized["edges"])
+        meta["truncated"] = normalized["truncated"]
+        self.logger.info(
+            "ci.graph.expand_normalized_debug",
+            extra={
+                "nodes_len": len(normalized["nodes"]),
+                "edges_len": len(normalized["edges"]),
+                "keys": list(normalized.keys()),
+            },
+        )
+        return normalized
 
     def _graph_path(self, source_id: str, target_id: str, hops: int) -> Dict[str, Any]:
         with self._tool_context("graph.path", hop_count=hops) as meta:
@@ -360,6 +538,7 @@ class CIOrchestratorRunner:
         auto_trace: Dict[str, Any] | None = None
         start = perf_counter()
         plan_view = (self.plan.view or View.SUMMARY).value if self.plan.view else View.SUMMARY.value
+        runner_context = _runner_context()
         self.logger.info(
             "ci.runner.start",
             extra={
@@ -370,30 +549,59 @@ class CIOrchestratorRunner:
                 "metric_enabled": bool(self.plan.metric),
                 "history_enabled": bool(self.plan.history.enabled),
                 "cep_enabled": bool(self.plan.cep and self.plan.cep.rule_id),
+                **runner_context,
             },
         )
+        self.logger.info("ci.runner.version", extra={**runner_context, "class": self.__class__.__name__})
+        self._runner_context = runner_context
+        # self-check: 
+        # 1) "srv-erp-02 cpu 평균 오늘" → keywords sanitizes to ["srv-erp-02"] → _handle_lookup() runs metric.aggregate/series.
+        # 2) "ci 타입별 개수" → no plan.metric → _handle_aggregate() returns ci.aggregate blocks as before.
+        # 3) "srv-erp-02 영향권 cpu max" → graph expand happens first, then graph-scope metric blocks (graph_payload keeps ids).
+        extracted_identifiers = self._routing_identifiers()
+        graph_requested = self._is_graph_requested()
+        list_patch_present = bool(self.plan.list.offset or self.plan.list.limit)
+        rerun_present = bool(
+            self.rerun_context.selected_ci_id or self.rerun_context.selected_secondary_ci_id
+        )
+        decision_context = {
+            "list_fallthrough": self._should_list_fallthrough_to_lookup(),
+            "graph_requested": graph_requested,
+            "extracted_identifiers": extracted_identifiers,
+            "list_patch_present": list_patch_present,
+            "rerun": rerun_present,
+        }
+        self.logger.info("ci.runner.routing_decision", extra=decision_context)
         try:
-            force_metric_lookup = bool(
-                self.plan.metric
-                and (
-                    self.plan.metric.mode == "series"
-                    or "chart" in (self.plan.output.blocks or [])
-                    or self.plan.output.primary == "chart"
-                )
-            )
             if self.plan.mode == PlanMode.AUTO:
+                self._log_routing("auto")
                 blocks, answer, auto_trace = self._run_auto_recipe()
+            elif self._should_list_fallthrough_to_lookup():
+                self._log_routing("graph requested → lookup")
+                blocks, answer = self._handle_lookup()
+            elif graph_requested and extracted_identifiers:
+                self._log_routing("graph requested + identifier → lookup")
+                blocks, answer = self._handle_lookup()
             elif self.plan.intent == Intent.LIST or self.plan.list.enabled:
+                self._log_routing("list (pure)")
                 blocks, answer = self._handle_list_preview()
-            elif force_metric_lookup or self.plan.intent == Intent.LOOKUP:
+            elif self.plan.metric:
+                self._log_routing("metric → lookup")
+                blocks, answer = self._handle_lookup()
+            elif self.plan.intent == Intent.LOOKUP:
+                self._log_routing("lookup")
                 blocks, answer = self._handle_lookup()
             elif self.plan.intent == Intent.AGGREGATE:
+                self._log_routing("aggregate")
                 blocks, answer = self._handle_aggregate()
             elif self.plan.intent == Intent.PATH:
+                self._log_routing("path")
                 blocks, answer = self._handle_path()
             elif self.plan.list.enabled:
+                self._log_routing("list (fallback)")
                 blocks, answer = self._handle_list_preview()
             else:
+                self._log_routing("lookup (fallback)")
                 blocks, answer = self._handle_lookup()
         except Exception as exc:  # pragma: no cover - best effort
             self.errors.append(str(exc))
@@ -413,6 +621,19 @@ class CIOrchestratorRunner:
         if auto_trace:
             trace["auto"] = auto_trace
         used_tools = [call.get("tool") for call in self.tool_calls if call.get("tool")]
+        if self.plan.metric and "ci.aggregate" in used_tools:
+            self.logger.warning(
+                "ci.runner.assert_failed",
+                extra={"used_tools": used_tools, "intent": self.plan.intent.value if self.plan.intent else None, "metric": True},
+            )
+        if graph_requested and "graph.expand" not in used_tools:
+            self.logger.warning(
+                "ci.runner.graph_missing",
+                extra={"graph_requested": graph_requested, "used_tools": used_tools},
+            )
+            trace["graph_expected_but_missing"] = True
+            self.plan_trace["graph_expected_but_missing"] = True
+        runner_context_meta = getattr(self, "_runner_context", _runner_context())
         meta = {
             "route": "ci",
             "route_reason": "CI tab",
@@ -420,6 +641,7 @@ class CIOrchestratorRunner:
             "summary": answer,
             "used_tools": used_tools,
             "fallback": len(self.errors) > 0,
+            "runner_context": runner_context_meta,
         }
         block_types = []
         for block in blocks:
@@ -429,6 +651,7 @@ class CIOrchestratorRunner:
                 block_type = getattr(block, "type", None)
             if block_type:
                 block_types.append(block_type)
+        self.logger.info("ci.runner.blocks_debug", extra={"types": block_types, "count": len(blocks)})
         self.logger.info(
             "ci.runner.blocks",
             extra={"blocks_count": len(blocks), "block_types": block_types},
@@ -453,28 +676,202 @@ class CIOrchestratorRunner:
         if not detail:
             return fallback_blocks or [], fallback_message or "Unable to resolve CI"
         blocks = response_builder.build_ci_detail_blocks(detail)
-        blocks.extend(self._metric_blocks(detail))
-        blocks.extend(self._history_blocks(detail))
-        blocks.extend(self._cep_blocks(detail))
-        view = (self.plan.view or View.SUMMARY).value
-        if view in {"COMPOSITION", "DEPENDENCY", "IMPACT", "NEIGHBORS"}:
-            graph_payload = self._graph_expand(
-                detail["ci_id"],
-                view,
-                self.plan.graph.depth,
-                self.plan.graph.limits.dict(),
-            )
-            blocks.extend(response_builder.build_network_blocks(graph_payload))
-            self.next_actions.extend(
-                self._graph_next_actions(
-                    view,
-                    graph_payload.get("meta", {}).get("depth", self.plan.graph.depth),
-                    graph_payload.get("truncated", False),
-                )
-            )
+        graph_view = self.plan.graph.view or (self.plan.view or View.SUMMARY)
+        if self._should_run_sections_loop():
+            blocks.extend(self._execute_sections_loop(detail, graph_view))
+        else:
+            blocks.extend(self._metric_blocks(detail))
+            blocks.extend(self._history_blocks(detail))
+            graph_blocks, _ = self._build_graph_blocks(detail, graph_view)
+            blocks.extend(graph_blocks)
+            blocks.extend(self._cep_blocks(detail))
         answer = f"Lookup result for {detail['ci_code']}"
         return blocks, answer
 
+    def _should_run_sections_loop(self) -> bool:
+        if self.plan.mode == PlanMode.AUTO:
+            return True
+        output_blocks = tuple(self.plan.output.blocks or ())
+        if len(output_blocks) >= 2 and output_blocks != self.DEFAULT_OUTPUT_BLOCKS:
+            return True
+        section_count = 0
+        if self.plan.metric:
+            section_count += 1
+        if self.plan.history.enabled:
+            section_count += 1
+        if self.plan.cep and self.plan.cep.mode == "simulate":
+            section_count += 1
+        return section_count >= 2
+
+    def _graph_scope_metric_requested(self) -> bool:
+        if self.plan.metric and self.plan.metric.scope == "graph":
+            return True
+        text = (self.question or "").lower()
+        if not text:
+            return False
+        return (
+            any(kw in text for kw in self.GRAPH_SCOPE_KEYWORDS)
+            and any(kw in text for kw in self.GRAPH_SCOPE_METRIC_KEYWORDS)
+        )
+
+    def _compute_graph_signature(self, payload: Dict[str, Any] | None) -> tuple | None:
+        if not payload:
+            return None
+        nodes_value = payload.get("nodes")
+        nodes = nodes_value if isinstance(nodes_value, list) else []
+        edges_value = payload.get("edges")
+        edges = edges_value if isinstance(edges_value, list) else []
+        meta_value = payload.get("meta")
+        if isinstance(meta_value, dict):
+            depth = meta_value.get("depth")
+        else:
+            depth = None
+        truncated = bool(payload.get("truncated", False))
+        ids_source = payload.get("ids")
+        if isinstance(ids_source, list):
+            ids = tuple(ids_source[:5])
+        else:
+            ids = tuple()
+        preview_ids = tuple(identifier for identifier in ids if identifier)
+        return (len(nodes), len(edges), depth, truncated, preview_ids)
+
+    def _build_graph_blocks(self, detail: Dict[str, Any], graph_view: View, allow_path: bool = False) -> tuple[List[Block], Dict[str, Any] | None]:
+        if not graph_view:
+            return [], None
+        allowed = self.GRAPH_VIEWS_WITH_PATH if allow_path else self.GRAPH_VIEWS
+        if graph_view not in allowed:
+            return [], None
+        try:
+            self.logger.info(
+                "ci.graph.payload_type_debug",
+                extra={"stage": "before_expand", "view": graph_view.value},
+            )
+            payload = self._graph_expand(
+                detail["ci_id"],
+                graph_view.value,
+                self.plan.graph.depth,
+                self.plan.graph.limits.dict(),
+            )
+            self.logger.info(
+                "ci.graph.payload_type_debug",
+                extra={
+                    "stage": "after_expand",
+                    "type": type(payload).__name__,
+                    "keys": list(payload.keys()) if isinstance(payload, dict) else None,
+                    "view": graph_view.value,
+                    "nodes_len": len(payload.get("nodes", [])) if isinstance(payload, dict) and isinstance(payload.get("nodes"), list) else None,
+                    "edges_len": len(payload.get("edges", [])) if isinstance(payload, dict) and isinstance(payload.get("edges"), list) else None,
+                },
+            )
+            if not isinstance(payload, dict):
+                self.logger.error(
+                    "ci.graph.payload_type",
+                    extra={"type": type(payload).__name__, "message": "graph payload not dict"},
+                )
+                self._last_graph_signature = self._compute_graph_signature(None)
+                return [
+                    text_block("Graph payload malformed", title=f"Graph {graph_view.value}")
+                ], None
+            truncated = payload.get("truncated", False)
+            nodes = payload.get("nodes")
+            edges = payload.get("edges")
+            if not isinstance(nodes, list) or not isinstance(edges, list):
+                self.logger.error(
+                    "ci.graph.payload_type",
+                    extra={
+                        "type": type(payload).__name__,
+                        "message": "graph payload missing nodes/edges",
+                        "keys": list(payload.keys()),
+                    },
+                )
+                self._last_graph_signature = self._compute_graph_signature(None)
+                return [
+                    text_block("Graph payload malformed", title=f"Graph {graph_view.value}")
+                ], payload
+            self.logger.info(
+                "ci.graph.payload_debug",
+                extra={
+                    "keys": list(payload.keys()),
+                    "nodes_len": len(nodes),
+                    "edges_len": len(edges),
+                },
+            )
+            self.next_actions.extend(
+                self._graph_next_actions(
+                    graph_view.value,
+                    payload.get("meta", {}).get("depth", self.plan.graph.depth),
+                    truncated,
+                )
+            )
+            self._last_graph_signature = self._compute_graph_signature(payload)
+            return response_builder.build_network_blocks(payload), payload
+        except Exception as exc:
+            self.logger.exception("ci.graph.build_graph_blocks.error", exc_info=exc)
+            self.errors.append(str(exc))
+            self._last_graph_signature = self._compute_graph_signature(None)
+            return [text_block(f"Graph {graph_view.value} expansion failed: {exc}", title=f"Graph {graph_view.value}")], None
+
+    def _execute_sections_loop(self, detail: Dict[str, Any], graph_view: View) -> List[Block]:
+        if not detail:
+            return []
+        sections = []
+        if self.plan.metric:
+            sections.append("metric")
+        if self.plan.history.enabled:
+            sections.append("history")
+        if self.plan.cep and self.plan.cep.mode == "simulate":
+            sections.append("cep")
+        graph_enabled = graph_view in self.GRAPH_VIEWS_WITH_PATH
+        force_graph = self._graph_scope_metric_requested() or (self.plan.history.scope == "graph" and self.plan.history.enabled)
+        if graph_enabled or force_graph:
+            graph_view_for_loop = graph_view if graph_enabled else (self.plan.graph.view or View.DEPENDENCY)
+            sections.append("graph")
+        else:
+            graph_view_for_loop = graph_view
+        if not sections:
+            return []
+        outputs: Dict[str, List[Block]] = {}
+        prev_signature = None
+        iteration = 0
+        max_iterations = 4
+        self._last_graph_signature = None
+        graph_payload: Dict[str, Any] | None = None
+        graph_call_index = 0
+        while iteration < max_iterations:
+            iteration += 1
+            if "graph" in sections:
+                graph_call_index += 1
+                self.logger.info(
+                    "ci.graph.build_graph_blocks.start",
+                    extra={
+                        "view": graph_view_for_loop.value,
+                        "depth": self.plan.graph.depth,
+                        "call_index": graph_call_index,
+                    },
+                )
+                try:
+                    graph_blocks, graph_payload = self._build_graph_blocks(detail, graph_view_for_loop, allow_path=True)
+                except Exception as exc:
+                    self.logger.exception("ci.graph.build_graph_blocks.exception", exc_info=exc)
+                    graph_blocks, graph_payload = (
+                        [text_block(f"Graph {graph_view_for_loop.value} expansion failed: {exc}", title=f"Graph {graph_view_for_loop.value}")],
+                        None,
+                    )
+                outputs["graph"] = graph_blocks
+            if "metric" in sections:
+                outputs["metric"] = self._metric_blocks(detail, graph_payload)
+            if "history" in sections:
+                outputs["history"] = self._history_blocks(detail, graph_payload)
+            if "cep" in sections:
+                outputs["cep"] = self._cep_blocks(detail)
+            signature = (repr(self.metric_context), repr(self.history_context), self._last_graph_signature)
+            if signature == prev_signature:
+                break
+            prev_signature = signature
+        combined: List[Block] = []
+        for name in ["metric", "history", "graph", "cep"]:
+            combined.extend(outputs.get(name) or [])
+        return combined
     def _run_auto_recipe(self) -> tuple[List[Block], str, Dict[str, Any]]:
         detail, fallback_blocks, fallback_message = self._resolve_ci_detail()
         auto_spec = self.plan.auto
@@ -1284,26 +1681,48 @@ class CIOrchestratorRunner:
                 return None, [text_block(message)], message
             return detail, None, None
         requested_keywords = list(self.plan.primary.keywords)
+        if not requested_keywords:
+            secondary_ids = self._extract_ci_identifiers(self.plan.secondary.keywords or [])
+            if secondary_ids:
+                requested_keywords = secondary_ids
+        search_keywords, sanitized_source, before_keywords = self._build_ci_search_keywords()
+        self.plan_trace.setdefault("keywords_sanitized", {})
+        self.plan_trace["keywords_sanitized"].update(
+            {"before": before_keywords, "after": search_keywords, "source": sanitized_source}
+        )
+        ci_search_trace = self.plan_trace.setdefault("ci_search_trace", [])
+        ci_search_trace.append({"stage": "initial", "keywords": search_keywords, "source": sanitized_source})
         candidates = self._ci_search(
-            keywords=self.plan.primary.keywords,
+            keywords=search_keywords,
             filters=[filter.dict() for filter in self.plan.primary.filters],
             limit=self.plan.primary.limit,
         )
+        ci_search_trace[-1]["row_count"] = len(candidates)
         if not candidates:
             candidates = self._ci_search_broad_or(
-                keywords=requested_keywords,
+                keywords=search_keywords,
                 filters=[filter.dict() for filter in self.plan.primary.filters],
                 limit=10,
             )
-            if not candidates:
-                message = "No CI matches found."
-                return None, [text_block(message, title="Lookup")], message
+            ci_search_trace.append({"stage": "broad_or", "keywords": search_keywords})
+        if not candidates:
+            message = "No CI matches found."
+            return None, [text_block(message, title="Lookup")], message
         if len(candidates) > 1:
-            exact = _find_exact_candidate(candidates, requested_keywords)
+            exact = _find_exact_candidate(candidates, search_keywords)
             if exact:
                 self.logger.info(
                     "ci.runner.ci_search_exact_match",
                     extra={"ci_id": exact.get("ci_id"), "ci_code": exact.get("ci_code")},
+                )
+                self.logger.info(
+                    "ci.resolve.debug",
+                    extra={
+                        "keywords": search_keywords,
+                        "row_count": len(candidates),
+                        "exact_ci_id": exact.get("ci_id"),
+                        "exact_ci_code": exact.get("ci_code"),
+                    },
                 )
                 detail = self._ci_get(exact["ci_id"])
                 if not detail:
@@ -1385,7 +1804,7 @@ class CIOrchestratorRunner:
             )
         return actions
 
-    def _metric_blocks(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _metric_blocks(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
         metric_spec = self.plan.metric
         if not metric_spec:
             return []
@@ -1394,12 +1813,14 @@ class CIOrchestratorRunner:
             metric_trace.update({"status": "missing", "requested": metric_spec.dict()})
             candidates = metric_tools.list_metric_names(self.tenant_id)
             rows = [[name] for name in candidates]
-            return [
+            blocks = [
                 text_block(f"Metric '{metric_spec.metric_name}' not found", title="Metric lookup"),
                 table_block(["metric_name"], rows, title="Available metrics"),
             ]
+            self._log_metric_blocks_return(blocks)
+            return blocks
         if metric_spec.scope == "graph":
-            return self._graph_metric_blocks(detail, metric_spec, metric_trace)
+            return self._graph_metric_blocks(detail, metric_spec, metric_trace, graph_payload=graph_payload)
         if metric_spec.mode == "series":
             series = self._metric_series_table(
                 detail["ci_id"],
@@ -1421,7 +1842,7 @@ class CIOrchestratorRunner:
                     f"{metric_spec.metric_name} ({metric_spec.time_range}) returned no data "
                     f"for CI {ci_code}"
                 )
-                return [
+                blocks = [
                     text_block(reason, title="Metric data unavailable"),
                     table_block(
                         ["metric", "time_range", "ci_code"],
@@ -1429,6 +1850,8 @@ class CIOrchestratorRunner:
                         title="Metric request details",
                     ),
                 ]
+                self._log_metric_blocks_return(blocks)
+                return blocks
             table_block_rows = table_block(["ts", "value"], rows, title="Metric series")
             chart = None
             try:
@@ -1453,8 +1876,8 @@ class CIOrchestratorRunner:
             return blocks
         aggregate = self._metric_aggregate(
             metric_spec.metric_name,
-            metric_spec.time_range,
             metric_spec.agg,
+            metric_spec.time_range,
             detail["ci_id"],
         )
         metric_trace.update(
@@ -1480,15 +1903,22 @@ class CIOrchestratorRunner:
             "agg": aggregate["agg"],
             "value": aggregate.get("value"),
         }
-        return [table_block(["metric_name", "agg", "time_from", "time_to", "value"], rows, title="Metric aggregate")]
+        blocks = [table_block(["metric_name", "agg", "time_from", "time_to", "value"], rows, title="Metric aggregate")]
+        self._log_metric_blocks_return(blocks)
+        return blocks
 
     def _graph_metric_blocks(
-        self, detail: Dict[str, Any], metric_spec: MetricSpec, metric_trace: Dict[str, Any]
+        self,
+        detail: Dict[str, Any],
+        metric_spec: MetricSpec,
+        metric_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
         graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
         graph_depth = self.plan.graph.depth
         graph_limits = self.plan.graph.limits.dict()
-        graph_payload = self._graph_expand(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
+        if not graph_payload:
+            graph_payload = self._graph_expand(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
         aggregate = self._metric_aggregate(
             metric_spec.metric_name,
@@ -1721,14 +2151,14 @@ class CIOrchestratorRunner:
         )
         return actions
 
-    def _history_blocks(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _history_blocks(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
         history_spec = self.plan.history
         if not history_spec or not history_spec.enabled:
             return []
         history_trace = self.plan_trace.setdefault("history", {})
         history_trace["requested"] = history_spec.dict()
         if history_spec.scope == "graph":
-            return self._graph_history_blocks(detail, history_spec, history_trace)
+            return self._graph_history_blocks(detail, history_spec, history_trace, graph_payload=graph_payload)
         return self._ci_history_blocks(detail, history_spec, history_trace)
 
     def _ci_history_blocks(
@@ -1767,11 +2197,13 @@ class CIOrchestratorRunner:
         detail: Dict[str, Any],
         history_spec: Any,
         history_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
         graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
         graph_depth = self.plan.graph.depth
         graph_limits = self.plan.graph.limits.dict()
-        graph_payload = self._graph_expand(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
+        if not graph_payload:
+            graph_payload = self._graph_expand(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
         result = self._history_recent(
             history_spec,
