@@ -7,12 +7,14 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 from sqlmodel import Session
 
+from apps.api.core.logging import get_logger
 from core.db import get_session
 from models.history import QueryHistory
 from schemas.common import ResponseEnvelope
 from schemas.history import HistoryCreate, HistoryRead
 
 router = APIRouter(prefix="/history", tags=["history"])
+logger = get_logger(__name__)
 
 
 def _resolve_identity(
@@ -73,8 +75,19 @@ def delete_history(
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
     entry = session.get(QueryHistory, history_id)
-    if not entry or entry.tenant_id != tenant_id or entry.user_id != user_id:
+    if not entry:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="History entry not found")
+    if entry.tenant_id != tenant_id or entry.user_id != user_id:
+        logger.warning(
+            "history.delete.identity_mismatch",
+            extra={
+                "requested_tenant_id": tenant_id,
+                "requested_user_id": user_id,
+                "entry_tenant_id": entry.tenant_id,
+                "entry_user_id": entry.user_id,
+                "history_id": str(history_id),
+            },
+        )
     session.delete(entry)
     session.commit()
     return ResponseEnvelope.success()
