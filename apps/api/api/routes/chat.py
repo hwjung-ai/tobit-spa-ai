@@ -105,18 +105,55 @@ async def stream_chat(
     assistant_buffer: list[str] = []
     done_sent = False
     prompt_for_orchestrator = resolved_message
+    
+    # 1. Fetch recent messages for context window
+    MAX_HISTORY_MESSAGES = 10
+    history_stmt = (
+        select(ChatMessage)
+        .where(ChatMessage.thread_id == thread.id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(MAX_HISTORY_MESSAGES)
+    )
+    past_messages = session.exec(history_stmt).all()
+    # Remove the very last user message we just saved, to avoid duplication if it was caught in the query
+    # (though typically we want it at the end).
+    # Since we just saved it, it should be the most recent one.
+    # Let's just re-build the prompt from history + current message carefully.
+    
+    # Re-order to chronological
+    past_messages = sorted(past_messages, key=lambda m: m.created_at)
+    
+    context_str = ""
+    for msg in past_messages:
+        # Skip the current message if it's already in the DB (which it is, we just saved it)
+        # We will append resolved_message explicitly at the end to be safe, 
+        # or we can just use the history including the current message.
+        # Let's use the history excluding the current one to clear confusion, then append current.
+        if msg.content == resolved_message and msg.role == "user" and msg == past_messages[-1]:
+            continue
+        context_str += f"{msg.role.upper()}: {msg.content}\n"
+
     if thread.summary:
         logging.info("Thread %s has summary; prepending to prompt", thread.id)
         prompt_for_orchestrator = (
             "Previous conversation summary:\n"
             f"{thread.summary}\n\n"
+            "Conversation History:\n"
+            f"{context_str}\n"
             f"User asks:\n{resolved_message}"
         )
-        logging.debug(
-            "Prompt for thread %s: %s",
-            thread.id,
-            prompt_for_orchestrator.replace("\n", " ")[:200],
+    elif context_str:
+        prompt_for_orchestrator = (
+            "Conversation History:\n"
+            f"{context_str}\n"
+            f"User asks:\n{resolved_message}"
         )
+
+    logging.debug(
+        "Prompt for thread %s: %s",
+        thread.id,
+        prompt_for_orchestrator.replace("\n", " ")[:200],
+    )
 
     async def event_generator() -> AsyncGenerator[str, None]:
         nonlocal done_sent
