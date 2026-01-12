@@ -324,7 +324,15 @@ WHERE {where_clause}
             for row in cur.fetchall():
                 rendered = [str(row[idx]) for idx in range(len(columns))]
                 rows.append(rendered)
-    return {"columns": columns, "rows": rows, "total": len(rows), "total_count": total_count}
+    query_str = query.strip()
+    return {
+        "columns": columns,
+        "rows": rows,
+        "total": len(rows),
+        "total_count": total_count,
+        "query": query_str,
+        "params": query_params,
+    }
 
 
 def ci_list_preview(

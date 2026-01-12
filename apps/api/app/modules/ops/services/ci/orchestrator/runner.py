@@ -1555,6 +1555,10 @@ class CIOrchestratorRunner:
             }
         block = response_builder.build_aggregate_block(agg)
         blocks.append(block)
+        query = agg.get("query")
+        params = agg.get("params")
+        if query and params is not None:
+            blocks.append(response_builder.build_sql_reference_block(query, params))
         answer = f"Aggregated {len(agg.get('rows', []))} groups"
         blocks.extend(self._build_list_preview_blocks())
         return blocks, answer

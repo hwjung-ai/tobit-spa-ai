@@ -5,6 +5,8 @@ from typing import Any, Dict, Iterable, List
 
 from apps.api.core.logging import get_logger
 
+from schemas import ReferenceItem, ReferencesBlock
+
 from app.modules.ops.services.ci.blocks import (
     network_block,
     number_block,
@@ -170,3 +172,17 @@ def build_path_blocks(path_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def build_answer_text(answer: str | None, fallback: str = "CI insight ready") -> Dict[str, Any]:
     return text_block(answer or fallback, title="Answer")
+
+def build_sql_reference_block(sql: str, params: list[Any], title: str = "Aggregation query") -> dict[str, Any]:
+    block = ReferencesBlock(
+        type="references",
+        title=title,
+        items=[
+            ReferenceItem(
+                kind="sql",
+                title=title,
+                payload={"sql": sql, "params": params},
+            )
+        ],
+    )
+    return block.model_dump()
