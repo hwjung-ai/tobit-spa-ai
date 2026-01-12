@@ -77,6 +77,9 @@ def _find_exact_candidate(candidates: Sequence[dict], identifiers: Sequence[str]
 CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 
 RUNNER_MARKER = "RUNNER_PATCH_GRAPH_20260112"
+HISTORY_FALLBACK_KEYWORDS = {"이력", "작업", "점검", "history", "log", "이벤트", "기록"}
+HISTORY_WORK_KEYWORDS = {"작업", "work", "deployment", "integration", "audit", "upgrade"}
+HISTORY_MAINT_KEYWORDS = {"유지보수", "maintenance", "maint", "점검", "inspection"}
 
 
 def _runner_context() -> Dict[str, Any]:
@@ -1712,6 +1715,10 @@ class CIOrchestratorRunner:
             ci_search_trace.append({"stage": "broad_or", "keywords": search_keywords})
         if not candidates:
             message = "No CI matches found."
+            history_fallback = self._history_fallback_for_question()
+            if history_fallback:
+                blocks, hist_message = history_fallback
+                return None, blocks, hist_message
             return None, [text_block(message, title="Lookup")], message
         if len(candidates) > 1:
             exact = _find_exact_candidate(candidates, search_keywords)
@@ -1745,6 +1752,74 @@ class CIOrchestratorRunner:
             message = f"CI {candidates[0]['ci_code']} not found."
             return None, [text_block(message)], message
         return detail, None, None
+
+    def _history_fallback_for_question(self) -> tuple[List[Dict[str, Any]], str] | None:
+        text = (self.question or "").lower()
+        if not any(keyword in text for keyword in HISTORY_FALLBACK_KEYWORDS):
+            return None
+        try:
+            history = history_tools.recent_work_and_maintenance(
+                self.tenant_id,
+                "last_7d",
+                limit=50,
+            )
+        except Exception as exc:
+            self.logger.debug("ci.runner.history_fallback_failed", exc_info=exc)
+            return [text_block("전체 이력 조회에 실패했습니다. 이력 탭을 이용해주세요.", title="History fallback")], "History fallback failed"
+        work_rows = history.get("work_rows", [])
+        maint_rows = history.get("maint_rows", [])
+        fallback_blocks: List[Dict[str, Any]] = [text_block("CI 없이 전체 이력을 가져왔습니다.", title="History fallback")]
+        types = self._history_types_from_question()
+        if "work" in types or not types:
+            fallback_blocks.append(
+                table_block(
+                    ["start_time", "ci_code", "ci_name", "work_type", "impact_level", "result", "summary"],
+                    [
+                        [
+                            str(row[0]),
+                            row[1] or "-",
+                            row[2] or "-",
+                            row[3],
+                            str(row[4]),
+                            row[5] or "",
+                            row[6] or "",
+                        ]
+                        for row in work_rows
+                    ]
+                    or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
+                    title="Work history (최근 7일)",
+                )
+            )
+        if "maintenance" in types or not types:
+            fallback_blocks.append(
+                table_block(
+                    ["start_time", "ci_code", "ci_name", "maint_type", "duration_min", "result", "summary"],
+                    [
+                        [
+                            str(row[0]),
+                            row[1] or "-",
+                            row[2] or "-",
+                            row[3],
+                            str(row[4]),
+                            row[5] or "",
+                            row[6] or "",
+                        ]
+                        for row in maint_rows
+                    ]
+                    or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
+                    title="Maintenance history (최근 7일)",
+                )
+            )
+        return fallback_blocks, "History fallback executed"
+
+    def _history_types_from_question(self) -> set[str]:
+        text = (self.question or "").lower()
+        types: set[str] = set()
+        if any(keyword in text for keyword in HISTORY_WORK_KEYWORDS):
+            types.add("work")
+        if any(keyword in text for keyword in HISTORY_MAINT_KEYWORDS):
+            types.add("maintenance")
+        return types
 
     def _resolve_path_endpoint(
         self,
