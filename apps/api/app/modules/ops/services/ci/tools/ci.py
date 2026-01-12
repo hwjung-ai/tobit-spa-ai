@@ -274,8 +274,6 @@ def ci_aggregate(
     top_n: int | None = 50,
 ) -> Dict[str, Any]:
     group_list = [field for field in group_by if field in FILTER_FIELDS]
-    if not group_list:
-        raise ValueError("At least one valid group_by field is required")
     metric_list = [metric for metric in metrics if metric in AGG_METRICS]
     if not metric_list:
         raise ValueError("At least one valid metric is required")
@@ -286,17 +284,19 @@ def ci_aggregate(
         where_clauses.append("ci.ci_id = ANY(%s)")
         params.append(list(ci_ids))
     where_clauses.extend(_build_filter_clauses(filters or (), params))
-    group_clause = ", ".join(f"ci.{field}" for field in group_list)
-    select_clause = ", ".join(f"ci.{field}" for field in group_list)
     metric_clause = []
     for metric in metric_list:
         if metric == "count":
             metric_clause.append("COUNT(*) AS count")
         elif metric == "count_distinct":
             metric_clause.append("COUNT(DISTINCT ci.ci_id) AS count_distinct")
-    order_by_clause = "ORDER BY count DESC" if "count" in metric_list else ""
+    group_clause = ", ".join(f"ci.{field}" for field in group_list)
+    order_by_clause = "ORDER BY count DESC" if group_list and "count" in metric_list else ""
     where_clause = " AND ".join(where_clauses)
-    query = f"""
+    if group_list:
+        select_clause = ", ".join(f"ci.{field}" for field in group_list)
+        columns = [field for field in group_list] + metric_list
+        query = f"""
 SELECT {select_clause}, {', '.join(metric_clause)}
 FROM ci
 WHERE {where_clause}
@@ -304,14 +304,21 @@ GROUP BY {group_clause}
 {order_by_clause}
 LIMIT %s
 """
+    else:
+        columns = metric_list
+        query = f"""
+SELECT {', '.join(metric_clause)}
+FROM ci
+WHERE {where_clause}
+"""
     count_query = f"SELECT COUNT(*) FROM ci WHERE {where_clause}"
     count_params = list(params)
-    params.append(sanitized_limit)
+    query_params = params + [sanitized_limit] if group_list else params
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(count_query, count_params)
             total_count = cur.fetchone()[0]
-            cur.execute(query, params)
+            cur.execute(query, query_params)
             columns = [field for field in group_list] + metric_list
             rows: List[List[str]] = []
             for row in cur.fetchall():

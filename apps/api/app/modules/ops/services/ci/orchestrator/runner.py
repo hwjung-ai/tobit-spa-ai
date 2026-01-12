@@ -1538,10 +1538,11 @@ class CIOrchestratorRunner:
         self.next_actions = prioritized + self.next_actions
 
     def _handle_aggregate(self) -> tuple[List[Block], str]:
+        agg_filters = [filter.dict() for filter in self.plan.aggregate.filters]
         agg = self._ci_aggregate(
             self.plan.aggregate.group_by,
             self.plan.aggregate.metrics,
-            filters=[filter.dict() for filter in self.plan.primary.filters],
+            filters=agg_filters or None,
             top_n=self.plan.aggregate.top_n,
         )
         blocks: List[Block] = []

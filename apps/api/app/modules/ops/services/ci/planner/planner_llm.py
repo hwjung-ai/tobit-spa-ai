@@ -4,7 +4,7 @@ import json
 import os
 import re
 from time import perf_counter
-from typing import List, Set, Tuple
+from typing import Iterable, List, Set, Tuple
 
 ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 
@@ -282,6 +282,7 @@ TABLE_HINTS = {
     "출력",
 }
 LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
+SERVER_FILTER_KEYWORDS = {"서버", "server"}
 CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
 OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", "gpt-4o-mini")
@@ -290,6 +291,7 @@ You are the OPS CI planner's output parser. Read the user's question and respond
 {
   "output_types": ["number","table","chart","network","text"],
   "ci_identifiers": ["ERP_OS_02"],
+  "filters": [{"field": "ci_subtype", "op": "=", "value": "server"}],
   "metric": {
     "name": "cpu_usage",
     "agg": "avg",
@@ -304,6 +306,7 @@ You are the OPS CI planner's output parser. Read the user's question and respond
 - output_types must list at least one element describing the requested blocks.
 - ci_identifiers should include specifiers such as CI code/ci_name when available.
 - metric must be null if there is no metric/history intent.
+- filters should contain field/op/value entries for any narrowing context (e.g. server filter when applicable).
 - LIST RULES:
   - Only enable list for explicit list requests such as “목록/리스트/전체 목록”.
   - Do not enable list for output format hints like “표로 보여줘/테이블로 보여줘/보여줘”.
@@ -351,6 +354,38 @@ def _extract_filters(text: str) -> List[FilterSpec]:
     return filters
 
 
+def _filters_from_payload(payload: Iterable[dict] | None) -> List[FilterSpec]:
+    results: List[FilterSpec] = []
+    if not payload:
+        return results
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        try:
+            results.append(FilterSpec(**item))
+        except Exception:
+            continue
+    return results
+
+
+def _merge_filters(*filter_lists: Iterable[FilterSpec]) -> List[FilterSpec]:
+    seen: set[tuple[str, str, str]] = set()
+    merged: List[FilterSpec] = []
+    for flist in filter_lists:
+        for spec in flist:
+            key = (spec.field, spec.op, spec.value)
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(spec)
+    return merged
+
+
+def _should_filter_server(text: str) -> bool:
+    normalized = text.lower()
+    return any(keyword in normalized for keyword in SERVER_FILTER_KEYWORDS)
+
+
 def create_plan(question: str) -> Plan:
     normalized = question.strip()
     start = perf_counter()
@@ -365,12 +400,15 @@ def create_plan(question: str) -> Plan:
         llm_payload = None
     output_types: Set[str]
     ci_keywords: tuple[str, ...]
+    llm_filters_payload = None
     if llm_payload:
         output_types = set(llm_payload.get("output_types") or ["text"])
         ci_keywords = tuple(llm_payload.get("ci_identifiers") or ())
+        llm_filters_payload = llm_payload.get("filters")
     else:
         output_types = determine_output_types(normalized)
         ci_keywords = ()
+    llm_filters = _filters_from_payload(llm_filters_payload)
     if graph_force:
         output_types.add("network")
         recovered = _extract_identifier_candidates(normalized)
@@ -437,6 +475,13 @@ def create_plan(question: str) -> Plan:
     parsed_filters = _extract_filters(normalized)
     if parsed_filters:
         plan.primary = plan.primary.copy(update={"filters": parsed_filters})
+    server_filter = FilterSpec(field="ci_subtype", value="server") if _should_filter_server(normalized) else None
+    aggregate_filters = _merge_filters(
+        plan.primary.filters,
+        llm_filters,
+        [server_filter] if server_filter else [],
+    )
+    plan.aggregate = plan.aggregate.copy(update={"filters": aggregate_filters})
     secondary_text = normalized
     if plan.intent == Intent.PATH:
         left, right = _split_path_candidates(normalized)
@@ -444,8 +489,10 @@ def create_plan(question: str) -> Plan:
         secondary_text = right
     plan.secondary = plan.secondary.copy(update={"keywords": _extract_keywords(secondary_text)})
     if plan.intent == Intent.AGGREGATE:
+        should_group = _determine_type_aggregation(normalized) and not aggregate_filters
+        group_by = ["ci_type"] if should_group else []
         plan.aggregate = plan.aggregate.copy(
-            update={"group_by": ["ci_type"], "metrics": ["count"], "top_n": 10}
+            update={"group_by": group_by, "metrics": ["count"], "top_n": 10}
         )
     if plan.intent == Intent.PATH:
         plan.graph = plan.graph.copy(update={"depth": 4})
@@ -548,6 +595,8 @@ def _determine_type_aggregation(text: str) -> bool:
 
 def _apply_ci_type_aggregation(plan: Plan, text: str) -> Plan:
     if not _determine_type_aggregation(text):
+        return plan
+    if plan.aggregate.filters:
         return plan
     if plan.intent == Intent.AGGREGATE and "ci_type" in plan.aggregate.group_by:
         return plan

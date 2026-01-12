@@ -45,6 +45,7 @@ class SecondarySpec(BaseModel):
 class AggregateSpec(BaseModel):
     group_by: List[str] = Field(default_factory=list)
     metrics: List[str] = Field(default_factory=list)
+    filters: List[FilterSpec] = Field(default_factory=list)
     scope: Literal["ci", "graph"] = "ci"
     top_n: int = 10
 
