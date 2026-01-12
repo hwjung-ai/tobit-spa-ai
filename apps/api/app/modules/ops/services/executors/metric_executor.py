@@ -20,16 +20,31 @@ from schemas import (
 def run_metric(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
-        raise ValueError("CI not found")
+        markdown = MarkdownBlock(
+            type="markdown",
+            title="Metric 결과 없음",
+            content="CI를 찾을 수 없습니다.",
+        )
+        return [markdown], ["postgres", "timescale"]
     ci = ci_hits[0]
     metric_hit = resolve_metric(question)
     if not metric_hit:
-        raise ValueError("Metric not found")
+        markdown = MarkdownBlock(
+            type="markdown",
+            title="Metric 결과 없음",
+            content="요청한 메트릭을 찾을 수 없습니다.",
+        )
+        return [markdown], ["postgres", "timescale"]
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
     query, params = _build_metric_query(tenant_id, ci, metric_hit, time_range)
     rows = _fetch_timeseries(query, params)
     if not rows:
-        raise ValueError("No metric data")
+        markdown = MarkdownBlock(
+            type="markdown",
+            title="Metric 결과 없음",
+            content="해당 기간에 메트릭 데이터가 없습니다.",
+        )
+        return [markdown], ["postgres", "timescale"]
     stats = _calculate_stats(rows)
     blocks = _build_blocks(ci, metric_hit, time_range, stats, rows, query, params)
     return blocks, ["postgres", "timescale"]

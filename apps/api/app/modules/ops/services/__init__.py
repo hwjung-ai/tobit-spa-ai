@@ -117,7 +117,11 @@ def _normalize_real_result(real_result: tuple[list[AnswerBlock], list[str]] | tu
 
 def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
-    return run_config_executor(question, tenant_id=tenant_id)
+    try:
+        return run_config_executor(question, tenant_id=tenant_id)
+    except Exception:
+        placeholder_blocks = _build_config_placeholder(question, settings)
+        return placeholder_blocks, ["placeholder"]
 
 
 def _run_history(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:

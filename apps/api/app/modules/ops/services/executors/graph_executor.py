@@ -41,7 +41,12 @@ LIMIT 300
 def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
-        raise ValueError("CI not found")
+        markdown = MarkdownBlock(
+            type="markdown",
+            title="Graph 결과 없음",
+            content="CI를 찾을 수 없습니다.",
+        )
+        return [markdown], ["neo4j", "postgres"]
     ci = ci_hits[0]
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
     depth = 3 if any(keyword in question for keyword in ("영향", "의존", "경로")) else 2
