@@ -144,6 +144,12 @@ export default function Home() {
   }, [threads]);
 
   const selectThread = (threadId: string) => {
+    if (activeThread?.id !== threadId) {
+      setChunks([]);
+      setReferences([]);
+      setStatus("idle");
+      eventSourceRef.current?.close();
+    }
     setActiveThread((prev) => (prev?.id === threadId ? prev : null));
     fetchThreadDetail(threadId).catch(console.error);
   };
