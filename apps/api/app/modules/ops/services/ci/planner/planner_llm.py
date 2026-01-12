@@ -34,7 +34,7 @@ def determine_output_types(text: str) -> Set[str]:
         output_types.add("aggregate")
     if any(keyword in normalized for keyword in SERIES_KEYWORDS):
         output_types.add("chart")
-    if any(keyword in normalized for keyword in LIST_KEYWORDS):
+    if any(keyword in normalized for keyword in TABLE_HINTS):
         output_types.add("table")
     if any(keyword in normalized for keyword in GRAPH_SCOPE_KEYWORDS):
         output_types.add("network")
@@ -261,11 +261,24 @@ LIST_KEYWORDS = {
     "list",
     "전체 목록",
     "나열",
+    "목록으로",
+    "리스트로",
+}
+TABLE_HINTS = {
+    "표",
+    "테이블",
+    "table",
+    "표로",
+    "테이블로",
     "보여줘",
-    "뽑아",
-    "뽑아줘",
+    "표로 보여줘",
+    "테이블로 보여줘",
+    "정리",
+    "정리해서",
     "추출",
     "가져와",
+    "뽑아",
+    "뽑아줘",
     "출력",
 }
 LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
@@ -292,7 +305,8 @@ You are the OPS CI planner's output parser. Read the user's question and respond
 - ci_identifiers should include specifiers such as CI code/ci_name when available.
 - metric must be null if there is no metric/history intent.
 - LIST RULES:
-  - If the question asks for a list such as “N개/몇 개/목록/리스트/나열/뽑아”, set list.enabled=true.
+  - Only enable list for explicit list requests such as “목록/리스트/전체 목록”.
+  - Do not enable list for output format hints like “표로 보여줘/테이블로 보여줘/보여줘”.
   - In list mode: output_types must be ["table"] and ci_identifiers may be [].
   - If N is present (e.g. 10개), set list.limit=N, otherwise default to 50.
 """
