@@ -187,6 +187,20 @@ def recent_work_and_maintenance(
     return {"work_rows": work_rows, "maint_rows": maint_rows, "meta": meta}
 
 
+HISTORY_WORK_KEYWORDS = {"작업", "work", "deployment", "integration", "audit", "upgrade", "change"}
+HISTORY_MAINT_KEYWORDS = {"유지보수", "maintenance", "maint", "점검", "inspection", "routine"}
+
+
+def detect_history_sections(question: str) -> set[str]:
+    text = (question or "").lower()
+    types: set[str] = set()
+    if any(keyword in text for keyword in HISTORY_WORK_KEYWORDS):
+        types.add("work")
+    if any(keyword in text for keyword in HISTORY_MAINT_KEYWORDS):
+        types.add("maintenance")
+    return types
+
+
 def _fetch_sql_rows(query: str, params: Iterable) -> list[tuple]:
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:

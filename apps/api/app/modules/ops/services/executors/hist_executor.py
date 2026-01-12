@@ -20,7 +20,7 @@ from ..ci.tools import history as history_tools
 def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
-        fallback_blocks = _build_history_fallback(tenant_id)
+        fallback_blocks = _build_history_fallback(tenant_id, question)
         return fallback_blocks, ["postgres", "timescale"]
     ci = ci_hits[0]
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
@@ -61,7 +61,10 @@ def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], l
         "events": len(event_rows),
         "max_severity": max((row[1] for row in event_rows), default=0),
     }
-    blocks = _build_blocks(ci, time_range, stats, work_rows, maint_rows, event_rows)
+    sections = history_tools.detect_history_sections(question)
+    include_work = "work" in sections or not sections
+    include_maint = "maintenance" in sections or not sections
+    blocks = _build_blocks(ci, time_range, stats, work_rows, maint_rows, event_rows, include_work, include_maint)
     references = _build_references(work_rows, maint_rows, event_rows, tenant_id, ci, time_range)
     blocks.append(references)
     return blocks, ["postgres", "timescale"]
@@ -81,6 +84,8 @@ def _build_blocks(
     work_rows: list[tuple],
     maint_rows: list[tuple],
     event_rows: list[tuple],
+    include_work: bool = True,
+    include_maint: bool = True,
 ) -> list[AnswerBlock]:
     markdown = MarkdownBlock(
         type="markdown",
@@ -93,22 +98,24 @@ def _build_blocks(
         ),
     )
     tables: list[TableBlock] = []
-    tables.append(
-        TableBlock(
-            type="table",
-            title="Work history",
-            columns=["start_time", "work_type", "impact_level", "result", "summary"],
-            rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in work_rows],
+    if include_work:
+        tables.append(
+            TableBlock(
+                type="table",
+                title="Work history",
+                columns=["start_time", "work_type", "impact_level", "result", "summary"],
+                rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in work_rows],
+            )
         )
-    )
-    tables.append(
-        TableBlock(
-            type="table",
-            title="Maintenance history",
-            columns=["start_time", "maint_type", "duration_min", "result", "summary"],
-            rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in maint_rows],
+    if include_maint:
+        tables.append(
+            TableBlock(
+                type="table",
+                title="Maintenance history",
+                columns=["start_time", "maint_type", "duration_min", "result", "summary"],
+                rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in maint_rows],
+            )
         )
-    )
     tables.append(
         TableBlock(
             type="table",
@@ -178,51 +185,60 @@ def _build_references(
     ])
 
 
-def _build_history_fallback(tenant_id: str) -> list[AnswerBlock]:
+def _build_history_fallback(tenant_id: str, question: str) -> list[AnswerBlock]:
     history = history_tools.recent_work_and_maintenance(tenant_id, "last_7d", limit=50)
     work_rows = history.get("work_rows", [])
     maint_rows = history.get("maint_rows", [])
+    sections = history_tools.detect_history_sections(question)
+    include_work = "work" in sections or not sections
+    include_maint = "maintenance" in sections or not sections
     blocks: list[AnswerBlock] = [
         MarkdownBlock(
             type="markdown",
             title="전체 이력 fallback",
             content="CI 없이 전체 이력을 보여드립니다.",
         ),
-        TableBlock(
-            type="table",
-            title="Work history (최근 7일)",
-            columns=["start_time", "ci_code", "ci_name", "work_type", "impact_level", "result", "summary"],
-            rows=[
-                [
-                    str(row[0]),
-                    row[1] or "-",
-                    row[2] or "-",
-                    row[3],
-                    str(row[4]),
-                    row[5] or "",
-                    row[6] or "",
-                ]
-                for row in work_rows
-            ]
-            or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
-        ),
-        TableBlock(
-            type="table",
-            title="Maintenance history (최근 7일)",
-            columns=["start_time", "ci_code", "ci_name", "maint_type", "duration_min", "result", "summary"],
-            rows=[
-                [
-                    str(row[0]),
-                    row[1] or "-",
-                    row[2] or "-",
-                    row[3],
-                    str(row[4]),
-                    row[5] or "",
-                    row[6] or "",
-                ]
-                for row in maint_rows
-            ]
-            or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
-        ),
     ]
+    if include_work:
+        blocks.append(
+            TableBlock(
+                type="table",
+                title="Work history (최근 7일)",
+                columns=["start_time", "ci_code", "ci_name", "work_type", "impact_level", "result", "summary"],
+                rows=[
+                    [
+                        str(row[0]),
+                        row[1] or "-",
+                        row[2] or "-",
+                        row[3],
+                        str(row[4]),
+                        row[5] or "",
+                        row[6] or "",
+                    ]
+                    for row in work_rows
+                ]
+                or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
+            )
+        )
+    if include_maint:
+        blocks.append(
+            TableBlock(
+                type="table",
+                title="Maintenance history (최근 7일)",
+                columns=["start_time", "ci_code", "ci_name", "maint_type", "duration_min", "result", "summary"],
+                rows=[
+                    [
+                        str(row[0]),
+                        row[1] or "-",
+                        row[2] or "-",
+                        row[3],
+                        str(row[4]),
+                        row[5] or "",
+                        row[6] or "",
+                    ]
+                    for row in maint_rows
+                ]
+                or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
+            )
+        )
     return blocks

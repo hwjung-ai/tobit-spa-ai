@@ -78,8 +78,6 @@ CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 
 RUNNER_MARKER = "RUNNER_PATCH_GRAPH_20260112"
 HISTORY_FALLBACK_KEYWORDS = {"이력", "작업", "점검", "history", "log", "이벤트", "기록"}
-HISTORY_WORK_KEYWORDS = {"작업", "work", "deployment", "integration", "audit", "upgrade"}
-HISTORY_MAINT_KEYWORDS = {"유지보수", "maintenance", "maint", "점검", "inspection"}
 
 
 def _runner_context() -> Dict[str, Any]:
@@ -1768,8 +1766,8 @@ class CIOrchestratorRunner:
             return [text_block("전체 이력 조회에 실패했습니다. 이력 탭을 이용해주세요.", title="History fallback")], "History fallback failed"
         work_rows = history.get("work_rows", [])
         maint_rows = history.get("maint_rows", [])
+        types = history_tools.detect_history_sections(self.question)
         fallback_blocks: List[Dict[str, Any]] = [text_block("CI 없이 전체 이력을 가져왔습니다.", title="History fallback")]
-        types = self._history_types_from_question()
         if "work" in types or not types:
             fallback_blocks.append(
                 table_block(
@@ -1811,15 +1809,6 @@ class CIOrchestratorRunner:
                 )
             )
         return fallback_blocks, "History fallback executed"
-
-    def _history_types_from_question(self) -> set[str]:
-        text = (self.question or "").lower()
-        types: set[str] = set()
-        if any(keyword in text for keyword in HISTORY_WORK_KEYWORDS):
-            types.add("work")
-        if any(keyword in text for keyword in HISTORY_MAINT_KEYWORDS):
-            types.add("maintenance")
-        return types
 
     def _resolve_path_endpoint(
         self,
