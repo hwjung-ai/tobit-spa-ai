@@ -143,12 +143,12 @@ def _run_all(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]
                 return _run_all_langgraph(question, settings)
             except Exception as exc:
                 logging.exception("LangGraph ALL execution failed; falling back to rule-based")
-                fallback_blocks, fallback_tools, fallback_error = _run_all_rule_based(question)
+                fallback_blocks, fallback_tools, fallback_error = _run_all_rule_based(question, settings)
                 lang_err = f"langgraph: {exc}"
                 combined_error = "; ".join(filter(None, [lang_err, fallback_error]))
                 return fallback_blocks, fallback_tools, combined_error or None
         logging.warning("LangGraph requested but OpenAI API key missing; using rule-based ALL executor")
-    return _run_all_rule_based(question)
+    return _run_all_rule_based(question, settings)
 
 
 def _run_all_langgraph(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str], str | None]:
@@ -156,7 +156,7 @@ def _run_all_langgraph(question: str, settings: Any) -> tuple[list[AnswerBlock],
     return runner.run(question)
 
 
-def _run_all_rule_based(question: str) -> tuple[list[AnswerBlock], list[str], str | None]:
+def _run_all_rule_based(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str], str | None]:
     selected = _determine_all_executors(question)
     successful_blocks: dict[str, list[AnswerBlock]] = {}
     used_tools: list[str] = []

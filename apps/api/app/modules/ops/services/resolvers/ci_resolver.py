@@ -7,7 +7,9 @@ from scripts.seed.utils import get_postgres_conn
 
 from .types import CIHit
 
-CI_CODE_PATTERN = re.compile(r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app)-[a-z0-9-]+\b", re.IGNORECASE)
+CI_CODE_PATTERN = re.compile(
+    r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app|mes)-[a-z0-9-]+\b", re.IGNORECASE
+)
 
 
 def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIHit]:
