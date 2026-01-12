@@ -37,7 +37,7 @@ METRIC_KEYWORDS = {"온도", "temp", "temperature", "cpu", "사용률", "추이"
 HIST_KEYWORDS = {"정비", "유지보수", "작업", "변경", "이력", "최근 변경", "최근"}
 GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구성요소", "관계"}
 
-ALL_EXECUTOR_ORDER = ("metric", "hist", "graph")
+ALL_EXECUTOR_ORDER = ("metric", "hist", "graph", "config")
 
 
 def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
@@ -121,15 +121,18 @@ def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[s
 
 
 def _run_history(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
-    return run_hist(question)
+    tenant_id = getattr(settings, "tenant_id", "t1")
+    return run_hist(question, tenant_id=tenant_id)
 
 
 def _run_graph(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
-    return run_graph(question)
+    tenant_id = getattr(settings, "tenant_id", "t1")
+    return run_graph(question, tenant_id=tenant_id)
 
 
 def _run_metric(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
-    return run_metric(question)
+    tenant_id = getattr(settings, "tenant_id", "t1")
+    return run_metric(question, tenant_id=tenant_id)
 
 
 
@@ -161,7 +164,7 @@ def _run_all_rule_based(question: str) -> tuple[list[AnswerBlock], list[str], st
     for name in selected:
         executor = _resolve_executor(name)
         try:
-            executor_blocks, executor_tools = executor(question)
+            executor_blocks, executor_tools = executor(question, settings)
             successful_blocks[name] = executor_blocks
             for tool in executor_tools:
                 if tool not in used_tools:
@@ -190,15 +193,16 @@ def _determine_all_executors(question: str) -> list[str]:
     if any(keyword in text for keyword in GRAPH_KEYWORDS):
         selected.append("graph")
     if not selected:
-        selected = ["hist", "metric"]
+        selected = ["hist", "metric", "config"]
     return selected
 
 
-def _resolve_executor(name: str) -> Callable[[str], tuple[list[AnswerBlock], list[str]]]:
-    executors: dict[str, Callable[[str], tuple[list[AnswerBlock], list[str]]]] = {
-        "metric": run_metric,
-        "hist": run_hist,
-        "graph": run_graph,
+def _resolve_executor(name: str) -> Callable[[str, Any], tuple[list[AnswerBlock], list[str]]]:
+    executors: dict[str, Callable[[str, Any], tuple[list[AnswerBlock], list[str]]]] = {
+        "metric": _run_metric,
+        "hist": _run_history,
+        "graph": _run_graph,
+        "config": _run_config,
     }
     return executors[name]
 
