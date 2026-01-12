@@ -53,6 +53,16 @@
 4) Save 눌러 server/local 저장 메시지 확인
 5) 새로고침 후 저장된 항목 복원 여부 확인
 
+### UI 표준 검증 (타임존/스크롤바)
+
+#### 검증 절차
+1) **타임존**:
+   - OPS 이력, CEP 이벤트 상세, Documents 목록 등 날짜가 표시되는 곳을 확인합니다.
+   - 표시된 시간이 **한국 시간 (KST, UTC+9)**에 맞는지 확인합니다. (예: DB에 09:00Z로 저장된 데이터가 화면에 18:00로 표시되어야 함)
+2) **스크롤바**:
+   - OPS Query History, Grid, JSON Viewer 등 스크롤이 생기는 영역을 확인합니다.
+   - OS 기본 스크롤바가 아닌, **얇고 어두운 테마의 Custom Scrollbar**가 적용되었는지 확인합니다.
+
 ## 4. API Manager
 
 ### API Manager Dev: 시스템 API (flagged)

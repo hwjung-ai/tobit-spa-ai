@@ -36,6 +36,15 @@
   - CEP simulate 연계 + Event Browser 링크
   - CI 목록 미리보기
 
+## 2-1. 공통 UI 표준
+
+### 타임존 (Timezone)
+- **Data (Backend)**: 모든 시간 데이터는 UTC로 저장되고 전송됩니다.
+- **Display (Frontend)**: 화면에 표시될 때는 브라우저에서 `Asia/Seoul` (KST) 타임존으로 변환하여 표시합니다. 백엔드 데이터에 타임존 정보가 누락된 경우에도 강제로 UTC로 해석하여 KST 변환을 보장합니다.
+
+### UI 스타일 (Styling)
+- **Scrollbar**: OS 기본 스크롤바 대신 프로젝트 전역 `custom-scrollbar` 스타일(얇은 디자인, 다크 테마)을 적용합니다. 모든 스크롤 가능한 영역(OPS 히스토리, 그리드, JSON 뷰어 등)에 일관되게 적용됩니다.
+
 ## 3. API Manager (API 매니저)
 
 ### 런타임 & 개발 도구
@@ -789,6 +798,19 @@ curl -s http://localhost:8000/cep/scheduler/instances
   ```
   서버는 `apps.api.app.modules.ops.services.ci.planner.validator`를 통해 patched plan을 재검증한 뒤 orchestrator를 실행한다.
 
+### OPS 그래프 시각화
+
+#### 소스 맵
+- Frontend Component: `apps/web/src/components/data/Neo4jGraphFlow.tsx` (Use reusable component)
+- Logic/Renderer: `apps/web/src/components/answer/BlockRenderer.tsx` (`GraphFlowRenderer`)
+
+#### 개요
+- Data Explorer의 Neo4j 탭에서 사용되는 `ReactFlow` 기반의 그래프 시각화 엔진을 OPS CI 응답에도 동일하게 적용했습니다.
+- **주요 기능**:
+  - **인터랙티브 조작**: 노드 드래그, 줌, 패닝 지원.
+  - **하이라이트**: 노드 클릭 시 해당 노드와 연결된 엣지를 강조 표시(Highlight)하여 복잡한 그래프에서도 관계를 명확히 파악 가능.
+  - **일관된 UX**: DATA 메뉴와 OPS 메뉴에서 동일한 그래프 조작 경험 제공.
+
 ### 메트릭 조회
 
 #### 소스 맵
@@ -825,6 +847,8 @@ curl -s http://localhost:8000/cep/scheduler/instances
 #### 개요
 - “이벤트/알람/로그/event” 키워드가 포함된 질문은 `plan.history.enabled = true`를 켠다. orchestrator는 `apps.api.app.modules.ops.services.ci.tools.history.event_log_recent`를 호출하며, 이 함수는 `event_log`의 CI 참조 및 타임스탬프 컬럼을 자동 탐지해 스키마와 무관하게 안전한 쿼리를 보장한다.
 - 고정 윈도우는 `last_24h`, `last_7d`, `last_30d`이며 row limit는 200이다. 테이블 블록 제목은 `Recent events (last_<window>)`로 표시되고 trace에는 요청 window가 기록된다.
+- CI를 명시하지 않은 “작업 이력”, “유지보수” 질문은 `apps.api.app.modules.ops.services.ci.tools.history.recent_work_and_maintenance` fallback을 사용하여 maintenance/work 테이블을 각기 분리 조회한다. runner는 텍스트 키워드(`작업`, `deployment`, `maintenance`, `점검` 등)를 통해 필요한 섹션만 포함시키며, 각 테이블에는 `ci_code`/`ci_name`을 보여줘 어느 CI의 기록인지 명확히 한다.
+- `apps.api.app.modules.ops.services.resolvers.time_range_resolver.resolve_time_range`는 기존 강제 윈도우 외에 “n개월”, “n년”, “YYYY년 MM월 첫주/둘째 주” 같은 표현도 인식하므로, “최근 6개월” 또는 “2025년 12월 첫주”처럼 구체적인 시간 범위를 요청해도 runner가 정확한 start/end를 계산해 event/work/maintenance 쿼리에 전달한다.
 - `event_log` 또는 필수 컬럼이 없더라도 CI 블록은 유지되며, 텍스트 경고 + trace warning으로 문제를 알린다.
 
 #### 샘플 질문
