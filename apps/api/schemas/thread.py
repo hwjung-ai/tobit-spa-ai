@@ -10,6 +10,9 @@ class ThreadCreate(BaseModel):
     title: str | None = Field(
         default=None, description="Optional human-friendly title for the thread"
     )
+    builder: str | None = Field(
+        default=None, description="Optional slug of the builder that created this thread"
+    )
 
 
 class MessageRead(BaseModel):
@@ -33,6 +36,7 @@ class ThreadRead(BaseModel):
     updated_at: datetime
     summary: str | None = None
     title_finalized: bool = False
+    builder: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

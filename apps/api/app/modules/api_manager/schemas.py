@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 from pydantic import field_validator, model_validator
 
 ApiType = Literal["system", "custom"]
-LogicType = Literal["sql", "workflow", "python", "script"]
+LogicType = Literal["sql", "workflow", "python", "script", "http"]
 
 
 def _ensure_json_mapping(value: Any, name: str) -> dict[str, Any]:
@@ -34,7 +34,7 @@ def _ensure_json_mapping(value: Any, name: str) -> dict[str, Any]:
 class ApiDefinitionCreate(BaseModel):
     api_name: str
     api_type: ApiType
-    method: Literal["GET", "POST"]
+    method: Literal["GET", "POST", "PUT", "DELETE"]
     endpoint: str
     logic_type: LogicType = "sql"
     logic_body: str
@@ -65,7 +65,7 @@ class ApiDefinitionCreate(BaseModel):
 
 class ApiDefinitionUpdate(BaseModel):
     api_name: str | None = None
-    method: Literal["GET", "POST"] | None = None
+    method: Literal["GET", "POST", "PUT", "DELETE"] | None = None
     endpoint: str | None = None
     description: str | None = None
     tags: list[str] | None = None
@@ -152,6 +152,15 @@ class ApiExecuteRequest(BaseModel):
     limit: int | None = 200
     executed_by: str | None = None
     input: Any | None = None
+
+
+class ApiDryRunRequest(BaseModel):
+    logic_type: LogicType
+    logic_body: str
+    params: dict[str, Any] = Field(default_factory=dict)
+    input: Any | None = None
+    runtime_policy: dict[str, Any] = Field(default_factory=dict)
+    logic_spec: dict[str, Any] = Field(default_factory=dict)
 
 
 class ApiExecuteResponse(BaseModel):

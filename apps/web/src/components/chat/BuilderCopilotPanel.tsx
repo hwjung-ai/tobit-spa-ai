@@ -7,6 +7,7 @@ interface BuilderCopilotPanelProps {
   instructionPrompt?: string;
   onAssistantMessage?: (text: string) => void;
   onAssistantMessageComplete?: (text: string) => void;
+  onUserMessage?: (text: string) => void;
   inputPlaceholder?: string;
 }
 
@@ -15,17 +16,18 @@ export default function BuilderCopilotPanel({
   instructionPrompt,
   onAssistantMessage,
   onAssistantMessageComplete,
+  onUserMessage,
   inputPlaceholder,
 }: BuilderCopilotPanelProps) {
   return (
-    <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-300 shadow-inner shadow-black/40">
-      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Builder Copilot</p>
+    <div className="shadow-inner shadow-black/20">
       <ChatExperience
         builderSlug={builderSlug}
         inline
         instructionPrompt={instructionPrompt}
         onAssistantMessage={onAssistantMessage}
         onAssistantMessageComplete={onAssistantMessageComplete}
+        onUserMessage={onUserMessage}
         inputPlaceholder={inputPlaceholder}
       />
     </div>

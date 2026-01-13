@@ -35,16 +35,26 @@ def _derive_title(message: str) -> str:
 
 
 def _get_or_create_thread(
-    session: Session, tenant_id: str, user_id: str, thread_id: Optional[str], message: str
+    session: Session,
+    tenant_id: str,
+    user_id: str,
+    thread_id: Optional[str],
+    message: str,
+    builder: str | None = None,
 ) -> ChatThread:
     if thread_id:
         statement = select(ChatThread).where(ChatThread.id == thread_id)
         thread = session.exec(statement).one_or_none()
         if not thread or thread.deleted_at:
             raise HTTPException(status_code=404, detail="Thread not found")
+        if builder and not thread.builder:
+            thread.builder = builder
+            session.add(thread)
+            session.commit()
+            session.refresh(thread)
         return thread
     title = _derive_title(message)
-    thread = ChatThread(title=title, tenant_id=tenant_id, user_id=user_id)
+    thread = ChatThread(title=title, tenant_id=tenant_id, user_id=user_id, builder=builder)
     session.add(thread)
     session.commit()
     session.refresh(thread)
@@ -88,6 +98,7 @@ async def stream_chat(
         min_length=1,
         description="Legacy prompt field; message is preferred",
     ),
+    builder: str | None = Query(None, description="Optional builder slug to tag the thread"),
     session: Session = Depends(get_session),
     identity: Tuple[str, str] = Depends(_resolve_identity),
     orchestrator: BaseOrchestrator = Depends(get_orchestrator),
@@ -99,7 +110,7 @@ async def stream_chat(
     if not message and prompt:  # TODO: remove prompt fallback in next release
         message = prompt
     tenant_id, user_id = identity
-    thread = _get_or_create_thread(session, tenant_id, user_id, thread_id, resolved_message)
+    thread = _get_or_create_thread(session, tenant_id, user_id, thread_id, resolved_message, builder=builder)
     _save_user_message(session, thread.id, resolved_message)
 
     assistant_buffer: list[str] = []

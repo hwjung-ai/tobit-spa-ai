@@ -13,7 +13,7 @@ from .crud import (
     list_exec_logs,
     update_api_definition,
 )
-from .executor import execute_sql_api
+from .executor import execute_sql_api, execute_http_api
 from .script_executor import execute_script_api
 from .workflow_executor import execute_workflow_api
 from .schemas import (
@@ -21,6 +21,7 @@ from .schemas import (
     ApiDefinitionRead,
     ApiDefinitionUpdate,
     ApiExecuteRequest,
+    ApiDryRunRequest,
     ApiExecLogRead,
     ApiType,
 )
@@ -128,7 +129,7 @@ def execute_api(
             executed_by=executed_by,
         )
         payload_result = result.model_dump()
-    elif api.logic_type == "script":
+    elif api.logic_type in ("script", "python"):
         script_result = execute_script_api(
             session=session,
             api_id=api_id,
@@ -149,8 +150,59 @@ def execute_api(
             limit=payload.limit,
         )
         payload_result = workflow_result.model_dump()
+    elif api.logic_type == "http":
+        http_result = execute_http_api(
+            session=session,
+            api_id=api_id,
+            logic_body=api.logic_body,
+            params=payload.params,
+            executed_by=executed_by,
+        )
+        payload_result = http_result.model_dump()
     else:
         raise HTTPException(status_code=400, detail="Logic type cannot be executed")
+    return ResponseEnvelope.success(data={"result": payload_result})
+
+
+@router.post("/dry-run")
+def dry_run_api(
+    payload: ApiDryRunRequest,
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    dummy_api_id = "00000000-0000-0000-0000-000000000000"
+    executed_by = "dry-run-user"
+    if payload.logic_type == "sql":
+        result = execute_sql_api(
+            session=session,
+            api_id=dummy_api_id,
+            logic_body=payload.logic_body,
+            params=payload.params,
+            limit=200,
+            executed_by=executed_by,
+        )
+        payload_result = result.model_dump()
+    elif payload.logic_type in ("script", "python"):
+        script_result = execute_script_api(
+            session=session,
+            api_id=dummy_api_id,
+            logic_body=payload.logic_body,
+            params=payload.params,
+            input_payload=payload.input,
+            executed_by=executed_by,
+            runtime_policy=payload.runtime_policy,
+        )
+        payload_result = script_result.model_dump()
+    elif payload.logic_type == "http":
+        http_result = execute_http_api(
+            session=session,
+            api_id=dummy_api_id,
+            logic_body=payload.logic_body,
+            params=payload.params,
+            executed_by=executed_by,
+        )
+        payload_result = http_result.model_dump()
+    else:
+        raise HTTPException(status_code=400, detail="Dry run not supported for this logic type")
     return ResponseEnvelope.success(data={"result": payload_result})
 
 

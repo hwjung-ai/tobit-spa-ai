@@ -10,7 +10,7 @@ from sqlmodel import Session
 
 from core.db import get_session
 from schemas.common import ResponseEnvelope
-from .executor import execute_sql_api, normalize_limit
+from .executor import execute_sql_api, execute_http_api, normalize_limit
 from .models import TbApiDef
 from .script_executor import execute_script_api
 
@@ -104,6 +104,34 @@ async def handle_runtime_request(
                 "references": script_result.references,
             }
         )
+    if api.logic_type == "http":
+        result = execute_http_api(
+            session=session,
+            api_id=str(api.api_id),
+            logic_body=api.logic_body,
+            params=params,
+            executed_by=executed_by,
+        )
+        return ResponseEnvelope.success(
+            data={
+                "api": {
+                    "api_id": str(api.api_id),
+                    "api_name": api.api_name,
+                    "endpoint": api.endpoint,
+                    "method": api.method,
+                },
+                "result": {
+                    "columns": result.columns,
+                    "rows": result.rows,
+                    "row_count": result.row_count,
+                    "duration_ms": result.duration_ms,
+                },
+                "references": {
+                    "http_spec": api.logic_body,
+                    "params": result.params,
+                },
+            }
+        )
     raise HTTPException(status_code=400, detail="Runtime API cannot be executed")
 
 
@@ -115,21 +143,42 @@ def _normalize_runtime_path(path: str) -> str:
 
 
 def _find_runtime_api(session: Session, endpoint: str, method: str) -> TbApiDef | None:
-    candidates = {endpoint}
-    if endpoint.startswith("/runtime/"):
-        suffix = endpoint[len("/runtime") :]
-        if suffix:
-            candidates.add(suffix if suffix.startswith("/") else f"/{suffix}")
-    if not endpoint.startswith("/runtime/"):
-        candidates.add(f"/runtime{endpoint}")
+    cleaned = _normalize_endpoint(endpoint)
     statement = (
         select(TbApiDef)
-        .where(TbApiDef.endpoint.in_(list(candidates)))
+        .where(
+            TbApiDef.endpoint.in_(
+                [
+                    cleaned,
+                    f"/runtime{cleaned}",
+                    f"/{cleaned.lstrip('/')}",
+                ]
+            )
+        )
         .where(TbApiDef.method == method)
         .where(TbApiDef.is_active == True)
         .limit(1)
     )
-    return session.exec(statement).first()
+    api = session.exec(statement).scalars().first()
+    if api:
+        return api
+    return session.exec(
+        select(TbApiDef)
+        .where(
+            TbApiDef.endpoint == cleaned.rstrip("/")
+        )
+        .where(TbApiDef.method == method)
+        .where(TbApiDef.is_active == True)
+        .limit(1)
+    ).scalars().first()
+
+
+def _normalize_endpoint(endpoint: str) -> str:
+    normalized = f"/{endpoint.lstrip('/')}"
+    if normalized.startswith("/runtime/"):
+        normalized = normalized[len("/runtime") :]
+        normalized = f"/{normalized.lstrip('/')}"
+    return normalized
 
 
 async def _extract_runtime_params(request: Request) -> tuple[dict[str, Any], int | None, Any | None]:

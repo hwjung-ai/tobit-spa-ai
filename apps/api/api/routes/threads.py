@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy import select
 
 from core.db import Session, get_session
@@ -25,7 +25,7 @@ def create_thread(
 ) -> ThreadRead:
     tenant_id, user_id = identity
     title = payload.title or "New conversation"
-    thread = ChatThread(title=title, tenant_id=tenant_id, user_id=user_id)
+    thread = ChatThread(title=title, tenant_id=tenant_id, user_id=user_id, builder=payload.builder)
     session.add(thread)
     session.commit()
     session.refresh(thread)
@@ -33,12 +33,17 @@ def create_thread(
 
 
 @router.get("/", response_model=list[ThreadRead])
-def list_threads(session: Session = Depends(get_session)) -> list[ThreadRead]:
-    statement = (
-        select(ChatThread)
-        .where(ChatThread.deleted_at.is_(None))
-        .order_by(ChatThread.updated_at.desc())
-    )
+def list_threads(
+    builder: str | None = Query(None, description="Filter threads by builder slug"),
+    session: Session = Depends(get_session),
+) -> list[ThreadRead]:
+    statement = select(ChatThread).where(ChatThread.deleted_at.is_(None))
+    if builder:
+        statement = statement.where(ChatThread.builder == builder)
+    else:
+        statement = statement.where(ChatThread.builder.is_(None))
+
+    statement = statement.order_by(ChatThread.updated_at.desc())
     threads = session.exec(statement).scalars().all()
     return [ThreadRead.model_validate(thread.model_dump()) for thread in threads]
 

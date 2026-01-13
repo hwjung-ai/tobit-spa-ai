@@ -43,11 +43,13 @@ class ConversationSummaryService:
                 {"role": "system", "content": "You are a helpful assistant that summarizes conversation threads into a single concise sentence or short paragraph."},
                 {"role": "user", "content": f"Summarize this conversation concisely:\n\n{snippet_text}"},
             ]
-            response = self._llm.create_response(
-                input=input_data,
-                model=self._settings.chat_model,
-                temperature=0.0
-            )
+            request_kwargs = {
+                "input": input_data,
+                "model": self._settings.chat_model,
+            }
+            if not self._settings.chat_model.startswith("gpt-5"):
+                request_kwargs["temperature"] = 0.0
+            response = self._llm.create_response(**request_kwargs)
             summary = self._llm.get_output_text(response).strip()
             
         except Exception as exc:  # pragma: no cover

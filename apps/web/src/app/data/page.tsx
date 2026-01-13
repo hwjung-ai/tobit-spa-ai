@@ -67,17 +67,17 @@ type Neo4jSerializedRelationship = {
 const isNeo4jNode = (value: unknown): value is Neo4jSerializedNode =>
   Boolean(
     value &&
-      typeof value === "object" &&
-      "__neo4j_type" in value &&
-      (value as Record<string, unknown>).__neo4j_type === "node"
+    typeof value === "object" &&
+    "__neo4j_type" in value &&
+    (value as Record<string, unknown>).__neo4j_type === "node"
   );
 
 const isNeo4jRelationship = (value: unknown): value is Neo4jSerializedRelationship =>
   Boolean(
     value &&
-      typeof value === "object" &&
-      "__neo4j_type" in value &&
-      (value as Record<string, unknown>).__neo4j_type === "relationship"
+    typeof value === "object" &&
+    "__neo4j_type" in value &&
+    (value as Record<string, unknown>).__neo4j_type === "relationship"
   );
 
 const getNodeDisplayName = (node: Neo4jSerializedNode) =>
@@ -333,15 +333,20 @@ export default function DataExplorerPage() {
   }, [defaultQuery]);
 
   useEffect(() => {
-    if (sourceTab !== "neo4j") {
-      setNormalizedNeo4jResult(null);
-      setNeo4jRowRefs([]);
-      setNeo4jScalar(null);
-      setNeo4jViewMode("table");
-      setHighlightedNodeIds(new Set());
-      setHighlightedEdgeIds(new Set());
-      setSelectedGraphNode(null);
-    }
+    // Clear all results when switching tabs
+    setGridRows([]);
+    setGridColumns([]);
+    setStatusMessage(null);
+    setQueryError(null);
+    setSelectedRow(null);
+
+    setNormalizedNeo4jResult(null);
+    setNeo4jRowRefs([]);
+    setNeo4jScalar(null);
+    setNeo4jViewMode("table");
+    setHighlightedNodeIds(new Set());
+    setHighlightedEdgeIds(new Set());
+    setSelectedGraphNode(null);
   }, [sourceTab]);
 
   const tablesQuery = useQuery({
@@ -829,14 +834,14 @@ export default function DataExplorerPage() {
                 Results
               </div>
               <div className="ag-theme-cep h-[520px] w-full rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden">
-                  <AgGridReact
-                    theme="legacy"
-                    columnDefs={gridColDefs}
-                    rowData={gridRows}
-                    rowSelection="single"
-                    defaultColDef={{ resizable: true, sortable: true, filter: true }}
-                    onRowClicked={handleTableRowClick}
-                  />
+                <AgGridReact
+                  theme="legacy"
+                  columnDefs={gridColDefs}
+                  rowData={gridRows}
+                  rowSelection="single"
+                  defaultColDef={{ resizable: true, sortable: true, filter: true }}
+                  onRowClicked={handleTableRowClick}
+                />
               </div>
               {statusMessage && (
                 <div className="mt-3 text-xs text-slate-400">{statusMessage}</div>
@@ -854,11 +859,10 @@ export default function DataExplorerPage() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${
-                        neo4jViewMode === "graph"
+                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "graph"
                           ? "border-sky-400 text-white"
                           : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-                      }`}
+                        }`}
                       onClick={() => setNeo4jViewMode("graph")}
                       disabled={!graphAvailable}
                     >
@@ -866,11 +870,10 @@ export default function DataExplorerPage() {
                     </button>
                     <button
                       type="button"
-                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${
-                        neo4jViewMode === "table"
+                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "table"
                           ? "border-sky-400 text-white"
                           : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-                      }`}
+                        }`}
                       onClick={() => {
                         setNeo4jViewMode("table");
                         setHighlightedNodeIds(new Set());
@@ -882,11 +885,10 @@ export default function DataExplorerPage() {
                     </button>
                     <button
                       type="button"
-                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${
-                        neo4jViewMode === "value"
+                      className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "value"
                           ? "border-sky-400 text-white"
                           : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-                      }`}
+                        }`}
                       onClick={() => setNeo4jViewMode("value")}
                       disabled={!valueAvailable}
                     >

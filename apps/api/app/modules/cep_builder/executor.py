@@ -340,3 +340,68 @@ def manual_trigger(
         "error_message": error_message,
         "duration_ms": duration_ms,
     }
+
+HTTP_TIMEOUT = 5.0
+
+def execute_http_api(session: Session, api_id: str, logic_body: str, params: dict[str, Any] | None, executed_by: str) -> ApiExecuteResponse:
+    try:
+        spec = json.loads(logic_body) if logic_body else {}
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Invalid HTTP logic body") from exc
+    method = spec.get("method", "GET").upper()
+    url = spec.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="HTTP logic must specify url")
+    headers = spec.get("headers") or {}
+    data = spec.get("body")
+    query_params = spec.get("params") or {}
+    start = perf_counter()
+    status = "success"
+    error_message: str | None = None
+    try:
+        response = httpx.request(
+            method,
+            url,
+            params=query_params,
+            headers=headers,
+            json=data,
+            timeout=HTTP_TIMEOUT,
+        )
+    except Exception as exc:
+        status = "fail"
+        error_message = str(exc)
+        raise HTTPException(status_code=502, detail="External HTTP request failed") from exc
+    finally:
+        duration_ms = int((perf_counter() - start) * 1000)
+        record_exec_log(
+            session=session,
+            api_id=api_id,
+            status=status,
+            duration_ms=duration_ms,
+            row_count=0,
+            params=params or {},
+            executed_by=executed_by,
+            error_message=error_message,
+        )
+    try:
+        body = response.json()
+    except ValueError:
+        body = response.text
+    if isinstance(body, list):
+        rows = [row if isinstance(row, dict) else {"value": row} for row in body]
+        columns = sorted({key for row in rows for key in row.keys()})
+    elif isinstance(body, dict):
+        rows = [body]
+        columns = sorted(body.keys())
+    else:
+        rows = [{"value": body}]
+        columns = ["value"]
+    duration_ms = int((perf_counter() - start) * 1000)
+    return ApiExecuteResponse(
+        executed_sql=f"HTTP {method} {url}",
+        params=params or {},
+        columns=columns,
+        rows=rows,
+        row_count=len(rows),
+        duration_ms=duration_ms,
+    )

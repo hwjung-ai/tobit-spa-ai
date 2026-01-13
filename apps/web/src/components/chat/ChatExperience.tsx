@@ -10,6 +10,7 @@ interface Message {
   id: string;
   role: ChatRole;
   text: string;
+  timestamp: number;
 }
 
 interface ChatExperienceProps {
@@ -17,6 +18,7 @@ interface ChatExperienceProps {
   inline?: boolean;
   onAssistantMessage?: (text: string) => void;
   onAssistantMessageComplete?: (text: string) => void;
+  onUserMessage?: (text: string) => void;
   instructionPrompt?: string;
   inputPlaceholder?: string;
 }
@@ -28,6 +30,7 @@ export default function ChatExperience({
   inline = false,
   onAssistantMessage,
   onAssistantMessageComplete,
+  onUserMessage,
   instructionPrompt,
   inputPlaceholder = "메시지를 입력하세요.",
 }: ChatExperienceProps) {
@@ -36,150 +39,175 @@ export default function ChatExperience({
   const [status, setStatus] = useState<"idle" | "streaming" | "error">("idle");
   const eventSourceRef = useRef<EventSource | null>(null);
 
-  const storageKey = `${STORAGE_PREFIX}${builderSlug}`;
+  const assistantMessageIdRef = useRef<string | null>(null);
+  const assistantBufferRef = useRef<string>("");
+  const apiBaseUrl = useMemo(() => normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL), []);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) {
-      return;
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      if (!Array.isArray(parsed.messages)) {
-        return;
+    const key = `${STORAGE_PREFIX}${builderSlug}`;
+    const raw = window.localStorage.getItem(key);
+    if (raw) {
+      try {
+        setMessages(JSON.parse(raw));
+      } catch {
+        window.localStorage.removeItem(key);
       }
-      setMessages(parsed.messages);
-    } catch {
-      window.localStorage.removeItem(storageKey);
     }
-  }, [storageKey]);
+  }, [builderSlug]);
 
   useEffect(() => {
-    const payload = { messages };
+    const key = `${STORAGE_PREFIX}${builderSlug}`;
     if (messages.length === 0) {
-      window.localStorage.removeItem(storageKey);
-      return;
+      window.localStorage.removeItem(key);
+    } else {
+      window.localStorage.setItem(key, JSON.stringify(messages));
     }
-    window.localStorage.setItem(storageKey, JSON.stringify(payload));
-  }, [messages, storageKey]);
-
-  useEffect(() => {
-    return () => {
-      eventSourceRef.current?.close();
-    };
-  }, []);
-
-  const addAssistantMessage = useRef<string | null>(null);
-  const lastAssistantText = useRef<string>("");
-  const notifyAssistant = (text: string) => {
-    if (!onAssistantMessage) {
-      return;
-    }
-    queueMicrotask(() => {
-      onAssistantMessage(text);
-    });
-  };
+  }, [messages, builderSlug]);
 
   const removeMessage = (id: string) => {
-    setMessages((prev) => prev.filter((message) => message.id !== id));
+    setMessages((prev) => prev.filter((m) => m.id !== id));
   };
 
   const handleStream = (prompt: string) => {
-    const key = Date.now().toString();
-    setMessages((prev) => [...prev, { id: key, role: "user", text: prompt }]);
-    setStatus("streaming");
-    eventSourceRef.current?.close();
-    const finalPrompt = instructionPrompt
-      ? `${instructionPrompt}\n\n${prompt}`
-      : prompt;
-    const encoded = encodeURIComponent(finalPrompt);
-    const source = new EventSource(
-      `${normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)}/chat/stream?message=${encoded}&builder=${encodeURIComponent(builderSlug)}`
-    );
-    lastAssistantText.current = "";
-    eventSourceRef.current = source;
-    addAssistantMessage.current = null;
+    // 1. Clear previous assistant tracking
+    assistantMessageIdRef.current = null;
+    assistantBufferRef.current = "";
 
-    source.addEventListener("message", (event) => {
+    // 2. Add user message
+    const userMsgId = `user-${Date.now()}`;
+    const timestamp = Date.now();
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", text: prompt, timestamp }]);
+    setStatus("streaming");
+
+    eventSourceRef.current?.close();
+
+    // 3. Prepare request
+    const finalPrompt = instructionPrompt
+      ? `${instructionPrompt}\n\nUser Query: ${prompt}`
+      : prompt;
+
+    const url = new URL(`${apiBaseUrl}/chat/stream`);
+    url.searchParams.set("message", finalPrompt);
+    url.searchParams.set("builder", builderSlug);
+
+    console.log("[Chat] Opening SSE stream:", url.toString());
+    const es = new EventSource(url.toString());
+    eventSourceRef.current = es;
+
+    es.onopen = () => {
+      console.log("[Chat] SSE opened");
+    };
+
+    // Use a unified message handler to avoid missing chunks
+    es.addEventListener("message", (event) => {
       try {
         const payload = JSON.parse(event.data);
-      if (payload.type === "answer") {
-        const chunkText = typeof payload.text === "string" ? payload.text : "";
-        const nextText = `${lastAssistantText.current}${chunkText}`;
-        lastAssistantText.current = nextText;
-        setMessages((prev) => {
-          const lastAssistantIdx = prev.findIndex(
-            (item) => item.role === "assistant" && item.id === addAssistantMessage.current
-          );
-          if (lastAssistantIdx >= 0) {
-            const updated = [...prev];
-            updated[lastAssistantIdx] = {
-              ...updated[lastAssistantIdx],
-              text: nextText,
-            };
-            return updated;
+        const type = payload.type;
+
+        console.log("[Chat] SSE payload type:", type);
+
+        if (type === "answer" || type === "text") { // Handle both just in case
+          const chunk = payload.text || "";
+          assistantBufferRef.current += chunk;
+
+          setMessages((prev) => {
+            if (!assistantMessageIdRef.current) {
+              console.log("[Chat] Creating new assistant message entry");
+              const newId = `assistant-${Date.now()}`;
+              assistantMessageIdRef.current = newId;
+              return [...prev, { id: newId, role: "assistant", text: chunk, timestamp: Date.now() }];
+            }
+            return prev.map((m) =>
+              m.id === assistantMessageIdRef.current ? { ...m, text: m.text + chunk } : m
+            );
+          });
+
+          if (onAssistantMessage) {
+            onAssistantMessage(assistantBufferRef.current);
           }
-          const id = `${payload.thread_id ?? "assistant"}-${Date.now()}`;
-          addAssistantMessage.current = id;
-          const newMessage = { id, role: "assistant" as ChatRole, text: nextText };
-          return [...prev, newMessage];
-        });
-        notifyAssistant(nextText);
-      }
-      if (payload.type === "done") {
-        setStatus("idle");
-        onAssistantMessageComplete?.(lastAssistantText.current);
-        source.close();
-      }
-        if (payload.type === "error") {
+        } else if (type === "done") {
+          console.log("[Chat] SSE done");
+          es.close();
+          setStatus("idle");
+          if (onAssistantMessageComplete) {
+            onAssistantMessageComplete(assistantBufferRef.current);
+          }
+          assistantMessageIdRef.current = null;
+        } else if (type === "error") {
+          console.error("[Chat] SSE payload error:", payload.text);
           setStatus("error");
-          source.close();
+          es.close();
         }
-      } catch (error) {
-        console.error("Chat stream parse error", error);
-        setStatus("error");
-        source.close();
+      } catch (err) {
+        console.error("[Chat] SSE parse error:", err, event.data);
+        // Sometimes payload is just a string? 
+        if (event.data && typeof event.data === 'string') {
+          // Fallback if the backend sends raw strings (unlikely given orch)
+        }
       }
     });
 
-    source.addEventListener("error", () => {
-      setStatus("error");
-      source.close();
-    });
+    es.onerror = (err) => {
+      console.error("[Chat] SSE connection error:", err);
+      // Don't kill status if we already got some meaningful content, but usually we should
+      if (!assistantBufferRef.current) {
+        setStatus("error");
+      } else {
+        setStatus("idle");
+      }
+      es.close();
+    };
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (!inputValue.trim()) {
+    if (status === "streaming" || !inputValue.trim()) {
       return;
     }
-    handleStream(inputValue.trim());
+    const val = inputValue.trim();
     setInputValue("");
+    if (onUserMessage) {
+      onUserMessage(val);
+    }
+    handleStream(val);
   };
 
   const panelClass = inline
-    ? "space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300"
-    : "space-y-4 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300";
+    ? "flex flex-col gap-3"
+    : "fixed bottom-6 right-6 z-50 flex w-80 flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-xl";
 
   return (
     <div className={panelClass}>
       <p className="text-xs uppercase tracking-[0.3em] text-slate-500">AI Copilot</p>
-      <div className="max-h-[220px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-[12px] text-slate-100">
+      <div className="max-h-[440px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-[12px] text-slate-100 custom-scrollbar">
         {messages.length === 0 ? (
           <p className="text-xs text-slate-500">질문을 입력하면 AI가 응답합니다.</p>
         ) : (
           messages.map((message) => (
             <div key={message.id} className="group mb-2 relative flex items-start gap-2 pr-8">
               <div className="flex-1">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                  {message.role === "user" ? "User" : "Assistant"}
-                </span>
-                <p className="text-sm text-slate-200">{message.text}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                    {message.role === "user" ? "User" : "Assistant"}
+                  </span>
+                  <span className="text-[9px] text-slate-600">
+                    {new Date(message.timestamp).toLocaleString("ko-KR", {
+                      year: "numeric",
+                      month: "numeric",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                      second: "numeric",
+                      hour12: true,
+                    })}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-200 break-words whitespace-pre-wrap">{message.text}</p>
               </div>
               <button
                 type="button"
                 onClick={() => removeMessage(message.id)}
-                className="absolute right-1 top-1 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400 bg-slate-900 text-[10px] text-rose-300 transition group-hover:flex"
+                className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
                 aria-label="Delete message"
               >
                 ✕
@@ -197,16 +225,28 @@ export default function ChatExperience({
           placeholder={inputPlaceholder}
         />
         <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-400">
-          <span>{status === "streaming" ? "Streaming…" : status === "error" ? "Error" : "Ready"}</span>
+          <span className={status === "streaming" ? "animate-pulse text-sky-400 font-bold" : ""}>
+            {status === "streaming" ? "Streaming…" : status === "error" ? "Error" : "Ready"}
+          </span>
           <button
             type="submit"
-            className="rounded-full border border-slate-800 bg-sky-500/80 px-4 py-1 text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+            className="rounded-full border border-slate-100/10 bg-sky-500/80 px-4 py-1 text-white transition hover:bg-sky-400 disabled:bg-slate-700"
             disabled={!inputValue.trim() || status === "streaming"}
           >
             Send
           </button>
         </div>
       </form>
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        .animate-pulse {
+          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
     </div>
   );
 }

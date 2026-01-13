@@ -22,6 +22,7 @@ class ChatThreadBase(SQLModel):
     deleted_at: datetime | None = None
     title_finalized: bool = Field(default=False)
     summary: str | None = None
+    builder: str | None = Field(default=None, description="Optional slug of the builder that created this thread")
 
 
 class ChatThread(ChatThreadBase, table=True):

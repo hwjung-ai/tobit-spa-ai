@@ -20,6 +20,7 @@ class LogicType(str):
     python = "python"
     workflow = "workflow"
     script = "script"
+    http = "http"
 
 
 class TbApiDef(SQLModel, table=True):

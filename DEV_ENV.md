@@ -34,6 +34,10 @@ NEO4J_URI=bolt://YOUR_NEO4J_HOST:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=secret
 ```
+```
+# start (with neo4j user) 
+/opt/bin/neo4j start
+```
 - **URI 정책**: 단일 노드는 `bolt://`, 클러스터는 `neo4j://`로 시작해야 합니다. (예: `bolt://host:7687` 혹은 `neo4j://cluster-uri:7687`)
 
 ### Redis
@@ -42,6 +46,11 @@ NEO4J_PASSWORD=secret
 REDIS_URL=redis://YOUR_REDIS_HOST:6379/0
 ```
 
+```
+# start (with root user) 
+systemctl start redis
+
+```
 ### OpenAI
 ```env
 # OpenAI

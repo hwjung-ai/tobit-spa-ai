@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from sqlmodel import Session, select
 
 from .models import ApiExecLog, ApiExecStepLog, TbApiDef
 from .schemas import ApiDefinitionCreate, ApiDefinitionUpdate, ApiType
 
-VALID_LOGIC_TYPES = {"sql", "workflow", "python", "script"}
+VALID_LOGIC_TYPES = {"sql", "workflow", "python", "script", "http"}
+DRY_RUN_API_ID = "00000000-0000-0000-0000-000000000000"
 
 
 def list_api_definitions(session: Session, api_type: ApiType | None = None) -> list[TbApiDef]:
@@ -76,9 +77,12 @@ def record_exec_log(
     params: dict[str, Any],
     executed_by: str | None,
     error_message: str | None = None,
-) -> ApiExecLog:
+) -> Optional[ApiExecLog]:
+    api_id_str = str(api_id)
+    if api_id_str == DRY_RUN_API_ID:
+        return None
     log = ApiExecLog(
-        api_id=uuid.UUID(api_id),
+        api_id=uuid.UUID(api_id_str),
         executed_by=executed_by,
         status=status,
         duration_ms=duration_ms,

@@ -65,11 +65,11 @@ class OpenAIOrchestrator(BaseOrchestrator):
             async for event in self._llm.stream_response(
                 input=input_data,
                 model=self.settings.chat_model,
-                temperature=self._effective_temperature(),
+                **self._stream_kwargs(),
             ):
                 # SSE event types according to Responses API
                 event_type = event.get("type")
-                
+
                 if event_type == "response.created":
                     # Response started
                     logging.debug("OpenAI Response created: %s", event.get("response_id"))
@@ -123,7 +123,7 @@ class OpenAIOrchestrator(BaseOrchestrator):
             response = await self._llm.acreate_response(
                 input=input_data,
                 model=self.settings.chat_model,
-                temperature=self._effective_temperature(),
+                **self._completion_kwargs(),
             )
             return self._llm.get_output_text(response)
         except Exception as exc:

@@ -8,14 +8,14 @@ import Editor from "@monaco-editor/react";
 
 type ScopeType = "system" | "custom";
 type CenterTab = "definition" | "logic" | "test";
-type LogicType = "sql" | "workflow" | "python" | "script";
+type LogicType = "sql" | "workflow" | "python" | "script" | "http";
 type SystemView = "discovered" | "registered";
 
 interface ApiDefinitionItem {
   api_id: string;
   api_name: string;
   api_type: ScopeType;
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "PUT" | "DELETE";
   endpoint: string;
   logic_type: LogicType;
   logic_body: string;
@@ -28,6 +28,7 @@ interface ApiDefinitionItem {
   param_schema: Record<string, unknown>;
   runtime_policy: Record<string, unknown>;
   logic_spec: Record<string, unknown>;
+  source?: ApiSource;
 }
 
 type ApiSource = "server" | "local";
@@ -87,6 +88,26 @@ interface WorkflowExecuteResult {
   references: Record<string, unknown>[];
 }
 
+const buildTemporaryApiFromDraft = (draft: ApiDraft): ApiDefinitionItem => ({
+  api_id: "applied-draft-temp",
+  api_name: `[NEW] ${draft.api_name || "Unsaved Draft"}`,
+  api_type: "custom",
+  method: draft.method || "GET",
+  endpoint: draft.endpoint || "",
+  logic_type: draft.logic.type || "sql",
+  logic_body: draft.logic.type === "sql" ? draft.logic.query : JSON.stringify(draft.logic.spec || {}),
+  description: draft.description || "",
+  tags: draft.tags || [],
+  is_active: typeof draft.is_active === "boolean" ? draft.is_active : true,
+  created_by: "AI Assistant",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  param_schema: draft.params_schema || {},
+  runtime_policy: draft.runtime_policy || {},
+  logic_spec: draft.logic.type === "http" ? draft.logic.spec || {} : {},
+  source: "local",
+});
+
 const DEFAULT_SCOPE: ScopeType = "custom";
 const DEFAULT_TAB: CenterTab = "definition";
 const SCOPE_LABELS: Record<ScopeType, string> = {
@@ -137,13 +158,14 @@ const logicTypeLabels: Record<LogicType, string> = {
   workflow: "Workflow",
   python: "Python script",
   script: "Script",
+  http: "HTTP",
 };
 
 const getEditorLanguage = (logicType: LogicType, scriptLanguage: "python" | "javascript") => {
   if (logicType === "sql") {
     return "sql";
   }
-  if (logicType === "workflow") {
+  if (logicType === "workflow" || logicType === "http") {
     return "json";
   }
   if (logicType === "python") {
@@ -173,47 +195,6 @@ const safeParseJson = (value: string, fallback: Record<string, unknown> = {}) =>
   } catch {
     return fallback;
   }
-};
-
-const extractFirstJsonObject = (text: string) => {
-  const startIdx = text.indexOf("{");
-  if (startIdx === -1) {
-    throw new Error("JSON 객체가 포함되어 있지 않습니다.");
-  }
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let i = startIdx; i < text.length; i += 1) {
-    const char = text[i];
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (char === "\\") {
-      escape = true;
-      continue;
-    }
-    if (char === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) {
-      continue;
-    }
-    if (char === "{") {
-      depth += 1;
-    }
-    if (char === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        return text.slice(startIdx, i + 1);
-      }
-    }
-  }
-  if (depth > 0 && !inString) {
-    return text.slice(startIdx) + "}".repeat(depth);
-  }
-  throw new Error("JSON 객체를 추출하지 못했습니다.");
 };
 
 const applyPatchToDraft = (base: ApiDraft, patchOps: { op: string; path: string; value: unknown }[]) => {
@@ -269,11 +250,22 @@ const validateDraftShape = (draft: ApiDraft) => {
   if (!draft.endpoint?.trim()) {
     return "draft.endpoint 값이 필요합니다.";
   }
-  if (!draft.logic || draft.logic.type !== "sql") {
-    return "draft.logic.type은 sql이어야 합니다.";
+  if (!draft.logic) {
+    return "draft.logic 값이 필요합니다.";
   }
-  if (!draft.logic.query?.trim()) {
-    return "draft.logic.query 값이 필요합니다.";
+  if (draft.logic.type === "sql") {
+    if (!draft.logic.query?.trim()) {
+      return "draft.logic.query 값이 필요합니다.";
+    }
+  } else if (draft.logic.type === "http") {
+    if (!draft.logic.spec?.url) {
+      return "draft.logic.spec.url 값이 필요합니다.";
+    }
+    if (!draft.logic.spec?.method) {
+      return "draft.logic.spec.method 값이 필요합니다.";
+    }
+  } else {
+    return `지원하지 않는 logic.type 입니다: ${(draft.logic as any).type}`;
   }
   return null;
 };
@@ -284,6 +276,14 @@ const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {
   }
   const obj = payload as Record<string, unknown>;
   if (obj.type !== "api_draft") {
+    // Fallback: Check if it looks like a flat draft
+    if (obj.api_name && (obj.endpoint || obj.logic)) {
+      const draft = normalizeApiDraft(obj);
+      const shapeError = validateDraftShape(draft);
+      if (!shapeError) {
+        return { ok: true, draft, notes: (obj.notes as string) ?? null };
+      }
+    }
     return { ok: false, error: "type=api_draft인 객체가 아닙니다." };
   }
   const mode = obj.mode;
@@ -291,7 +291,11 @@ const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {
     if (!obj.draft || typeof obj.draft !== "object") {
       return { ok: false, error: "draft 필드가 없습니다." };
     }
-    const draft = obj.draft as ApiDraft;
+    const rawDraft = obj.draft as any;
+    if (rawDraft?.logic?.type === "http" && rawDraft.logic.request && !rawDraft.logic.spec) {
+      rawDraft.logic.spec = rawDraft.logic.request;
+    }
+    const draft = normalizeApiDraft(rawDraft);
     const shapeError = validateDraftShape(draft);
     if (shapeError) {
       return { ok: false, error: shapeError };
@@ -302,12 +306,16 @@ const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {
     if (!Array.isArray(obj.patch)) {
       return { ok: false, error: "patch 배열이 필요합니다." };
     }
-    const updated = applyPatchToDraft(baseDraft, obj.patch as any);
-    const shapeError = validateDraftShape(updated);
+    const patched = applyPatchToDraft(baseDraft, obj.patch as any);
+    if (patched?.logic?.type === "http" && (patched.logic as any).request && !patched.logic.spec) {
+      patched.logic.spec = (patched.logic as any).request;
+    }
+    const draft = normalizeApiDraft(patched);
+    const shapeError = validateDraftShape(draft);
     if (shapeError) {
       return { ok: false, error: shapeError };
     }
-    return { ok: true, draft: updated, notes: (obj.notes as string) ?? null };
+    return { ok: true, draft, notes: (obj.notes as string) ?? null };
   }
   return { ok: false, error: "mode는 replace 또는 patch여야 합니다." };
 };
@@ -328,39 +336,172 @@ const tryParseJson = (text: string) => {
   }
 };
 
+const extractJsonObjectFrom = (text: string, startIdx: number) => {
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = startIdx; i < text.length; i += 1) {
+    const char = text[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (char === "\\") {
+      escape = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) {
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+    }
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return text.slice(startIdx, i + 1);
+      }
+    }
+  }
+  if (depth > 0 && !inString) {
+    return text.slice(startIdx) + "}".repeat(depth);
+  }
+  throw new Error("JSON 객체를 추출하지 못했습니다.");
+};
+
+const extractJsonCandidates = (text: string) => {
+  const candidates: string[] = [];
+  let searchIdx = text.indexOf("{");
+  while (searchIdx !== -1 && searchIdx < text.length) {
+    try {
+      const candidate = extractJsonObjectFrom(text, searchIdx);
+      if (candidate.trim()) {
+        candidates.push(candidate);
+      }
+      searchIdx = text.indexOf("{", searchIdx + candidate.length);
+    } catch {
+      searchIdx = text.indexOf("{", searchIdx + 1);
+    }
+  }
+  return candidates;
+};
+
 const parseApiDraft = (text: string, baseDraft: ApiDraft) => {
   const rawCandidates = [stripCodeFences(text), text];
+  let lastError: string | null = null;
+  const tryNormalize = (payload: Record<string, unknown>) => {
+    if (payload.type !== "api_draft") {
+      return null;
+    }
+    const normalized = normalizeDraftPayload(payload, baseDraft);
+    if (normalized.ok) {
+      return normalized;
+    }
+    if (normalized.error) {
+      lastError = normalized.error;
+    }
+    return null;
+  };
+
   for (const candidate of rawCandidates) {
     if (!candidate.trim()) {
       continue;
     }
     const direct = tryParseJson(candidate);
-    if (direct) {
-      return normalizeDraftPayload(direct, baseDraft);
+    if (direct && typeof direct === "object" && direct !== null) {
+      const normalized = tryNormalize(direct as Record<string, unknown>);
+      if (normalized) {
+        return normalized;
+      }
     }
-    try {
-      const extracted = extractFirstJsonObject(candidate);
-      const parsed = JSON.parse(extracted);
-      return normalizeDraftPayload(parsed, baseDraft);
-    } catch {
-      // continue to next candidate
+    const extractedCandidates = extractJsonCandidates(candidate);
+    if (extractedCandidates.length === 0) {
+      continue;
+    }
+    for (const extracted of extractedCandidates) {
+      try {
+        const parsed = JSON.parse(extracted);
+        if (typeof parsed !== "object" || parsed === null) {
+          continue;
+        }
+        const normalized = tryNormalize(parsed as Record<string, unknown>);
+        if (normalized) {
+          return normalized;
+        }
+      } catch {
+        // ignore parse failures for individual candidates
+      }
     }
   }
-  return { ok: false, error: "JSON 객체를 추출할 수 없습니다." };
+  return { ok: false, error: lastError ?? "JSON 객체를 추출할 수 없습니다." };
 };
 
-const apiToDraft = (api: ApiDefinitionItem): ApiDraft => ({
-  api_name: api.api_name,
-  method: api.method,
-  endpoint: api.endpoint,
-  description: api.description ?? "",
-  tags: api.tags ?? [],
-  params_schema: api.param_schema ?? {},
-  logic: {
-    type: "sql",
-    query: api.logic_body,
-  },
-});
+const normalizeApiDraft = (input: any): ApiDraft => {
+  const draft: ApiDraft = {
+    api_name: (input.api_name || "").trim(),
+    method: (input.method || "GET").toUpperCase() as ApiDraft["method"],
+    endpoint: (input.endpoint || "").trim(),
+    description: (input.description || "").trim(),
+    tags: Array.isArray(input.tags) ? input.tags : [],
+    params_schema: input.params_schema || {},
+    runtime_policy: input.runtime_policy || {},
+    is_active: typeof input.is_active === "boolean" ? input.is_active : true,
+    logic: { type: "sql", query: "" }, // Default
+  };
+
+  if (input.logic?.type === "http") {
+    draft.logic = {
+      type: "http",
+      spec: {
+        method: input.logic.spec?.method || "GET",
+        url: input.logic.spec?.url || "",
+        headers: input.logic.spec?.headers || {},
+        params: input.logic.spec?.params || {},
+        body: input.logic.spec?.body || {},
+      },
+    };
+  } else {
+    draft.logic = {
+      type: "sql",
+      query: input.logic?.query || "",
+    };
+  }
+  return draft;
+};
+
+const apiToDraft = (api: ApiDefinitionItem): ApiDraft => {
+  const draft: ApiDraft = {
+    api_name: api.api_name,
+    method: api.method,
+    endpoint: api.endpoint,
+    description: api.description ?? "",
+    tags: api.tags ?? [],
+    params_schema: api.param_schema ?? {},
+    runtime_policy: api.runtime_policy ?? {},
+    is_active: api.is_active ?? true,
+    logic: {
+      type: "sql",
+      query: "",
+    },
+  };
+
+  if (api.logic_type === "http") {
+    draft.logic = {
+      type: "http",
+      spec: safeParseJson(api.logic_body, { method: "GET", url: "" }),
+    };
+  } else {
+    draft.logic = {
+      type: "sql",
+      query: api.logic_body,
+    };
+  }
+  return draft;
+};
 
 const validateSql = (query: string) => {
   const errors: string[] = [];
@@ -398,21 +539,28 @@ const validateApiDraft = (draft: ApiDraft) => {
   if (!draft.api_name.trim()) {
     errors.push("API 이름을 입력해야 합니다.");
   }
-  if (!draft.endpoint.startsWith("/api-manager/")) {
-    errors.push("/api-manager/로 시작하는 엔드포인트만 허용됩니다.");
+  if (!draft.endpoint.startsWith("/")) {
+    errors.push("엔드포인트는 /로 시작해야 합니다.");
   }
   if (!["GET", "POST", "PUT", "DELETE"].includes(draft.method)) {
     errors.push("HTTP 메서드는 GET/POST/PUT/DELETE 중 하나여야 합니다.");
   }
-  if (draft.logic.type !== "sql") {
-    errors.push("logic.type은 sql이어야 합니다.");
+
+  if (draft.logic.type === "sql") {
+    if (!draft.logic.query.trim()) {
+      errors.push("SQL 쿼리를 입력해야 합니다.");
+    }
+    const sqlResult = validateSql(draft.logic.query);
+    errors.push(...sqlResult.errors);
+    warnings.push(...sqlResult.warnings);
+  } else if (draft.logic.type === "http") {
+    if (!draft.logic.spec.url) {
+      errors.push("HTTP Logic에 URL은 필수입니다.");
+    }
+  } else {
+    errors.push(`지원하지 않는 로직 타입입니다: ${(draft.logic as any).type}`);
   }
-  if (!draft.logic.query.trim()) {
-    errors.push("SQL 쿼리를 입력해야 합니다.");
-  }
-  const sqlResult = validateSql(draft.logic.query);
-  errors.push(...sqlResult.errors);
-  warnings.push(...sqlResult.warnings);
+
   return { ok: errors.length === 0, errors, warnings };
 };
 
@@ -430,12 +578,26 @@ const computeDraftDiff = (draft: ApiDraft, baseline: ApiDraft) => {
   if (draft.description !== baseline.description) {
     differences.push(`Description changed`);
   }
-  if (draft.tags.join(",") !== baseline.tags.join(",")) {
-    differences.push(`Tags: ${baseline.tags.join(", ") || "<empty>"} → ${draft.tags.join(", ") || "<empty>"}`);
+  const dTags = draft.tags || [];
+  const bTags = baseline.tags || [];
+  if (dTags.join(",") !== bTags.join(",")) {
+    differences.push(`Tags: ${bTags.join(", ") || "<empty>"} → ${dTags.join(", ") || "<empty>"}`);
   }
-  if (draft.logic.query !== baseline.logic.query) {
-    differences.push("Logic query updated");
+  if (draft.logic.type !== baseline.logic.type) {
+    differences.push(`Logic type: ${baseline.logic.type} → ${draft.logic.type}`);
   }
+  if (draft.logic.type === "sql" && baseline.logic.type === "sql") {
+    if (draft.logic.query !== baseline.logic.query) {
+      differences.push("Logic query updated");
+    }
+  } else if (draft.logic.type === "http" && baseline.logic.type === "http") {
+    if (JSON.stringify(draft.logic.spec) !== JSON.stringify(baseline.logic.spec)) {
+      differences.push("Logic HTTP spec updated");
+    }
+  } else {
+    differences.push("Logic body updated");
+  }
+
   return differences;
 };
 
@@ -446,9 +608,23 @@ interface ApiDraft {
   description: string;
   tags: string[];
   params_schema: Record<string, unknown>;
-  logic: {
+  runtime_policy: Record<string, unknown>;
+  is_active: boolean;
+  logic:
+  | {
     type: "sql";
     query: string;
+    timeout_ms?: number;
+  }
+  | {
+    type: "http";
+    spec: {
+      method: string;
+      url: string;
+      headers?: Record<string, string>;
+      params?: Record<string, any>;
+      body?: any;
+    };
     timeout_ms?: number;
   };
 }
@@ -492,7 +668,9 @@ export default function ApiManagerPage() {
   const [systemError, setSystemError] = useState<string | null>(null);
   const [systemFetchStatus, setSystemFetchStatus] = useState<"idle" | "ok" | "error">("idle");
   const [systemFetchAt, setSystemFetchAt] = useState<string | null>(null);
+  const [localApis, setLocalApis] = useState<ApiDefinitionItem[]>([]);
   const skipAutoSelectRef = useRef(false);
+  const skipResetRef = useRef(false);
   const [systemView, setSystemView] = useState<SystemView>("discovered");
   const [discoveredEndpoints, setDiscoveredEndpoints] = useState<DiscoveredEndpoint[]>([]);
   const [discoveredError, setDiscoveredError] = useState<string | null>(null);
@@ -530,6 +708,13 @@ export default function ApiManagerPage() {
   const [scriptLanguage, setScriptLanguage] = useState<"python" | "javascript">("python");
   const [paramSchemaText, setParamSchemaText] = useState("{}");
   const [runtimePolicyText, setRuntimePolicyText] = useState("{}");
+  const [httpSpec, setHttpSpec] = useState({
+    url: "",
+    method: "GET",
+    headers: "{}",
+    body: "{}",
+    params: "{}",
+  });
   const [testParams, setTestParams] = useState("{}");
   const [testInput, setTestInput] = useState("{}");
   const [testLimit, setTestLimit] = useState("200");
@@ -540,6 +725,7 @@ export default function ApiManagerPage() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [logsLoading, setLogsLoading] = useState(false);
   const [showJsonResult, setShowJsonResult] = useState(false);
+  const [showLogicResult, setShowLogicResult] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -551,6 +737,23 @@ export default function ApiManagerPage() {
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (logicType === "http") {
+      try {
+        const spec = {
+          url: httpSpec.url,
+          method: httpSpec.method,
+          headers: JSON.parse(httpSpec.headers || "{}"),
+          body: JSON.parse(httpSpec.body || "{}"),
+          params: JSON.parse(httpSpec.params || "{}"),
+        };
+        setLogicBody(JSON.stringify(spec, null, 2));
+      } catch (error) {
+        console.error("Error creating http logic body from spec:", error);
+      }
+    }
+  }, [httpSpec, logicType]);
+
+  useEffect(() => {
     if (!enableSystemApis && scope === "system") {
       setScope("custom");
     }
@@ -560,8 +763,14 @@ export default function ApiManagerPage() {
     if (scope === "system" && enableSystemApis) {
       return systemApis.find((api) => api.api_id === selectedId) ?? null;
     }
-    return apis.find((api) => api.api_id === selectedId) ?? null;
-  }, [apis, systemApis, selectedId, scope, enableSystemApis]);
+    const found = apis.find((api) => api.api_id === selectedId) || localApis.find((api) => api.api_id === selectedId);
+    if (found) return found;
+
+    if (selectedId === "applied-draft-temp" && draftApi) {
+      return buildTemporaryApiFromDraft(draftApi);
+    }
+    return null;
+  }, [apis, systemApis, localApis, selectedId, scope, enableSystemApis, draftApi]);
 
   const discoveredConstraintLines = useMemo(() => {
     if (!selectedDiscovered) {
@@ -576,26 +785,48 @@ export default function ApiManagerPage() {
   }, [selectedDiscovered]);
 
   const buildDraftFromForm = useCallback((): ApiDraft => {
-    return {
+    const draft: ApiDraft = {
       api_name: definitionDraft.api_name,
       method: definitionDraft.method as ApiDraft["method"],
       endpoint: definitionDraft.endpoint,
       description: definitionDraft.description,
       tags: parseTags(definitionDraft.tags),
       params_schema: safeParseJson(paramSchemaText),
+      runtime_policy: safeParseJson(runtimePolicyText),
+      is_active: definitionDraft.is_active,
       logic: {
         type: "sql",
-        query: logicBody,
+        query: "",
       },
     };
-  }, [definitionDraft, logicBody, paramSchemaText]);
+
+    if (logicType === "http") {
+      draft.logic = {
+        type: "http",
+        spec: {
+          method: httpSpec.method,
+          url: httpSpec.url,
+          headers: safeParseJson(httpSpec.headers),
+          params: safeParseJson(httpSpec.params),
+          body: safeParseJson(httpSpec.body),
+        },
+      };
+    } else {
+      draft.logic = {
+        type: "sql",
+        query: logicBody,
+      };
+    }
+
+    return draft;
+  }, [definitionDraft, paramSchemaText, logicType, httpSpec, logicBody]);
 
   const buildSavePayload = useCallback(() => {
     if (isSystemScope) {
       setStatusMessage("System APIs are read-only. Import to Custom to edit.");
       return null;
     }
-    if (scope === "custom" && !logicBody.trim()) {
+    if (scope === "custom" && !(logicBody || "").trim()) {
       setStatusMessage("Logic body is required for custom APIs.");
       return null;
     }
@@ -620,16 +851,18 @@ export default function ApiManagerPage() {
       logicSpecPayload = { language: scriptLanguage };
     } else if (logicType === "python") {
       logicSpecPayload = { language: "python" };
+    } else if (logicType === "http") {
+      logicSpecPayload = {};
     }
     return {
-      api_name: definitionDraft.api_name.trim(),
+      api_name: (definitionDraft.api_name || "").trim(),
       api_type: scope,
-      method: definitionDraft.method.toUpperCase(),
-      endpoint: definitionDraft.endpoint.trim(),
-      description: definitionDraft.description.trim() || null,
-      tags: parseTags(definitionDraft.tags),
+      method: (definitionDraft.method || "GET").toUpperCase(),
+      endpoint: (definitionDraft.endpoint || "").trim(),
+      description: (definitionDraft.description || "").trim() || null,
+      tags: parseTags(definitionDraft.tags || ""),
       logic_type: logicType,
-      logic_body: logicBody.trim(),
+      logic_body: (logicBody || "").trim(),
       param_schema: parsedParamSchema,
       runtime_policy: parsedRuntimePolicy,
       logic_spec: logicSpecPayload,
@@ -648,21 +881,18 @@ export default function ApiManagerPage() {
   ]);
 
   const buildFormSnapshot = useCallback(() => {
-    return JSON.stringify({
-      ...buildDraftFromForm(),
-      logic_type: logicType,
-      runtime_policy: safeParseJson(runtimePolicyText),
-    });
-  }, [buildDraftFromForm, logicType, runtimePolicyText]);
+    return JSON.stringify(buildDraftFromForm());
+  }, [buildDraftFromForm]);
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
 
   const saveApiToServer = useCallback(
-    async (payload: Record<string, unknown>) => {
-      const target = selectedApi
+    async (payload: Record<string, unknown>, forceCreate = false) => {
+      const isUpdating = selectedApi && selectedApi.api_id !== "applied-draft-temp" && !forceCreate;
+      const target = isUpdating
         ? `${apiBaseUrl}/api-manager/apis/${selectedApi.api_id}`
         : `${apiBaseUrl}/api-manager/apis`;
-      const method = selectedApi ? "PUT" : "POST";
+      const method = isUpdating ? "PUT" : "POST";
       try {
         const response = await fetch(target, {
           method,
@@ -680,8 +910,10 @@ export default function ApiManagerPage() {
     },
     [apiBaseUrl, selectedApi]
   );
-  const draftStorageId = selectedId ?? "new";
-  const finalStorageId = selectedId ?? (definitionDraft.endpoint || "new");
+  const draftStorageId = selectedId === "applied-draft-temp" ? "new" : (selectedId ?? "new");
+  const finalStorageId = selectedId === "applied-draft-temp"
+    ? (definitionDraft.endpoint || "new")
+    : (selectedId ?? (definitionDraft.endpoint || "new"));
 
   const getLocalSystemApis = useCallback(() => {
     if (typeof window === "undefined") {
@@ -807,6 +1039,47 @@ export default function ApiManagerPage() {
     [apiBaseUrl, scope, enableSystemApis, getLocalSystemApis]
   );
 
+  const loadLocalCustomApis = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const items: ApiDefinitionItem[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key?.startsWith(FINAL_STORAGE_PREFIX)) {
+        try {
+          const raw = window.localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            // It might be a partial draft or a full API definition depending on how it was saved
+            // Ensure basic fields are present to treat as a "local" record
+            if (parsed.endpoint && parsed.api_name) {
+              const localId = key.replace(FINAL_STORAGE_PREFIX, "");
+              items.push({
+                ...parsed,
+                api_id: parsed.api_id || `local-${localId}`,
+                updated_at: parsed.updated_at || new Date().toISOString(),
+                created_at: parsed.created_at || new Date().toISOString(),
+                source: "local"
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse local API", e);
+        }
+      }
+    }
+    setLocalApis(items);
+  }, []);
+
+  useEffect(() => {
+    if (draftStatus !== "applied" && draftStatus !== "outdated") {
+      setLocalApis((prev) => prev.filter((api) => api.api_id !== "applied-draft-temp"));
+    }
+  }, [draftStatus]);
+
+  useEffect(() => {
+    loadLocalCustomApis();
+  }, [loadLocalCustomApis]);
+
   const loadDiscoveredEndpoints = useCallback(async () => {
     if (!isSystemScope) {
       return;
@@ -837,7 +1110,7 @@ export default function ApiManagerPage() {
   }, [apiBaseUrl, isSystemScope]);
 
   const fetchExecLogs = useCallback(async () => {
-    if (!selectedId) {
+    if (!selectedId || selectedId === "applied-draft-temp" || selectedId.startsWith("local") || selectedId.startsWith("system:")) {
       setExecLogs([]);
       return;
     }
@@ -869,6 +1142,9 @@ export default function ApiManagerPage() {
   }, [isSystemScope, systemView, loadDiscoveredEndpoints]);
 
   useEffect(() => {
+    if (selectedId === "applied-draft-temp" && draftApi) {
+      return;
+    }
     const key = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
     const raw = window.localStorage.getItem(key);
     if (!raw) {
@@ -892,7 +1168,7 @@ export default function ApiManagerPage() {
       setDraftApi(null);
       setDraftStatus("idle");
     }
-  }, [draftStorageId]);
+  }, [draftStorageId, selectedId]);
 
   useEffect(() => {
     const key = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
@@ -945,6 +1221,10 @@ export default function ApiManagerPage() {
   }, [buildFormSnapshot, formBaselineSnapshot, draftApi, appliedDraftSnapshot]);
 
   useEffect(() => {
+    if (skipResetRef.current) {
+      skipResetRef.current = false;
+      return;
+    }
     if (!selectedApi) {
       setDefinitionDraft({
         api_name: "",
@@ -957,6 +1237,7 @@ export default function ApiManagerPage() {
       });
       setLogicBody("");
       setLogicType("sql");
+      setHttpSpec({ url: "", method: "GET", headers: "{}", body: "{}", params: "{}" });
       setParamSchemaText("{}");
       setRuntimePolicyText("{}");
       setActiveTab(DEFAULT_TAB);
@@ -976,12 +1257,29 @@ export default function ApiManagerPage() {
       method: selectedApi.method,
       endpoint: selectedApi.endpoint,
       description: selectedApi.description ?? "",
-      tags: selectedApi.tags.join(", "),
+      tags: (selectedApi.tags || []).join(", "),
       is_active: selectedApi.is_active,
       created_by: selectedApi.created_by ?? "",
     });
     setLogicBody(selectedApi.logic_body);
     setLogicType(selectedApi.logic_type);
+
+    if (selectedApi.logic_type === "http") {
+      try {
+        const spec = JSON.parse(selectedApi.logic_body || "{}");
+        setHttpSpec({
+          url: spec.url || "",
+          method: spec.method || "GET",
+          headers: JSON.stringify(spec.headers || {}, null, 2),
+          body: JSON.stringify(spec.body || {}, null, 2),
+          params: JSON.stringify(spec.params || {}, null, 2),
+        });
+      } catch {
+        // Reset to default if parsing fails
+        setHttpSpec({ url: "", method: "GET", headers: "{}", body: "{}", params: "{}" });
+      }
+    }
+
     setParamSchemaText(formatJson(selectedApi.param_schema));
     setRuntimePolicyText(formatJson(selectedApi.runtime_policy));
     const specLanguage = (selectedApi.logic_spec?.language ?? "") as string;
@@ -1001,7 +1299,23 @@ export default function ApiManagerPage() {
   }, [selectedApi, fetchExecLogs]);
 
   const filteredApis = useMemo(() => {
-    let result = apis;
+    // Combine server-fetched APIs and local-stored APIs
+    const merged = [...apis];
+    for (const local of localApis) {
+      if (!merged.find(a => a.api_id === local.api_id || (a.endpoint === local.endpoint && a.method === local.method))) {
+        merged.push(local);
+      }
+    }
+
+    // If a draft is applied but not yet in the list, unshift a temporary "Draft" entry
+    if ((draftStatus === "applied" || draftStatus === "outdated") && draftApi) {
+      const alreadyExists = merged.find(a => a.endpoint === draftApi.endpoint && a.method === draftApi.method);
+      if (!alreadyExists) {
+        merged.unshift(buildTemporaryApiFromDraft(draftApi));
+      }
+    }
+
+    let result = merged;
     if (logicFilter !== "all") {
       result = result.filter((api) => api.logic_type === logicFilter);
     }
@@ -1014,9 +1328,9 @@ export default function ApiManagerPage() {
         api.api_name.toLowerCase().includes(lower) ||
         api.endpoint.toLowerCase().includes(lower) ||
         api.method.toLowerCase().includes(lower) ||
-        api.tags.join(",").toLowerCase().includes(lower)
+        (api.tags || []).join(",").toLowerCase().includes(lower)
     );
-  }, [apis, searchTerm, logicFilter]);
+  }, [apis, localApis, draftStatus, draftApi, searchTerm, logicFilter]);
 
   const filteredSystemApis = useMemo(() => {
     if (!systemSearchTerm.trim()) {
@@ -1028,7 +1342,7 @@ export default function ApiManagerPage() {
         api.api_name.toLowerCase().includes(lower) ||
         api.endpoint.toLowerCase().includes(lower) ||
         api.method.toLowerCase().includes(lower) ||
-        api.tags.join(",").toLowerCase().includes(lower)
+        (api.tags || []).join(",").toLowerCase().includes(lower)
     );
   }, [systemApis, systemSearchTerm]);
 
@@ -1053,18 +1367,25 @@ export default function ApiManagerPage() {
     if (!payload) {
       return;
     }
+    // If endpoint is different from selected, force create (POST instead of PUT)
+    // If we are currently in virtual draft mode or a local-only mode, we must forceCreate on the server
+    const isVirtual = selectedId === "applied-draft-temp" || (selectedApi && selectedApi.api_id.startsWith("local-"));
+    const isEndpointDifferent = selectedApi && !isVirtual && payload.endpoint !== selectedApi.endpoint;
+    const isLogicTypeDifferent = selectedApi && !isVirtual && payload.logic_type !== selectedApi.logic_type;
+    const forceCreate = isVirtual || Boolean(isEndpointDifferent || isLogicTypeDifferent);
+
     setIsSaving(true);
     setSaveTarget(null);
     setLastSaveError(null);
     try {
-      const result = await saveApiToServer(payload);
+      const result = await saveApiToServer(payload, forceCreate);
       if (!result.ok) {
         setLastSaveError(result.error ?? "Failed to save API definition");
         setStatusMessage(result.error ?? "Save failed. 확인 로그를 참고하세요.");
         return;
       }
       const saved = result.data as ApiDefinitionItem | null;
-      setStatusMessage(selectedApi ? "API updated" : "API created");
+      setStatusMessage(forceCreate || !selectedApi ? "API created" : "API updated");
       setSaveTarget("server");
       if (saved?.api_id) {
         setSelectedId(saved.api_id);
@@ -1072,6 +1393,7 @@ export default function ApiManagerPage() {
       } else {
         await loadApis(selectedId ?? undefined);
       }
+      loadLocalCustomApis();
     } finally {
       setIsSaving(false);
     }
@@ -1088,18 +1410,57 @@ export default function ApiManagerPage() {
     setDraftNotes("드래프트를 미리보기로 렌더링합니다.");
   };
 
-  const handleTestDraft = () => {
+  const handleTestDraft = async () => {
     if (!draftApi) {
       setDraftErrors(["AI 드래프트가 없습니다."]);
       return;
     }
-    setDraftStatus("testing");
     const validation = validateApiDraft(draftApi);
     setDraftErrors(validation.errors);
     setDraftWarnings(validation.warnings);
-    setDraftNotes(validation.ok ? "테스트 통과" : "테스트 실패");
-    setDraftTestOk(validation.ok);
-    setDraftStatus(validation.ok ? "draft_ready" : "error");
+
+    if (!validation.ok) {
+      setDraftNotes("규격 테스트 실패 (Dry-run 생략)");
+      setDraftTestOk(false);
+      setDraftStatus("error");
+      return;
+    }
+
+    setDraftStatus("testing");
+    setDraftNotes("실제 로직 테스트 중 (Dry-run)...");
+
+    try {
+      const bodyValue = draftApi.logic.type === "sql"
+        ? draftApi.logic.query
+        : JSON.stringify(draftApi.logic.spec);
+
+      const response = await fetch(`${apiBaseUrl}/api-manager/dry-run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          logic_type: draftApi.logic.type,
+          logic_body: bodyValue,
+          params: draftApi.params_schema || {},
+          runtime_policy: draftApi.runtime_policy || { allow_runtime: true }, // Ensure it can run during test
+        })
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body?.message || body?.detail || "Dry-run failed");
+      }
+
+      setExecutionResult(body.data.result);
+      setShowLogicResult(true);
+
+      setDraftNotes("실제 로직 테스트 성공! 데이터를 확인하세요.");
+      setDraftTestOk(true);
+      setDraftStatus("draft_ready");
+    } catch (err) {
+      setDraftErrors([err instanceof Error ? err.message : "네트워크 오류"]);
+      setDraftNotes("실제 로직 테스트 실패");
+      setDraftTestOk(false);
+      setDraftStatus("error");
+    }
   };
 
   const applyFinalToForm = (draft: ApiDraft) => {
@@ -1108,21 +1469,48 @@ export default function ApiManagerPage() {
       api_name: draft.api_name,
       method: draft.method,
       endpoint: draft.endpoint,
-      description: draft.description,
-      tags: draft.tags.join(", "),
+      description: draft.description ?? "",
+      tags: (draft.tags || []).join(", "),
+      is_active: typeof draft.is_active === "boolean" ? draft.is_active : true,
     }));
-    setLogicType("sql");
-    setLogicBody(draft.logic.query);
-    setParamSchemaText(JSON.stringify(draft.params_schema ?? {}, null, 2));
+    setParamSchemaText(JSON.stringify(draft.params_schema || {}, null, 2));
+    setRuntimePolicyText(JSON.stringify(draft.runtime_policy || {}, null, 2));
+
+    if (draft.logic.type === "http") {
+      setLogicType("http");
+      const spec = draft.logic.spec;
+      setHttpSpec({
+        url: spec.url || "",
+        method: spec.method || "GET",
+        headers: JSON.stringify(spec.headers || {}, null, 2),
+        body: JSON.stringify(spec.body || {}, null, 2),
+        params: JSON.stringify(spec.params || {}, null, 2),
+      });
+      // logicBody will be updated by the useEffect for httpSpec
+    } else {
+      setLogicType("sql");
+      setLogicBody(draft.logic.query);
+    }
   };
 
   const applyDraftToForm = (draft: ApiDraft) => {
+    // Fill the form fields
     applyFinalToForm(draft);
     setDraftStatus("applied");
+
+    // Switch to virtual draft mode so it appears in the list as [NEW]
+    skipResetRef.current = true;
+    setSelectedId("applied-draft-temp");
+
     setDraftNotes("드래프트가 폼에 적용되었습니다. 저장 전입니다.");
-    setStatusMessage("Draft applied to editor (not saved).");
+    setStatusMessage("Draft applied. 리스트에서 [NEW] 항목을 확인하세요.");
     setFormDirty(true);
-    setAppliedDraftSnapshot(JSON.stringify(draft));
+    // Explicitly normalize before snapshotting to guarantee key order matches buildDraftFromForm
+    setAppliedDraftSnapshot(JSON.stringify(normalizeApiDraft(draft)));
+    setLocalApis((prev) => {
+      const tempEntry = buildTemporaryApiFromDraft(draft);
+      return [tempEntry, ...prev.filter((api) => api.api_id !== "applied-draft-temp")];
+    });
   };
 
   const handleApplyDraft = () => {
@@ -1144,14 +1532,19 @@ export default function ApiManagerPage() {
       setDraftErrors(["테스트를 통과한 뒤 저장할 수 있습니다."]);
       return;
     }
-    const finalPayload = buildDraftFromForm();
+    const finalPayload = buildSavePayload();
+    if (!finalPayload) return;
     const storageKey = `${FINAL_STORAGE_PREFIX}${finalStorageId}`;
     setIsSaving(true);
     setSaveTarget(null);
     setLastSaveError(null);
+
+    const isVirtual = selectedId === "applied-draft-temp" || (selectedApi && selectedApi.api_id.startsWith("local-"));
+    const forceCreate = isVirtual || (selectedApi ? finalPayload.endpoint !== selectedApi.endpoint : false);
+
     saveApiWithFallback({
       payload: finalPayload,
-      saveApiToServer,
+      saveApiToServer: (p: Record<string, unknown>) => saveApiToServer(p, forceCreate),
       storage: window.localStorage,
       storageKey,
     })
@@ -1171,6 +1564,7 @@ export default function ApiManagerPage() {
         } else {
           setStatusMessage("Saved locally (server unavailable).");
           setDraftNotes("서버 저장 실패로 로컬에 저장했습니다.");
+          loadLocalCustomApis();
         }
         setDraftApi(null);
         setDraftStatus("saved");
@@ -1191,8 +1585,12 @@ export default function ApiManagerPage() {
       });
   };
 
-  const handleNew = () => {
+  const handleNew = useCallback(() => {
     setSelectedId(null);
+    setDraftApi(null);
+    setDraftStatus("idle");
+    setAppliedDraftSnapshot(null);
+    setStatusMessage("새 API 정의를 시작합니다.");
     setDefinitionDraft({
       api_name: "",
       method: "GET",
@@ -1204,6 +1602,7 @@ export default function ApiManagerPage() {
     });
     setLogicBody("");
     setLogicType("sql");
+    setHttpSpec({ url: "", method: "GET", headers: "{}", body: "{}", params: "{}" });
     setScriptLanguage("python");
     setParamSchemaText("{}");
     setRuntimePolicyText("{}");
@@ -1211,7 +1610,7 @@ export default function ApiManagerPage() {
     setFormDirty(false);
     setFormBaselineSnapshot(JSON.stringify(buildDraftFromForm()));
     setAppliedDraftSnapshot(null);
-  };
+  }, [buildDraftFromForm]);
 
   const handleImportSystemApi = useCallback(() => {
     if (!selectedApi) {
@@ -1248,6 +1647,8 @@ export default function ApiManagerPage() {
         responses: endpoint.responses ?? null,
         source: "discovered",
       },
+      runtime_policy: {},
+      is_active: true,
       logic: {
         type: "sql",
         query: "SELECT 1",
@@ -1287,6 +1688,8 @@ export default function ApiManagerPage() {
         type: "sql",
         query: "SELECT 1",
       },
+      runtime_policy: {},
+      is_active: true,
     };
   }, []);
 
@@ -1365,286 +1768,46 @@ export default function ApiManagerPage() {
     setExecutedBy(log.executed_by ?? "ops-builder");
   };
 
-  const definitionLogicContent = (
-    <div className="space-y-4">
-      {activeTab === "definition" && (
-        <div className="space-y-3">
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            API Name
-            <input
-              value={definitionDraft.api_name}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
-              }
-              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              disabled={isSystemScope}
-            />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs uppercase tracking-normal text-slate-500">
-              Method
-              <select
-                value={definitionDraft.method}
-                onChange={(event) =>
-                  setDefinitionDraft((prev) => ({ ...prev, method: event.target.value as "GET" | "POST" }))
-                }
-                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-                disabled={isSystemScope}
-              >
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-              </select>
-            </label>
-            <label className="text-xs uppercase tracking-normal text-slate-500">
-              Endpoint
-              <input
-                value={definitionDraft.endpoint}
-                onChange={(event) =>
-                  setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
-                }
-                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-                disabled={isSystemScope}
-              />
-            </label>
-          </div>
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            Description
-            <textarea
-              value={definitionDraft.description}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
-              }
-              className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-              disabled={isSystemScope}
-            />
-          </label>
-          {selectedDiscovered ? (
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-200">
-              <p className="text-[10px] uppercase tracking-normal text-slate-500">Supported actions / constraints</p>
-              {selectedDiscovered.summary ? (
-                <p className="text-sm text-slate-200">{selectedDiscovered.summary}</p>
-              ) : null}
-              {discoveredConstraintLines.map((line, index) => (
-                <p key={index} className="text-[11px] text-slate-400">
-                  {line}
-                </p>
-              ))}
-              <button
-                onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
-                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-slate-500"
-              >
-                Import to Custom
-              </button>
-            </div>
-          ) : null}
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            Tags (comma separated)
-            <input
-              value={definitionDraft.tags}
-              onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
-              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              disabled={isSystemScope}
-            />
-          </label>
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <label className="text-xs uppercase tracking-normal text-slate-500">
-              Param Schema (JSON)
-              <textarea
-                value={paramSchemaText}
-                onChange={(event) => setParamSchemaText(event.target.value)}
-                className="mt-2 h-[22rem] w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-                disabled={isSystemScope && systemView !== "registered"}
-              />
-            </label>
-            <div className="flex flex-col">
-              <span className="text-xs uppercase tracking-normal text-slate-500">Runtime Policy (JSON)</span>
-              <div className="mt-2 h-[22rem]">
-                {!isSystemScope || systemView === "registered" ? (
-                  <textarea
-                    value={runtimePolicyText}
-                    onChange={(event) => setRuntimePolicyText(event.target.value)}
-                    className="h-full w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-                    disabled={isSystemScope && systemView !== "registered"}
-                  />
-                ) : (
-                  <div className="flex h-full flex-col justify-center rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-400">
-                    Runtime Policy editing is available only for System {'>'} Registered or Custom APIs.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <label className="text-xs uppercase tracking-normal text-slate-500 flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={definitionDraft.is_active}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
-              }
-              className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
-              disabled={isSystemScope}
-            />
-            Active
-          </label>
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            Created by
-            <input
-              value={definitionDraft.created_by}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
-              }
-              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              placeholder="ops-builder"
-              disabled={isSystemScope}
-            />
-          </label>
-        </div>
-      )}
-      {activeTab === "logic" && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-normal text-slate-500">
-              Logic ({logicTypeLabels[logicType]})
-            </p>
-            {!isSystemScope ? (
-              <div className="flex flex-wrap gap-2">
-                {(["sql", "workflow", "python", "script"] as LogicType[]).map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setLogicType(type)}
-                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal ${logicType === type
-                      ? "border-sky-500 bg-sky-500/10 text-white"
-                      : "border-slate-800 bg-slate-950 text-slate-400"
-                      }`}
-                  >
-                    {logicTypeLabels[type]}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          {logicType === "script" && !isSystemScope ? (
-            <label className="text-xs uppercase tracking-normal text-slate-500 flex flex-col gap-2">
-              Script language
-              <select
-                value={scriptLanguage}
-                onChange={(event) =>
-                  setScriptLanguage(event.target.value as "python" | "javascript")
-                }
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              >
-                <option value="python">Python</option>
-                <option value="javascript">JavaScript</option>
-              </select>
-            </label>
-          ) : null}
-          <div className="builder-json-shell h-64 rounded-2xl border border-slate-800 bg-slate-950/60">
-            <Editor
-              height="100%"
-              defaultLanguage={getEditorLanguage(logicType, scriptLanguage)}
-              value={logicBody}
-              onChange={(value) => setLogicBody(value ?? "")}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: false },
-                fontSize: 13,
-                readOnly: isSystemScope,
-              }}
-            />
-          </div>
-        </div>
-      )}
-      <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-normal text-slate-500">
-          {statusMessage ?? "정의/로직 저장"}
-        </span>
-        <button
-          onClick={handleSave}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
-          disabled={isSaving || isSystemScope}
-        >
-          {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
-        </button>
-      </div>
-    </div>
-  );
+  const handleDryRunFromEditor = async () => {
+    setIsExecuting(true);
+    const start = Date.now();
+    try {
+      const formPayload = buildDraftFromForm();
+      // For HTTP, logic_body is already updated by useEffect to be the spec JSON
+      const dryPayload = {
+        logic_type: logicType,
+        logic_body: logicBody,
+        params: safeParseJson(paramSchemaText),
+        runtime_policy: safeParseJson(runtimePolicyText),
+      };
 
-  const isSqlApi = selectedApi?.logic_type === "sql";
-  const isWorkflowApi = selectedApi?.logic_type === "workflow";
+      const response = await fetch(`${apiBaseUrl}/api-manager/dry-run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dryPayload),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.message ?? body.detail ?? "Dry-run failed");
+      }
+      const duration = Date.now() - start;
+      const result = body.data.result;
 
-  const testTabContent = (
-    <div className="space-y-3">
-      {selectedApi ? (
-        <p className="text-[11px] text-slate-400">
-          Runtime URL:{" "}
-          <span className="font-mono text-[10px] text-slate-200">
-            {`${apiBaseUrl}${selectedApi.endpoint}`}
-          </span>
-        </p>
-      ) : null}
-      <label className="text-xs uppercase tracking-normal text-slate-500">
-        Params JSON
-        <textarea
-          value={testParams}
-          onChange={(event) => setTestParams(event.target.value)}
-          className="mt-2 h-32 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-        />
-      </label>
-      {isWorkflowApi ? (
-        <label className="text-xs uppercase tracking-normal text-slate-500">
-          Input JSON (optional)
-          <textarea
-            value={testInput}
-            onChange={(event) => setTestInput(event.target.value)}
-            className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-          />
-        </label>
-      ) : null}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-xs uppercase tracking-normal text-slate-500">
-          Limit
-          <input
-            type="number"
-            min={1}
-            max={1000}
-            value={testLimit}
-            onChange={(event) => setTestLimit(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-          />
-        </label>
-        <label className="text-xs uppercase tracking-normal text-slate-500">
-          Executed by
-          <input
-            value={executedBy}
-            onChange={(event) => setExecutedBy(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-            placeholder="ops-builder"
-          />
-        </label>
-        <div className="flex items-end">
-          <button
-            onClick={handleExecute}
-            className="w-full rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-sky-400 disabled:bg-slate-700"
-            disabled={
-              !selectedId || isExecuting || (!isSqlApi && !isWorkflowApi)
-            }
-          >
-            {isExecuting
-              ? "Executing…"
-              : isWorkflowApi
-                ? "Execute Workflow"
-                : "Execute SQL"}
-          </button>
-        </div>
-      </div>
-      {selectedApi && selectedApi.logic_type === "script" ? (
-        <p className="text-xs text-slate-400">
-          Script APIs are saved for future execution support in MVP-5.
-        </p>
-      ) : null}
-      {testError ? <p className="text-xs text-rose-400">{testError}</p> : null}
-    </div>
-  );
+      setExecutionResult({
+        ...result,
+        duration_ms: result.duration_ms || duration,
+      });
+      setShowLogicResult(true);
+      setStatusMessage("Dry-run 실행 성공.");
+      setWorkflowResult(null);
+    } catch (error) {
+      console.error("Dry-run failed", error);
+      setStatusMessage(error instanceof Error ? error.message : "Dry-run 실패");
+      setExecutionResult(null);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
 
   const testResultsArea = (
     <div className="space-y-4">
@@ -1793,6 +1956,432 @@ export default function ApiManagerPage() {
     </div>
   );
 
+  const definitionLogicContent = (
+    <div className="space-y-4">
+      {activeTab === "definition" && (
+        <div className="space-y-3">
+          <label className="text-xs uppercase tracking-normal text-slate-500">
+            API Name
+            <input
+              value={definitionDraft.api_name}
+              onChange={(event) =>
+                setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
+              }
+              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              disabled={isSystemScope}
+            />
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs uppercase tracking-normal text-slate-500">
+              Method
+              <select
+                value={definitionDraft.method}
+                onChange={(event) =>
+                  setDefinitionDraft((prev) => ({ ...prev, method: event.target.value as ApiDraft["method"] }))
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                disabled={isSystemScope}
+              >
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+              </select>
+            </label>
+            <label className="text-xs uppercase tracking-normal text-slate-500">
+              Endpoint
+              <input
+                value={definitionDraft.endpoint}
+                onChange={(event) =>
+                  setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
+                }
+                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                disabled={isSystemScope}
+              />
+            </label>
+          </div>
+          <label className="text-xs uppercase tracking-normal text-slate-500">
+            Description
+            <textarea
+              value={definitionDraft.description ?? ""}
+              onChange={(event) =>
+                setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
+              }
+              className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+              disabled={isSystemScope}
+            />
+          </label>
+          {selectedDiscovered ? (
+            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-200">
+              <p className="text-[10px] uppercase tracking-normal text-slate-500">Supported actions / constraints</p>
+              {selectedDiscovered.summary ? (
+                <p className="text-sm text-slate-200">{selectedDiscovered.summary}</p>
+              ) : null}
+              {discoveredConstraintLines.map((line, index) => (
+                <p key={index} className="text-[11px] text-slate-400">
+                  {line}
+                </p>
+              ))}
+              <button
+                onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-slate-500"
+              >
+                Import to Custom
+              </button>
+            </div>
+          ) : null}
+          <label className="text-xs uppercase tracking-normal text-slate-500">
+            Tags (comma separated)
+            <input
+              value={definitionDraft.tags}
+              onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
+              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              disabled={isSystemScope}
+            />
+          </label>
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+            <label className="text-xs uppercase tracking-normal text-slate-500">
+              Param Schema (JSON)
+              <textarea
+                value={paramSchemaText}
+                onChange={(event) => setParamSchemaText(event.target.value)}
+                className="mt-2 h-[11rem] w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                disabled={isSystemScope && systemView !== "registered"}
+              />
+            </label>
+            <div className="flex flex-col">
+              <span className="text-xs uppercase tracking-normal text-slate-500">Runtime Policy (JSON)</span>
+              <div className="mt-2 h-[11rem]">
+                {!isSystemScope || systemView === "registered" ? (
+                  <textarea
+                    value={runtimePolicyText}
+                    onChange={(event) => setRuntimePolicyText(event.target.value)}
+                    className="h-full w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                    disabled={isSystemScope && systemView !== "registered"}
+                  />
+                ) : (
+                  <div className="flex h-full flex-col justify-center rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-400">
+                    Runtime Policy editing is available only for System {'>'} Registered or Custom APIs.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <label className="text-xs uppercase tracking-normal text-slate-500 flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={definitionDraft.is_active}
+              onChange={(event) =>
+                setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
+              }
+              className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
+              disabled={isSystemScope}
+            />
+            Active
+          </label>
+          <label className="text-xs uppercase tracking-normal text-slate-500">
+            Created by
+            <input
+              value={definitionDraft.created_by}
+              onChange={(event) =>
+                setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
+              }
+              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              placeholder="ops-builder"
+              disabled={isSystemScope}
+            />
+          </label>
+        </div>
+      )}
+      {activeTab === "logic" && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-normal text-slate-500">
+              Logic ({logicTypeLabels[logicType]})
+            </p>
+            {!isSystemScope ? (
+              <div className="flex flex-wrap gap-2">
+                {(["sql", "workflow", "python", "script", "http"] as LogicType[]).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => setLogicType(type)}
+                    disabled={!!selectedId}
+                    className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal transition ${logicType === type
+                      ? "border-sky-500 bg-sky-500/10 text-white"
+                      : "border-slate-800 bg-slate-950 text-slate-400"
+                      } ${!!selectedId ? "opacity-40 cursor-not-allowed" : "hover:border-slate-600 shadow-sm"}`}
+                  >
+                    {logicTypeLabels[type]}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {logicType === "script" && !isSystemScope ? (
+            <label className="text-xs uppercase tracking-normal text-slate-500 flex flex-col gap-2">
+              Script language
+              <select
+                value={scriptLanguage}
+                onChange={(event) =>
+                  setScriptLanguage(event.target.value as "python" | "javascript")
+                }
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              >
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+              </select>
+            </label>
+          ) : null}
+          <div className={`builder-json-shell rounded-2xl border border-slate-800 bg-slate-950/60 transition-all ${logicType === "http" ? "h-auto max-h-[500px] overflow-y-auto" : "h-64 overflow-hidden"
+            }`}>
+            {logicType === "http" && !isSystemScope ? (
+              <div className="space-y-4 p-4 text-sm">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
+                    Method
+                    <select
+                      value={httpSpec.method}
+                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, method: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500"
+                    >
+                      <option>GET</option>
+                      <option>POST</option>
+                      <option>PUT</option>
+                      <option>DELETE</option>
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
+                    URL
+                    <input
+                      value={httpSpec.url}
+                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, url: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500"
+                      placeholder="https://api.example.com/data"
+                    />
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
+                    Headers (JSON)
+                    <textarea
+                      value={httpSpec.headers}
+                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, headers: e.target.value }))}
+                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
+                    Params (JSON)
+                    <textarea
+                      value={httpSpec.params}
+                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, params: e.target.value }))}
+                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar"
+                    />
+                  </label>
+                </div>
+                <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500 pb-2">
+                  Body (JSON)
+                  <textarea
+                    value={httpSpec.body}
+                    onChange={(e) => setHttpSpec((prev) => ({ ...prev, body: e.target.value }))}
+                    className="h-32 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar"
+                  />
+                </label>
+              </div>
+            ) : (
+              <Editor
+                height="100%"
+                language={getEditorLanguage(logicType, scriptLanguage)}
+                value={logicBody}
+                onChange={(value) => setLogicBody(value ?? "")}
+                theme="vs-dark"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 13,
+                  readOnly: isSystemScope,
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800/60">
+        <span className={`text-[11px] uppercase tracking-[0.1em] px-3 py-1 rounded-full border ${statusMessage?.toLowerCase().includes("failed") || statusMessage?.toLowerCase().includes("error")
+          ? "text-rose-400 border-rose-500/30 bg-rose-500/5 font-semibold"
+          : statusMessage && statusMessage.includes("Saved")
+            ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/5"
+            : "text-slate-500 border-transparent bg-transparent"
+          }`}>
+          {statusMessage ?? "정의/로직 저장 대기"}
+        </span>
+        <div className="flex items-center gap-3">
+          {activeTab === "logic" && (logicType === "sql" || logicType === "http" || logicType === "script" || logicType === "python") && (
+            <button
+              onClick={handleDryRunFromEditor}
+              className="rounded-full border border-sky-500/30 bg-sky-500/80 px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-white transition hover:bg-sky-400 hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled:bg-slate-800 disabled:text-slate-500"
+              disabled={isExecuting}
+            >
+              {isExecuting ? "Running…" : `Test ${logicTypeLabels[logicType]} (Dry-run)`}
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-[12px] font-bold uppercase tracking-wider text-white transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled:bg-slate-800 disabled:text-slate-500"
+            disabled={isSaving || isSystemScope}
+          >
+            {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
+          </button>
+        </div>
+      </div>
+      {showLogicResult && activeTab === "logic" && (
+        <div className="mt-4 border-t border-slate-800 pt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs uppercase tracking-normal text-slate-500">Query Result</span>
+            <button
+              onClick={() => setShowLogicResult(false)}
+              className="text-[10px] text-slate-500 hover:text-slate-300"
+            >
+              Close
+            </button>
+          </div>
+          {executionResult ? (
+            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p>Rows: {executionResult.row_count}</p>
+                  <p>Duration: {executionResult.duration_ms} ms</p>
+                </div>
+                <button
+                  onClick={() => setShowJsonResult((prev) => !prev)}
+                  className="text-[10px] uppercase tracking-normal text-slate-400 underline"
+                >
+                  {showJsonResult ? "Hide JSON" : "Show JSON"}
+                </button>
+              </div>
+              {showJsonResult ? (
+                <pre className="max-h-60 overflow-auto rounded-xl bg-slate-950/70 p-3 text-xs text-slate-100 custom-scrollbar">
+                  {JSON.stringify(executionResult, null, 2)}
+                </pre>
+              ) : executionResult.columns.length === 0 ? (
+                <p className="text-xs text-slate-400">No columns returned.</p>
+              ) : (
+                <div className="overflow-auto custom-scrollbar">
+                  <table className="min-w-full text-left text-xs text-slate-200">
+                    <thead>
+                      <tr>
+                        {executionResult.columns.map((column) => (
+                          <th
+                            key={column}
+                            className="border-b border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
+                          >
+                            {column}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {executionResult.rows.map((row, rowIndex) => (
+                        <tr
+                          key={`row-${rowIndex}`}
+                          className={rowIndex % 2 === 0 ? "bg-slate-950/40" : "bg-slate-900/40"}
+                        >
+                          {executionResult.columns.map((column) => (
+                            <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
+                              <pre className="m-0 text-[12px] text-slate-100">{String(row[column] ?? "")}</pre>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No result available.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const isSqlApi = selectedApi?.logic_type === "sql";
+  const isWorkflowApi = selectedApi?.logic_type === "workflow";
+  const isHttpApi = selectedApi?.logic_type === "http";
+
+  const testTabContent = (
+    <div className="space-y-3">
+      {selectedApi ? (
+        <p className="text-[11px] text-slate-400">
+          Runtime URL:{" "}
+          <span className="font-mono text-[10px] text-slate-200">
+            {`${apiBaseUrl}${selectedApi.endpoint}`}
+          </span>
+        </p>
+      ) : null}
+      <label className="text-xs uppercase tracking-normal text-slate-500">
+        Params JSON
+        <textarea
+          value={testParams}
+          onChange={(event) => setTestParams(event.target.value)}
+          className="mt-2 h-32 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+        />
+      </label>
+      {isWorkflowApi ? (
+        <label className="text-xs uppercase tracking-normal text-slate-500">
+          Input JSON (optional)
+          <textarea
+            value={testInput}
+            onChange={(event) => setTestInput(event.target.value)}
+            className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+          />
+        </label>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <label className="text-xs uppercase tracking-normal text-slate-500">
+          Limit
+          <input
+            type="number"
+            min={1}
+            max={1000}
+            value={testLimit}
+            onChange={(event) => setTestLimit(event.target.value)}
+            className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          />
+        </label>
+        <label className="text-xs uppercase tracking-normal text-slate-500">
+          Executed by
+          <input
+            value={executedBy}
+            onChange={(event) => setExecutedBy(event.target.value)}
+            className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+            placeholder="ops-builder"
+          />
+        </label>
+        <div className="flex items-end">
+          <button
+            onClick={handleExecute}
+            className="w-full rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+            disabled={
+              !selectedId || isExecuting || (!isSqlApi && !isWorkflowApi && !isHttpApi)
+            }
+          >
+            {isExecuting
+              ? "Executing…"
+              : isWorkflowApi
+                ? "Execute Workflow"
+                : "Execute API"}
+          </button>
+        </div>
+      </div>
+      {selectedApi && selectedApi.logic_type === "script" ? (
+        <p className="text-xs text-slate-400">
+          Script APIs are saved for future execution support in MVP-5.
+        </p>
+      ) : null}
+      {testError ? <p className="text-xs text-rose-400">{testError}</p> : null}
+    </div>
+  );
+
   const centerTop = (
     <div className="space-y-4">
       <div className="flex gap-3">
@@ -1819,20 +2408,21 @@ export default function ApiManagerPage() {
         testResultsArea
       ) : (
         <>
-          <p className="text-xs uppercase tracking-normal text-slate-500">Metadata</p>
-          {selectedApi ? (
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
-              <p>
-                Endpoint: <span className="text-slate-100">{selectedApi.endpoint}</span>
+          <p className="text-xs uppercase tracking-normal text-slate-500">Metadata (Current Editor)</p>
+          <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
+            <p>
+              Endpoint: <span className="text-slate-100">{definitionDraft.endpoint || "(new)"}</span>
+            </p>
+            <p>
+              Logic type: <span className="text-sky-400 font-mono">{logicTypeLabels[logicType]}</span>
+            </p>
+            {selectedApi && (
+              <p className="border-t border-slate-800/60 pt-2 text-[10px] text-slate-500">
+                Editing: {selectedApi.api_name} ({selectedApi.api_id})
               </p>
-              <p>
-                Logic type: <span className="text-slate-100">{selectedApi.logic_type}</span>
-              </p>
-              <p>{statusMessage}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">새 API 정의를 만들거나 목록에서 선택하세요.</p>
-          )}
+            )}
+            <p className="text-[11px] text-amber-400/80">{statusMessage}</p>
+          </div>
         </>
       )}
     </div>
@@ -2089,6 +2679,7 @@ export default function ApiManagerPage() {
               { id: "workflow", label: "Workflow" },
               { id: "python", label: "Python" },
               { id: "script", label: "Script" },
+              { id: "http", label: "HTTP" },
             ].map((item) => (
               <button
                 key={item.id}
@@ -2116,14 +2707,23 @@ export default function ApiManagerPage() {
                 <button
                   key={api.api_id}
                   onClick={() => setSelectedId(api.api_id)}
-                  className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition flex items-center gap-3 whitespace-nowrap overflow-hidden ${selectedApi?.api_id === api.api_id
+                  className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition flex items-center gap-3 whitespace-nowrap overflow-hidden ${selectedId === api.api_id
                     ? "border-sky-400 bg-sky-500/10 text-white"
                     : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
                     }`}
                 >
-                  <span className="text-[10px] uppercase tracking-normal text-slate-500 font-mono w-10 flex-shrink-0">{api.method}</span>
-                  <span className="font-semibold truncate flex-shrink-1">{api.api_name}</span>
-                  <span className="text-[11px] text-slate-500 truncate flex-shrink-1">{api.endpoint}</span>
+                  <div className="flex flex-col flex-1 overflow-hidden">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="text-[10px] uppercase text-slate-500 min-w-8">{api.method}</span>
+                      <span className="font-semibold truncate">{api.api_name}</span>
+                      {((api.source === "local" && api.api_id !== "applied-draft-temp") || api.api_id.startsWith("local-")) && (
+                        <span className="rounded-full border border-amber-500/50 bg-amber-500/10 px-1.5 py-0.2 text-[8px] uppercase tracking-normal text-amber-400">
+                          Local
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-500 truncate">{api.endpoint}</span>
+                  </div>
                 </button>
               ))
             )}
@@ -2144,46 +2744,57 @@ export default function ApiManagerPage() {
   );
 
   const COPILOT_INSTRUCTION =
-    "Return ONLY ONE JSON object. No markdown. type=api_draft. Example: {\"type\":\"api_draft\",\"draft\":{\"api_name\":\"...\",\"method\":\"GET\",\"endpoint\":\"/api-manager/...\",\"description\":\"\",\"tags\":[],\"params_schema\":{},\"logic\":{\"type\":\"sql\",\"query\":\"SELECT 1\"}}}";
+    "Return ONLY ONE JSON object. No markdown. type=api_draft. \n" +
+    "Example (SQL): {\"type\":\"api_draft\",\"draft\":{\"api_name\":\"...\",\"method\":\"GET\",\"endpoint\":\"/api-manager/...\",\"logic\":{\"type\":\"sql\",\"query\":\"SELECT 1\"},\"is_active\":true,\"runtime_policy\":{}}}\n" +
+    "Example (HTTP): {\"type\":\"api_draft\",\"draft\":{\"api_name\":\"...\",\"method\":\"GET\",\"endpoint\":\"/api-manager/...\",\"logic\":{\"type\":\"http\",\"spec\":{\"method\":\"GET\",\"url\":\"https://...\"}},\"is_active\":true,\"runtime_policy\":{}}}";
 
   const processAssistantDraft = useCallback(
-    (messageText: string) => {
+    (messageText: string, isComplete: boolean) => {
       setLastAssistantRaw(messageText);
       const baseDraft = draftApi ?? (selectedApi ? apiToDraft(selectedApi) : buildDraftFromForm());
       const result = parseApiDraft(messageText, baseDraft);
       setLastParseStatus(result.ok ? "success" : "fail");
       setLastParseError(result.error ?? null);
+
       if (result.ok && result.draft) {
         setDraftApi(result.draft);
         setDraftStatus("draft_ready");
-        setDraftNotes((prev) => prev ?? "AI 드래프트가 준비되었습니다.");
+        setDraftNotes(result.notes || "AI 드래프트가 준비되었습니다.");
         setDraftErrors([]);
         setDraftWarnings([]);
         setDraftTestOk(null);
         setPreviewJson(JSON.stringify(result.draft, null, 2));
         setPreviewSummary(`${result.draft.method} ${result.draft.endpoint}`);
       } else {
-        setDraftApi(null);
-        setPreviewJson(null);
-        setPreviewSummary(null);
-        setDraftStatus("error");
-        setDraftNotes(result.error ?? "AI 드래프트를 해석할 수 없습니다.");
-        setDraftTestOk(false);
+        // While streaming, don't show "failed to extract" as an error immediately
+        // Just keep the status as "idle" or a special "typing" status
+        if (isComplete) {
+          setDraftApi(null);
+          setPreviewJson(null);
+          setPreviewSummary(null);
+          setDraftStatus("error");
+          setDraftNotes(result.error ?? "AI 드래프트를 해석할 수 없습니다.");
+          setDraftTestOk(false);
+        } else if (draftStatus !== "draft_ready") {
+          // Keep looking but don't alarm the user
+          setDraftStatus("idle");
+          setDraftNotes("AI가 답변을 생성 중입니다...");
+        }
       }
     },
-    [draftApi, selectedApi, buildDraftFromForm]
+    [draftApi, selectedApi, buildDraftFromForm, draftStatus]
   );
 
   const handleAssistantMessage = useCallback(
     (messageText: string) => {
-      processAssistantDraft(messageText);
+      processAssistantDraft(messageText, false);
     },
     [processAssistantDraft]
   );
 
   const handleAssistantMessageComplete = useCallback(
     (messageText: string) => {
-      processAssistantDraft(messageText);
+      processAssistantDraft(messageText, true);
     },
     [processAssistantDraft]
   );
@@ -2196,6 +2807,17 @@ export default function ApiManagerPage() {
         instructionPrompt={COPILOT_INSTRUCTION}
         onAssistantMessage={handleAssistantMessage}
         onAssistantMessageComplete={handleAssistantMessageComplete}
+        onUserMessage={() => {
+          setDraftApi(null);
+          setDraftStatus("idle");
+          setDraftNotes(null);
+          setDraftErrors([]);
+          setDraftWarnings([]);
+          setDraftTestOk(null);
+          setPreviewJson(null);
+          setPreviewSummary(null);
+          setDraftDiff(null);
+        }}
         inputPlaceholder="API 드래프트를 설명해 주세요..."
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
@@ -2320,7 +2942,7 @@ export default function ApiManagerPage() {
     <div className="py-6">
       <h1 className="text-2xl font-semibold text-white">API Manager</h1>
       <p className="mb-6 text-sm text-slate-400">
-        Builder shell for defining SQL-only APIs that power the next OPS tools.
+        Builder shell for defining executable APIs that power OPS and orchestration tools.
       </p>
       <BuilderShell
         leftPane={leftPane}

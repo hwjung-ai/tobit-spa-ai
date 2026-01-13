@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from time import perf_counter
 from typing import Any
+import re
+import httpx
+import json
 
 from fastapi import HTTPException
 from sqlalchemy import text as sa_text
@@ -30,6 +33,9 @@ BANNED_KEYWORDS = {
 DEFAULT_LIMIT = 200
 MAX_LIMIT = 1000
 
+BANNED_PATTERN = re.compile(r"\b(" + "|".join(BANNED_KEYWORDS) + r")\b")
+
+HTTP_TIMEOUT = 5.0
 
 def normalize_limit(value: int | None) -> int:
     if value is None:
@@ -46,9 +52,12 @@ def validate_select_sql(sql: str) -> None:
         raise HTTPException(status_code=400, detail="Semicolons are not allowed")
     if not (upper.startswith("SELECT") or upper.startswith("WITH")):
         raise HTTPException(status_code=400, detail="Only SELECT/WITH statements are allowed")
-    for keyword in BANNED_KEYWORDS:
-        if keyword in upper:
-            raise HTTPException(status_code=400, detail=f"Forbidden keyword detected: {keyword}")
+    match = BANNED_PATTERN.search(upper)
+    if match:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Forbidden keyword detected: {match.group(0)}",
+        )
 
 
 def execute_sql_api(
@@ -70,8 +79,8 @@ def execute_sql_api(
     rows: list[dict[str, Any]] = []
     row_count = 0
     try:
-        session.exec(sa_text("SET LOCAL statement_timeout = :timeout"), {"timeout": STATEMENT_TIMEOUT_MS})
-        result = session.exec(sa_text(wrapped_sql), bind_params)
+        session.exec(sa_text("SET LOCAL statement_timeout = :timeout"), params={"timeout": STATEMENT_TIMEOUT_MS})
+        result = session.exec(sa_text(wrapped_sql), params=bind_params)
         columns = list(result.keys())
         for record in result:
             row = dict(record._mapping)
@@ -101,5 +110,69 @@ def execute_sql_api(
         columns=columns,
         rows=rows,
         row_count=row_count,
+        duration_ms=duration_ms,
+    )
+
+
+def execute_http_api(session: Session, api_id: str, logic_body: str, params: dict[str, Any] | None, executed_by: str) -> ApiExecuteResponse:
+    try:
+        spec = json.loads(logic_body) if logic_body else {}
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Invalid HTTP logic body") from exc
+    method = spec.get("method", "GET").upper()
+    url = spec.get("url")
+    if not url:
+        raise HTTPException(status_code=400, detail="HTTP logic must specify url")
+    headers = spec.get("headers") or {}
+    data = spec.get("body")
+    query_params = spec.get("params") or {}
+    start = perf_counter()
+    status = "success"
+    error_message: str | None = None
+    try:
+        response = httpx.request(
+            method,
+            url,
+            params=query_params,
+            headers=headers,
+            json=data,
+            timeout=HTTP_TIMEOUT,
+        )
+    except Exception as exc:
+        status = "fail"
+        error_message = str(exc)
+        raise HTTPException(status_code=502, detail="External HTTP request failed") from exc
+    finally:
+        duration_ms = int((perf_counter() - start) * 1000)
+        record_exec_log(
+            session=session,
+            api_id=api_id,
+            status=status,
+            duration_ms=duration_ms,
+            row_count=0,
+            params=params or {},
+            executed_by=executed_by,
+            error_message=error_message,
+        )
+    try:
+        body = response.json()
+    except ValueError:
+        body = response.text
+    if isinstance(body, list):
+        rows = [row if isinstance(row, dict) else {"value": row} for row in body]
+        columns = sorted({key for row in rows for key in row.keys()})
+    elif isinstance(body, dict):
+        rows = [body]
+        columns = sorted(body.keys())
+    else:
+        rows = [{"value": body}]
+        columns = ["value"]
+    duration_ms = int((perf_counter() - start) * 1000)
+    return ApiExecuteResponse(
+        executed_sql=f"HTTP {method} {url}",
+        params=params or {},
+        columns=columns,
+        rows=rows,
+        row_count=len(rows),
         duration_ms=duration_ms,
     )
