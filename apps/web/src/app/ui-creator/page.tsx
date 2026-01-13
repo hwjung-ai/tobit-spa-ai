@@ -1097,10 +1097,11 @@ export default function UiCreatorPage() {
       return;
     }
     const endpoint = dataSource.endpoint.startsWith("/") ? dataSource.endpoint : `/${dataSource.endpoint}`;
+    const apiManagerEndpoint = endpoint.startsWith("/api-manager/") ? endpoint : `/api-manager${endpoint}`;
     const runtimeEndpoint = endpoint.startsWith("/runtime/") ? endpoint : `/runtime${endpoint}`;
     const alternateRuntimeEndpoint = endpoint.startsWith("/api-manager/")
       ? `/runtime${endpoint.replace("/api-manager", "")}`
-      : null;
+      : `/runtime/api-manager${endpoint}`;
     const method = dataSource.method.toUpperCase();
     const defaultParams = (dataSource.default_params ?? {}) as Record<string, unknown>;
     let parsedParams: Record<string, unknown> = {};
@@ -1163,7 +1164,7 @@ export default function UiCreatorPage() {
         if (listResponse.ok) {
           const listPayload = await listResponse.json().catch(() => ({}));
           const items = (listPayload.data?.apis ?? []) as Array<{ api_id: string; endpoint: string }>;
-          const candidates = new Set([endpoint, runtimeEndpoint, alternateRuntimeEndpoint].filter(Boolean) as string[]);
+          const candidates = new Set([endpoint, apiManagerEndpoint, runtimeEndpoint, alternateRuntimeEndpoint].filter(Boolean) as string[]);
           const match = items.find((item) => candidates.has(item.endpoint));
           if (match?.api_id) {
             ({ response, payload } = await runExecute(match.api_id));
