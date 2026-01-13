@@ -24,3 +24,4 @@ python-docx
 pypdf
 python-multipart
 croniter
+watchdog

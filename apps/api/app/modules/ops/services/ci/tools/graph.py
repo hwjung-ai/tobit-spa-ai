@@ -9,8 +9,18 @@ from app.modules.ops.services.ci import policy
 from app.modules.ops.services.ci.view_registry import Direction, VIEW_REGISTRY
 
 from apps.api.scripts.seed.utils import get_neo4j_driver
+from app.shared.config_loader import load_text
 
 DEFAULT_LIMITS = {"max_nodes": 200, "max_edges": 400, "max_paths": 25}
+
+_QUERY_BASE = "queries/neo4j/graph"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"Graph query '{name}' not found")
+    return query
 
 
 def _pattern_for_direction(direction: Direction, depth: int) -> str:
@@ -110,14 +120,8 @@ def graph_expand(
     applied_limits = DEFAULT_LIMITS.copy()
     if limits:
         applied_limits.update({k: max(1, v) for k, v in limits.items() if v is not None})
-    cypher = f"""
-MATCH (root:CI {{ci_id: $root_ci_id, tenant_id: $tenant_id}})
-MATCH path=(root){patterns}()
-WHERE all(rel IN relationships(path) WHERE type(rel) IN $allowed_rel)
-  AND all(node IN nodes(path) WHERE node.tenant_id = $tenant_id)
-RETURN path
-LIMIT $max_paths
-"""
+    cypher_template = _load_query("graph_expand.cypher")
+    cypher = cypher_template.format(patterns=patterns)
     driver = get_neo4j_driver()
     try:
         with driver.session() as session:
@@ -158,16 +162,8 @@ def graph_path(
     if not view_policy:
         raise ValueError("PATH view is not defined")
     direction_pattern = _pattern_for_direction(view_policy.direction_default, depth)
-    cypher = f"""
-MATCH (source:CI {{ci_id: $source_ci_id, tenant_id: $tenant_id}})
-MATCH (target:CI {{ci_id: $target_ci_id, tenant_id: $tenant_id}})
-MATCH path=shortestPath((source){direction_pattern}(target))
-WHERE all(rel IN relationships(path) WHERE type(rel) IN $allowed_rel)
-  AND length(path) <= $max_hops
-  AND all(node IN nodes(path) WHERE node.tenant_id = $tenant_id)
-RETURN path
-LIMIT 1
-"""
+    cypher_template = _load_query("graph_path.cypher")
+    cypher = cypher_template.format(direction_pattern=direction_pattern)
     driver = get_neo4j_driver()
     try:
         with driver.session() as session:

@@ -6,6 +6,8 @@ from psycopg import Connection
 
 from apps.api.scripts.seed.utils import get_postgres_conn
 
+from app.shared.config_loader import load_text
+
 SEARCH_COLUMNS = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category"]
 FILTER_FIELDS = {"ci_type", "ci_subtype", "ci_category", "status", "location", "owner"}
 JSONB_TAG_KEYS = {"system", "role", "runs_on", "host_server", "ci_subtype", "connected_servers"}
@@ -13,6 +15,15 @@ JSONB_ATTR_KEYS = {"engine", "version", "zone", "ip", "cpu_cores", "memory_gb"}
 MAX_SEARCH_LIMIT = 50
 MAX_AGG_ROWS = 200
 AGG_METRICS = {"count", "count_distinct"}
+
+_QUERY_BASE = "queries/postgres/ci"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"CI query '{name}' not found")
+    return query
 
 FilterOp = Literal["=", "!=", "ILIKE"]
 
@@ -125,15 +136,12 @@ def _ci_search_broad_or_inner(
             raise ValueError(f"Sort column '{column}' is not allowed")
         order_by = f"ci.{column}"
         direction = dir_value
-    query = f"""
-SELECT ci.ci_id, ci.ci_code, ci.ci_name, ci.ci_type, ci.ci_subtype, ci.ci_category,
-       ci.status, ci.location, ci.owner
-FROM ci
-LEFT JOIN ci_ext ON ci.ci_id = ci_ext.ci_id
-WHERE {' AND '.join(where_clauses)}
-ORDER BY {order_by} {direction}
-LIMIT %s
-"""
+    query_template = _load_query("ci_search.sql")
+    query = query_template.format(
+        where_clause=" AND ".join(where_clauses),
+        order_by=order_by,
+        direction=direction,
+    )
     params.append(limit)
     with conn.cursor() as cur:
         cur.execute(query, params)
@@ -174,15 +182,12 @@ def _ci_search_inner(
             raise ValueError(f"Sort column '{column}' is not allowed")
         order_by = f"ci.{column}"
         direction = dir_value
-    query = f"""
-SELECT ci.ci_id, ci.ci_code, ci.ci_name, ci.ci_type, ci.ci_subtype, ci.ci_category,
-       ci.status, ci.location, ci.owner
-FROM ci
-LEFT JOIN ci_ext ON ci.ci_id = ci_ext.ci_id
-WHERE {' AND '.join(where_clauses)}
-ORDER BY {order_by} {direction}
-LIMIT %s
-"""
+    query_template = _load_query("ci_search.sql")
+    query = query_template.format(
+        where_clause=" AND ".join(where_clauses),
+        order_by=order_by,
+        direction=direction,
+    )
     params.append(limit)
     with conn.cursor() as cur:
         cur.execute(query, params)
@@ -206,16 +211,8 @@ LIMIT %s
 def ci_get(tenant_id: str, ci_id: str) -> Dict[str, Any] | None:
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-SELECT ci.ci_id, ci.ci_code, ci.ci_name, ci.ci_type, ci.ci_subtype, ci.ci_category,
-       ci.status, ci.location, ci.owner, ci_ext.tags, ci_ext.attributes
-FROM ci
-LEFT JOIN ci_ext ON ci.ci_id = ci_ext.ci_id
-WHERE ci.ci_id = %s AND ci.tenant_id = %s
-""",
-                (ci_id, tenant_id),
-            )
+            query = _load_query("ci_get.sql").format(field="ci_id")
+            cur.execute(query, (ci_id, tenant_id))
             row = cur.fetchone()
             if not row:
                 return None
@@ -237,16 +234,8 @@ WHERE ci.ci_id = %s AND ci.tenant_id = %s
 def ci_get_by_code(tenant_id: str, ci_code: str) -> Dict[str, Any] | None:
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-SELECT ci.ci_id, ci.ci_code, ci.ci_name, ci.ci_type, ci.ci_subtype, ci.ci_category,
-       ci.status, ci.location, ci.owner, ci_ext.tags, ci_ext.attributes
-FROM ci
-LEFT JOIN ci_ext ON ci.ci_id = ci_ext.ci_id
-WHERE ci.ci_code = %s AND ci.tenant_id = %s
-""",
-                (ci_code, tenant_id),
-            )
+            query = _load_query("ci_get.sql").format(field="ci_code")
+            cur.execute(query, (ci_code, tenant_id))
             row = cur.fetchone()
             if not row:
                 return None
@@ -296,22 +285,22 @@ def ci_aggregate(
     if group_list:
         select_clause = ", ".join(f"ci.{field}" for field in group_list)
         columns = [field for field in group_list] + metric_list
-        query = f"""
-SELECT {select_clause}, {', '.join(metric_clause)}
-FROM ci
-WHERE {where_clause}
-GROUP BY {group_clause}
-{order_by_clause}
-LIMIT %s
-"""
+        query_template = _load_query("ci_aggregate_group.sql")
+        query = query_template.format(
+            select_clause=select_clause,
+            metric_clause=", ".join(metric_clause),
+            where_clause=where_clause,
+            group_clause=group_clause,
+            order_by_clause=order_by_clause,
+        )
     else:
         columns = metric_list
-        query = f"""
-SELECT {', '.join(metric_clause)}
-FROM ci
-WHERE {where_clause}
-"""
-    count_query = f"SELECT COUNT(*) FROM ci WHERE {where_clause}"
+        query_template = _load_query("ci_aggregate_total.sql")
+        query = query_template.format(
+            metric_clause=", ".join(metric_clause),
+            where_clause=where_clause,
+        )
+    count_query = _load_query("ci_aggregate_count.sql").format(where_clause=where_clause)
     count_params = list(params)
     query_params = params + [sanitized_limit] if group_list else params
     with get_postgres_conn() as conn:
@@ -347,15 +336,10 @@ def ci_list_preview(
     where_clauses = ["ci.tenant_id = %s"]
     where_clauses.extend(_build_filter_clauses(filters or (), params))
     total_params = list(params)
-    total_query = f"SELECT COUNT(*) FROM ci WHERE {' AND '.join(where_clauses)}"
-    query = f"""
-SELECT ci.ci_id, ci.ci_code, ci.ci_name, ci.ci_type, ci.ci_subtype, ci.status, ci.owner, ci.location, ci.created_at
-FROM ci
-WHERE {' AND '.join(where_clauses)}
-ORDER BY ci.created_at DESC, ci.ci_code ASC
-LIMIT %s
-OFFSET %s
-"""
+    where_clause = " AND ".join(where_clauses)
+    total_query = _load_query("ci_aggregate_count.sql").format(where_clause=where_clause)
+    query_template = _load_query("ci_list_preview.sql")
+    query = query_template.format(where_clause=where_clause)
     params.extend([sanitized_limit, sanitized_offset])
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:

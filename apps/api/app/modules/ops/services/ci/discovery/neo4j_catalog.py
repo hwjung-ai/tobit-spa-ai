@@ -11,9 +11,20 @@ from neo4j import Driver
 
 from apps.api.scripts.seed.utils import get_neo4j_driver
 
+from app.shared.config_loader import load_text
+
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "neo4j_catalog.json"
 EXPECTED_CI_PROPERTIES = {"ci_id", "ci_code", "tenant_id"}
+
+_QUERY_BASE = "queries/neo4j/discovery"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"Neo4j catalog query '{name}' not found")
+    return query
 
 
 def _mask_sensitive(value: str | None) -> str | None:
@@ -41,34 +52,32 @@ def _build_environment_context() -> dict[str, str | None]:
 
 
 def _fetch_relationship_types(driver: Driver) -> list[str]:
+    query = _load_query("relationship_types.cypher")
     with driver.session() as session:
         return session.execute_read(
-            lambda tx: [record["relationshipType"] for record in tx.run("CALL db.relationshipTypes()")]
+            lambda tx: [record["relationshipType"] for record in tx.run(query)]
         )
 
 
 def _fetch_relationship_counts(driver: Driver) -> list[dict[str, object]]:
+    query = _load_query("relationship_counts.cypher")
     with driver.session() as session:
         result = session.execute_read(
-            lambda tx: tx.run(
-                "MATCH ()-[r]->() RETURN type(r) AS rel_type, count(*) AS cnt ORDER BY cnt DESC"
-            ).data()
+            lambda tx: tx.run(query).data()
         )
         return [{"rel_type": row["rel_type"], "count": row["cnt"]} for row in result]
 
 
 def _fetch_labels(driver: Driver) -> list[str]:
+    query = _load_query("labels.cypher")
     with driver.session() as session:
-        return session.execute_read(lambda tx: [record["label"] for record in tx.run("CALL db.labels()")])
+        return session.execute_read(lambda tx: [record["label"] for record in tx.run(query)])
 
 
 def _fetch_ci_properties(driver: Driver) -> tuple[list[str], list[str]]:
+    query = _load_query("ci_properties.cypher")
     with driver.session() as session:
-        result = session.execute_read(
-            lambda tx: tx.run(
-                "CALL db.schema.nodeTypeProperties() YIELD nodeType, propertyName, mandatory"
-            ).data()
-        )
+        result = session.execute_read(lambda tx: tx.run(query).data())
     ci_props: list[str] = []
     for row in result:
         node_type = row.get("nodeType")

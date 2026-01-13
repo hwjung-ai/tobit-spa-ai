@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Iterable
+from typing import Any
 
 import psycopg
 
+from app.shared.config_loader import load_text
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -13,47 +14,71 @@ from schemas import (
     ReferencesBlock,
     TableBlock,
 )
+
 from ..resolvers import resolve_ci
 from ..resolvers.types import CIHit
 
-CI_SELECT = """
-SELECT ci_code, ci_name, ci_type, ci_subtype, status, criticality, owner, location, updated_at
-FROM ci
-WHERE tenant_id = %s
-  AND ci_id = %s
-  AND deleted_at IS NULL
-"""
-
-CI_EXT_SELECT = """
-SELECT attributes, tags, updated_at
-FROM ci_ext
-WHERE ci_id = %s
-"""
-
 
 def run_config(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+    # Load queries from external files
+    ci_select_query = load_text("queries/postgres/ci/resolve_ci.sql")
+    ci_ext_select_query = load_text("queries/postgres/ci/ci_attributes.sql")
+
+    if not ci_select_query or not ci_ext_select_query:
+        return [
+            MarkdownBlock(
+                type="markdown",
+                title="Error",
+                content="### 쿼리 파일 로드 실패\n- `resolve_ci.sql` 또는 `ci_attributes.sql` 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
+            )
+        ], []
+
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
-        raise ValueError("CI not found")
+        # Per user request, do not fallback to mock. Return markdown guide.
+        return [
+            MarkdownBlock(
+                type="markdown",
+                title="CI 조회 결과",
+                content="질문에서 CI를 찾을 수 없습니다. `MES_App_Report_02-2의 상태`와 같이 명확한 CI를 지정하여 질문해주세요.",
+            )
+        ], []
     ci = ci_hits[0]
-    with get_pg_connection() as conn:
-        ci_row = _fetch_ci(conn, tenant_id, ci.ci_id)
-        if not ci_row:
-            raise ValueError("CI record missing")
-        ci_ext = _fetch_ci_ext(conn, ci.ci_id)
-    blocks = _build_blocks(ci, ci_row, ci_ext, tenant_id)
+
+    try:
+        with get_pg_connection() as conn:
+            ci_row = _fetch_ci(conn, ci_select_query, tenant_id, ci.ci_id)
+            if not ci_row:
+                return [
+                    MarkdownBlock(
+                        type="markdown",
+                        title="CI 조회 결과",
+                        content=f"CI '{ci.ci_code}'에 대한 레코드를 찾을 수 없습니다.",
+                    )
+                ], ["postgres"]
+            ci_ext = _fetch_ci_ext(conn, ci_ext_select_query, ci.ci_id)
+    except Exception as e:
+        return [
+            MarkdownBlock(
+                type="markdown",
+                title="Database Error",
+                content=f"데이터베이스 조회 중 오류가 발생했습니다:\n```\n{str(e)}\n```",
+            )
+        ], []
+
+    blocks = _build_blocks(ci, ci_row, ci_ext, tenant_id, ci_select_query, ci_ext_select_query)
     return blocks, ["postgres"]
 
 
-def _fetch_ci(conn, tenant_id: str, ci_id: str) -> dict[str, Any] | None:
+def _fetch_ci(conn, query: str, tenant_id: str, ci_id: str) -> dict[str, Any] | None:
     with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-        cur.execute(CI_SELECT, (tenant_id, ci_id))
+        cur.execute(query, (tenant_id, ci_id))
         return cur.fetchone()
 
 
-def _fetch_ci_ext(conn, ci_id: str) -> dict[str, Any] | None:
+def _fetch_ci_ext(conn, query: str, ci_id: str) -> dict[str, Any] | None:
     with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
-        cur.execute(CI_EXT_SELECT, (ci_id,))
+        cur.execute(query, (ci_id,))
         return cur.fetchone()
 
 
@@ -70,7 +95,14 @@ def _normalize_json_blob(value: Any) -> dict[str, Any]:
     return {"value": value}
 
 
-def _build_blocks(ci: CIHit, ci_row: dict[str, Any], ci_ext: dict[str, Any] | None, tenant_id: str) -> list[AnswerBlock]:
+def _build_blocks(
+    ci: CIHit,
+    ci_row: dict[str, Any],
+    ci_ext: dict[str, Any] | None,
+    tenant_id: str,
+    ci_select_query: str,
+    ci_ext_select_query: str,
+) -> list[AnswerBlock]:
     markdown = MarkdownBlock(
         type="markdown",
         title="CI 구성 조회 결과",
@@ -130,16 +162,16 @@ def _build_blocks(ci: CIHit, ci_row: dict[str, Any], ci_ext: dict[str, Any] | No
         type="references",
         title="Config SQL",
         items=[
-        ReferenceItem(
-            kind="sql",
-            title="ci lookup",
-            payload={"sql": CI_SELECT.strip(), "params": [tenant_id, ci.ci_id]},
-        ),
-        ReferenceItem(
-            kind="sql",
-            title="ci_ext lookup",
-            payload={"sql": CI_EXT_SELECT.strip(), "params": [ci.ci_id]},
-        ),
+            ReferenceItem(
+                kind="sql",
+                title="ci lookup",
+                payload={"sql": ci_select_query.strip(), "params": [tenant_id, ci.ci_id]},
+            ),
+            ReferenceItem(
+                kind="sql",
+                title="ci_ext lookup",
+                payload={"sql": ci_ext_select_query.strip(), "params": [ci.ci_id]},
+            ),
         ],
     )
     return [markdown, base_table, attributes_table, tags_table, references]

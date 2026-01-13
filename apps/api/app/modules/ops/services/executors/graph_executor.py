@@ -4,6 +4,7 @@ from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
 from typing import Iterable
 
+from app.shared.config_loader import load_text
 from core.db_neo4j import get_neo4j_driver
 from schemas import (
     AnswerBlock,
@@ -19,26 +20,19 @@ from schemas.answer_blocks import GraphPosition
 from ..resolvers import resolve_ci, resolve_time_range
 
 
-BASE_GRAPH_QUERY = """
-MATCH (n:CI)
-WHERE n.tenant_id = $tenant_id AND n.ci_code = $ci_code
-MATCH path = (n)-[r*1..{depth}]-(m:CI)
-WHERE m.tenant_id = $tenant_id
-RETURN n, relationships(path) AS r, m
-LIMIT 300
-"""
-
-COMPONENT_QUERY = """
-MATCH (sys:CI)
-WHERE sys.tenant_id = $tenant_id AND sys.ci_code = $ci_code AND sys.ci_type = 'SYSTEM'
-MATCH (sys)-[:COMPOSED_OF]->(c:CI)
-WHERE c.tenant_id = $tenant_id
-RETURN sys, c
-LIMIT 300
-"""
-
-
 def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+    base_graph_query_template = load_text("queries/neo4j/graph/dependency_expand.cypher")
+    component_query = load_text("queries/neo4j/graph/component_composition.cypher")
+
+    if not base_graph_query_template or not component_query:
+        return [
+            MarkdownBlock(
+                type="markdown",
+                title="Error",
+                content="### 쿼리 파일 로드 실패\n- Graph 관련 Cypher 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
+            )
+        ], []
+
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
         markdown = MarkdownBlock(
@@ -48,15 +42,17 @@ def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], 
         )
         return [markdown], ["neo4j", "postgres"]
     ci = ci_hits[0]
+
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
     depth = 3 if any(keyword in question for keyword in ("영향", "의존", "경로")) else 2
     include_components = any(keyword in question for keyword in ("구성", "구성요소"))
     driver = get_neo4j_driver()
     try:
-        records = _run_graph_query(driver, tenant_id, ci.ci_code, depth)
-        comp_records = _run_component_query(driver, tenant_id, ci.ci_code) if include_components else []
+        records = _run_graph_query(driver, base_graph_query_template, tenant_id, ci.ci_code, depth)
+        comp_records = _run_component_query(driver, component_query, tenant_id, ci.ci_code) if include_components else []
     finally:
         driver.close()
+
     nodes, edges = _build_graph(records, comp_records)
     if not nodes:
         nodes = [
@@ -66,6 +62,7 @@ def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], 
                 position=GraphPosition(x=0.0, y=0.0),
             )
         ]
+
     top_relations = _format_relation_summary(edges)
     markdown = MarkdownBlock(
         type="markdown",
@@ -78,21 +75,23 @@ def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], 
             f"Top relations: {top_relations}"
         ),
     )
-    references = _build_references(tenant_id, ci.ci_code, depth, include_components)
+    references = _build_references(
+        base_graph_query_template, component_query, tenant_id, ci.ci_code, depth, include_components
+    )
     graph_block = GraphBlock(type="graph", title="Dependency graph", nodes=nodes, edges=edges)
     return [markdown, graph_block, references], ["neo4j", "postgres"]
 
 
-def _run_graph_query(driver, tenant_id: str, ci_code: str, depth: int):
-    query = BASE_GRAPH_QUERY.format(depth=depth)
+def _run_graph_query(driver, query_template: str, tenant_id: str, ci_code: str, depth: int):
+    query = query_template.format(depth=depth)
     with driver.session() as session:
         result = session.run(query, tenant_id=tenant_id, ci_code=ci_code, depth=depth)
         return list(result)
 
 
-def _run_component_query(driver, tenant_id: str, ci_code: str):
+def _run_component_query(driver, query: str, tenant_id: str, ci_code: str):
     with driver.session() as session:
-        result = session.run(COMPONENT_QUERY, tenant_id=tenant_id, ci_code=ci_code)
+        result = session.run(query, tenant_id=tenant_id, ci_code=ci_code)
         return list(result)
 
 
@@ -190,9 +189,16 @@ def _format_relation_summary(edges: Iterable[GraphEdge]) -> str:
     return ", ".join(f"{label}:{count}" for label, count in counts.most_common(3))
 
 
-def _build_references(tenant_id, ci_code, depth, include_components):
+def _build_references(
+    base_graph_query_template: str,
+    component_query: str,
+    tenant_id: str,
+    ci_code: str,
+    depth: int,
+    include_components: bool,
+):
     items = []
-    query_text = BASE_GRAPH_QUERY.format(depth=depth).strip()
+    query_text = base_graph_query_template.format(depth=depth).strip()
     items.append(
         ReferenceItem(
             kind="cypher",
@@ -208,7 +214,7 @@ def _build_references(tenant_id, ci_code, depth, include_components):
             ReferenceItem(
                 kind="cypher",
                 title="component query",
-                payload={"cypher": COMPONENT_QUERY.strip(), "params": {"tenant_id": tenant_id, "ci_code": ci_code}},
+                payload={"cypher": component_query.strip(), "params": {"tenant_id": tenant_id, "ci_code": ci_code}},
             )
         )
     return ReferencesBlock(type="references", title="Graph queries", items=items)

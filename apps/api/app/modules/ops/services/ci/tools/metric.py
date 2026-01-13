@@ -6,6 +6,8 @@ from typing import List, Literal, Tuple
 
 from apps.api.scripts.seed.utils import get_postgres_conn
 
+from app.shared.config_loader import load_text
+
 TIME_RANGES = {
     "last_1h": timedelta(hours=1),
     "last_24h": timedelta(hours=24),
@@ -16,6 +18,15 @@ DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 AGG_FUNCTIONS = {"count", "max", "min", "avg"}
 MAX_CI_IDS = 300
+
+_QUERY_BASE = "queries/postgres/metric"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"Metric query '{name}' not found")
+    return query
 
 
 def _calculate_time_range(time_range: str) -> Tuple[datetime, datetime]:
@@ -28,14 +39,6 @@ def _calculate_time_range(time_range: str) -> Tuple[datetime, datetime]:
     if not delta:
         raise ValueError(f"Unsupported time range '{time_range}'")
     return now - delta, now
-
-
-def _metric_base_query() -> str:
-    return (
-        "FROM metric_value mv "
-        "JOIN metric_def md ON mv.metric_id = md.metric_id "
-        "WHERE mv.tenant_id = %s AND md.metric_name = %s "
-    )
 
 
 def _prepare_ci_ids(ci_id: str | None, ci_ids: list[str] | None) -> tuple[list[str], bool, int]:
@@ -54,22 +57,18 @@ def _prepare_ci_ids(ci_id: str | None, ci_ids: list[str] | None) -> tuple[list[s
 
 
 def metric_exists(tenant_id: str, metric_name: str) -> bool:
+    query = _load_query("metric_exists.sql")
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT 1 FROM metric_def WHERE metric_name = %s LIMIT 1",
-                (metric_name,),
-            )
+            cur.execute(query, (metric_name,))
             return bool(cur.fetchone())
 
 
 def list_metric_names(tenant_id: str, limit: int = 200) -> List[str]:
+    query = _load_query("metric_list.sql")
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT DISTINCT metric_name FROM metric_def ORDER BY metric_name LIMIT %s",
-                (limit,),
-            )
+            cur.execute(query, (limit,))
             return [row[0] for row in cur.fetchall()]
 
 
@@ -86,12 +85,8 @@ def metric_aggregate(
     ci_list, truncated, requested_count = _prepare_ci_ids(ci_id, ci_ids)
     time_from, time_to = _calculate_time_range(time_range)
     function = "COUNT(*)" if agg == "count" else f"{agg.upper()}(mv.value)"
-    query = (
-        f"SELECT {function} AS value "
-        f"{_metric_base_query()}"
-        "AND mv.ci_id = ANY(%s) "
-        "AND mv.time >= %s AND mv.time < %s"
-    )
+    query_template = _load_query("metric_aggregate.sql")
+    query = query_template.format(function=function)
     params = [tenant_id, metric_name, ci_list, time_from, time_to]
     value = None
     with get_postgres_conn() as conn:
@@ -121,13 +116,7 @@ def metric_series_table(
 ) -> dict[str, object]:
     time_from, time_to = _calculate_time_range(time_range)
     sanitized_limit = max(1, min(1000, limit or 200))
-    query = (
-        "SELECT mv.time, mv.value "
-        f"{_metric_base_query()}"
-        "AND mv.ci_id = %s "
-        "AND mv.time >= %s AND mv.time < %s "
-        "ORDER BY mv.time DESC LIMIT %s"
-    )
+    query = _load_query("metric_series.sql")
     params = [tenant_id, metric_name, ci_id, time_from, time_to, sanitized_limit]
     rows: List[tuple[str, str]] = []
     with get_postgres_conn() as conn:

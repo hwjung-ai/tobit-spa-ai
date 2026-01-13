@@ -11,6 +11,7 @@ from .executors.graph_executor import run_graph
 from .executors.hist_executor import run_hist
 from .executors.metric_executor import run_metric
 from app.llm.client import get_llm_client
+from app.shared import config_loader
 
 
 class LangGraphPlan(BaseModel):
@@ -37,7 +38,16 @@ class LangGraphAllRunner:
         self._llm = get_llm_client()
 
     def run(self, question: str) -> tuple[list[AnswerBlock], list[str], str | None]:
-        plan = self._plan(question)
+        try:
+            plan = self._plan(question)
+        except Exception as exc:
+            logging.exception("LangGraph plan failed")
+            block = MarkdownBlock(
+                type="markdown",
+                title="LangGraph plan error",
+                content="프롬프트 로드 실패 또는 LLM 계획 수립 오류로 실행하지 못했습니다.",
+            )
+            return [block], ["prompt"], str(exc)
         plan = self._ensure_default_plan(plan)
 
         executor_blocks: dict[str, list[AnswerBlock]] = {}
@@ -72,23 +82,13 @@ class LangGraphAllRunner:
         return ordered_blocks, used_tools, error_info
 
     def _plan(self, question: str) -> LangGraphPlan:
-        prompt = (
-            "You are orchestrating OPS queries. The question is:\n"
-            f"{question}\n\n"
-            "Return only JSON that follows this schema:\n"
-            "{\n"
-            '  "run_metric": bool,\n'
-            '  "run_hist": bool,\n'
-            '  "run_graph": bool,\n'
-            '  "time_hint": str | null,\n'
-            '  "metric_hint": str | null,\n'
-            '  "ci_hint": str | null\n'
-            "}\n\n"
-            "Choose the minimum set of executors needed to answer the question.\n"
-            "Hint fields help suffix the question to narrow the scope.\n"
-            "If unsure prefer both metric and hist."
-        )
-        response = self._call_llm(prompt)
+        templates = self._load_prompt_templates()
+        system_prompt = templates.get("plan_system")
+        user_template = templates.get("plan_user")
+        if not system_prompt or not user_template:
+            raise RuntimeError("LangGraph plan prompt templates are missing")
+        prompt = user_template.replace("{question}", question)
+        response = self._call_llm(prompt, system_prompt)
         try:
             payload = json.loads(response)
         except json.JSONDecodeError as exc:
@@ -117,17 +117,18 @@ class LangGraphAllRunner:
 
     def _build_final_summary(self, question: str, plan: LangGraphPlan, blocks: list[AnswerBlock]) -> MarkdownBlock:
         descriptions = self._describe_blocks(blocks)
-        prompt = (
-            "You are a LangGraph aggregator for OPS. Produce a final Markdown summary (5-10 lines) "
-            "for the question below and cite the evidence by referencing the block titles/contexts "
-            "with the word '근거'. Avoid JSON.\n\n"
-            f"Question: {question}\n"
-            f"Plan: {plan.model_dump()}\n"
-            f"Evidence:\n{descriptions}\n\n"
-            "Hint at which blocks (metric SQL, history table, graph nodes) support your answer."
-        )
         try:
-            content = self._call_llm(prompt)
+            templates = self._load_prompt_templates()
+            system_prompt = templates.get("summary_system")
+            user_template = templates.get("summary_user")
+            if not system_prompt or not user_template:
+                raise RuntimeError("LangGraph summary prompt templates are missing")
+            prompt = (
+                user_template.replace("{question}", question)
+                .replace("{plan}", str(plan.model_dump()))
+                .replace("{evidence}", descriptions)
+            )
+            content = self._call_llm(prompt, system_prompt)
             content = content.strip()
             if not content:
                 raise RuntimeError("LangGraph summary returned empty content")
@@ -147,9 +148,9 @@ class LangGraphAllRunner:
             lines.append(f"- {block.type}: {title}")
         return "\n".join(lines)
 
-    def _call_llm(self, prompt: str) -> str:
+    def _call_llm(self, prompt: str, system_prompt: str) -> str:
         input_data = [
-            {"role": "system", "content": "You are a deterministic LangGraph planner/aggregator."},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt},
         ]
 
@@ -177,6 +178,15 @@ class LangGraphAllRunner:
         if not content:
             raise RuntimeError("LangGraph LLM returned empty content")
         return content.strip()
+
+    def _load_prompt_templates(self) -> dict[str, str]:
+        prompt_data = config_loader.load_yaml("prompts/ops/langgraph.yaml")
+        if not prompt_data or "templates" not in prompt_data:
+            raise RuntimeError("LangGraph prompt templates not found")
+        templates = prompt_data["templates"]
+        if not isinstance(templates, dict):
+            raise RuntimeError("LangGraph prompt templates invalid")
+        return templates
 
     def _is_temperature_not_supported_error(self, exc: Exception) -> bool:
         message = str(exc)

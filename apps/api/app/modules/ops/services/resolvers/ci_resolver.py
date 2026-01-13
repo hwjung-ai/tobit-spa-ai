@@ -5,11 +5,22 @@ from typing import Iterable
 
 from scripts.seed.utils import get_postgres_conn
 
+from app.shared.config_loader import load_text
+
 from .types import CIHit
 
 CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app|mes)-[a-z0-9-]+\b", re.IGNORECASE
 )
+
+_QUERY_BASE = "queries/postgres/ci"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"CI resolver query '{name}' not found")
+    return query
 
 
 def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIHit]:
@@ -19,16 +30,9 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
             if codes:
+                exact_query = _load_query("ci_resolver_exact.sql")
                 for code in dict.fromkeys(codes):
-                    cur.execute(
-                        """
-                        SELECT ci_id, ci_code, ci_name, ci_type, ci_subtype, ci_category
-                        FROM ci
-                        WHERE ci_code = %s AND tenant_id = %s AND deleted_at IS NULL
-                        LIMIT %s
-                        """,
-                        (code, tenant_id, limit),
-                    )
+                    cur.execute(exact_query, (code, tenant_id, limit))
                     for row in cur.fetchall():
                         hits.append(_row_to_hit(row, 1.0))
                         seen_codes.add(row[1])
@@ -62,15 +66,8 @@ def _query_pattern(cur, tenant_id: str, question: str, field: str, limit: int) -
         return []
     if field not in {"ci_code", "ci_name"}:
         raise ValueError("Unsupported field for CI query")
-    cur.execute(
-        f"""
-        SELECT ci_id, ci_code, ci_name, ci_type, ci_subtype, ci_category
-        FROM ci
-        WHERE tenant_id = %s AND deleted_at IS NULL AND {field} ILIKE %s
-        LIMIT %s
-        """,
-        (tenant_id, f"%{term}%", limit),
-    )
+    pattern_query = _load_query("ci_resolver_pattern.sql").format(field=field)
+    cur.execute(pattern_query, (tenant_id, f"%{term}%", limit))
     return cur.fetchall()
 
 

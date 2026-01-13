@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Iterable, List, Tuple
 
+from app.shared.config_loader import load_text
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -13,48 +14,36 @@ from schemas import (
     TableBlock,
 )
 
-from ..resolvers import resolve_ci, resolve_time_range
 from ..ci.tools import history as history_tools
+from ..resolvers import resolve_ci, resolve_time_range
 
 
 def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+    work_h_query = load_text("queries/postgres/history/work_history.sql")
+    maint_h_query = load_text("queries/postgres/history/maintenance_history.sql")
+    event_l_query = load_text("queries/postgres/history/event_log.sql")
+
+    if not work_h_query or not maint_h_query or not event_l_query:
+        return [
+            MarkdownBlock(
+                type="markdown",
+                title="Error",
+                content="### 쿼리 파일 로드 실패\n- History 관련 SQL 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
+            )
+        ], []
+
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
         fallback_blocks = _build_history_fallback(tenant_id, question)
         return fallback_blocks, ["postgres", "timescale"]
     ci = ci_hits[0]
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
-    work_rows = _fetch_history(
-        """
-        SELECT start_time, work_type, impact_level, result, summary
-        FROM work_history
-        WHERE tenant_id = %s AND ci_id = %s AND start_time >= %s AND start_time < %s
-        ORDER BY start_time DESC
-        LIMIT 50
-        """,
-        (tenant_id, ci.ci_id, time_range.start, time_range.end),
-    )
-    maint_rows = _fetch_history(
-        """
-        SELECT start_time, maint_type, duration_min, result, summary
-        FROM maintenance_history
-        WHERE tenant_id = %s AND ci_id = %s AND start_time >= %s AND start_time < %s
-        ORDER BY start_time DESC
-        LIMIT 50
-        """,
-        (tenant_id, ci.ci_id, time_range.start, time_range.end),
-    )
-    event_rows = _fetch_history(
-        """
-        SELECT el.time, el.severity, el.event_type, el.source, el.title, c.ci_code, c.ci_name
-        FROM event_log AS el
-        LEFT JOIN ci AS c ON c.ci_id = el.ci_id
-        WHERE el.tenant_id = %s AND el.ci_id = %s AND el.time >= %s AND el.time < %s
-        ORDER BY el.severity DESC, el.time DESC
-        LIMIT 50
-        """,
-        (tenant_id, ci.ci_id, time_range.start, time_range.end),
-    )
+
+    params = (tenant_id, ci.ci_id, time_range.start, time_range.end)
+    work_rows = _fetch_history(work_h_query, params)
+    maint_rows = _fetch_history(maint_h_query, params)
+    event_rows = _fetch_history(event_l_query, params)
+
     stats = {
         "work": len(work_rows),
         "maint": len(maint_rows),
@@ -65,7 +54,18 @@ def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], l
     include_work = "work" in sections or not sections
     include_maint = "maintenance" in sections or not sections
     blocks = _build_blocks(ci, time_range, stats, work_rows, maint_rows, event_rows, include_work, include_maint)
-    references = _build_references(work_rows, maint_rows, event_rows, tenant_id, ci, time_range)
+
+    references = _build_references(
+        work_rows,
+        maint_rows,
+        event_rows,
+        tenant_id,
+        ci,
+        time_range,
+        work_h_query,
+        maint_h_query,
+        event_l_query,
+    )
     blocks.append(references)
     return blocks, ["postgres", "timescale"]
 
@@ -145,17 +145,18 @@ def _build_references(
     tenant_id: str,
     ci,
     time_range,
+    work_h_query: str,
+    maint_h_query: str,
+    event_l_query: str,
 ) -> ReferencesBlock:
     items = []
+    params = [tenant_id, ci.ci_id, time_range.start, time_range.end]
     if work_rows:
         items.append(
             ReferenceItem(
                 kind="sql",
                 title="work history query",
-                payload={
-                    "sql": "SELECT start_time,... FROM work_history ...",
-                    "params": [tenant_id, ci.ci_id, time_range.start, time_range.end],
-                },
+                payload={"sql": work_h_query, "params": params},
             )
         )
     if maint_rows:
@@ -163,10 +164,7 @@ def _build_references(
             ReferenceItem(
                 kind="sql",
                 title="maintenance history query",
-                payload={
-                    "sql": "SELECT start_time,... FROM maintenance_history ...",
-                    "params": [tenant_id, ci.ci_id, time_range.start, time_range.end],
-                },
+                payload={"sql": maint_h_query, "params": params},
             )
         )
     if event_rows:
@@ -174,15 +172,14 @@ def _build_references(
             ReferenceItem(
                 kind="sql",
                 title="event log query",
-                payload={
-                    "sql": "SELECT time,... FROM event_log ...",
-                    "params": [tenant_id, ci.ci_id, time_range.start, time_range.end],
-                },
+                payload={"sql": event_l_query, "params": params},
             )
         )
-    return ReferencesBlock(type="references", title="History queries", items=items or [
-        ReferenceItem(kind="sql", title="history query", payload={"sql": "No rows returned", "params": []})
-    ])
+    return ReferencesBlock(
+        type="references",
+        title="History queries",
+        items=items or [ReferenceItem(kind="sql", title="history query", payload={"sql": "No rows returned", "params": []})],
+    )
 
 
 def _build_history_fallback(tenant_id: str, question: str) -> list[AnswerBlock]:

@@ -1,0 +1,37 @@
+version: 1
+name: ops_langgraph
+templates:
+  plan_system: |
+    You are a deterministic LangGraph planner/aggregator.
+  plan_user: |
+    You are orchestrating OPS queries. The question is:
+    {question}
+
+    Return only JSON that follows this schema:
+    {
+      "run_metric": bool,
+      "run_hist": bool,
+      "run_graph": bool,
+      "time_hint": str | null,
+      "metric_hint": str | null,
+      "ci_hint": str | null
+    }
+
+    Choose the minimum set of executors needed to answer the question.
+    Hint fields help suffix the question to narrow the scope.
+    If unsure prefer both metric and hist.
+  summary_system: |
+    You are a LangGraph aggregator for OPS.
+  summary_user: |
+    Produce a final Markdown summary (5-10 lines) for the question below and cite the evidence by referencing the block titles/contexts with the word '근거'. Avoid JSON.
+
+    Question: {question}
+    Plan: {plan}
+    Evidence:
+    {evidence}
+
+    Hint at which blocks (metric SQL, history table, graph nodes) support your answer.
+params:
+  - question
+  - plan
+  - evidence

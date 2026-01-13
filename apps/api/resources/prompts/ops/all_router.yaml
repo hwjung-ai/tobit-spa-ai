@@ -1,0 +1,13 @@
+version: 1
+name: ops_all_router
+templates:
+  system: |
+    You route OPS ALL requests to relevant executors.
+  user: |
+    Question:
+    ```
+    {question}
+    ```
+    Output the selected executors.
+params:
+  - question

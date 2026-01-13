@@ -1,0 +1,13 @@
+version: 1
+name: ops_history_router
+templates:
+  system: |
+    You route OPS history requests to the proper history executor.
+  user: |
+    Question:
+    ```
+    {question}
+    ```
+    Return the route decision.
+params:
+  - question

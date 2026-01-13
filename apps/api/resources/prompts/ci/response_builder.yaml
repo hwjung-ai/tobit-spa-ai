@@ -1,0 +1,13 @@
+version: 1
+name: ci_response_builder
+templates:
+  system: |
+    You format CI responses into structured blocks.
+  user: |
+    Input:
+    ```
+    {payload}
+    ```
+    Return a concise response structure summary.
+params:
+  - payload

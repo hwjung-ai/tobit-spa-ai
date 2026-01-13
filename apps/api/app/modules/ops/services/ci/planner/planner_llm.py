@@ -6,7 +6,7 @@ import re
 from time import perf_counter
 from typing import Iterable, List, Set, Tuple
 
-ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
+import openai
 
 from app.llm.client import get_llm_client
 from app.modules.ops.services.ci.planner.plan_schema import (
@@ -23,6 +23,13 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     View,
     ListSpec,
 )
+from app.shared import config_loader
+from apps.api.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+
+ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 
 
 def determine_output_types(text: str) -> Set[str]:
@@ -97,12 +104,28 @@ def _metric_payload_to_spec(payload: dict[str, str] | None) -> MetricSpec | None
     return MetricSpec(metric_name=name, agg=agg, time_range=time_range, mode=mode)
 
 
-def _build_output_parser_messages(text: str) -> list[dict[str, str]]:
+def _build_output_parser_messages(text: str) -> list[dict[str, str]] | None:
+    prompt_data = config_loader.load_yaml("prompts/ci/planner.yaml")
+    if not prompt_data or "templates" not in prompt_data:
+        logger.error("Failed to load CI planner prompt or templates are missing.")
+        return None
+
+    templates = prompt_data["templates"]
+    system_prompt = templates.get("system")
+    user_prompt_template = templates.get("user")
+
+    if not system_prompt or not user_prompt_template:
+        logger.error("System or user prompt template is missing in planner.yaml.")
+        return None
+
+    # Use simple replacement, not format()
+    user_prompt = user_prompt_template.replace("{question}", text)
+
     return [
-        {"role": "system", "content": OUTPUT_SCHEMA_PROMPT},
+        {"role": "system", "content": system_prompt},
         {
             "role": "user",
-            "content": f"Question:\n```\n{text}\n```\nRespond only with a JSON object matching the schema above.",
+            "content": user_prompt,
         },
     ]
 
@@ -114,11 +137,15 @@ def _extract_json_block(text: str) -> str | None:
 
 def _call_output_parser_llm(text: str) -> dict | None:
     try:
+        messages = _build_output_parser_messages(text)
+        if messages is None:
+            raise ValueError("Failed to build LLM messages from prompt template.")
+
         llm = get_llm_client()
         start = perf_counter()
         response = llm.create_response(
             model=OUTPUT_PARSER_MODEL,
-            input=_build_output_parser_messages(text),
+            input=messages,
             temperature=0,
         )
         elapsed = int((perf_counter() - start) * 1000)
@@ -137,9 +164,7 @@ def _call_output_parser_llm(text: str) -> dict | None:
         )
         json_text = _extract_json_block(content)
         if not json_text:
-            raise ValueError(
-                f"LLM response missing JSON block: {content[:400]!r}"
-            )
+            raise ValueError(f"LLM response missing JSON block: {content[:400]!r}")
         try:
             payload = json.loads(json_text)
         except json.JSONDecodeError as exc:
@@ -149,13 +174,11 @@ def _call_output_parser_llm(text: str) -> dict | None:
         logger.warning("ci.planner.llm_fallback", extra={"error": str(exc)})
         return None
 
+
 def is_metric_requested(text: str) -> bool:
     normalized = text.lower()
     return any(keyword in normalized for keyword in METRIC_KEYWORDS)
 
-import openai
-
-from apps.api.core.logging import get_logger
 
 TAG_FILTER_KEYS = {"system", "role", "runs_on", "host_server", "ci_subtype", "connected_servers"}
 ATTR_FILTER_KEYS = {"engine", "version", "zone", "ip", "cpu_cores", "memory_gb"}
@@ -286,33 +309,7 @@ SERVER_FILTER_KEYWORDS = {"서버", "server"}
 CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
 OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", "gpt-4o-mini")
-OUTPUT_SCHEMA_PROMPT = """
-You are the OPS CI planner's output parser. Read the user's question and respond ONLY with the following JSON schema:
-{
-  "output_types": ["number","table","chart","network","text"],
-  "ci_identifiers": ["ERP_OS_02"],
-  "filters": [{"field": "ci_subtype", "op": "=", "value": "server"}],
-  "metric": {
-    "name": "cpu_usage",
-    "agg": "avg",
-    "time_range": "2024-12-29",
-    "mode": "aggregate"
-  },
-  "ambiguity": false,
-  "list": { "enabled": false, "limit": 50, "offset": 0 }
-}
-- Always return JSON only, without markdown, bullet points, or text.
-- Use null or empty arrays when the value is not applicable.
-- output_types must list at least one element describing the requested blocks.
-- ci_identifiers should include specifiers such as CI code/ci_name when available.
-- metric must be null if there is no metric/history intent.
-- filters should contain field/op/value entries for any narrowing context (e.g. server filter when applicable).
-- LIST RULES:
-  - Only enable list for explicit list requests such as “목록/리스트/전체 목록”.
-  - Do not enable list for output format hints like “표로 보여줘/테이블로 보여줘/보여줘”.
-  - In list mode: output_types must be ["table"] and ci_identifiers may be [].
-  - If N is present (e.g. 10개), set list.limit=N, otherwise default to 50.
-"""
+
 
 def _determine_intent(text: str) -> Intent:
     normalized = text.lower()
@@ -768,8 +765,6 @@ HISTORY_TIME_MAP = {
 
 TYPE_KEYWORDS = {"종류", "타입", "type", "category", "kind"}
 TYPE_AGG_KEYWORDS = TYPE_KEYWORDS
-
-logger = get_logger(__name__)
 
 
 def _determine_history_spec(text: str):

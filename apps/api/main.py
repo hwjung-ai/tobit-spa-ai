@@ -1,3 +1,4 @@
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -9,15 +10,13 @@ if str(ROOT) not in sys.path:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from apps.api.core.logging import configure_logging
-from apps.api.core.middleware import RequestIDMiddleware
-
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
 from app.modules.data_explorer import router as data_explorer_router
 from app.modules.ui_creator.router import router as ui_creator_router
+from app.shared import config_loader
 from api.routes.chat import router as chat_router
 from api.routes.documents import router as document_router
 from api.routes.health import router as health_router
@@ -26,6 +25,8 @@ from api.routes.history import router as history_router
 from app.modules.ops.router import router as ops_router
 from api.routes.threads import router as thread_router
 from core.config import get_settings
+from apps.api.core.logging import configure_logging
+from apps.api.core.middleware import RequestIDMiddleware
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -54,13 +55,20 @@ app.include_router(history_router)
 
 
 @app.on_event("startup")
-async def _start_cep_scheduler() -> None:
+async def on_startup() -> None:
+    # Start CEP scheduler
     start_scheduler()
+    # Start resource watcher
+    enable_watcher = os.environ.get("ENABLE_RESOURCE_WATCHER", "true").lower() == "true"
+    config_loader.start_watching(enable_watcher)
 
 
 @app.on_event("shutdown")
-async def _stop_cep_scheduler() -> None:
+async def on_shutdown() -> None:
+    # Stop CEP scheduler
     stop_scheduler()
+    # Stop resource watcher
+    config_loader.stop_watching()
 
 
 @app.get("/health")

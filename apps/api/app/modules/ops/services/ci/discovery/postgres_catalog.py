@@ -12,6 +12,8 @@ from psycopg import Connection
 
 from apps.api.scripts.seed.utils import get_postgres_conn
 
+from app.shared.config_loader import load_text
+
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "postgres_catalog.json"
 TARGET_TABLES = ["ci", "ci_ext"]
@@ -23,6 +25,15 @@ AGG_COLUMNS = [
     "location",
     "owner",
 ]
+
+_QUERY_BASE = "queries/postgres/discovery"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"Postgres catalog query '{name}' not found")
+    return query
 
 
 def _mask_sensitive(value: str | None) -> str | None:
@@ -52,14 +63,8 @@ def _build_environment_context() -> dict[str, str | None]:
 
 def _fetch_columns(conn: Connection) -> list[dict[str, str]]:
     with conn.cursor() as cur:
-        cur.execute(
-            """
-SELECT table_name, column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_name IN ('ci', 'ci_ext')
-ORDER BY table_name, ordinal_position
-"""
-        )
+        columns_query = _load_query("postgres_catalog_columns.sql")
+        cur.execute(columns_query)
         return [
             {
                 "table_name": table_name,
@@ -73,7 +78,8 @@ ORDER BY table_name, ordinal_position
 
 def _fetch_table_row_count(conn: Connection, table: str) -> int:
     with conn.cursor() as cur:
-        cur.execute(f"SELECT COUNT(*) FROM {table}")
+        count_query = _load_query("postgres_catalog_table_count.sql").format(table=table)
+        cur.execute(count_query)
         return cur.fetchone()[0]
 
 
@@ -81,16 +87,8 @@ def _fetch_aggregation(
     conn: Connection, column: str, limit: int = 50
 ) -> list[dict[str, int | str | None]]:
     with conn.cursor() as cur:
-        cur.execute(
-            f"""
-SELECT {column} AS value, COUNT(*) AS cnt
-FROM ci
-GROUP BY {column}
-ORDER BY cnt DESC
-LIMIT %s
-""",
-            (limit,),
-        )
+        agg_query = _load_query("postgres_catalog_aggregation.sql").format(column=column)
+        cur.execute(agg_query, (limit,))
         return [{"value": value, "count": cnt} for value, cnt in cur.fetchall()]
 
 
@@ -109,15 +107,8 @@ def _sample_jsonb_values(
     conn: Connection, column: str, key: str, limit: int = 5
 ) -> list[str]:
     with conn.cursor() as cur:
-        cur.execute(
-            f"""
-SELECT DISTINCT jsonb_extract_path_text({column}, %s) AS value
-FROM ci_ext
-WHERE {column} ? %s
-LIMIT %s
-""",
-            (key, key, limit),
-        )
+        sample_query = _load_query("postgres_catalog_jsonb_sample.sql").format(column=column)
+        cur.execute(sample_query, (key, key, limit))
         return [_format_sample_value(row[0]) for row in cur.fetchall()]
 
 
@@ -125,18 +116,8 @@ def _collect_jsonb_key_stats(
     conn: Connection, column: str
 ) -> list[dict[str, object]]:
     with conn.cursor() as cur:
-        cur.execute(
-            f"""
-SELECT key, COUNT(*) AS cnt
-FROM (
-    SELECT jsonb_object_keys({column}) AS key
-    FROM ci_ext
-    WHERE {column} IS NOT NULL
-) sub
-GROUP BY key
-ORDER BY cnt DESC
-"""
-        )
+        stats_query = _load_query("postgres_catalog_jsonb_key_stats.sql").format(column=column)
+        cur.execute(stats_query)
         results: list[dict[str, object]] = []
         for key, cnt in cur.fetchall():
             samples = _sample_jsonb_values(conn, column, key)

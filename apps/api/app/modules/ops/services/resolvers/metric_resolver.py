@@ -4,6 +4,8 @@ from typing import Iterable
 
 from scripts.seed.utils import get_postgres_conn
 
+from app.shared.config_loader import load_text
+
 from .types import MetricHit
 
 METRIC_KEYWORDS = [
@@ -26,17 +28,12 @@ def resolve_metric(question: str) -> MetricHit | None:
 
 
 def _fetch_metric(metric_name: str) -> MetricHit | None:
+    query = load_text("queries/postgres/metric/metric_resolver.sql")
+    if not query:
+        raise ValueError("Metric resolver query not found")
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT metric_id, metric_name
-                FROM metric_def
-                WHERE metric_name = %s
-                LIMIT 1
-                """,
-                (metric_name,),
-            )
+            cur.execute(query, (metric_name,))
             row = cur.fetchone()
             if not row:
                 return None

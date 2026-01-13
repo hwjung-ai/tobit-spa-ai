@@ -5,6 +5,8 @@ from typing import Iterable, Literal, List, Tuple
 
 from apps.api.scripts.seed.utils import get_postgres_conn
 
+from app.shared.config_loader import load_text
+
 TIME_RANGES = {
     "last_24h": timedelta(hours=24),
     "last_7d": timedelta(days=7),
@@ -13,6 +15,15 @@ TIME_RANGES = {
 
 MAX_LIMIT = 200
 MAX_CI_IDS = 300
+
+_QUERY_BASE = "queries/postgres/history"
+
+
+def _load_query(name: str) -> str:
+    query = load_text(f"{_QUERY_BASE}/{name}")
+    if not query:
+        raise ValueError(f"History query '{name}' not found")
+    return query
 
 
 def _prepare_ci_ids(ci_ids: List[str]) -> Tuple[List[str], bool, int]:
@@ -28,17 +39,14 @@ def _load_event_log_metadata() -> dict[str, object]:
     warnings: List[str] = []
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'event_log' LIMIT 1"
-            )
+            table_exists_query = _load_query("event_log_table_exists.sql")
+            cur.execute(table_exists_query)
             table_exists = bool(cur.fetchone())
             if not table_exists:
                 warnings.append("event_log table not found")
                 return {"available": False, "warnings": warnings}
-            cur.execute(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_schema = 'public' AND table_name = 'event_log' ORDER BY ordinal_position"
-            )
+            columns_query = _load_query("event_log_columns.sql")
+            cur.execute(columns_query)
             columns = [row[0] for row in cur.fetchall()]
     ci_candidates = ["ci_id", "ci_code", "target_ci_id", "resource_id"]
     time_candidates = ["created_at", "occurred_at", "timestamp", "ts"]
@@ -122,11 +130,11 @@ def event_log_recent(
     else:
         warnings.append("tenant_id column missing in event_log; tenant scope not enforced")
     columns_sql = ", ".join(selected_columns)
-    query = (
-        f"SELECT {columns_sql} FROM event_log "
-        f"LEFT JOIN ci ON ci.ci_id = event_log.ci_id "
-        f"WHERE {' AND '.join(where_clauses)} "
-        f"ORDER BY {time_col} DESC LIMIT %s"
+    query_template = _load_query("event_log_recent.sql")
+    query = query_template.format(
+        columns=columns_sql,
+        where_clause=" AND ".join(where_clauses),
+        time_col=time_col,
     )
     params.append(sanitized_limit)
     rows: List[List[str]] = []
@@ -156,26 +164,14 @@ def recent_work_and_maintenance(
     limit: int | None = 50,
 ) -> dict[str, object]:
     time_from, time_to = _calculate_time_range(time_range)
+    work_query = _load_query("work_history_recent.sql")
     work_rows = _fetch_sql_rows(
-        """
-        SELECT wh.start_time, c.ci_code, c.ci_name, wh.work_type, wh.impact_level, wh.result, wh.summary
-        FROM work_history AS wh
-        LEFT JOIN ci AS c ON c.ci_id = wh.ci_id
-        WHERE wh.tenant_id = %s AND wh.start_time >= %s AND wh.start_time < %s
-        ORDER BY wh.start_time DESC
-        LIMIT %s
-        """,
+        work_query,
         (tenant_id, time_from, time_to, limit or 50),
     )
+    maint_query = _load_query("maintenance_history_recent.sql")
     maint_rows = _fetch_sql_rows(
-        """
-        SELECT mh.start_time, c.ci_code, c.ci_name, mh.maint_type, mh.duration_min, mh.result, mh.summary
-        FROM maintenance_history AS mh
-        LEFT JOIN ci AS c ON c.ci_id = mh.ci_id
-        WHERE mh.tenant_id = %s AND mh.start_time >= %s AND mh.start_time < %s
-        ORDER BY mh.start_time DESC
-        LIMIT %s
-        """,
+        maint_query,
         (tenant_id, time_from, time_to, limit or 50),
     )
     meta = {
