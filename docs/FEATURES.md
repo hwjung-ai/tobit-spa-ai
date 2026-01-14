@@ -53,7 +53,7 @@
 
 ##### 소스 맵
 - Backend 라우터: `apps/api/app/modules/api_manager/runtime_router.py`
-- 실행기: `apps/api/app/modules/api_manager/executor.py`, `apps/api/app/modules/api_manager/script_executor.py`, `apps/api/app/modules/api_manager/workflow_executor.py`
+- 실행기: `apps/api/app/modules/api_manager/executor.py`, `apps/api/app/modules/api_manager/script_executor.py`, `apps/api/app/modules/api_manager/workflow_executor.py`, `apps/api/app/modules/api_manager/script_executor_runner.py`
 - 모델/CRUD: `apps/api/app/modules/api_manager/models.py`, `apps/api/app/modules/api_manager/crud.py`
 - 라우터 등록: `apps/api/main.py`
 
@@ -178,7 +178,7 @@
   - `GET /ui-defs/{ui_id}`
   - `POST /ui-defs`
   - `PUT /ui-defs/{ui_id}`
-  각 응답은 `ResponseEnvelope`로 감싼다.
+각 응답은 `ResponseEnvelope`로 감싼다.
 - Builder UI `/ui-creator`는 `BuilderShell`과 `ChatPanel`을 재사용하며 다음을 제공한다:
   - 탐색기 목록(좌측)
   - schema 및 preview/params 토글용 JSON 편집기(중앙)
@@ -262,8 +262,8 @@
 #### 소스 맵
 - Backend API: `apps/api/app/modules/cep_builder/router.py`, `apps/api/app/modules/cep_builder/schemas.py`
 - 저장/모델: `apps/api/app/modules/cep_builder/crud.py`, `apps/api/app/modules/cep_builder/models.py`
-- 실행기: `apps/api/app/modules/cep_builder/executor.py`
-- 스케줄러: `apps/api/app/modules/cep_builder/scheduler.py`
+- 실행기: `apps/api/app/modules/cep_builder/executor.py`, `apps/api/app/modules/cep_builder/notification_engine.py`
+- 스케줄러: `apps/api/app/modules/cep_builder/scheduler.py`, `apps/api/app/modules/cep_builder/event_broadcaster.py`
 - Frontend: `apps/web/src/app/cep-builder/page.tsx`, `apps/web/src/app/cep-builder/chat/page.tsx`
 
 
@@ -309,12 +309,12 @@
 ```bash
 # simulate (payload에 metrics 포함)
 curl -s -X POST http://localhost:8000/cep/rules/<rule_id>/simulate \
-  -H "Content-Type: application/json" \
+  -H "Content-Type": application/json" \
   -d '{"test_payload":{"metrics":{"cpu_usage":85}}}'
 
 # 수동 트리거
 curl -s -X POST http://localhost:8000/cep/rules/<rule_id>/trigger \
-  -H "Content-Type: application/json" \
+  -H "Content-Type": application/json" \
   -d '{"payload":{"metrics":{"cpu_usage":85}}}'
 
 # 로그 조회
@@ -848,7 +848,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 - “이벤트/알람/로그/event” 키워드가 포함된 질문은 `plan.history.enabled = true`를 켠다. orchestrator는 `apps.api.app.modules.ops.services.ci.tools.history.event_log_recent`를 호출하며, 이 함수는 `event_log`의 CI 참조 및 타임스탬프 컬럼을 자동 탐지해 스키마와 무관하게 안전한 쿼리를 보장한다.
 - 고정 윈도우는 `last_24h`, `last_7d`, `last_30d`이며 row limit는 200이다. 테이블 블록 제목은 `Recent events (last_<window>)`로 표시되고 trace에는 요청 window가 기록된다.
 - CI를 명시하지 않은 “작업 이력”, “유지보수” 질문은 `apps.api.app.modules.ops.services.ci.tools.history.recent_work_and_maintenance` fallback을 사용하여 maintenance/work 테이블을 각기 분리 조회한다. runner는 텍스트 키워드(`작업`, `deployment`, `maintenance`, `점검` 등)를 통해 필요한 섹션만 포함시키며, 각 테이블에는 `ci_code`/`ci_name`을 보여줘 어느 CI의 기록인지 명확히 한다.
-- `apps.api.app.modules.ops.services.resolvers.time_range_resolver.resolve_time_range`는 기존 강제 윈도우 외에 “n개월”, “n년”, “YYYY년 MM월 첫주/둘째 주” 같은 표현도 인식하므로, “최근 6개월” 또는 “2025년 12월 첫주”처럼 구체적인 시간 범위를 요청해도 runner가 정확한 start/end를 계산해 event/work/maintenance 쿼리에 전달한다.
+- `apps.api.app/modules/ops/services/resolvers/time_range_resolver.resolve_time_range`는 기존 강제 윈도우 외에 “n개월”, “n년”, “YYYY년 MM월 첫주/둘째 주” 같은 표현도 인식하므로, “최근 6개월” 또는 “2025년 12월 첫주”처럼 구체적인 시간 범위를 요청해도 runner가 정확한 start/end를 계산해 event/work/maintenance 쿼리에 전달한다.
 - `event_log` 또는 필수 컬럼이 없더라도 CI 블록은 유지되며, 텍스트 경고 + trace warning으로 문제를 알린다.
 
 #### 샘플 질문
@@ -1072,7 +1072,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 #### 개요
 - `mode=auto`는 이제 고정 레시피 대신 경량 결정 트리를 따른다. planner는 키워드 조합으로 원하는 뷰(COMPOSITION/DEPENDENCY/IMPACT/NEIGHBORS/PATH)를 추론하고, depth 힌트(1‑3)를 정책 모듈로 clamp하며, 질문에 `cpu`/`latency`/`error`/`이벤트`/`로그`/`simulate` 등이 명시될 때만 metrics/history/CEP를 활성화한다. 요약 블록은 항상 첫 블록으로 포함되며, runner는 요청된 그래프 뷰를 순회하고 trace에 실제 실행 섹션(`trace.auto.views`, `trace.auto.metrics`, `trace.auto.history`, `trace.auto.cep`)을 기록한다.
 - 메트릭 키워드는 일반 metric 스펙 흐름을 트리거한다. 명시적 메트릭이 없더라도 metrics가 활성화되어 있으면 cpu_usage/latency/error 후보로 fallback한다. 시리즈 힌트(`추이`, `그래프`)는 planner가 `mode=series`를 요청하도록 한다(CI 스코프에만 적용). History/CEP는 게이트되어 history는 CI 스코프 이벤트 로그만, CEP는 rule_id가 있을 때만 실행한다.
-- “깊게 3단계” 같은 depth 힌트는 확장을 조정하되 `apps.api.app.modules.ops.services.ci.policy.clamp_depth`로 clamp된다. runner는 각 그래프 뷰를 확장하고 depth bump/view swap/metric time_range 토글 등 next actions를 시드하며, 요약 텍스트는 성공/실패 섹션을 나열한다.
+- “깊게 3단계” 같은 depth 힌트는 확장을 조정하되 `apps.api.app/modules/ops/services/ci/policy.clamp_depth`로 clamp된다. runner는 각 그래프 뷰를 확장하고 depth bump/view swap/metric time_range 토글 등 next actions를 시드하며, 요약 텍스트는 성공/실패 섹션을 나열한다.
 
 #### 샘플 질문
 1. “sys-erp 의존 관계 알려줘”
