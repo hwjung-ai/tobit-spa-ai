@@ -90,9 +90,10 @@
       "description": "Begin lookback window"
     }
   }
-  ```
+```
 
 프론트엔드 작업: `/api-manager`와 `BuilderShell` 패널을 수정해 JSON 편집기와 logic-type selector를 노출하고, SQL/workflow/script 대상은 편집 가능하게 유지하면서 실행은 안전하게 제한한다.
+- `logic_type`에 `http`가 추가되어 JSON으로 구성된 외부 HTTP 요청을 실행할 수 있다. `logic_body`에는 최소 `url` 필드가 필요하며, `method`, `params`(쿼리스트링), `headers`, `body`(JSON payload)가 임의로 포함될 수 있다. 실행 시 server-side `httpx` 클라이언트가 해당 스펙을 호출하고 응답(JSON이나 텍스트)을 `rows` 컬렉션으로 변환하여 `ApiExecuteResponse`에 담는다. 실패/타임아웃은 502로 노출되며, `executed_sql`은 `HTTP <METHOD> <URL>` 형식으로 기록돼 Builder evidence 패널에 참고된다.
 
 ### API Manager Dev: 시스템 API (flagged)
 
@@ -112,6 +113,9 @@
   2. 각 엔드포인트 카드는 OpenAPI `summary`(테이블에 표시)와 확장된 `description` 텍스트를 상세 패널에 노출한다. 여기에는 read-only, LIMIT 200, timeout, allowlist, banned commands 등의 제약이 열거되어 `/data/postgres/query`나 `/data/redis/command`가 “기능이 부족해 보이는” 인상을 줄인다.
   3. 상세 카드는 supported actions/constraints 섹션을 강조 표시하여 각 RPC 엔드포인트의 가능/불가 항목을 빠르게 확인하게 한다.
   4. 설명 하단의 runtime policy textarea는 Discovered 항목에서는 비활성화되고, “System > Registered” 또는 Custom API 선택 시 UI 툴팁 안내대로 편집 가능해진다.
+  5. 시스템 뷰의 `discovered`/`registered` 탭은 출처가 다릅니다.
+     - **Discovered** 탭은 FastAPI가 노출하는 OpenAPI 경로(`/api-manager/system/endpoints`)를 불러와서 화면에 보여줍니다. 자동 수집된 경로이므로 편집/저장은 불가능합니다.
+     - **Registered** 탭은 실제 DB의 `tb_api_def` 테이블(`api_type = "system"`)에 저장된 API 정의로, `logic_type`, `logic_body`, `runtime_policy` 같은 실체가 있습니다. 초기 마이그레이션에서 등록된 기본 `system` API(예: `/api-manager/metrics-summary`)도 여기에 포함되므로 Builder에서 직접 저장해본 적이 없어도 항목이 보일 수 있습니다.
 - 활성화되면 API 목록에 `system` 탭이 나타난다. UI는 `/api-manager/apis`를 계속 호출해 등록된 API를 채우며, HTTP 호출 실패 시 로컬 캐시(`api-manager:api:*`)를 사용한다.
 
 ### API Manager (API 매니저) - 워크플로 실행
@@ -1120,7 +1124,7 @@ curl -s http://localhost:8000/cep/scheduler/instances
 3. “sys-erp 와 sys-apm 어떻게 연결돼?”
 4. “sys-erp rule 123e4567-e89b-12d3-a456-426614174000 simulate”
 
-### CI 목록 미리보기 (Hotfix 5D-3)
+### CI 목록 미리보기
 
 #### 소스 맵
 - 리스트 도구: `apps/api/app/modules/ops/services/ci/tools/ci.py`, `apps/api/app/modules/ops/services/ci/orchestrator/runner.py`

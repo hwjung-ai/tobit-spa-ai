@@ -2132,17 +2132,26 @@ export default function ApiManagerPage() {
               </select>
             </label>
           ) : null}
-          <div className={`builder-json-shell rounded-2xl border border-slate-800 bg-slate-950/60 transition-all ${logicType === "http" ? "h-auto max-h-[500px] overflow-y-auto" : "h-64 overflow-hidden"
-            }`}>
-            {logicType === "http" && !isSystemScope ? (
+          <div
+            className={`builder-json-shell rounded-2xl border border-slate-800 bg-slate-950/60 transition-all ${
+              logicType === "http" ? "h-auto max-h-[500px] overflow-y-auto" : "h-64 overflow-hidden"
+            }`}
+          >
+            {logicType === "http" ? (
               <div className="space-y-4 p-4 text-sm">
+                {isSystemScope ? (
+                  <p className="text-[11px] text-slate-400">
+                    HTTP spec is read-only for system APIs.
+                  </p>
+                ) : null}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
                     Method
                     <select
                       value={httpSpec.method}
                       onChange={(e) => setHttpSpec((prev) => ({ ...prev, method: e.target.value }))}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500"
+                      disabled={isSystemScope}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <option>GET</option>
                       <option>POST</option>
@@ -2155,7 +2164,8 @@ export default function ApiManagerPage() {
                     <input
                       value={httpSpec.url}
                       onChange={(e) => setHttpSpec((prev) => ({ ...prev, url: e.target.value }))}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500"
+                      disabled={isSystemScope}
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
                       placeholder="https://api.example.com/data"
                     />
                   </label>
@@ -2166,7 +2176,8 @@ export default function ApiManagerPage() {
                     <textarea
                       value={httpSpec.headers}
                       onChange={(e) => setHttpSpec((prev) => ({ ...prev, headers: e.target.value }))}
-                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar"
+                      disabled={isSystemScope}
+                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   </label>
                   <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
@@ -2174,7 +2185,8 @@ export default function ApiManagerPage() {
                     <textarea
                       value={httpSpec.params}
                       onChange={(e) => setHttpSpec((prev) => ({ ...prev, params: e.target.value }))}
-                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar"
+                      disabled={isSystemScope}
+                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
                     />
                   </label>
                 </div>
@@ -2183,7 +2195,8 @@ export default function ApiManagerPage() {
                   <textarea
                     value={httpSpec.body}
                     onChange={(e) => setHttpSpec((prev) => ({ ...prev, body: e.target.value }))}
-                    className="h-32 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar"
+                    disabled={isSystemScope}
+                    className="h-32 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
                   />
                 </label>
               </div>

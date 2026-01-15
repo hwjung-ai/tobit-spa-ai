@@ -79,6 +79,18 @@
 2) 상세 카드에 OpenAPI 요약과 “Supported actions / constraints” 블록이 표시되고, read-only 정책/강제 LIMIT/timeout/allowlist가 포함됐는지 확인한다.
 3) `/data/redis/command`를 열어 설명에 안전한 명령과 금지 작업이 언급되는지 확인한다.
 
+### API Manager: HTTP logic type
+
+#### 소스 맵
+- Backend: `apps/api/app/modules/api_manager/router.py` (`/api-manager/apis/*/execute`, `/runtime/*`) + `apps/api/app/modules/api_manager/executor.py` (`execute_http_api`)
+- Schema/validation: `apps/api/app/modules/api_manager/schemas.py` (`LogicType`, `ApiDefinition*`)
+- Frontend: `apps/web/src/app/api-manager/page.tsx` (Builder logic-type selector + HTTP spec editor), `apps/web/src/components/builder/BuilderShell.tsx`
+
+#### 검증 절차
+1) Builder에서 새 API를 만들 때 `logic_type`을 `http`로 선택하고 `logic_body`에 JSON로 `{ "url": "https://httpbin.org/get", "method": "GET", "params": { "foo": "bar" } }`처럼 외부 HTTP 스펙을 저장한다. 저장 후 `/api-manager/apis`와 `/runtime/{endpoint}`에서 `http` 정의가 목록 및 `logic_spec` JSON에 존재하는지 확인한다.
+2) 동일 API에 대해 `/api-manager/apis/{api_id}/dry-run` 또는 `/api-manager/apis/{api_id}/execute`를 호출하여 `ResponseEnvelope.success.data.result.executed_sql`에 `HTTP GET https://httpbin.org/get` 형식이 나오고 `rows`에 JSON 혹은 텍스트 응답이 들어오는지, `row_count`가 1개 이상인지 확인한다.
+3) API 실행 로그(`tb_api_exec_log`, `apps/api/logs/api.log`)에 `External HTTP request failed` 오류 없이 `status=success`가 기록되고, `params`에 Builder에서 입력한 파라미터가 그대로 남는지 확인한다.
+
 ## 5. CEP
 
 ### CEP Event Browser (End-to-End 관측)
