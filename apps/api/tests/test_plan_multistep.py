@@ -163,6 +163,19 @@ except ImportError:
         if len(plan.branches) > budget.max_branches:
             budget_errors.append(f"Number of branches ({len(plan.branches)}) exceeds max_branches budget ({budget.max_branches})")
 
+        # Validate timeout_seconds
+        if budget.timeout_seconds is not None:
+            if budget.timeout_seconds < 1:
+                budget_errors.append(f"timeout_seconds ({budget.timeout_seconds}) must be >= 1")
+            elif budget.timeout_seconds > 3600:
+                budget_errors.append(f"timeout_seconds ({budget.timeout_seconds}) exceeds maximum of 3600 seconds (1 hour)")
+
+        # Validate max_depth
+        if budget.max_depth < 1:
+            budget_errors.append(f"max_depth ({budget.max_depth}) must be >= 1")
+        elif budget.max_depth > 10:
+            budget_errors.append(f"max_depth ({budget.max_depth}) exceeds maximum of 10")
+
         trace["budget"] = {
             "valid": len(budget_errors) == 0,
             "errors": budget_errors if budget_errors else None,
@@ -589,3 +602,69 @@ class TestPlanValidation:
         assert trace.get("multistep", {}).get("structure", {}).get("total_steps") == 2
         assert trace.get("multistep", {}).get("structure", {}).get("total_branches") == 1
         assert trace.get("multistep", {}).get("structure", {}).get("total_loops") == 1
+
+    def test_validate_timeout_invalid_range(self):
+        """Test validation fails with invalid timeout_seconds."""
+        budget = BudgetSpec(timeout_seconds=0)  # Invalid: less than 1
+        plan = Plan(
+            intent=Intent.LOOKUP,
+            enable_multistep=True,
+            budget=budget,
+        )
+        with pytest.raises(ValueError, match="Multi-step plan validation failed"):
+            validate_plan(plan)
+
+    def test_validate_timeout_exceeds_maximum(self):
+        """Test validation fails when timeout exceeds maximum."""
+        budget = BudgetSpec(timeout_seconds=3601)  # Invalid: exceeds 1 hour
+        plan = Plan(
+            intent=Intent.LOOKUP,
+            enable_multistep=True,
+            budget=budget,
+        )
+        with pytest.raises(ValueError, match="Multi-step plan validation failed"):
+            validate_plan(plan)
+
+    def test_validate_timeout_valid_range(self):
+        """Test validation passes with valid timeout_seconds."""
+        budget = BudgetSpec(timeout_seconds=300)  # Valid: 5 minutes
+        plan = Plan(
+            intent=Intent.LOOKUP,
+            enable_multistep=True,
+            budget=budget,
+        )
+        normalized, trace = validate_plan(plan)
+        assert normalized.budget.timeout_seconds == 300
+
+    def test_validate_max_depth_invalid_range(self):
+        """Test validation fails with invalid max_depth."""
+        budget = BudgetSpec(max_depth=0)  # Invalid: less than 1
+        plan = Plan(
+            intent=Intent.LOOKUP,
+            enable_multistep=True,
+            budget=budget,
+        )
+        with pytest.raises(ValueError, match="Multi-step plan validation failed"):
+            validate_plan(plan)
+
+    def test_validate_max_depth_exceeds_maximum(self):
+        """Test validation fails when max_depth exceeds maximum."""
+        budget = BudgetSpec(max_depth=11)  # Invalid: exceeds 10
+        plan = Plan(
+            intent=Intent.LOOKUP,
+            enable_multistep=True,
+            budget=budget,
+        )
+        with pytest.raises(ValueError, match="Multi-step plan validation failed"):
+            validate_plan(plan)
+
+    def test_validate_max_depth_valid_range(self):
+        """Test validation passes with valid max_depth."""
+        budget = BudgetSpec(max_depth=5)  # Valid: within range
+        plan = Plan(
+            intent=Intent.LOOKUP,
+            enable_multistep=True,
+            budget=budget,
+        )
+        normalized, trace = validate_plan(plan)
+        assert normalized.budget.max_depth == 5

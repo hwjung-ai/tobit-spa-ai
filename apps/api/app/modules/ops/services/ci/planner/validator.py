@@ -136,7 +136,7 @@ def _validate_step_references(plan: Plan) -> tuple[bool, List[str]]:
 
 
 def _validate_budget_constraints(plan: Plan) -> tuple[bool, List[str]]:
-    """Check budget constraints"""
+    """Check budget constraints including timeout and depth policies"""
     errors: List[str] = []
     budget = plan.budget
 
@@ -155,6 +155,19 @@ def _validate_budget_constraints(plan: Plan) -> tuple[bool, List[str]]:
     for loop in plan.loops:
         if loop.max_iterations > budget.max_iterations:
             errors.append(f"Loop {loop.loop_id} max_iterations ({loop.max_iterations}) exceeds budget ({budget.max_iterations})")
+
+    # Validate timeout_seconds
+    if budget.timeout_seconds is not None:
+        if budget.timeout_seconds < 1:
+            errors.append(f"timeout_seconds ({budget.timeout_seconds}) must be >= 1")
+        elif budget.timeout_seconds > 3600:
+            errors.append(f"timeout_seconds ({budget.timeout_seconds}) exceeds maximum of 3600 seconds (1 hour)")
+
+    # Validate max_depth
+    if budget.max_depth < 1:
+        errors.append(f"max_depth ({budget.max_depth}) must be >= 1")
+    elif budget.max_depth > 10:
+        errors.append(f"max_depth ({budget.max_depth}) exceeds maximum of 10")
 
     return len(errors) == 0, errors
 
