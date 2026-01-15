@@ -97,10 +97,17 @@ def ci_search(
     filters: Iterable[FilterSpec] | None = None,
     limit: int | None = 10,
     sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
-) -> List[Dict[str, Any]]:
+) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
     with get_postgres_conn() as conn:
-        return _ci_search_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
+        rows = _ci_search_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
+        records = [CIRecord(**row) for row in rows]
+        return CISearchResult(
+            records=records,
+            total=len(records),
+            query=None,
+            params=[],
+        )
 
 
 def ci_search_broad_or(
@@ -109,10 +116,17 @@ def ci_search_broad_or(
     filters: Iterable[FilterSpec] | None = None,
     limit: int | None = 10,
     sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
-) -> List[Dict[str, Any]]:
+) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
     with get_postgres_conn() as conn:
-        return _ci_search_broad_or_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
+        rows = _ci_search_broad_or_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
+        records = [CIRecord(**row) for row in rows]
+        return CISearchResult(
+            records=records,
+            total=len(records),
+            query=None,
+            params=[],
+        )
 
 
 def _ci_search_broad_or_inner(
@@ -209,7 +223,7 @@ def _ci_search_inner(
     return rows
 
 
-def ci_get(tenant_id: str, ci_id: str) -> Dict[str, Any] | None:
+def ci_get(tenant_id: str, ci_id: str) -> CIRecord | None:
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
             query = _load_query("ci_get.sql").format(field="ci_id")
@@ -217,22 +231,22 @@ def ci_get(tenant_id: str, ci_id: str) -> Dict[str, Any] | None:
             row = cur.fetchone()
             if not row:
                 return None
-            return {
-                "ci_id": str(row[0]),
-                "ci_code": row[1],
-                "ci_name": row[2],
-                "ci_type": row[3],
-                "ci_subtype": row[4],
-                "ci_category": row[5],
-                "status": row[6],
-                "location": row[7],
-                "owner": row[8],
-                "tags": row[9] or {},
-                "attributes": row[10] or {},
-            }
+            return CIRecord(
+                ci_id=str(row[0]),
+                ci_code=row[1],
+                ci_name=row[2],
+                ci_type=row[3],
+                ci_subtype=row[4],
+                ci_category=row[5],
+                status=row[6],
+                location=row[7],
+                owner=row[8],
+                tags=row[9] or {},
+                attributes=row[10] or {},
+            )
 
 
-def ci_get_by_code(tenant_id: str, ci_code: str) -> Dict[str, Any] | None:
+def ci_get_by_code(tenant_id: str, ci_code: str) -> CIRecord | None:
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
             query = _load_query("ci_get.sql").format(field="ci_code")
@@ -240,19 +254,19 @@ def ci_get_by_code(tenant_id: str, ci_code: str) -> Dict[str, Any] | None:
             row = cur.fetchone()
             if not row:
                 return None
-            return {
-                "ci_id": str(row[0]),
-                "ci_code": row[1],
-                "ci_name": row[2],
-                "ci_type": row[3],
-                "ci_subtype": row[4],
-                "ci_category": row[5],
-                "status": row[6],
-                "location": row[7],
-                "owner": row[8],
-                "tags": row[9] or {},
-                "attributes": row[10] or {},
-            }
+            return CIRecord(
+                ci_id=str(row[0]),
+                ci_code=row[1],
+                ci_name=row[2],
+                ci_type=row[3],
+                ci_subtype=row[4],
+                ci_category=row[5],
+                status=row[6],
+                location=row[7],
+                owner=row[8],
+                tags=row[9] or {},
+                attributes=row[10] or {},
+            )
 
 
 def ci_aggregate(
@@ -262,7 +276,7 @@ def ci_aggregate(
     filters: Iterable[FilterSpec] | None = None,
     ci_ids: Iterable[str] | None = None,
     top_n: int | None = 50,
-) -> Dict[str, Any]:
+) -> CIAggregateResult:
     group_list = [field for field in group_by if field in FILTER_FIELDS]
     metric_list = [metric for metric in metrics if metric in AGG_METRICS]
     if not metric_list:
@@ -315,14 +329,13 @@ def ci_aggregate(
                 rendered = [str(row[idx]) for idx in range(len(columns))]
                 rows.append(rendered)
     query_str = query.strip()
-    return {
-        "columns": columns,
-        "rows": rows,
-        "total": len(rows),
-        "total_count": total_count,
-        "query": query_str,
-        "params": query_params,
-    }
+    return CIAggregateResult(
+        columns=columns,
+        rows=rows,
+        total=len(rows),
+        query=query_str,
+        params=query_params,
+    )
 
 
 def ci_list_preview(
@@ -330,7 +343,7 @@ def ci_list_preview(
     limit: int,
     offset: int = 0,
     filters: Iterable[FilterSpec] | None = None,
-) -> Dict[str, Any]:
+) -> CIListResult:
     sanitized_limit = _clamp_limit(limit, 50, 50)
     sanitized_offset = max(0, offset)
     params: List[Any] = [tenant_id]
@@ -361,9 +374,11 @@ def ci_list_preview(
                 }
                 for row in cur.fetchall()
             ]
-    return {
-        "rows": rows,
-        "total": total,
-        "limit": sanitized_limit,
-        "offset": sanitized_offset,
-    }
+    return CIListResult(
+        rows=rows,
+        total=total,
+        limit=sanitized_limit,
+        offset=sanitized_offset,
+        query=query.strip(),
+        params=params,
+    )
