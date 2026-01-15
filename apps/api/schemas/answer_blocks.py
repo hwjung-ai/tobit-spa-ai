@@ -77,8 +77,62 @@ class ReferencesBlock(BaseModel):
     id: str | None = None
 
 
+class TextBlock(BaseModel):
+    type: Literal["text"]
+    title: str | None = None
+    id: str | None = None
+    text: str
+
+
+class NumberBlock(BaseModel):
+    type: Literal["number"]
+    title: str | None = None
+    id: str | None = None
+    value: float
+    unit: str | None = None
+
+
+class NetworkBlock(BaseModel):
+    type: Literal["network"]
+    title: str | None = None
+    id: str | None = None
+    nodes: list[dict[str, Any]]
+    edges: list[dict[str, Any]]
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
+class PathBlock(BaseModel):
+    type: Literal["path"]
+    title: str | None = None
+    id: str | None = None
+    nodes: list[dict[str, Any]]
+    edges: list[dict[str, Any]]
+    hop_count: int
+
+
+class ChartBlock(BaseModel):
+    type: Literal["chart"]
+    chart_type: Literal["line", "bar", "scatter"] = "line"
+    title: str | None = None
+    id: str | None = None
+    x: str
+    series: list[dict[str, Any]]
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
 AnswerBlock = Annotated[
-    Union[MarkdownBlock, TableBlock, TimeSeriesBlock, GraphBlock, ReferencesBlock],
+    Union[
+        MarkdownBlock,
+        TableBlock,
+        TimeSeriesBlock,
+        GraphBlock,
+        ReferencesBlock,
+        TextBlock,
+        NumberBlock,
+        NetworkBlock,
+        PathBlock,
+        ChartBlock,
+    ],
     Field(discriminator="type"),
 ]
 
