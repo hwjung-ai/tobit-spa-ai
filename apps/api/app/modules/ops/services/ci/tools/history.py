@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterable, Literal, List, Tuple
 
 from apps.api.scripts.seed.utils import get_postgres_conn
+from schemas.tool_contracts import HistoryRecord, HistoryResult
 
 from app.shared.config_loader import load_text
 
@@ -162,7 +163,7 @@ def recent_work_and_maintenance(
     tenant_id: str,
     time_range: Literal["last_24h", "last_7d", "last_30d"],
     limit: int | None = 50,
-) -> dict[str, object]:
+) -> HistoryResult:
     time_from, time_to = _calculate_time_range(time_range)
     work_query = _load_query("work_history_recent.sql")
     work_rows = _fetch_sql_rows(
@@ -174,13 +175,25 @@ def recent_work_and_maintenance(
         maint_query,
         (tenant_id, time_from, time_to, limit or 50),
     )
-    meta = {
-        "time_from": time_from.isoformat(),
-        "time_to": time_to.isoformat(),
-        "limit": limit or 50,
-        "warnings": [],
-    }
-    return {"work_rows": work_rows, "maint_rows": maint_rows, "meta": meta}
+    # Convert rows to HistoryRecord format
+    records: List[HistoryRecord] = []
+    for row in list(work_rows) + list(maint_rows):
+        # Assuming row format: (timestamp, event_type, ci_id, ci_code, description)
+        if len(row) >= 5:
+            records.append(
+                HistoryRecord(
+                    timestamp=row[0].isoformat() if hasattr(row[0], 'isoformat') else str(row[0]),
+                    event_type=row[1] or "work",
+                    ci_id=str(row[2]) if row[2] else "",
+                    ci_code=str(row[3]) if row[3] else "",
+                    description=str(row[4]) if row[4] else "",
+                )
+            )
+    return HistoryResult(
+        records=records,
+        total=len(records),
+        time_range=time_range,
+    )
 
 
 HISTORY_WORK_KEYWORDS = {"작업", "work", "deployment", "integration", "audit", "upgrade", "change"}
