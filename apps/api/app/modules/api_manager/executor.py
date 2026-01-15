@@ -37,6 +37,75 @@ BANNED_PATTERN = re.compile(r"\b(" + "|".join(BANNED_KEYWORDS) + r")\b")
 
 HTTP_TIMEOUT = 5.0
 
+# Template pattern: {{params.field}} or {{params.nested.field}}
+PLACEHOLDER_PATTERN = re.compile(r"{{\s*([^}\s]+)\s*}}")
+
+def _resolve_path(source: Any, keys: list[str], error_message: str) -> Any:
+    """Resolve nested dictionary/list path for template expressions."""
+    current = source
+    for key in keys:
+        if isinstance(current, dict) and key in current:
+            current = current[key]
+        else:
+            raise HTTPException(status_code=400, detail=error_message)
+    return current
+
+
+def _evaluate_http_expression(expression: str, params: dict[str, Any]) -> Any:
+    """
+    Evaluate HTTP template expressions like {{params.field.nested}}.
+    Only 'params' root is supported for HTTP templates.
+    """
+    parts = expression.split(".")
+    if not parts or parts[0] != "params":
+        raise HTTPException(
+            status_code=400,
+            detail=f"HTTP template expression '{expression}' must start with 'params'"
+        )
+
+    try:
+        return _resolve_path(params, parts[1:], f"missing param for '{expression}'")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Template expression '{expression}' resolution failed: {str(exc)}"
+        ) from exc
+
+
+def _render_http_templates(spec: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+    """
+    Apply {{params.xxx}} template substitution to all string fields in HTTP spec.
+    Supports recursive substitution in nested dicts and lists.
+    Compatible with workflow_executor template patterns.
+    """
+    if not spec:
+        return spec
+
+    def render_value(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {key: render_value(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [render_value(item) for item in value]
+        if isinstance(value, str):
+            # Find {{params.xxx}} placeholders
+            matches = list(PLACEHOLDER_PATTERN.finditer(value))
+            if not matches:
+                return value
+            # Full expression match: preserve type (e.g., {{params.count}} → 10)
+            if len(matches) == 1 and matches[0].group(0).strip() == value.strip():
+                return _evaluate_http_expression(matches[0].group(1), params)
+            # Partial substitution: convert to string
+            def _replace(match: re.Match[str]) -> str:
+                resolved = _evaluate_http_expression(match.group(1), params)
+                return str(resolved)
+            return PLACEHOLDER_PATTERN.sub(_replace, value)
+        return value
+
+    return render_value(spec)
+
+
 def normalize_limit(value: int | None) -> int:
     if value is None:
         return DEFAULT_LIMIT
@@ -119,6 +188,11 @@ def execute_http_api(session: Session, api_id: str, logic_body: str, params: dic
         spec = json.loads(logic_body) if logic_body else {}
     except json.JSONDecodeError as exc:
         raise HTTPException(status_code=400, detail="Invalid HTTP logic body") from exc
+
+    # Apply template substitution to spec using runtime params
+    final_params = params or {}
+    spec = _render_http_templates(spec, final_params)
+
     method = spec.get("method", "GET").upper()
     url = spec.get("url")
     if not url:
