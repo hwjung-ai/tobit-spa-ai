@@ -9,13 +9,14 @@
     "lint": "eslint",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
     "test": "node --test src/lib/apiManagerSave.test.js",
+    "test:e2e": "playwright test",
     "dev:log": "node -e \"require('fs').mkdirSync('logs', { recursive: true })\" && next dev > logs/web.log 2>&1"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@tanstack/react-query": "^5.52.2",
     "ag-grid-community": "^33.2.0",
     "ag-grid-react": "^33.2.0",
-    "@tanstack/react-query": "^5.52.2",
-    "@monaco-editor/react": "^4.7.0",
     "next": "16.1.1",
     "pdfjs-dist": "^5.4.296",
     "react": "19.2.3",
@@ -26,6 +27,7 @@
     "recharts": "^2.7.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
