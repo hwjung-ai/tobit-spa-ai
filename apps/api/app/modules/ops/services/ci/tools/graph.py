@@ -7,6 +7,7 @@ from neo4j import Driver
 
 from app.modules.ops.services.ci import policy
 from app.modules.ops.services.ci.view_registry import Direction, VIEW_REGISTRY
+from schemas.tool_contracts import GraphExpandResult, GraphPathResult
 
 from apps.api.scripts.seed.utils import get_neo4j_driver
 from app.shared.config_loader import load_text
@@ -101,17 +102,18 @@ def graph_expand(
     view: str,
     depth: int | None = None,
     limits: Dict[str, int] | None = None,
-) -> Dict[str, Any]:
+) -> GraphExpandResult:
     policy_decision = policy.build_policy_trace(view, requested_depth=depth)
     allowed_rel = policy_decision["allowed_rel_types"]
     if not allowed_rel:
-        return {
-            "nodes": [],
-            "edges": [],
-            "ids": [],
-            "summary": {"rel_type_counts": {}, "node_count": 0, "edge_count": 0},
-            "truncated": False,
-        }
+        return GraphExpandResult(
+            nodes=[],
+            edges=[],
+            ids=[],
+            summary={"rel_type_counts": {}, "node_count": 0, "edge_count": 0},
+            truncated=False,
+            meta={},
+        )
     view_policy = VIEW_REGISTRY.get(view.upper())
     if not view_policy:
         raise ValueError(f"Unknown view '{view}'")
@@ -140,12 +142,19 @@ def graph_expand(
         driver.close()
     paths = [record["path"] for record in results if "path" in record]
     nodes_payload = _gather_unique_entities(paths, applied_limits["max_nodes"], applied_limits["max_edges"])
-    nodes_payload["meta"] = {
+    meta = {
         "depth": used_depth,
         "limits": applied_limits,
         "rel_types": allowed_rel,
     }
-    return nodes_payload
+    return GraphExpandResult(
+        nodes=nodes_payload["nodes"],
+        edges=nodes_payload["edges"],
+        ids=nodes_payload["ids"],
+        summary=nodes_payload["summary"],
+        truncated=nodes_payload["truncated"],
+        meta=meta,
+    )
 
 
 def graph_path(
@@ -153,11 +162,17 @@ def graph_path(
     source_ci_id: str,
     target_ci_id: str,
     max_hops: int,
-) -> Dict[str, Any]:
+) -> GraphPathResult:
     depth = policy.clamp_depth("PATH", max_hops)
     allowed_rel = policy.get_allowed_rel_types("PATH")
     if not allowed_rel:
-        return {"nodes": [], "edges": [], "hop_count": 0, "truncated": False}
+        return GraphPathResult(
+            nodes=[],
+            edges=[],
+            hop_count=0,
+            truncated=False,
+            meta={},
+        )
     view_policy = VIEW_REGISTRY.get("PATH")
     if not view_policy:
         raise ValueError("PATH view is not defined")
@@ -182,13 +197,19 @@ def graph_path(
     finally:
         driver.close()
     if not result:
-        return {"nodes": [], "edges": [], "hop_count": 0, "truncated": False}
+        return GraphPathResult(
+            nodes=[],
+            edges=[],
+            hop_count=0,
+            truncated=False,
+            meta={},
+        )
     path = result["path"]
     nodes, edges, _, _ = _collect_path_entities(path)
-    return {
-        "nodes": nodes,
-        "edges": edges,
-        "hop_count": len(edges),
-        "truncated": len(edges) > depth,
-        "meta": {"rel_types": allowed_rel, "depth": depth},
-    }
+    return GraphPathResult(
+        nodes=nodes,
+        edges=edges,
+        hop_count=len(edges),
+        truncated=len(edges) > depth,
+        meta={"rel_types": allowed_rel, "depth": depth},
+    )

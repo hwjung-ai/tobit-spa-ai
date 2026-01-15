@@ -5,6 +5,7 @@ import re
 from typing import List, Literal, Tuple
 
 from apps.api.scripts.seed.utils import get_postgres_conn
+from schemas.tool_contracts import MetricAggregateResult, MetricSeriesResult
 
 from app.shared.config_loader import load_text
 
@@ -79,7 +80,7 @@ def metric_aggregate(
     agg: Literal["count", "max", "min", "avg"],
     ci_id: str | None = None,
     ci_ids: list[str] | None = None,
-) -> dict[str, object]:
+) -> MetricAggregateResult:
     if agg not in AGG_FUNCTIONS:
         raise ValueError(f"Unsupported aggregate '{agg}'")
     ci_list, truncated, requested_count = _prepare_ci_ids(ci_id, ci_ids)
@@ -94,17 +95,18 @@ def metric_aggregate(
             cur.execute(query, params)
             row = cur.fetchone()
             value = row[0] if row else None
-    meta = {
-        "metric_name": metric_name,
-        "agg": agg,
-        "time_range": time_range,
-        "time_from": time_from.isoformat(),
-        "time_to": time_to.isoformat(),
-        "ci_count_used": len(ci_list),
-        "ci_ids_truncated": truncated,
-        "ci_requested": requested_count,
-    }
-    return {**meta, "value": value, "ci_ids": ci_list}
+    return MetricAggregateResult(
+        metric_name=metric_name,
+        agg=agg,
+        time_range=time_range,
+        time_from=time_from.isoformat(),
+        time_to=time_to.isoformat(),
+        ci_count_used=len(ci_list),
+        ci_ids_truncated=truncated,
+        ci_requested=requested_count,
+        value=value,
+        ci_ids=ci_list,
+    )
 
 
 def metric_series_table(
@@ -113,7 +115,7 @@ def metric_series_table(
     metric_name: str,
     time_range: Literal["last_1h", "last_24h", "last_7d"],
     limit: int | None = 200,
-) -> dict[str, object]:
+) -> MetricSeriesResult:
     time_from, time_to = _calculate_time_range(time_range)
     sanitized_limit = max(1, min(1000, limit or 200))
     query = _load_query("metric_series.sql")
@@ -124,4 +126,8 @@ def metric_series_table(
             cur.execute(query, params)
             for time_val, value in cur.fetchall():
                 rows.append((time_val.isoformat(), str(value)))
-    return {"metric_name": metric_name, "time_range": time_range, "rows": rows}
+    return MetricSeriesResult(
+        metric_name=metric_name,
+        time_range=time_range,
+        rows=rows,
+    )

@@ -5,6 +5,7 @@ from typing import Any, Dict, Iterable, List, Literal
 from psycopg import Connection
 
 from apps.api.scripts.seed.utils import get_postgres_conn
+from schemas.tool_contracts import CIRecord, CISearchResult, CIAggregateResult, CIListResult
 
 from app.shared.config_loader import load_text
 
