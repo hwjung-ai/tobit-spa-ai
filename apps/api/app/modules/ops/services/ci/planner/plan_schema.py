@@ -121,6 +121,64 @@ class PlanMode(str, Enum):
     AUTO = "auto"
 
 
+class BudgetSpec(BaseModel):
+    """Budget constraints for plan execution"""
+    max_steps: int = 10
+    max_depth: int = 5
+    max_branches: int = 3
+    max_iterations: int = 100
+    timeout_seconds: int | None = None
+
+
+class StepCondition(BaseModel):
+    """Condition to determine step execution or branching"""
+    field: str
+    operator: Literal["==", "!=", "<", ">", "<=", ">=", "contains", "matches"]
+    value: str | int | float | bool
+
+
+class PlanStep(BaseModel):
+    """Individual step in a multi-step plan"""
+    step_id: str
+    name: str
+    description: str | None = None
+    intent: Intent
+    view: View | None = None
+    mode: PlanMode = PlanMode.CI
+    primary: PrimarySpec = Field(default_factory=PrimarySpec)
+    secondary: SecondarySpec = Field(default_factory=SecondarySpec)
+    aggregate: AggregateSpec = Field(default_factory=AggregateSpec)
+    graph: GraphSpec = Field(default_factory=GraphSpec)
+    output: OutputSpec = Field(default_factory=OutputSpec)
+    metric: MetricSpec | None = None
+    history: HistorySpec = Field(default_factory=lambda: HistorySpec())
+    cep: CepSpec | None = None
+    auto: AutoSpec = Field(default_factory=AutoSpec)
+    list: ListSpec = Field(default_factory=ListSpec)
+    condition: StepCondition | None = None
+    next_step_id: str | None = None
+    error_next_step_id: str | None = None
+
+
+class PlanBranch(BaseModel):
+    """Conditional branch in a plan"""
+    branch_id: str
+    name: str
+    condition: StepCondition
+    steps: List[PlanStep] = Field(default_factory=list)
+    merge_step_id: str | None = None
+
+
+class PlanLoop(BaseModel):
+    """Loop construct in a plan"""
+    loop_id: str
+    name: str
+    max_iterations: int = 10
+    break_condition: StepCondition | None = None
+    steps: List[PlanStep] = Field(default_factory=list)
+    next_step_id: str | None = None
+
+
 class Plan(BaseModel):
     intent: Intent = Intent.LOOKUP
     view: View | None = View.SUMMARY
@@ -137,6 +195,12 @@ class Plan(BaseModel):
     list: ListSpec = Field(default_factory=ListSpec)
     normalized_from: str | None = None
     normalized_to: str | None = None
+    # Multi-step execution support
+    steps: List[PlanStep] = Field(default_factory=list)
+    branches: List[PlanBranch] = Field(default_factory=list)
+    loops: List[PlanLoop] = Field(default_factory=list)
+    budget: BudgetSpec = Field(default_factory=BudgetSpec)
+    enable_multistep: bool = False
 
     @validator("view", pre=True, always=True)
     def normalize_view(cls, value: View | str | None) -> View | None:

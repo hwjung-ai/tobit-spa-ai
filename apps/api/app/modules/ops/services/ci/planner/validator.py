@@ -6,7 +6,19 @@ import re
 
 from apps.api.core.logging import get_logger
 from app.modules.ops.services.ci import policy
-from app.modules.ops.services.ci.planner.plan_schema import AutoSpec, Intent, ListSpec, Plan, PlanMode, View
+from app.modules.ops.services.ci.planner.plan_schema import (
+    AutoSpec,
+    BudgetSpec,
+    Intent,
+    ListSpec,
+    Plan,
+    PlanBranch,
+    PlanLoop,
+    PlanMode,
+    PlanStep,
+    StepCondition,
+    View,
+)
 
 AUTO_METRIC_CANDIDATES = ["cpu_usage", "latency", "error"]
 AUTO_ALLOWED_GRAPH_VIEWS = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}
@@ -51,6 +63,150 @@ def _clamp_auto_views(views: List[View]) -> List[View]:
     if not clamped:
         clamped = [View.NEIGHBORS]
     return clamped
+
+
+def _validate_step_ids_unique(plan: Plan) -> tuple[bool, List[str]]:
+    """Check if all step IDs in plan are unique"""
+    seen_ids: set[str] = set()
+    duplicates: List[str] = []
+
+    for step in plan.steps:
+        if step.step_id in seen_ids:
+            duplicates.append(step.step_id)
+        seen_ids.add(step.step_id)
+
+    for branch in plan.branches:
+        if branch.branch_id in seen_ids:
+            duplicates.append(branch.branch_id)
+        seen_ids.add(branch.branch_id)
+        for step in branch.steps:
+            if step.step_id in seen_ids:
+                duplicates.append(step.step_id)
+            seen_ids.add(step.step_id)
+
+    for loop in plan.loops:
+        if loop.loop_id in seen_ids:
+            duplicates.append(loop.loop_id)
+        seen_ids.add(loop.loop_id)
+        for step in loop.steps:
+            if step.step_id in seen_ids:
+                duplicates.append(step.step_id)
+            seen_ids.add(step.step_id)
+
+    return len(duplicates) == 0, duplicates
+
+
+def _validate_step_references(plan: Plan) -> tuple[bool, List[str]]:
+    """Check if all step references point to existing steps"""
+    all_step_ids: set[str] = set()
+
+    for step in plan.steps:
+        all_step_ids.add(step.step_id)
+
+    for branch in plan.branches:
+        all_step_ids.add(branch.branch_id)
+        for step in branch.steps:
+            all_step_ids.add(step.step_id)
+
+    for loop in plan.loops:
+        all_step_ids.add(loop.loop_id)
+        for step in loop.steps:
+            all_step_ids.add(step.step_id)
+
+    errors: List[str] = []
+
+    for step in plan.steps:
+        if step.next_step_id and step.next_step_id not in all_step_ids:
+            errors.append(f"Step {step.step_id} references unknown next_step_id: {step.next_step_id}")
+        if step.error_next_step_id and step.error_next_step_id not in all_step_ids:
+            errors.append(f"Step {step.step_id} references unknown error_next_step_id: {step.error_next_step_id}")
+
+    for branch in plan.branches:
+        if branch.merge_step_id and branch.merge_step_id not in all_step_ids:
+            errors.append(f"Branch {branch.branch_id} references unknown merge_step_id: {branch.merge_step_id}")
+        for step in branch.steps:
+            if step.next_step_id and step.next_step_id not in all_step_ids:
+                errors.append(f"Step {step.step_id} in branch {branch.branch_id} references unknown next_step_id: {step.next_step_id}")
+
+    for loop in plan.loops:
+        if loop.next_step_id and loop.next_step_id not in all_step_ids:
+            errors.append(f"Loop {loop.loop_id} references unknown next_step_id: {loop.next_step_id}")
+
+    return len(errors) == 0, errors
+
+
+def _validate_budget_constraints(plan: Plan) -> tuple[bool, List[str]]:
+    """Check budget constraints"""
+    errors: List[str] = []
+    budget = plan.budget
+
+    total_steps = len(plan.steps)
+    for branch in plan.branches:
+        total_steps += len(branch.steps)
+    for loop in plan.loops:
+        total_steps += len(loop.steps) * loop.max_iterations
+
+    if total_steps > budget.max_steps:
+        errors.append(f"Total steps ({total_steps}) exceeds max_steps budget ({budget.max_steps})")
+
+    if len(plan.branches) > budget.max_branches:
+        errors.append(f"Number of branches ({len(plan.branches)}) exceeds max_branches budget ({budget.max_branches})")
+
+    for loop in plan.loops:
+        if loop.max_iterations > budget.max_iterations:
+            errors.append(f"Loop {loop.loop_id} max_iterations ({loop.max_iterations}) exceeds budget ({budget.max_iterations})")
+
+    return len(errors) == 0, errors
+
+
+def _validate_multistep_structure(plan: Plan) -> tuple[bool, Dict[str, Any]]:
+    """Validate multi-step plan structure"""
+    trace: Dict[str, Any] = {}
+
+    if not plan.enable_multistep:
+        trace["multistep_enabled"] = False
+        return True, trace
+
+    trace["multistep_enabled"] = True
+
+    # Check unique IDs
+    unique_ok, duplicate_ids = _validate_step_ids_unique(plan)
+    trace["unique_ids"] = {
+        "valid": unique_ok,
+        "duplicates": duplicate_ids if duplicate_ids else None,
+    }
+
+    # Check references
+    refs_ok, ref_errors = _validate_step_references(plan)
+    trace["references"] = {
+        "valid": refs_ok,
+        "errors": ref_errors if ref_errors else None,
+    }
+
+    # Check budget
+    budget_ok, budget_errors = _validate_budget_constraints(plan)
+    trace["budget"] = {
+        "valid": budget_ok,
+        "errors": budget_errors if budget_errors else None,
+        "constraints": {
+            "max_steps": plan.budget.max_steps,
+            "max_branches": plan.budget.max_branches,
+            "max_iterations": plan.budget.max_iterations,
+            "timeout_seconds": plan.budget.timeout_seconds,
+        },
+    }
+
+    # Count structure
+    trace["structure"] = {
+        "total_steps": len(plan.steps),
+        "total_branches": len(plan.branches),
+        "total_loops": len(plan.loops),
+        "steps_in_branches": sum(len(b.steps) for b in plan.branches),
+        "steps_in_loops": sum(len(l.steps) for l in plan.loops),
+    }
+
+    is_valid = unique_ok and refs_ok and budget_ok
+    return is_valid, trace
 
 
 def _apply_auto_mode(plan: Plan, auto_spec: AutoSpec) -> tuple[Plan, Dict[str, Any]]:
@@ -167,8 +323,20 @@ def validate_plan(plan: Plan) -> Tuple[Plan, Dict[str, Any]]:
         extra={
             "mode": mode.value if mode else None,
             "intent": normalized.intent.value if normalized.intent else None,
+            "multistep_enabled": normalized.enable_multistep,
         },
     )
+    # Validate multi-step structure first if enabled
+    multistep_valid, multistep_trace = _validate_multistep_structure(normalized)
+    if normalized.enable_multistep and not multistep_valid:
+        error_msgs = []
+        if multistep_trace.get("unique_ids", {}).get("duplicates"):
+            error_msgs.append(f"Duplicate step IDs: {multistep_trace['unique_ids']['duplicates']}")
+        if multistep_trace.get("references", {}).get("errors"):
+            error_msgs.extend(multistep_trace["references"]["errors"])
+        if multistep_trace.get("budget", {}).get("errors"):
+            error_msgs.extend(multistep_trace["budget"]["errors"])
+        raise ValueError(f"Multi-step plan validation failed: {'; '.join(error_msgs)}")
     if normalized.intent == Intent.PATH:
         normalized.view = View.PATH
     view = normalized.view or View.SUMMARY
@@ -415,12 +583,16 @@ def validate_plan(plan: Plan) -> Tuple[Plan, Dict[str, Any]]:
     if normalized.normalized_from and normalized.normalized_to:
         trace["normalized_from"] = normalized.normalized_from
         trace["normalized_to"] = normalized.normalized_to
+    # Add multi-step trace
+    if multistep_trace:
+        trace["multistep"] = multistep_trace
     logger.info(
         "ci.validator.done",
         extra={
             "view": view.value,
             "depth": normalized.graph.depth,
             "mode": normalized.mode.value if normalized.mode else None,
+            "multistep_enabled": normalized.enable_multistep,
         },
     )
     return normalized, trace
