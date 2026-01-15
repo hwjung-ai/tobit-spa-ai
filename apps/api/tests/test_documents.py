@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 from httpx import AsyncClient, ASGITransport
-from sqlalchemy import select
+from sqlalchemy import JSON, select
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -21,9 +22,17 @@ os.environ.setdefault("DOCUMENT_STORAGE_ROOT", str(storage_root))
 from main import app
 
 
+def _patch_jsonb_for_sqlite():
+    for table in SQLModel.metadata.tables.values():
+        for column in table.columns:
+            if isinstance(column.type, JSONB):
+                column.type = JSON()
+
+
 @pytest.fixture(autouse=True)
 def override_session(monkeypatch: pytest.MonkeyPatch):
     AppSettings.connection_cache.clear()
+    _patch_jsonb_for_sqlite()
     engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
     SQLModel.metadata.create_all(engine)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=Session)

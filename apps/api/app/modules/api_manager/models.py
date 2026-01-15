@@ -42,20 +42,20 @@ class TbApiDef(SQLModel, table=True):
     logic_body: str = Field(sa_column=Column(Text, nullable=False))
     param_schema: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     runtime_policy: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     logic_spec: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     description: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     tags: list[str] = Field(
         default_factory=list,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     is_active: bool = Field(default=True, sa_column=Column(Boolean, nullable=False, server_default=text("true")))
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))

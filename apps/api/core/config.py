@@ -71,7 +71,7 @@ class AppSettings(BaseSettings):
             return self.database_url
         if not all([self.pg_host, self.pg_db, self.pg_user, self.pg_password]):
             raise ValueError("Postgres configuration requires host, db, user, password")
-        return f"postgresql://{self.pg_user}:{self.pg_password}@{self.pg_host}:{self.pg_port}/{self.pg_db}"
+        return f"postgresql+psycopg://{self.pg_user}:{self.pg_password}@{self.pg_host}:{self.pg_port}/{self.pg_db}"
 
     @property
     def document_storage_path(self) -> Path:

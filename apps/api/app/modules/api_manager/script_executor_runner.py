@@ -17,7 +17,6 @@ import requests
 
 DISALLOWED_MODULES = {
     "sqlalchemy",
-    "psycopg2",
     "psycopg",
     "asyncpg",
     "pg8000",

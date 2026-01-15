@@ -27,11 +27,11 @@ class TbCepRule(SQLModel, table=True):
     trigger_type: str = Field(sa_column=Column(Text, nullable=False))
     trigger_spec: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     action_spec: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     is_active: bool = Field(default=True, sa_column=Column(Boolean, nullable=False, server_default=text("true")))
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
@@ -63,7 +63,7 @@ class TbCepExecLog(SQLModel, table=True):
     error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     references: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
 
 
@@ -107,15 +107,15 @@ class TbCepNotification(SQLModel, table=True):
     rule_id: uuid.UUID | None = Field(default=None, sa_column=Column(UUID(as_uuid=True), nullable=True))
     headers: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     trigger: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     policy: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
@@ -146,7 +146,7 @@ class TbCepNotificationLog(SQLModel, table=True):
     reason: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     payload: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     response_status: int | None = Field(default=None, sa_column=Column(Integer, nullable=True))
     response_body: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
@@ -183,11 +183,11 @@ class TbCepMetricPollSnapshot(SQLModel, table=True):
     last_error: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     recent_matches: list[dict[str, Any]] = Field(
         default_factory=list,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     recent_failures: list[dict[str, Any]] = Field(
         default_factory=list,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,

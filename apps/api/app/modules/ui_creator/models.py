@@ -22,12 +22,12 @@ class TbUiDef(SQLModel, table=True):
     schema_definition: dict[str, Any] = Field(
         alias="schema",
         default_factory=dict,
-        sa_column=Column("schema", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column("schema", JSONB, nullable=False),
     )
     description: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     tags: dict[str, Any] = Field(
         default_factory=dict,
-        sa_column=Column(JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+        sa_column=Column(JSONB, nullable=False),
     )
 
     @property
