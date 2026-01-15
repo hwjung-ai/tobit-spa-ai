@@ -7,7 +7,7 @@ import importlib
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 
-from apps.api.core.logging import get_logger
+from core.logging import get_logger
 from schemas import ResponseEnvelope
 
 from .schemas import (

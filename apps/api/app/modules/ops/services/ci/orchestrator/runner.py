@@ -11,7 +11,8 @@ from typing import Any, Dict, Iterable, List, Literal, Sequence, Tuple
 import os
 import threading
 
-from apps.api.core.logging import get_logger
+from core.logging import get_logger
+from schemas.tool_contracts import ToolCall
 from app.modules.ops.services.ci import policy, response_builder
 from app.modules.ops.services.ci.actions import NextAction, RerunPayload
 from app.modules.ops.services.ci.blocks import Block, chart_block, number_block, table_block, text_block
@@ -111,7 +112,9 @@ class CIOrchestratorRunner:
         self.rerun_context = rerun_context or RerunContext()
         self.logger = get_logger(__name__)
         self.logger.info("ci.runner.instance_start", extra=_runner_context())
-        self.tool_calls: List[Dict[str, Any]] = []
+        self.tool_calls: List[ToolCall] = []
+        self.tool_calls_raw: List[Dict[str, Any]] = []
+        self.references: List[Dict[str, Any]] = []
         self.errors: List[str] = []
         self.next_actions: List[NextAction] = []
         self.metric_context: Dict[str, Any] | None = None
@@ -127,24 +130,63 @@ class CIOrchestratorRunner:
         self.GRAPH_SCOPE_METRIC_KEYWORDS = ("cpu", "latency", "error", "memory", "disk", "network")
 
     @contextmanager
-    def _tool_context(self, tool: str, **meta):
+    def _tool_context(self, tool: str, input_params: Dict[str, Any] | None = None, **meta):
         meta = dict(meta)
         start = perf_counter()
         self.logger.info(f"ci.tool.{tool}.start", extra=meta)
         try:
             yield meta
+        except Exception as exc:
+            meta["error"] = str(exc)
+            raise
         finally:
             elapsed = int((perf_counter() - start) * 1000)
             meta["elapsed_ms"] = elapsed
             self.logger.info(f"ci.tool.{tool}.done", extra=meta)
+
+            # Store raw entry for backward compatibility
             entry = {"tool": tool, **meta}
-            self.tool_calls.append(entry)
+            self.tool_calls_raw.append(entry)
+
+            # Create ToolCall with standardized structure
+            output_summary = {k: v for k, v in meta.items()
+                            if k not in ("error", "elapsed_ms") and not k.startswith("_")}
+            error = meta.get("error")
+
+            tool_call = ToolCall(
+                tool=tool,
+                elapsed_ms=elapsed,
+                input_params=input_params or {},
+                output_summary=output_summary,
+                error=error
+            )
+            self.tool_calls.append(tool_call)
 
     def _log_routing(self, route: str) -> None:
         self.logger.info(
             "ci.runner.routing",
             extra={"intent": self.plan.intent.value if self.plan.intent else None, "metric": bool(self.plan.metric), "route": route},
         )
+
+    def _extract_references_from_blocks(self, blocks: List[Block]) -> None:
+        """Extract and accumulate references from blocks."""
+        for block in blocks:
+            if isinstance(block, dict):
+                block_type = block.get("type")
+                if block_type == "references":
+                    items = block.get("items", [])
+                    for item in items:
+                        if isinstance(item, dict) and "kind" in item and "payload" in item:
+                            self.references.append(item)
+            else:
+                # Pydantic model
+                block_type = getattr(block, "type", None)
+                if block_type == "references":
+                    items = getattr(block, "items", [])
+                    for item in items:
+                        item_dict = item.dict() if hasattr(item, "dict") else dict(item)
+                        if "kind" in item_dict and "payload" in item_dict:
+                            self.references.append(item_dict)
 
     def _log_metric_blocks_return(self, blocks: List[Block]) -> None:
         types = [block.get("type") if isinstance(block, dict) else getattr(block, "type", None) for block in blocks]
@@ -159,8 +201,15 @@ class CIOrchestratorRunner:
     ) -> List[Dict[str, Any]]:
         keywords_tuple = tuple(keywords or ())
         filters_tuple = tuple(filters or ())
+        input_params = {
+            "keywords": list(keywords_tuple),
+            "filter_count": len(filters_tuple),
+            "limit": limit,
+            "sort": sort,
+        }
         with self._tool_context(
             "ci.search",
+            input_params=input_params,
             keyword_count=len(keywords_tuple),
             filter_count=len(filters_tuple),
             limit=limit,
@@ -325,13 +374,13 @@ class CIOrchestratorRunner:
         return self._has_ci_identifier_in_keywords()
 
     def _ci_get(self, ci_id: str) -> Dict[str, Any] | None:
-        with self._tool_context("ci.get", ci_id=ci_id) as meta:
+        with self._tool_context("ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id) as meta:
             detail = ci_tools.ci_get(self.tenant_id, ci_id)
             meta["found"] = bool(detail)
         return detail
 
     def _ci_get_by_code(self, ci_code: str) -> Dict[str, Any] | None:
-        with self._tool_context("ci.get", ci_code=ci_code) as meta:
+        with self._tool_context("ci.get", input_params={"ci_code": ci_code}, ci_code=ci_code) as meta:
             detail = ci_tools.ci_get_by_code(self.tenant_id, ci_code)
             meta["found"] = bool(detail)
         return detail
@@ -348,8 +397,16 @@ class CIOrchestratorRunner:
         metric_list = tuple(metrics or ())
         filters_tuple = tuple(filters or ())
         ci_ids_tuple = tuple(ci_ids or ())
+        input_params = {
+            "group_by": list(group_list),
+            "metrics": list(metric_list),
+            "filter_count": len(filters_tuple),
+            "ci_ids_count": len(ci_ids_tuple),
+            "top_n": top_n,
+        }
         with self._tool_context(
             "ci.aggregate",
+            input_params=input_params,
             group_by=",".join(group_list),
             metrics=",".join(metric_list),
             filter_count=len(filters_tuple),
@@ -374,8 +431,14 @@ class CIOrchestratorRunner:
         filters: Iterable[FilterSpec] | None = None,
     ) -> Dict[str, Any]:
         filters_tuple = tuple(filters or ())
+        input_params = {
+            "limit": limit,
+            "offset": offset,
+            "filter_count": len(filters_tuple),
+        }
         with self._tool_context(
             "ci.list",
+            input_params=input_params,
             limit=limit,
             offset=offset,
             filter_count=len(filters_tuple),
@@ -385,7 +448,13 @@ class CIOrchestratorRunner:
         return result
 
     def _graph_expand(self, ci_id: str, view: str, depth: int, limits: dict[str, int]) -> Dict[str, Any]:
-        with self._tool_context("graph.expand", view=view, depth=depth) as meta:
+        input_params = {
+            "ci_id": ci_id,
+            "view": view,
+            "depth": depth,
+            "limits": limits,
+        }
+        with self._tool_context("graph.expand", input_params=input_params, view=view, depth=depth) as meta:
             raw_payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
             payload_type = type(raw_payload).__name__ if raw_payload is not None else "NoneType"
             raw_extra: Dict[str, Any] = {"type": payload_type, "preview": str(raw_payload)[:200]}
@@ -445,7 +514,12 @@ class CIOrchestratorRunner:
         return normalized
 
     def _graph_path(self, source_id: str, target_id: str, hops: int) -> Dict[str, Any]:
-        with self._tool_context("graph.path", hop_count=hops) as meta:
+        input_params = {
+            "source_id": source_id,
+            "target_id": target_id,
+            "hops": hops,
+        }
+        with self._tool_context("graph.path", input_params=input_params, hop_count=hops) as meta:
             payload = graph_tools.graph_path(self.tenant_id, source_id, target_id, hops)
             meta["node_count"] = len(payload.get("nodes", []))
             meta["edge_count"] = len(payload.get("edges", []))
@@ -461,8 +535,16 @@ class CIOrchestratorRunner:
         ci_ids: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         ci_ids_tuple = tuple(ci_ids or ())
+        input_params = {
+            "metric_name": metric_name,
+            "agg": agg,
+            "time_range": time_range,
+            "ci_id": ci_id,
+            "ci_ids_count": len(ci_ids_tuple),
+        }
         with self._tool_context(
             "metric.aggregate",
+            input_params=input_params,
             metric=metric_name,
             agg=agg,
             time_range=time_range,
@@ -480,7 +562,13 @@ class CIOrchestratorRunner:
         time_range: str,
         limit: int | None = None,
     ) -> dict[str, Any]:
-        with self._tool_context("metric.series", metric=metric_name, time_range=time_range, limit=limit) as meta:
+        input_params = {
+            "ci_id": ci_id,
+            "metric_name": metric_name,
+            "time_range": time_range,
+            "limit": limit,
+        }
+        with self._tool_context("metric.series", input_params=input_params, metric=metric_name, time_range=time_range, limit=limit) as meta:
             result = metric_tools.metric_series_table(self.tenant_id, ci_id, metric_name, time_range, limit)
             meta["rows_count"] = len(result.get("rows", []))
         return result
@@ -496,8 +584,15 @@ class CIOrchestratorRunner:
         final_time_range = time_range or getattr(history_spec, "time_range", None) or "last_7d"
         final_limit = limit or getattr(history_spec, "limit", None) or 50
         scope = getattr(history_spec, "scope", "ci")
+        input_params = {
+            "time_range": final_time_range,
+            "scope": scope,
+            "limit": final_limit,
+            "ci_ids_count": len(ci_ids) if ci_ids else 0,
+        }
         with self._tool_context(
             "history.recent",
+            input_params=input_params,
             time_range=final_time_range,
             scope=scope,
             limit=final_limit,
@@ -521,7 +616,13 @@ class CIOrchestratorRunner:
         metric_context: Dict[str, Any] | None,
         history_context: Dict[str, Any] | None,
     ) -> Dict[str, Any]:
-        with self._tool_context("cep.simulate", rule_id=rule_id) as meta:
+        input_params = {
+            "rule_id": rule_id,
+            "ci_context_keys": list(ci_context.keys()) if ci_context else [],
+            "metric_context_present": bool(metric_context),
+            "history_context_present": bool(history_context),
+        }
+        with self._tool_context("cep.simulate", input_params=input_params, rule_id=rule_id) as meta:
             result = cep_tools.cep_simulate(
                 self.tenant_id,
                 rule_id or "",
@@ -607,11 +708,16 @@ class CIOrchestratorRunner:
         except Exception as exc:  # pragma: no cover - best effort
             self.errors.append(str(exc))
             raise
+
+        # Extract references from blocks
+        self._extract_references_from_blocks(blocks)
+
         trace = {
             "plan_raw": self.plan_raw.dict(),
             "plan_validated": self.plan.dict(),
             "policy_decisions": self.plan_trace.get("policy_decisions"),
-            "tool_calls": self.tool_calls,
+            "tool_calls": [call.dict() for call in self.tool_calls],
+            "references": self.references,
             "errors": self.errors,
             "tenant_id": self.tenant_id,
         }
@@ -621,7 +727,7 @@ class CIOrchestratorRunner:
         self._apply_list_trace(trace)
         if auto_trace:
             trace["auto"] = auto_trace
-        used_tools = [call.get("tool") for call in self.tool_calls if call.get("tool")]
+        used_tools = [call.tool for call in self.tool_calls if call.tool]
         if self.plan.metric and "ci.aggregate" in used_tools:
             self.logger.warning(
                 "ci.runner.assert_failed",
