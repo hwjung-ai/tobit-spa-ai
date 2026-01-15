@@ -4,13 +4,13 @@ import json
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Dict, List, Tuple
+from uuid import uuid4
 
 from fastapi import HTTPException
 
-from apps.api.app.modules.cep_builder.crud import get_rule, record_exec_log
-from apps.api.app.modules.cep_builder.executor import evaluate_trigger
-from apps.api.core.db import get_session_context
-from uuid import uuid4
+from app.modules.cep_builder.crud import get_rule, record_exec_log
+from app.modules.cep_builder.executor import evaluate_trigger
+from core.db import get_session_context
 
 try:
     import yaml  # type: ignore[import]

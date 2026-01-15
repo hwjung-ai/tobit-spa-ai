@@ -9,7 +9,7 @@ from pathlib import Path
 
 from neo4j import Driver
 
-from apps.api.scripts.seed.utils import get_neo4j_driver
+from scripts.seed.utils import get_neo4j_driver
 
 from app.shared.config_loader import load_text
 

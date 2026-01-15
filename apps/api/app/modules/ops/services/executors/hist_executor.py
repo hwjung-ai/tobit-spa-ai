@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from time import perf_counter
 from typing import Iterable, List, Tuple
 
 from app.shared.config_loader import load_text
@@ -13,36 +14,74 @@ from schemas import (
     ReferencesBlock,
     TableBlock,
 )
+from schemas.tool_contracts import ExecutorResult, ToolCall
 
 from ..ci.tools import history as history_tools
 from ..resolvers import resolve_ci, resolve_time_range
 
 
-def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
+    start_time = perf_counter()
+    tool_calls: list[ToolCall] = []
+    references_list: list[dict] = []
+    used_tools = ["postgres", "timescale"]
+
     work_h_query = load_text("queries/postgres/history/work_history.sql")
     maint_h_query = load_text("queries/postgres/history/maintenance_history.sql")
     event_l_query = load_text("queries/postgres/history/event_log.sql")
 
     if not work_h_query or not maint_h_query or not event_l_query:
-        return [
-            MarkdownBlock(
-                type="markdown",
-                title="Error",
-                content="### 쿼리 파일 로드 실패\n- History 관련 SQL 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
-            )
-        ], []
+        error_block = MarkdownBlock(
+            type="markdown",
+            title="Error",
+            content="### 쿼리 파일 로드 실패\n- History 관련 SQL 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
+        )
+        return ExecutorResult(
+            blocks=[error_block.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references_list,
+            summary={"status": "error", "reason": "query_load_failed"},
+        )
 
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
         fallback_blocks = _build_history_fallback(tenant_id, question)
-        return fallback_blocks, ["postgres", "timescale"]
+        fallback_dicts = [b.dict() if hasattr(b, "dict") else b for b in fallback_blocks]
+        return ExecutorResult(
+            blocks=fallback_dicts,
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references_list,
+            summary={"status": "no_ci"},
+        )
     ci = ci_hits[0]
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
 
     params = (tenant_id, ci.ci_id, time_range.start, time_range.end)
+    fetch_start = perf_counter()
     work_rows = _fetch_history(work_h_query, params)
     maint_rows = _fetch_history(maint_h_query, params)
     event_rows = _fetch_history(event_l_query, params)
+    fetch_elapsed_ms = int((perf_counter() - fetch_start) * 1000)
+
+    # Record history.recent tool call
+    tool_calls.append(
+        ToolCall(
+            tool="history.recent",
+            elapsed_ms=fetch_elapsed_ms,
+            input_params={
+                "time_range": time_range.bucket,
+                "ci_id": ci.ci_id,
+                "ci_ids_count": 1,
+            },
+            output_summary={
+                "work_rows": len(work_rows),
+                "maint_rows": len(maint_rows),
+                "event_rows": len(event_rows),
+            },
+        )
+    )
 
     stats = {
         "work": len(work_rows),
@@ -55,7 +94,7 @@ def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], l
     include_maint = "maintenance" in sections or not sections
     blocks = _build_blocks(ci, time_range, stats, work_rows, maint_rows, event_rows, include_work, include_maint)
 
-    references = _build_references(
+    references_block = _build_references(
         work_rows,
         maint_rows,
         event_rows,
@@ -66,8 +105,29 @@ def run_hist(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], l
         maint_h_query,
         event_l_query,
     )
-    blocks.append(references)
-    return blocks, ["postgres", "timescale"]
+    blocks.append(references_block)
+
+    # Extract references from blocks
+    for block in blocks:
+        if isinstance(block, ReferencesBlock):
+            for item in block.items:
+                references_list.append(item.dict())
+
+    # Convert blocks to dicts
+    blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+
+    elapsed_ms = int((perf_counter() - start_time) * 1000)
+    return ExecutorResult(
+        blocks=blocks_dict,
+        used_tools=used_tools,
+        tool_calls=tool_calls,
+        references=references_list,
+        summary={
+            "status": "success",
+            "ci_code": ci.ci_code,
+            "stats": stats,
+        },
+    )
 
 
 def _fetch_history(query: str, params: Iterable) -> list[tuple]:

@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 
 import re
 
-from apps.api.core.logging import get_logger
+from core.logging import get_logger
 from app.modules.ops.services.ci import policy
 from app.modules.ops.services.ci.planner.plan_schema import (
     AutoSpec,

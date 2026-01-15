@@ -8,8 +8,7 @@ from neo4j import Driver
 from app.modules.ops.services.ci import policy
 from app.modules.ops.services.ci.view_registry import Direction, VIEW_REGISTRY
 from schemas.tool_contracts import GraphExpandResult, GraphPathResult
-
-from apps.api.scripts.seed.utils import get_neo4j_driver
+from scripts.seed.utils import get_neo4j_driver
 from app.shared.config_loader import load_text
 
 DEFAULT_LIMITS = {"max_nodes": 200, "max_edges": 400, "max_paths": 25}

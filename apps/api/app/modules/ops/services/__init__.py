@@ -30,6 +30,7 @@ from .executors.metric_executor import run_metric
 from .executors.hist_executor import run_hist
 from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
+from schemas.tool_contracts import ExecutorResult
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
@@ -96,9 +97,16 @@ def _execute_real_mode(mode: OpsMode, question: str, settings: Any) -> tuple[lis
     return executor(question, settings)
 
 
-def _normalize_real_result(real_result: tuple[list[AnswerBlock], list[str]] | tuple[list[AnswerBlock], list[str], str | None]) -> tuple[list[AnswerBlock], list[str], str | None]:
+def _normalize_real_result(real_result: tuple[list[AnswerBlock], list[str]] | tuple[list[AnswerBlock], list[str], str | None] | ExecutorResult) -> tuple[list[AnswerBlock], list[str], str | None]:
+    # Handle ExecutorResult from new executors
+    if isinstance(real_result, ExecutorResult):
+        # Convert blocks dicts back to AnswerBlock objects if needed
+        blocks = real_result.blocks
+        return blocks, real_result.used_tools, None
+
+    # Handle legacy tuple returns
     if not isinstance(real_result, tuple):
-        raise ValueError("Real executor must return a tuple")
+        raise ValueError("Real executor must return a tuple or ExecutorResult")
     if len(real_result) == 2:
         return real_result[0], real_result[1], None
     if len(real_result) == 3:
@@ -115,17 +123,17 @@ def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[s
         return placeholder_blocks, ["placeholder"]
 
 
-def _run_history(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
+def _run_history(question: str, settings: Any) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
     return run_hist(question, tenant_id=tenant_id)
 
 
-def _run_graph(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
+def _run_graph(question: str, settings: Any) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
     return run_graph(question, tenant_id=tenant_id)
 
 
-def _run_metric(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
+def _run_metric(question: str, settings: Any) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
     return run_metric(question, tenant_id=tenant_id)
 

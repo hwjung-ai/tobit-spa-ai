@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Iterable, List
 
-from apps.api.core.logging import get_logger
+from core.logging import get_logger
 
 from schemas import ReferenceItem, ReferencesBlock
 

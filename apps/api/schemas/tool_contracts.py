@@ -141,3 +141,17 @@ class ToolCallTrace(BaseModel):
     tool_calls: List[ToolCall]
     total_elapsed_ms: int
     total_calls: int
+
+
+# Executor Results
+class ExecutorResult(BaseModel):
+    """Standard result format from OPS executors (metric, hist, graph).
+
+    Wraps blocks with Tool Contract metadata for standardized execution tracking.
+    """
+
+    blocks: List[Dict[str, Any]]  # Answer blocks to display
+    used_tools: List[str]  # Tools used during execution (e.g., ["postgres", "timescale"])
+    tool_calls: List[ToolCall] = Field(default_factory=list)  # Tool execution trace
+    references: List[Dict[str, Any]] = Field(default_factory=list)  # Extracted references
+    summary: Dict[str, Any] = Field(default_factory=dict)  # Execution summary

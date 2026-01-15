@@ -10,7 +10,7 @@ from typing import Iterable
 
 from psycopg import Connection
 
-from apps.api.scripts.seed.utils import get_postgres_conn
+from scripts.seed.utils import get_postgres_conn
 
 from app.shared.config_loader import load_text
 

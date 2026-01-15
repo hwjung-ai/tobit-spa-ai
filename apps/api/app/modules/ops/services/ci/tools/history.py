@@ -3,9 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Iterable, Literal, List, Tuple
 
-from apps.api.scripts.seed.utils import get_postgres_conn
+from scripts.seed.utils import get_postgres_conn
 from schemas.tool_contracts import HistoryRecord, HistoryResult
-
 from app.shared.config_loader import load_text
 
 TIME_RANGES = {

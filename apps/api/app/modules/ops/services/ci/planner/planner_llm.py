@@ -24,7 +24,7 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     ListSpec,
 )
 from app.shared import config_loader
-from apps.api.core.logging import get_logger
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 

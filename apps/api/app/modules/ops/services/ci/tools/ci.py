@@ -4,9 +4,8 @@ from typing import Any, Dict, Iterable, List, Literal
 
 from psycopg import Connection
 
-from apps.api.scripts.seed.utils import get_postgres_conn
+from scripts.seed.utils import get_postgres_conn
 from schemas.tool_contracts import CIRecord, CISearchResult, CIAggregateResult, CIListResult
-
 from app.shared.config_loader import load_text
 
 SEARCH_COLUMNS = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category"]

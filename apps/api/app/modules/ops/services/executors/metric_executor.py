@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from time import perf_counter
 from typing import Iterable, Tuple
 
 from app.shared.config_loader import load_text
@@ -14,21 +15,32 @@ from schemas import (
     TimeSeriesPoint,
     TimeSeriesSeries,
 )
+from schemas.tool_contracts import ExecutorResult, ToolCall
 
 from ..resolvers import resolve_ci, resolve_metric, resolve_time_range
 from ..resolvers.types import CIHit, MetricHit, TimeRange
 
 
-def run_metric(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+def run_metric(question: str, tenant_id: str = "t1") -> ExecutorResult:
+    start_time = perf_counter()
+    tool_calls: list[ToolCall] = []
+    references: list[dict] = []
+    used_tools = ["postgres", "timescale"]
+
     query_template = load_text("queries/postgres/metric/metric_timeseries.sql")
     if not query_template:
-        return [
-            MarkdownBlock(
-                type="markdown",
-                title="Error",
-                content="### 쿼리 파일 로드 실패\n- `metric_timeseries.sql` 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
-            )
-        ], []
+        error_block = MarkdownBlock(
+            type="markdown",
+            title="Error",
+            content="### 쿼리 파일 로드 실패\n- `metric_timeseries.sql` 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
+        )
+        return ExecutorResult(
+            blocks=[error_block.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references,
+            summary={"status": "error", "reason": "query_load_failed"},
+        )
 
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
@@ -37,7 +49,13 @@ def run_metric(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock],
             title="Metric 결과 없음",
             content="CI를 찾을 수 없습니다.",
         )
-        return [markdown], ["postgres", "timescale"]
+        return ExecutorResult(
+            blocks=[markdown.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references,
+            summary={"status": "no_ci"},
+        )
     ci = ci_hits[0]
 
     metric_hit = resolve_metric(question)
@@ -47,11 +65,33 @@ def run_metric(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock],
             title="Metric 결과 없음",
             content="요청한 메트릭을 찾을 수 없습니다.",
         )
-        return [markdown], ["postgres", "timescale"]
+        return ExecutorResult(
+            blocks=[markdown.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references,
+            summary={"status": "no_metric"},
+        )
 
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
     params = _build_metric_params(tenant_id, ci, metric_hit, time_range)
+    fetch_start = perf_counter()
     rows = _fetch_timeseries(query_template, params)
+    fetch_elapsed_ms = int((perf_counter() - fetch_start) * 1000)
+
+    # Record metric.series tool call
+    tool_calls.append(
+        ToolCall(
+            tool="metric.series",
+            elapsed_ms=fetch_elapsed_ms,
+            input_params={
+                "metric": metric_hit.metric_name,
+                "time_range": time_range.bucket,
+                "ci_id": ci.ci_id,
+            },
+            output_summary={"rows_count": len(rows)},
+        )
+    )
 
     if not rows:
         markdown = MarkdownBlock(
@@ -59,11 +99,40 @@ def run_metric(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock],
             title="Metric 결과 없음",
             content="해당 기간에 메트릭 데이터가 없습니다.",
         )
-        return [markdown], ["postgres", "timescale"]
+        return ExecutorResult(
+            blocks=[markdown.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references,
+            summary={"status": "no_data"},
+        )
 
     stats = _calculate_stats(rows)
     blocks = _build_blocks(ci, metric_hit, time_range, stats, rows, query_template, params)
-    return blocks, ["postgres", "timescale"]
+
+    # Extract references from blocks
+    for block in blocks:
+        if isinstance(block, ReferencesBlock):
+            for item in block.items:
+                references.append(item.dict())
+
+    # Convert blocks to dicts
+    blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+
+    elapsed_ms = int((perf_counter() - start_time) * 1000)
+    return ExecutorResult(
+        blocks=blocks_dict,
+        used_tools=used_tools,
+        tool_calls=tool_calls,
+        references=references,
+        summary={
+            "status": "success",
+            "metric": metric_hit.metric_name,
+            "ci_code": ci.ci_code,
+            "rows_count": len(rows),
+            "stats": stats,
+        },
+    )
 
 
 def _build_metric_params(

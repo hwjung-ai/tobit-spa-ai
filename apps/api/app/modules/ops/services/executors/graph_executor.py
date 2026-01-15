@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict, deque
 from datetime import datetime, timezone
+from time import perf_counter
 from typing import Iterable
 
 from app.shared.config_loader import load_text
@@ -16,22 +17,33 @@ from schemas import (
     ReferencesBlock,
 )
 from schemas.answer_blocks import GraphPosition
+from schemas.tool_contracts import ExecutorResult, ToolCall
 
 from ..resolvers import resolve_ci, resolve_time_range
 
 
-def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
+    start_time = perf_counter()
+    tool_calls: list[ToolCall] = []
+    references_list: list[dict] = []
+    used_tools = ["neo4j", "postgres"]
+
     base_graph_query_template = load_text("queries/neo4j/graph/dependency_expand.cypher")
     component_query = load_text("queries/neo4j/graph/component_composition.cypher")
 
     if not base_graph_query_template or not component_query:
-        return [
-            MarkdownBlock(
-                type="markdown",
-                title="Error",
-                content="### 쿼리 파일 로드 실패\n- Graph 관련 Cypher 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
-            )
-        ], []
+        error_block = MarkdownBlock(
+            type="markdown",
+            title="Error",
+            content="### 쿼리 파일 로드 실패\n- Graph 관련 Cypher 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
+        )
+        return ExecutorResult(
+            blocks=[error_block.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references_list,
+            summary={"status": "error", "reason": "query_load_failed"},
+        )
 
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
@@ -40,18 +52,43 @@ def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], 
             title="Graph 결과 없음",
             content="CI를 찾을 수 없습니다.",
         )
-        return [markdown], ["neo4j", "postgres"]
+        return ExecutorResult(
+            blocks=[markdown.dict()],
+            used_tools=used_tools,
+            tool_calls=tool_calls,
+            references=references_list,
+            summary={"status": "no_ci"},
+        )
     ci = ci_hits[0]
 
     time_range = resolve_time_range(question, datetime.now(timezone.utc))
     depth = 3 if any(keyword in question for keyword in ("영향", "의존", "경로")) else 2
     include_components = any(keyword in question for keyword in ("구성", "구성요소"))
     driver = get_neo4j_driver()
+    query_start = perf_counter()
     try:
         records = _run_graph_query(driver, base_graph_query_template, tenant_id, ci.ci_code, depth)
         comp_records = _run_component_query(driver, component_query, tenant_id, ci.ci_code) if include_components else []
     finally:
         driver.close()
+    query_elapsed_ms = int((perf_counter() - query_start) * 1000)
+
+    # Record graph.expand tool call
+    tool_calls.append(
+        ToolCall(
+            tool="graph.expand",
+            elapsed_ms=query_elapsed_ms,
+            input_params={
+                "ci_code": ci.ci_code,
+                "depth": depth,
+                "include_components": include_components,
+            },
+            output_summary={
+                "nodes": len(records) + len(comp_records),
+                "edges": len(records),  # Simplified
+            },
+        )
+    )
 
     nodes, edges = _build_graph(records, comp_records)
     if not nodes:
@@ -75,11 +112,35 @@ def run_graph(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], 
             f"Top relations: {top_relations}"
         ),
     )
-    references = _build_references(
+    references_block = _build_references(
         base_graph_query_template, component_query, tenant_id, ci.ci_code, depth, include_components
     )
+
+    # Extract references from references_block
+    if isinstance(references_block, ReferencesBlock):
+        for item in references_block.items:
+            references_list.append(item.dict())
+
     graph_block = GraphBlock(type="graph", title="Dependency graph", nodes=nodes, edges=edges)
-    return [markdown, graph_block, references], ["neo4j", "postgres"]
+    blocks = [markdown, graph_block, references_block]
+
+    # Convert blocks to dicts
+    blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+
+    elapsed_ms = int((perf_counter() - start_time) * 1000)
+    return ExecutorResult(
+        blocks=blocks_dict,
+        used_tools=used_tools,
+        tool_calls=tool_calls,
+        references=references_list,
+        summary={
+            "status": "success",
+            "ci_code": ci.ci_code,
+            "nodes": len(nodes),
+            "edges": len(edges),
+            "depth": depth,
+        },
+    )
 
 
 def _run_graph_query(driver, query_template: str, tenant_id: str, ci_code: str, depth: int):

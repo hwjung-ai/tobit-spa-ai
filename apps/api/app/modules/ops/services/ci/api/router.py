@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from apps.api.core.logging import get_logger
+from core.logging import get_logger
 
 from schemas import ResponseEnvelope
 
