@@ -63,21 +63,12 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         route_reason = "OPS mock mode"
         summary = f"Mocked OPS response for {mode}"
     else:
-        try:
-            result = _execute_real_mode(mode, question, settings)
-            blocks, used_tools, extra_error = _normalize_real_result(result)
-            if extra_error:
-                error = extra_error
-            route_reason = "OPS real mode"
-            summary = f"Real mode response for {mode}"
-        except Exception as exc:  # pragma: no cover (real executors not ready)
-            logging.exception("OPS real executor failed")
-            blocks = _build_mock_blocks(mode, question)
-            used_tools = ["mock"]
-            fallback = True
-            error = str(exc)
-            route_reason = f"Real mode fallback: {type(exc).__name__}"
-            summary = f"Mock fallback for {mode}"
+        result = _execute_real_mode(mode, question, settings)
+        blocks, used_tools, extra_error = _normalize_real_result(result)
+        if extra_error:
+            error = extra_error
+        route_reason = "OPS real mode"
+        summary = f"Real mode response for {mode}"
     meta = AnswerMeta(
         route=mode,
         route_reason=route_reason,
