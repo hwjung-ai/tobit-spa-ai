@@ -145,6 +145,8 @@ class AnswerMeta(BaseModel):
     used_tools: list[str] = []
     fallback: bool = False
     error: str | None = None
+    trace_id: str | None = None
+    parent_trace_id: str | None = None
 
 
 class AnswerEnvelope(BaseModel):

@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Literal
 
+from core.logging import get_request_context
 from core.config import get_settings
 from schemas import (
     AnswerBlock,
@@ -46,6 +47,10 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
     started = time.perf_counter()
     fallback = False
     error: str | None = None
+    context = get_request_context()
+    trace_id = context.get("trace_id") or "-"
+    parent_trace_id = context.get("parent_trace_id") or "-"
+
     if mode == "config":
         blocks, used_tools, route_reason, summary, fallback, error = _handle_config_mode(question, settings)
         meta = AnswerMeta(
@@ -56,6 +61,8 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
             used_tools=used_tools,
             fallback=fallback,
             error=error,
+            trace_id=trace_id if trace_id != "-" else None,
+            parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
         )
         return AnswerEnvelope(meta=meta, blocks=blocks)
     if settings.ops_mode != "real":
@@ -78,6 +85,8 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         used_tools=used_tools,
         fallback=fallback,
         error=error,
+        trace_id=trace_id if trace_id != "-" else None,
+        parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
     )
     return AnswerEnvelope(meta=meta, blocks=blocks)
 

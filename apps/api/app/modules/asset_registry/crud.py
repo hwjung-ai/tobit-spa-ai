@@ -6,6 +6,8 @@ from typing import Any
 
 from sqlmodel import Session, select
 
+from app.modules.audit_log.crud import create_audit_log
+from core.logging import get_request_context
 from .models import TbAssetRegistry, TbAssetVersionHistory
 from .validators import validate_asset
 
@@ -87,6 +89,7 @@ def update_asset(
     session: Session,
     asset: TbAssetRegistry,
     updates: dict[str, Any],
+    updated_by: str | None = None,
 ) -> TbAssetRegistry:
     """Update draft asset"""
     if asset.status == "published":
@@ -94,6 +97,21 @@ def update_asset(
 
     if not updates:
         return asset
+
+    # Get trace info from context
+    context = get_request_context()
+    trace_id = context.get("trace_id") or str(uuid.uuid4())
+    parent_trace_id = context.get("parent_trace_id") or None
+
+    # Store old values for audit
+    old_values = {}
+    changes = {}
+    for key in updates:
+        if key not in ["asset_id", "created_at", "created_by", "status", "version"]:
+            old_value = getattr(asset, key, None)
+            new_value = updates[key]
+            old_values[key] = old_value
+            changes[key] = f"{old_value} -> {new_value}"
 
     for key, value in updates.items():
         if key not in ["asset_id", "created_at", "created_by", "status", "version"]:
@@ -104,6 +122,23 @@ def update_asset(
     session.add(asset)
     session.commit()
     session.refresh(asset)
+
+    # Record audit log if there were changes
+    if changes and updated_by:
+        create_audit_log(
+            session=session,
+            trace_id=trace_id,
+            parent_trace_id=parent_trace_id,
+            resource_type="asset",
+            resource_id=str(asset.asset_id),
+            action="update",
+            actor=updated_by,
+            changes=changes,
+            old_values=old_values,
+            new_values=updates,
+            metadata={"asset_type": asset.asset_type, "asset_name": asset.name},
+        )
+
     return asset
 
 
@@ -118,6 +153,11 @@ def publish_asset(
 
     # Validate before publish
     validate_asset(asset)
+
+    # Get trace info from context
+    context = get_request_context()
+    trace_id = context.get("trace_id") or str(uuid.uuid4())
+    parent_trace_id = context.get("parent_trace_id") or None
 
     # Find existing published asset with same name
     existing = session.exec(
@@ -135,6 +175,7 @@ def publish_asset(
         session.add(existing)
 
     # Publish current asset
+    old_status = asset.status
     asset.status = "published"
     asset.published_by = published_by
     asset.published_at = datetime.utcnow()
@@ -143,6 +184,21 @@ def publish_asset(
     session.add(asset)
     session.commit()
     session.refresh(asset)
+
+    # Record audit log
+    create_audit_log(
+        session=session,
+        trace_id=trace_id,
+        parent_trace_id=parent_trace_id,
+        resource_type="asset",
+        resource_id=str(asset.asset_id),
+        action="publish",
+        actor=published_by,
+        changes={"status": old_status + " -> published", "version": asset.version},
+        old_values={"status": old_status},
+        new_values={"status": "published", "published_by": published_by, "published_at": asset.published_at.isoformat()},
+        metadata={"asset_type": asset.asset_type, "asset_name": asset.name},
+    )
 
     # Save to version history
     history = TbAssetVersionHistory(
@@ -177,6 +233,11 @@ def rollback_asset(
     if current.status != "published":
         raise ValueError("Can only rollback published assets")
 
+    # Get trace info from context
+    context = get_request_context()
+    trace_id = context.get("trace_id") or str(uuid.uuid4())
+    parent_trace_id = context.get("parent_trace_id") or None
+
     # Find target version from history
     history = session.exec(
         select(TbAssetVersionHistory)
@@ -186,6 +247,9 @@ def rollback_asset(
 
     if not history:
         raise ValueError(f"Version {to_version} not found in history")
+
+    # Store old version for audit
+    old_version = current.version
 
     # Restore snapshot (excluding immutable fields)
     snapshot = history.snapshot
@@ -204,6 +268,21 @@ def rollback_asset(
     session.add(current)
     session.commit()
     session.refresh(current)
+
+    # Record audit log for rollback
+    create_audit_log(
+        session=session,
+        trace_id=trace_id,
+        parent_trace_id=parent_trace_id,
+        resource_type="asset",
+        resource_id=str(current.asset_id),
+        action="rollback",
+        actor=executed_by,
+        changes={"version": old_version + " -> " + str(current.version), "from_version": to_version},
+        old_values={"version": old_version},
+        new_values={"version": current.version, "published_by": executed_by, "published_at": current.published_at.isoformat()},
+        metadata={"asset_type": current.asset_type, "asset_name": current.name, "from_version": to_version},
+    )
 
     # Record rollback in history
     rollback_history = TbAssetVersionHistory(

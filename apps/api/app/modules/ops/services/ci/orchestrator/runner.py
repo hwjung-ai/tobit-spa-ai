@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, List, Literal, Sequence, Tuple
 import os
 import threading
 
-from core.logging import get_logger
+from core.logging import get_logger, get_request_context
 from schemas.tool_contracts import ToolCall
 from app.modules.ops.services.ci import policy, response_builder
 from app.modules.ops.services.ci.actions import NextAction, RerunPayload
@@ -712,6 +712,10 @@ class CIOrchestratorRunner:
         # Extract references from blocks
         self._extract_references_from_blocks(blocks)
 
+        context = get_request_context()
+        trace_id = context.get("trace_id") or "-"
+        parent_trace_id = context.get("parent_trace_id") or "-"
+
         trace = {
             "plan_raw": self.plan_raw.dict(),
             "plan_validated": self.plan.dict(),
@@ -720,6 +724,8 @@ class CIOrchestratorRunner:
             "references": self.references,
             "errors": self.errors,
             "tenant_id": self.tenant_id,
+            "trace_id": trace_id if trace_id != "-" else None,
+            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
         }
         if self.aggregation_summary:
             plan_trace = trace.setdefault("plan", {})
@@ -749,6 +755,8 @@ class CIOrchestratorRunner:
             "used_tools": used_tools,
             "fallback": len(self.errors) > 0,
             "runner_context": runner_context_meta,
+            "trace_id": trace_id if trace_id != "-" else None,
+            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
         }
         block_types = []
         for block in blocks:
