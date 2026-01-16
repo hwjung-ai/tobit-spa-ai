@@ -16,6 +16,7 @@ from models.chat import ChatMessage, ChatThread
 from models.document import Document, DocumentChunk
 from app.modules.api_manager.models import ApiExecLog, TbApiDef
 from app.modules.ui_creator.models import TbUiDef
+from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from sqlmodel import SQLModel
 
 config = context.config

@@ -47,6 +47,7 @@
 2.  **프론트엔드 설정**:
     - `apps/web/.env.example` 파일을 복사하여 `apps/web/.env.local` 파일을 생성하고, API 서버 주소 등 필요한 환경변수를 설정합니다.
     - `npm install`로 의존성을 설치합니다.
+    - Playwright 기반 UI 테스트를 실행하려면 `npx playwright install`로 Playwright와 브라우저 바이너리를 설치합니다.
 
 3.  **전체 실행**:
     - 프로젝트 루트에서 `make dev`를 실행하여 백엔드와 프론트엔드를 동시에 시작합니다.
@@ -69,7 +70,7 @@
   - `make web-dev`: 프론트엔드 개발 서버를 실행합니다.
   - `make web-lint`: 프론트엔드 코드 품질을 검사합니다.
   - `make web-format`: 프론트엔드 코드를 포맷팅합니다.
-  - `make web-test`: 프론트엔드 테스트를 실행합니다.
+  - `make web-test`: Playwright 기반 UI 테스트를 실행합니다 (`npx playwright install` 후 실행).
 
 ---
 

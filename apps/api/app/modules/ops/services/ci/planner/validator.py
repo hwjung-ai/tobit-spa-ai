@@ -21,6 +21,27 @@ from app.modules.ops.services.ci.planner.plan_schema import (
 )
 
 AUTO_METRIC_CANDIDATES = ["cpu_usage", "latency", "error"]
+
+
+def get_default_budget() -> BudgetSpec:
+    """Load default budget from published policy asset or use fallback"""
+    try:
+        from app.modules.asset_registry.loader import load_policy_asset
+
+        policy_asset = load_policy_asset("plan_budget")
+        if policy_asset:
+            return BudgetSpec(
+                max_steps=policy_asset.get("max_steps", 10),
+                timeout_seconds=(policy_asset.get("timeout_ms", 120000) // 1000),
+                max_depth=policy_asset.get("max_depth", 5),
+                max_branches=3,
+                max_iterations=100,
+            )
+    except Exception as e:
+        logger.warning(f"Failed to load policy asset for budget: {e}")
+
+    # Ultimate fallback
+    return BudgetSpec()
 AUTO_ALLOWED_GRAPH_VIEWS = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}
 AUTO_VIEW_DEFAULT_DEPTHS = {
     View.COMPOSITION: 2,
