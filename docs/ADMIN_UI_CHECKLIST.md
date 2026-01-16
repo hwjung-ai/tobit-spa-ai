@@ -8,9 +8,9 @@
 
 ### 1. Audit Log Router 추가
 - [ ] `apps/api/app/modules/audit_log/router.py` 파일 생성
-- [ ] GET `/audit-log/trace/{trace_id}` 엔드포인트 구현
-- [ ] GET `/audit-log/parent-trace/{parent_trace_id}` 엔드포인트 구현
-- [ ] GET `/audit-log/resource` 엔드포인트 구현
+- [ ] GET `/audit-log` 엔드포인트 구현 (resource_type/resource_id 필터)
+- [ ] GET `/audit-log/by-trace/{trace_id}` 엔드포인트 구현
+- [ ] GET `/audit-log/by-parent-trace/{parent_trace_id}` 엔드포인트 구현
 - [ ] `apps/api/main.py`에 router 등록
 - [ ] ResponseEnvelope 구조 준수 확인
 
@@ -25,8 +25,8 @@
 - [ ] Validation 에러 메시지 명확화
 
 ### 3. API 테스트
-- [ ] curl로 `/audit-log/trace/{trace_id}` 테스트
-- [ ] curl로 `/audit-log/resource` 테스트
+- [ ] curl로 `/audit-log/by-trace/{trace_id}` 테스트
+- [ ] curl로 `/audit-log` (resource filter) 테스트
 - [ ] Asset publish validation 에러 테스트
 - [ ] Asset rollback 테스트
 

@@ -93,9 +93,9 @@ Trace ID 입력 → 검색 → Audit Logs 표시
 ```python
 # apps/api/app/modules/audit_log/router.py
 
-GET  /audit-log/trace/{trace_id}
-GET  /audit-log/parent-trace/{parent_trace_id}
-GET  /audit-log/resource?resource_type=...&resource_id=...
+GET  /audit-log?resource_type=...&resource_id=...
+GET  /audit-log/by-trace/{trace_id}
+GET  /audit-log/by-parent-trace/{parent_trace_id}
 ```
 
 #### Asset Registry Validation 강화

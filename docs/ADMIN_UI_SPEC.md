@@ -268,8 +268,8 @@ published → [Edit + Save] → published (source: published, 새 값)
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**데이터 소스**: 
-- GET `/audit-log/resource?resource_type=operation_setting&resource_id={setting_key}`
+**데이터 소스**:
+- GET `/audit-log?resource_type=operation_setting&resource_id={setting_key}`
 - (향후 구현 필요)
 
 ---
@@ -338,13 +338,13 @@ published → [Edit + Save] → published (source: published, 새 값)
 
 #### Search
 - **Search**:
-  - GET `/audit-log/trace/{trace_id}` (향후 구현 필요)
+  - GET `/audit-log/by-trace/{trace_id}`
   - 성공: Audit Logs 테이블 표시
   - 실패: "No logs found for trace ID: {trace_id}"
-  
+
 - **View Parent** (parent_trace_id 존재 시):
-  - 클릭 시 parent_trace_id로 새 검색 수행
-  
+  - 클릭 시 parent_trace_id로 새 검색 수행 (GET `/audit-log/by-parent-trace/{parent_trace_id}`)
+
 - **Details** (Audit Log 행):
   - JSON 모달 표시
   - changes, old_values, new_values, metadata 전체 표시
@@ -421,35 +421,36 @@ published → [Edit + Save] → published (source: published, 새 값)
 **파일**: `apps/api/app/modules/audit_log/router.py`
 
 ```python
-@router.get("/trace/{trace_id}")
+@router.get("")
+def list_audit_logs(
+    resource_type: str | None = Query(None),
+    resource_id: str | None = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    logs = get_audit_logs_by_resource(session, resource_type, resource_id, limit, offset)
+    return ResponseEnvelope.success(
+        data={"audit_logs": logs, "paging": {"limit": limit, "offset": offset, "count": len(logs)}}
+    )
+
+@router.get("/by-trace/{trace_id}")
 def get_audit_logs_by_trace_endpoint(
     trace_id: str,
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
-    """Get all audit logs for a specific trace ID."""
     logs = get_audit_logs_by_trace(session, trace_id)
-    return ResponseEnvelope.success(data={"logs": logs, "count": len(logs)})
+    return ResponseEnvelope.success({"trace_id": trace_id, "audit_logs": logs, "count": len(logs)})
 
-@router.get("/parent-trace/{parent_trace_id}")
+@router.get("/by-parent-trace/{parent_trace_id}")
 def get_audit_logs_by_parent_trace_endpoint(
     parent_trace_id: str,
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
-    """Get all audit logs for a specific parent trace ID."""
     logs = get_audit_logs_by_parent_trace(session, parent_trace_id)
-    return ResponseEnvelope.success(data={"logs": logs, "count": len(logs)})
-
-@router.get("/resource")
-def get_audit_logs_by_resource_endpoint(
-    resource_type: str = Query(...),
-    resource_id: str = Query(...),
-    limit: int = Query(100, ge=1, le=1000),
-    offset: int = Query(0, ge=0),
-    session: Session = Depends(get_session),
-) -> ResponseEnvelope:
-    """Get audit logs for a specific resource."""
-    logs = get_audit_logs_by_resource(session, resource_type, resource_id, limit, offset)
-    return ResponseEnvelope.success(data={"logs": logs, "count": len(logs)})
+    return ResponseEnvelope.success(
+        {"parent_trace_id": parent_trace_id, "audit_logs": logs, "count": len(logs)}
+    )
 ```
 
 ### 4.2 Asset Registry Validation (강화)
@@ -527,15 +528,15 @@ publish_asset 함수에 validation 로직 추가:
 1. 운영자가 `/admin/inspector` 접속
 2. Trace ID 입력: "trace-abc-123"
 3. **Search** 클릭
-4. GET `/audit-log/trace/trace-abc-123`
+4. GET `/audit-log/by-trace/trace-abc-123`
 5. 결과 표시:
    - Trace Info: trace_id, parent_trace_id (있으면)
    - Audit Logs 테이블: 3개 로그
      - 2026-01-16 10:30 | asset:prompt-001 | publish | admin | {...}
      - 2026-01-16 10:25 | asset:prompt-001 | update | admin | {...}
      - 2026-01-16 10:20 | asset:prompt-001 | create | admin | {...}
-6. parent_trace_id가 "trace-parent-456"인 경우 **View Parent** 버튼 표시
-7. **View Parent** 클릭 → "trace-parent-456"로 새 검색
+6. parent_trace_id가 "trace-parent-456"인 경우 **View Parent** 버튼 표시 (GET `/audit-log/by-parent-trace/trace-parent-456`)
+7. **View Parent** 클릭 → 부모 trace를 `/audit-log/by-parent-trace/{parent_trace_id}`로 조회
 
 **결과**: Trace ID에 연결된 모든 Audit Log 확인 가능
 
