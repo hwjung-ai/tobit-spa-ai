@@ -3,38 +3,30 @@
 import { useEffect, useState } from "react";
 import { Asset, fetchApi } from "../../../lib/adminUtils";
 import AssetTable from "../../../components/admin/AssetTable";
+import CreateAssetModal from "../../../components/admin/CreateAssetModal";
+import { useRouter } from "next/navigation";
+
+import { useQuery } from "@tanstack/react-query";
 
 export default function AssetsPage() {
-    const [assets, setAssets] = useState<Asset[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const router = useRouter();
     const [typeFilter, setTypeFilter] = useState<"all" | "prompt" | "mapping" | "policy">("all");
     const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
-    const loadAssets = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
+    const { data: assets = [], isLoading, error, refetch } = useQuery({
+        queryKey: ["assets", typeFilter, statusFilter],
+        queryFn: async () => {
             const params = new URLSearchParams();
             if (typeFilter !== "all") params.append("asset_type", typeFilter);
             if (statusFilter !== "all") params.append("status", statusFilter);
 
             const queryString = params.toString();
             const endpoint = `/asset-registry/assets${queryString ? `?${queryString}` : ""}`;
-
             const response = await fetchApi<{ assets: Asset[] }>(endpoint);
-            setAssets(response.data.assets);
-        } catch (err: any) {
-            setError(err.message || "Failed to load assets");
-        } finally {
-            setIsLoading(false);
+            return response.data.assets;
         }
-    };
-
-    useEffect(() => {
-        loadAssets();
-    }, [typeFilter, statusFilter]);
+    });
 
     return (
         <div className="p-6">
@@ -47,7 +39,7 @@ export default function AssetsPage() {
                         </p>
                     </div>
                     <button
-                        onClick={() => alert("Asset creation feature is coming in the next update.")}
+                        onClick={() => setShowCreateModal(true)}
                         className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors font-medium text-sm shadow-lg shadow-sky-900/20"
                     >
                         + New Asset
@@ -85,7 +77,7 @@ export default function AssetsPage() {
 
                     <div className="flex-1 flex items-end">
                         <button
-                            onClick={loadAssets}
+                            onClick={() => refetch()}
                             className="px-4 py-2 text-slate-400 hover:text-slate-200 transition-colors text-sm"
                         >
                             Refresh List
@@ -102,9 +94,9 @@ export default function AssetsPage() {
                         </div>
                     ) : error ? (
                         <div className="text-center py-20">
-                            <p className="text-red-400 mb-4">{error}</p>
+                            <p className="text-red-400 mb-4">{(error as any)?.message || "Failed to load assets"}</p>
                             <button
-                                onClick={loadAssets}
+                                onClick={() => refetch()}
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm transition-colors font-medium"
                             >
                                 Try Again
@@ -121,6 +113,15 @@ export default function AssetsPage() {
                     </div>
                 )}
             </div>
+
+            {showCreateModal && (
+                <CreateAssetModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={(assetId) => {
+                        router.push(`/admin/assets/${assetId}`);
+                    }}
+                />
+            )}
         </div>
     );
 }

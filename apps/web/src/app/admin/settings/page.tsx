@@ -6,33 +6,22 @@ import SettingsTable from "../../../components/admin/SettingsTable";
 import SettingEditModal from "../../../components/admin/SettingEditModal";
 import Toast from "../../../components/admin/Toast";
 
+import { useQuery } from "@tanstack/react-query";
+
 export default function SettingsPage() {
-    const [settings, setSettings] = useState<OperationSetting[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [selectedSetting, setSelectedSetting] = useState<OperationSetting | null>(null);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
 
-    const loadSettings = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
+    const { data: settings = [], isLoading, error, refetch } = useQuery({
+        queryKey: ["settings"],
+        queryFn: async () => {
             const response = await fetchApi<{ settings: OperationSetting[] }>("/settings/operations");
-            setSettings(response.data.settings);
-        } catch (err: any) {
-            setError(err.message || "Unable to load operational settings.");
-        } finally {
-            setIsLoading(false);
+            return response.data.settings;
         }
-    };
-
-    useEffect(() => {
-        loadSettings();
-    }, []);
+    });
 
     const handleEditSuccess = () => {
-        loadSettings();
+        refetch();
 
         if (selectedSetting?.restart_required) {
             setToast({
@@ -79,9 +68,9 @@ export default function SettingsPage() {
                         </div>
                     ) : error ? (
                         <div className="text-center py-24">
-                            <p className="text-red-400 font-medium mb-4">{error}</p>
+                            <p className="text-red-400 font-medium mb-4">{(error as any)?.message || "Unable to load settings"}</p>
                             <button
-                                onClick={loadSettings}
+                                onClick={() => refetch()}
                                 className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all"
                             >
                                 Reconnect to API
@@ -94,7 +83,7 @@ export default function SettingsPage() {
                             <div className="p-4 bg-slate-950/30 border-t border-slate-800/50 flex justify-between items-center">
                                 <p className="text-[10px] text-slate-500 italic">Total {settings.length} parameters managed by OperationSettingsService</p>
                                 <button
-                                    onClick={loadSettings}
+                                    onClick={() => refetch()}
                                     className="text-[10px] text-slate-400 hover:text-white flex items-center gap-1 transition-colors font-bold uppercase tracking-widest"
                                 >
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

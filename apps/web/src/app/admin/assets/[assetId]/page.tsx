@@ -6,34 +6,21 @@ import { Asset, fetchApi } from "../../../../lib/adminUtils";
 import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";
 
+import { useQuery } from "@tanstack/react-query";
+
 export default function AssetDetailPage() {
     const params = useParams();
     const router = useRouter();
     const assetId = params.assetId as string;
 
-    const [asset, setAsset] = useState<Asset | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const loadAsset = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
+    const { data: asset, isLoading, error, refetch } = useQuery({
+        queryKey: ["asset", assetId],
+        queryFn: async () => {
             const response = await fetchApi<{ asset: Asset }>(`/asset-registry/assets/${assetId}`);
-            setAsset(response.data.asset);
-        } catch (err: any) {
-            setError(err.message || "Failed to load asset information.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (assetId) {
-            loadAsset();
-        }
-    }, [assetId]);
+            return response.data.asset;
+        },
+        enabled: !!assetId
+    });
 
     if (isLoading) {
         return (
@@ -57,7 +44,7 @@ export default function AssetDetailPage() {
                             </svg>
                         </div>
                         <h2 className="text-xl font-bold text-white mb-2">Error Loading Asset</h2>
-                        <p className="text-slate-400 mb-8 max-w-md mx-auto">{error || "The requested asset could not be found or retrieved from the server."}</p>
+                        <p className="text-slate-400 mb-8 max-w-md mx-auto">{(error as any)?.message || "The requested asset could not be found or retrieved from the server."}</p>
                         <Link
                             href="/admin/assets"
                             className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium inline-block"
@@ -110,7 +97,7 @@ export default function AssetDetailPage() {
 
                 {/* Content Section */}
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <AssetForm asset={asset} onSave={loadAsset} />
+                    <AssetForm asset={asset} onSave={() => refetch()} />
                 </div>
             </div>
         </div>
