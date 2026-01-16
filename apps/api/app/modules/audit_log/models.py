@@ -27,7 +27,10 @@ class TbAuditLog(SQLModel, table=True):
     changes: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))
     old_values: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
     new_values: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
-    audit_metadata: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
+    audit_metadata: dict[str, Any] | None = Field(
+        default=None,
+        sa_column=Column("metadata", JSONB, nullable=True),
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),

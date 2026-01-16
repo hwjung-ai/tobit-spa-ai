@@ -14,6 +14,7 @@ from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
 from app.modules.cep_builder import router as cep_builder_router
+from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
 from app.modules.data_explorer import router as data_explorer_router
 from app.modules.ui_creator.router import router as ui_creator_router
@@ -48,6 +49,7 @@ app.include_router(thread_router)
 app.include_router(document_router)
 app.include_router(ops_router)
 app.include_router(asset_registry_router)
+app.include_router(operation_settings_router)
 app.include_router(cep_builder_router)
 app.include_router(data_explorer_router)
 app.include_router(api_manager_router)

@@ -8,7 +8,65 @@
 
 ---
 
-## 2. Common Features (공통 기능)
+## 2. 완료된 P0 항목 (✅ Completed)
+
+### P0-1: Request Tracing & Audit Logging System ✅
+- **설명**: 요청별 trace_id/parent_trace_id를 통한 분산 추적 및 모든 중요 변경사항의 감사 로그 기록
+- **구현 상태**: 완료
+- **주요 기능**:
+  - 미들웨어에서 trace_id 자동 생성 및 전파
+  - 로깅에 trace_id/parent_trace_id 포함
+  - TbAuditLog 테이블: 리소스별 변경 이력 추적
+  - 자산 레지스트리(publish/rollback) 감사 로그 통합
+- **소스**:
+  - 미들웨어: `apps/api/core/middleware.py`
+  - 로깅: `apps/api/core/logging.py`
+  - 감사 모델: `apps/api/app/modules/audit_log/models.py`
+  - 감사 CRUD: `apps/api/app/modules/audit_log/crud.py`
+  - 마이그레이션: `apps/api/alembic/versions/0023_add_audit_log.py`
+
+### P0-2: Asset Registry System ✅
+- **설명**: 자산(Asset) 버전 관리, 발행/롤백 기능을 통한 자산 수명주기 관리
+- **구현 상태**: 완료
+- **주요 기능**:
+  - Asset 정의 및 버전 관리
+  - Publish/Rollback을 통한 버전 제어
+  - 자산 변경 이력 추적
+  - P0-1 감사 로그 통합
+- **소스**:
+  - 모델/CRUD: `apps/api/app/modules/asset_registry/`
+  - 마이그레이션: `apps/api/alembic/versions/0022_add_asset_registry.py`
+
+### P0-3: Runtime Settings Externalization ✅
+- **설명**: OPS_MODE, ops_enable_langgraph 등 런타임 플래그를 설정 관리 시스템으로 외부화
+- **구현 상태**: 완료
+- **주요 기능**:
+  - 설정 우선순위: published > env > default
+  - GET /settings/operations: 모든 설정 조회
+  - PUT /settings/operations/{key}: 설정 변경
+  - 설정 변경 이력 감사 로그 기록
+  - 변경 적용 시 restart_required 플래그 제공
+- **설정 항목**:
+  - ops_mode (mock/real)
+  - ops_enable_langgraph (bool)
+  - enable_system_apis (bool)
+  - enable_data_explorer (bool)
+  - cep_enable_metric_polling (bool)
+  - cep_metric_poll_global_interval_seconds (int)
+  - cep_metric_poll_concurrency (int)
+  - cep_enable_notifications (bool)
+  - ops_enable_cep_scheduler (bool)
+- **소스**:
+  - 모델: `apps/api/app/modules/operation_settings/models.py`
+  - CRUD: `apps/api/app/modules/operation_settings/crud.py`
+  - 서비스: `apps/api/app/modules/operation_settings/services.py`
+  - 라우터: `apps/api/app/modules/operation_settings/router.py`
+  - 마이그레이션: `apps/api/alembic/versions/0024_add_operation_settings.py`
+  - 테스트: `apps/api/tests/test_operation_settings.py` (9/9 passing)
+
+---
+
+## 3. Common Features (공통 기능)
 
 모든 모듈에 걸쳐 필요한 최우선 공통 과제입니다.
 
@@ -159,10 +217,15 @@
 2.  **권한 관리 및 감사**: 활성화 시, 데이터베이스 및 테이블별 접근 권한을 제어하고, 모든 쿼리 실행 기록을 감사 로그로 남겨야 합니다.
 
 ---
-## 10. 우선순위 요약
+## 11. 우선순위 요약
 
-### P0: 즉시 시작
-- **공통**: 인증/권한, 보안, 감사 로그, 로그 표준화, 테스트 관리
+### P0: 즉시 시작 (부분 완료)
+**완료된 항목** (✅):
+- **공통**: 감사 로그 (Audit Log) ✅, Request Tracing ✅
+- **운영 설정**: 런타임 플래그 외부화 ✅
+
+**여전히 필요한 항목**:
+- **공통**: 인증/권한, 보안 (HTTPS/암호화), 로그 표준화, 테스트 관리
 - **OPS AI**: 오케스트레이터 고도화 (재귀/분기 처리), CI 변경 관리
 - **API/UI/CEP**: 버전 관리 및 롤백 기능
 - **문서 검색/대화**: 핵심 기능 고도화 (다중 형식 지원, 이력 관리 강화)
