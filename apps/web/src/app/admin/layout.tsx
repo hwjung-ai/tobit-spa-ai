@@ -17,34 +17,44 @@ export default function AdminLayout({
     ];
 
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950">
-            {/* Sub Navigation */}
-            <div className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-40">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="flex gap-8">
-                        {tabs.map((tab) => {
-                            const isActive = pathname.startsWith(tab.href);
-                            return (
-                                <Link
-                                    key={tab.label}
-                                    href={tab.href}
-                                    className={`py-4 text-sm font-medium transition-colors border-b-2 ${isActive
-                                            ? "border-sky-500 text-sky-400"
-                                            : "border-transparent text-slate-400 hover:text-slate-200"
-                                        }`}
-                                >
-                                    {tab.label}
-                                </Link>
-                            );
-                        })}
-                    </div>
+        <div className="py-6 tracking-tight builder-shell builder-text">
+            {/* Header & Section Title */}
+            <div className="flex items-center justify-between mb-2">
+                <h1 className="text-2xl font-semibold text-white">Admin Dashboard</h1>
+                <div className="text-[10px] uppercase tracking-[0.25em] text-slate-500">
+                    System Management
+                </div>
+            </div>
+            <p className="mb-6 text-sm text-slate-400">
+                Configure operational parameters, manage core assets, and audit system activities.
+            </p>
+
+            {/* Sub Navigation (Capsule Style like Data page) */}
+            <div className="mb-6 flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Module:</span>
+                    {tabs.map((tab) => {
+                        const isActive = pathname.startsWith(tab.href);
+                        return (
+                            <Link
+                                key={tab.label}
+                                href={tab.href}
+                                className={`rounded-full border px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] transition ${isActive
+                                    ? "border-sky-400 text-white bg-sky-400/5 shadow-[0_0_15px_rgba(56,189,248,0.1)]"
+                                    : "border-slate-800 text-slate-400 hover:border-slate-600 hover:text-slate-200"
+                                    }`}
+                            >
+                                {tab.label}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
 
-            {/* Main Content */}
-            <main className="flex-1">
+            {/* Main Content Area */}
+            <div className="animate-in fade-in duration-700">
                 {children}
-            </main>
+            </div>
         </div>
     );
 }

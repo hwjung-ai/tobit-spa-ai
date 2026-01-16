@@ -73,6 +73,24 @@ class AppSettings(BaseSettings):
             raise ValueError("Postgres configuration requires host, db, user, password")
         return f"postgresql+psycopg://{self.pg_user}:{self.pg_password}@{self.pg_host}:{self.pg_port}/{self.pg_db}"
 
+    def _normalize_psycopg_dsn(self, value: str) -> str:
+        prefix = "postgresql+psycopg://"
+        if value.startswith(prefix):
+            return "postgresql://" + value[len(prefix) :]
+        return value
+
+    @property
+    def psycopg_dsn(self) -> str:
+        """
+        psycopg 3 expects a plain libpq-style DSN, so strip the SQLAlchemy dialect hint.
+        """
+        if self.database_url:
+            return self._normalize_psycopg_dsn(self.database_url)
+        if not all([self.pg_host, self.pg_db, self.pg_user, self.pg_password]):
+            raise ValueError("Postgres configuration requires host, db, user, password")
+        dsn = f"postgresql+psycopg://{self.pg_user}:{self.pg_password}@{self.pg_host}:{self.pg_port}/{self.pg_db}"
+        return self._normalize_psycopg_dsn(dsn)
+
     @property
     def document_storage_path(self) -> Path:
         base = (

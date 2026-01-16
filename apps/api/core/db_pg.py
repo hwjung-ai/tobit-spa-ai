@@ -7,7 +7,7 @@ from .config import AppSettings
 
 def get_pg_connection(settings: AppSettings | None = None) -> psycopg.Connection:
     settings = settings or AppSettings.cached_settings()
-    return psycopg.connect(settings.postgres_dsn)
+    return psycopg.connect(settings.psycopg_dsn)
 
 
 def test_postgres_connection(settings: AppSettings) -> bool:
