@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: "UI", href: "/ui-creator" },
   { label: "CEP", href: "/cep-builder" },
   { label: "Data", href: "/data", adminOnly: true },
+  { label: "Admin", href: "/admin/assets", adminOnly: true },
 ];
 
 const normalizePath = (value: string | null) => {
@@ -43,11 +44,10 @@ export default function NavTabs() {
           <Link
             key={item.label}
             href={item.href}
-            className={`transition border-b-2 pb-1 ${
-              isActive
+            className={`transition border-b-2 pb-1 ${isActive
                 ? "border-sky-400 text-white"
                 : "border-transparent text-slate-400 hover:border-slate-600 hover:text-white"
-            }`}
+              }`}
           >
             {item.label}
           </Link>

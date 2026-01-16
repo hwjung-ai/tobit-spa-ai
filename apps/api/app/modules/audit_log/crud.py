@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Iterable, Sequence
 
+from sqlalchemy.engine.row import Row
 from sqlmodel import Session, select
 
 from app.modules.audit_log.models import TbAuditLog
@@ -56,7 +57,7 @@ def get_audit_logs_by_resource(
         .limit(limit)
         .offset(offset)
     )
-    return session.exec(statement).all()
+    return _unwrap_result(session.exec(statement).all())
 
 
 def get_audit_logs_by_trace(
@@ -69,7 +70,7 @@ def get_audit_logs_by_trace(
         .where(TbAuditLog.trace_id == trace_id)
         .order_by(TbAuditLog.created_at.desc())
     )
-    return session.exec(statement).all()
+    return _unwrap_result(session.exec(statement).all())
 
 
 def get_audit_logs_by_parent_trace(
@@ -82,4 +83,18 @@ def get_audit_logs_by_parent_trace(
         .where(TbAuditLog.parent_trace_id == parent_trace_id)
         .order_by(TbAuditLog.created_at.desc())
     )
-    return session.exec(statement).all()
+    return _unwrap_result(session.exec(statement).all())
+
+
+def _unwrap_result(rows: Sequence[Row | TbAuditLog | tuple[object, ...]]) -> list[TbAuditLog]:
+    def _normalize(row: Row | TbAuditLog | tuple[object, ...]) -> TbAuditLog:
+        if isinstance(row, TbAuditLog):
+            return row
+        if isinstance(row, Row) or isinstance(row, tuple):
+            return row[0]  # type: ignore[index]
+        if isinstance(row, Iterable):
+            # fallback: pick first element
+            return next(iter(row))  # type: ignore[return-value]
+        return row  # pragma: no cover
+
+    return [_normalize(row) for row in rows]

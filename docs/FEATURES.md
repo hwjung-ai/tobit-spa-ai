@@ -35,6 +35,11 @@
   - AUTO 모드(레시피/동적/PATH/인사이트)
   - CEP simulate 연계 + Event Browser 링크
   - CI 목록 미리보기
+- Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
+  - Assets: Prompt/Mapping/Policy 자산 관리 (draft/publish/rollback)
+  - Settings: 운영 설정 편집 (restart_required 표시)
+  - Inspector: Trace ID 검색 및 Audit Log 조회
+  - 상세 명세: `docs/ADMIN_UI_SPEC.md`
 
 ## 2-1. 공통 UI 표준
 

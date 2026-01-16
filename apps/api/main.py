@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
+from app.modules.audit_log.router import router as audit_log_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
@@ -52,6 +53,7 @@ app.include_router(asset_registry_router)
 app.include_router(operation_settings_router)
 app.include_router(cep_builder_router)
 app.include_router(data_explorer_router)
+app.include_router(audit_log_router)
 app.include_router(api_manager_router)
 app.include_router(runtime_router)
 app.include_router(ui_creator_router)
