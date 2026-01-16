@@ -148,7 +148,7 @@ def execute_sql_api(
     rows: list[dict[str, Any]] = []
     row_count = 0
     try:
-        session.exec(sa_text("SET LOCAL statement_timeout = :timeout"), params={"timeout": STATEMENT_TIMEOUT_MS})
+        session.exec(sa_text(f"SET LOCAL statement_timeout = '{STATEMENT_TIMEOUT_MS}ms'"))
         result = session.exec(sa_text(wrapped_sql), params=bind_params)
         columns = list(result.keys())
         for record in result:
