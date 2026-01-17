@@ -132,6 +132,42 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `make api-lint` / `make web-lint`: 각 파트의 코드 품질을 검사합니다.
    - `make api-migrate`: DB 마이그레이션(`alembic upgrade head`)을 실행합니다. **DB 스키마 변경 시 AI가 직접 실행해야 합니다.**
 
+### 3-1) 테스트 실행 (필독)
+   **코드를 수정한 후에는 반드시 아래 테스트를 실행하여 변경사항을 검증해야 합니다.**
+
+   - **Backend 유닛 테스트**:
+     ```bash
+     pytest apps/api/tests/
+     ```
+     비즈니스 로직, API 엔드포인트, 데이터베이스 작업 수정 시 필수 실행
+
+   - **Frontend E2E 테스트 (Playwright)**:
+     ```bash
+     npm run test:e2e          # apps/web 디렉토리에서 실행
+     # 또는
+     make web-test-e2e         # 프로젝트 루트에서 실행
+     ```
+     UI 컴포넌트, 사용자 흐름, 대화 상자, 버튼 동작 등 변경 시 필수 실행
+     - **테스트 파일 위치**: `apps/web/tests-e2e/*.spec.ts`
+     - **주요 테스트**: Inspector 흐름, RCA 실행, Regression Watch 기능
+
+   - **Backend API 수동 테스트**:
+     ```bash
+     # Python 스크립트로 엔드포인트 검증
+     python3 << 'EOF'
+     import requests
+     response = requests.post("http://localhost:8000/ops/endpoint-path", json={...})
+     print(response.json())
+     EOF
+     ```
+     새로운 API 엔드포인트 추가 또는 응답 형식 변경 시 실행
+
+   - **코드 품질 검사** (pre-commit 훅과 동일):
+     ```bash
+     make api-lint              # Backend: Ruff, mypy
+     make web-lint              # Frontend: ESLint, Prettier
+     ```
+
 ### 4) 품질 관리
    - 모든 코드는 `pre-commit` 훅(Ruff, Prettier)의 검사를 통과해야 합니다.
    - 핵심 로직을 수정할 경우, 반드시 `pytest`(백엔드) 또는 관련 UI 테스트(프론트엔드)를 통해 검증해야 합니다.
