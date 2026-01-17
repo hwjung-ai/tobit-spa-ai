@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   Line,
@@ -184,11 +184,34 @@ interface BlockRendererProps {
   blocks: AnswerBlock[];
   nextActions?: NextAction[];
   onAction?: (action: NextAction) => void;
+  traceId?: string;
 }
 
 const lineColors = ["#38bdf8", "#34d399", "#f97316", "#a855f7", "#f472b6"];
 
-export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRendererProps) {
+interface RenderedBlockTelemetry {
+  block_type: string;
+  component_name: string;
+  ok: boolean;
+  error?: string;
+}
+
+const BLOCK_COMPONENT_NAMES: Record<string, string> = {
+  markdown: "MarkdownBlock",
+  table: "TableBlock",
+  text: "TextBlock",
+  number: "NumberBlock",
+  timeseries: "TimeSeriesBlock",
+  chart: "ChartBlock",
+  graph: "GraphFlowRenderer",
+  network: "NetworkBlock",
+  path: "PathBlock",
+  references: "ReferencesBlock",
+};
+
+const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+
+export default function BlockRenderer({ blocks, nextActions, onAction, traceId }: BlockRendererProps) {
   const [fullscreenGraph, setFullscreenGraph] = useState<GraphBlock | null>(null);
   const candidateActionMap = useMemo(() => {
     const map = new Map<string, NextAction>();
@@ -216,6 +239,48 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
     );
   }, [nextActions]);
 
+  const telemetryEntriesRef = useRef<RenderedBlockTelemetry[]>([]);
+  const lastPayloadKeyRef = useRef<string>("");
+
+  telemetryEntriesRef.current = [];
+  useEffect(() => {
+    if (!traceId) {
+      lastPayloadKeyRef.current = "";
+      return;
+    }
+    if (!blocks || blocks.length === 0) {
+      lastPayloadKeyRef.current = "";
+      return;
+    }
+    const payload = {
+      rendered_blocks: telemetryEntriesRef.current,
+      warnings: [],
+    };
+    const payloadKey = JSON.stringify(payload);
+    if (lastPayloadKeyRef.current === payloadKey) {
+      return;
+    }
+    lastPayloadKeyRef.current = payloadKey;
+
+    const endpoint = `${normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)}/inspector/traces/${encodeURIComponent(
+      traceId
+    )}/ui-render`;
+
+    void (async () => {
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          console.warn("UI render telemetry failed", response.status, response.statusText);
+        }
+      } catch (fetchError) {
+        console.warn("UI render telemetry request failed", fetchError);
+      }
+    })();
+  }, [traceId, blocks]);
   if (!blocks || blocks.length === 0) {
     return (
       <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
@@ -233,7 +298,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
           </p>
         ) : null;
 
-        switch (block.type) {
+        const baseKey = `${block.type}-${block.id ?? index}`;
+        const componentName = BLOCK_COMPONENT_NAMES[block.type] ?? "BlockRenderer";
+        const renderBlockContent = () => {
+          switch (block.type) {
           case "markdown":
             return (
               <section
@@ -588,15 +656,35 @@ export default function BlockRenderer({ blocks, nextActions, onAction }: BlockRe
             );
 
           default:
-            return (
-              <section
-                key={`unknown-${index}`}
-                className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
-              >
-                <p className="text-sm text-slate-400">Unsupported block type.</p>
-              </section>
-            );
+            throw new Error(`Unsupported block type: ${block.type}`);
+          }
+        };
+        let blockElement: ReactNode;
+        let ok = true;
+        let errorMessage: string | undefined;
+        try {
+          blockElement = renderBlockContent();
+        } catch (error) {
+          ok = false;
+          errorMessage =
+            error instanceof Error ? error.message : String(error ?? "unknown error");
+          blockElement = (
+            <section
+              key={baseKey}
+              className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
+            >
+              {title}
+              <p className="text-sm text-rose-300">렌더링 오류: {errorMessage}</p>
+            </section>
+          );
         }
+        telemetryEntriesRef.current.push({
+          block_type: block.type,
+          component_name: componentName,
+          ok,
+          ...(errorMessage ? { error: errorMessage } : {}),
+        });
+        return blockElement;
       })}
       {generalActions.length ? (
         <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4">

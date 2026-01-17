@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BlockRenderer, {
   type AnswerBlock,
@@ -234,6 +235,7 @@ export default function OpsPage() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [traceOpen, setTraceOpen] = useState(false);
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const router = useRouter();
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
@@ -366,6 +368,7 @@ export default function OpsPage() {
     }
     | undefined;
   const traceContents = useMemo(() => (traceData ? JSON.stringify(traceData, null, 2) : ""), [traceData]);
+  const currentTraceId = selectedEntry?.response?.meta?.trace_id;
 
   useEffect(() => {
     setTraceOpen(false);
@@ -393,6 +396,25 @@ export default function OpsPage() {
       setTimeout(() => setTraceCopyStatus("idle"), 2000);
     }
   }, [traceContents]);
+
+  const handleCopyResultTraceId = useCallback(async () => {
+    if (!currentTraceId) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(currentTraceId);
+      setStatusMessage("Trace ID가 클립보드에 복사되었습니다.");
+    } catch {
+      setStatusMessage("Trace ID 복사에 실패했습니다.");
+    }
+  }, [currentTraceId]);
+
+  const openInspectorTrace = useCallback(() => {
+    if (!currentTraceId) {
+      return;
+    }
+    router.push(`/admin/inspector?trace_id=${encodeURIComponent(currentTraceId)}`);
+  }, [currentTraceId, router]);
 
   const traceCopyLabel =
     traceCopyStatus === "copied" ? "Copied!" : traceCopyStatus === "failed" ? "Retry" : "Copy";
@@ -875,13 +897,35 @@ export default function OpsPage() {
               <p className="mt-2 text-[11px] text-slate-400">No trace captured yet.</p>
             )}
           </details>
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+            <span className="font-mono text-slate-200">
+              Trace ID: {currentTraceId ?? "없음"}
+            </span>
+            {currentTraceId ? (
+              <>
+                <button
+                  onClick={handleCopyResultTraceId}
+                  className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                >
+                  Copy trace_id
+                </button>
+                <button
+                  onClick={openInspectorTrace}
+                  className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                >
+                  Open in Inspector
+                </button>
+              </>
+            ) : null}
+          </div>
           <div className="flex-1 overflow-y-auto">
             {selectedEntry && Array.isArray(selectedEntry.response?.blocks) ? (
               <BlockRenderer
                 blocks={selectedEntry.response.blocks}
-                nextActions={selectedEntry.nextActions}
-                onAction={handleNextAction}
-              />
+              nextActions={selectedEntry.nextActions}
+              onAction={handleNextAction}
+              traceId={selectedEntry.response.meta?.trace_id ?? undefined}
+            />
             ) : (
               <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
                 <p className="text-sm text-slate-500">Run a query to visualize OPS data.</p>
