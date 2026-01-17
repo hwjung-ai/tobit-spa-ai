@@ -3,9 +3,14 @@
 Utility for migrating seed File Prompts under apps/api/resources/prompts into the Asset Registry.
 
 Usage:
-  python scripts/prompt_asset_importer.py --scope ci --apply --publish --cleanup
+  python scripts/prompt_asset_importer.py --scope ci --apply --publish
+  python scripts/prompt_asset_importer.py --scope ci --apply --cleanup-drafts  (delete drafts only)
 
 Run with --apply once the API server is running so assets are actually created and published.
+
+Flags:
+  --cleanup-drafts: Delete existing draft assets before importing. When used alone, only deletes drafts without creating new assets.
+  --publish: Publish assets immediately after creating them (requires --apply).
 """
 
 from __future__ import annotations
@@ -228,6 +233,10 @@ def execute_import(
             print(f"Updated: {len(existing_assets)} asset name(s) remaining\n")
         except Exception as exc:
             print(f"Warning: Failed to refresh after cleanup: {exc}\n", file=sys.stderr)
+
+        # If cleanup-drafts only, stop here (don't create new assets)
+        if client:
+            return
 
     for prompt_file in files:
         data = yaml.safe_load(prompt_file.read_text(encoding="utf-8")) or {}

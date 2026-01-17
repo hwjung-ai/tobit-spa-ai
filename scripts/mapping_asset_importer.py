@@ -3,9 +3,14 @@
 Utility for migrating seed Mapping files under apps/api/resources/mappings into the Asset Registry.
 
 Usage:
-  python scripts/mapping_asset_importer.py --apply --publish --cleanup-drafts
+  python scripts/mapping_asset_importer.py --scope ci --apply --publish
+  python scripts/mapping_asset_importer.py --scope ci --apply --cleanup-drafts  (delete drafts only)
 
 Run with --apply once the API server is running so assets are actually created and published.
+
+Flags:
+  --cleanup-drafts: Delete existing draft assets. When used alone, only deletes drafts without creating new assets.
+  --publish: Publish assets immediately after creating them (requires --apply).
 """
 
 from __future__ import annotations
@@ -22,13 +27,23 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 MAPPING_ROOT = REPO_ROOT / "apps/api/resources/mappings"
 
 
-def collect_mapping_files() -> list[Path]:
-    """Collect mapping YAML files from resources/mappings/."""
+def collect_mapping_files(scopes: list[str] | None = None) -> list[Path]:
+    """Collect mapping YAML files from resources/mappings/.
+
+    Args:
+        scopes: Optional list of scopes to filter by. If None, returns all files.
+    """
     files: list[Path] = []
     if not MAPPING_ROOT.exists():
         raise RuntimeError(f"Mapping directory not found: {MAPPING_ROOT}")
 
     for yaml_file in sorted(MAPPING_ROOT.rglob("*.yaml")):
+        # If scopes are specified, filter by scope in YAML
+        if scopes:
+            yaml_data = yaml.safe_load(yaml_file.read_text(encoding="utf-8")) or {}
+            asset_scope = yaml_data.get("scope", "ci")
+            if asset_scope not in scopes:
+                continue
         files.append(yaml_file)
     return files
 
@@ -55,8 +70,13 @@ def build_mapping_payload(
     return payload
 
 
-def fetch_mapping_assets(client: httpx.Client, assets_url: str) -> dict[str, list[dict[str, Any]]]:
+def fetch_mapping_assets(client: httpx.Client, assets_url: str, scopes: list[str] | None = None) -> dict[str, list[dict[str, Any]]]:
     """Fetch existing mapping assets from registry.
+
+    Args:
+        client: HTTP client
+        assets_url: API endpoint URL
+        scopes: Optional list of scopes to filter by. If None, returns all assets.
 
     Returns:
         Dict mapping asset name to list of asset objects
@@ -69,6 +89,11 @@ def fetch_mapping_assets(client: httpx.Client, assets_url: str) -> dict[str, lis
         name = asset.get("name")
         if not name:
             continue
+        # Filter by scope if provided
+        if scopes is not None:
+            asset_scope = asset.get("scope")
+            if asset_scope not in scopes:
+                continue
         asset_map.setdefault(name, []).append(asset)
     return asset_map
 
@@ -80,6 +105,7 @@ def execute_import(
     apply: bool,
     publish: bool,
     cleanup_drafts: bool,
+    scopes: list[str],
 ) -> None:
     """Execute mapping asset import."""
     assets_url = base_url.rstrip("/") + "/asset-registry/assets"
@@ -87,12 +113,13 @@ def execute_import(
     existing_assets: dict[str, list[dict[str, Any]]] = {}
     if client:
         try:
-            existing_assets = fetch_mapping_assets(client, assets_url)
+            # Fetch assets for the specified scopes only
+            existing_assets = fetch_mapping_assets(client, assets_url, scopes=scopes)
         except Exception as exc:
             print(f"Failed to fetch existing assets: {exc}", file=sys.stderr)
 
     if cleanup_drafts and client:
-        print(f"\n--- Cleaning up existing mapping drafts ---")
+        print(f"\n--- Cleaning up existing mapping drafts in scopes: {scopes} ---")
         cleaned_count = 0
         failed_deletions = []
 
@@ -100,8 +127,10 @@ def execute_import(
             remaining = []
             for asset in asset_list:
                 is_draft = asset.get("status") == "draft"
+                asset_scope = asset.get("scope")
+                scope_matches = asset_scope in scopes if asset_scope else False
 
-                if is_draft:
+                if is_draft and scope_matches:
                     draft_id = asset["asset_id"]
                     delete_url = assets_url + f"/{draft_id}"
 
@@ -133,13 +162,17 @@ def execute_import(
         else:
             print(" ---")
 
-        # Refresh existing assets from DB after cleanup
+        # Refresh existing assets from DB after cleanup to ensure deleted assets are removed
         print("--- Refreshing asset list from server ---")
         try:
-            existing_assets = fetch_mapping_assets(client, assets_url)
+            existing_assets = fetch_mapping_assets(client, assets_url, scopes=scopes)
             print(f"Updated: {len(existing_assets)} asset name(s) remaining\n")
         except Exception as exc:
             print(f"Warning: Failed to refresh after cleanup: {exc}\n", file=sys.stderr)
+
+        # If cleanup-drafts only, stop here (don't create new assets)
+        if client:
+            return
 
     for yaml_file in files:
         yaml_data = yaml.safe_load(yaml_file.read_text(encoding="utf-8")) or {}
@@ -220,33 +253,52 @@ def main() -> int:
         help="Base URL of the running API server",
     )
     parser.add_argument(
+        "--scope",
+        action="append",
+        help="Scope(s) to import (e.g., ci, ops). Repeat flag for multiple.",
+    )
+    parser.add_argument(
         "--created-by", default="mapping_migration", help="Actor recorded in created_by/published_by"
     )
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="POST to the API server. Without this, runs in dry-run mode.",
+        help="Actually POST assets to the API instead of printing payloads",
     )
     parser.add_argument(
         "--publish",
         action="store_true",
-        help="Publish assets after creation.",
+        help="Publish assets immediately after creating them (requires --apply)",
     )
     parser.add_argument(
         "--cleanup-drafts",
+        "--cleanup",
+        dest="cleanup_drafts",
         action="store_true",
-        help="Delete existing draft assets before import.",
+        help="Delete existing draft assets with the same name before import",
     )
 
     args = parser.parse_args()
+    scopes = args.scope or ["ci"]
+    if args.publish and not args.apply:
+        print("Error: --publish requires --apply.", file=sys.stderr)
+        return 1
 
     try:
-        files = collect_mapping_files()
+        files = collect_mapping_files(scopes)
         if not files:
-            print("No mapping YAML files found in resources/mappings/", file=sys.stderr)
-            return 1
+            print("No mapping files found for the requested scope(s).")
+            return 0
         print(f"Found {len(files)} mapping file(s) to import")
-        execute_import(files, args.base_url, args.created_by, args.apply, args.publish, args.cleanup_drafts)
+        execute_import(
+            files=files,
+            base_url=args.base_url,
+            actor=args.created_by,
+            apply=args.apply,
+            publish=args.publish,
+            cleanup_drafts=args.cleanup_drafts,
+            scopes=scopes,
+        )
         return 0
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
