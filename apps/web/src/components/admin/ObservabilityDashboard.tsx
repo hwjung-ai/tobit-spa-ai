@@ -56,7 +56,15 @@ export default function ObservabilityDashboard() {
 
     const loadKpis = async () => {
       try {
-        const res = await fetch("/ops/observability/kpis");
+        // Try both paths: /ops/observability/kpis and /api/ops/observability/kpis
+        let res = await fetch("/ops/observability/kpis");
+
+        // If 404, try with /api prefix
+        if (res.status === 404) {
+          console.warn("Trying alternative API path...");
+          res = await fetch("/api/ops/observability/kpis");
+        }
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}: ${res.statusText}`);
         }

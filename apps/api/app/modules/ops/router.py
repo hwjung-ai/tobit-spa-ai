@@ -50,8 +50,15 @@ def query_ops(payload: OpsQueryRequest) -> ResponseEnvelope:
 
 @router.get("/observability/kpis", response_model=ResponseEnvelope)
 def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvelope:
-    payload = collect_observability_metrics(session)
-    return ResponseEnvelope.success(data={"kpis": payload})
+    try:
+        payload = collect_observability_metrics(session)
+        if not payload:
+            logger.warning("Empty observability metrics returned")
+            return ResponseEnvelope.error(code=500, message="Failed to collect metrics")
+        return ResponseEnvelope.success(data={"kpis": payload})
+    except Exception as e:
+        logger.error(f"Observability metrics error: {e}", exc_info=True)
+        return ResponseEnvelope.error(code=500, message=f"Observability service error: {str(e)}")
 
 
 # --- RCA (Root Cause Analysis) ---
