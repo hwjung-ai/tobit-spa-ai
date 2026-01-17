@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 
 from core.config import get_settings
-from core.db import get_session_context
+from core.db import get_session
 from core.logging import get_logger, get_request_context
 from schemas import ResponseEnvelope
 
@@ -245,7 +245,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         flow_spans = get_all_spans()
 
         try:
-            with get_session_context() as session:
+            with get_session() as session:
                 persist_execution_trace(
                     session=session,
                     trace_id=active_trace_id,
@@ -341,7 +341,7 @@ async def execute_ui_action(
             raise ValueError("Mock mode not allowed in OPS_MODE=real")
 
         # Execute action deterministically
-        with get_session_context() as session:
+        with get_session() as session:
             executor_result = await execute_action_deterministic(
                 action_id=payload.action_id,
                 inputs=payload.inputs,
@@ -356,7 +356,7 @@ async def execute_ui_action(
         duration_ms = int((time.time() - ts_start) * 1000)
         all_spans = get_all_spans()
 
-        with get_session_context() as session:
+        with get_session() as session:
             persist_execution_trace(
                 session=session,
                 trace_id=trace_id,
@@ -427,7 +427,7 @@ async def execute_ui_action(
             }
         ]
 
-        with get_session_context() as session:
+        with get_session() as session:
             persist_execution_trace(
                 session=session,
                 trace_id=trace_id,
@@ -489,7 +489,7 @@ async def execute_ui_action(
 
 
 @router.get("/golden-queries")
-def list_golden_queries(session: Any = Depends(get_session_context)) -> ResponseEnvelope:
+def list_golden_queries(session: Any = Depends(get_session)) -> ResponseEnvelope:
     """List all golden queries"""
     from app.modules.inspector.crud import list_golden_queries
 
@@ -514,7 +514,7 @@ def list_golden_queries(session: Any = Depends(get_session_context)) -> Response
 @router.post("/golden-queries")
 def create_golden_query(
     payload: Dict[str, Any],
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """Create a new golden query"""
     from app.modules.inspector.crud import create_golden_query as crud_create
@@ -545,7 +545,7 @@ def create_golden_query(
 def update_golden_query(
     query_id: str,
     payload: Dict[str, Any],
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """Update golden query"""
     from app.modules.inspector.crud import update_golden_query as crud_update
@@ -579,7 +579,7 @@ def update_golden_query(
 @router.delete("/golden-queries/{query_id}")
 def delete_golden_query(
     query_id: str,
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """Delete golden query"""
     from app.modules.inspector.crud import delete_golden_query as crud_delete
@@ -598,7 +598,7 @@ def delete_golden_query(
 def set_baseline(
     query_id: str,
     payload: Dict[str, Any],
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """Set baseline trace for a golden query"""
     from app.modules.inspector.crud import (
@@ -646,7 +646,7 @@ def set_baseline(
 def run_regression(
     query_id: str,
     payload: Dict[str, Any],
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """
     Run regression check for a golden query.
@@ -697,10 +697,10 @@ def run_regression(
             candidate_trace = {
                 "status": "success",
                 "asset_versions": [],  # Will be populated by OPS execution
-                "plan_validated": answer_envelope.meta.__dict__ if answer_envelope.meta else {},
+                "plan_validated": answer_envelope.meta.__dict__ if answer_envelope.meta else None,
                 "execution_steps": [],
-                "answer": answer_envelope.model_dump(),
-                "references": answer_envelope.blocks if answer_envelope.blocks else [],
+                "answer": answer_envelope.model_dump() if answer_envelope else {},
+                "references": answer_envelope.blocks if answer_envelope and answer_envelope.blocks else [],
                 "ui_render": {"error_count": 0},
             }
 
@@ -767,7 +767,7 @@ def run_regression(
 def list_regression_runs(
     golden_query_id: str | None = None,
     limit: int = 50,
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """List regression runs"""
     from app.modules.inspector.crud import list_regression_runs
@@ -799,7 +799,7 @@ def list_regression_runs(
 @router.get("/regression-runs/{run_id}")
 def get_regression_run(
     run_id: str,
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """Get regression run details"""
     from app.modules.inspector.crud import get_regression_run
@@ -835,7 +835,7 @@ def get_regression_run(
 @router.post("/rca")
 def run_rca(
     payload: Dict[str, Any],
-    session: Any = Depends(get_session_context),
+    session: Any = Depends(get_session),
 ) -> ResponseEnvelope:
     """
     Run Root Cause Analysis on a trace or trace diff.
@@ -914,11 +914,15 @@ def run_rca(
                 return ResponseEnvelope.error(message=f"Candidate trace {candidate_trace_id} not found")
 
             # Generate hypotheses
-            hypotheses_list = rca_engine.analyze_diff(
-                baseline.model_dump(),
-                candidate.model_dump(),
-                max_hypotheses=max_hypotheses,
-            )
+            try:
+                hypotheses_list = rca_engine.analyze_diff(
+                    baseline.model_dump(),
+                    candidate.model_dump(),
+                    max_hypotheses=max_hypotheses,
+                )
+            except Exception as diff_err:
+                logger.error(f"Diff analysis error: {diff_err}", exc_info=True)
+                raise
 
             source_traces = [baseline_trace_id, candidate_trace_id]
             question = f"RCA: Analyze regression/change between {baseline_trace_id[:8]}... and {candidate_trace_id[:8]}..."
@@ -986,8 +990,9 @@ def run_rca(
             })
 
         # Create execution trace for RCA run
-        rca_trace = create_execution_trace(
-            session,
+        from app.modules.inspector.models import TbExecutionTrace
+
+        rca_trace_obj = TbExecutionTrace(
             trace_id=rca_trace_id,
             parent_trace_id=None,  # RCA is top-level
             feature="rca",
@@ -1020,8 +1025,15 @@ def run_rca(
             audit_links=None,
             flow_spans=None,
         )
+        try:
+            rca_trace = create_execution_trace(session, rca_trace_obj)
+            logger.info(f"RCA trace created successfully: {rca_trace_id}")
+        except Exception as trace_err:
+            logger.error(f"Failed to create RCA trace: {trace_err}", exc_info=True)
+            return ResponseEnvelope.error(message=f"Failed to persist RCA results: {str(trace_err)}")
 
         # ===== Return response =====
+        logger.info(f"Returning RCA response with trace_id: {rca_trace_id}")
         return ResponseEnvelope.success(
             data={
                 "trace_id": rca_trace_id,

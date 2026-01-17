@@ -19,11 +19,12 @@
 
 ## 3. 기술 스택 (변경 불가)
 
-- **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Apache ECharts, React Flow
+- **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Apache ECharts, React Flow, Radix UI (checkbox, select), Lucide React (icons)
 - **Backend**: FastAPI, Pydantic v2, SQLModel, Alembic, LangGraph, Redis, RQ
 - **Database Driver**: psycopg (>=3.1) - PostgreSQL 접근의 필수 드라이버
 - **Data**: PostgreSQL, pgvector, TimescaleDB, Neo4j, Redis
 - **Observability**: LangSmith (선택 사항)
+- **E2E Testing**: Playwright (@playwright/test)
 
 ---
 
@@ -134,6 +135,8 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 ### 4) 품질 관리
    - 모든 코드는 `pre-commit` 훅(Ruff, Prettier)의 검사를 통과해야 합니다.
    - 핵심 로직을 수정할 경우, 반드시 `pytest`(백엔드) 또는 관련 UI 테스트(프론트엔드)를 통해 검증해야 합니다.
+   - **Frontend UI 변경 시**: Playwright E2E 테스트(`make web-test-e2e` 또는 `npm run test:e2e`)를 실행하여 사용자 흐름이 정상 작동하는지 확인합니다.
+   - **Backend API 변경 시**: `curl` 또는 Python 스크립트로 엔드포인트를 테스트하여 응답 형식과 에러 처리가 올바른지 확인합니다.
    - **Tool Contract 변경 시**: `ToolCall`, `ReferenceItem` 등의 스키마 수정 후에는 반드시 관련 executor/runner 테스트를 실행합니다.
    - **Database 드라이버 변경 시**: psycopg 버전 업그레이드 시 모든 DB 호출 코드를 검증하고, SQLAlchemy/SQLModel 마이그레이션이 필요한지 확인합니다.
 
@@ -144,8 +147,9 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 AI 에이전트는 모든 작업을 종료하기 전, 다음 네 가지 기준을 충족했는지 스스로 확인해야 합니다.
 
 1.  **검증 (Verification)**
-    - 단순 코드 생성을 넘어, 실제 동작을 확인했습니까? (`curl` 테스트, `pytest` 실행 결과, UI 동작 스크린샷 등)
+    - 단순 코드 생성을 넘어, 실제 동작을 확인했습니까? (`curl` 테스트, `pytest` 실행 결과, UI 동작 스크린샷, Playwright E2E 테스트 등)
     - 백엔드 로직 수정 시, `tests/`에 관련 테스트 케이스를 추가하거나 `curl` 스크립트 실행 결과를 제시했습니까?
+    - Frontend UI 변경 시, Playwright E2E 테스트(`npm run test:e2e` 또는 `make web-test-e2e`)를 실행하여 사용자 흐름을 검증했습니까?
     - Tool Contract/Reference 관련 변경: 해당 스키마를 사용하는 모든 서비스(executor, runner 등)에서 정상 작동 확인했습니까?
     - DB 드라이버/마이그레이션: `make api-migrate` 실행 후 DB 스키마가 정상 생성되었는지 확인했습니까?
 

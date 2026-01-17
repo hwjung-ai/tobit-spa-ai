@@ -230,11 +230,19 @@ function InspectorContent() {
     setDetailError(null);
     try {
       const response = await fetchApi<TraceDetailResponse>(`/inspector/traces/${encodeURIComponent(traceId)}`);
+      if (!response.data.trace) {
+        setDetailError("Trace not found or invalid response");
+        setTraceDetail(null);
+        setTraceAuditLogs([]);
+        return;
+      }
       setTraceDetail(response.data.trace);
-      setTraceAuditLogs(response.data.audit_logs);
+      setTraceAuditLogs(response.data.audit_logs || []);
       setSelectedTraceId(response.data.trace.trace_id);
     } catch (err: any) {
       setDetailError(err.message || "실행 증거를 불러오지 못했습니다.");
+      setTraceDetail(null);
+      setTraceAuditLogs([]);
     } finally {
       setDetailLoading(false);
     }
@@ -353,7 +361,7 @@ function InspectorContent() {
     setSingleRcaLoading(true);
     setSingleRcaError(null);
     try {
-      const response = await fetchApi<{ trace_id: string }>("/ops/rca", {
+      const response = await fetchApi<{ trace_id: string; status: string }>("/ops/rca", {
         method: "POST",
         body: JSON.stringify({
           mode: "single",
@@ -361,6 +369,12 @@ function InspectorContent() {
           options: { max_hypotheses: 5, include_snippets: true },
         }),
       });
+
+      if (!response.data || !response.data.trace_id) {
+        setSingleRcaError("Invalid RCA response: missing trace_id");
+        return;
+      }
+
       setShowDiffView(false);
       setCompareTraceDetail(null);
       setTraceDetail(null);

@@ -33,7 +33,7 @@ function SpanNode({ data, isConnecting, selected }: NodeProps<SpanNodeData>) {
     <div
       className={`w-56 bg-slate-900/80 rounded-lg px-3 py-2 transition-all cursor-pointer ${nodeClass} ${statusClass}`}
     >
-      <Handle type="target" position={Position.Top} isConnecting={isConnecting} />
+      <Handle type="target" position={Position.Top} />
 
       <div className="text-xs font-semibold text-slate-100 truncate">{data.name}</div>
 

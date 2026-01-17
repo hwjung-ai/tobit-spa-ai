@@ -72,7 +72,7 @@ def list_execution_traces(
         total_stmt = total_stmt.where(*filters)
 
     traces = session.exec(statement).all()
-    total = session.exec(total_stmt).scalar_one()
+    total = session.exec(total_stmt).one()
     return traces, total
 
 

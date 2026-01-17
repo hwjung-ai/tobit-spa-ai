@@ -21,6 +21,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, clas
 
 
 def init_db() -> None:
+    # Import all models to register them with SQLModel
+    # This is required for init_db() to create all tables
+    import app.modules.inspector.models  # noqa: F401
+
     SQLModel.metadata.create_all(engine)
 
 

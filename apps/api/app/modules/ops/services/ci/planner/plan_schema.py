@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class Intent(str, Enum):
@@ -31,21 +31,21 @@ class FilterSpec(BaseModel):
 
 
 class PrimarySpec(BaseModel):
-    keywords: List[str] = Field(default_factory=list)
-    filters: List[FilterSpec] = Field(default_factory=list)
+    keywords: List[str] = Field(default_factory=lambda: [])
+    filters: List[FilterSpec] = Field(default_factory=lambda: [])
     limit: int = 5
 
 
 class SecondarySpec(BaseModel):
-    keywords: List[str] = Field(default_factory=list)
-    filters: List[FilterSpec] = Field(default_factory=list)
+    keywords: List[str] = Field(default_factory=lambda: [])
+    filters: List[FilterSpec] = Field(default_factory=lambda: [])
     limit: int = 5
 
 
 class AggregateSpec(BaseModel):
-    group_by: List[str] = Field(default_factory=list)
-    metrics: List[str] = Field(default_factory=list)
-    filters: List[FilterSpec] = Field(default_factory=list)
+    group_by: List[str] = Field(default_factory=lambda: [])
+    metrics: List[str] = Field(default_factory=lambda: [])
+    filters: List[FilterSpec] = Field(default_factory=lambda: [])
     scope: Literal["ci", "graph"] = "ci"
     top_n: int = 10
 
@@ -58,7 +58,7 @@ class GraphLimits(BaseModel):
 
 class GraphSpec(BaseModel):
     depth: int = 2
-    limits: GraphLimits = Field(default_factory=GraphLimits)
+    limits: GraphLimits = Field(default_factory=lambda: GraphLimits())
     view: View | None = None
 
 
@@ -113,8 +113,8 @@ class AutoSpec(BaseModel):
     metric_mode: Literal["aggregate", "series"] = "aggregate"
     include_history: bool = False
     include_cep: bool = False
-    path: AutoPathSpec = Field(default_factory=AutoPathSpec)
-    graph_scope: AutoGraphScopeSpec = Field(default_factory=AutoGraphScopeSpec)
+    path: AutoPathSpec = Field(default_factory=lambda: AutoPathSpec())
+    graph_scope: AutoGraphScopeSpec = Field(default_factory=lambda: AutoGraphScopeSpec())
 
 class PlanMode(str, Enum):
     CI = "ci"
@@ -145,16 +145,16 @@ class PlanStep(BaseModel):
     intent: Intent
     view: View | None = None
     mode: PlanMode = PlanMode.CI
-    primary: PrimarySpec = Field(default_factory=PrimarySpec)
-    secondary: SecondarySpec = Field(default_factory=SecondarySpec)
-    aggregate: AggregateSpec = Field(default_factory=AggregateSpec)
-    graph: GraphSpec = Field(default_factory=GraphSpec)
-    output: OutputSpec = Field(default_factory=OutputSpec)
+    primary: PrimarySpec = Field(default_factory=lambda: PrimarySpec())
+    secondary: SecondarySpec = Field(default_factory=lambda: SecondarySpec())
+    aggregate: AggregateSpec = Field(default_factory=lambda: AggregateSpec())
+    graph: GraphSpec = Field(default_factory=lambda: GraphSpec())
+    output: OutputSpec = Field(default_factory=lambda: OutputSpec())
     metric: MetricSpec | None = None
     history: HistorySpec = Field(default_factory=lambda: HistorySpec())
     cep: CepSpec | None = None
-    auto: AutoSpec = Field(default_factory=AutoSpec)
-    list: ListSpec = Field(default_factory=ListSpec)
+    auto: AutoSpec = Field(default_factory=lambda: AutoSpec())
+    list: ListSpec = Field(default_factory=lambda: ListSpec())
     condition: StepCondition | None = None
     next_step_id: str | None = None
     error_next_step_id: str | None = None
@@ -165,7 +165,7 @@ class PlanBranch(BaseModel):
     branch_id: str
     name: str
     condition: StepCondition
-    steps: List[PlanStep] = Field(default_factory=list)
+    steps: List[PlanStep] = Field(default_factory=lambda: [])
     merge_step_id: str | None = None
 
 
@@ -183,33 +183,35 @@ class Plan(BaseModel):
     intent: Intent = Intent.LOOKUP
     view: View | None = View.SUMMARY
     mode: PlanMode = PlanMode.CI
-    primary: PrimarySpec = Field(default_factory=PrimarySpec)
-    secondary: SecondarySpec = Field(default_factory=SecondarySpec)
-    aggregate: AggregateSpec = Field(default_factory=AggregateSpec)
-    graph: GraphSpec = Field(default_factory=GraphSpec)
-    output: OutputSpec = Field(default_factory=OutputSpec)
+    primary: PrimarySpec = Field(default_factory=lambda: PrimarySpec())
+    secondary: SecondarySpec = Field(default_factory=lambda: SecondarySpec())
+    aggregate: AggregateSpec = Field(default_factory=lambda: AggregateSpec())
+    graph: GraphSpec = Field(default_factory=lambda: GraphSpec())
+    output: OutputSpec = Field(default_factory=lambda: OutputSpec())
     metric: MetricSpec | None = None
     history: HistorySpec = Field(default_factory=lambda: HistorySpec())
     cep: CepSpec | None = None
-    auto: AutoSpec = Field(default_factory=AutoSpec)
-    list: ListSpec = Field(default_factory=ListSpec)
+    auto: AutoSpec = Field(default_factory=lambda: AutoSpec())
+    list: ListSpec = Field(default_factory=lambda: ListSpec())
     normalized_from: str | None = None
     normalized_to: str | None = None
     # Multi-step execution support
-    steps: List[PlanStep] = Field(default_factory=list)
-    branches: List[PlanBranch] = Field(default_factory=list)
-    loops: List[PlanLoop] = Field(default_factory=list)
-    budget: BudgetSpec = Field(default_factory=BudgetSpec)
+    steps: List[PlanStep] = Field(default_factory=lambda: [])
+    branches: List[PlanBranch] = Field(default_factory=lambda: [])
+    loops: List[PlanLoop] = Field(default_factory=lambda: [])
+    budget: BudgetSpec = Field(default_factory=lambda: BudgetSpec())
     enable_multistep: bool = False
 
-    @validator("view", pre=True, always=True)
-    def normalize_view(cls, value: View | str | None) -> View | None:
+    @field_validator("view", mode="before")
+    @classmethod
+    def normalize_view(cls, value: Any) -> View | None:
         if isinstance(value, str):
             return View(value.upper())
         return value
 
-    @validator("mode", pre=True, always=True)
-    def normalize_mode(cls, value: PlanMode | str | None) -> PlanMode:
+    @field_validator("mode", mode="before")
+    @classmethod
+    def normalize_mode(cls, value: Any) -> PlanMode:
         if isinstance(value, PlanMode):
             return value
         if isinstance(value, str):

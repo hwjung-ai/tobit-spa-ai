@@ -70,7 +70,7 @@ class RCAEngine:
         fallbacks = trace.get("fallbacks", {})
 
         # Rule 1: Tool call errors
-        if status == "error":
+        if status == "error" and execution_steps:
             self._check_tool_errors(execution_steps)
 
         # Rule 2: Fallback asset usage
@@ -78,7 +78,7 @@ class RCAEngine:
             self._check_fallback_assets(applied_assets, fallbacks)
 
         # Rule 3: Plan step overflow
-        steps = plan_validated.get("steps", [])
+        steps = plan_validated.get("steps", []) if plan_validated else []
         if steps:
             self._check_plan_step_limits(steps, plan_validated)
 
@@ -87,29 +87,32 @@ class RCAEngine:
             self._check_no_data_normal(answer)
 
         # Rule 5: Tool duration spike
-        self._check_tool_duration_spike(execution_steps)
+        if execution_steps:
+            self._check_tool_duration_spike(execution_steps)
 
         # Rule 6: UI mapping failures
-        if ui_render.get("error_count", 0) > 0:
+        if ui_render and ui_render.get("error_count", 0) > 0:
             self._check_ui_mapping_failures(ui_render)
 
         # Rule 7: Validator policy violations
-        if plan_validated.get("policy_violations"):
+        if plan_validated and plan_validated.get("policy_violations"):
             self._check_validator_violations(plan_validated)
 
         # Rule 8: Plan intent misclassification
-        if plan_validated.get("intent") == "list" and plan_validated.get("view") == "graph":
+        if plan_validated and plan_validated.get("intent") == "list" and plan_validated.get("view") == "graph":
             self._check_intent_misclassify(plan_validated)
 
         # Rule 9: SQL zero-row results
-        for ref in references:
-            if ref.get("ref_type", "").startswith("SQL") and ref.get("row_count") == 0:
-                self._check_sql_zero_rows(ref)
+        if references:
+            for ref in references:
+                if ref.get("ref_type", "").startswith("SQL") and ref.get("row_count") == 0:
+                    self._check_sql_zero_rows(ref)
 
         # Rule 10: HTTP auth errors
-        for ref in references:
-            if ref.get("ref_type", "").startswith("HTTP"):
-                self._check_http_auth_errors(ref, execution_steps)
+        if references:
+            for ref in references:
+                if ref.get("ref_type", "").startswith("HTTP"):
+                    self._check_http_auth_errors(ref, execution_steps)
 
         # Sort by confidence and return top N
         self._rank_hypotheses()
@@ -144,35 +147,39 @@ class RCAEngine:
         candidate_steps = candidate_trace.get("execution_steps", [])
         baseline_blocks = baseline_trace.get("answer", {}).get("blocks", [])
         candidate_blocks = candidate_trace.get("answer", {}).get("blocks", [])
-        baseline_refs = baseline_trace.get("references", [])
-        candidate_refs = candidate_trace.get("references", [])
-        baseline_ui_errors = baseline_trace.get("ui_render", {}).get("error_count", 0)
-        candidate_ui_errors = candidate_trace.get("ui_render", {}).get("error_count", 0)
+        baseline_refs = baseline_trace.get("references") or []
+        candidate_refs = candidate_trace.get("references") or []
+        baseline_ui_render = baseline_trace.get("ui_render") or {}
+        candidate_ui_render = candidate_trace.get("ui_render") or {}
+        baseline_ui_errors = baseline_ui_render.get("error_count", 0)
+        candidate_ui_errors = candidate_ui_render.get("error_count", 0)
 
         # Rule 1: Asset version changes (highest priority)
         if baseline_assets != candidate_assets:
             self._check_asset_changes(baseline_assets, candidate_assets, candidate_trace)
 
         # Rule 2: Plan changes
-        if baseline_plan.get("intent") != candidate_plan.get("intent") or \
-           baseline_plan.get("output_types") != candidate_plan.get("output_types"):
+        if baseline_plan and candidate_plan and \
+           (baseline_plan.get("intent") != candidate_plan.get("intent") or \
+            baseline_plan.get("output_types") != candidate_plan.get("output_types")):
             self._check_plan_changes(baseline_plan, candidate_plan)
 
         # Rule 3: Tool call path changes
-        baseline_tool_names = {step.get("step_id", "").split(":")[0] for step in baseline_steps}
-        candidate_tool_names = {step.get("step_id", "").split(":")[0] for step in candidate_steps}
+        baseline_tool_names = {step.get("step_id", "").split(":")[0] for step in (baseline_steps or [])}
+        candidate_tool_names = {step.get("step_id", "").split(":")[0] for step in (candidate_steps or [])}
         if baseline_tool_names != candidate_tool_names:
             self._check_tool_path_changes(baseline_tool_names, candidate_tool_names)
 
         # Rule 4: New tool errors
-        baseline_errors = sum(1 for s in baseline_steps if s.get("error"))
-        candidate_errors = sum(1 for s in candidate_steps if s.get("error"))
+        baseline_errors = sum(1 for s in (baseline_steps or []) if s.get("error"))
+        candidate_errors = sum(1 for s in (candidate_steps or []) if s.get("error"))
         if candidate_errors > baseline_errors:
             self._check_tool_error_regression(candidate_steps, baseline_steps)
 
         # Rule 5: Block structure changes
-        if len(baseline_blocks) != len(candidate_blocks) or \
-           {b.get("type") for b in baseline_blocks} != {b.get("type") for b in candidate_blocks}:
+        if baseline_blocks and candidate_blocks and \
+           (len(baseline_blocks) != len(candidate_blocks) or \
+            {b.get("type") for b in baseline_blocks} != {b.get("type") for b in candidate_blocks}):
             self._check_block_structure_change(baseline_blocks, candidate_blocks)
 
         # Rule 6: UI render regression
@@ -180,7 +187,9 @@ class RCAEngine:
             self._check_ui_render_regression(baseline_ui_errors, candidate_ui_errors)
 
         # Rule 7: Data reduction
-        if len(candidate_refs) < len(baseline_refs) * 0.8:
+        baseline_refs = baseline_refs or []
+        candidate_refs = candidate_refs or []
+        if len(candidate_refs) < len(baseline_refs) * 0.8 and len(baseline_refs) > 0:
             self._check_data_reduction(baseline_refs, candidate_refs)
 
         # Rule 8: Performance regression

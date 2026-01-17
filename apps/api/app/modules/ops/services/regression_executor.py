@@ -48,13 +48,13 @@ def compute_regression_diff(
     """
 
     # 1. Asset version changes
-    baseline_assets = baseline_trace.get("asset_versions", [])
-    candidate_assets = candidate_trace.get("asset_versions", [])
+    baseline_assets = baseline_trace.get("asset_versions") or []
+    candidate_assets = candidate_trace.get("asset_versions") or []
     assets_changed = baseline_assets != candidate_assets
 
     # 2. Plan changes
-    baseline_plan = baseline_trace.get("plan_validated", {})
-    candidate_plan = candidate_trace.get("plan_validated", {})
+    baseline_plan = baseline_trace.get("plan_validated") or {}
+    candidate_plan = candidate_trace.get("plan_validated") or {}
 
     plan_intent_changed = (
         baseline_plan.get("intent") != candidate_plan.get("intent")
@@ -64,8 +64,8 @@ def compute_regression_diff(
     )
 
     # 3. Tool call changes - match by signature
-    baseline_steps = baseline_trace.get("execution_steps", [])
-    candidate_steps = candidate_trace.get("execution_steps", [])
+    baseline_steps = baseline_trace.get("execution_steps") or []
+    candidate_steps = candidate_trace.get("execution_steps") or []
 
     (
         tool_added_count,
@@ -75,8 +75,10 @@ def compute_regression_diff(
     ) = _analyze_tool_calls(baseline_steps, candidate_steps)
 
     # 4. Answer blocks structure
-    baseline_blocks = baseline_trace.get("answer", {}).get("blocks", [])
-    candidate_blocks = candidate_trace.get("answer", {}).get("blocks", [])
+    baseline_answer = baseline_trace.get("answer") or {}
+    candidate_answer = candidate_trace.get("answer") or {}
+    baseline_blocks = baseline_answer.get("blocks", [])
+    candidate_blocks = candidate_answer.get("blocks", [])
 
     blocks_structure_changed = _blocks_structure_changed(
         baseline_blocks, candidate_blocks
@@ -86,8 +88,8 @@ def compute_regression_diff(
     candidate_block_count = len(candidate_blocks)
 
     # 5. References count variance
-    baseline_refs = baseline_trace.get("references", [])
-    candidate_refs = candidate_trace.get("references", [])
+    baseline_refs = baseline_trace.get("references") or []
+    candidate_refs = candidate_trace.get("references") or []
 
     baseline_ref_count = len(baseline_refs)
     candidate_ref_count = len(candidate_refs)
@@ -106,11 +108,11 @@ def compute_regression_diff(
     error_in_candidate = candidate_status == "error"
 
     # 7. UI render errors
-    baseline_ui = baseline_trace.get("ui_render", {})
-    candidate_ui = candidate_trace.get("ui_render", {})
+    baseline_ui = baseline_trace.get("ui_render") or {}
+    candidate_ui = candidate_trace.get("ui_render") or {}
 
-    baseline_ui_errors = baseline_ui.get("error_count", 0)
-    candidate_ui_errors = candidate_ui.get("error_count", 0)
+    baseline_ui_errors = baseline_ui.get("error_count", 0) if isinstance(baseline_ui, dict) else 0
+    candidate_ui_errors = candidate_ui.get("error_count", 0) if isinstance(candidate_ui, dict) else 0
     ui_errors_increase = candidate_ui_errors > baseline_ui_errors
 
     return RegressionDiffSummary(

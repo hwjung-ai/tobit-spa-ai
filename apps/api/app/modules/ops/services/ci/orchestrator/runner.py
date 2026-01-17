@@ -238,8 +238,8 @@ class CIOrchestratorRunner:
                 limit=limit,
                 sort=sort,
             )
-            meta["row_count"] = len(result)
-        if not result and not self._ci_search_recovery:
+            meta["row_count"] = len(result.records)
+        if not result.records and not self._ci_search_recovery:
             recovered = self._recover_ci_identifiers()
             if recovered:
                 self._ci_search_recovery = True
@@ -248,7 +248,7 @@ class CIOrchestratorRunner:
                     update={"primary": self.plan.primary.copy(update={"keywords": list(recovered)})}
                 )
                 return self._ci_search(keywords=recovered, filters=filters, limit=limit, sort=sort)
-        return result
+        return [r.dict() for r in result.records]
 
     def _ci_search_broad_or(
         self,
@@ -293,8 +293,8 @@ class CIOrchestratorRunner:
                 limit=limit,
                 sort=None,
             )
-            meta["row_count"] = len(result)
-        return result
+            meta["row_count"] = len(result.records)
+        return [r.dict() for r in result.records]
 
     def _recover_ci_identifiers(self) -> tuple[str, ...] | None:
         if not self.question:
@@ -393,13 +393,13 @@ class CIOrchestratorRunner:
         with self._tool_context("ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id) as meta:
             detail = ci_tools.ci_get(self.tenant_id, ci_id)
             meta["found"] = bool(detail)
-        return detail
+        return detail.dict() if detail else None
 
     def _ci_get_by_code(self, ci_code: str) -> Dict[str, Any] | None:
         with self._tool_context("ci.get", input_params={"ci_code": ci_code}, ci_code=ci_code) as meta:
             detail = ci_tools.ci_get_by_code(self.tenant_id, ci_code)
             meta["found"] = bool(detail)
-        return detail
+        return detail.dict() if detail else None
 
     def _ci_aggregate(
         self,
@@ -437,8 +437,8 @@ class CIOrchestratorRunner:
                 ci_ids=ci_ids,
                 top_n=top_n,
             )
-            meta["row_count"] = len(result.get("rows", []))
-        return result
+            meta["row_count"] = len(result.rows)
+        return result.dict()
 
     def _ci_list_preview(
         self,
@@ -460,8 +460,8 @@ class CIOrchestratorRunner:
             filter_count=len(filters_tuple),
         ) as meta:
             result = ci_tools.ci_list_preview(self.tenant_id, limit, offset, filters)
-            meta["row_count"] = len(result.get("rows", []))
-        return result
+            meta["row_count"] = len(result.rows)
+        return result.dict()
 
     def _graph_expand(self, ci_id: str, view: str, depth: int, limits: dict[str, int]) -> Dict[str, Any]:
         input_params = {
@@ -567,9 +567,9 @@ class CIOrchestratorRunner:
             ci_ids_count=len(ci_ids_tuple),
         ) as meta:
             result = metric_tools.metric_aggregate(self.tenant_id, metric_name, time_range, agg, ci_id=ci_id, ci_ids=ci_ids_tuple or None)
-            meta["value_present"] = result.get("value") is not None
-            meta["ci_count_used"] = len(result.get("ci_ids", []))
-        return result
+            meta["value_present"] = result.value is not None
+            meta["ci_count_used"] = result.ci_count_used
+        return result.dict()
 
     def _metric_series_table(
         self,
@@ -586,8 +586,8 @@ class CIOrchestratorRunner:
         }
         with self._tool_context("metric.series", input_params=input_params, metric=metric_name, time_range=time_range, limit=limit) as meta:
             result = metric_tools.metric_series_table(self.tenant_id, ci_id, metric_name, time_range, limit)
-            meta["rows_count"] = len(result.get("rows", []))
-        return result
+            meta["rows_count"] = len(result.rows)
+        return result.dict()
 
     def _history_recent(
         self,
@@ -1894,8 +1894,8 @@ class CIOrchestratorRunner:
         except Exception as exc:
             self.logger.debug("ci.runner.history_fallback_failed", exc_info=exc)
             return [text_block("전체 이력 조회에 실패했습니다. 이력 탭을 이용해주세요.", title="History fallback")], "History fallback failed"
-        work_rows = history.get("work_rows", [])
-        maint_rows = history.get("maint_rows", [])
+        work_records = [r for r in history.records if r.event_type == "work"]
+        maint_records = [r for r in history.records if r.event_type == "maintenance"]
         types = history_tools.detect_history_sections(self.question)
         fallback_blocks: List[Dict[str, Any]] = [text_block("CI 없이 전체 이력을 가져왔습니다.", title="History fallback")]
         if "work" in types or not types:
@@ -1904,15 +1904,15 @@ class CIOrchestratorRunner:
                     ["start_time", "ci_code", "ci_name", "work_type", "impact_level", "result", "summary"],
                     [
                         [
-                            str(row[0]),
-                            row[1] or "-",
-                            row[2] or "-",
-                            row[3],
-                            str(row[4]),
-                            row[5] or "",
-                            row[6] or "",
+                            r.timestamp,
+                            r.ci_code or "-",
+                            "-", # ci_name not in HistoryRecord
+                            r.event_type,
+                            "-",
+                            "-",
+                            r.description,
                         ]
-                        for row in work_rows
+                        for r in work_records
                     ]
                     or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
                     title="Work history (최근 7일)",
@@ -1924,15 +1924,15 @@ class CIOrchestratorRunner:
                     ["start_time", "ci_code", "ci_name", "maint_type", "duration_min", "result", "summary"],
                     [
                         [
-                            str(row[0]),
-                            row[1] or "-",
-                            row[2] or "-",
-                            row[3],
-                            str(row[4]),
-                            row[5] or "",
-                            row[6] or "",
+                            r.timestamp,
+                            r.ci_code or "-",
+                            "-",
+                            r.event_type,
+                            "-",
+                            "-",
+                            r.description,
                         ]
-                        for row in maint_rows
+                        for r in maint_records
                     ]
                     or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
                     title="Maintenance history (최근 7일)",

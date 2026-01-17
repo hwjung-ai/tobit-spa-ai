@@ -270,31 +270,28 @@ export default function RegressionWatchPanel() {
                     <td className="px-4 py-3 text-right space-x-2">
                       <Button
                         size="sm"
-                        variant="ghost"
                         onClick={() => {
                           setSelectedQuery(query);
                           setShowBaselineDialog(true);
                         }}
-                        className="text-xs h-8"
+                        className="text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
                       >
                         Set Baseline
                       </Button>
                       <Button
                         size="sm"
-                        variant="ghost"
                         onClick={() => {
                           setSelectedQuery(query);
                           setShowRunDialog(true);
                         }}
-                        className="text-xs h-8"
+                        className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
                       >
                         Run
                       </Button>
                       <Button
                         size="sm"
-                        variant="ghost"
                         onClick={() => handleDeleteQuery(query.id)}
-                        className="text-xs h-8 text-red-400"
+                        className="text-xs h-8 bg-red-600 hover:bg-red-700 text-white"
                       >
                         Delete
                       </Button>
@@ -470,14 +467,14 @@ export default function RegressionWatchPanel() {
 
           <DialogFooter>
             <Button
-              variant="outline"
               onClick={() => setShowBaselineDialog(false)}
+              className="bg-slate-700 hover:bg-slate-600 text-white"
             >
               Cancel
             </Button>
             <Button
               onClick={handleSetBaseline}
-              className="bg-blue-600"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               disabled={!baselineForm.trace_id}
             >
               Set Baseline
@@ -507,12 +504,15 @@ export default function RegressionWatchPanel() {
 
           <DialogFooter>
             <Button
-              variant="outline"
               onClick={() => setShowRunDialog(false)}
+              className="bg-slate-700 hover:bg-slate-600 text-white"
             >
               Cancel
             </Button>
-            <Button onClick={handleRunRegression} className="bg-green-600">
+            <Button
+              onClick={handleRunRegression}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
               Run Regression
             </Button>
           </DialogFooter>
