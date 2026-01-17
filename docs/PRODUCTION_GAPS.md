@@ -218,17 +218,67 @@
 2.  **권한 관리 및 감사**: 활성화 시, 데이터베이스 및 테이블별 접근 권한을 제어하고, 모든 쿼리 실행 기록을 감사 로그로 남겨야 합니다.
 
 ---
+## 11. UI Creator Phase 4 완료 항목 (✅ Completed - 2026-01-18)
+
+### 📊 UI Screen & Asset Registry 최종 통합
+- **UI Screen Component** ✅
+  - JSON 기반 UI 정의 및 동적 렌더링 (UIScreenRenderer)
+  - 컴포넌트 지원: button, input, text, card, grid, chart 등
+  - State management 및 reactive binding
+  - Error Boundary를 통한 런타임 오류 처리
+
+- **Screen Asset Model & Migration** ✅
+  - TbAssetRegistry에 screen_id, schema_json, tags 칼럼 추가
+  - 마이그레이션: `0029_add_screen_asset_fields.py` (0028 → 0030 체인)
+  - 자산 생명주기: draft → published → rollback
+
+- **Binding Engine** ✅
+  - 템플릿 표현식: `{{inputs.x}}`, `{{state.x}}`, `{{context.x}}`
+  - Array index 지원: `{{state.items[0].name}}`
+  - 정규식 기반 검증
+
+- **RCA Integration & Inspector** ✅
+  - RCAPanel: Root Cause Analysis 가설 표시
+  - Inspector 점프 링크 (seamless navigation)
+  - RegressionWatchPanel 통합
+
+- **Admin Dashboard** ✅
+  - Asset Registry UI (목록, 필터, 생성)
+  - Observability Dashboard (KPI, 차트)
+  - Regression Watch Panel (결과 분석)
+
+### 🔧 API Response Format Standardization (2026-01-18)
+- **ResponseEnvelope 표준화** ✅
+  - 모든 API 응답을 `{time, code, message, data}` 형식으로 통일
+  - 예외: SSE 스트리밍은 제외
+  - Asset Registry, Observability KPI 모두 준수
+
+- **마이그레이션 자동화** ✅
+  - Alembic 병렬 마이그레이션 해결 (merge 파일 제거)
+  - 0029 down_revision 수정: 0022 → 0028
+  - 수동 마이그레이션 완료: tags 칼럼, 인덱스 생성
+  - startup 시 자동 마이그레이션 실행
+
+- **프론트엔드-백엔드 통합** ✅
+  - fetchApi 호환성: `response.data.assets` 구조 확립
+  - ObservabilityDashboard 절대 URL 적용
+  - CORS 설정 및 API 라우팅 정상화
+
+---
+
 ## 11. 우선순위 요약
 
 ### P0: 즉시 시작 (부분 완료)
 **완료된 항목** (✅):
 - **공통**: 감사 로그 (Audit Log) ✅, Request Tracing ✅
 - **운영 설정**: 런타임 플래그 외부화 ✅
+- **UI Creator**: Phase 4 완료 (Screen Asset, Binding Engine, RCA Integration) ✅
+- **API 표준**: ResponseEnvelope 표준화 ✅
 
 **여전히 필요한 항목**:
 - **공통**: 인증/권한, 보안 (HTTPS/암호화), 로그 표준화, 테스트 관리
 - **OPS AI**: 오케스트레이터 고도화 (재귀/분기 처리), CI 변경 관리
-- **API/UI/CEP**: 버전 관리 및 롤백 기능
+- **API/UI/CEP**: 버전 관리 및 롤백 기능 (Asset Registry는 기본 완료)
 - **문서 검색/대화**: 핵심 기능 고도화 (다중 형식 지원, 이력 관리 강화)
 
 ### P1: 단기 (1-3개월)
