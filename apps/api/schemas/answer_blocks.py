@@ -120,6 +120,44 @@ class ChartBlock(BaseModel):
     meta: dict[str, Any] = Field(default_factory=dict)
 
 
+class UIInput(BaseModel):
+    """UI input field definition"""
+    id: str
+    label: str
+    kind: Literal["text", "number", "select", "date", "datetime", "checkbox"]
+    required: bool = False
+    placeholder: str | None = None
+    default: Any | None = None
+    options: list[dict[str, Any]] | None = None  # for select: [{"label": "...", "value": "..."}]
+
+
+class UIAction(BaseModel):
+    """UI action button definition"""
+    id: str
+    label: str
+    endpoint: str = "/ops/ui-actions"
+    method: Literal["POST"] = "POST"
+    payload_template: dict[str, Any]  # with {{trace_id}}, {{inputs.<id>}}, {{action_id}}
+    variant: Literal["default", "destructive", "outline", "secondary", "ghost", "link"] = "default"
+
+
+class UIBindings(BaseModel):
+    """UI state bindings (future-proof)"""
+    loading: str | None = None  # e.g. "state.loading"
+    error: str | None = None    # e.g. "state.error"
+    result_blocks: str | None = None  # e.g. "state.result.blocks"
+
+
+class UIPanelBlock(BaseModel):
+    """Interactive UI panel block with inputs and actions"""
+    type: Literal["ui_panel"]
+    title: str | None = None
+    id: str | None = None
+    inputs: list[UIInput] = Field(default_factory=list)
+    actions: list[UIAction] = Field(default_factory=list)
+    bindings: UIBindings | None = None
+
+
 AnswerBlock = Annotated[
     Union[
         MarkdownBlock,
@@ -132,6 +170,7 @@ AnswerBlock = Annotated[
         NetworkBlock,
         PathBlock,
         ChartBlock,
+        UIPanelBlock,
     ],
     Field(discriminator="type"),
 ]

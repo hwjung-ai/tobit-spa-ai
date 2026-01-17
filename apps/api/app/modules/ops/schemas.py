@@ -83,3 +83,21 @@ class CiAskResponse(BaseModel):
     trace: Dict[str, Any]
     next_actions: List[Dict[str, Any]]
     meta: Dict[str, Any] | None
+
+
+# UI Actions schemas
+class UIActionRequest(BaseModel):
+    """Request for UI action execution"""
+    trace_id: str | None = None
+    action_id: str
+    inputs: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
+
+
+class UIActionResponse(BaseModel):
+    """Response from UI action execution"""
+    trace_id: str
+    status: Literal["ok", "error"]
+    blocks: List[Dict[str, Any]] = []
+    references: List[Dict[str, Any]] = []
+    error: Dict[str, Any] | None = None

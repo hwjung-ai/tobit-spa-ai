@@ -14,6 +14,8 @@ import {
 import ReactFlow, { Background, Controls, type Edge, type Node } from "reactflow";
 import "reactflow/dist/style.css";
 import { type NextAction } from "../../app/ops/nextActions";
+import UIPanelRenderer from "./UIPanelRenderer";
+import type { UIPanelBlock } from "@/types/uiActions";
 
 export type AnswerBlock =
   | MarkdownBlock
@@ -25,7 +27,8 @@ export type AnswerBlock =
   | TextBlock
   | NumberBlock
   | NetworkBlock
-  | PathBlock;
+  | PathBlock
+  | UIPanelBlock;
 
 export interface AnswerEnvelope {
   meta: AnswerMeta;
@@ -207,6 +210,7 @@ const BLOCK_COMPONENT_NAMES: Record<string, string> = {
   network: "NetworkBlock",
   path: "PathBlock",
   references: "ReferencesBlock",
+  ui_panel: "UIPanelRenderer",
 };
 
 const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
@@ -652,6 +656,23 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                     </div>
                   ))}
                 </div>
+              </section>
+            );
+
+          case "ui_panel":
+            return (
+              <section
+                key={`${block.type}-${block.id ?? index}`}
+                className="rounded-3xl"
+              >
+                <UIPanelRenderer
+                  block={block as UIPanelBlock}
+                  traceId={traceId}
+                  onResult={(blocks) => {
+                    // Optional: handle result blocks
+                    // Could append to current view or replace
+                  }}
+                />
               </section>
             );
 
