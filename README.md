@@ -33,6 +33,7 @@
 - **[docs/FEATURES.md](./docs/FEATURES.md)**: 각 기능의 상세 명세, API 노트, 사용 예시를 제공합니다.
 - **[docs/OPERATIONS.md](./docs/OPERATIONS.md)**: 기능 검증을 위한 운영 체크리스트 및 절차를 안내합니다.
 - **[docs/PRODUCTION_GAPS.md](./docs/PRODUCTION_GAPS.md)**: MVP에서 프로덕션으로 전환하기 위한 기술 부채 및 개선 항목(TODO) 목록입니다.
+- **[docs/QUERY_ASSET_OPERATION_GUIDE.md](./docs/QUERY_ASSET_OPERATION_GUIDE.md)**: SQL Query를 Asset Registry 기반으로 운영하는 기준과 Query Import/Publish/Trace 흐름을 정리합니다.
 
 ---
 

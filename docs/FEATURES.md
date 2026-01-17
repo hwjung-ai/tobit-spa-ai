@@ -36,10 +36,10 @@
   - CEP simulate 연계 + Event Browser 링크
   - CI 목록 미리보기
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
-  - Assets: Prompt/Mapping/Policy 자산 관리 (draft/publish/rollback)
+  - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
   - Settings: 운영 설정 편집 (restart_required 표시)
-  - Inspector: Trace ID 검색 및 Audit Log 조회
-  - 상세 명세: `docs/ADMIN_UI_SPEC.md`
+  - Inspector: Trace ID 검색 및 Audit Log 조회, Query asset 사용 trace 기록
+  - 상세 명세: `docs/ADMIN_UI_SPEC.md`, `docs/QUERY_ASSET_OPERATION_GUIDE.md`
 
 ## 2-1. 공통 UI 표준
 

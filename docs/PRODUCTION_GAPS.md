@@ -97,7 +97,8 @@
 6.  **관리자 화면**:
     - 사용자/테넌트별 토큰 사용량 및 시스템 리소스 모니터링
     - 시스템 로그 조회 및 다운로드
-    - 프롬프트/쿼리 관리 및 확인 UI
+    - 프롬프트/쿼리/Query Asset 관리 UI (draft/publish/rollback, SQL read-only bible view)
+    - Query asset 변경/Publish/rollback은 Inspector trace와 Audit Log에 기록되어야 하며, docs/QUERY_ASSET_OPERATION_GUIDE.md를 참조하여 SQL 자산을 운영합니다.
 7.  **백업 및 복구**:
     - 정기 자동 백업 및 검증
     - 데이터 복구 프로세스 수립
