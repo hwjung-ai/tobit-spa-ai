@@ -64,6 +64,20 @@ app.include_router(history_router)
 
 @app.on_event("startup")
 async def on_startup() -> None:
+    # Run database migrations
+    try:
+        from alembic.config import Config as AlembicConfig
+        from alembic import command
+        import logging
+
+        logger = logging.getLogger(__name__)
+        alembic_cfg = AlembicConfig("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        logger.info("Database migrations completed successfully")
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Failed to run migrations: {e}", exc_info=True)
+
     # Start CEP scheduler
     start_scheduler()
     # Start resource watcher
