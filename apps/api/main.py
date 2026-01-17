@@ -72,6 +72,10 @@ async def on_startup() -> None:
 
         logger = logging.getLogger(__name__)
         alembic_cfg = AlembicConfig("alembic.ini")
+
+        # Set the actual database URL from settings instead of hardcoded alembic.ini
+        alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+
         command.upgrade(alembic_cfg, "head")
         logger.info("Database migrations completed successfully")
     except Exception as e:
