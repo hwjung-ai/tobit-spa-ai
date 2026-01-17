@@ -16,6 +16,7 @@ import { AuditLog, fetchApi, formatRelativeTime, formatTimestamp } from "../../.
 import AuditLogTable, { AuditLogDetailsModal } from "../../../components/admin/AuditLogTable";
 import ValidationAlert from "../../../components/admin/ValidationAlert";
 import SpanNode from "../../../components/admin/SpanNode";
+import TraceDiffView from "../../../components/admin/TraceDiffView";
 import { generateNodes, generateEdges, filterToolSpans } from "../../../lib/flowGraphUtils";
 
 const PER_PAGE = 20;
@@ -182,6 +183,12 @@ export default function InspectorPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareTraceId, setCompareTraceId] = useState("");
+  const [compareTraceDetail, setCompareTraceDetail] = useState<ExecutionTraceDetail | null>(null);
+  const [compareFetching, setCompareFetching] = useState(false);
+  const [compareError, setCompareError] = useState<string | null>(null);
+  const [showDiffView, setShowDiffView] = useState(false);
   const reactFlowInstance = useReactFlow();
   const searchParams = useSearchParams();
 
@@ -303,6 +310,34 @@ export default function InspectorPage() {
 
   const handleResetFilters = () => {
     setFilters(initialFilters);
+  };
+
+  const handleCompareClick = () => {
+    setShowCompareModal(true);
+    setCompareTraceId("");
+    setCompareError(null);
+  };
+
+  const handleFetchCompareTrace = async () => {
+    if (!compareTraceId.trim()) {
+      setCompareError("Trace ID를 입력하세요.");
+      return;
+    }
+
+    setCompareFetching(true);
+    setCompareError(null);
+    try {
+      const response = await fetchApi<TraceDetailResponse>(
+        `/inspector/traces/${encodeURIComponent(compareTraceId.trim())}`
+      );
+      setCompareTraceDetail(response.data.trace);
+      setShowDiffView(true);
+      setShowCompareModal(false);
+    } catch (err: any) {
+      setCompareError(err.message || "비교 trace를 불러오는데 실패했습니다.");
+    } finally {
+      setCompareFetching(false);
+    }
   };
 
   const handleRowClick = (traceId: string) => {
@@ -643,11 +678,18 @@ export default function InspectorPage() {
             </div>
             <div className="flex items-center gap-3">
               <button
+                onClick={handleCompareClick}
+                className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-[0.2em] text-emerald-200 hover:bg-emerald-900/40 transition"
+              >
+                Compare
+              </button>
+              <button
                 onClick={() => {
                   setTraceDetail(null);
                   setTraceAuditLogs([]);
                   setSelectedTraceId(null);
                   setDetailError(null);
+                  setShowDiffView(false);
                 }}
                 className="px-3 py-2 rounded-xl border border-slate-700 text-xs uppercase tracking-[0.2em] hover:border-slate-500"
               >
@@ -1168,6 +1210,77 @@ export default function InspectorPage() {
             <AuditLogDetailsModal log={selectedLog} onClose={() => setSelectedLog(null)} />
           )}
         </div>
+      )}
+
+      {/* Compare Modal */}
+      {showCompareModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 w-96 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-white">Compare with Trace</h3>
+              <button
+                onClick={() => setShowCompareModal(false)}
+                className="text-slate-400 hover:text-white text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2">
+                  Trace ID to Compare
+                </label>
+                <input
+                  type="text"
+                  value={compareTraceId}
+                  onChange={(e) => setCompareTraceId(e.target.value)}
+                  placeholder="Paste trace_id..."
+                  className="w-full px-3 py-2 bg-slate-900/40 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleFetchCompareTrace();
+                    }
+                  }}
+                />
+              </div>
+
+              {compareError && (
+                <div className="px-3 py-2 rounded-lg bg-rose-900/20 border border-rose-800 text-rose-300 text-xs">
+                  {compareError}
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setShowCompareModal(false)}
+                  className="px-3 py-2 rounded-lg border border-slate-700 text-xs uppercase tracking-[0.2em] hover:border-slate-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFetchCompareTrace}
+                  disabled={compareFetching}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs uppercase tracking-[0.2em] text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {compareFetching ? "Fetching..." : "Compare"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Diff View */}
+      {showDiffView && traceDetail && compareTraceDetail && (
+        <TraceDiffView
+          traceA={traceDetail}
+          traceB={compareTraceDetail}
+          onClose={() => {
+            setShowDiffView(false);
+            setCompareTraceDetail(null);
+          }}
+        />
       )}
     </div>
   );
