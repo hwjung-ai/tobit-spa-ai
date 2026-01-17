@@ -483,3 +483,347 @@ async def execute_ui_action(
                 "error": {"type": type(exc).__name__, "message": str(exc)},
             }
         )
+
+
+# --- Regression Watch (Step 5) ---
+
+
+@router.get("/golden-queries")
+def list_golden_queries(session: Any = Depends(get_session_context)) -> ResponseEnvelope:
+    """List all golden queries"""
+    from app.modules.inspector.crud import list_golden_queries
+
+    queries = list_golden_queries(session)
+    return ResponseEnvelope.success(
+        data={
+            "queries": [
+                {
+                    "id": q.id,
+                    "name": q.name,
+                    "query_text": q.query_text,
+                    "ops_type": q.ops_type,
+                    "enabled": q.enabled,
+                    "created_at": q.created_at.isoformat(),
+                }
+                for q in queries
+            ]
+        }
+    )
+
+
+@router.post("/golden-queries")
+def create_golden_query(
+    payload: Dict[str, Any],
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """Create a new golden query"""
+    from app.modules.inspector.crud import create_golden_query as crud_create
+
+    try:
+        query = crud_create(
+            session,
+            name=payload.get("name"),
+            query_text=payload.get("query_text"),
+            ops_type=payload.get("ops_type"),
+            options=payload.get("options"),
+        )
+        return ResponseEnvelope.success(
+            data={
+                "id": query.id,
+                "name": query.name,
+                "query_text": query.query_text,
+                "ops_type": query.ops_type,
+                "created_at": query.created_at.isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to create golden query: {e}")
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.put("/golden-queries/{query_id}")
+def update_golden_query(
+    query_id: str,
+    payload: Dict[str, Any],
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """Update golden query"""
+    from app.modules.inspector.crud import update_golden_query as crud_update
+
+    try:
+        query = crud_update(
+            session,
+            query_id,
+            name=payload.get("name"),
+            query_text=payload.get("query_text"),
+            enabled=payload.get("enabled"),
+            options=payload.get("options"),
+        )
+        if not query:
+            return ResponseEnvelope.error(message="Golden query not found")
+        return ResponseEnvelope.success(
+            data={
+                "id": query.id,
+                "name": query.name,
+                "query_text": query.query_text,
+                "ops_type": query.ops_type,
+                "enabled": query.enabled,
+                "created_at": query.created_at.isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to update golden query: {e}")
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.delete("/golden-queries/{query_id}")
+def delete_golden_query(
+    query_id: str,
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """Delete golden query"""
+    from app.modules.inspector.crud import delete_golden_query as crud_delete
+
+    try:
+        success = crud_delete(session, query_id)
+        if not success:
+            return ResponseEnvelope.error(message="Golden query not found")
+        return ResponseEnvelope.success(data={"deleted": True})
+    except Exception as e:
+        logger.error(f"Failed to delete golden query: {e}")
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.post("/golden-queries/{query_id}/set-baseline")
+def set_baseline(
+    query_id: str,
+    payload: Dict[str, Any],
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """Set baseline trace for a golden query"""
+    from app.modules.inspector.crud import (
+        get_golden_query,
+        get_execution_trace,
+        create_regression_baseline,
+    )
+
+    try:
+        # Verify golden query exists
+        query = get_golden_query(session, query_id)
+        if not query:
+            return ResponseEnvelope.error(message="Golden query not found")
+
+        # Verify baseline trace exists
+        baseline_trace_id = payload.get("trace_id")
+        baseline_trace = get_execution_trace(session, baseline_trace_id)
+        if not baseline_trace:
+            return ResponseEnvelope.error(message="Baseline trace not found")
+
+        # Create baseline record
+        baseline = create_regression_baseline(
+            session,
+            golden_query_id=query_id,
+            baseline_trace_id=baseline_trace_id,
+            baseline_status=baseline_trace.status,
+            asset_versions=baseline_trace.asset_versions,
+            created_by=payload.get("created_by"),
+        )
+
+        return ResponseEnvelope.success(
+            data={
+                "id": baseline.id,
+                "baseline_trace_id": baseline.baseline_trace_id,
+                "baseline_status": baseline.baseline_status,
+                "created_at": baseline.created_at.isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to set baseline: {e}")
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.post("/golden-queries/{query_id}/run-regression")
+def run_regression(
+    query_id: str,
+    payload: Dict[str, Any],
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """
+    Run regression check for a golden query.
+
+    Executes the golden query and compares result against baseline.
+    """
+    from app.modules.inspector.crud import (
+        get_golden_query,
+        get_execution_trace,
+        get_latest_regression_baseline,
+        create_regression_run,
+    )
+    from app.modules.ops.services.regression_executor import (
+        compute_regression_diff,
+        determine_judgment,
+    )
+
+    try:
+        # Verify golden query exists
+        query = get_golden_query(session, query_id)
+        if not query:
+            return ResponseEnvelope.error(message="Golden query not found")
+
+        # Get baseline
+        baseline = get_latest_regression_baseline(session, query_id)
+        if not baseline:
+            return ResponseEnvelope.error(message="No baseline set for this golden query")
+
+        # Get baseline trace for comparison
+        baseline_trace = get_execution_trace(session, baseline.baseline_trace_id)
+        if not baseline_trace:
+            return ResponseEnvelope.error(message="Baseline trace not found")
+
+        # Execute golden query (use existing OPS handler)
+        ts_start = time.time()
+        clear_spans()
+
+        try:
+            # Use handle_ops_query to execute the golden query
+            answer_envelope = handle_ops_query(query.ops_type, query.query_text)
+            duration_ms = int((time.time() - ts_start) * 1000)
+
+            # Create execution trace for candidate
+            candidate_trace_id = str(uuid.uuid4())
+            all_spans = get_all_spans()
+
+            # Build candidate trace dict for comparison
+            candidate_trace = {
+                "status": "success",
+                "asset_versions": [],  # Will be populated by OPS execution
+                "plan_validated": answer_envelope.meta.__dict__ if answer_envelope.meta else {},
+                "execution_steps": [],
+                "answer": answer_envelope.model_dump(),
+                "references": answer_envelope.blocks if answer_envelope.blocks else [],
+                "ui_render": {"error_count": 0},
+            }
+
+            # Compute regression diff
+            diff = compute_regression_diff(
+                baseline_trace.model_dump(),
+                candidate_trace,
+            )
+
+            # Determine judgment
+            judgment, verdict_reason = determine_judgment(diff)
+
+            # Create regression run record
+            run = create_regression_run(
+                session,
+                golden_query_id=query_id,
+                baseline_id=baseline.id,
+                candidate_trace_id=candidate_trace_id,
+                baseline_trace_id=baseline.baseline_trace_id,
+                judgment=judgment,
+                triggered_by=payload.get("triggered_by", "manual"),
+                verdict_reason=verdict_reason,
+                diff_summary={
+                    "assets_changed": diff.assets_changed,
+                    "plan_intent_changed": diff.plan_intent_changed,
+                    "plan_output_changed": diff.plan_output_changed,
+                    "tool_calls_added": diff.tool_calls_added,
+                    "tool_calls_removed": diff.tool_calls_removed,
+                    "tool_calls_failed": diff.tool_calls_failed,
+                    "blocks_structure_changed": diff.blocks_structure_changed,
+                    "references_variance": diff.references_variance,
+                    "status_changed": diff.status_changed,
+                    "ui_errors_increase": diff.ui_errors_increase,
+                },
+                trigger_info=payload.get("trigger_info"),
+                execution_duration_ms=duration_ms,
+            )
+
+            return ResponseEnvelope.success(
+                data={
+                    "id": run.id,
+                    "candidate_trace_id": candidate_trace_id,
+                    "baseline_trace_id": baseline.baseline_trace_id,
+                    "judgment": judgment,
+                    "verdict_reason": verdict_reason,
+                    "diff_summary": run.diff_summary,
+                    "execution_duration_ms": duration_ms,
+                    "created_at": run.created_at.isoformat(),
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"Regression execution failed: {e}")
+            return ResponseEnvelope.error(
+                message=f"Regression execution failed: {str(e)}"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to run regression: {e}")
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.get("/regression-runs")
+def list_regression_runs(
+    golden_query_id: str | None = None,
+    limit: int = 50,
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """List regression runs"""
+    from app.modules.inspector.crud import list_regression_runs
+
+    try:
+        runs = list_regression_runs(session, golden_query_id=golden_query_id, limit=limit)
+        return ResponseEnvelope.success(
+            data={
+                "runs": [
+                    {
+                        "id": r.id,
+                        "golden_query_id": r.golden_query_id,
+                        "baseline_id": r.baseline_id,
+                        "candidate_trace_id": r.candidate_trace_id,
+                        "baseline_trace_id": r.baseline_trace_id,
+                        "judgment": r.judgment,
+                        "verdict_reason": r.verdict_reason,
+                        "created_at": r.created_at.isoformat(),
+                    }
+                    for r in runs
+                ]
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to list regression runs: {e}")
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.get("/regression-runs/{run_id}")
+def get_regression_run(
+    run_id: str,
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """Get regression run details"""
+    from app.modules.inspector.crud import get_regression_run
+
+    try:
+        run = get_regression_run(session, run_id)
+        if not run:
+            return ResponseEnvelope.error(message="Regression run not found")
+
+        return ResponseEnvelope.success(
+            data={
+                "id": run.id,
+                "golden_query_id": run.golden_query_id,
+                "baseline_id": run.baseline_id,
+                "candidate_trace_id": run.candidate_trace_id,
+                "baseline_trace_id": run.baseline_trace_id,
+                "judgment": run.judgment,
+                "verdict_reason": run.verdict_reason,
+                "diff_summary": run.diff_summary,
+                "triggered_by": run.triggered_by,
+                "execution_duration_ms": run.execution_duration_ms,
+                "created_at": run.created_at.isoformat(),
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to get regression run: {e}")
+        return ResponseEnvelope.error(message=str(e))

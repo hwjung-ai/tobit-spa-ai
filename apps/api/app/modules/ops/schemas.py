@@ -101,3 +101,64 @@ class UIActionResponse(BaseModel):
     blocks: List[Dict[str, Any]] = []
     references: List[Dict[str, Any]] = []
     error: Dict[str, Any] | None = None
+
+
+# Regression Watch schemas
+class GoldenQueryCreate(BaseModel):
+    """Create a new golden query"""
+    name: str
+    query_text: str
+    ops_type: OpsMode
+    options: Dict[str, Any] | None = None
+
+
+class GoldenQueryRead(BaseModel):
+    """Golden query read response"""
+    id: str
+    name: str
+    query_text: str
+    ops_type: OpsMode
+    options: Dict[str, Any] | None
+    enabled: bool
+    created_at: str
+
+
+class GoldenQueryUpdate(BaseModel):
+    """Update golden query"""
+    name: str | None = None
+    query_text: str | None = None
+    enabled: bool | None = None
+    options: Dict[str, Any] | None = None
+
+
+class RegressionBaseline(BaseModel):
+    """Regression baseline info"""
+    id: str
+    golden_query_id: str
+    baseline_trace_id: str
+    baseline_status: str
+    asset_versions: List[str] | None
+    created_by: str | None
+    created_at: str
+
+
+class RegressionRunRequest(BaseModel):
+    """Request to run regression check"""
+    golden_query_id: str
+    trigger_by: Literal["manual", "asset_change", "schedule"] = "manual"
+    trigger_info: Dict[str, Any] | None = None
+
+
+class RegressionRunResult(BaseModel):
+    """Regression run result"""
+    id: str
+    golden_query_id: str
+    baseline_id: str
+    candidate_trace_id: str
+    baseline_trace_id: str
+    judgment: Literal["PASS", "WARN", "FAIL"]
+    verdict_reason: str | None
+    diff_summary: Dict[str, Any] | None
+    triggered_by: str
+    execution_duration_ms: int | None
+    created_at: str
