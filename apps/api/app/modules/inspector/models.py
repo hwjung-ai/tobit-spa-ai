@@ -75,6 +75,10 @@ class TbExecutionTrace(SQLModel, table=True):
         default=None,
         sa_column=Column(JSONB, nullable=True),
     )
+    flow_spans: List[Dict[str, Any]] | None = Field(
+        default=None,
+        sa_column=Column(JSONB, nullable=True),
+    )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
         sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),

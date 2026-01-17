@@ -6,6 +6,21 @@ from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
 
+class FlowSpan(BaseModel):
+    """Execution flow span for timeline visualization."""
+
+    span_id: str
+    parent_span_id: str | None = None
+    name: str
+    kind: str
+    status: str
+    ts_start_ms: int
+    ts_end_ms: int
+    duration_ms: int
+    summary: Dict[str, Any] = Field(default_factory=dict)
+    links: Dict[str, Any] = Field(default_factory=dict)
+
+
 class TraceSummary(BaseModel):
     trace_id: str
     created_at: datetime
@@ -38,6 +53,7 @@ class ExecutionTraceRead(BaseModel):
     answer: Dict[str, Any] | None
     ui_render: Dict[str, Any] | None
     audit_links: Dict[str, Any] | None
+    flow_spans: List[FlowSpan] | None = None
 
 
 class TraceListRequest(BaseModel):

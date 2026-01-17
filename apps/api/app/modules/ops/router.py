@@ -26,6 +26,12 @@ from .services.ci.orchestrator.runner import CIOrchestratorRunner
 from .services.ci.planner import planner_llm, validator
 from .services.ci.planner.plan_schema import Plan
 from app.modules.inspector.service import persist_execution_trace
+from app.modules.inspector.span_tracker import (
+    start_span,
+    end_span,
+    get_all_spans,
+    clear_spans,
+)
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -148,47 +154,80 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
     error_response: JSONResponse | None = None
     duration_ms: int | None = None
     trace_payload: dict[str, Any] | None = None
+    flow_spans: list[Dict[str, Any]] = []
+
+    # Initialize span tracking for this trace
+    clear_spans()
+
     try:
         rerun_ctx: RerunContext | None = None
         if payload.rerun:
             logger.info("ci.runner.planner.skipped", extra={"reason": "rerun"})
-            patched_plan = _apply_patch(payload.rerun.base_plan, payload.rerun.patch)
-            logger.info("ci.runner.validator.start", extra={"phase": "rerun"})
-            plan_validated, plan_trace = validator.validate_plan(patched_plan)
-            logger.info("ci.runner.validator.done", extra={"phase": "rerun"})
+            validator_span = start_span("validator", "stage")
+            try:
+                patched_plan = _apply_patch(payload.rerun.base_plan, payload.rerun.patch)
+                logger.info("ci.runner.validator.start", extra={"phase": "rerun"})
+                plan_validated, plan_trace = validator.validate_plan(patched_plan)
+                logger.info("ci.runner.validator.done", extra={"phase": "rerun"})
+                end_span(validator_span, links={"plan_path": "plan.validated"})
+            except Exception as e:
+                end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                raise
             plan_raw = payload.rerun.base_plan
             rerun_ctx = RerunContext(
                 selected_ci_id=payload.rerun.selected_ci_id,
                 selected_secondary_ci_id=payload.rerun.selected_secondary_ci_id,
             )
         else:
-            planner_start = time.perf_counter()
-            logger.info("ci.runner.planner.start", extra={"llm_called": False})
-            plan_raw = planner_llm.create_plan(payload.question)
-            elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
-            logger.info("ci.runner.planner.done", extra={"llm_called": False, "elapsed_ms": elapsed_ms})
-            logger.info("ci.runner.validator.start", extra={"phase": "initial"})
-            plan_validated, plan_trace = validator.validate_plan(plan_raw)
-            logger.info("ci.runner.validator.done", extra={"phase": "initial"})
+            planner_span = start_span("planner", "stage")
+            try:
+                planner_start = time.perf_counter()
+                logger.info("ci.runner.planner.start", extra={"llm_called": False})
+                plan_raw = planner_llm.create_plan(payload.question)
+                elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
+                logger.info("ci.runner.planner.done", extra={"llm_called": False, "elapsed_ms": elapsed_ms})
+                end_span(planner_span, links={"plan_path": "plan.raw"})
+            except Exception as e:
+                end_span(planner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                raise
 
-        runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
-        logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
-        runner = CIOrchestratorRunner(
-            plan_validated,
-            plan_raw,
-            tenant_id,
-            payload.question,
-            plan_trace,
-            rerun_context=rerun_ctx,
-        )
-        result = runner.run()
-        next_actions = result.get("next_actions") or []
-        next_actions_count = len(next_actions)
-        envelope_blocks = result.get("blocks") or []
-        trace_payload = result.get("trace") or {}
-        meta = result.get("meta")
-        trace_status = "error" if trace_payload.get("errors") else "success"
-        duration_ms = int((time.perf_counter() - start) * 1000)
+            validator_span = start_span("validator", "stage")
+            try:
+                logger.info("ci.runner.validator.start", extra={"phase": "initial"})
+                plan_validated, plan_trace = validator.validate_plan(plan_raw)
+                logger.info("ci.runner.validator.done", extra={"phase": "initial"})
+                end_span(validator_span, links={"plan_path": "plan.validated"})
+            except Exception as e:
+                end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                raise
+
+        runner_span = start_span("runner", "stage")
+        try:
+            runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
+            logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
+            runner = CIOrchestratorRunner(
+                plan_validated,
+                plan_raw,
+                tenant_id,
+                payload.question,
+                plan_trace,
+                rerun_context=rerun_ctx,
+            )
+            runner._flow_spans_enabled = True
+            runner._runner_span_id = runner_span
+            result = runner.run()
+            next_actions = result.get("next_actions") or []
+            next_actions_count = len(next_actions)
+            envelope_blocks = result.get("blocks") or []
+            trace_payload = result.get("trace") or {}
+            meta = result.get("meta")
+            trace_status = "error" if trace_payload.get("errors") else "success"
+            end_span(runner_span)
+        except Exception as e:
+            end_span(runner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+            raise
+        finally:
+            duration_ms = int((time.perf_counter() - start) * 1000)
         context = get_request_context()
         active_trace_id = context.get("trace_id")
         if not active_trace_id or active_trace_id == "-":
@@ -200,6 +239,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             "question": payload.question,
             "rerun": payload.rerun.dict(exclude_none=True) if payload.rerun else None,
         }
+        # Capture flow spans before trace persistence
+        flow_spans = get_all_spans()
+
         try:
             with get_session_context() as session:
                 persist_execution_trace(
@@ -219,6 +261,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                     trace_payload=trace_payload,
                     answer_meta=meta,
                     blocks=envelope_blocks,
+                    flow_spans=flow_spans if flow_spans else None,
                 )
         except Exception as exc:
             logger.exception("ci.trace.persist_failed", exc_info=exc)

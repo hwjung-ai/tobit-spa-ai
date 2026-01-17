@@ -111,6 +111,7 @@ def persist_execution_trace(
     trace_payload: Dict[str, Any],
     answer_meta: Dict[str, Any] | None,
     blocks: List[Dict[str, Any]] | None,
+    flow_spans: List[Dict[str, Any]] | None = None,
 ) -> TbExecutionTrace:
     assets = get_tracked_assets()
     applied_assets = _build_applied_assets(assets)
@@ -144,5 +145,6 @@ def persist_execution_trace(
         answer=answer_data,
         ui_render=None,
         audit_links={"related_audit_log_ids": []},
+        flow_spans=flow_spans,
     )
     return create_execution_trace(session, trace_entry)

@@ -14,6 +14,7 @@ import threading
 from core.logging import get_logger, get_request_context
 from schemas.tool_contracts import ToolCall
 from app.modules.ops.services.ci import policy, response_builder
+from app.modules.inspector.span_tracker import start_span, end_span
 from app.modules.ops.services.ci.actions import NextAction, RerunPayload
 from app.modules.ops.services.ci.blocks import Block, chart_block, number_block, table_block, text_block
 from app.modules.ops.services.ci.planner.plan_schema import AutoSpec, Intent, MetricSpec, Plan, PlanMode, View
@@ -128,21 +129,36 @@ class CIOrchestratorRunner:
         self._last_graph_signature: tuple | None = None
         self.GRAPH_SCOPE_KEYWORDS = ("영향권", "영향", "범위", "의존", "dependency", "impact")
         self.GRAPH_SCOPE_METRIC_KEYWORDS = ("cpu", "latency", "error", "memory", "disk", "network")
+        # Flow span tracking
+        self._flow_spans_enabled: bool = False
+        self._runner_span_id: str | None = None
 
     @contextmanager
     def _tool_context(self, tool: str, input_params: Dict[str, Any] | None = None, **meta):
         meta = dict(meta)
         start = perf_counter()
         self.logger.info(f"ci.tool.{tool}.start", extra=meta)
+
+        # Start tool span if enabled
+        tool_span_id = None
+        if self._flow_spans_enabled and self._runner_span_id:
+            tool_span_id = start_span(f"tool:{tool}", "tool", parent_span_id=self._runner_span_id)
+
         try:
             yield meta
         except Exception as exc:
             meta["error"] = str(exc)
+            if tool_span_id:
+                end_span(tool_span_id, status="error", summary={"error_type": type(exc).__name__, "error_message": str(exc)})
             raise
         finally:
             elapsed = int((perf_counter() - start) * 1000)
             meta["elapsed_ms"] = elapsed
             self.logger.info(f"ci.tool.{tool}.done", extra=meta)
+
+            # End tool span if enabled
+            if tool_span_id:
+                end_span(tool_span_id)
 
             # Store raw entry for backward compatibility
             entry = {"tool": tool, **meta}

@@ -56,6 +56,27 @@ interface ExecutionStep {
   references?: ReferenceEntry[];
 }
 
+interface FlowSpan {
+  span_id: string;
+  parent_span_id: string | null;
+  name: string;
+  kind: string;
+  status: string;
+  ts_start_ms: number;
+  ts_end_ms: number;
+  duration_ms: number;
+  summary: {
+    note?: string;
+    error_type?: string;
+    error_message?: string;
+  };
+  links: {
+    plan_path?: string;
+    tool_call_id?: string;
+    block_id?: string;
+  };
+}
+
 interface ReferenceEntry {
   ref_type: string;
   name: string;
@@ -109,6 +130,7 @@ interface ExecutionTraceDetail {
   answer: { envelope_meta: Record<string, any> | null; blocks: AnswerBlock[] } | null;
   ui_render: { rendered_blocks: UIRenderedBlock[]; warnings: string[] } | null;
   audit_links: Record<string, any> | null;
+  flow_spans: FlowSpan[] | null;
 }
 
 interface TraceDetailResponse {
@@ -142,6 +164,7 @@ export default function InspectorPage() {
   const [planView, setPlanView] = useState<"raw" | "validated">("validated");
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [linkCopyStatus, setLinkCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [selectedSpan, setSelectedSpan] = useState<FlowSpan | null>(null);
   const searchParams = useSearchParams();
 
   const handleSearch = useCallback(
@@ -913,6 +936,116 @@ export default function InspectorPage() {
                       <p className="text-xs text-slate-500">UI 렌더 이벤트가 아직 없습니다.</p>
                     )}
                   </section>
+
+                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Flow Timeline</p>
+                      {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
+                        <span className="text-[10px] text-slate-400">{traceDetail.flow_spans.length} spans</span>
+                      )}
+                    </div>
+                    {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 ? (
+                      <div className="space-y-2">
+                        {traceDetail.flow_spans
+                          .sort((a, b) => a.ts_start_ms - b.ts_start_ms)
+                          .map((span) => {
+                            const statusClass =
+                              span.status === "ok"
+                                ? "bg-emerald-900/40 text-emerald-200"
+                                : "bg-rose-900/40 text-rose-200";
+                            return (
+                              <div
+                                key={span.span_id}
+                                onClick={() => setSelectedSpan(span)}
+                                className="bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-900/60 transition-colors"
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <span className="text-xs font-mono text-slate-300 truncate">{span.name}</span>
+                                    <span className={`px-2 py-1 rounded-full text-[10px] uppercase whitespace-nowrap ${statusClass}`}>
+                                      {span.status}
+                                    </span>
+                                    <span className="text-[11px] text-slate-400 whitespace-nowrap">{span.kind}</span>
+                                  </div>
+                                  <span className="text-[11px] text-slate-400 whitespace-nowrap">{span.duration_ms}ms</span>
+                                </div>
+                                {span.summary.note && (
+                                  <p className="mt-2 text-[11px] text-slate-400">{span.summary.note}</p>
+                                )}
+                                {span.summary.error_message && (
+                                  <p className="mt-2 text-[11px] text-rose-300">{span.summary.error_message}</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">Flow 데이터 없음 (구버전 trace)</p>
+                    )}
+                  </section>
+
+                  {selectedSpan && (
+                    <section className="bg-slate-900/60 border border-slate-700 rounded-2xl p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Span Details</p>
+                          <p className="text-sm font-semibold text-white mt-1">{selectedSpan.name}</p>
+                        </div>
+                        <button
+                          onClick={() => setSelectedSpan(null)}
+                          className="text-slate-400 hover:text-white text-lg"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs text-slate-300">
+                        <div>
+                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Kind</p>
+                          <p className="mt-1">{selectedSpan.kind}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Status</p>
+                          <p className="mt-1">{selectedSpan.status}</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Duration</p>
+                          <p className="mt-1">{selectedSpan.duration_ms}ms</p>
+                        </div>
+                        <div>
+                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Span ID</p>
+                          <p className="mt-1 font-mono text-[10px]">{selectedSpan.span_id}</p>
+                        </div>
+                      </div>
+
+                      {selectedSpan.links.plan_path && (
+                        <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-3 space-y-2">
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Related Plan</p>
+                          {renderJsonDetails(
+                            selectedSpan.links.plan_path === "plan.raw" ? "Raw Plan" : "Validated Plan",
+                            selectedSpan.links.plan_path === "plan.raw" ? traceDetail.plan_raw : traceDetail.plan_validated
+                          )}
+                        </div>
+                      )}
+
+                      {selectedSpan.links.tool_call_id && traceDetail.execution_steps && (
+                        <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-3 space-y-2">
+                          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Related Tool Call</p>
+                          {(() => {
+                            const step = traceDetail.execution_steps.find((s) => s.tool_name === selectedSpan.links.tool_call_id);
+                            return step ? (
+                              <div className="space-y-2">
+                                {renderJsonDetails("Request", step.request)}
+                                {renderJsonDetails("Response", step.response)}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-slate-400">Tool call not found</p>
+                            );
+                          })()}
+                        </div>
+                      )}
+                    </section>
+                  )}
 
                   <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <div className="flex items-center justify-between">
