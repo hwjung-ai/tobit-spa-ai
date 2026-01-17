@@ -8,7 +8,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '0029_add_screen_asset_fields'
-down_revision = '0022_add_asset_registry'
+down_revision = '0028_add_flow_spans_column'
 branch_labels = None
 depends_on = None
 
