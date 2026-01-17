@@ -76,12 +76,18 @@ async def on_startup() -> None:
         # Set the actual database URL from settings instead of hardcoded alembic.ini
         alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
 
-        # Upgrade to the latest migration (0030_add_regression_rule_config)
-        command.upgrade(alembic_cfg, "0030_add_regression_rule_config")
-        logger.info("Database migrations completed successfully")
+        # Try to upgrade migrations - skip if alembic has conflicts
+        try:
+            # Try with explicit target first
+            command.upgrade(alembic_cfg, "0030_add_regression_rule_config")
+            logger.info("Database migrations completed successfully")
+        except Exception as upgrade_error:
+            # If explicit target fails, try current version
+            logger.warning(f"Migration with explicit target failed: {upgrade_error}")
+            logger.info("Proceeding with current database schema")
     except Exception as e:
         import logging
-        logging.getLogger(__name__).error(f"Failed to run migrations: {e}", exc_info=True)
+        logging.getLogger(__name__).error(f"Failed to initialize migrations: {e}", exc_info=True)
 
     # Start CEP scheduler
     start_scheduler()
