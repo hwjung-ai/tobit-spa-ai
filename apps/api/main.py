@@ -74,7 +74,7 @@ async def on_startup() -> None:
         alembic_cfg = AlembicConfig("alembic.ini")
 
         # Set the actual database URL from settings instead of hardcoded alembic.ini
-        alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+        alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
 
         command.upgrade(alembic_cfg, "head")
         logger.info("Database migrations completed successfully")
