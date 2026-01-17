@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import ReactFlow, {
   Node,
   Edge,
@@ -10,6 +10,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   useReactFlow,
+  ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { AuditLog, fetchApi, formatRelativeTime, formatTimestamp } from "../../../lib/adminUtils";
@@ -160,7 +161,7 @@ const initialFilters: FilterState = {
   assetId: "",
 };
 
-export default function InspectorPage() {
+function InspectorContent() {
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [lookupTraceId, setLookupTraceId] = useState("");
   const [traces, setTraces] = useState<TraceSummaryRow[]>([]);
@@ -189,7 +190,10 @@ export default function InspectorPage() {
   const [compareFetching, setCompareFetching] = useState(false);
   const [compareError, setCompareError] = useState<string | null>(null);
   const [showDiffView, setShowDiffView] = useState(false);
+  const [singleRcaLoading, setSingleRcaLoading] = useState(false);
+  const [singleRcaError, setSingleRcaError] = useState<string | null>(null);
   const reactFlowInstance = useReactFlow();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const handleSearch = useCallback(
@@ -343,6 +347,33 @@ export default function InspectorPage() {
   const handleRowClick = (traceId: string) => {
     fetchTraceDetail(traceId);
   };
+
+  const handleRunSingleRca = useCallback(async () => {
+    if (!traceDetail) return;
+    setSingleRcaLoading(true);
+    setSingleRcaError(null);
+    try {
+      const response = await fetchApi<{ trace_id: string }>("/ops/rca", {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "single",
+          trace_id: traceDetail.trace_id,
+          options: { max_hypotheses: 5, include_snippets: true },
+        }),
+      });
+      setShowDiffView(false);
+      setCompareTraceDetail(null);
+      setTraceDetail(null);
+      setTraceAuditLogs([]);
+      setSelectedTraceId(null);
+      setDetailError(null);
+      router.push(`/admin/inspector?trace_id=${encodeURIComponent(response.data.trace_id)}`);
+    } catch (err: any) {
+      setSingleRcaError(err.message || "Failed to run RCA analysis.");
+    } finally {
+      setSingleRcaLoading(false);
+    }
+  }, [traceDetail, router]);
 
   const renderAppliedAsset = (asset: AssetSummary | null | undefined) => {
     if (!asset) {
@@ -620,32 +651,32 @@ export default function InspectorPage() {
       {traceDetail && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4">
           <div className="bg-slate-950 border border-slate-800 max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col">
-          <header className="px-6 py-4 border-b border-slate-800 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-3">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trace Overview</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="text-lg font-semibold text-white tracking-tight">{traceDetail.question}</h2>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs uppercase tracking-[0.3em] ${getStatusBadgeClass(
-                    traceDetail.status
-                  )}`}
-                >
-                  {traceDetail.status}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-                <span>Feature: {traceDetail.feature}</span>
-                <span>Mode: {traceDetail.ops_mode}</span>
-                <span>Endpoint: {traceDetail.endpoint}</span>
-                <span>Method: {traceDetail.method}</span>
-              </div>
+            <header className="px-6 py-4 border-b border-slate-800 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-3">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trace Overview</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <h2 className="text-lg font-semibold text-white tracking-tight">{traceDetail.question}</h2>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs uppercase tracking-[0.3em] ${getStatusBadgeClass(
+                      traceDetail.status
+                    )}`}
+                  >
+                    {traceDetail.status}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                  <span>Feature: {traceDetail.feature}</span>
+                  <span>Mode: {traceDetail.ops_mode}</span>
+                  <span>Endpoint: {traceDetail.endpoint}</span>
+                  <span>Method: {traceDetail.method}</span>
+                </div>
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
                   <span className="font-mono">{traceDetail.trace_id}</span>
                   <button
                     onClick={handleCopyTraceId}
                     className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
                   >
-                  {traceCopyStatus === "copied"
+                    {traceCopyStatus === "copied"
                       ? "복사됨"
                       : traceCopyStatus === "failed"
                         ? "재시도"
@@ -664,39 +695,54 @@ export default function InspectorPage() {
                   {traceDetail.parent_trace_id && (
                     <button
                       onClick={() => fetchTraceDetail(traceDetail.parent_trace_id!)}
-                    className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
-                  >
-                    View parent
-                  </button>
-                )}
+                      className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                    >
+                      View parent
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-4 text-[11px] text-slate-400">
+                  <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
+                  <span>{formatTimestamp(traceDetail.created_at)}</span>
+                  <span>{formatRelativeTime(traceDetail.created_at)}</span>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-4 text-[11px] text-slate-400">
-                <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
-                <span>{formatTimestamp(traceDetail.created_at)}</span>
-                <span>{formatRelativeTime(traceDetail.created_at)}</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={handleRunSingleRca}
+                  disabled={singleRcaLoading}
+                  className="px-3 py-2 rounded-xl border border-fuchsia-600 bg-fuchsia-900/20 text-xs uppercase tracking-[0.2em] text-fuchsia-200 hover:bg-fuchsia-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {singleRcaLoading ? "Analyzing..." : "Run RCA"}
+                </button>
+                <button
+                  onClick={handleCompareClick}
+                  className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-[0.2em] text-emerald-200 hover:bg-emerald-900/40 transition"
+                >
+                  Compare
+                </button>
+                <button
+                  onClick={() => {
+                    setTraceDetail(null);
+                    setTraceAuditLogs([]);
+                    setSelectedTraceId(null);
+                    setDetailError(null);
+                    setShowDiffView(false);
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-700 text-xs uppercase tracking-[0.2em] hover:border-slate-500"
+                >
+                  Close
+                </button>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleCompareClick}
-                className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-[0.2em] text-emerald-200 hover:bg-emerald-900/40 transition"
-              >
-                Compare
-              </button>
-              <button
-                onClick={() => {
-                  setTraceDetail(null);
-                  setTraceAuditLogs([]);
-                  setSelectedTraceId(null);
-                  setDetailError(null);
-                  setShowDiffView(false);
-                }}
-                className="px-3 py-2 rounded-xl border border-slate-700 text-xs uppercase tracking-[0.2em] hover:border-slate-500"
-              >
-                Close
-              </button>
-            </div>
-          </header>
+              {singleRcaError && (
+                <div className="mt-2">
+                  <ValidationAlert
+                    errors={[singleRcaError]}
+                    onClose={() => setSingleRcaError(null)}
+                  />
+                </div>
+              )}
+            </header>
             <div className="p-6 overflow-y-auto custom-scrollbar space-y-6">
               {detailError && (
                 <ValidationAlert errors={[detailError]} onClose={() => setDetailError(null)} />
@@ -1030,11 +1076,10 @@ export default function InspectorPage() {
                                 setFlowViewMode("timeline");
                                 setSelectedSpan(null);
                               }}
-                              className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${
-                                flowViewMode === "timeline"
-                                  ? "bg-slate-700 text-white"
-                                  : "text-slate-400 hover:text-slate-300"
-                              }`}
+                              className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${flowViewMode === "timeline"
+                                ? "bg-slate-700 text-white"
+                                : "text-slate-400 hover:text-slate-300"
+                                }`}
                             >
                               Timeline
                             </button>
@@ -1043,11 +1088,10 @@ export default function InspectorPage() {
                                 setFlowViewMode("graph");
                                 setSelectedSpan(null);
                               }}
-                              className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${
-                                flowViewMode === "graph"
-                                  ? "bg-slate-700 text-white"
-                                  : "text-slate-400 hover:text-slate-300"
-                              }`}
+                              className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${flowViewMode === "graph"
+                                ? "bg-slate-700 text-white"
+                                : "text-slate-400 hover:text-slate-300"
+                                }`}
                             >
                               Graph
                             </button>
@@ -1283,5 +1327,13 @@ export default function InspectorPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function InspectorPage() {
+  return (
+    <ReactFlowProvider>
+      <InspectorContent />
+    </ReactFlowProvider>
   );
 }
