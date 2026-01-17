@@ -76,7 +76,8 @@ async def on_startup() -> None:
         # Set the actual database URL from settings instead of hardcoded alembic.ini
         alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
 
-        command.upgrade(alembic_cfg, "head")
+        # Upgrade to the latest migration (0030_add_regression_rule_config)
+        command.upgrade(alembic_cfg, "0030_add_regression_rule_config")
         logger.info("Database migrations completed successfully")
     except Exception as e:
         import logging
