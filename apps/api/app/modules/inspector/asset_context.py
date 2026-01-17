@@ -10,7 +10,7 @@ _ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar("inspector_asset_
 
 
 def _initial_context() -> Dict[str, Any]:
-    return {"prompt": None, "policy": None, "mapping": None, "queries": []}
+    return {"prompt": None, "policy": None, "mapping": None, "queries": [], "screens": []}
 
 
 def _ensure_context() -> Dict[str, Any]:
@@ -34,6 +34,7 @@ def get_tracked_assets() -> Dict[str, Any]:
         "policy": context.get("policy"),
         "mapping": context.get("mapping"),
         "queries": list(context.get("queries", [])),
+        "screens": list(context.get("screens", [])),
     }
 
 
@@ -60,4 +61,12 @@ def track_query_asset(info: AssetInfo) -> None:
     queries = list(context.get("queries", []))
     queries.append(info)
     context["queries"] = queries
+    _ASSET_CONTEXT.set(context)
+
+
+def track_screen_asset(info: AssetInfo) -> None:
+    context = _ensure_context()
+    screens = list(context.get("screens", []))
+    screens.append(info)
+    context["screens"] = screens
     _ASSET_CONTEXT.set(context)

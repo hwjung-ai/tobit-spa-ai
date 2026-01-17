@@ -1,0 +1,128 @@
+{
+  "screen_id": "maintenance_crud_v1",
+  "version": "1.0",
+  "layout": {
+    "type": "dashboard",
+    "direction": "vertical",
+    "spacing": 16
+  },
+  "components": [
+    {
+      "id": "title",
+      "type": "text",
+      "props": { "content": "Maintenance CRUD" }
+    },
+    {
+      "id": "filters",
+      "type": "input",
+      "label": "Device ID",
+      "bind": "state.filters.device_id",
+      "props": { "name": "device_id", "placeholder": "GT-1" },
+      "actions": [
+        {
+          "id": "list",
+          "handler": "list_maintenance_filtered",
+          "payload_template": {
+            "device_id": "{{inputs.device_id}}",
+            "offset": 0,
+            "limit": 20
+          }
+        }
+      ]
+    },
+    {
+      "id": "create_button",
+      "type": "button",
+      "label": "New Ticket",
+      "actions": [
+        {
+          "id": "open_modal",
+          "handler": "open_maintenance_modal",
+          "payload_template": {}
+        }
+      ]
+    },
+    {
+      "id": "tickets",
+      "type": "table",
+      "bind": "state.results.list_maintenance_filtered",
+      "props": {
+        "columns": ["ID", "Device", "Type", "Status"],
+        "rows": "{{state.results.list_maintenance_filtered}}"
+      }
+    },
+    {
+      "id": "detail",
+      "type": "keyvalue",
+      "bind": "state.selected",
+      "props": {
+        "items": "{{state.selected}}"
+      }
+    },
+    {
+      "id": "create_modal",
+      "type": "modal",
+      "props": {
+        "title": "Create Maintenance",
+        "open": "{{state.modal_open}}",
+        "components": [
+          {
+            "id": "modal_device",
+            "type": "input",
+            "label": "Device",
+            "bind": "state.form.device_id",
+            "props": { "name": "device_id", "placeholder": "GT-1" }
+          },
+          {
+            "id": "modal_type",
+            "type": "input",
+            "label": "Type",
+            "bind": "state.form.maintenance_type",
+            "props": { "name": "maintenance_type", "placeholder": "Preventive" }
+          },
+          {
+            "id": "modal_date",
+            "type": "input",
+            "label": "Scheduled Date",
+            "bind": "state.form.scheduled_date",
+            "props": { "name": "scheduled_date", "placeholder": "2026-01-20" }
+          },
+          {
+            "id": "modal_submit",
+            "type": "button",
+            "label": "Create",
+            "actions": [
+              {
+                "id": "create_ticket",
+                "handler": "create_maintenance_ticket",
+                "payload_template": {
+                  "device_id": "{{inputs.device_id}}",
+                  "maintenance_type": "{{inputs.maintenance_type}}",
+                  "scheduled_date": "{{inputs.scheduled_date}}"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "actions": [
+        {
+          "id": "close_modal",
+          "handler": "close_maintenance_modal",
+          "payload_template": {}
+        }
+      ]
+    }
+  ],
+  "actions": [],
+  "state": {
+    "initial": {
+      "filters": { "device_id": "" },
+      "form": { "device_id": "", "maintenance_type": "", "scheduled_date": "" },
+      "modal_open": false,
+      "results": {},
+      "selected": []
+    }
+  },
+  "bindings": {}
+}

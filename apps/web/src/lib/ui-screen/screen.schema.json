@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Screen Schema v1",
+  "type": "object",
+  "required": ["screen_id", "layout", "components", "state", "actions", "bindings"],
+  "properties": {
+    "screen_id": { "type": "string" },
+    "version": { "type": "string", "default": "1.0" },
+    "layout": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string", "enum": ["grid", "form", "modal", "list", "dashboard"] },
+        "direction": { "type": "string", "enum": ["horizontal", "vertical"], "default": "vertical" },
+        "spacing": { "type": "number" },
+        "max_width": { "type": "string" }
+      }
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["text","markdown","button","input","table","chart","badge","tabs","modal","keyvalue","divider"] },
+          "label": { "type": "string" },
+          "bind": { "type": "string" },
+          "props": { "type": ["object", "null"] },
+          "visibility": { "type": ["object", "null"] },
+          "actions": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "required": ["id","handler"],
+              "properties": {
+                "id": { "type": "string" },
+                "label": { "type": "string" },
+                "handler": { "type": "string" },
+                "payload_template": { "type": ["object","null"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": ["array","null"],
+      "items": { "$ref": "#/properties/components/items/properties/actions/items" }
+    },
+    "state": {
+      "type": ["object","null"],
+      "required": ["initial"],
+      "properties": {
+        "initial": { "type": ["object","null"] },
+        "schema": { "type": ["object","null"] }
+      }
+    },
+    "bindings": { "type": ["object","null"], "additionalProperties": { "type": "string" } },
+    "metadata": {
+      "type": ["object","null"],
+      "properties": {
+        "author": { "type": "string" },
+        "created_at": { "type": "string" },
+        "notes": { "type": "string" },
+        "tags": { "type": ["object","null"], "additionalProperties": { "type": "string" } }
+      }
+    }
+  },
+  "additionalProperties": false
+}

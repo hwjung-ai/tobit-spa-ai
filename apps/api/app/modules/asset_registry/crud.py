@@ -55,6 +55,9 @@ def create_asset(
     query_sql: str | None = None,
     query_params: dict[str, Any] | None = None,
     query_metadata: dict[str, Any] | None = None,
+    screen_id: str | None = None,
+    screen_schema: dict[str, Any] | None = None,
+    tags: dict[str, Any] | None = None,
     created_by: str | None = None,
 ) -> TbAssetRegistry:
     """Create new asset in draft status"""
@@ -80,6 +83,11 @@ def create_asset(
         query_sql=query_sql,
         query_params=query_params,
         query_metadata=query_metadata,
+        # Screen fields
+        screen_id=screen_id,
+        screen_schema=screen_schema,
+        # Common fields
+        tags=tags,
         # Metadata
         created_by=created_by,
         created_at=datetime.now(),

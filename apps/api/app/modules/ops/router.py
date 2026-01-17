@@ -12,6 +12,7 @@ from core.config import get_settings
 from core.db import get_session
 from core.logging import get_logger, get_request_context
 from schemas import ResponseEnvelope
+from sqlmodel import Session
 
 from .schemas import (
     CiAskRequest,
@@ -34,6 +35,7 @@ from app.modules.inspector.span_tracker import (
     get_all_spans,
     clear_spans,
 )
+from .services.observability_service import collect_observability_metrics
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -44,6 +46,12 @@ logger = get_logger(__name__)
 def query_ops(payload: OpsQueryRequest) -> ResponseEnvelope:
     envelope = handle_ops_query(payload.mode, payload.question)
     return ResponseEnvelope.success(data={"answer": envelope.model_dump()})
+
+
+@router.get("/observability/kpis", response_model=ResponseEnvelope)
+def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvelope:
+    payload = collect_observability_metrics(session)
+    return ResponseEnvelope.success(data={"kpis": payload})
 
 
 # --- CI OPS (Ask CI) ---

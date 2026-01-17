@@ -1,15 +1,27 @@
 """
-Deterministic UI Action executor for handling interactive UI panel actions.
+UI Actions Service: Execute deterministic UI actions with binding engine
 
-Routes action_id to specific executors without LLM involvement.
+Responsibilities:
+1. Render action payload with binding engine
+2. Route to action handler registry
+3. Execute action deterministically
+4. Return blocks + metadata
 """
+
+from __future__ import annotations
 
 from typing import Any, Dict
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, ValidationError
 
+from core.logging import get_logger
+from .binding_engine import BindingEngine, mask_sensitive_inputs as mask_fn
+from .action_registry import execute_action, ExecutorResult
 
-# Action-specific input validators
+logger = get_logger(__name__)
+
+
+# Action-specific input validators (legacy, for backward compatibility)
 class HistoryQueryInputs(BaseModel):
     """Input schema for run_history_query action"""
     device_id: str
@@ -17,7 +29,7 @@ class HistoryQueryInputs(BaseModel):
     date_to: str    # ISO date (YYYY-MM-DD)
 
 
-# Action registry mapping action_id to executor configuration
+# Legacy action registry (kept for backward compatibility)
 ACTION_REGISTRY = {
     "run_history_query": {
         "validator": HistoryQueryInputs,
@@ -38,19 +50,15 @@ def mask_sensitive_inputs(inputs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Mask sensitive input values before storing in trace.
 
+    Uses BindingEngine's mask_sensitive_inputs function.
+
     Args:
         inputs: User input values
 
     Returns:
-        Masked input dictionary with sensitive values replaced with "[MASKED]"
+        Masked input dictionary with sensitive values replaced
     """
-    masked = {}
-    for key, value in inputs.items():
-        if any(sk in key.lower() for sk in SENSITIVE_INPUT_KEYS):
-            masked[key] = "[MASKED]"
-        else:
-            masked[key] = value
-    return masked
+    return mask_fn(inputs)
 
 
 async def execute_action_deterministic(
@@ -63,80 +71,103 @@ async def execute_action_deterministic(
     Execute a deterministic UI action without LLM involvement.
 
     This function:
-    1. Validates the action_id exists
-    2. Validates inputs against the action's input schema
-    3. Routes to the appropriate executor
-    4. Executes using existing OPS executors (config, history, metric, etc.)
-    5. Returns standardized result with blocks, references, tool_calls
+    1. Validates the action_id exists (from registry)
+    2. Routes to the appropriate action handler
+    3. Executes using action registry handlers
+    4. Returns standardized result with blocks, references, tool_calls
 
     Args:
         action_id: Action identifier for routing
-        inputs: User input values (validated before calling)
+        inputs: User input values
         context: Execution context (mode, origin, etc.)
         session: Database session
 
     Returns:
-        Dict with keys: blocks, references, tool_calls
+        Dict with keys: blocks, references, tool_calls, summary
 
     Raises:
-        ValueError: If action_id is unknown or input validation fails
+        ValueError: If action_id is unknown or execution fails
     """
 
-    # Validate action exists
-    if action_id not in ACTION_REGISTRY:
-        raise ValueError(f"Unknown action_id: {action_id}")
+    logger.info(
+        "execute_action_deterministic.start",
+        extra={"action_id": action_id, "inputs_keys": list(inputs.keys())},
+    )
 
-    action_config = ACTION_REGISTRY[action_id]
-
-    # Validate inputs against schema
-    validator = action_config["validator"]
     try:
-        validated_inputs = validator(**inputs)
-    except ValidationError as e:
-        raise ValueError(f"Input validation failed: {e}")
-
-    # Build executor params
-    params_builder = action_config["params_builder"]
-    executor_params = params_builder(dict(validated_inputs))
-
-    # Route to existing executor
-    executor_name = action_config["executor"]
-
-    # Import and call executor (reuse existing OPS executors)
-    if executor_name == "history":
-        from app.modules.ops.services.executors.hist_executor import run_hist
-        result = await run_hist(
-            question=executor_params["question"],
-            mode=context.get("mode", "real"),
+        # Use new action registry (from action_registry module)
+        result: ExecutorResult = await execute_action(
+            action_id=action_id,
+            inputs=inputs,
+            context=context,
             session=session,
         )
-    elif executor_name == "metric":
-        from app.modules.ops.services.executors.metric_executor import run_metric
-        result = await run_metric(
-            question=executor_params["question"],
-            mode=context.get("mode", "real"),
-            session=session,
-        )
-    elif executor_name == "config":
-        from app.modules.ops.services.executors.config_executor import run_config
-        result = await run_config(
-            question=executor_params["question"],
-            mode=context.get("mode", "real"),
-            session=session,
-        )
-    elif executor_name == "graph":
-        from app.modules.ops.services.executors.graph_executor import run_graph
-        result = await run_graph(
-            question=executor_params["question"],
-            mode=context.get("mode", "real"),
-            session=session,
-        )
-    else:
-        raise ValueError(f"Unknown executor: {executor_name}")
 
-    # Return standardized result
-    return {
-        "blocks": result.get("blocks", []),
-        "references": result.get("references", []),
-        "tool_calls": result.get("tool_calls", []),
+        logger.info(
+            "execute_action_deterministic.success",
+            extra={
+                "action_id": action_id,
+                "blocks_count": len(result.blocks),
+            },
+        )
+
+        # Return standardized result
+        return {
+            "blocks": result.blocks,
+            "references": result.references,
+            "tool_calls": result.tool_calls,
+            "summary": result.summary,
+        }
+
+    except Exception as e:
+        logger.error(
+            "execute_action_deterministic.error",
+            extra={"action_id": action_id, "error": str(e)},
+        )
+        raise
+
+
+def render_action_payload(
+    payload_template: Dict[str, Any],
+    inputs: Dict[str, Any],
+    state: Dict[str, Any],
+    context_extra: Dict[str, Any],
+    trace_id: str,
+) -> Dict[str, Any]:
+    """
+    Render action payload template with bindings.
+
+    Creates binding context and renders template using BindingEngine.
+
+    Args:
+        payload_template: Template with {{expr}} patterns
+        inputs: User inputs
+        state: Current screen state
+        context_extra: Additional context (mode, user_id, etc.)
+        trace_id: Current trace ID
+
+    Returns:
+        Rendered payload dict
+
+    Raises:
+        BindingError: If binding fails
+    """
+    binding_context = {
+        "inputs": inputs,
+        "state": state,
+        "context": context_extra,
+        "trace_id": trace_id,
     }
+
+    logger.info(
+        "render_action_payload",
+        extra={
+            "template_keys": list(payload_template.keys()) if isinstance(payload_template, dict) else "N/A",
+        },
+    )
+
+    rendered = BindingEngine.render_template(payload_template, binding_context)
+
+    logger.debug("render_action_payload.result", extra={"rendered_keys": list(rendered.keys()) if isinstance(rendered, dict) else "N/A"})
+
+    return rendered

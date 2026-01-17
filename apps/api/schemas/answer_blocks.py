@@ -158,6 +158,16 @@ class UIPanelBlock(BaseModel):
     bindings: UIBindings | None = None
 
 
+class UIScreenBlock(BaseModel):
+    """Screen rendering trigger block - references a published Screen Asset"""
+    type: Literal["ui_screen"]
+    screen_id: str  # Published Screen Asset ID (stable key)
+    params: dict[str, Any] | None = None  # Initial parameters for screen
+    bindings: dict[str, str] | None = None  # State binding rules (key=screen path, value=binding expr)
+    id: str | None = None  # Block instance ID (optional, for trace reference)
+    title: str | None = None  # Optional title (renderer may ignore)
+
+
 AnswerBlock = Annotated[
     Union[
         MarkdownBlock,
@@ -171,6 +181,7 @@ AnswerBlock = Annotated[
         PathBlock,
         ChartBlock,
         UIPanelBlock,
+        UIScreenBlock,
     ],
     Field(discriminator="type"),
 ]

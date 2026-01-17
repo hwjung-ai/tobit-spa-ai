@@ -178,6 +178,13 @@
 - UI 공통: `apps/web/src/components/builder/BuilderShell.tsx`, `apps/web/src/components/chat/BuilderCopilotPanel.tsx`
 - 런타임 연동: `apps/api/app/modules/api_manager/runtime_router.py`, `apps/api/app/modules/api_manager/router.py`
 
+#### UIScreen Assets (U1-U2)
+- Screen Schema v1: `apps/web/src/lib/ui-screen/screen.schema.ts`, `apps/web/src/lib/ui-screen/screen.schema.json`
+- Component Registry v1: `apps/web/src/lib/ui-screen/component-registry.ts`
+- Runtime Renderer: `apps/web/src/components/answer/UIScreenRenderer.tsx`
+- Screen Asset CRUD: `apps/api/app/modules/asset_registry/router.py`, `docs/UI_SCREEN_ASSET_CRUD.md`
+- Inspector 적용 자산 기록: `apps/api/app/modules/inspector/service.py`
+
 - `tb_ui_def`는 런타임 엔드포인트 응답을 렌더링하는 UI 정의를 보관한다:
   - 컬럼: `ui_id`, `ui_name`, `ui_type` (`grid`/`chart`/`dashboard`), `schema`, `description`, `tags`, `is_active`, `created_by`, timestamps.
   - `schema.data_source.endpoint`는 반드시 `/runtime/...`를 가리켜야 하며 method와 선택적 `default_params`를 포함한다.

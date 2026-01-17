@@ -57,6 +57,17 @@ class TbAssetRegistry(SQLModel, table=True):
         default=None, sa_column=Column(JSONB, nullable=True)
     )
 
+    # Screen fields
+    screen_id: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    screen_schema: dict[str, Any] | None = Field(
+        default=None, sa_column=Column("schema_json", JSONB, nullable=True)
+    )
+
+    # Common fields
+    tags: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+
     # Metadata
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     published_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))

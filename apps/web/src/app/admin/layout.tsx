@@ -15,6 +15,7 @@ export default function AdminLayout({
         { label: "Settings", href: "/admin/settings" },
         { label: "Inspector", href: "/admin/inspector" },
         { label: "Regression", href: "/admin/regression" },
+        { label: "Observability", href: "/admin/observability" },
     ];
 
     return (

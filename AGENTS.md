@@ -105,6 +105,27 @@
   - 블록 반환 시 `ReferenceBlock` 타입의 블록으로 분리하여 제공합니다.
   - Executor와 Runner는 실행 중 수집된 모든 참조를 `trace["references"]`에 누적합니다.
 
+- **UI Screen Contract** (Phase 1-4):
+  - **UIScreenBlock** (`schemas/answer_blocks.py::UIScreenBlock`):
+    - `type: "ui_screen"` (고정), `screen_id` (필수), `params` (선택), `bindings` (선택)
+    - Answer block에서 Published Screen Asset을 참조하는 트리거 역할
+    - Applied Assets에 `screen_id`, `version`, `status` 기록 필수
+
+  - **Screen Asset** (`app/modules/asset_registry`):
+    - Prompt/Policy와 동일한 생명주기: draft → published → rollback
+    - DB 필드: `screen_id` (stable key), `schema_json` (UI 정의), `tags` (메타데이터)
+    - 마이그레이션: `0029_add_screen_asset_fields.py`
+
+  - **Binding Engine** (`app/modules/ops/services/binding_engine.py`):
+    - 템플릿 표현식: `{{inputs.x}}`, `{{state.x}}`, `{{context.x}}`, `{{trace_id}}`
+    - Dot-path only (표현식/계산 불가)
+    - 민감정보 마스킹: password, secret, token, api_key 등
+
+  - **Action Handler Registry** (`app/modules/ops/services/action_registry.py`):
+    - `/ops/ui-actions` 단일 엔드포인트
+    - Deterministic executor로 라우팅
+    - 모든 핸들러는 `ExecutorResult` (blocks, tool_calls, references, summary) 반환
+
 - **Data Explorer (데이터 탐색기)**:
   - 조회 전용(Read-only)으로만 동작해야 합니다.
   - SQL, Cypher, Redis에서 데이터 변경을 유발하는 위험한 명령어 사용을 금지하고, 허용된 명령어 목록(allowlist)을 강제해야 합니다.
@@ -122,6 +143,12 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `docs/OPERATIONS.md`: 기능 검증을 위한 운영 체크리스트입니다. (운영 절차 변경 시 반드시 업데이트)
    - `docs/PRODUCTION_GAPS.md`: 프로덕션 전환을 위해 필요한 작업 목록(TODO)입니다.
 
+### 1-1) UI Creator Contract 관련 문서
+   - `CONTRACT_UI_CREATOR_V1.md`: UI Screen 기능의 3대 계약(C0-1, C0-2, C0-3) 명세서입니다.
+   - `PHASE_1_2_3_SUMMARY.md`: Phase 1-3 구현 내역 (API, Web, 테스트) 요약입니다.
+   - `DEPLOYMENT_GUIDE_PHASE_4.md`: Phase 4 배포 절차 및 마이그레이션 가이드입니다.
+   - `PHASE_4_FINAL_SUMMARY.md`: 전체 프로젝트 (Step 0 ~ Phase 4) 완성 요약입니다.
+
 ### 2) 로그 위치
    - **Backend**: `apps/api/logs/api.log`
    - **Frontend**: `apps/web/logs/web.log`
@@ -131,6 +158,16 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `make api-dev` / `make web-dev`: 백엔드 또는 프론트엔드를 개별적으로 실행합니다.
    - `make api-lint` / `make web-lint`: 각 파트의 코드 품질을 검사합니다.
    - `make api-migrate`: DB 마이그레이션(`alembic upgrade head`)을 실행합니다. **DB 스키마 변경 시 AI가 직접 실행해야 합니다.**
+
+### 2-1) UI Creator Contract (Phase 1-4) 구현 관련
+   - **Binding Engine** (`apps/api/app/modules/ops/services/binding_engine.py`): {{inputs}}, {{state}}, {{context}}, {{trace_id}} 템플릿 치환 엔진
+   - **Action Registry** (`apps/api/app/modules/ops/services/action_registry.py`): UI 액션 핸들러 라우팅 시스템
+   - **UIScreenRenderer** (`apps/web/src/components/answer/UIScreenRenderer.tsx`): 화면 렌더링 컴포넌트
+   - **DB Migration** (`apps/api/alembic/versions/0029_add_screen_asset_fields.py`): Screen asset 필드 추가 마이그레이션
+
+   관련 테스트:
+   - API 테스트: `apps/api/tests/test_ui_contract.py` (20개 테스트)
+   - E2E 테스트: `apps/web/e2e/ui-screen.spec.ts` (17개 테스트)
 
 ### 3-1) 테스트 실행 (필독)
    **코드를 수정한 후에는 반드시 아래 테스트를 실행하여 변경사항을 검증해야 합니다.**

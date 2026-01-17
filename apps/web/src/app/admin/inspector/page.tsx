@@ -57,6 +57,8 @@ interface AssetSummary {
   engine?: string | null;
   policy_type?: string | null;
   mapping_type?: string | null;
+  screen_id?: string | null;
+  status?: string | null;
 }
 
 interface ExecutionStep {
@@ -134,6 +136,7 @@ interface ExecutionTraceDetail {
     policy?: AssetSummary | null;
     mapping?: AssetSummary | null;
     queries?: AssetSummary[] | null;
+    screens?: AssetSummary[] | null;
   } | null;
   asset_versions: string[] | null;
   fallbacks: Record<string, boolean> | null;
@@ -817,6 +820,20 @@ function InspectorContent() {
                           </ul>
                         ) : (
                           <p className="text-xs text-slate-500">Query asset 없음</p>
+                        )}
+                      </div>
+                      <div className="md:col-span-2 space-y-2">
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Screens</p>
+                        {traceDetail.applied_assets?.screens?.length ? (
+                          <ul className="space-y-2">
+                            {traceDetail.applied_assets.screens.map((screen) => (
+                              <li key={screen.asset_id || `${screen.screen_id}-${screen.status}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-300">
+                                {screen.screen_id || "screen"} · {screen.status ?? "unknown"} · {screen.version ?? "?"}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-xs text-slate-500">Screen asset 없음</p>
                         )}
                       </div>
                     </div>

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.modules.inspector.asset_context import get_tracked_assets
+from app.modules.asset_registry.models import TbAssetRegistry
 from app.modules.inspector.crud import create_execution_trace
 from app.modules.inspector.models import TbExecutionTrace
 
@@ -32,6 +34,9 @@ def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
         "queries": [
             _summarize_asset(entry) for entry in state.get("queries", []) if entry
         ],
+        "screens": [
+            entry for entry in state.get("screens", []) if entry
+        ],
     }
 
 
@@ -53,7 +58,52 @@ def _compute_asset_versions(state: dict[str, Any]) -> List[str]:
             versions.append(asset_id)
         else:
             versions.append(f"{entry.get('name')}@{entry.get('source')}")
+    for entry in state.get("screens", []):
+        if not entry:
+            continue
+        asset_id = entry.get("asset_id")
+        if asset_id:
+            versions.append(asset_id)
+        else:
+            versions.append(f"{entry.get('screen_id')}@{entry.get('status')}")
     return versions
+
+
+def _resolve_screen_assets(session: Session, blocks: List[Dict[str, Any]] | None) -> List[Dict[str, Any]]:
+    if not blocks:
+        return []
+    screen_blocks = [b for b in blocks if isinstance(b, dict) and b.get("type") == "ui_screen"]
+    if not screen_blocks:
+        return []
+
+    screen_ids = list({b.get("screen_id") for b in screen_blocks if b.get("screen_id")})
+    if not screen_ids:
+        return []
+
+    assets = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "screen")
+        .where(TbAssetRegistry.screen_id.in_(screen_ids))
+        .where(TbAssetRegistry.status == "published")
+    ).all()
+    assets_by_screen = {asset.screen_id: asset for asset in assets}
+
+    resolved: List[Dict[str, Any]] = []
+    for block in screen_blocks:
+        screen_id = block.get("screen_id")
+        asset = assets_by_screen.get(screen_id)
+        resolved.append(
+            {
+                "asset_id": str(asset.asset_id) if asset else None,
+                "screen_id": screen_id,
+                "version": asset.version if asset else None,
+                "status": asset.status if asset else "missing",
+                "applied_at": datetime.utcnow().isoformat(),
+                "block_id": block.get("id"),
+                "source": "asset_registry" if asset else "unknown",
+            }
+        )
+    return resolved
 
 
 def _compute_fallbacks(state: dict[str, Any]) -> Dict[str, bool]:
@@ -114,6 +164,9 @@ def persist_execution_trace(
     flow_spans: List[Dict[str, Any]] | None = None,
 ) -> TbExecutionTrace:
     assets = get_tracked_assets()
+    resolved_screens = _resolve_screen_assets(session, blocks)
+    if resolved_screens:
+        assets["screens"] = resolved_screens
     applied_assets = _build_applied_assets(assets)
     asset_versions = _compute_asset_versions(assets)
     fallbacks = _compute_fallbacks(assets)

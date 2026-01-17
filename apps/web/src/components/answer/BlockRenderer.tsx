@@ -15,6 +15,7 @@ import ReactFlow, { Background, Controls, type Edge, type Node } from "reactflow
 import "reactflow/dist/style.css";
 import { type NextAction } from "../../app/ops/nextActions";
 import UIPanelRenderer from "./UIPanelRenderer";
+import UIScreenRenderer from "./UIScreenRenderer";
 import type { UIPanelBlock } from "@/types/uiActions";
 
 export type AnswerBlock =
@@ -28,7 +29,8 @@ export type AnswerBlock =
   | NumberBlock
   | NetworkBlock
   | PathBlock
-  | UIPanelBlock;
+  | UIPanelBlock
+  | UIScreenBlock;
 
 export interface AnswerEnvelope {
   meta: AnswerMeta;
@@ -183,6 +185,15 @@ export interface ReferencesBlock {
   id?: BlockId;
 }
 
+export interface UIScreenBlock {
+  type: "ui_screen";
+  screen_id: string;
+  params?: Record<string, unknown>;
+  bindings?: Record<string, string>;
+  id?: BlockId;
+  title?: string;
+}
+
 interface BlockRendererProps {
   blocks: AnswerBlock[];
   nextActions?: NextAction[];
@@ -211,6 +222,7 @@ const BLOCK_COMPONENT_NAMES: Record<string, string> = {
   path: "PathBlock",
   references: "ReferencesBlock",
   ui_panel: "UIPanelRenderer",
+  ui_screen: "UIScreenRenderer",
 };
 
 const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
@@ -675,6 +687,24 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 />
               </section>
             );
+
+          case "ui_screen": {
+            const screenBlock = block as UIScreenBlock;
+            return (
+              <section
+                key={`${block.type}-${block.id ?? index}`}
+                className="rounded-3xl"
+              >
+                <UIScreenRenderer
+                  block={screenBlock}
+                  traceId={traceId}
+                  onResult={(resultBlocks) => {
+                    // Optional: handle result blocks from screen actions
+                  }}
+                />
+              </section>
+            );
+          }
 
           default:
             throw new Error(`Unsupported block type: ${block.type}`);
