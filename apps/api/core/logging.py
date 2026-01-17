@@ -137,3 +137,4 @@ def configure_logging(level: str | int = "INFO") -> None:
 
     # reduce noisy SSE heartbeat logs
     logging.getLogger("sse_starlette.sse").setLevel(logging.INFO)
+    logging.getLogger("watchdog").setLevel(logging.INFO)
