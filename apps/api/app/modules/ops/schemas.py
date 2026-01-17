@@ -100,6 +100,7 @@ class UIActionResponse(BaseModel):
     status: Literal["ok", "error"]
     blocks: List[Dict[str, Any]] = []
     references: List[Dict[str, Any]] = []
+    state_patch: Dict[str, Any] | None = None
     error: Dict[str, Any] | None = None
 
 

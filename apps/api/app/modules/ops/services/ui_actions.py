@@ -117,6 +117,7 @@ async def execute_action_deterministic(
             "references": result.references,
             "tool_calls": result.tool_calls,
             "summary": result.summary,
+            "state_patch": result.state_patch,
         }
 
     except Exception as e:

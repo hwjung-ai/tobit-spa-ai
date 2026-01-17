@@ -544,6 +544,7 @@ async def execute_ui_action(
                 "status": "ok",
                 "blocks": executor_result["blocks"],
                 "references": executor_result.get("references", []),
+                "state_patch": executor_result.get("state_patch", {}),
             }
         )
 
