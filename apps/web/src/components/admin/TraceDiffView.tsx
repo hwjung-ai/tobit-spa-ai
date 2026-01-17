@@ -492,6 +492,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
       const response = await fetchApi<{ trace_id: string }>("/ops/rca", {
         method: "POST",
         body: JSON.stringify({
+          mode: "diff",
           baseline_trace_id: traceA.trace_id,
           candidate_trace_id: traceB.trace_id,
         }),
