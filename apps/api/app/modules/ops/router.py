@@ -827,3 +827,216 @@ def get_regression_run(
     except Exception as e:
         logger.error(f"Failed to get regression run: {e}")
         return ResponseEnvelope.error(message=str(e))
+
+
+# --- RCA Assist (Step 6) ---
+
+
+@router.post("/rca")
+def run_rca(
+    payload: Dict[str, Any],
+    session: Any = Depends(get_session_context),
+) -> ResponseEnvelope:
+    """
+    Run Root Cause Analysis on a trace or trace diff.
+
+    Mode 1: Single trace analysis (failure/issue diagnosis)
+    {
+      "mode": "single",
+      "trace_id": "abc-123",
+      "options": { "max_hypotheses": 5, "include_snippets": true, "use_llm": true }
+    }
+
+    Mode 2: Diff analysis (regression/change analysis)
+    {
+      "mode": "diff",
+      "baseline_trace_id": "base-123",
+      "candidate_trace_id": "cand-456",
+      "options": { "max_hypotheses": 7, "include_snippets": true, "use_llm": true }
+    }
+
+    Returns RCA trace with hypotheses as blocks.
+    """
+    from app.modules.inspector.crud import (
+        get_execution_trace,
+        create_execution_trace,
+    )
+    from app.modules.ops.services.rca_engine import RCAEngine
+    from app.modules.llm.rca_summarizer import summarize_rca_results
+
+    try:
+        mode = payload.get("mode")
+        options = payload.get("options", {})
+        max_hypotheses = options.get("max_hypotheses", 5)
+        use_llm = options.get("use_llm", True)
+        include_snippets = options.get("include_snippets", True)
+
+        ts_start = time.time()
+        rca_engine = RCAEngine()
+
+        # ===== Single Trace Mode =====
+        if mode == "single":
+            trace_id = payload.get("trace_id")
+            if not trace_id:
+                return ResponseEnvelope.error(message="trace_id required for single mode")
+
+            # Fetch trace
+            trace = get_execution_trace(session, trace_id)
+            if not trace:
+                return ResponseEnvelope.error(message=f"Trace {trace_id} not found")
+
+            # Generate hypotheses
+            hypotheses_list = rca_engine.analyze_single_trace(
+                trace.model_dump(),
+                max_hypotheses=max_hypotheses,
+            )
+
+            source_traces = [trace_id]
+            question = f"RCA: Analyze failure in trace {trace_id[:8]}..."
+
+        # ===== Diff Mode =====
+        elif mode == "diff":
+            baseline_trace_id = payload.get("baseline_trace_id")
+            candidate_trace_id = payload.get("candidate_trace_id")
+
+            if not baseline_trace_id or not candidate_trace_id:
+                return ResponseEnvelope.error(
+                    message="baseline_trace_id and candidate_trace_id required for diff mode"
+                )
+
+            # Fetch traces
+            baseline = get_execution_trace(session, baseline_trace_id)
+            candidate = get_execution_trace(session, candidate_trace_id)
+
+            if not baseline:
+                return ResponseEnvelope.error(message=f"Baseline trace {baseline_trace_id} not found")
+            if not candidate:
+                return ResponseEnvelope.error(message=f"Candidate trace {candidate_trace_id} not found")
+
+            # Generate hypotheses
+            hypotheses_list = rca_engine.analyze_diff(
+                baseline.model_dump(),
+                candidate.model_dump(),
+                max_hypotheses=max_hypotheses,
+            )
+
+            source_traces = [baseline_trace_id, candidate_trace_id]
+            question = f"RCA: Analyze regression/change between {baseline_trace_id[:8]}... and {candidate_trace_id[:8]}..."
+
+        else:
+            return ResponseEnvelope.error(message="mode must be 'single' or 'diff'")
+
+        # ===== Convert to dict and summarize =====
+        rca_data = rca_engine.to_dict()
+        hypotheses = rca_data.get("hypotheses", [])
+
+        # Add LLM descriptions if enabled
+        if use_llm and hypotheses:
+            try:
+                hypotheses = summarize_rca_results(
+                    hypotheses,
+                    use_llm=True,
+                    language="korean",
+                )
+                logger.info(f"RCA summarization completed for {len(hypotheses)} hypotheses")
+            except Exception as e:
+                logger.warning(f"RCA summarization failed (using fallback): {e}")
+                for hyp in hypotheses:
+                    hyp["description"] = ""
+
+        # ===== Create RCA trace =====
+        rca_trace_id = str(uuid.uuid4())
+        duration_ms = int((time.time() - ts_start) * 1000)
+
+        # Build RCA answer blocks
+        rca_blocks = []
+
+        # Block 1: Summary
+        rca_blocks.append({
+            "type": "markdown",
+            "title": "RCA Analysis Summary",
+            "content": f"**Mode:** {mode}\n**Traces Analyzed:** {', '.join(source_traces[:2])}\n**Hypotheses Found:** {len(hypotheses)}",
+        })
+
+        # Block 2: Hypotheses list (one hypothesis per block)
+        for hyp in hypotheses:
+            hyp_content = f"""**Rank {hyp['rank']}: {hyp['title']}**
+
+**Confidence:** {hyp['confidence'].upper()}
+
+**Description:** {hyp.get('description', 'N/A')}
+
+**Evidence:**
+"""
+            for evidence in hyp.get("evidence", []):
+                hyp_content += f"- `{evidence['path']}`: {evidence['snippet']}\n"
+
+            hyp_content += f"\n**Verification Checks:**\n"
+            for check in hyp.get("checks", [])[:3]:
+                hyp_content += f"- {check}\n"
+
+            hyp_content += f"\n**Recommended Actions:**\n"
+            for action in hyp.get("recommended_actions", [])[:3]:
+                hyp_content += f"- {action}\n"
+
+            rca_blocks.append({
+                "type": "markdown",
+                "title": f"Hypothesis {hyp['rank']}",
+                "content": hyp_content,
+            })
+
+        # Create execution trace for RCA run
+        rca_trace = create_execution_trace(
+            session,
+            trace_id=rca_trace_id,
+            parent_trace_id=None,  # RCA is top-level
+            feature="rca",
+            endpoint="/ops/rca",
+            method="POST",
+            ops_mode="real",
+            question=question,
+            status="success" if hypotheses else "warning",
+            duration_ms=duration_ms,
+            request_payload={
+                "mode": mode,
+                "source_traces": source_traces,
+                "options": options,
+            },
+            applied_assets=None,
+            asset_versions=None,
+            fallbacks=None,
+            plan_raw=None,
+            plan_validated=None,
+            execution_steps=None,
+            references=None,
+            answer={
+                "meta": {
+                    "route": "rca",
+                    "summary": f"RCA: {len(hypotheses)} hypotheses generated",
+                },
+                "blocks": rca_blocks,
+            },
+            ui_render=None,
+            audit_links=None,
+            flow_spans=None,
+        )
+
+        # ===== Return response =====
+        return ResponseEnvelope.success(
+            data={
+                "trace_id": rca_trace_id,
+                "status": "ok",
+                "blocks": rca_blocks,
+                "rca": {
+                    "mode": mode,
+                    "source_traces": source_traces,
+                    "hypotheses": hypotheses,
+                    "total_hypotheses": len(hypotheses),
+                    "analysis_duration_ms": duration_ms,
+                },
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"RCA analysis failed: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=f"RCA analysis failed: {str(e)}")

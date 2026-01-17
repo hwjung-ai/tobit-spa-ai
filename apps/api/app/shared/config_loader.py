@@ -11,8 +11,8 @@ from watchdog.observers import Observer
 
 logger = logging.getLogger(__name__)
 
-# API root is 3 levels up from this file's location (apps/api/app/shared)
-BASE_DIR = Path(__file__).resolve().parents[3]
+# API root is 2 levels up from this file's location (apps/api/app/shared -> apps/api)
+BASE_DIR = Path(__file__).resolve().parents[2]
 RESOURCES_DIR = BASE_DIR / "resources"
 
 _cache: Dict[str, Any] = {}
