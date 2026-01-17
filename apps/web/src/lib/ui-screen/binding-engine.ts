@@ -89,25 +89,110 @@ function resolvePath(path: string, ctx: BindingContext) {
   return get(ctx.state || {}, path);
 }
 
+/**
+ * Parse dot-path notation with array index support
+ * Examples:
+ *   "state.device"          → ["state", "device"]
+ *   "state.items[0].name"   → ["state", "items", "0", "name"]
+ *   "state.nested[2].id"    → ["state", "nested", "2", "id"]
+ *   "state.length"          → ["state", "length"] (array.length property)
+ */
+function parsePathWithIndices(path: string): string[] {
+  if (!path) return [];
+
+  const parts: string[] = [];
+  let current = "";
+  let i = 0;
+
+  while (i < path.length) {
+    const char = path[i];
+
+    if (char === ".") {
+      if (current) {
+        parts.push(current);
+        current = "";
+      }
+      i++;
+    } else if (char === "[") {
+      if (current) {
+        parts.push(current);
+        current = "";
+      }
+      // Extract index: [0], [1], etc.
+      i++;
+      let index = "";
+      while (i < path.length && path[i] !== "]") {
+        index += path[i];
+        i++;
+      }
+      if (path[i] === "]") {
+        parts.push(index);
+        i++;
+      }
+      // Skip the "." after "]" if present
+      if (path[i] === ".") {
+        i++;
+      }
+    } else {
+      current += char;
+      i++;
+    }
+  }
+
+  if (current) {
+    parts.push(current);
+  }
+
+  return parts;
+}
+
 export function get(obj: any, path?: string) {
   if (!path) return undefined;
-  const parts = path.split(".");
+  const parts = parsePathWithIndices(path);
   let cur = obj;
   for (const p of parts) {
     if (cur == null) return undefined;
-    cur = cur[p];
+    // Try to parse as array index (numeric string)
+    const idx = parseInt(p, 10);
+    if (!isNaN(idx) && Array.isArray(cur)) {
+      cur = cur[idx];
+    } else {
+      cur = cur[p];
+    }
   }
   return cur;
 }
 
 export function set(obj: any, path: string, value: any) {
-  const parts = path.split(".");
+  const parts = parsePathWithIndices(path);
+  if (parts.length === 0) return;
+
   let cur = obj;
   for (const p of parts.slice(0, -1)) {
-    if (cur[p] == null || typeof cur[p] !== "object") {
-      cur[p] = {};
+    const idx = parseInt(p, 10);
+    if (!isNaN(idx)) {
+      // Array index
+      if (!Array.isArray(cur)) {
+        cur = [];
+      }
+      if (cur[idx] == null) {
+        cur[idx] = {};
+      }
+      cur = cur[idx];
+    } else {
+      // Object property
+      if (cur[p] == null || typeof cur[p] !== "object") {
+        cur[p] = {};
+      }
+      cur = cur[p];
     }
-    cur = cur[p];
   }
-  cur[parts[parts.length - 1]] = value;
+
+  const lastPart = parts[parts.length - 1];
+  const lastIdx = parseInt(lastPart, 10);
+  if (!isNaN(lastIdx) && Array.isArray(cur)) {
+    cur[lastIdx] = value;
+  } else {
+    cur[lastPart] = value;
+  }
 }

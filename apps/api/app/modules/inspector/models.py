@@ -220,3 +220,72 @@ class TbRegressionRun(SQLModel, table=True):
         default_factory=datetime.utcnow,
         sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     )
+
+
+class TbRegressionRuleConfig(SQLModel, table=True):
+    """Configurable judgment rules for regression detection (v2)"""
+
+    __tablename__ = "tb_regression_rule_config"
+
+    id: str = Field(
+        sa_column=Column(Text, primary_key=True, nullable=False),
+        description="Unique identifier (UUID)",
+    )
+    golden_query_id: str = Field(
+        sa_column=Column(Text, nullable=False, index=True),
+        description="Applied to specific golden query (or 'global' for default)",
+    )
+
+    # FAIL thresholds (triggers FAIL if matched)
+    max_assets_changed: int = Field(
+        default=0,
+        description="Max assets allowed to change (0 = no change)",
+    )
+    plan_intent_change_allowed: bool = Field(
+        default=False,
+        description="Allow plan intent changes without FAIL",
+    )
+    tool_calls_failed_threshold: int = Field(
+        default=0,
+        description="Max tool call failures allowed (0 = no failures allowed)",
+    )
+    blocks_structure_variance_threshold: float = Field(
+        default=0.5,
+        description="Max block structure change (0.5 = 50%)",
+    )
+
+    # WARN thresholds (triggers WARN if matched)
+    tool_calls_added_threshold: int = Field(
+        default=1,
+        description="Max tool calls added (before WARN)",
+    )
+    references_variance_threshold: float = Field(
+        default=0.25,
+        description="Max references variance (0.25 = 25%)",
+    )
+    tool_duration_spike_factor: float = Field(
+        default=2.0,
+        description="Max tool duration multiplier (2.0 = 2x)",
+    )
+
+    # Enabled rules
+    check_assets_changed: bool = Field(default=True)
+    check_plan_intent: bool = Field(default=True)
+    check_tool_errors: bool = Field(default=True)
+    check_block_structure: bool = Field(default=True)
+    check_tool_duration: bool = Field(default=True)
+    check_references_variance: bool = Field(default=True)
+
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow,
+        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    )
+    updated_by: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+        description="User who last updated (optional)",
+    )
