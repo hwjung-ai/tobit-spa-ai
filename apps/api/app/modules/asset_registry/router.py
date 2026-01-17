@@ -76,7 +76,7 @@ def list_assets(asset_type: str | None = None):
         if asset_type:
             q = q.where(TbAssetRegistry.asset_type == asset_type)
         assets = session.exec(q).all()
-        return {"items": [
+        return {"assets": [
             {
                 "asset_id": str(a.asset_id),
                 "screen_id": a.screen_id,
