@@ -14,6 +14,7 @@ from app.modules.asset_registry.schemas import (
     ScreenAssetUpdate,
 )
 from core.db import get_session_context
+from schemas.common import ResponseEnvelope
 
 router = APIRouter(prefix="/asset-registry")
 
@@ -69,24 +70,31 @@ def create_screen_asset(payload: ScreenAssetCreate):
         )
 
 
-@router.get("/assets")
+@router.get("/assets", response_model=ResponseEnvelope)
 def list_assets(asset_type: str | None = None):
     with get_session_context() as session:
         q = select(TbAssetRegistry)
         if asset_type:
             q = q.where(TbAssetRegistry.asset_type == asset_type)
         assets = session.exec(q).all()
-        return {"assets": [
-            {
-                "asset_id": str(a.asset_id),
-                "screen_id": a.screen_id,
-                "asset_type": a.asset_type,
-                "name": a.name,
-                "version": a.version,
-                "status": a.status,
-                "published_at": a.published_at,
-            } for a in assets
-        ], "total": len(assets)}
+        return ResponseEnvelope(
+            code=0,
+            message="OK",
+            data={
+                "assets": [
+                    {
+                        "asset_id": str(a.asset_id),
+                        "screen_id": a.screen_id,
+                        "asset_type": a.asset_type,
+                        "name": a.name,
+                        "version": a.version,
+                        "status": a.status,
+                        "published_at": a.published_at,
+                    } for a in assets
+                ],
+                "total": len(assets)
+            }
+        )
 
 
 @router.get("/assets/{asset_id}", response_model=ScreenAssetRead)
