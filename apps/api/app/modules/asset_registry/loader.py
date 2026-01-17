@@ -7,6 +7,12 @@ from sqlmodel import Session, select
 
 from app.shared import config_loader
 from core.db import get_session_context
+from app.modules.inspector.asset_context import (
+    track_mapping_asset,
+    track_policy_asset,
+    track_prompt_asset,
+    track_query_asset,
+)
 from .models import TbAssetRegistry
 
 logger = logging.getLogger(__name__)
@@ -31,13 +37,25 @@ def load_prompt_asset(scope: str, engine: str, name: str) -> dict[str, Any] | No
 
         if asset:
             logger.info(f"Loaded prompt from asset registry: {name} (v{asset.version})")
-            return {
+            payload = {
+                "asset_id": str(asset.asset_id),
                 "version": asset.version,
                 "name": asset.name,
                 "templates": {"system": asset.template},
                 "params": list(asset.input_schema.get("properties", {}).keys()),
                 "source": "asset_registry",
             }
+            track_prompt_asset(
+                {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "scope": scope,
+                    "engine": engine,
+                }
+            )
+            return payload
 
     # Fallback to file
     file_path = f"prompts/{scope}/{engine}.yaml"
@@ -45,8 +63,22 @@ def load_prompt_asset(scope: str, engine: str, name: str) -> dict[str, Any] | No
 
     if prompt_data:
         logger.warning(f"Using fallback file for prompt '{name}': resources/{file_path}")
-        prompt_data["source"] = "file_fallback"
-        return prompt_data
+        fallback_payload = dict(prompt_data)
+        fallback_payload["source"] = "file_fallback"
+        fallback_payload["asset_id"] = None
+        fallback_payload["version"] = None
+        fallback_payload["name"] = name
+        track_prompt_asset(
+            {
+                "asset_id": None,
+                "name": name,
+                "version": None,
+                "source": "file_fallback",
+                "scope": scope,
+                "engine": engine,
+            }
+        )
+        return fallback_payload
 
     logger.warning(f"Prompt asset not found: {name} (scope={scope}, engine={engine})")
     return None
@@ -56,7 +88,8 @@ def load_mapping_asset(mapping_type: str = "graph_relation") -> dict[str, Any] |
     """
     Load mapping asset with fallback priority:
     1. Published asset from DB
-    2. File from resources/
+    2. Seed file from resources/
+    3. Legacy file (current location)
     """
     with get_session_context() as session:
         asset = session.exec(
@@ -68,15 +101,74 @@ def load_mapping_asset(mapping_type: str = "graph_relation") -> dict[str, Any] |
 
         if asset:
             logger.info(f"Loaded mapping from asset registry: {asset.name} (v{asset.version})")
-            return asset.content
+            payload = dict(asset.content or {})
+            payload["_asset_meta"] = {
+                "asset_id": str(asset.asset_id),
+                "name": asset.name,
+                "version": asset.version,
+                "source": "asset_registry",
+                "mapping_type": mapping_type,
+            }
+            track_mapping_asset(
+                {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "mapping_type": mapping_type,
+                }
+            )
+            return payload
 
-    # Fallback to file
-    file_path = "app/modules/ops/services/ci/relation_mapping.yaml"
-    mapping_data = config_loader.load_yaml(file_path)
+    # Fallback to seed file
+    seed_path = "mappings/graph_relation_mapping.yaml"
+    seed_data = config_loader.load_yaml(seed_path)
 
-    if mapping_data:
-        logger.warning(f"Using fallback file for mapping: {file_path}")
-        return mapping_data
+    if seed_data and "content" in seed_data:
+        logger.warning(f"Using seed file for mapping: resources/{seed_path}")
+        payload = dict(seed_data.get("content") or {})
+        payload["_asset_meta"] = {
+            "asset_id": None,
+            "name": mapping_type,
+            "version": None,
+            "source": "seed_file",
+            "mapping_type": mapping_type,
+        }
+        track_mapping_asset(
+            {
+                "asset_id": None,
+                "name": mapping_type,
+                "version": None,
+                "source": "seed_file",
+                "mapping_type": mapping_type,
+            }
+        )
+        return payload
+
+    # Legacy fallback
+    legacy_path = "app/modules/ops/services/ci/relation_mapping.yaml"
+    legacy_data = config_loader.load_yaml(legacy_path)
+
+    if legacy_data:
+        logger.warning(f"Using legacy file for mapping: {legacy_path}")
+        payload = dict(legacy_data)
+        payload["_asset_meta"] = {
+            "asset_id": None,
+            "name": mapping_type,
+            "version": None,
+            "source": "legacy_file",
+            "mapping_type": mapping_type,
+        }
+        track_mapping_asset(
+            {
+                "asset_id": None,
+                "name": mapping_type,
+                "version": None,
+                "source": "legacy_file",
+                "mapping_type": mapping_type,
+            }
+        )
+        return payload
 
     logger.warning(f"Mapping asset not found: {mapping_type}")
     return None
@@ -86,7 +178,8 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
     """
     Load policy asset with fallback priority:
     1. Published asset from DB
-    2. Hardcoded defaults
+    2. Seed file from resources/
+    3. Hardcoded defaults
     """
     with get_session_context() as session:
         asset = session.exec(
@@ -98,15 +191,94 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
 
         if asset:
             logger.info(f"Loaded policy from asset registry: {asset.name} (v{asset.version})")
-            return asset.limits
+            payload = dict(asset.limits or {})
+            payload["_asset_meta"] = {
+                "asset_id": str(asset.asset_id),
+                "name": asset.name,
+                "version": asset.version,
+                "source": "asset_registry",
+                "policy_type": policy_type,
+            }
+            track_policy_asset(
+                {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "policy_type": policy_type,
+                }
+            )
+            return payload
 
-    # Fallback to defaults
-    logger.info(f"Using default policy for {policy_type}")
-    return {
-        "max_steps": 10,
-        "timeout_ms": 120000,  # 2 minutes
-        "max_depth": 5,
+    # Fallback to seed file
+    seed_file_map = {
+        "plan_budget": "policies/plan_budget.yaml",
+        "view_depth": "policies/view_depth_policies.yaml",
     }
+
+    if policy_type in seed_file_map:
+        seed_path = seed_file_map[policy_type]
+        seed_data = config_loader.load_yaml(seed_path)
+        if seed_data and "limits" in seed_data:
+            logger.warning(f"Using seed file for policy '{policy_type}': resources/{seed_path}")
+            payload = dict(seed_data["limits"] or {})
+            payload["_asset_meta"] = {
+                "asset_id": None,
+                "name": policy_type,
+                "version": None,
+                "source": "seed_file",
+                "policy_type": policy_type,
+            }
+            track_policy_asset(
+                {
+                    "asset_id": None,
+                    "name": policy_type,
+                    "version": None,
+                    "source": "seed_file",
+                    "policy_type": policy_type,
+                }
+            )
+            return payload
+
+    # Ultimate fallback to hardcoded defaults
+    logger.warning(f"Using hardcoded defaults for policy '{policy_type}'")
+    if policy_type == "plan_budget":
+        return {
+            "max_steps": 10,
+            "timeout_ms": 120000,  # 2 minutes
+            "max_depth": 5,
+            "max_branches": 3,
+            "max_iterations": 100,
+        }
+    elif policy_type == "view_depth":
+        # Return a minimal view_depth policy (this shouldn't normally be used)
+        logger.warning(f"No view_depth policy found in DB or seed file, returning None")
+        payload = {
+            "max_steps": 10,
+            "timeout_ms": 120000,
+            "max_depth": 5,
+            "max_branches": 3,
+            "max_iterations": 100,
+            "_asset_meta": {
+                "asset_id": None,
+                "name": policy_type,
+                "version": None,
+                "source": "default",
+                "policy_type": policy_type,
+            },
+        }
+        track_policy_asset(
+            {
+                "asset_id": None,
+                "name": policy_type,
+                "version": None,
+                "source": "default",
+                "policy_type": policy_type,
+            }
+        )
+        return payload
+
+    return None
 
 
 def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -132,12 +304,25 @@ def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str 
         if asset:
             logger.info(f"Loaded query from asset registry: {name} (v{asset.version})")
             asset_identifier = f"{str(asset.asset_id)}:v{asset.version}"
-            return {
-                "sql": asset.query_sql,
-                "params": asset.query_params or {},
-                "metadata": asset.query_metadata or {},
-                "source": "asset_registry",
-            }, asset_identifier
+            track_query_asset(
+                {
+                    "asset_id": asset_identifier,
+                    "name": name,
+                    "scope": scope,
+                    "source": "asset_registry",
+                    "version": asset.version,
+                }
+            )
+            return (
+                {
+                    "sql": asset.query_sql,
+                    "params": asset.query_params or {},
+                    "metadata": asset.query_metadata or {},
+                    "source": "asset_registry",
+                    "asset_id": asset_identifier,
+                },
+                asset_identifier,
+            )
 
     # Fallback to file
     file_path = f"queries/{scope}/{name}.sql"
@@ -145,12 +330,24 @@ def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str 
 
     if query_text:
         logger.warning(f"Using fallback file for query '{name}': resources/{file_path}")
-        return {
-            "sql": query_text,
-            "params": {},
-            "metadata": {"seed_file": file_path},
-            "source": "file_fallback",
-        }, None
+        track_query_asset(
+            {
+                "asset_id": None,
+                "name": name,
+                "scope": scope,
+                "source": "file_fallback",
+                "version": None,
+            }
+        )
+        return (
+            {
+                "sql": query_text,
+                "params": {},
+                "metadata": {"seed_file": file_path},
+                "source": "file_fallback",
+            },
+            None,
+        )
 
     logger.warning(f"Query asset not found: {name} (scope={scope})")
     return None, None

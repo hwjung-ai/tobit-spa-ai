@@ -1,0 +1,16 @@
+name: plan_budget_default
+description: "Default budget constraints for plan execution"
+policy_type: plan_budget
+scope: ci
+limits:
+  max_steps: 10
+  timeout_ms: 120000
+  max_depth: 5
+  max_branches: 3
+  max_iterations: 100
+metadata:
+  source: "validator.py::get_default_budget(), plan_schema.py::BudgetSpec"
+  migrated_from: "code"
+  references:
+    - "apps/api/app/modules/ops/services/ci/planner/validator.py:26-44"
+    - "apps/api/app/modules/ops/services/ci/planner/plan_schema.py:124-130"

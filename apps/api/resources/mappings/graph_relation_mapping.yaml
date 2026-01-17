@@ -1,0 +1,50 @@
+name: graph_relation_mapping
+description: "Relationship type mappings for graph views"
+mapping_type: graph_relation
+scope: ci
+content:
+  version: 1
+  views:
+    SUMMARY:
+      rel_types: []
+    COMPOSITION:
+      rel_types:
+        - COMPOSED_OF
+    DEPENDENCY:
+      rel_types:
+        - DEPENDS_ON
+        - RUNS_ON
+        - DEPLOYED_ON
+        - USES
+        - PROTECTED_BY
+        - CONNECTED_TO
+    IMPACT:
+      rel_types:
+        - DEPENDS_ON
+    PATH:
+      rel_types:
+        - DEPENDS_ON
+        - RUNS_ON
+        - DEPLOYED_ON
+        - USES
+        - PROTECTED_BY
+        - CONNECTED_TO
+    NEIGHBORS:
+      rel_types: []
+  summary_neighbors_allowlist:
+    - COMPOSED_OF
+    - DEPENDS_ON
+    - RUNS_ON
+    - DEPLOYED_ON
+    - USES
+    - PROTECTED_BY
+    - CONNECTED_TO
+  exclude_rel_types: []
+metadata:
+  source_file: "app/modules/ops/services/ci/relation_mapping.yaml"
+  migrated_from: "yaml_file"
+  notes:
+    impact_definition: "IMPACT는 의존 기반 영향(가정)으로 정의합니다."
+  references:
+    - "apps/api/app/modules/ops/services/ci/relation_mapping.yaml"
+    - "apps/api/app/modules/ops/services/ci/policy.py:103-117"

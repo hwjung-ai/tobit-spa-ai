@@ -34,8 +34,8 @@ def get_default_budget() -> BudgetSpec:
                 max_steps=policy_asset.get("max_steps", 10),
                 timeout_seconds=(policy_asset.get("timeout_ms", 120000) // 1000),
                 max_depth=policy_asset.get("max_depth", 5),
-                max_branches=3,
-                max_iterations=100,
+                max_branches=policy_asset.get("max_branches", 3),
+                max_iterations=policy_asset.get("max_iterations", 100),
             )
     except Exception as e:
         logger.warning(f"Failed to load policy asset for budget: {e}")

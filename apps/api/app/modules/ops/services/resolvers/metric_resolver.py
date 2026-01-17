@@ -5,6 +5,7 @@ from typing import Iterable
 from scripts.seed.utils import get_postgres_conn
 
 from app.shared.config_loader import load_text
+from app.modules.asset_registry.loader import load_query_asset
 
 from .types import MetricHit
 
@@ -28,7 +29,10 @@ def resolve_metric(question: str) -> MetricHit | None:
 
 
 def _fetch_metric(metric_name: str) -> MetricHit | None:
-    query = load_text("queries/postgres/metric/metric_resolver.sql")
+    # Load query with DB priority fallback to file
+    asset = load_query_asset("metric", "metric_resolver")
+    query = asset.get("sql") if asset else None
+    query = query or load_text("queries/postgres/metric/metric_resolver.sql")
     if not query:
         raise ValueError("Metric resolver query not found")
     with get_postgres_conn() as conn:

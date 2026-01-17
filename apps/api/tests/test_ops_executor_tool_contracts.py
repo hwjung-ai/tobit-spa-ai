@@ -142,11 +142,12 @@ class TestExecutorBackwardCompatibility:
         blocks = [{"type": "markdown", "content": "test"}]
         used_tools = ["postgres"]
 
-        normalized_blocks, normalized_tools, error = _normalize_real_result((blocks, used_tools))
+        normalized_blocks, normalized_tools, error, executor = _normalize_real_result((blocks, used_tools))
 
         assert normalized_blocks == blocks
         assert normalized_tools == used_tools
         assert error is None
+        assert executor is None
 
     def test_normalize_real_result_with_legacy_tuple_and_error(self):
         """Test _normalize_real_result handles legacy tuples with error."""
@@ -156,13 +157,14 @@ class TestExecutorBackwardCompatibility:
         used_tools = ["postgres"]
         error = "Test error"
 
-        normalized_blocks, normalized_tools, normalized_error = _normalize_real_result(
+        normalized_blocks, normalized_tools, normalized_error, executor = _normalize_real_result(
             (blocks, used_tools, error)
         )
 
         assert normalized_blocks == blocks
         assert normalized_tools == used_tools
         assert normalized_error == error
+        assert executor is None
 
 
 class TestToolCallSerialization:

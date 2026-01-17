@@ -1,0 +1,37 @@
+name: view_depth_policies
+description: "Depth constraints for graph views"
+policy_type: view_depth
+scope: ci
+limits:
+  views:
+    SUMMARY:
+      default_depth: 1
+      max_depth: 1
+      direction_default: "both"
+    COMPOSITION:
+      default_depth: 2
+      max_depth: 3
+      direction_default: "out"
+    DEPENDENCY:
+      default_depth: 2
+      max_depth: 3
+      direction_default: "both"
+    IMPACT:
+      default_depth: 2
+      max_depth: 2
+      direction_default: "out"
+    PATH:
+      default_depth: 3
+      max_depth: 6
+      direction_default: "both"
+      max_hops: 6
+    NEIGHBORS:
+      default_depth: 1
+      max_depth: 2
+      direction_default: "both"
+metadata:
+  source: "view_registry.py::VIEW_REGISTRY"
+  migrated_from: "code"
+  references:
+    - "apps/api/app/modules/ops/services/ci/view_registry.py"
+    - "apps/api/app/modules/ops/services/ci/policy.py:120-127"

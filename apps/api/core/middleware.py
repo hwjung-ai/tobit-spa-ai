@@ -7,6 +7,7 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from apps.api.core.logging import clear_request_context, set_request_context
+from app.modules.inspector.asset_context import reset_asset_context
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):
@@ -19,11 +20,13 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         request.state.tenant_id = tenant_id
         request.state.trace_id = trace_id
         request.state.parent_trace_id = parent_trace_id
+        reset_asset_context()
         set_request_context(request_id, tenant_id, mode="ci", trace_id=trace_id, parent_trace_id=parent_trace_id)
         try:
             response: Response = await call_next(request)
         finally:
             clear_request_context()
+            reset_asset_context()
         response.headers["X-Request-ID"] = request_id
         response.headers["X-Trace-ID"] = trace_id
         if parent_trace_id:

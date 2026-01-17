@@ -28,19 +28,63 @@ SUMMARY_NEIGHBORS_VIEWS = {"SUMMARY", "NEIGHBORS"}
 
 
 def _load_relation_mapping() -> dict[str, object]:
-    if not RELATION_MAPPING_PATH.exists():
-        raise FileNotFoundError(f"Missing relation mapping file at {RELATION_MAPPING_PATH}")
-    with RELATION_MAPPING_PATH.open("r", encoding="utf-8") as fh:
-        payload = yaml.safe_load(fh) or {}
-    return payload
+    """Load relation mapping with fallback priority:
+    1. Published asset from DB
+    2. Seed file from resources/
+    3. Legacy file (current location)
+    """
+    try:
+        from app.modules.asset_registry.loader import load_mapping_asset
+
+        mapping_data = load_mapping_asset("graph_relation")
+        if mapping_data:
+            return mapping_data
+    except Exception as e:
+        logger.warning(f"Failed to load mapping asset: {e}")
+
+    # Legacy fallback
+    if RELATION_MAPPING_PATH.exists():
+        with RELATION_MAPPING_PATH.open("r", encoding="utf-8") as fh:
+            payload = yaml.safe_load(fh) or {}
+        logger.warning(f"Using legacy mapping file: {RELATION_MAPPING_PATH}")
+        return payload
+
+    raise FileNotFoundError(f"No relation mapping found in DB or files")
 
 
-RELATION_MAPPING = _load_relation_mapping()
-VIEW_RELATION_MAPPING: dict[str, List[str]] = {
-    view_name.upper(): config.get("rel_types", []) or []
-    for view_name, config in (RELATION_MAPPING.get("views") or {}).items()
-}
-EXCLUDE_REL_TYPES = set(RELATION_MAPPING.get("exclude_rel_types") or [])
+# Lazy loading caches (avoid circular imports and DB access at module load time)
+_RELATION_MAPPING_CACHE = None
+_VIEW_RELATION_MAPPING_CACHE = None
+_EXCLUDE_REL_TYPES_CACHE = None
+
+
+def _ensure_relation_mapping() -> dict[str, object]:
+    """Lazy load relation mapping on first access"""
+    global _RELATION_MAPPING_CACHE
+    if _RELATION_MAPPING_CACHE is None:
+        _RELATION_MAPPING_CACHE = _load_relation_mapping()
+    return _RELATION_MAPPING_CACHE
+
+
+def _ensure_view_relation_mapping() -> dict[str, List[str]]:
+    """Lazy load view relation mapping on first access"""
+    global _VIEW_RELATION_MAPPING_CACHE
+    if _VIEW_RELATION_MAPPING_CACHE is None:
+        mapping = _ensure_relation_mapping()
+        _VIEW_RELATION_MAPPING_CACHE = {
+            view_name.upper(): config.get("rel_types", []) or []
+            for view_name, config in (mapping.get("views") or {}).items()
+        }
+    return _VIEW_RELATION_MAPPING_CACHE
+
+
+def _ensure_exclude_rel_types() -> set[str]:
+    """Lazy load exclude rel types on first access"""
+    global _EXCLUDE_REL_TYPES_CACHE
+    if _EXCLUDE_REL_TYPES_CACHE is None:
+        mapping = _ensure_relation_mapping()
+        _EXCLUDE_REL_TYPES_CACHE = set(mapping.get("exclude_rel_types") or [])
+    return _EXCLUDE_REL_TYPES_CACHE
 
 
 def _load_json(path: Path) -> dict[str, object]:
@@ -104,13 +148,17 @@ def get_allowed_rel_types(view: str, discovered: Iterable[str] | None = None) ->
     view_key = view.upper()
     if view_key not in VIEW_REGISTRY:
         raise ValueError(f"Unknown view '{view}'")
-    mapped_rel_types = VIEW_RELATION_MAPPING.get(view_key, [])
+    # Use lazy-loaded view relation mapping
+    view_mapping = _ensure_view_relation_mapping()
+    mapped_rel_types = view_mapping.get(view_key, [])
     discovered_list = _normalized_discovered(discovered)
     if view_key in STATIC_VIEW_NAMES:
         return [rel for rel in mapped_rel_types if rel]
     if mapped_rel_types:
         return [rel for rel in mapped_rel_types if rel]
-    filtered = [rel for rel in discovered_list if rel not in EXCLUDE_REL_TYPES]
+    # Use lazy-loaded exclude rel types
+    exclude_types = _ensure_exclude_rel_types()
+    filtered = [rel for rel in discovered_list if rel not in exclude_types]
     if view_key in SUMMARY_NEIGHBORS_VIEWS:
         controlled = [rel for rel in filtered if rel in SUMMARY_NEIGHBORS_ALLOWLIST]
         return controlled or filtered

@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Literal
 
+from core.db import get_session_context
 from core.logging import get_request_context
 from core.config import get_settings
 from schemas import (
@@ -32,6 +33,8 @@ from .executors.hist_executor import run_hist
 from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
 from schemas.tool_contracts import ExecutorResult
+from app.modules.inspector.service import persist_execution_trace
+from app.modules.inspector.service import persist_execution_trace
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
@@ -42,41 +45,46 @@ GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구�
 ALL_EXECUTOR_ORDER = ("metric", "hist", "graph", "config")
 
 
+def _serialize_references(items: list[dict[str, Any]] | list[Any] | None) -> list[dict[str, Any]]:
+    serialized: list[dict[str, Any]] = []
+    if not items:
+        return serialized
+    for item in items:
+        if isinstance(item, dict):
+            serialized.append(item)
+        elif hasattr(item, "dict"):
+            serialized.append(item.dict())
+        else:
+            serialized.append({"value": item})
+    return serialized
+
+
 def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
     settings = get_settings()
     started = time.perf_counter()
     fallback = False
     error: str | None = None
+    executor_result: ExecutorResult | None = None
     context = get_request_context()
     trace_id = context.get("trace_id") or "-"
     parent_trace_id = context.get("parent_trace_id") or "-"
 
     if mode == "config":
         blocks, used_tools, route_reason, summary, fallback, error = _handle_config_mode(question, settings)
-        meta = AnswerMeta(
-            route=mode,
-            route_reason=route_reason,
-            timing_ms=int((time.perf_counter() - started) * 1000),
-            summary=summary,
-            used_tools=used_tools,
-            fallback=fallback,
-            error=error,
-            trace_id=trace_id if trace_id != "-" else None,
-            parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
-        )
-        return AnswerEnvelope(meta=meta, blocks=blocks)
-    if settings.ops_mode != "real":
+        executor_result = None
+    elif settings.ops_mode != "real":
         blocks = _build_mock_blocks(mode, question)
         used_tools = ["mock"]
         route_reason = "OPS mock mode"
         summary = f"Mocked OPS response for {mode}"
     else:
         result = _execute_real_mode(mode, question, settings)
-        blocks, used_tools, extra_error = _normalize_real_result(result)
+        blocks, used_tools, extra_error, executor_result = _normalize_real_result(result)
         if extra_error:
             error = extra_error
         route_reason = "OPS real mode"
         summary = f"Real mode response for {mode}"
+
     meta = AnswerMeta(
         route=mode,
         route_reason=route_reason,
@@ -88,7 +96,45 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         trace_id=trace_id if trace_id != "-" else None,
         parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
     )
-    return AnswerEnvelope(meta=meta, blocks=blocks)
+    envelope = AnswerEnvelope(meta=meta, blocks=blocks)
+    payload = envelope.model_dump()
+
+    trace_payload: dict[str, Any] = {
+        "tool_calls": [],
+        "references": [],
+        "used_tools": used_tools,
+        "summary": executor_result.summary if executor_result else {},
+    }
+    if executor_result:
+        trace_payload["tool_calls"] = [call.model_dump() for call in executor_result.tool_calls]
+        trace_payload["references"] = _serialize_references(executor_result.references)
+
+    request_payload = {"question": question, "mode": mode}
+    status = "error" if error else "success"
+    try:
+        with get_session_context() as session:
+            persist_execution_trace(
+                session=session,
+                trace_id=context.get("trace_id") or context.get("request_id") or "-",
+                parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
+                feature=mode,
+                endpoint="/ops/query",
+                method="POST",
+                ops_mode=settings.ops_mode,
+                question=question,
+                status=status,
+                duration_ms=meta.timing_ms,
+                request_payload=request_payload,
+                plan_raw=None,
+                plan_validated=None,
+                trace_payload=trace_payload,
+                answer_meta=payload.get("meta"),
+                blocks=payload.get("blocks"),
+            )
+    except Exception as exc:
+        logging.exception("ops.trace.persist_failed", exc_info=exc)
+
+    return envelope
 
 
 def _execute_real_mode(mode: OpsMode, question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
@@ -106,20 +152,22 @@ def _execute_real_mode(mode: OpsMode, question: str, settings: Any) -> tuple[lis
     return executor(question, settings)
 
 
-def _normalize_real_result(real_result: tuple[list[AnswerBlock], list[str]] | tuple[list[AnswerBlock], list[str], str | None] | ExecutorResult) -> tuple[list[AnswerBlock], list[str], str | None]:
+def _normalize_real_result(
+    real_result: tuple[list[AnswerBlock], list[str]] | tuple[list[AnswerBlock], list[str], str | None] | ExecutorResult
+) -> tuple[list[AnswerBlock], list[str], str | None, ExecutorResult | None]:
     # Handle ExecutorResult from new executors
     if isinstance(real_result, ExecutorResult):
         # Convert blocks dicts back to AnswerBlock objects if needed
         blocks = real_result.blocks
-        return blocks, real_result.used_tools, None
+        return blocks, real_result.used_tools, None, real_result
 
     # Handle legacy tuple returns
     if not isinstance(real_result, tuple):
         raise ValueError("Real executor must return a tuple or ExecutorResult")
     if len(real_result) == 2:
-        return real_result[0], real_result[1], None
+        return real_result[0], real_result[1], None, None
     if len(real_result) == 3:
-        return real_result[0], real_result[1], real_result[2]
+        return real_result[0], real_result[1], real_result[2], None
     raise ValueError("Real executor tuple must have 2 or 3 elements")
 
 

@@ -78,34 +78,116 @@ def validate_mapping_asset(asset: TbAssetRegistry) -> None:
     if not isinstance(views, dict):
         raise ValueError("Mapping content 'views' must be a dictionary")
 
+    # Extended validation: views structure details
+    required_views = {"SUMMARY", "COMPOSITION", "DEPENDENCY", "IMPACT", "PATH", "NEIGHBORS"}
+
+    for view_name in required_views:
+        if view_name not in views:
+            raise ValueError(f"Mapping content.views must include '{view_name}'")
+
+        view_config = views[view_name]
+        if not isinstance(view_config, dict):
+            raise ValueError(f"Mapping content.views.{view_name} must be a dictionary")
+
+        # rel_types required
+        if "rel_types" not in view_config:
+            raise ValueError(f"Mapping content.views.{view_name} must have 'rel_types' field")
+
+        rel_types = view_config["rel_types"]
+        if not isinstance(rel_types, list):
+            raise ValueError(f"Mapping content.views.{view_name}.rel_types must be a list")
+
+        # All elements must be strings
+        for rel_type in rel_types:
+            if not isinstance(rel_type, str):
+                raise ValueError(f"Mapping content.views.{view_name}.rel_types must contain only strings")
+
+    # summary_neighbors_allowlist validation (optional)
+    if "summary_neighbors_allowlist" in asset.content:
+        allowlist = asset.content["summary_neighbors_allowlist"]
+        if not isinstance(allowlist, list):
+            raise ValueError("Mapping content.summary_neighbors_allowlist must be a list")
+        for rel_type in allowlist:
+            if not isinstance(rel_type, str):
+                raise ValueError("Mapping content.summary_neighbors_allowlist must contain only strings")
+
+    # exclude_rel_types validation (optional)
+    if "exclude_rel_types" in asset.content:
+        exclude = asset.content["exclude_rel_types"]
+        if not isinstance(exclude, list):
+            raise ValueError("Mapping content.exclude_rel_types must be a list")
+
 
 def validate_policy_asset(asset: TbAssetRegistry) -> None:
     """Validate policy asset fields"""
-    if not asset.policy_type or asset.policy_type != "plan_budget":
-        raise ValueError("Policy asset must have policy_type of 'plan_budget'")
+    valid_types = ["plan_budget", "view_depth"]
+    if not asset.policy_type or asset.policy_type not in valid_types:
+        raise ValueError(f"Policy asset must have policy_type in {valid_types}")
 
     if not asset.limits:
         raise ValueError("Policy asset must have limits")
 
     limits = asset.limits
 
-    # Validate max_steps
-    max_steps = limits.get("max_steps")
-    if max_steps is None or not isinstance(max_steps, int) or max_steps < 1:
-        raise ValueError("limits.max_steps must be integer >= 1")
+    if asset.policy_type == "plan_budget":
+        # Validate max_steps
+        max_steps = limits.get("max_steps")
+        if max_steps is None or not isinstance(max_steps, int) or max_steps < 1:
+            raise ValueError("limits.max_steps must be integer >= 1")
 
-    # Validate timeout_ms
-    timeout_ms = limits.get("timeout_ms")
-    if timeout_ms is None or not isinstance(timeout_ms, int) or timeout_ms < 1000:
-        raise ValueError("limits.timeout_ms must be integer >= 1000")
+        # Validate timeout_ms
+        timeout_ms = limits.get("timeout_ms")
+        if timeout_ms is None or not isinstance(timeout_ms, int) or timeout_ms < 1000:
+            raise ValueError("limits.timeout_ms must be integer >= 1000")
 
-    # Validate max_depth
-    max_depth = limits.get("max_depth")
-    if max_depth is None or not isinstance(max_depth, int) or max_depth < 1:
-        raise ValueError("limits.max_depth must be integer >= 1")
+        # Validate max_depth
+        max_depth = limits.get("max_depth")
+        if max_depth is None or not isinstance(max_depth, int) or max_depth < 1:
+            raise ValueError("limits.max_depth must be integer >= 1")
 
-    if max_depth > 10:
-        raise ValueError("limits.max_depth must be <= 10")
+        if max_depth > 10:
+            raise ValueError("limits.max_depth must be <= 10")
+
+        # Validate max_branches (optional, default=3)
+        max_branches = limits.get("max_branches", 3)
+        if not isinstance(max_branches, int) or max_branches < 1:
+            raise ValueError("limits.max_branches must be integer >= 1")
+
+        # Validate max_iterations (optional, default=100)
+        max_iterations = limits.get("max_iterations", 100)
+        if not isinstance(max_iterations, int) or max_iterations < 1:
+            raise ValueError("limits.max_iterations must be integer >= 1")
+
+    elif asset.policy_type == "view_depth":
+        # Validate view_depth policy type
+        views = limits.get("views")
+        if not views or not isinstance(views, dict):
+            raise ValueError("limits.views must be a dictionary")
+
+        required_views = {"SUMMARY", "COMPOSITION", "DEPENDENCY", "IMPACT", "PATH", "NEIGHBORS"}
+        for view_name in required_views:
+            if view_name not in views:
+                raise ValueError(f"limits.views must include '{view_name}'")
+
+            view_policy = views[view_name]
+            if not isinstance(view_policy, dict):
+                raise ValueError(f"limits.views.{view_name} must be a dictionary")
+
+            # default_depth validation
+            default_depth = view_policy.get("default_depth")
+            if default_depth is None or not isinstance(default_depth, int) or default_depth < 1:
+                raise ValueError(f"limits.views.{view_name}.default_depth must be integer >= 1")
+
+            # max_depth validation
+            max_depth = view_policy.get("max_depth")
+            if max_depth is None or not isinstance(max_depth, int) or max_depth < 1:
+                raise ValueError(f"limits.views.{view_name}.max_depth must be integer >= 1")
+            if max_depth > 10:
+                raise ValueError(f"limits.views.{view_name}.max_depth must be <= 10")
+
+            # default_depth <= max_depth constraint
+            if default_depth > max_depth:
+                raise ValueError(f"limits.views.{view_name}.default_depth must be <= max_depth")
 
 
 def validate_query_asset(asset: TbAssetRegistry) -> None:

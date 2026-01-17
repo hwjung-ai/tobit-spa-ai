@@ -5,6 +5,7 @@ from time import perf_counter
 from typing import Iterable, List, Tuple
 
 from app.shared.config_loader import load_text
+from app.modules.asset_registry.loader import load_query_asset
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -20,15 +21,23 @@ from ..ci.tools import history as history_tools
 from ..resolvers import resolve_ci, resolve_time_range
 
 
+def _load_query_sql(scope: str, name: str) -> str | None:
+    """Load query SQL with DB priority fallback to file."""
+    asset = load_query_asset(scope, name)
+    if asset:
+        return asset.get("sql")
+    return None
+
+
 def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
     start_time = perf_counter()
     tool_calls: list[ToolCall] = []
     references_list: list[dict] = []
     used_tools = ["postgres", "timescale"]
 
-    work_h_query = load_text("queries/postgres/history/work_history.sql")
-    maint_h_query = load_text("queries/postgres/history/maintenance_history.sql")
-    event_l_query = load_text("queries/postgres/history/event_log.sql")
+    work_h_query = _load_query_sql("history", "work_history") or load_text("queries/postgres/history/work_history.sql")
+    maint_h_query = _load_query_sql("history", "maintenance_history") or load_text("queries/postgres/history/maintenance_history.sql")
+    event_l_query = _load_query_sql("history", "event_log") or load_text("queries/postgres/history/event_log.sql")
 
     if not work_h_query or not maint_h_query or not event_l_query:
         error_block = MarkdownBlock(

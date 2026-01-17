@@ -6,6 +6,7 @@ from typing import Any
 import psycopg
 
 from app.shared.config_loader import load_text
+from app.modules.asset_registry.loader import load_query_asset
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -19,10 +20,18 @@ from ..resolvers import resolve_ci
 from ..resolvers.types import CIHit
 
 
+def _load_query_sql(scope: str, name: str) -> str | None:
+    """Load query SQL with DB priority fallback to file."""
+    asset = load_query_asset(scope, name)
+    if asset:
+        return asset.get("sql")
+    return None
+
+
 def run_config(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
-    # Load queries from external files
-    ci_select_query = load_text("queries/postgres/ci/resolve_ci.sql")
-    ci_ext_select_query = load_text("queries/postgres/ci/ci_attributes.sql")
+    # Load queries with DB priority fallback to files
+    ci_select_query = _load_query_sql("ci", "resolve_ci") or load_text("queries/postgres/ci/resolve_ci.sql")
+    ci_ext_select_query = _load_query_sql("ci", "ci_attributes") or load_text("queries/postgres/ci/ci_attributes.sql")
 
     if not ci_select_query or not ci_ext_select_query:
         return [

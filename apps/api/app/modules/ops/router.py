@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Any, Dict, List, Optional
 
 import importlib
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 
-from core.logging import get_logger
+from core.config import get_settings
+from core.db import get_session_context
+from core.logging import get_logger, get_request_context
 from schemas import ResponseEnvelope
 
 from .schemas import (
@@ -22,6 +25,7 @@ from .services import handle_ops_query
 from .services.ci.orchestrator.runner import CIOrchestratorRunner
 from .services.ci.planner import planner_llm, validator
 from .services.ci.planner.plan_schema import Plan
+from app.modules.inspector.service import persist_execution_trace
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -140,6 +144,10 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             "has_trace_plan_validated": has_trace_plan_validated,
         },
     )
+    response_payload: ResponseEnvelope | None = None
+    error_response: JSONResponse | None = None
+    duration_ms: int | None = None
+    trace_payload: dict[str, Any] | None = None
     try:
         rerun_ctx: RerunContext | None = None
         if payload.rerun:
@@ -162,7 +170,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             logger.info("ci.runner.validator.start", extra={"phase": "initial"})
             plan_validated, plan_trace = validator.validate_plan(plan_raw)
             logger.info("ci.runner.validator.done", extra={"phase": "initial"})
-        
+
         runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
         logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
         runner = CIOrchestratorRunner(
@@ -177,15 +185,53 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         next_actions = result.get("next_actions") or []
         next_actions_count = len(next_actions)
         envelope_blocks = result.get("blocks") or []
+        trace_payload = result.get("trace") or {}
+        meta = result.get("meta")
+        trace_status = "error" if trace_payload.get("errors") else "success"
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        context = get_request_context()
+        active_trace_id = context.get("trace_id")
+        if not active_trace_id or active_trace_id == "-":
+            active_trace_id = context.get("request_id") or str(uuid.uuid4())
+        parent_trace_id = context.get("parent_trace_id")
+        if parent_trace_id == "-":
+            parent_trace_id = None
+        request_payload = {
+            "question": payload.question,
+            "rerun": payload.rerun.dict(exclude_none=True) if payload.rerun else None,
+        }
+        try:
+            with get_session_context() as session:
+                persist_execution_trace(
+                    session=session,
+                    trace_id=active_trace_id,
+                    parent_trace_id=parent_trace_id,
+                    feature="ci",
+                    endpoint="/ops/ci/ask",
+                    method="POST",
+                    ops_mode=get_settings().ops_mode,
+                    question=payload.question,
+                    status=trace_status,
+                    duration_ms=duration_ms,
+                    request_payload=request_payload,
+                    plan_raw=trace_payload.get("plan_raw"),
+                    plan_validated=trace_payload.get("plan_validated"),
+                    trace_payload=trace_payload,
+                    answer_meta=meta,
+                    blocks=envelope_blocks,
+                )
+        except Exception as exc:
+            logger.exception("ci.trace.persist_failed", exc_info=exc)
+        status = "error" if trace_status == "error" else "ok"
         response: CiAskResponse = CiAskResponse(**result)
-        return ResponseEnvelope.success(data=response.dict())
+        response_payload = ResponseEnvelope.success(data=response.dict())
     except Exception as exc: 
         status = "error"
         logger.exception("ci.ask.error", exc_info=exc)
         error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
-        return JSONResponse(status_code=500, content=error_body)
+        error_response = JSONResponse(status_code=500, content=error_body)
     finally:
-        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        elapsed_ms = duration_ms if duration_ms is not None else int((time.perf_counter() - start) * 1000)
         block_types: list[str] = []
         if envelope_blocks:
             for block in envelope_blocks:
@@ -207,3 +253,5 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 "has_trace_plan_validated": has_trace_plan_validated,
             },
         )
+    assert response_payload or error_response  # ensure we always have a response
+    return response_payload or error_response

@@ -5,6 +5,7 @@ from time import perf_counter
 from typing import Iterable, Tuple
 
 from app.shared.config_loader import load_text
+from app.modules.asset_registry.loader import load_query_asset
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -21,13 +22,21 @@ from ..resolvers import resolve_ci, resolve_metric, resolve_time_range
 from ..resolvers.types import CIHit, MetricHit, TimeRange
 
 
+def _load_query_sql(scope: str, name: str) -> str | None:
+    """Load query SQL with DB priority fallback to file."""
+    asset = load_query_asset(scope, name)
+    if asset:
+        return asset.get("sql")
+    return None
+
+
 def run_metric(question: str, tenant_id: str = "t1") -> ExecutorResult:
     start_time = perf_counter()
     tool_calls: list[ToolCall] = []
     references: list[dict] = []
     used_tools = ["postgres", "timescale"]
 
-    query_template = load_text("queries/postgres/metric/metric_timeseries.sql")
+    query_template = _load_query_sql("metric", "metric_timeseries") or load_text("queries/postgres/metric/metric_timeseries.sql")
     if not query_template:
         error_block = MarkdownBlock(
             type="markdown",

@@ -6,6 +6,7 @@ from time import perf_counter
 from typing import Iterable
 
 from app.shared.config_loader import load_text
+from app.modules.asset_registry.loader import load_query_asset
 from core.db_neo4j import get_neo4j_driver
 from schemas import (
     AnswerBlock,
@@ -22,14 +23,22 @@ from schemas.tool_contracts import ExecutorResult, ToolCall
 from ..resolvers import resolve_ci, resolve_time_range
 
 
+def _load_query_sql(scope: str, name: str) -> str | None:
+    """Load query SQL with DB priority fallback to file."""
+    asset = load_query_asset(scope, name)
+    if asset:
+        return asset.get("sql")
+    return None
+
+
 def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
     start_time = perf_counter()
     tool_calls: list[ToolCall] = []
     references_list: list[dict] = []
     used_tools = ["neo4j", "postgres"]
 
-    base_graph_query_template = load_text("queries/neo4j/graph/dependency_expand.cypher")
-    component_query = load_text("queries/neo4j/graph/component_composition.cypher")
+    base_graph_query_template = _load_query_sql("graph", "dependency_expand") or load_text("queries/neo4j/graph/dependency_expand.cypher")
+    component_query = _load_query_sql("graph", "component_composition") or load_text("queries/neo4j/graph/component_composition.cypher")
 
     if not base_graph_query_template or not component_query:
         error_block = MarkdownBlock(

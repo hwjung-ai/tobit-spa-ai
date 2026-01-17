@@ -18,6 +18,7 @@ from app.modules.cep_builder import router as cep_builder_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
 from app.modules.data_explorer import router as data_explorer_router
+from app.modules.inspector.router import router as inspector_router
 from app.modules.ui_creator.router import router as ui_creator_router
 from app.shared import config_loader
 from api.routes.chat import router as chat_router
@@ -57,6 +58,7 @@ app.include_router(audit_log_router)
 app.include_router(api_manager_router)
 app.include_router(runtime_router)
 app.include_router(ui_creator_router)
+app.include_router(inspector_router)
 app.include_router(history_router)
 
 
