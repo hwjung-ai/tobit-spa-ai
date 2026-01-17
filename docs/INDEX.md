@@ -44,35 +44,36 @@ tobit-spa-ai/
 │   └── CONTRACT_UI_CREATOR_V1.md   # UI Creator 기능 명세
 │                                   #   3개 계약, API 정의
 │
-├── 📋 기능 & 사양
-│   ├── docs/
-│   │   ├── FEATURES.md             # ⭐ 모든 기능 명세
-│   │   │                          #   API, 사용 예시, 제약사항
-│   │   ├── ADMIN_UI_GUIDE.md       # 관리자 UI 운영
-│   │   │                          #   Assets, Observability, Settings
-│   │   ├── ASSET_OPERATIONS_GUIDE.md # 자산 운영
-│   │   │                          #   Query, Prompt, Mapping, Policy
-│   │   ├── OPERATIONS.md           # 운영 체크리스트
-│   │   │                          #   기능 검증, smoke test
-│   │   └── OPERATIONS_PLAYBOOK.md  # 대응 가이드
+├── 📋 모든 문서 (docs/)
+│   ├── INDEX.md                    # ⭐ 중앙 인덱스 (당신이 여기!)
+│   │
+│   ├── 기능 & 운영
+│   ├── FEATURES.md                 # ⭐ 모든 기능 명세
+│   │                              #   API, 사용 예시, 제약사항
+│   ├── ADMIN_UI_GUIDE.md           # 관리자 UI 운영
+│   │                              #   Assets, Observability, Settings
+│   ├── ASSET_OPERATIONS_GUIDE.md   # 자산 운영
+│   │                              #   Query, Prompt, Mapping, Policy
+│   ├── OPERATIONS.md               # 운영 체크리스트
+│   │                              #   기능 검증, smoke test
+│   ├── OPERATIONS_PLAYBOOK.md      # 대응 가이드
 │   │                              #   8가지 문제 시나리오, 진단법
-│
-├── 🎯 프로덕션 준비
-│   └── docs/
-│       ├── ROADMAP.md              # 통합 로드맵
-│       │                          #   전략 + 타임라인 + 의존성
-│       ├── PRODUCTION_GAPS.md      # P0-P2 프로덕션 TODO
-│       │                          #   상세 기능별, 우선순위
-│       ├── PRODUCTION_CHECKLIST.md # 배포 전 체크리스트
-│       │                          #   200+ 항목, 진행 추적
-│       └── IMPLEMENTATION_ROADMAP.md # 구현 상세 계획
-│                                   #   Phase별 구체적 단계, 의존성
-│
-└── 📦 HISTORY/                     # 아카이브 (참고용)
-    ├── README.md                   # 아카이브 설명
-    ├── FINAL_STATUS.md             # 완료도 추이
-    ├── PHASE_SUMMARIES.md          # Phase 1-4 요약
-    └── P0_P1_P2_IMPROVEMENTS.md   # 개선 추적
+│   │
+│   ├── 프로덕션 준비
+│   ├── ROADMAP.md                  # 통합 로드맵
+│   │                              #   전략 + 타임라인 + 의존성
+│   ├── PRODUCTION_GAPS.md          # P0-P2 프로덕션 TODO
+│   │                              #   상세 기능별, 우선순위
+│   ├── PRODUCTION_CHECKLIST.md     # 배포 전 체크리스트
+│   │                              #   200+ 항목, 진행 추적
+│   ├── IMPLEMENTATION_ROADMAP.md   # 구현 상세 계획
+│   │                              #   Phase별 구체적 단계, 의존성
+│   │
+│   └── 📦 history/                 # 아카이브 (참고용)
+│       ├── README.md               # 아카이브 설명
+│       ├── FINAL_STATUS.md         # 완료도 추이
+│       ├── PHASE_SUMMARIES.md      # Phase 1-4 요약
+│       └── P0_P1_P2_IMPROVEMENTS.md # 개선 추적
 ```
 
 ---
