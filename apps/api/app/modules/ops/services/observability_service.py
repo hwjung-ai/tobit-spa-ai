@@ -55,15 +55,16 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
     latency_p50 = _percentile(durations_list, 0.5)
     latency_p95 = _percentile(durations_list, 0.95)
 
+    day_expr = func.date_trunc("day", TbRegressionRun.created_at)
     regression_trend_query = select(
-        func.date_trunc("day", TbRegressionRun.created_at).label("day"),
+        day_expr.label("day"),
         TbRegressionRun.judgment,
         func.count().label("count"),
     ).where(TbRegressionRun.created_at >= since_week)
     regression_trend_query = regression_trend_query.group_by(
-        func.date_trunc("day", TbRegressionRun.created_at), TbRegressionRun.judgment
+        day_expr, TbRegressionRun.judgment
     )
-    regression_trend_query = regression_trend_query.order_by("day")
+    regression_trend_query = regression_trend_query.order_by(day_expr)
     trend_result = session.exec(regression_trend_query).all()
     trend_map: dict[str, dict[str, int]] = defaultdict(lambda: {"PASS": 0, "WARN": 0, "FAIL": 0})
     regression_totals: Counter[str] = Counter()
