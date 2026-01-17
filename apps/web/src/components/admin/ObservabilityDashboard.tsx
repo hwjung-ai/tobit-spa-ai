@@ -53,26 +53,48 @@ export default function ObservabilityDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/ops/observability/kpis")
-      .then((res) => res.json())
-      .then((json: ObservabilityResponse) => {
+
+    const loadKpis = async () => {
+      try {
+        const res = await fetch("/ops/observability/kpis");
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const json: ObservabilityResponse = await res.json();
+
         if (cancelled) return;
+
         if (json.code !== 0) {
           setError(json.message || "Failed to load observability metrics");
           return;
         }
+
         if (json.data?.kpis) {
-          setPayload(json.data.kpis);
+          // Validate KPI payload structure
+          const kpis = json.data.kpis;
+          if (typeof kpis.success_rate !== 'number' ||
+              typeof kpis.failure_rate !== 'number' ||
+              !kpis.latency ||
+              !Array.isArray(kpis.regression_trend) ||
+              !kpis.regression_totals ||
+              !Array.isArray(kpis.top_causes)) {
+            throw new Error("Invalid KPI payload structure");
+          }
+          setPayload(kpis);
+          setError(null);
         } else {
           setError("No KPI payload returned from server");
         }
-      })
-      .catch((err) => {
-        if (cancelled) {
-          return;
-        }
-        setError(err?.message || "Observability request failed");
-      });
+      } catch (err) {
+        if (cancelled) return;
+        const errorMsg = err instanceof Error ? err.message : "Observability request failed";
+        console.error("ObservabilityDashboard error:", errorMsg);
+        setError(errorMsg);
+      }
+    };
+
+    loadKpis();
     return () => {
       cancelled = true;
     };

@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { fetchApi } from "@/lib/adminUtils";
+import RCAPanel from "./RCAPanel";
 
 interface GoldenQuery {
   id: string;
@@ -527,7 +528,7 @@ export default function RegressionWatchPanel() {
           </DialogHeader>
 
           {selectedRun && (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-4 max-h-[600px] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-slate-400">Judgment</p>
@@ -553,6 +554,16 @@ export default function RegressionWatchPanel() {
                   <p className="text-sm text-slate-200">
                     {selectedRun.verdict_reason}
                   </p>
+                </div>
+              )}
+
+              {/* RCA Panel - Root Cause Analysis */}
+              {(selectedRun.judgment === "FAIL" || selectedRun.judgment === "WARN") && (
+                <div className="border-t border-slate-800 pt-4">
+                  <RCAPanel
+                    baselineTraceId={selectedRun.baseline_trace_id}
+                    candidateTraceId={selectedRun.candidate_trace_id}
+                  />
                 </div>
               )}
 
