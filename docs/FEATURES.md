@@ -38,7 +38,7 @@
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
   - Settings: 운영 설정 편집 (restart_required 표시)
-  - Inspector: Trace ID 검색 및 Audit Log 조회, Query asset 사용 trace 기록
+  - Inspector: Trace ID 검색/필터, parent_trace 연결, Applied Assets · Plan · Execution · References · Answer Blocks · UI Render 섹션으로 전체 흐름 확인, UI Render telemetry/동작 상태 보기, Audit Log 추적
   - 상세 명세: `docs/ADMIN_UI_SPEC.md`, `docs/QUERY_ASSET_OPERATION_GUIDE.md`
 
 ## 2-1. 공통 UI 표준

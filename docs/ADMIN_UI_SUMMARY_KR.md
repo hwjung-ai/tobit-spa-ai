@@ -73,6 +73,10 @@ published > env > default
 - parent_trace_id 연결 표시 (View Parent 버튼)
 - Audit Log 상세 보기 (JSON 모달)
 - (P1) OPS History 링크
+- Applied Assets / Plan / Execution / References / Answer Blocks / UI Render(컴포넌트 + ok/error + warning) 섹션으로 실행 흐름을 1개의 trace_id에서 한눈에 파악
+- Trace 리스트: 상대/절대 생성 시간, feature, status 뱃지, duration, question snippet, 적용 자산 요약(filter/q/asset_id/date range 지원)
+- Trace Detail 상단에 Trace ID · Copy trace_id · Copy link · Open in Inspector 버튼 + parent_trace_id 연결
+- Inspector UI render 섹션은 `ui_render.rendered_blocks`와 warnings/에러 메시지를 보여주며, OPS 결과 화면에서 trace_id 복사 시 해당 trace를 자동 오픈
 
 **검색 흐름**:
 ```
