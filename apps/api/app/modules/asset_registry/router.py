@@ -157,11 +157,14 @@ def delete_asset_endpoint(
     # Capture asset info before deleting
     asset_info = AssetRead.model_validate(asset).model_dump()
 
-    # Delete the asset
-    delete_asset(session, asset_id)
+    # Delete the asset directly in this session
+    session.delete(asset)
+    session.commit()
 
     # Return the captured asset info
     return ResponseEnvelope.success(data={"asset": asset_info, "deleted": True})
+
+
 @router.post("/assets/{asset_id}/unpublish")
 def unpublish_asset_endpoint(
     asset_id: str,
