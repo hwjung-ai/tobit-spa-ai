@@ -1,10 +1,6 @@
-/**
- * Trace Diff View Component
- * Displays side-by-side comparison of two execution traces
- * Shows changes by section with optional "show only changes" filter
- */
-
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { fetchApi } from "../../lib/adminUtils";
 import {
   computeTraceDiff,
   diffAppliedAssets,
@@ -483,8 +479,31 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyCha
 export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffViewProps) {
   const [selectedSection, setSelectedSection] = useState<Section>("assets");
   const [showOnlyChanges, setShowOnlyChanges] = useState(false);
+  const [rcaLoading, setRcaLoading] = useState(false);
+  const [rcaError, setRcaError] = useState<string | null>(null);
+  const router = useRouter();
 
   const traceDiff = useMemo(() => computeTraceDiff(traceA, traceB), [traceA, traceB]);
+
+  const handleRunRca = useCallback(async () => {
+    setRcaLoading(true);
+    setRcaError(null);
+    try {
+      const response = await fetchApi<{ trace_id: string }>("/ops/rca", {
+        method: "POST",
+        body: JSON.stringify({
+          baseline_trace_id: traceA.trace_id,
+          candidate_trace_id: traceB.trace_id,
+        }),
+      });
+      router.push(`/admin/inspector?trace_id=${encodeURIComponent(response.data.trace_id)}`);
+      onClose(); // Close the diff view after kicking off RCA
+    } catch (err: any) {
+      setRcaError(err.message || "Failed to run RCA analysis.");
+    } finally {
+      setRcaLoading(false);
+    }
+  }, [traceA, traceB, router, onClose]);
 
   const sectionHasChanges = (section: Section): boolean => {
     switch (section) {
@@ -548,6 +567,18 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
                 {traceB.status}
               </div>
             </div>
+          </div>
+
+          {/* RCA Button */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={handleRunRca}
+              disabled={rcaLoading}
+              className="px-4 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700 text-xs uppercase tracking-wider font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              {rcaLoading ? "Analyzing..." : "▶︎ Run RCA"}
+            </button>
+            {rcaError && <div className="text-xs text-rose-400">{rcaError}</div>}
           </div>
 
           {/* Summary & Toggle */}

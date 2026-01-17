@@ -2,25 +2,25 @@ api-venv:
 	cd apps/api && python -m venv .venv
 
 api-install:
-	cd apps/api && .venv/Scripts/pip install -r requirements.txt
+	cd apps/api && .venv/bin/pip install -r requirements.txt
 
 api-dev:
-	cd apps/api && .venv/Scripts/python -m uvicorn main:app --reload --port 8000
+	cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000
 
 api-lint:
-	cd apps/api && .venv/Scripts/ruff check .
+	cd apps/api && .venv/bin/ruff check .
 
 api-format:
-	cd apps/api && .venv/Scripts/ruff format .
+	cd apps/api && .venv/bin/ruff format .
 
 api-test:
-	cd apps/api && .venv/Scripts/pytest
+	cd apps/api && .venv/bin/pytest
 
 api-migrate:
-	cd apps/api && .venv/Scripts/alembic upgrade head
+	cd apps/api && .venv/bin/alembic upgrade head
 
 api-worker:
-	cd apps/api && .venv/Scripts/python run_worker.py
+	cd apps/api && .venv/bin/python run_worker.py
 
 web-install:
 	cd apps/web && npm install
@@ -38,7 +38,7 @@ web-test:
 	cd apps/web && npm run test
 
 dev:
-	npx concurrently --kill-others-on-fail --names "API,WORKER,WEB" --prefix-colors "blue,magenta,green" "cd apps\api && .venv\Scripts\python.exe -m uvicorn main:app --reload --port 8000" "cd apps\api && .venv\Scripts\python.exe run_worker.py" "cd apps\web && npm run dev:log"
+	npx concurrently --kill-others-on-fail --names "API,WORKER,WEB" --prefix-colors "blue,magenta,green" "cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000" "cd apps/api && .venv/bin/python run_worker.py" "cd apps/web && npm run dev:log"
 
 status:
 	git status
