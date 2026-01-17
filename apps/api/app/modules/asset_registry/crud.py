@@ -52,6 +52,9 @@ def create_asset(
     content: dict[str, Any] | None = None,
     policy_type: str | None = None,
     limits: dict[str, Any] | None = None,
+    query_sql: str | None = None,
+    query_params: dict[str, Any] | None = None,
+    query_metadata: dict[str, Any] | None = None,
     created_by: str | None = None,
 ) -> TbAssetRegistry:
     """Create new asset in draft status"""
@@ -73,10 +76,14 @@ def create_asset(
         # Policy fields
         policy_type=policy_type,
         limits=limits,
+        # Query fields
+        query_sql=query_sql,
+        query_params=query_params,
+        query_metadata=query_metadata,
         # Metadata
         created_by=created_by,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
     )
 
     session.add(asset)
@@ -117,7 +124,7 @@ def update_asset(
         if key not in ["asset_id", "created_at", "created_by", "status", "version"]:
             setattr(asset, key, value)
 
-    asset.updated_at = datetime.utcnow()
+    asset.updated_at = datetime.now()
 
     session.add(asset)
     session.commit()
@@ -171,15 +178,15 @@ def publish_asset(
     if existing:
         # Archive old published version
         existing.status = "draft"
-        existing.updated_at = datetime.utcnow()
+        existing.updated_at = datetime.now()
         session.add(existing)
 
     # Publish current asset
     old_status = asset.status
     asset.status = "published"
     asset.published_by = published_by
-    asset.published_at = datetime.utcnow()
-    asset.updated_at = datetime.utcnow()
+    asset.published_at = datetime.now()
+    asset.updated_at = datetime.now()
 
     session.add(asset)
     session.commit()
@@ -206,7 +213,7 @@ def publish_asset(
         version=asset.version,
         snapshot=asset.model_dump(mode="json"),
         published_by=published_by,
-        published_at=datetime.utcnow(),
+        published_at=datetime.now(),
     )
     session.add(history)
     session.commit()
@@ -262,8 +269,8 @@ def rollback_asset(
     # Increment version for rollback
     current.version += 1
     current.published_by = executed_by
-    current.published_at = datetime.utcnow()
-    current.updated_at = datetime.utcnow()
+    current.published_at = datetime.now()
+    current.updated_at = datetime.now()
 
     session.add(current)
     session.commit()
@@ -290,10 +297,64 @@ def rollback_asset(
         version=current.version,
         snapshot=current.model_dump(mode="json"),
         published_by=executed_by,
-        published_at=datetime.utcnow(),
+        published_at=datetime.now(),
         rollback_from_version=to_version,
     )
     session.add(rollback_history)
     session.commit()
 
     return current
+
+
+def delete_asset(
+    session: Session,
+    asset_id: str,
+) -> TbAssetRegistry:
+    """Delete a draft asset."""
+    asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+    if not asset:
+        raise ValueError("Asset not found")
+    if asset.status != "draft":
+        raise ValueError("Only draft assets can be deleted")
+
+    session.delete(asset)
+    session.commit()
+    return asset
+def unpublish_asset(
+    session: Session,
+    asset: TbAssetRegistry,
+    executed_by: str = "system",
+) -> TbAssetRegistry:
+    """Unpublish asset (change status to draft)"""
+    if asset.status != "published":
+        raise ValueError("Only published assets can be unpublished")
+
+    # Get trace info from context
+    context = get_request_context()
+    trace_id = context.get("trace_id") or str(uuid.uuid4())
+    parent_trace_id = context.get("parent_trace_id") or None
+
+    old_status = asset.status
+    asset.status = "draft"
+    asset.updated_at = datetime.now()
+
+    session.add(asset)
+    session.commit()
+    session.refresh(asset)
+
+    # Record audit log
+    create_audit_log(
+        session=session,
+        trace_id=trace_id,
+        parent_trace_id=parent_trace_id,
+        resource_type="asset",
+        resource_id=str(asset.asset_id),
+        action="unpublish",
+        actor=executed_by,
+        changes={"status": old_status + " -> draft"},
+        old_values={"status": old_status},
+        new_values={"status": "draft"},
+        metadata={"asset_type": asset.asset_type, "asset_name": asset.name},
+    )
+
+    return asset

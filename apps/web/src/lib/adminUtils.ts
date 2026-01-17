@@ -9,7 +9,7 @@ export interface ResponseEnvelope<T = any> {
 
 export interface Asset {
   asset_id: string;
-  asset_type: "prompt" | "mapping" | "policy";
+  asset_type: "prompt" | "mapping" | "policy" | "query";
   name: string;
   description: string | null;
   version: number;
@@ -25,6 +25,9 @@ export interface Asset {
   content: Record<string, any> | null;
   policy_type: string | null;
   limits: Record<string, any> | null;
+  query_sql: string | null;
+  query_params: Record<string, any> | null;
+  query_metadata: Record<string, any> | null;
 
   // Metadata
   created_by: string | null;

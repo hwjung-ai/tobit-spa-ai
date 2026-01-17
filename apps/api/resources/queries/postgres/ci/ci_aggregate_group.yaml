@@ -1,0 +1,11 @@
+name: ci_aggregate_group
+description: 'Query for ci: ci aggregate group'
+scope: ci
+category: ci_management
+tags:
+- ci
+- ci_management
+parameters: []
+output_schema:
+  type: object
+  properties: {}

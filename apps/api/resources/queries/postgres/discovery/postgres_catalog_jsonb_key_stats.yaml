@@ -1,0 +1,11 @@
+name: postgres_catalog_jsonb_key_stats
+description: 'Query for ci: postgres catalog jsonb key stats'
+scope: ci
+category: discovery
+tags:
+- ci
+- discovery
+parameters: []
+output_schema:
+  type: object
+  properties: {}

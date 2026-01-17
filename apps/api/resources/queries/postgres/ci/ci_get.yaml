@@ -1,0 +1,57 @@
+# Query Asset Seed: CI Get
+# Type: Discovery / Retrieval
+# Purpose: Fetch a single CI with extended attributes
+# Database: PostgreSQL
+
+name: ci_get
+description: "Fetch a single CI record with extended attributes including tags and custom attributes"
+scope: ci
+category: discovery
+tags:
+  - ci
+  - retrieval
+parameters:
+  - name: field
+    type: string
+    description: "Field name to filter by (e.g., ci_id, ci_code, ci_name)"
+    required: true
+  - name: tenant_id
+    type: string
+    description: "Tenant ID for multi-tenant isolation"
+    required: true
+output_schema:
+  type: object
+  properties:
+    ci_id:
+      type: string
+      description: "CI unique identifier"
+    ci_code:
+      type: string
+      description: "CI business code"
+    ci_name:
+      type: string
+      description: "CI display name"
+    ci_type:
+      type: string
+      description: "CI classification type"
+    ci_subtype:
+      type: string
+      description: "CI sub-classification"
+    ci_category:
+      type: string
+      description: "CI category"
+    status:
+      type: string
+      description: "CI operational status"
+    location:
+      type: string
+      description: "Physical or logical location"
+    owner:
+      type: string
+      description: "Responsible owner identifier"
+    tags:
+      type: array
+      description: "Associated tags"
+    attributes:
+      type: object
+      description: "Custom attributes (JSONB)"

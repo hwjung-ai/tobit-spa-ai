@@ -1,0 +1,11 @@
+name: work_history_recent
+description: 'Query for history: work history recent'
+scope: history
+category: history_tracking
+tags:
+- history
+- history_tracking
+parameters: []
+output_schema:
+  type: object
+  properties: {}

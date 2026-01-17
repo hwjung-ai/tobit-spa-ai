@@ -1,0 +1,11 @@
+name: metric_resolver
+description: 'Query for metric: metric resolver'
+scope: metric
+category: metric_tracking
+tags:
+- metric
+- metric_tracking
+parameters: []
+output_schema:
+  type: object
+  properties: {}

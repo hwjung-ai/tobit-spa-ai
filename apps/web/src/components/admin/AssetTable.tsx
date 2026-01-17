@@ -2,80 +2,163 @@
 
 import { Asset, formatRelativeTime } from "../../lib/adminUtils";
 import Link from "next/link";
+import { useMemo } from "react";
+import { AgGridReact } from "ag-grid-react";
+import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
+import type { ColDef } from "ag-grid-community";
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-quartz.css";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AssetTableProps {
     assets: Asset[];
 }
 
 export default function AssetTable({ assets }: AssetTableProps) {
+    const colDefs = useMemo<ColDef<Asset>[]>(() => [
+        {
+            headerName: "Name",
+            field: "name",
+            flex: 2,
+            minWidth: 200,
+            cellRenderer: (params: any) => {
+                if (!params.data) return null;
+                return (
+                    <Link
+                        href={`/admin/assets/${params.data.asset_id}`}
+                        className="text-sky-400 hover:text-sky-300 font-medium transition-colors"
+                    >
+                        {params.value}
+                    </Link>
+                );
+            }
+        },
+        {
+            headerName: "Type",
+            field: "asset_type",
+            flex: 1,
+            minWidth: 120,
+            cellRenderer: (params: any) => {
+                const type = params.value;
+                const colors = type === "prompt" ? "bg-purple-950/50 text-purple-300 border-purple-800/50" :
+                    type === "mapping" ? "bg-blue-950/50 text-blue-300 border-blue-800/50" :
+                    type === "policy" ? "bg-green-950/50 text-green-300 border-green-800/50" :
+                    type === "query" ? "bg-orange-950/50 text-orange-300 border-orange-800/50" :
+                        "bg-slate-950/50 text-slate-300 border-slate-800/50";
+                return (
+                    <span className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}>
+                        {type}
+                    </span>
+                );
+            }
+        },
+        {
+            headerName: "Status",
+            field: "status",
+            flex: 1,
+            minWidth: 120,
+            cellRenderer: (params: any) => {
+                const status = params.value;
+                const colors = status === "published" ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50" :
+                    "bg-slate-800/50 text-slate-400 border-slate-700/50";
+                return (
+                    <span className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}>
+                        {status}
+                    </span>
+                );
+            }
+        },
+        {
+            headerName: "Version",
+            field: "version",
+            width: 100,
+            cellRenderer: (params: any) => (
+                <span className="text-slate-400 font-mono text-xs">v{params.value}</span>
+            )
+        },
+        {
+            headerName: "Updated",
+            field: "updated_at",
+            flex: 1,
+            minWidth: 150,
+            cellRenderer: (params: any) => (
+                <span className="text-slate-500 text-xs">
+                    {formatRelativeTime(params.value)}
+                </span>
+            )
+        },
+        {
+            headerName: "Actions",
+            field: "asset_id",
+            width: 100,
+            sortable: false,
+            filter: false,
+            pinned: "right",
+            cellRenderer: (params: any) => (
+                <div className="flex justify-end w-full pr-2">
+                    <Link
+                        href={`/admin/assets/${params.value}`}
+                        className="text-slate-500 hover:text-sky-400 transition-colors"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </Link>
+                </div>
+            )
+        }
+    ], []);
+
     if (assets.length === 0) {
         return (
-            <div className="text-center py-8 text-slate-400">
-                No assets found
+            <div className="text-center py-20 bg-slate-900/40 rounded-2xl border border-slate-800">
+                <div className="w-12 h-12 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700/50">
+                    <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                </div>
+                <p className="text-slate-500 text-sm font-medium italic">No assets found</p>
             </div>
         );
     }
 
     return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className="border-b border-slate-800">
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium">Name</th>
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium">Type</th>
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium">Status</th>
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium font-mono">Version</th>
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium">Updated</th>
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {assets.map((asset) => (
-                        <tr
-                            key={asset.asset_id}
-                            className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors"
-                        >
-                            <td className="py-3 px-4">
-                                <Link
-                                    href={`/admin/assets/${asset.asset_id}`}
-                                    className="text-sky-400 hover:text-sky-300 transition-colors"
-                                >
-                                    {asset.name}
-                                </Link>
-                            </td>
-                            <td className="py-3 px-4">
-                                <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${asset.asset_type === "prompt" ? "bg-purple-950/50 text-purple-300" :
-                                        asset.asset_type === "mapping" ? "bg-blue-950/50 text-blue-300" :
-                                            "bg-green-950/50 text-green-300"
-                                    }`}>
-                                    {asset.asset_type}
-                                </span>
-                            </td>
-                            <td className="py-3 px-4">
-                                <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${asset.status === "published" ? "bg-green-950/50 text-green-300" :
-                                        "bg-slate-800 text-slate-300"
-                                    }`}>
-                                    {asset.status}
-                                </span>
-                            </td>
-                            <td className="py-3 px-4 text-slate-300">
-                                v{asset.version}
-                            </td>
-                            <td className="py-3 px-4 text-slate-400 text-xs">
-                                {formatRelativeTime(asset.updated_at)}
-                            </td>
-                            <td className="py-3 px-4 text-right">
-                                <Link
-                                    href={`/admin/assets/${asset.asset_id}`}
-                                    className="text-sky-400 hover:text-sky-300 text-xs transition-colors"
-                                >
-                                    View
-                                </Link>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+        <div className="flex flex-col w-full h-full overflow-hidden">
+            {/* Grid Header with Count */}
+            <div className="flex justify-between items-center px-4 py-2 border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                        Assets Registry
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 text-[10px] font-mono font-bold border border-slate-700">
+                        count: {assets.length}
+                    </span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium italic">
+                    Drag columns to reorder • Click headers to sort
+                </div>
+            </div>
+
+            <div className="ag-theme-cep w-full overflow-hidden" style={{ height: '600px' }}>
+                <AgGridReact
+                    theme="legacy"
+                    rowData={assets}
+                    columnDefs={colDefs}
+                    defaultColDef={{
+                        sortable: true,
+                        filter: true,
+                        resizable: true,
+                        suppressMovable: false,
+                        unSortIcon: true,
+                    }}
+                    rowSelection="single"
+                    animateRows={true}
+                    headerHeight={44}
+                    rowHeight={48}
+                />
+            </div>
         </div>
     );
 }

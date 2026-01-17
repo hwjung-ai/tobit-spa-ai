@@ -7,7 +7,7 @@ import uuid
 from pydantic import BaseModel, Field, field_validator
 
 
-AssetType = Literal["prompt", "mapping", "policy"]
+AssetType = Literal["prompt", "mapping", "policy", "query"]
 AssetStatus = Literal["draft", "published"]
 
 
@@ -31,6 +31,11 @@ class AssetCreate(BaseModel):
     policy_type: str | None = None
     limits: dict[str, Any] | None = None
 
+    # Query fields
+    query_sql: str | None = None
+    query_params: dict[str, Any] | None = None
+    query_metadata: dict[str, Any] | None = None
+
     created_by: str | None = None
 
 
@@ -48,6 +53,11 @@ class AssetUpdate(BaseModel):
 
     # Policy fields
     limits: dict[str, Any] | None = None
+
+    # Query fields
+    query_sql: str | None = None
+    query_params: dict[str, Any] | None = None
+    query_metadata: dict[str, Any] | None = None
 
 
 class AssetRead(BaseModel):
@@ -68,6 +78,9 @@ class AssetRead(BaseModel):
     content: dict[str, Any] | None = None
     policy_type: str | None = None
     limits: dict[str, Any] | None = None
+    query_sql: str | None = None
+    query_params: dict[str, Any] | None = None
+    query_metadata: dict[str, Any] | None = None
 
     # Metadata
     created_by: str | None

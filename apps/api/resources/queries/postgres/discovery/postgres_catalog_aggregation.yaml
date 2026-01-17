@@ -1,0 +1,11 @@
+name: postgres_catalog_aggregation
+description: 'Query for ci: postgres catalog aggregation'
+scope: ci
+category: discovery
+tags:
+- ci
+- discovery
+parameters: []
+output_schema:
+  type: object
+  properties: {}

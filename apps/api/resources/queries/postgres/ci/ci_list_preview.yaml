@@ -1,0 +1,11 @@
+name: ci_list_preview
+description: 'Query for ci: ci list preview'
+scope: ci
+category: ci_management
+tags:
+- ci
+- ci_management
+parameters: []
+output_schema:
+  type: object
+  properties: {}

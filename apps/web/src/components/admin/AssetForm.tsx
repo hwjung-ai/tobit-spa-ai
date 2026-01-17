@@ -19,6 +19,9 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
         output_contract: asset.output_contract ? JSON.stringify(asset.output_contract, null, 2) : "",
         content: asset.content ? JSON.stringify(asset.content, null, 2) : "",
         limits: asset.limits ? JSON.stringify(asset.limits, null, 2) : "",
+        query_sql: asset.query_sql || "",
+        query_params: asset.query_params ? JSON.stringify(asset.query_params, null, 2) : "",
+        query_metadata: asset.query_metadata ? JSON.stringify(asset.query_metadata, null, 2) : "",
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +31,33 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
     const [showRollbackModal, setShowRollbackModal] = useState(false);
     const [rollbackVersion, setRollbackVersion] = useState("");
+
+    const handleDelete = async () => {
+        if (!confirm("Are you sure you want to delete this draft asset? This action cannot be undone.")) return;
+        setIsSaving(true);
+        try {
+            await fetchApi(`/asset-registry/assets/${asset.asset_id}`, { method: "DELETE" });
+            window.location.href = "/admin/assets";
+        } catch (err: any) {
+            setErrors([err.message || "Failed to delete asset"]);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleUnpublish = async () => {
+        if (!confirm("Are you sure you want to rollback this asset to draft? It will no longer be active until re-published.")) return;
+        setIsRollingBack(true);
+        try {
+            await fetchApi(`/asset-registry/assets/${asset.asset_id}/unpublish`, { method: "POST" });
+            setToast({ message: "Asset returned to draft status", type: "success" });
+            onSave();
+        } catch (err: any) {
+            setErrors([err.message || "Failed to rollback to draft"]);
+        } finally {
+            setIsRollingBack(false);
+        }
+    };
 
     const isDraft = asset.status === "draft";
 
@@ -62,6 +92,14 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             } else if (asset.asset_type === "policy") {
                 if (formData.limits.trim()) {
                     payload.limits = JSON.parse(formData.limits);
+                }
+            } else if (asset.asset_type === "query") {
+                payload.query_sql = formData.query_sql || null;
+                if (formData.query_params.trim()) {
+                    payload.query_params = JSON.parse(formData.query_params);
+                }
+                if (formData.query_metadata.trim()) {
+                    payload.query_metadata = JSON.parse(formData.query_metadata);
                 }
             }
 
@@ -258,12 +296,60 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                         />
                     </div>
                 )}
+
+                {asset.asset_type === "query" && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">SQL Query (SELECT only)</label>
+                            <textarea
+                                value={formData.query_sql}
+                                onChange={(e) => setFormData({ ...formData, query_sql: e.target.value })}
+                                disabled={!isDraft}
+                                rows={12}
+                                placeholder="SELECT ..."
+                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Query Parameters (JSON)</label>
+                                <textarea
+                                    value={formData.query_params}
+                                    onChange={(e) => setFormData({ ...formData, query_params: e.target.value })}
+                                    disabled={!isDraft}
+                                    rows={6}
+                                    placeholder="{}"
+                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Query Metadata (JSON)</label>
+                                <textarea
+                                    value={formData.query_metadata}
+                                    onChange={(e) => setFormData({ ...formData, query_metadata: e.target.value })}
+                                    disabled={!isDraft}
+                                    rows={6}
+                                    placeholder="{}"
+                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Actions */}
             <div className="flex items-center justify-end gap-3">
                 {isDraft ? (
                     <>
+                        <button
+                            onClick={handleDelete}
+                            disabled={isSaving}
+                            className="px-6 py-2 bg-rose-950/20 text-rose-500 hover:bg-rose-950/40 border border-rose-800/50 rounded-lg transition-colors font-medium mr-auto"
+                        >
+                            Delete Draft
+                        </button>
                         <button
                             onClick={handleSaveDraft}
                             disabled={isSaving}
@@ -280,12 +366,21 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                         </button>
                     </>
                 ) : (
-                    <button
-                        onClick={() => setShowRollbackModal(true)}
-                        className="px-6 py-2 bg-yellow-700/20 text-yellow-500 hover:bg-yellow-700/30 border border-yellow-700/50 rounded-lg transition-colors font-medium"
-                    >
-                        Rollback to Version...
-                    </button>
+                    <>
+                        <button
+                            onClick={handleUnpublish}
+                            disabled={isRollingBack}
+                            className="px-6 py-2 bg-amber-950/20 text-amber-500 hover:bg-amber-950/40 border border-amber-800/50 rounded-lg transition-colors font-medium"
+                        >
+                            {isRollingBack ? "Rolling back..." : "Rollback to Draft"}
+                        </button>
+                        <button
+                            onClick={() => setShowRollbackModal(true)}
+                            className="px-6 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors font-medium"
+                        >
+                            Version Rollback...
+                        </button>
+                    </>
                 )}
             </div>
 
@@ -295,7 +390,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                     <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-md w-full p-6 shadow-2xl">
                         <h2 className="text-lg font-semibold text-white mb-2">Rollback Asset</h2>
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-                            Enter the version number to rollback to. This will create a <strong>new draft version</strong> with the content from the specified version.
+                            Enter the version number to rollback to. This will move the <strong>published status</strong> to the selected version and increment the version number.
                         </p>
                         <div className="space-y-4">
                             <div>

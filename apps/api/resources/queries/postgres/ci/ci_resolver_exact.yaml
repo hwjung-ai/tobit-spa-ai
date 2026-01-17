@@ -1,0 +1,11 @@
+name: ci_resolver_exact
+description: 'Query for ci: ci resolver exact'
+scope: ci
+category: ci_management
+tags:
+- ci
+- ci_management
+parameters: []
+output_schema:
+  type: object
+  properties: {}

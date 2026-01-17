@@ -12,6 +12,8 @@ from .crud import (
     update_asset,
     publish_asset,
     rollback_asset,
+    delete_asset,
+    unpublish_asset,
 )
 from .schemas import (
     AssetCreate,
@@ -68,6 +70,9 @@ def create_asset_endpoint(
             content=payload.content,
             policy_type=payload.policy_type,
             limits=payload.limits,
+            query_sql=payload.query_sql,
+            query_params=payload.query_params,
+            query_metadata=payload.query_metadata,
             created_by=payload.created_by,
         )
     except ValueError as e:
@@ -135,3 +140,40 @@ def rollback_asset_endpoint(
         raise HTTPException(status_code=400, detail=str(e))
 
     return ResponseEnvelope.success(data={"asset": AssetRead.model_validate(rolled_back).model_dump()})
+
+
+@router.delete("/assets/{asset_id}")
+def delete_asset_endpoint(
+    asset_id: str,
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """Delete draft asset"""
+    asset = get_asset(session, asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    if asset.status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft asset can be deleted")
+
+    # Capture asset info before deleting
+    asset_info = AssetRead.model_validate(asset).model_dump()
+
+    # Delete the asset
+    delete_asset(session, asset_id)
+
+    # Return the captured asset info
+    return ResponseEnvelope.success(data={"asset": asset_info, "deleted": True})
+@router.post("/assets/{asset_id}/unpublish")
+def unpublish_asset_endpoint(
+    asset_id: str,
+    executed_by: str = Query("system"),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """Unpublish asset (change status to draft)"""
+    asset = get_asset(session, asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    try:
+        unpublished = unpublish_asset(session, asset, executed_by=executed_by)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return ResponseEnvelope.success(data={"asset": AssetRead.model_validate(unpublished).model_dump()})

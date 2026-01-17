@@ -4,7 +4,7 @@ import json
 import os
 import re
 from time import perf_counter
-from typing import Iterable, List, Set, Tuple
+from typing import Any, Iterable, List, Set, Tuple
 
 import openai
 
@@ -23,7 +23,7 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     View,
     ListSpec,
 )
-from app.shared import config_loader
+from app.modules.asset_registry.loader import load_prompt_asset
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -104,21 +104,43 @@ def _metric_payload_to_spec(payload: dict[str, str] | None) -> MetricSpec | None
     return MetricSpec(metric_name=name, agg=agg, time_range=time_range, mode=mode)
 
 
-def _build_output_parser_messages(text: str) -> list[dict[str, str]] | None:
-    prompt_data = config_loader.load_yaml("prompts/ci/planner.yaml")
-    if not prompt_data or "templates" not in prompt_data:
-        logger.error("Failed to load CI planner prompt or templates are missing.")
+def _load_planner_prompt_definition() -> dict[str, Any] | None:
+    prompt_data = load_prompt_asset(PROMPT_SCOPE, PROMPT_ENGINE, PROMPT_NAME)
+    if not prompt_data:
+        logger.error("Prompt definition missing for ci planner (scope=%s)", PROMPT_SCOPE)
+        return None
+    templates = prompt_data.get("templates")
+    if not isinstance(templates, dict):
+        logger.error("Prompt templates invalid for ci planner asset: %s", prompt_data.get("name"))
         return None
 
-    templates = prompt_data["templates"]
+    logger.info(
+        "ci.planner.prompt_loaded",
+        extra={
+            "prompt_source": prompt_data.get("source"),
+            "prompt_name": prompt_data.get("name"),
+            "prompt_version": prompt_data.get("version"),
+        },
+    )
+    return prompt_data
+
+
+def _build_output_parser_messages(text: str) -> list[dict[str, str]] | None:
+    prompt_data = _load_planner_prompt_definition()
+    if not prompt_data:
+        return None
+
+    templates = prompt_data.get("templates", {})
     system_prompt = templates.get("system")
     user_prompt_template = templates.get("user")
 
     if not system_prompt or not user_prompt_template:
-        logger.error("System or user prompt template is missing in planner.yaml.")
+        logger.error(
+            "System or user template missing for ci planner prompt definition (source=%s)",
+            prompt_data.get("source"),
+        )
         return None
 
-    # Use simple replacement, not format()
     user_prompt = user_prompt_template.replace("{question}", text)
 
     return [
@@ -309,6 +331,10 @@ SERVER_FILTER_KEYWORDS = {"서버", "server"}
 CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
 OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", "gpt-4o-mini")
+
+PROMPT_SCOPE = "ci"
+PROMPT_ENGINE = "planner"
+PROMPT_NAME = "ci_planner_output_parser"
 
 
 def _determine_intent(text: str) -> Intent:

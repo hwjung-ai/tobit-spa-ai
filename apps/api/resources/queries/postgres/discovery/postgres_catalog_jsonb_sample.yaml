@@ -1,0 +1,11 @@
+name: postgres_catalog_jsonb_sample
+description: 'Query for ci: postgres catalog jsonb sample'
+scope: ci
+category: discovery
+tags:
+- ci
+- discovery
+parameters: []
+output_schema:
+  type: object
+  properties: {}

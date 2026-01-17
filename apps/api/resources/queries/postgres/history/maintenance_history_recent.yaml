@@ -1,0 +1,11 @@
+name: maintenance_history_recent
+description: 'Query for history: maintenance history recent'
+scope: history
+category: history_tracking
+tags:
+- history
+- history_tracking
+parameters: []
+output_schema:
+  type: object
+  properties: {}

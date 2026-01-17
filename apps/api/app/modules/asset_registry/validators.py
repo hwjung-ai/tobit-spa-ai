@@ -13,6 +13,8 @@ def validate_asset(asset: TbAssetRegistry) -> None:
         validate_mapping_asset(asset)
     elif asset.asset_type == "policy":
         validate_policy_asset(asset)
+    elif asset.asset_type == "query":
+        validate_query_asset(asset)
     else:
         raise ValueError(f"Unknown asset_type: {asset.asset_type}")
 
@@ -104,3 +106,33 @@ def validate_policy_asset(asset: TbAssetRegistry) -> None:
 
     if max_depth > 10:
         raise ValueError("limits.max_depth must be <= 10")
+
+
+def validate_query_asset(asset: TbAssetRegistry) -> None:
+    """Validate query asset fields"""
+    import re
+
+    if not asset.query_sql or not asset.query_sql.strip():
+        raise ValueError("Query asset must have non-empty query_sql")
+
+    # Validate SQL is SELECT only
+    sql_upper = asset.query_sql.strip().upper()
+    if not sql_upper.startswith("SELECT"):
+        raise ValueError("Query asset must contain only SELECT statements")
+
+    # Check for dangerous keywords using word boundaries to avoid false positives
+    # e.g., "updated_at" should not trigger "UPDATE"
+    dangerous_keywords = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "TRUNCATE", "EXEC", "EXECUTE"]
+    for keyword in dangerous_keywords:
+        # Word boundary pattern: keyword must be preceded and followed by non-word characters
+        pattern = r'\b' + keyword + r'\b'
+        if re.search(pattern, sql_upper):
+            raise ValueError(f"Query asset cannot contain {keyword} statements")
+
+    # query_metadata should exist but can be empty
+    if asset.query_metadata is None:
+        asset.query_metadata = {}
+
+    # query_params should exist but can be empty
+    if asset.query_params is None:
+        asset.query_params = {}

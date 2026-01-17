@@ -107,3 +107,50 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
         "timeout_ms": 120000,  # 2 minutes
         "max_depth": 5,
     }
+
+
+def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str | None]:
+    """
+    Load query asset with fallback priority:
+    1. Published asset from DB
+    2. File from resources/queries/
+
+    Returns:
+        Tuple of (asset_data, asset_id_version_str)
+        asset_id_version_str format: "{asset_id}:v{version}" for tracking
+    """
+    with get_session_context() as session:
+        # Try DB first
+        asset = session.exec(
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "query")
+            .where(TbAssetRegistry.scope == scope)
+            .where(TbAssetRegistry.name == name)
+            .where(TbAssetRegistry.status == "published")
+        ).first()
+
+        if asset:
+            logger.info(f"Loaded query from asset registry: {name} (v{asset.version})")
+            asset_identifier = f"{str(asset.asset_id)}:v{asset.version}"
+            return {
+                "sql": asset.query_sql,
+                "params": asset.query_params or {},
+                "metadata": asset.query_metadata or {},
+                "source": "asset_registry",
+            }, asset_identifier
+
+    # Fallback to file
+    file_path = f"queries/{scope}/{name}.sql"
+    query_text = config_loader.load_text(file_path)
+
+    if query_text:
+        logger.warning(f"Using fallback file for query '{name}': resources/{file_path}")
+        return {
+            "sql": query_text,
+            "params": {},
+            "metadata": {"seed_file": file_path},
+            "source": "file_fallback",
+        }, None
+
+    logger.warning(f"Query asset not found: {name} (scope={scope})")
+    return None, None

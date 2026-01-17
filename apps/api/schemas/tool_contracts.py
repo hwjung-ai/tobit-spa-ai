@@ -133,6 +133,7 @@ class ToolCall(BaseModel):
     input_params: Dict[str, Any] = Field(default_factory=dict)
     output_summary: Dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
+    query_asset: str | None = None  # Query asset identifier: "{asset_id}:v{version}" if used
 
 
 class ToolCallTrace(BaseModel):

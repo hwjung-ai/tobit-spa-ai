@@ -48,6 +48,15 @@ class TbAssetRegistry(SQLModel, table=True):
         default=None, sa_column=Column(JSONB, nullable=True)
     )
 
+    # Query fields
+    query_sql: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    query_params: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+    query_metadata: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+
     # Metadata
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     published_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
@@ -55,11 +64,11 @@ class TbAssetRegistry(SQLModel, table=True):
         default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True)
     )
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=datetime.now,
         sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     )
     updated_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=datetime.now,
         sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     )
 
@@ -76,7 +85,7 @@ class TbAssetVersionHistory(SQLModel, table=True):
     snapshot: dict[str, Any] = Field(sa_column=Column(JSONB, nullable=False))
     published_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     published_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=datetime.now,
         sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     )
     rollback_from_version: int | None = Field(

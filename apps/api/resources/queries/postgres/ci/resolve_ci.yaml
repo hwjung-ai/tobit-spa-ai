@@ -1,0 +1,11 @@
+name: resolve_ci
+description: 'Query for ci: resolve ci'
+scope: ci
+category: ci_management
+tags:
+- ci
+- ci_management
+parameters: []
+output_schema:
+  type: object
+  properties: {}
