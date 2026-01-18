@@ -230,7 +230,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     if (comp.type === "text") {
       const content = props.content || boundValue || comp.label || "";
       return (
-        <div key={comp.id} className="text-sm text-slate-100">
+        <div key={comp.id} className="text-sm text-slate-100" data-testid={`component-text-${comp.id}`}>
           {content}
         </div>
       );
@@ -239,7 +239,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     if (comp.type === "markdown") {
       const content = props.content || boundValue || comp.label || "";
       return (
-        <div key={comp.id} className="prose prose-invert max-w-none text-sm">
+        <div key={comp.id} className="prose prose-invert max-w-none text-sm" data-testid={`component-markdown-${comp.id}`}>
           <ReactMarkdown>{content}</ReactMarkdown>
         </div>
       );
@@ -257,6 +257,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
           className="rounded-full border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-100 hover:border-slate-500"
           disabled={disabled || isLoading}
           onClick={() => comp.actions?.[0] && handleAction(comp.actions[0])}
+          data-testid={`component-button-${comp.id}`}
         >
           {isLoading ? "Loading..." : label}
         </button>
@@ -278,6 +279,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
               handleAction(comp.actions[0]);
             }
           }}
+          data-testid={`component-input-${comp.id}`}
         />
       );
     }
@@ -286,7 +288,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
       const rows = props.rows || boundValue || [];
       const columns = props.columns || (rows[0] ? Object.keys(rows[0]) : []);
       return (
-        <table key={comp.id} className="min-w-full border border-slate-800 text-xs">
+        <table key={comp.id} className="min-w-full border border-slate-800 text-xs" data-testid={`component-table-${comp.id}`}>
           <thead className="bg-slate-900/80 text-slate-300">
             <tr>
               {columns.map((col: any) => (
@@ -315,7 +317,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
       const series = props.series || [];
       const data = series[0]?.data || [];
       return (
-        <div key={comp.id} className="h-52 w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+        <div key={comp.id} className="h-52 w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-3" data-testid={`component-chart-${comp.id}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
               <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
@@ -332,7 +334,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     if (comp.type === "badge") {
       const label = props.label || boundValue || comp.label || "Badge";
       return (
-        <span key={comp.id} className="inline-flex rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200">
+        <span key={comp.id} className="inline-flex rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200" data-testid={`component-badge-${comp.id}`}>
           {label}
         </span>
       );
@@ -343,7 +345,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
       const activeIndex = activeTabs[comp.id] ?? props.activeIndex ?? 0;
       const activeTab = tabs[activeIndex];
       return (
-        <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+        <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4" data-testid={`component-tabs-${comp.id}`}>
           <div className="flex gap-2">
             {tabs.map((tab: any, index: number) => (
               <button
@@ -369,7 +371,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
       const isOpen = props.open ?? false;
       if (!isOpen) return null;
       return (
-        <div key={comp.id} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70">
+        <div key={comp.id} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70" data-testid={`component-modal-${comp.id}`}>
           <div className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-slate-100">{props.title || comp.label}</h3>
@@ -392,7 +394,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     if (comp.type === "keyvalue") {
       const items = props.items || boundValue || [];
       return (
-        <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-xs">
+        <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-xs" data-testid={`component-keyvalue-${comp.id}`}>
           {items.map((item: any, index: number) => (
             <div key={`${comp.id}-kv-${index}`} className="flex items-center justify-between border-b border-slate-800 py-1 last:border-b-0">
               <span className="text-slate-400">{item.key}</span>
@@ -406,7 +408,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     if (comp.type === "divider") {
       const orientation = props.orientation || "horizontal";
       return (
-        <div key={comp.id} className={orientation === "vertical" ? "h-full w-px bg-slate-700" : "h-px w-full bg-slate-700"} />
+        <div key={comp.id} className={orientation === "vertical" ? "h-full w-px bg-slate-700" : "h-px w-full bg-slate-700"} data-testid={`component-divider-${comp.id}`} />
       );
     }
 
@@ -417,12 +419,90 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     );
   };
 
-  return (
-    <UIScreenErrorBoundary>
-      <div className="space-y-4">
-        {screenSchema.components.map((comp) => (
+  const renderByLayout = () => {
+    const layout = screenSchema.layout;
+    const components = screenSchema.components;
+
+    // Determine layout type
+    const layoutType = layout?.type || "stack";
+
+    // Handle grid layout
+    if (layoutType === "grid") {
+      const cols = layout?.cols || 2;
+      const gap = layout?.gap || 4;
+      const gridClass = `grid grid-cols-${cols} gap-${gap}`;
+      return (
+        <div className={gridClass} data-testid="layout-grid">
+          {components.map((comp) => (
+            <div key={comp.id} data-testid={`grid-item-${comp.id}`}>
+              {renderComponent(comp)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Handle stack (vertical/horizontal) layout
+    if (layoutType === "stack" || layoutType === "form" || layoutType === "dashboard") {
+      const direction = layout?.direction || "vertical";
+      const gap = layout?.gap || 4;
+      const isVertical = direction === "vertical";
+      const containerClass = isVertical
+        ? `space-y-${gap}`
+        : `flex gap-${gap} flex-row`;
+
+      return (
+        <div className={containerClass} data-testid={`layout-stack-${direction}`}>
+          {components.map((comp) => (
+            <React.Fragment key={comp.id}>{renderComponent(comp)}</React.Fragment>
+          ))}
+        </div>
+      );
+    }
+
+    // Handle list layout
+    if (layoutType === "list") {
+      const gap = layout?.gap || 2;
+      return (
+        <div className={`space-y-${gap}`} data-testid="layout-list">
+          {components.map((comp) => (
+            <div key={comp.id} className="border-b border-slate-800 pb-3 last:border-b-0" data-testid={`list-item-${comp.id}`}>
+              {renderComponent(comp)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Handle modal layout
+    if (layoutType === "modal") {
+      return (
+        <div data-testid="layout-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-5">
+            <div className="space-y-4">
+              {components.map((comp) => (
+                <React.Fragment key={comp.id}>{renderComponent(comp)}</React.Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback to default stack
+    return (
+      <div className="space-y-4" data-testid="layout-default">
+        {components.map((comp) => (
           <React.Fragment key={comp.id}>{renderComponent(comp)}</React.Fragment>
         ))}
+      </div>
+    );
+  };
+
+  return (
+    <UIScreenErrorBoundary>
+      <div data-testid={`screen-renderer-${screenId}`}>
+        {renderByLayout()}
       </div>
     </UIScreenErrorBoundary>
   );

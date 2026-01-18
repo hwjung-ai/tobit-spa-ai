@@ -10,8 +10,9 @@ import {
 } from 'recharts';
 import {
   Users, Settings, Activity, AlertCircle, TrendingUp,
-  RefreshCw, Menu, X
+  RefreshCw, Menu, X, Layers
 } from 'lucide-react';
+import ScreenAssetPanel from './ScreenAssetPanel';
 
 interface DashboardTab {
   id: string;
@@ -29,6 +30,7 @@ const AdminDashboard: React.FC = () => {
 
   const tabs: DashboardTab[] = [
     { id: 'overview', label: 'Overview', icon: <Activity className="w-5 h-5" /> },
+    { id: 'screens', label: 'Screens', icon: <Layers className="w-5 h-5" /> },
     { id: 'users', label: 'Users', icon: <Users className="w-5 h-5" /> },
     { id: 'monitoring', label: 'Monitoring', icon: <TrendingUp className="w-5 h-5" /> },
     { id: 'alerts', label: 'Alerts', icon: <AlertCircle className="w-5 h-5" /> },
@@ -153,6 +155,10 @@ const AdminDashboard: React.FC = () => {
     </div>
   );
 
+  const renderScreens = () => (
+    <ScreenAssetPanel onScreenUpdate={() => {}} />
+  );
+
   const renderUsers = () => (
     <UserManagementPanel />
   );
@@ -217,6 +223,7 @@ const AdminDashboard: React.FC = () => {
 
         <main className="p-8">
           {activeTab === 'overview' && renderOverview()}
+          {activeTab === 'screens' && renderScreens()}
           {activeTab === 'users' && renderUsers()}
           {activeTab === 'monitoring' && renderMonitoring()}
           {activeTab === 'alerts' && renderAlerts()}

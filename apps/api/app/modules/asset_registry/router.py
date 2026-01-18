@@ -4,7 +4,7 @@ from datetime import datetime
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends, status
 from sqlmodel import Session, select
 
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
@@ -13,16 +13,40 @@ from app.modules.asset_registry.schemas import (
     ScreenAssetRead,
     ScreenAssetUpdate,
 )
+from app.modules.auth.models import TbUser
+from app.modules.permissions.models import ResourcePermission
+from app.modules.permissions.crud import check_permission
 from core.db import get_session_context
+from core.auth import get_current_user
 from schemas.common import ResponseEnvelope
 
 router = APIRouter(prefix="/asset-registry")
 
 
 @router.post("/assets", response_model=ScreenAssetRead)
-def create_screen_asset(payload: ScreenAssetCreate):
+def create_screen_asset(
+    payload: ScreenAssetCreate,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(lambda: Session.begin()),
+):
     if payload.asset_type != "screen":
         raise HTTPException(status_code=400, detail="asset_type must be 'screen'")
+
+    # Check permission
+    permission_result = check_permission(
+        session=session,
+        user_id=current_user.id,
+        role=current_user.role,
+        permission=ResourcePermission.ASSET_CREATE,
+        resource_type="asset",
+        resource_id=None,
+    )
+
+    if not permission_result.granted:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission denied: {permission_result.reason}",
+        )
 
     with get_session_context() as session:
         asset = TbAssetRegistry(
@@ -185,11 +209,32 @@ def get_asset(asset_id: str, version: int | None = None):
 
 
 @router.put("/assets/{asset_id}", response_model=ScreenAssetRead)
-def update_asset(asset_id: str, payload: ScreenAssetUpdate):
+def update_asset(
+    asset_id: str,
+    payload: ScreenAssetUpdate,
+    current_user: TbUser = Depends(get_current_user),
+):
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, asset_id)
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
+
+        # Check permission
+        permission_result = check_permission(
+            session=session,
+            user_id=current_user.id,
+            role=current_user.role,
+            permission=ResourcePermission.ASSET_UPDATE,
+            resource_type="asset",
+            resource_id=asset_id,
+        )
+
+        if not permission_result.granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {permission_result.reason}",
+            )
+
         if asset.status != "draft":
             raise HTTPException(status_code=400, detail="only draft assets can be updated")
         if payload.name is not None:
@@ -223,12 +268,32 @@ def update_asset(asset_id: str, payload: ScreenAssetUpdate):
 
 
 @router.post("/assets/{asset_id}/publish")
-def publish_asset(asset_id: str, body: dict[str, Any] = Body(...)):
-    published_by = body.get("published_by")
+def publish_asset(
+    asset_id: str,
+    body: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    published_by = body.get("published_by") or current_user.id
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, asset_id)
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
+
+        # Check permission
+        permission_result = check_permission(
+            session=session,
+            user_id=current_user.id,
+            role=current_user.role,
+            permission=ResourcePermission.ASSET_UPDATE,
+            resource_type="asset",
+            resource_id=asset_id,
+        )
+
+        if not permission_result.granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {permission_result.reason}",
+            )
         # increment version and set status
         asset.version = (asset.version or 0) + 1
         asset.status = "published"
@@ -261,13 +326,33 @@ def publish_asset(asset_id: str, body: dict[str, Any] = Body(...)):
 
 
 @router.post("/assets/{asset_id}/rollback")
-def rollback_asset(asset_id: str, body: dict[str, Any] = Body(...)):
+def rollback_asset(
+    asset_id: str,
+    body: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
     target_version = body.get("target_version")
-    published_by = body.get("published_by")
+    published_by = body.get("published_by") or current_user.id
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, asset_id)
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
+
+        # Check permission
+        permission_result = check_permission(
+            session=session,
+            user_id=current_user.id,
+            role=current_user.role,
+            permission=ResourcePermission.ASSET_UPDATE,
+            resource_type="asset",
+            resource_id=asset_id,
+        )
+
+        if not permission_result.granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {permission_result.reason}",
+            )
         hist = session.exec(
             select(TbAssetVersionHistory)
             .where(TbAssetVersionHistory.asset_id == asset.asset_id)
@@ -304,11 +389,31 @@ def rollback_asset(asset_id: str, body: dict[str, Any] = Body(...)):
 
 
 @router.delete("/assets/{asset_id}")
-def delete_asset(asset_id: str):
+def delete_asset(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, asset_id)
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
+
+        # Check permission
+        permission_result = check_permission(
+            session=session,
+            user_id=current_user.id,
+            role=current_user.role,
+            permission=ResourcePermission.ASSET_DELETE,
+            resource_type="asset",
+            resource_id=asset_id,
+        )
+
+        if not permission_result.granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {permission_result.reason}",
+            )
+
         if asset.status != "draft":
             raise HTTPException(status_code=400, detail="only draft assets can be deleted")
         session.delete(asset)
