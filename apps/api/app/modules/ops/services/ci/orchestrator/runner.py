@@ -2608,3 +2608,263 @@ class CIOrchestratorRunner:
 
     def _history_context_source(self, history_spec: Any) -> str:
         return history_spec.source if getattr(history_spec, "source", None) else "event_log"
+
+    # ==============================================================================
+    # Tool Registry Execution Helpers (Phase 2B Additions)
+    # ==============================================================================
+    # These helper methods enable gradual migration to ToolRegistry-based execution.
+    # They wrap existing tool calls and can be progressively adopted.
+
+    def _execute_tool(
+        self,
+        tool_type: ToolType,
+        operation: str,
+        **params
+    ) -> Dict[str, Any]:
+        """
+        Execute a tool through the registry with standardized error handling.
+
+        Args:
+            tool_type: Type of tool to execute
+            operation: Operation to perform
+            **params: Operation-specific parameters
+
+        Returns:
+            Tool result data
+
+        Raises:
+            ValueError: If tool execution fails
+        """
+        context = ToolContext(
+            tenant_id=self.tenant_id,
+            request_id=get_request_context().get("request_id"),
+            trace_id=get_request_context().get("trace_id"),
+        )
+
+        params_with_op = {"operation": operation, **params}
+        result = self._tool_executor.execute(tool_type, context, params_with_op)
+
+        if not result.success:
+            raise ValueError(result.error or "Unknown tool error")
+
+        return result.data
+
+    # CI Tool Helpers
+    def _ci_search_v2(
+        self,
+        keywords: Iterable[str] | None = None,
+        filters: Iterable[FilterSpec] | None = None,
+        limit: int | None = None,
+        sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute CI search through registry (v2).
+        Returns same format as legacy _ci_search.
+        """
+        result = self._execute_tool(
+            ToolType.CI,
+            "search",
+            keywords=keywords,
+            filters=filters,
+            limit=limit,
+            sort=sort,
+        )
+        return [r.dict() if hasattr(r, "dict") else r for r in result.records]
+
+    def _ci_get_v2(self, ci_id: str) -> Dict[str, Any] | None:
+        """
+        Execute CI get through registry (v2).
+        Returns same format as legacy _ci_get.
+        """
+        try:
+            result = self._execute_tool(ToolType.CI, "get", ci_id=ci_id)
+            return result.dict() if hasattr(result, "dict") else result
+        except ValueError:
+            return None
+
+    def _ci_get_by_code_v2(self, ci_code: str) -> Dict[str, Any] | None:
+        """
+        Execute CI get_by_code through registry (v2).
+        Returns same format as legacy _ci_get_by_code.
+        """
+        try:
+            result = self._execute_tool(ToolType.CI, "get_by_code", ci_code=ci_code)
+            return result.dict() if hasattr(result, "dict") else result
+        except ValueError:
+            return None
+
+    def _ci_aggregate_v2(
+        self,
+        group_by: Iterable[str],
+        metrics: Iterable[str],
+        filters: Iterable[FilterSpec] | None = None,
+        ci_ids: Iterable[str] | None = None,
+        top_n: int | None = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute CI aggregate through registry (v2).
+        Returns same format as legacy _ci_aggregate.
+        """
+        result = self._execute_tool(
+            ToolType.CI,
+            "aggregate",
+            group_by=group_by,
+            metrics=metrics,
+            filters=filters,
+            ci_ids=ci_ids,
+            top_n=top_n,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    def _ci_list_preview_v2(
+        self,
+        limit: int,
+        offset: int = 0,
+        filters: Iterable[FilterSpec] | None = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute CI list_preview through registry (v2).
+        Returns same format as legacy _ci_list_preview.
+        """
+        result = self._execute_tool(
+            ToolType.CI,
+            "list_preview",
+            limit=limit,
+            offset=offset,
+            filters=filters,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    # Metric Tool Helpers
+    def _metric_aggregate_v2(
+        self,
+        metric_name: str,
+        agg: str,
+        time_range: str,
+        ci_id: str | None = None,
+        ci_ids: Iterable[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Execute Metric aggregate through registry (v2).
+        Returns same format as legacy _metric_aggregate.
+        """
+        result = self._execute_tool(
+            ToolType.METRIC,
+            "aggregate",
+            metric_name=metric_name,
+            agg=agg,
+            time_range=time_range,
+            ci_id=ci_id,
+            ci_ids=ci_ids,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    def _metric_series_table_v2(
+        self,
+        ci_id: str,
+        metric_name: str,
+        time_range: str,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        """
+        Execute Metric series through registry (v2).
+        Returns same format as legacy _metric_series_table.
+        """
+        result = self._execute_tool(
+            ToolType.METRIC,
+            "series",
+            ci_id=ci_id,
+            metric_name=metric_name,
+            time_range=time_range,
+            limit=limit,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    # Graph Tool Helpers
+    def _graph_expand_v2(
+        self,
+        ci_id: str,
+        view: str,
+        depth: int,
+        limits: dict[str, int],
+    ) -> Dict[str, Any]:
+        """
+        Execute Graph expand through registry (v2).
+        Returns same format as legacy _graph_expand.
+        """
+        result = self._execute_tool(
+            ToolType.GRAPH,
+            "expand",
+            ci_id=ci_id,
+            view=view,
+            depth=depth,
+            limits=limits,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    def _graph_path_v2(
+        self,
+        source_id: str,
+        target_id: str,
+        hops: int,
+    ) -> Dict[str, Any]:
+        """
+        Execute Graph path through registry (v2).
+        Returns same format as legacy _graph_path.
+        """
+        result = self._execute_tool(
+            ToolType.GRAPH,
+            "path",
+            ci_id=source_id,
+            target_ci_id=target_id,
+            max_hops=hops,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    # History Tool Helpers
+    def _history_recent_v2(
+        self,
+        history_spec: Any,
+        ci_context: Dict[str, Any],
+        ci_ids: list[str] | None = None,
+        time_range: str | None = None,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        """
+        Execute History event_log through registry (v2).
+        Returns same format as legacy _history_recent.
+        """
+        final_time_range = time_range or getattr(history_spec, "time_range", None) or "last_7d"
+        final_limit = limit or getattr(history_spec, "limit", None) or 50
+
+        result = self._execute_tool(
+            ToolType.HISTORY,
+            "event_log",
+            ci=ci_context,
+            time_range=final_time_range,
+            limit=final_limit,
+            ci_ids=ci_ids,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    # CEP Tool Helpers
+    def _cep_simulate_v2(
+        self,
+        rule_id: str | None,
+        ci_context: Dict[str, Any],
+        metric_context: Dict[str, Any] | None,
+        history_context: Dict[str, Any] | None,
+    ) -> Dict[str, Any]:
+        """
+        Execute CEP simulate through registry (v2).
+        Returns same format as legacy _cep_simulate.
+        """
+        result = self._execute_tool(
+            ToolType.CEP,
+            "simulate",
+            rule_id=rule_id or "",
+            ci_context=ci_context,
+            metric_context=metric_context,
+            history_context=history_context,
+        )
+        return result if isinstance(result, dict) else result.dict()
