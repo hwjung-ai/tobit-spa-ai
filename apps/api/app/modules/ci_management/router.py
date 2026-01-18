@@ -10,8 +10,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
-from database import get_session
-from schemas import ResponseEnvelope
+from core.db import get_session
+from schemas.common import ResponseEnvelope
 from .models import (
     ChangeType,
     ChangeStatus,

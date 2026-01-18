@@ -25,6 +25,7 @@ class LogicType(str):
 
 class TbApiDef(SQLModel, table=True):
     __tablename__ = "tb_api_def"
+    __table_args__ = ({"extend_existing": True},)
 
     api_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -71,6 +72,7 @@ class TbApiDef(SQLModel, table=True):
 
 class ApiExecLog(SQLModel, table=True):
     __tablename__ = "tb_api_exec_log"
+    __table_args__ = ({"extend_existing": True},)
 
     exec_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -94,6 +96,7 @@ class ApiExecLog(SQLModel, table=True):
 
 class ApiExecStepLog(SQLModel, table=True):
     __tablename__ = "tb_api_exec_step_log"
+    __table_args__ = ({"extend_existing": True},)
 
     exec_step_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,

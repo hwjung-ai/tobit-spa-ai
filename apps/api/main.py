@@ -18,7 +18,7 @@ from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
 from app.modules.auth.router import router as auth_router
 from app.modules.audit_log.router import router as audit_log_router
-from app.modules.ci_management.router import router as ci_management_router
+# from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type issues
 from app.modules.permissions.router import router as permissions_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.operation_settings.router import router as operation_settings_router
@@ -67,7 +67,7 @@ app.include_router(ops_router)
 app.include_router(asset_registry_router)
 app.include_router(operation_settings_router)
 app.include_router(cep_builder_router)
-app.include_router(ci_management_router)
+# app.include_router(ci_management_router)  # Temporarily disabled
 app.include_router(data_explorer_router)
 app.include_router(audit_log_router)
 app.include_router(api_manager_router)

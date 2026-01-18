@@ -11,6 +11,7 @@ from sqlmodel import Field, SQLModel
 
 class TbAssetRegistry(SQLModel, table=True):
     __tablename__ = "tb_asset_registry"
+    __table_args__ = ({"extend_existing": True},)
 
     asset_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
@@ -86,6 +87,7 @@ class TbAssetRegistry(SQLModel, table=True):
 
 class TbAssetVersionHistory(SQLModel, table=True):
     __tablename__ = "tb_asset_version_history"
+    __table_args__ = ({"extend_existing": True},)
 
     history_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,

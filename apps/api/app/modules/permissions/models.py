@@ -97,6 +97,7 @@ class TbRolePermission(TbRolePermissionBase, table=True):
     """Role-to-permission mapping table."""
     __tablename__ = "tb_role_permission"
 
+    __table_args__ = ({"extend_existing": True},)
     id: str = Field(
         primary_key=True,
         max_length=36,
@@ -135,6 +136,7 @@ class TbResourcePermission(TbResourcePermissionBase, table=True):
     """Resource-specific permission overrides table."""
     __tablename__ = "tb_resource_permission"
 
+    __table_args__ = ({"extend_existing": True},)
     id: str = Field(
         primary_key=True,
         max_length=36,

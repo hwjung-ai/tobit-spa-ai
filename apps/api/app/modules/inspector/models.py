@@ -10,6 +10,7 @@ from sqlmodel import Field, SQLModel
 
 class TbExecutionTrace(SQLModel, table=True):
     __tablename__ = "tb_execution_trace"
+    __table_args__ = ({"extend_existing": True},)
 
     trace_id: str = Field(
         sa_column=Column(Text, primary_key=True, nullable=False),
@@ -89,6 +90,7 @@ class TbGoldenQuery(SQLModel, table=True):
     """Golden query baseline for regression detection"""
 
     __tablename__ = "tb_golden_query"
+    __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
         sa_column=Column(Text, primary_key=True, nullable=False),
@@ -130,6 +132,7 @@ class TbRegressionBaseline(SQLModel, table=True):
     """Baseline trace for regression detection"""
 
     __tablename__ = "tb_regression_baseline"
+    __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
         sa_column=Column(Text, primary_key=True, nullable=False),
@@ -167,6 +170,7 @@ class TbRegressionRun(SQLModel, table=True):
     """Regression detection run result"""
 
     __tablename__ = "tb_regression_run"
+    __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
         sa_column=Column(Text, primary_key=True, nullable=False),
@@ -226,6 +230,7 @@ class TbRegressionRuleConfig(SQLModel, table=True):
     """Configurable judgment rules for regression detection (v2)"""
 
     __tablename__ = "tb_regression_rule_config"
+    __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
         sa_column=Column(Text, primary_key=True, nullable=False),

@@ -14,6 +14,8 @@ class TbOperationSettings(SQLModel, table=True):
 
     __tablename__ = "tb_operation_settings"
 
+    __table_args__ = ({"extend_existing": True},)
+
     setting_id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
         sa_column=Column(UUID(as_uuid=True), primary_key=True, nullable=False),

@@ -104,6 +104,7 @@ class TbCIChange(TbCIChangeBase, table=True):
     """CI Change tracking table."""
     __tablename__ = "tb_ci_change"
 
+    __table_args__ = ({"extend_existing": True},)
     id: str = Field(primary_key=True, max_length=36, default_factory=lambda: str(uuid4()))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -114,6 +115,7 @@ class TbCIIntegrityIssue(TbCIIntegrityIssueBase, table=True):
     """CI Integrity validation issues table."""
     __tablename__ = "tb_ci_integrity_issue"
 
+    __table_args__ = ({"extend_existing": True},)
     id: str = Field(primary_key=True, max_length=36, default_factory=lambda: str(uuid4()))
     detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -124,6 +126,7 @@ class TbCIDuplicate(TbCIDuplicateBase, table=True):
     """CI Duplicate detection table."""
     __tablename__ = "tb_ci_duplicate"
 
+    __table_args__ = ({"extend_existing": True},)
     id: str = Field(primary_key=True, max_length=36, default_factory=lambda: str(uuid4()))
     detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

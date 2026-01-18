@@ -11,6 +11,7 @@ from sqlmodel import Field, SQLModel
 
 class TbUiDef(SQLModel, table=True):
     __tablename__ = 'tb_ui_def'
+    __table_args__ = ({"extend_existing": True},)
     model_config = {"populate_by_name": True}
 
     ui_id: uuid.UUID = Field(

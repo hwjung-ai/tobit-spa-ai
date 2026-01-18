@@ -38,6 +38,7 @@ class TbUserBase(SQLModel):
 class TbUser(TbUserBase, table=True):
     """User account table."""
     __tablename__ = "tb_user"
+    __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
         primary_key=True,
@@ -114,6 +115,7 @@ class TbRefreshTokenBase(SQLModel):
 class TbRefreshToken(TbRefreshTokenBase, table=True):
     """Refresh token storage table."""
     __tablename__ = "tb_refresh_token"
+    __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
         primary_key=True,

@@ -42,6 +42,7 @@ class TbApiKey(TbApiKeyBase, table=True):
     """API Key storage table."""
     __tablename__ = "tb_api_key"
 
+    __table_args__ = ({"extend_existing": True},)
     id: str = Field(
         primary_key=True,
         max_length=36,
