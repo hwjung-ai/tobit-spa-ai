@@ -1,0 +1,405 @@
+/**
+ * Admin Dashboard - Main component
+ * Manages user administration, system monitoring, and settings
+ */
+
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
+} from 'recharts';
+import {
+  Users, Settings, Activity, AlertCircle, TrendingUp,
+  RefreshCw, Menu, X
+} from 'lucide-react';
+
+interface DashboardTab {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const AdminDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [systemHealth, setSystemHealth] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const tabs: DashboardTab[] = [
+    { id: 'overview', label: 'Overview', icon: <Activity className="w-5 h-5" /> },
+    { id: 'users', label: 'Users', icon: <Users className="w-5 h-5" /> },
+    { id: 'monitoring', label: 'Monitoring', icon: <TrendingUp className="w-5 h-5" /> },
+    { id: 'alerts', label: 'Alerts', icon: <AlertCircle className="w-5 h-5" /> },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  useEffect(() => {
+    fetchDashboardData();
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const [healthRes, metricsRes, alertsRes] = await Promise.all([
+        fetch('/api/admin/system/health'),
+        fetch('/api/admin/system/metrics'),
+        fetch('/api/admin/system/alerts'),
+      ]);
+
+      if (healthRes.ok) {
+        const data = await healthRes.json();
+        setSystemHealth(data.health);
+      }
+
+      if (metricsRes.ok) {
+        const data = await metricsRes.json();
+        setMetrics(data.metrics);
+      }
+
+      if (alertsRes.ok) {
+        const data = await alertsRes.json();
+        setAlerts(data.alerts || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getHealthColor = (status: string) => {
+    switch (status) {
+      case 'healthy':
+        return 'text-green-600 bg-green-50';
+      case 'warning':
+        return 'text-yellow-600 bg-yellow-50';
+      case 'critical':
+        return 'text-red-600 bg-red-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const renderOverview = () => (
+    <div className="space-y-6">
+      {/* System Health Status */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className={`p-6 rounded-lg border ${getHealthColor(systemHealth?.status || 'unknown')}`}>
+          <div className="text-sm font-medium mb-2">System Status</div>
+          <div className="text-2xl font-bold capitalize">{systemHealth?.status || 'Unknown'}</div>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-blue-50 text-blue-600">
+          <div className="text-sm font-medium mb-2">Active Alerts</div>
+          <div className="text-2xl font-bold">{alerts.length}</div>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-purple-50 text-purple-600">
+          <div className="text-sm font-medium mb-2">Resources</div>
+          <div className="text-sm space-y-1">
+            <div>CPU: {systemHealth?.resource?.cpu_percent.toFixed(1)}%</div>
+            <div>Mem: {systemHealth?.resource?.memory_percent.toFixed(1)}%</div>
+          </div>
+        </div>
+
+        <div className="p-6 rounded-lg border bg-indigo-50 text-indigo-600">
+          <div className="text-sm font-medium mb-2">Last Updated</div>
+          <div className="text-sm">{new Date().toLocaleTimeString()}</div>
+        </div>
+      </div>
+
+      {/* Metrics Charts */}
+      {metrics?.resources && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* CPU and Memory Chart */}
+          <div className="bg-white p-6 rounded-lg border">
+            <h3 className="text-lg font-semibold mb-4">Resource Usage</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={metrics.resources.slice(-24)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="cpu_percent" stroke="#ef4444" name="CPU %" />
+                <Line type="monotone" dataKey="memory_percent" stroke="#f59e0b" name="Memory %" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* API Performance Chart */}
+          {metrics?.api && (
+            <div className="bg-white p-6 rounded-lg border">
+              <h3 className="text-lg font-semibold mb-4">API Performance</h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={metrics.api.slice(-12)}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="avg_response_time_ms" fill="#3b82f6" name="Avg Response (ms)" />
+                  <Bar dataKey="error_rate" fill="#ef4444" name="Error Rate" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderUsers = () => (
+    <UserManagementPanel />
+  );
+
+  const renderMonitoring = () => (
+    <MonitoringPanel metrics={metrics} systemHealth={systemHealth} />
+  );
+
+  const renderAlerts = () => (
+    <AlertsPanel alerts={alerts} />
+  );
+
+  const renderSettings = () => (
+    <SettingsPanel />
+  );
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
+      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gray-900 text-white transition-all duration-300`}>
+        <div className="p-4 flex items-center justify-between">
+          {sidebarOpen && <span className="font-bold text-lg">Admin</span>}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1 hover:bg-gray-800 rounded"
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        <nav className="mt-8 space-y-2">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-300 hover:bg-gray-800'
+              }`}
+            >
+              {tab.icon}
+              {sidebarOpen && <span>{tab.label}</span>}
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto">
+        <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <button
+            onClick={fetchDashboardData}
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </header>
+
+        <main className="p-8">
+          {activeTab === 'overview' && renderOverview()}
+          {activeTab === 'users' && renderUsers()}
+          {activeTab === 'monitoring' && renderMonitoring()}
+          {activeTab === 'alerts' && renderAlerts()}
+          {activeTab === 'settings' && renderSettings()}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;
+
+
+// Sub-components
+const UserManagementPanel: React.FC = () => {
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [page]);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/admin/users?page=${page}&per_page=20`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold">User Management</h2>
+      </div>
+
+      <div className="bg-white rounded-lg border overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Username</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Last Login</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {users.map((user) => (
+              <tr key={user.user_id} className="hover:bg-gray-50">
+                <td className="px-6 py-3 text-sm text-gray-900">{user.username}</td>
+                <td className="px-6 py-3 text-sm text-gray-600">{user.email}</td>
+                <td className="px-6 py-3 text-sm">
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                    user.is_active
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {user.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-6 py-3 text-sm text-gray-600">
+                  {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
+                </td>
+                <td className="px-6 py-3 text-sm">
+                  <button className="text-blue-600 hover:underline">Manage</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const MonitoringPanel: React.FC<{ metrics: any; systemHealth: any }> = ({ metrics, systemHealth }) => (
+  <div className="space-y-6">
+    <h2 className="text-xl font-bold">System Monitoring</h2>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="bg-white p-6 rounded-lg border">
+        <h3 className="text-lg font-semibold mb-4">Resource Metrics</h3>
+        <div className="space-y-3">
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>CPU Usage</span>
+              <span className="font-semibold">{systemHealth?.resource?.cpu_percent.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-blue-600 h-2 rounded-full"
+                style={{ width: `${Math.min(systemHealth?.resource?.cpu_percent || 0, 100)}%` }}
+              />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Memory Usage</span>
+              <span className="font-semibold">{systemHealth?.resource?.memory_percent.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-yellow-600 h-2 rounded-full"
+                style={{ width: `${Math.min(systemHealth?.resource?.memory_percent || 0, 100)}%` }}
+              />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>Disk Usage</span>
+              <span className="font-semibold">{systemHealth?.resource?.disk_percent.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-red-600 h-2 rounded-full"
+                style={{ width: `${Math.min(systemHealth?.resource?.disk_percent || 0, 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg border">
+        <h3 className="text-lg font-semibold mb-4">API Metrics</h3>
+        <div className="space-y-3">
+          <div className="flex justify-between text-sm">
+            <span>Total Requests</span>
+            <span className="font-semibold">{systemHealth?.api?.total_requests || 0}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Error Rate</span>
+            <span className="font-semibold">{((systemHealth?.api?.error_rate || 0) * 100).toFixed(2)}%</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Avg Response Time</span>
+            <span className="font-semibold">{systemHealth?.api?.avg_response_time_ms.toFixed(0)}ms</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const AlertsPanel: React.FC<{ alerts: any[] }> = ({ alerts }) => (
+  <div className="space-y-6">
+    <h2 className="text-xl font-bold">System Alerts</h2>
+    <div className="space-y-3">
+      {alerts.length === 0 ? (
+        <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg">
+          No active alerts
+        </div>
+      ) : (
+        alerts.map((alert, index) => (
+          <div
+            key={index}
+            className={`p-4 rounded-lg border ${
+              alert.severity === 'critical'
+                ? 'bg-red-50 border-red-200 text-red-800'
+                : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+            }`}
+          >
+            <div className="font-semibold">{alert.message}</div>
+            <div className="text-sm mt-1">{new Date(alert.timestamp).toLocaleString()}</div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+);
+
+const SettingsPanel: React.FC = () => (
+  <div className="space-y-6">
+    <h2 className="text-xl font-bold">System Settings</h2>
+    <div className="bg-white p-6 rounded-lg border">
+      <p className="text-gray-600">Settings management interface coming soon...</p>
+    </div>
+  </div>
+);
