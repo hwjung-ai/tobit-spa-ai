@@ -55,7 +55,11 @@ export default function BuilderShell({
   }, [isResizingLeft, isResizingRight]);
 
   return (
-    <div ref={containerRef} className="flex h-full flex-col gap-4 overflow-hidden">
+    <div
+      ref={containerRef}
+      className="flex h-full flex-col gap-4 overflow-hidden"
+      style={{ userSelect: isResizingLeft || isResizingRight ? "none" : "auto" }}
+    >
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left Pane */}
         <div
@@ -67,7 +71,10 @@ export default function BuilderShell({
 
         {/* Left Resize Handle */}
         <div
-          onMouseDown={() => setIsResizingLeft(true)}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            setIsResizingLeft(true);
+          }}
           className={`group flex w-4 cursor-col-resize items-center justify-center transition-colors ${isResizingLeft ? "bg-sky-500/10" : "hover:bg-sky-500/5"
             }`}
         >
@@ -89,7 +96,10 @@ export default function BuilderShell({
 
         {/* Right Resize Handle */}
         <div
-          onMouseDown={() => setIsResizingRight(true)}
+          onMouseDown={(event) => {
+            event.preventDefault();
+            setIsResizingRight(true);
+          }}
           className={`group flex w-4 cursor-col-resize items-center justify-center transition-colors ${isResizingRight ? "bg-sky-500/10" : "hover:bg-sky-500/5"
             }`}
         >
