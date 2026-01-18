@@ -240,14 +240,14 @@ class CIOrchestratorRunner:
         ) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result_data = self._ci_search_v2(
+                result_data = self._ci_search_via_registry(
                     keywords=keywords_tuple,
                     filters=filters_tuple,
                     limit=limit,
                     sort=sort,
                 )
                 meta["row_count"] = len(result_data)
-                result_records = result_data  # v2 returns list of dicts
+                result_records = result_data  # registry returns list of dicts
             except Exception as e:
                 self.logger.warning(f"CI search via registry failed, falling back: {e}")
                 # Fallback to direct call
@@ -416,7 +416,7 @@ class CIOrchestratorRunner:
         with self._tool_context("ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                detail = self._ci_get_v2(ci_id)
+                detail = self._ci_get_via_registry(ci_id)
                 meta["found"] = bool(detail)
             except Exception as e:
                 self.logger.warning(f"CI get via registry failed, falling back: {e}")
@@ -429,7 +429,7 @@ class CIOrchestratorRunner:
         with self._tool_context("ci.get", input_params={"ci_code": ci_code}, ci_code=ci_code) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                detail = self._ci_get_by_code_v2(ci_code)
+                detail = self._ci_get_by_code_via_registry(ci_code)
                 meta["found"] = bool(detail)
             except Exception as e:
                 self.logger.warning(f"CI get_by_code via registry failed, falling back: {e}")
@@ -468,7 +468,7 @@ class CIOrchestratorRunner:
         ) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._ci_aggregate_v2(
+                result = self._ci_aggregate_via_registry(
                     group_by=group_by,
                     metrics=metrics,
                     filters=filters,
@@ -512,7 +512,7 @@ class CIOrchestratorRunner:
         ) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._ci_list_preview_v2(limit=limit, offset=offset, filters=filters)
+                result = self._ci_list_preview_via_registry(limit=limit, offset=offset, filters=filters)
                 meta["row_count"] = len(result.get("rows", []))
             except Exception as e:
                 self.logger.warning(f"CI list_preview via registry failed, falling back: {e}")
@@ -532,7 +532,7 @@ class CIOrchestratorRunner:
         with self._tool_context("graph.expand", input_params=input_params, view=view, depth=depth) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                raw_payload = self._graph_expand_v2(ci_id=ci_id, view=view, depth=depth, limits=limits)
+                raw_payload = self._graph_expand_via_registry(ci_id=ci_id, view=view, depth=depth, limits=limits)
             except Exception as e:
                 self.logger.warning(f"Graph expand via registry failed, falling back: {e}")
                 raw_payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
@@ -603,7 +603,7 @@ class CIOrchestratorRunner:
         with self._tool_context("graph.path", input_params=input_params, hop_count=hops) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                payload = self._graph_path_v2(source_id=source_id, target_id=target_id, hops=hops)
+                payload = self._graph_path_via_registry(source_id=source_id, target_id=target_id, hops=hops)
             except Exception as e:
                 self.logger.warning(f"Graph path via registry failed, falling back: {e}")
                 payload = graph_tools.graph_path(self.tenant_id, source_id, target_id, hops)
@@ -639,7 +639,7 @@ class CIOrchestratorRunner:
         ) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._metric_aggregate_v2(
+                result = self._metric_aggregate_via_registry(
                     metric_name=metric_name,
                     agg=agg,
                     time_range=time_range,
@@ -673,7 +673,7 @@ class CIOrchestratorRunner:
         with self._tool_context("metric.series", input_params=input_params, metric=metric_name, time_range=time_range, limit=limit) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._metric_series_table_v2(
+                result = self._metric_series_table_via_registry(
                     ci_id=ci_id,
                     metric_name=metric_name,
                     time_range=time_range,
@@ -714,7 +714,7 @@ class CIOrchestratorRunner:
         ) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._history_recent_v2(
+                result = self._history_recent_via_registry(
                     history_spec=history_spec,
                     ci_context=ci_context,
                     ci_ids=ci_ids,
@@ -755,7 +755,7 @@ class CIOrchestratorRunner:
         with self._tool_context("cep.simulate", input_params=input_params, rule_id=rule_id) as meta:
             # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._cep_simulate_v2(
+                result = self._cep_simulate_via_registry(
                     rule_id=rule_id,
                     ci_context=ci_context,
                     metric_context=metric_context,
@@ -2770,7 +2770,7 @@ class CIOrchestratorRunner:
         return result.data
 
     # CI Tool Helpers
-    def _ci_search_v2(
+    def _ci_search_via_registry(
         self,
         keywords: Iterable[str] | None = None,
         filters: Iterable[FilterSpec] | None = None,
@@ -2778,8 +2778,8 @@ class CIOrchestratorRunner:
         sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
     ) -> List[Dict[str, Any]]:
         """
-        Execute CI search through registry (v2).
-        Returns same format as legacy _ci_search.
+        Execute CI search through ToolRegistry.
+        Returns same format as primary _ci_search.
         """
         result = self._execute_tool(
             ToolType.CI,
@@ -2791,10 +2791,10 @@ class CIOrchestratorRunner:
         )
         return [r.dict() if hasattr(r, "dict") else r for r in result.records]
 
-    def _ci_get_v2(self, ci_id: str) -> Dict[str, Any] | None:
+    def _ci_get_via_registry(self, ci_id: str) -> Dict[str, Any] | None:
         """
-        Execute CI get through registry (v2).
-        Returns same format as legacy _ci_get.
+        Execute CI get through ToolRegistry.
+        Returns same format as primary _ci_get.
         """
         try:
             result = self._execute_tool(ToolType.CI, "get", ci_id=ci_id)
@@ -2802,10 +2802,10 @@ class CIOrchestratorRunner:
         except ValueError:
             return None
 
-    def _ci_get_by_code_v2(self, ci_code: str) -> Dict[str, Any] | None:
+    def _ci_get_by_code_via_registry(self, ci_code: str) -> Dict[str, Any] | None:
         """
-        Execute CI get_by_code through registry (v2).
-        Returns same format as legacy _ci_get_by_code.
+        Execute CI get_by_code through ToolRegistry.
+        Returns same format as primary _ci_get_by_code.
         """
         try:
             result = self._execute_tool(ToolType.CI, "get_by_code", ci_code=ci_code)
@@ -2813,7 +2813,7 @@ class CIOrchestratorRunner:
         except ValueError:
             return None
 
-    def _ci_aggregate_v2(
+    def _ci_aggregate_via_registry(
         self,
         group_by: Iterable[str],
         metrics: Iterable[str],
@@ -2822,8 +2822,8 @@ class CIOrchestratorRunner:
         top_n: int | None = None,
     ) -> Dict[str, Any]:
         """
-        Execute CI aggregate through registry (v2).
-        Returns same format as legacy _ci_aggregate.
+        Execute CI aggregate through ToolRegistry.
+        Returns same format as primary _ci_aggregate.
         """
         result = self._execute_tool(
             ToolType.CI,
@@ -2836,15 +2836,15 @@ class CIOrchestratorRunner:
         )
         return result.dict() if hasattr(result, "dict") else result
 
-    def _ci_list_preview_v2(
+    def _ci_list_preview_via_registry(
         self,
         limit: int,
         offset: int = 0,
         filters: Iterable[FilterSpec] | None = None,
     ) -> Dict[str, Any]:
         """
-        Execute CI list_preview through registry (v2).
-        Returns same format as legacy _ci_list_preview.
+        Execute CI list_preview through ToolRegistry.
+        Returns same format as primary _ci_list_preview.
         """
         result = self._execute_tool(
             ToolType.CI,
@@ -2856,7 +2856,7 @@ class CIOrchestratorRunner:
         return result.dict() if hasattr(result, "dict") else result
 
     # Metric Tool Helpers
-    def _metric_aggregate_v2(
+    def _metric_aggregate_via_registry(
         self,
         metric_name: str,
         agg: str,
@@ -2865,8 +2865,8 @@ class CIOrchestratorRunner:
         ci_ids: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         """
-        Execute Metric aggregate through registry (v2).
-        Returns same format as legacy _metric_aggregate.
+        Execute Metric aggregate through ToolRegistry.
+        Returns same format as primary _metric_aggregate.
         """
         result = self._execute_tool(
             ToolType.METRIC,
@@ -2879,7 +2879,7 @@ class CIOrchestratorRunner:
         )
         return result.dict() if hasattr(result, "dict") else result
 
-    def _metric_series_table_v2(
+    def _metric_series_table_via_registry(
         self,
         ci_id: str,
         metric_name: str,
@@ -2887,8 +2887,8 @@ class CIOrchestratorRunner:
         limit: int | None = None,
     ) -> dict[str, Any]:
         """
-        Execute Metric series through registry (v2).
-        Returns same format as legacy _metric_series_table.
+        Execute Metric series through ToolRegistry.
+        Returns same format as primary _metric_series_table.
         """
         result = self._execute_tool(
             ToolType.METRIC,
@@ -2901,7 +2901,7 @@ class CIOrchestratorRunner:
         return result.dict() if hasattr(result, "dict") else result
 
     # Graph Tool Helpers
-    def _graph_expand_v2(
+    def _graph_expand_via_registry(
         self,
         ci_id: str,
         view: str,
@@ -2909,8 +2909,8 @@ class CIOrchestratorRunner:
         limits: dict[str, int],
     ) -> Dict[str, Any]:
         """
-        Execute Graph expand through registry (v2).
-        Returns same format as legacy _graph_expand.
+        Execute Graph expand through ToolRegistry.
+        Returns same format as primary _graph_expand.
         """
         result = self._execute_tool(
             ToolType.GRAPH,
@@ -2922,15 +2922,15 @@ class CIOrchestratorRunner:
         )
         return result if isinstance(result, dict) else result.dict()
 
-    def _graph_path_v2(
+    def _graph_path_via_registry(
         self,
         source_id: str,
         target_id: str,
         hops: int,
     ) -> Dict[str, Any]:
         """
-        Execute Graph path through registry (v2).
-        Returns same format as legacy _graph_path.
+        Execute Graph path through ToolRegistry.
+        Returns same format as primary _graph_path.
         """
         result = self._execute_tool(
             ToolType.GRAPH,
@@ -2942,7 +2942,7 @@ class CIOrchestratorRunner:
         return result if isinstance(result, dict) else result.dict()
 
     # History Tool Helpers
-    def _history_recent_v2(
+    def _history_recent_via_registry(
         self,
         history_spec: Any,
         ci_context: Dict[str, Any],
@@ -2951,8 +2951,8 @@ class CIOrchestratorRunner:
         limit: int | None = None,
     ) -> dict[str, Any]:
         """
-        Execute History event_log through registry (v2).
-        Returns same format as legacy _history_recent.
+        Execute History event_log through ToolRegistry.
+        Returns same format as primary _history_recent.
         """
         final_time_range = time_range or getattr(history_spec, "time_range", None) or "last_7d"
         final_limit = limit or getattr(history_spec, "limit", None) or 50
@@ -2968,7 +2968,7 @@ class CIOrchestratorRunner:
         return result if isinstance(result, dict) else result.dict()
 
     # CEP Tool Helpers
-    def _cep_simulate_v2(
+    def _cep_simulate_via_registry(
         self,
         rule_id: str | None,
         ci_context: Dict[str, Any],
@@ -2976,8 +2976,8 @@ class CIOrchestratorRunner:
         history_context: Dict[str, Any] | None,
     ) -> Dict[str, Any]:
         """
-        Execute CEP simulate through registry (v2).
-        Returns same format as legacy _cep_simulate.
+        Execute CEP simulate through ToolRegistry.
+        Returns same format as primary _cep_simulate.
         """
         result = self._execute_tool(
             ToolType.CEP,
