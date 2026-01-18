@@ -33,6 +33,11 @@ from app.modules.ops.services.ci.tools import graph as graph_tools
 from app.modules.ops.services.ci.tools import history as history_tools
 from app.modules.ops.services.ci.tools import metric as metric_tools
 from app.modules.ops.services.ci.tools.ci import FilterSpec
+from app.modules.ops.services.ci.tools import (
+    ToolContext,
+    ToolType,
+    get_tool_executor,
+)
 
 
 @dataclass
@@ -132,6 +137,8 @@ class CIOrchestratorRunner:
         # Flow span tracking
         self._flow_spans_enabled: bool = False
         self._runner_span_id: str | None = None
+        # Tool executor for dynamic tool invocation
+        self._tool_executor = get_tool_executor()
 
     @contextmanager
     def _tool_context(self, tool: str, input_params: Dict[str, Any] | None = None, **meta):
