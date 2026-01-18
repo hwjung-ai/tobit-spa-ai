@@ -7,6 +7,8 @@ from uuid import uuid4
 
 from sqlmodel import Field, SQLModel
 
+from apps.api.core.encryption import get_encryption_manager
+
 
 class UserRole(str, Enum):
     """User role enumeration."""
@@ -18,13 +20,19 @@ class UserRole(str, Enum):
 
 class TbUserBase(SQLModel):
     """Base user model."""
-    email: str = Field(max_length=255)
     username: str = Field(max_length=100)
     password_hash: str = Field(max_length=255)
     role: UserRole = Field(default=UserRole.VIEWER)
     tenant_id: str = Field(max_length=64, index=True)
     is_active: bool = Field(default=True)
     last_login_at: Optional[datetime] = None
+    # Encrypted fields (stored encrypted in database)
+    email_encrypted: str = Field(max_length=512, description="Encrypted email address")
+    phone_encrypted: Optional[str] = Field(
+        default=None,
+        max_length=512,
+        description="Encrypted phone number"
+    )
 
 
 class TbUser(TbUserBase, table=True):
@@ -42,6 +50,52 @@ class TbUser(TbUserBase, table=True):
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
+
+    def get_email(self) -> str:
+        """Decrypt and return email address."""
+        if not self.email_encrypted:
+            return ""
+        try:
+            manager = get_encryption_manager()
+            return manager.decrypt(self.email_encrypted)
+        except ValueError:
+            # Return as-is if decryption fails (backward compatibility)
+            return self.email_encrypted
+
+    def set_email(self, email: str) -> None:
+        """Encrypt and store email address."""
+        if not email:
+            self.email_encrypted = ""
+            return
+        try:
+            manager = get_encryption_manager()
+            self.email_encrypted = manager.encrypt(email)
+        except ValueError:
+            # Store plaintext if encryption fails
+            self.email_encrypted = email
+
+    def get_phone(self) -> Optional[str]:
+        """Decrypt and return phone number."""
+        if not self.phone_encrypted:
+            return None
+        try:
+            manager = get_encryption_manager()
+            return manager.decrypt(self.phone_encrypted)
+        except ValueError:
+            # Return as-is if decryption fails
+            return self.phone_encrypted
+
+    def set_phone(self, phone: Optional[str]) -> None:
+        """Encrypt and store phone number."""
+        if not phone:
+            self.phone_encrypted = None
+            return
+        try:
+            manager = get_encryption_manager()
+            self.phone_encrypted = manager.encrypt(phone)
+        except ValueError:
+            # Store plaintext if encryption fails
+            self.phone_encrypted = phone
 
 
 class TbUserRead(TbUserBase):

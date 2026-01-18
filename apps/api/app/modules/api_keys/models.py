@@ -7,6 +7,8 @@ from uuid import uuid4
 
 from sqlmodel import Field, SQLModel
 
+from apps.api.core.encryption import get_encryption_manager
+
 
 class ApiKeyScope(str, Enum):
     """API Key permission scopes."""
@@ -52,6 +54,39 @@ class TbApiKey(TbApiKeyBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc)
     )
     created_by_trace_id: str = Field(max_length=36, default="system")
+
+    def encrypt_hash(self, key_hash: str) -> str:
+        """
+        Encrypt API key hash for additional security.
+
+        Args:
+            key_hash: bcrypt hash to encrypt
+
+        Returns:
+            Encrypted hash string
+        """
+        try:
+            manager = get_encryption_manager()
+            return manager.encrypt(key_hash)
+        except ValueError:
+            # Return as-is if encryption fails
+            return key_hash
+
+    def decrypt_hash(self) -> str:
+        """
+        Decrypt API key hash.
+
+        Returns:
+            Decrypted hash string
+        """
+        if not self.key_hash:
+            return ""
+        try:
+            manager = get_encryption_manager()
+            return manager.decrypt(self.key_hash)
+        except ValueError:
+            # Return as-is if decryption fails (might not be encrypted)
+            return self.key_hash
 
 
 class TbApiKeyRead(SQLModel):
