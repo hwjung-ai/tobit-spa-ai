@@ -1,6 +1,6 @@
 "use client";
 
-import ScreenAssetEditor from "@/components/admin/ScreenAssetEditor";
+import ScreenEditor from "@/components/admin/screen-editor/ScreenEditor";
 import { useParams } from "next/navigation";
 
 export default function ScreenEditorPage() {
@@ -8,8 +8,6 @@ export default function ScreenEditorPage() {
   const screenId = params.screenId as string;
 
   return (
-    <div className="space-y-4">
-      <ScreenAssetEditor assetId={screenId} />
-    </div>
+    <ScreenEditor assetId={screenId} />
   );
 }
