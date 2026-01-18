@@ -1,1 +1,5 @@
-from .router import router  # noqa: F401
+"""API Manager Module - Dynamic API creation, versioning, and management"""
+
+__all__ = [
+    "APIManager",
+]
