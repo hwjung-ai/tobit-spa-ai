@@ -24,6 +24,7 @@
 | Test 로그 | `test_results.log` | pytest 실행 로그 (현재 `/usr/bin/python: No module named pytest` 메시지) |
 | Test 자원 | `tests/test_asset_importers.py` | Asset importer 시나리오 테스트 코드 (pytest로 실행 가능 환경에서 재실행 필요) |
 | 상세 문서 | `docs/PRODUCTION_GAPS.md` | UI Creator U2 관련 섹션에서 실 구현, 테스트, trace evidence/REST schema, state_patch 등 개요 포함 |
+| 테스트 실행 안내 | `apps/api/.venv/bin/pytest` | `.venv`에 설치된 pytest를 활성화한 상태(`source apps/api/.venv/bin/activate` 또는 `./.venv/bin/pytest`)로 테스트를 수행하고, 결과를 `docs/history/test_results.log`나 새 log로 갱신하십시오. |
 
 ## 3. 후속 과제
 
