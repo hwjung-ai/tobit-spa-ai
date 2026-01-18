@@ -84,8 +84,9 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
         if (!assetResp.ok) {
           throw new Error(`Failed to load screen asset: ${assetResp.status} ${assetResp.statusText}`);
         }
-        const asset = await assetResp.json();
-        const schema = (asset.schema_json || asset.screen_schema) as ScreenSchemaV1;
+        const raw = await assetResp.json();
+        const asset = (raw?.data?.asset || raw?.asset || raw) as Record<string, any>;
+        const schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
 
         if (!schema || typeof schema !== 'object') {
           throw new Error('Invalid screen schema: missing or non-object');

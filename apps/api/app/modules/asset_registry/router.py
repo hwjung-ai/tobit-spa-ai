@@ -95,7 +95,57 @@ def list_assets(asset_type: str | None = None):
         )
 
 
-@router.get("/assets/{asset_id}", response_model=ScreenAssetRead)
+def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
+    return {
+        "asset_id": str(asset.asset_id),
+        "asset_type": asset.asset_type,
+        "name": asset.name,
+        "description": asset.description,
+        "version": asset.version,
+        "status": asset.status,
+        "scope": asset.scope,
+        "engine": asset.engine,
+        "template": asset.template,
+        "input_schema": asset.input_schema,
+        "output_contract": asset.output_contract,
+        "mapping_type": asset.mapping_type,
+        "content": asset.content,
+        "policy_type": asset.policy_type,
+        "limits": asset.limits,
+        "query_sql": asset.query_sql,
+        "query_params": asset.query_params,
+        "query_metadata": asset.query_metadata,
+        "screen_id": asset.screen_id,
+        "screen_schema": asset.screen_schema,
+        "tags": asset.tags,
+        "created_by": asset.created_by,
+        "published_by": asset.published_by,
+        "published_at": asset.published_at,
+        "created_at": asset.created_at,
+        "updated_at": asset.updated_at,
+    }
+
+
+def _to_screen_asset(asset: TbAssetRegistry, schema: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {
+        "asset_id": str(asset.asset_id),
+        "asset_type": asset.asset_type,
+        "screen_id": asset.screen_id,
+        "name": asset.name,
+        "description": asset.description,
+        "version": asset.version,
+        "status": asset.status,
+        "screen_schema": schema or asset.screen_schema,
+        "tags": asset.tags,
+        "created_by": asset.created_by,
+        "published_by": asset.published_by,
+        "published_at": asset.published_at,
+        "created_at": asset.created_at,
+        "updated_at": asset.updated_at,
+    }
+
+
+@router.get("/assets/{asset_id}")
 def get_asset(asset_id: str, version: int | None = None):
     with get_session_context() as session:
         asset = None
@@ -114,49 +164,24 @@ def get_asset(asset_id: str, version: int | None = None):
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
+        if asset.asset_type != "screen":
+            return ResponseEnvelope.success(data={"asset": _serialize_asset(asset)})
+
+        if not asset.screen_id or asset.screen_schema is None:
+            raise HTTPException(status_code=404, detail="screen asset is not available")
+
         if version and version != asset.version:
-            # fetch from history
             hist = session.exec(
-                select(TbAssetVersionHistory).where(
-                    TbAssetVersionHistory.asset_id == asset.asset_id
-                ).where(TbAssetVersionHistory.version == version)
+                select(TbAssetVersionHistory)
+                .where(TbAssetVersionHistory.asset_id == asset.asset_id)
+                .where(TbAssetVersionHistory.version == version)
             ).first()
             if not hist:
                 raise HTTPException(status_code=404, detail="version not found")
             snapshot = hist.snapshot
-            return ScreenAssetRead(
-                asset_id=str(asset.asset_id),
-                asset_type=asset.asset_type,
-                screen_id=asset.screen_id,
-                name=snapshot.get("name"),
-                description=snapshot.get("description"),
-                version=hist.version,
-                status=asset.status,
-                screen_schema=snapshot.get("schema_json"),
-                tags=asset.tags,
-                created_by=asset.created_by,
-                published_by=asset.published_by,
-                published_at=asset.published_at,
-                created_at=asset.created_at,
-                updated_at=asset.updated_at,
-            )
+            return ResponseEnvelope.success(data={"asset": _to_screen_asset(asset, snapshot.get("schema_json"))})
 
-        return ScreenAssetRead(
-            asset_id=str(asset.asset_id),
-            asset_type=asset.asset_type,
-            screen_id=asset.screen_id,
-            name=asset.name,
-            description=asset.description,
-            version=asset.version,
-            status=asset.status,
-            screen_schema=asset.screen_schema,
-            tags=asset.tags,
-            created_by=asset.created_by,
-            published_by=asset.published_by,
-            published_at=asset.published_at,
-            created_at=asset.created_at,
-            updated_at=asset.updated_at,
-        )
+        return ResponseEnvelope.success(data={"asset": _to_screen_asset(asset)})
 
 
 @router.put("/assets/{asset_id}", response_model=ScreenAssetRead)
