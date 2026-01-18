@@ -238,15 +238,31 @@ class CIOrchestratorRunner:
             limit=limit,
             sort_column=sort[0] if sort else None,
         ) as meta:
-            result = ci_tools.ci_search(
-                self.tenant_id,
-                keywords=keywords_tuple,
-                filters=filters_tuple,
-                limit=limit,
-                sort=sort,
-            )
-            meta["row_count"] = len(result.records)
-        if not result.records and not self._ci_search_recovery:
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result_data = self._ci_search_v2(
+                    keywords=keywords_tuple,
+                    filters=filters_tuple,
+                    limit=limit,
+                    sort=sort,
+                )
+                meta["row_count"] = len(result_data)
+                result_records = result_data  # v2 returns list of dicts
+            except Exception as e:
+                self.logger.warning(f"CI search via registry failed, falling back: {e}")
+                # Fallback to direct call
+                result = ci_tools.ci_search(
+                    self.tenant_id,
+                    keywords=keywords_tuple,
+                    filters=filters_tuple,
+                    limit=limit,
+                    sort=sort,
+                )
+                meta["row_count"] = len(result.records)
+                meta["fallback"] = True
+                result_records = [r.dict() for r in result.records]
+
+        if not result_records and not self._ci_search_recovery:
             recovered = self._recover_ci_identifiers()
             if recovered:
                 self._ci_search_recovery = True
@@ -255,7 +271,7 @@ class CIOrchestratorRunner:
                     update={"primary": self.plan.primary.copy(update={"keywords": list(recovered)})}
                 )
                 return self._ci_search(keywords=recovered, filters=filters, limit=limit, sort=sort)
-        return [r.dict() for r in result.records]
+        return result_records
 
     def _ci_search_broad_or(
         self,
@@ -398,15 +414,29 @@ class CIOrchestratorRunner:
 
     def _ci_get(self, ci_id: str) -> Dict[str, Any] | None:
         with self._tool_context("ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id) as meta:
-            detail = ci_tools.ci_get(self.tenant_id, ci_id)
-            meta["found"] = bool(detail)
-        return detail.dict() if detail else None
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                detail = self._ci_get_v2(ci_id)
+                meta["found"] = bool(detail)
+            except Exception as e:
+                self.logger.warning(f"CI get via registry failed, falling back: {e}")
+                detail = ci_tools.ci_get(self.tenant_id, ci_id)
+                meta["found"] = bool(detail)
+                meta["fallback"] = True
+        return detail.dict() if (detail and hasattr(detail, "dict")) else detail
 
     def _ci_get_by_code(self, ci_code: str) -> Dict[str, Any] | None:
         with self._tool_context("ci.get", input_params={"ci_code": ci_code}, ci_code=ci_code) as meta:
-            detail = ci_tools.ci_get_by_code(self.tenant_id, ci_code)
-            meta["found"] = bool(detail)
-        return detail.dict() if detail else None
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                detail = self._ci_get_by_code_v2(ci_code)
+                meta["found"] = bool(detail)
+            except Exception as e:
+                self.logger.warning(f"CI get_by_code via registry failed, falling back: {e}")
+                detail = ci_tools.ci_get_by_code(self.tenant_id, ci_code)
+                meta["found"] = bool(detail)
+                meta["fallback"] = True
+        return detail.dict() if (detail and hasattr(detail, "dict")) else detail
 
     def _ci_aggregate(
         self,
@@ -436,16 +466,30 @@ class CIOrchestratorRunner:
             ci_ids_count=len(ci_ids_tuple),
             top_n=top_n,
         ) as meta:
-            result = ci_tools.ci_aggregate(
-                self.tenant_id,
-                group_by,
-                metrics,
-                filters=filters,
-                ci_ids=ci_ids,
-                top_n=top_n,
-            )
-            meta["row_count"] = len(result.rows)
-        return result.dict()
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result = self._ci_aggregate_v2(
+                    group_by=group_by,
+                    metrics=metrics,
+                    filters=filters,
+                    ci_ids=ci_ids,
+                    top_n=top_n,
+                )
+                meta["row_count"] = len(result.get("rows", []))
+            except Exception as e:
+                self.logger.warning(f"CI aggregate via registry failed, falling back: {e}")
+                result_obj = ci_tools.ci_aggregate(
+                    self.tenant_id,
+                    group_by,
+                    metrics,
+                    filters=filters,
+                    ci_ids=ci_ids,
+                    top_n=top_n,
+                )
+                meta["row_count"] = len(result_obj.rows)
+                meta["fallback"] = True
+                result = result_obj.dict()
+        return result
 
     def _ci_list_preview(
         self,
@@ -466,9 +510,17 @@ class CIOrchestratorRunner:
             offset=offset,
             filter_count=len(filters_tuple),
         ) as meta:
-            result = ci_tools.ci_list_preview(self.tenant_id, limit, offset, filters)
-            meta["row_count"] = len(result.rows)
-        return result.dict()
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result = self._ci_list_preview_v2(limit=limit, offset=offset, filters=filters)
+                meta["row_count"] = len(result.get("rows", []))
+            except Exception as e:
+                self.logger.warning(f"CI list_preview via registry failed, falling back: {e}")
+                result_obj = ci_tools.ci_list_preview(self.tenant_id, limit, offset, filters)
+                meta["row_count"] = len(result_obj.rows)
+                meta["fallback"] = True
+                result = result_obj.dict()
+        return result
 
     def _graph_expand(self, ci_id: str, view: str, depth: int, limits: dict[str, int]) -> Dict[str, Any]:
         input_params = {
@@ -478,7 +530,13 @@ class CIOrchestratorRunner:
             "limits": limits,
         }
         with self._tool_context("graph.expand", input_params=input_params, view=view, depth=depth) as meta:
-            raw_payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                raw_payload = self._graph_expand_v2(ci_id=ci_id, view=view, depth=depth, limits=limits)
+            except Exception as e:
+                self.logger.warning(f"Graph expand via registry failed, falling back: {e}")
+                raw_payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
+                meta["fallback"] = True
             payload_type = type(raw_payload).__name__ if raw_payload is not None else "NoneType"
             raw_extra: Dict[str, Any] = {"type": payload_type, "preview": str(raw_payload)[:200]}
             if isinstance(raw_payload, dict):
@@ -543,7 +601,13 @@ class CIOrchestratorRunner:
             "hops": hops,
         }
         with self._tool_context("graph.path", input_params=input_params, hop_count=hops) as meta:
-            payload = graph_tools.graph_path(self.tenant_id, source_id, target_id, hops)
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                payload = self._graph_path_v2(source_id=source_id, target_id=target_id, hops=hops)
+            except Exception as e:
+                self.logger.warning(f"Graph path via registry failed, falling back: {e}")
+                payload = graph_tools.graph_path(self.tenant_id, source_id, target_id, hops)
+                meta["fallback"] = True
             meta["node_count"] = len(payload.get("nodes", []))
             meta["edge_count"] = len(payload.get("edges", []))
             meta["hop_count"] = payload.get("hop_count")
@@ -573,10 +637,25 @@ class CIOrchestratorRunner:
             time_range=time_range,
             ci_ids_count=len(ci_ids_tuple),
         ) as meta:
-            result = metric_tools.metric_aggregate(self.tenant_id, metric_name, time_range, agg, ci_id=ci_id, ci_ids=ci_ids_tuple or None)
-            meta["value_present"] = result.value is not None
-            meta["ci_count_used"] = result.ci_count_used
-        return result.dict()
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result = self._metric_aggregate_v2(
+                    metric_name=metric_name,
+                    agg=agg,
+                    time_range=time_range,
+                    ci_id=ci_id,
+                    ci_ids=ci_ids_tuple or None,
+                )
+                meta["value_present"] = result.get("value") is not None
+                meta["ci_count_used"] = result.get("ci_count_used")
+            except Exception as e:
+                self.logger.warning(f"Metric aggregate via registry failed, falling back: {e}")
+                result_obj = metric_tools.metric_aggregate(self.tenant_id, metric_name, time_range, agg, ci_id=ci_id, ci_ids=ci_ids_tuple or None)
+                meta["value_present"] = result_obj.value is not None
+                meta["ci_count_used"] = result_obj.ci_count_used
+                meta["fallback"] = True
+                result = result_obj.dict()
+        return result
 
     def _metric_series_table(
         self,
@@ -592,9 +671,22 @@ class CIOrchestratorRunner:
             "limit": limit,
         }
         with self._tool_context("metric.series", input_params=input_params, metric=metric_name, time_range=time_range, limit=limit) as meta:
-            result = metric_tools.metric_series_table(self.tenant_id, ci_id, metric_name, time_range, limit)
-            meta["rows_count"] = len(result.rows)
-        return result.dict()
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result = self._metric_series_table_v2(
+                    ci_id=ci_id,
+                    metric_name=metric_name,
+                    time_range=time_range,
+                    limit=limit,
+                )
+                meta["rows_count"] = len(result.get("rows", []))
+            except Exception as e:
+                self.logger.warning(f"Metric series via registry failed, falling back: {e}")
+                result_obj = metric_tools.metric_series_table(self.tenant_id, ci_id, metric_name, time_range, limit)
+                meta["rows_count"] = len(result_obj.rows)
+                meta["fallback"] = True
+                result = result_obj.dict()
+        return result
 
     def _history_recent(
         self,
@@ -620,16 +712,31 @@ class CIOrchestratorRunner:
             scope=scope,
             limit=final_limit,
         ) as meta:
-            result = history_tools.event_log_recent(
-                self.tenant_id,
-                ci_context,
-                final_time_range,
-                final_limit,
-                ci_ids=ci_ids,
-            )
-            meta["row_count"] = len(result.get("rows", []))
-            meta["warnings_count"] = len(result.get("warnings", []))
-            meta["available"] = result.get("available")
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result = self._history_recent_v2(
+                    history_spec=history_spec,
+                    ci_context=ci_context,
+                    ci_ids=ci_ids,
+                    time_range=final_time_range,
+                    limit=final_limit,
+                )
+                meta["row_count"] = len(result.get("rows", []))
+                meta["warnings_count"] = len(result.get("warnings", []))
+                meta["available"] = result.get("available")
+            except Exception as e:
+                self.logger.warning(f"History recent via registry failed, falling back: {e}")
+                result = history_tools.event_log_recent(
+                    self.tenant_id,
+                    ci_context,
+                    final_time_range,
+                    final_limit,
+                    ci_ids=ci_ids,
+                )
+                meta["row_count"] = len(result.get("rows", []))
+                meta["warnings_count"] = len(result.get("warnings", []))
+                meta["available"] = result.get("available")
+                meta["fallback"] = True
         return result
 
     def _cep_simulate(
@@ -646,15 +753,28 @@ class CIOrchestratorRunner:
             "history_context_present": bool(history_context),
         }
         with self._tool_context("cep.simulate", input_params=input_params, rule_id=rule_id) as meta:
-            result = cep_tools.cep_simulate(
-                self.tenant_id,
-                rule_id or "",
-                ci_context,
-                metric_context=metric_context,
-                history_context=history_context,
-            )
-            meta["success"] = bool(result.get("success"))
-            meta["exec_log_present"] = bool(result.get("exec_log_id"))
+            # MIGRATED TO REGISTRY (Phase 2C)
+            try:
+                result = self._cep_simulate_v2(
+                    rule_id=rule_id,
+                    ci_context=ci_context,
+                    metric_context=metric_context,
+                    history_context=history_context,
+                )
+                meta["success"] = bool(result.get("success"))
+                meta["exec_log_present"] = bool(result.get("exec_log_id"))
+            except Exception as e:
+                self.logger.warning(f"CEP simulate via registry failed, falling back: {e}")
+                result = cep_tools.cep_simulate(
+                    self.tenant_id,
+                    rule_id or "",
+                    ci_context,
+                    metric_context=metric_context,
+                    history_context=history_context,
+                )
+                meta["success"] = bool(result.get("success"))
+                meta["exec_log_present"] = bool(result.get("exec_log_id"))
+                meta["fallback"] = True
         return result
 
     def run(self) -> Dict[str, Any]:
