@@ -49,6 +49,27 @@ class ExecuteApiRequest(BaseModel):
     params: dict = {}
 
 
+@router.get("/apis", response_model=dict)
+async def list_apis(
+    api_type: Optional[str] = Query(None)
+):
+    """List all available APIs (public endpoint - no authentication required)"""
+
+    try:
+        # Return empty list for now - this is a placeholder
+        # In real implementation: fetch from database
+        return {
+            "status": "ok",
+            "data": {
+                "apis": []
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"List APIs failed: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
 @router.post("/create", response_model=dict)
 async def create_api(
     request: CreateApiRequest,
