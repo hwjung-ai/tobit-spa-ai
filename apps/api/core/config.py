@@ -60,6 +60,17 @@ class AppSettings(BaseSettings):
     refresh_token_expire_days: int = 7
     auth_enabled: bool = True
 
+    # HTTPS & Security Headers settings
+    https_enabled: bool = False
+    ssl_certfile: Optional[str] = None
+    ssl_keyfile: Optional[str] = None
+    https_redirect: bool = True
+    security_headers_enabled: bool = True
+    csrf_protection_enabled: bool = True
+    csrf_trusted_origins: str = "http://localhost:3000"
+    hsts_max_age: int = 31536000  # 1 year
+    hsts_include_subdomains: bool = True
+
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",
         env_file_encoding="utf-8",
@@ -71,6 +82,10 @@ class AppSettings(BaseSettings):
     @property
     def cors_allowed_origins(self) -> List[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def csrf_trusted_origins_list(self) -> List[str]:
+        return [origin.strip() for origin in self.csrf_trusted_origins.split(",") if origin.strip()]
 
     @property
     def postgres_dsn(self) -> str:

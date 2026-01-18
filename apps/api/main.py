@@ -10,12 +10,15 @@ if str(ROOT) not in sys.path:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from apps.api.core.security_middleware import add_security_middleware
+from apps.api.core.cors_config import CORSConfig
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
 from app.modules.auth.router import router as auth_router
 from app.modules.audit_log.router import router as audit_log_router
+from app.modules.ci_management.router import router as ci_management_router
 from app.modules.permissions.router import router as permissions_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.operation_settings.router import router as operation_settings_router
@@ -44,12 +47,13 @@ configure_logging(settings.log_level)
 
 app = FastAPI()
 app.add_middleware(RequestIDMiddleware)
+add_security_middleware(app, settings)
+
+# Configure CORS with advanced settings
+cors_config = CORSConfig(settings)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_allowed_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    **cors_config.get_cors_config_dict(),
 )
 app.include_router(health_router)
 app.include_router(hello_router)
@@ -63,6 +67,7 @@ app.include_router(ops_router)
 app.include_router(asset_registry_router)
 app.include_router(operation_settings_router)
 app.include_router(cep_builder_router)
+app.include_router(ci_management_router)
 app.include_router(data_explorer_router)
 app.include_router(audit_log_router)
 app.include_router(api_manager_router)
@@ -88,8 +93,8 @@ async def on_startup() -> None:
 
         # Try to upgrade migrations - skip if alembic has conflicts
         try:
-            # Try with explicit target first
-            command.upgrade(alembic_cfg, "0031_add_auth_tables")
+            # Try with explicit target first (upgrade to latest)
+            command.upgrade(alembic_cfg, "head")
             logger.info("Database migrations completed successfully")
         except Exception as upgrade_error:
             # If explicit target fails, try current version
