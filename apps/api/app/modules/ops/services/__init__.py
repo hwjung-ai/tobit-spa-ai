@@ -10,6 +10,7 @@ from typing import Any, Callable, Literal
 from core.db import get_session_context
 from core.logging import get_request_context
 from core.config import get_settings
+from uuid import uuid4
 from schemas import (
     AnswerBlock,
     AnswerEnvelope,
@@ -34,7 +35,6 @@ from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
 from schemas.tool_contracts import ExecutorResult
 from app.modules.inspector.service import persist_execution_trace
-from app.modules.inspector.service import persist_execution_trace
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
@@ -43,6 +43,17 @@ HIST_KEYWORDS = {"정비", "유지보수", "작업", "변경", "이력", "최근
 GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구성요소", "관계"}
 
 ALL_EXECUTOR_ORDER = ("metric", "hist", "graph", "config")
+
+_FALLBACK_ERRORS: dict[str, str] = {
+    "query_load_failed": "Query asset missing",
+    "no_ci": "CI not found",
+    "no_metric": "Metric not found",
+    "no_data": "Metric data unavailable",
+}
+
+
+def _fallback_error_message(status: str) -> str | None:
+    return _FALLBACK_ERRORS.get(status)
 
 
 def _serialize_references(items: list[dict[str, Any]] | list[Any] | None) -> list[dict[str, Any]]:
@@ -66,8 +77,12 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
     error: str | None = None
     executor_result: ExecutorResult | None = None
     context = get_request_context()
-    trace_id = context.get("trace_id") or "-"
-    parent_trace_id = context.get("parent_trace_id") or "-"
+    trace_raw = context.get("trace_id") or context.get("request_id")
+    if not trace_raw or trace_raw == "-":
+        trace_raw = uuid4().hex
+    trace_id = trace_raw
+    parent_raw = context.get("parent_trace_id")
+    parent_trace_id = parent_raw if parent_raw and parent_raw != "-" else None
 
     if mode == "config":
         blocks, used_tools, route_reason, summary, fallback, error = _handle_config_mode(question, settings)
@@ -82,6 +97,19 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         blocks, used_tools, extra_error, executor_result = _normalize_real_result(result)
         if extra_error:
             error = extra_error
+            if ";" in error:
+                for segment in (segment.strip() for segment in error.split(";")):
+                    if "hist service unavailable" in segment:
+                        error = segment
+                        break
+        if executor_result:
+            status = executor_result.summary.get("status")
+            if status and status != "success":
+                fallback = True
+                if not error:
+                    error = _fallback_error_message(status)
+                blocks = _build_mock_blocks(mode, question)
+                used_tools = ["mock"]
         route_reason = "OPS real mode"
         summary = f"Real mode response for {mode}"
 
@@ -94,7 +122,7 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         fallback=fallback,
         error=error,
         trace_id=trace_id if trace_id != "-" else None,
-        parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
+        parent_trace_id=parent_trace_id,
     )
     envelope = AnswerEnvelope(meta=meta, blocks=blocks)
     payload = envelope.model_dump()
@@ -115,8 +143,8 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         with get_session_context() as session:
             persist_execution_trace(
                 session=session,
-                trace_id=context.get("trace_id") or context.get("request_id") or "-",
-                parent_trace_id=parent_trace_id if parent_trace_id != "-" else None,
+                trace_id=trace_id,
+                parent_trace_id=parent_trace_id,
                 feature=mode,
                 endpoint="/ops/query",
                 method="POST",

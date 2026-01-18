@@ -856,6 +856,9 @@ class CIOrchestratorRunner:
         return result
 
     def run(self) -> Dict[str, Any]:
+        return asyncio.run(self._run_async())
+
+    async def _run_async(self) -> Dict[str, Any]:
         blocks: List[Block] = []
         answer = "CI insight ready"
         auto_trace: Dict[str, Any] | None = None
@@ -877,10 +880,6 @@ class CIOrchestratorRunner:
         )
         self.logger.info("ci.runner.version", extra={**runner_context, "class": self.__class__.__name__})
         self._runner_context = runner_context
-        # self-check: 
-        # 1) "srv-erp-02 cpu 평균 오늘" → keywords sanitizes to ["srv-erp-02"] → _handle_lookup() runs metric.aggregate/series.
-        # 2) "ci 타입별 개수" → no plan.metric → _handle_aggregate() returns ci.aggregate blocks as before.
-        # 3) "srv-erp-02 영향권 cpu max" → graph expand happens first, then graph-scope metric blocks (graph_payload keeps ids).
         extracted_identifiers = self._routing_identifiers()
         graph_requested = self._is_graph_requested()
         list_patch_present = bool(self.plan.list.offset or self.plan.list.limit)
@@ -898,39 +897,38 @@ class CIOrchestratorRunner:
         try:
             if self.plan.mode == PlanMode.AUTO:
                 self._log_routing("auto")
-                blocks, answer, auto_trace = self._run_auto_recipe()
+                blocks, answer, auto_trace = await self._run_auto_recipe_async()
             elif self._should_list_fallthrough_to_lookup():
                 self._log_routing("graph requested → lookup")
-                blocks, answer = self._handle_lookup()
+                blocks, answer = await self._handle_lookup_async()
             elif graph_requested and extracted_identifiers:
                 self._log_routing("graph requested + identifier → lookup")
-                blocks, answer = self._handle_lookup()
+                blocks, answer = await self._handle_lookup_async()
             elif self.plan.intent == Intent.LIST or self.plan.list.enabled:
                 self._log_routing("list (pure)")
-                blocks, answer = self._handle_list_preview()
+                blocks, answer = await self._handle_list_preview_async()
             elif self.plan.metric:
                 self._log_routing("metric → lookup")
-                blocks, answer = self._handle_lookup()
+                blocks, answer = await self._handle_lookup_async()
             elif self.plan.intent == Intent.LOOKUP:
                 self._log_routing("lookup")
-                blocks, answer = self._handle_lookup()
+                blocks, answer = await self._handle_lookup_async()
             elif self.plan.intent == Intent.AGGREGATE:
                 self._log_routing("aggregate")
-                blocks, answer = self._handle_aggregate()
+                blocks, answer = await self._handle_aggregate_async()
             elif self.plan.intent == Intent.PATH:
                 self._log_routing("path")
-                blocks, answer = self._handle_path()
+                blocks, answer = await self._handle_path_async()
             elif self.plan.list.enabled:
                 self._log_routing("list (fallback)")
-                blocks, answer = self._handle_list_preview()
+                blocks, answer = await self._handle_list_preview_async()
             else:
                 self._log_routing("lookup (fallback)")
-                blocks, answer = self._handle_lookup()
+                blocks, answer = await self._handle_lookup_async()
         except Exception as exc:  # pragma: no cover - best effort
             self.errors.append(str(exc))
             raise
 
-        # Extract references from blocks
         self._extract_references_from_blocks(blocks)
 
         context = get_request_context()
@@ -1006,21 +1004,24 @@ class CIOrchestratorRunner:
         }
 
     def _handle_lookup(self) -> tuple[List[Block], str]:
+        return asyncio.run(self._handle_lookup_async())
+
+    async def _handle_lookup_async(self) -> tuple[List[Block], str]:
         self.metric_context = None
         self.history_context = None
-        detail, fallback_blocks, fallback_message = self._resolve_ci_detail()
+        detail, fallback_blocks, fallback_message = await self._resolve_ci_detail_async()
         if not detail:
             return fallback_blocks or [], fallback_message or "Unable to resolve CI"
         blocks = response_builder.build_ci_detail_blocks(detail)
         graph_view = self.plan.graph.view or (self.plan.view or View.SUMMARY)
         if self._should_run_sections_loop():
-            blocks.extend(self._execute_sections_loop(detail, graph_view))
+            blocks.extend(await self._execute_sections_loop_async(detail, graph_view))
         else:
-            blocks.extend(self._metric_blocks(detail))
-            blocks.extend(self._history_blocks(detail))
-            graph_blocks, _ = self._build_graph_blocks(detail, graph_view)
+            blocks.extend(await self._metric_blocks_async(detail))
+            blocks.extend(await self._history_blocks_async(detail))
+            graph_blocks, _ = await self._build_graph_blocks_async(detail, graph_view)
             blocks.extend(graph_blocks)
-            blocks.extend(self._cep_blocks(detail))
+            blocks.extend(await self._cep_blocks_async(detail))
         answer = f"Lookup result for {detail['ci_code']}"
         return blocks, answer
 
@@ -1071,7 +1072,11 @@ class CIOrchestratorRunner:
         preview_ids = tuple(identifier for identifier in ids if identifier)
         return (len(nodes), len(edges), depth, truncated, preview_ids)
 
+
     def _build_graph_blocks(self, detail: Dict[str, Any], graph_view: View, allow_path: bool = False) -> tuple[List[Block], Dict[str, Any] | None]:
+        return asyncio.run(self._build_graph_blocks_async(detail, graph_view, allow_path=allow_path))
+
+    async def _build_graph_blocks_async(self, detail: Dict[str, Any], graph_view: View, allow_path: bool = False) -> tuple[List[Block], Dict[str, Any] | None]:
         if not graph_view:
             return [], None
         allowed = self.GRAPH_VIEWS_WITH_PATH if allow_path else self.GRAPH_VIEWS
@@ -1082,7 +1087,7 @@ class CIOrchestratorRunner:
                 "ci.graph.payload_type_debug",
                 extra={"stage": "before_expand", "view": graph_view.value},
             )
-            payload = self._graph_expand(
+            payload = await self._graph_expand_async(
                 detail["ci_id"],
                 graph_view.value,
                 self.plan.graph.depth,
@@ -1148,6 +1153,9 @@ class CIOrchestratorRunner:
             return [text_block(f"Graph {graph_view.value} expansion failed: {exc}", title=f"Graph {graph_view.value}")], None
 
     def _execute_sections_loop(self, detail: Dict[str, Any], graph_view: View) -> List[Block]:
+        return asyncio.run(self._execute_sections_loop_async(detail, graph_view))
+
+    async def _execute_sections_loop_async(self, detail: Dict[str, Any], graph_view: View) -> List[Block]:
         if not detail:
             return []
         sections = []
@@ -1186,7 +1194,7 @@ class CIOrchestratorRunner:
                     },
                 )
                 try:
-                    graph_blocks, graph_payload = self._build_graph_blocks(detail, graph_view_for_loop, allow_path=True)
+                    graph_blocks, graph_payload = await self._build_graph_blocks_async(detail, graph_view_for_loop, allow_path=True)
                 except Exception as exc:
                     self.logger.exception("ci.graph.build_graph_blocks.exception", exc_info=exc)
                     graph_blocks, graph_payload = (
@@ -1195,11 +1203,11 @@ class CIOrchestratorRunner:
                     )
                 outputs["graph"] = graph_blocks
             if "metric" in sections:
-                outputs["metric"] = self._metric_blocks(detail, graph_payload)
+                outputs["metric"] = await self._metric_blocks_async(detail, graph_payload)
             if "history" in sections:
-                outputs["history"] = self._history_blocks(detail, graph_payload)
+                outputs["history"] = await self._history_blocks_async(detail, graph_payload)
             if "cep" in sections:
-                outputs["cep"] = self._cep_blocks(detail)
+                outputs["cep"] = await self._cep_blocks_async(detail)
             signature = (repr(self.metric_context), repr(self.history_context), self._last_graph_signature)
             if signature == prev_signature:
                 break
@@ -1208,8 +1216,12 @@ class CIOrchestratorRunner:
         for name in ["metric", "history", "graph", "cep"]:
             combined.extend(outputs.get(name) or [])
         return combined
+
     def _run_auto_recipe(self) -> tuple[List[Block], str, Dict[str, Any]]:
-        detail, fallback_blocks, fallback_message = self._resolve_ci_detail()
+        return asyncio.run(self._run_auto_recipe_async())
+
+    async def _run_auto_recipe_async(self) -> tuple[List[Block], str, Dict[str, Any]]:
+        detail, fallback_blocks, fallback_message = await self._resolve_ci_detail_async()
         auto_spec = self.plan.auto
         auto_trace: Dict[str, Any] = {
             "auto_recipe_applied": True,
@@ -1223,8 +1235,8 @@ class CIOrchestratorRunner:
         if not detail:
             auto_trace["status"] = "ci_unresolved"
             return fallback_blocks or [], fallback_message or "AUTO recipe could not resolve CI", auto_trace
-        graph_blocks, graph_payloads, view_entries = self._auto_graph_blocks(detail, auto_spec)
-        path_blocks, path_trace = self._auto_path_blocks(detail, auto_spec)
+        graph_blocks, graph_payloads, view_entries = await self._auto_graph_blocks_async(detail, auto_spec)
+        path_blocks, path_trace = await self._auto_path_blocks_async(detail, auto_spec)
         view_entries_with_path = list(view_entries)
         if path_trace:
             view_entries_with_path.append(
@@ -1238,13 +1250,13 @@ class CIOrchestratorRunner:
             )
         auto_trace["views"] = view_entries_with_path
         auto_trace["path"].update(path_trace or {"status": "skipped"})
-        metrics_blocks, metric_trace = self._run_auto_metrics(detail, auto_spec)
+        metrics_blocks, metric_trace = await self._run_auto_metrics_async(detail, auto_spec)
         auto_trace["metrics"] = metric_trace
-        history_blocks, history_trace = self._run_auto_history(detail, auto_spec)
+        history_blocks, history_trace = await self._run_auto_history_async(detail, auto_spec)
         auto_trace["history"] = history_trace
-        graph_scope_blocks, graph_scope_trace = self._auto_graph_scope_sections(detail, auto_spec, graph_payloads)
+        graph_scope_blocks, graph_scope_trace = await self._auto_graph_scope_sections_async(detail, auto_spec, graph_payloads)
         auto_trace["graph_scope"] = graph_scope_trace
-        cep_blocks = self._cep_blocks(detail)
+        cep_blocks = await self._cep_blocks_async(detail)
         cep_status = "simulated" if self.plan.cep and self.plan.cep.rule_id else "skipped"
         auto_trace["cep"] = {"status": cep_status, "rule_id": self.plan.cep.rule_id if self.plan.cep else None}
         view_labels = "+".join(entry.get("view", "") for entry in view_entries_with_path if entry.get("view")) or "NEIGHBORS"
@@ -1285,6 +1297,11 @@ class CIOrchestratorRunner:
     def _auto_graph_blocks(
         self, detail: Dict[str, Any], auto_spec: AutoSpec
     ) -> tuple[List[Block], Dict[str, Dict[str, Any]], List[Dict[str, Any]]]:
+        return asyncio.run(self._auto_graph_blocks_async(detail, auto_spec))
+
+    async def _auto_graph_blocks_async(
+        self, detail: Dict[str, Any], auto_spec: AutoSpec
+    ) -> tuple[List[Block], Dict[str, Dict[str, Any]], List[Dict[str, Any]]]:
         views = [view for view in auto_spec.views if view not in {View.SUMMARY, View.PATH}]
         if not views:
             views = [View.NEIGHBORS]
@@ -1295,7 +1312,7 @@ class CIOrchestratorRunner:
             depth = self._auto_depth_for_view(view, auto_spec)
             view_entry: Dict[str, Any] = {"view": view.value}
             try:
-                payload = self._graph_expand(
+                payload = await self._graph_expand_async(
                     detail["ci_id"],
                     view.value,
                     depth,
@@ -1327,25 +1344,28 @@ class CIOrchestratorRunner:
         return graph_blocks, graph_payloads, entries
 
     def _auto_path_blocks(self, detail: Dict[str, Any], auto_spec: AutoSpec) -> tuple[List[Block], Dict[str, Any]]:
+        return asyncio.run(self._auto_path_blocks_async(detail, auto_spec))
+
+    async def _auto_path_blocks_async(self, detail: Dict[str, Any], auto_spec: AutoSpec) -> tuple[List[Block], Dict[str, Any]]:
         if View.PATH not in auto_spec.views:
             return [], {"status": "skipped"}
         path_spec = auto_spec.path
         trace: Dict[str, Any] = {"requested": path_spec.dict(), "view": View.PATH.value}
         source_detail = detail
         if path_spec.source_ci_code and path_spec.source_ci_code.lower() != detail["ci_code"].lower():
-            resolved = self._ci_detail_by_code(path_spec.source_ci_code)
+            resolved = await self._ci_detail_by_code_async(path_spec.source_ci_code)
             if resolved:
                 source_detail = resolved
             else:
                 trace.setdefault("warnings", []).append(f"Source CI '{path_spec.source_ci_code}' not found")
         target_detail = None
         if path_spec.target_ci_code:
-            target_detail = self._ci_detail_by_code(path_spec.target_ci_code)
+            target_detail = await self._ci_detail_by_code_async(path_spec.target_ci_code)
             if not target_detail:
                 trace["status"] = "target_not_found"
         if target_detail:
             hops = self._auto_path_hops(auto_spec)
-            path_payload = self._graph_path(source_detail["ci_id"], target_detail["ci_id"], hops)
+            path_payload = await self._graph_path_async(source_detail["ci_id"], target_detail["ci_id"], hops)
             if not path_payload.get("nodes"):
                 message = f"No path found from {source_detail['ci_code']} to {target_detail['ci_code']}"
                 trace.update({"status": "no_path", "source": source_detail["ci_code"], "target": target_detail["ci_code"]})
@@ -1359,7 +1379,7 @@ class CIOrchestratorRunner:
                 }
             )
             return response_builder.build_path_blocks(path_payload), trace
-        candidates = self._auto_path_candidates(detail)
+        candidates = await self._auto_path_candidates_async(detail)
         if not candidates:
             trace["status"] = "no_candidates"
             return [text_block("No path candidates available.", title="AUTO Path")], trace
@@ -1372,21 +1392,27 @@ class CIOrchestratorRunner:
         return blocks, trace
 
     def _ci_detail_by_code(self, ci_code: str | None) -> Dict[str, Any] | None:
+        return asyncio.run(self._ci_detail_by_code_async(ci_code))
+
+    async def _ci_detail_by_code_async(self, ci_code: str | None) -> Dict[str, Any] | None:
         if not ci_code:
             return None
-        detail = self._ci_get_by_code(ci_code)
+        detail = await self._ci_get_by_code_async(ci_code)
         if detail:
             return detail
-        # fallback will search, let `_ci_search` handle logging
         return None
 
     def _auto_path_hops(self, auto_spec: AutoSpec) -> int:
         hint = auto_spec.depth_hint or self.plan.graph.depth or 4
         return policy.clamp_depth("PATH", max(1, hint))
 
+
     def _auto_path_candidates(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
+        return asyncio.run(self._auto_path_candidates_async(detail))
+
+    async def _auto_path_candidates_async(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
         try:
-            payload = self._graph_expand(
+            payload = await self._graph_expand_async(
                 detail["ci_id"],
                 View.NEIGHBORS.value,
                 1,
@@ -1419,7 +1445,7 @@ class CIOrchestratorRunner:
                 }
             )
         if len(candidates) < 5:
-            search = self._ci_search(limit=5)
+            search = await self._ci_search_async(limit=5)
             for entry in search:
                 if entry["ci_code"] == detail["ci_code"] or entry["ci_id"] in seen:
                     continue
@@ -1449,6 +1475,9 @@ class CIOrchestratorRunner:
         return actions
 
     def _auto_metric_candidate_blocks(self, detail: Dict[str, Any]) -> tuple[List[Block], Dict[str, Any]]:
+        return asyncio.run(self._auto_metric_candidate_blocks_async(detail))
+
+    async def _auto_metric_candidate_blocks_async(self, detail: Dict[str, Any]) -> tuple[List[Block], Dict[str, Any]]:
         rows: List[List[str]] = []
         candidates: List[Dict[str, Any]] = []
         highlights: List[Dict[str, Any]] = []
@@ -1459,7 +1488,7 @@ class CIOrchestratorRunner:
                 candidates.append(entry)
                 continue
             try:
-                aggregate = self._metric_aggregate(
+                aggregate = await self._metric_aggregate_async(
                     metric_name,
                     agg,
                     "last_24h",
@@ -1527,10 +1556,13 @@ class CIOrchestratorRunner:
         )
 
     def _run_auto_metrics(self, detail: Dict[str, Any], auto_spec: AutoSpec) -> tuple[List[Block], Dict[str, Any]]:
+        return asyncio.run(self._run_auto_metrics_async(detail, auto_spec))
+
+    async def _run_auto_metrics_async(self, detail: Dict[str, Any], auto_spec: AutoSpec) -> tuple[List[Block], Dict[str, Any]]:
         if not auto_spec.include_metric:
             return [], {"status": "disabled"}
         if self.plan.metric:
-            blocks = self._metric_blocks(detail)
+            blocks = await self._metric_blocks_async(detail)
             status = {
                 "status": "spec",
                 "metric": self.plan.metric.metric_name,
@@ -1547,13 +1579,16 @@ class CIOrchestratorRunner:
             if highlights:
                 status["highlights"] = highlights
             return blocks, status
-        return self._auto_metric_candidate_blocks(detail)
+        return await self._auto_metric_candidate_blocks_async(detail)
 
     def _run_auto_history(self, detail: Dict[str, Any]) -> tuple[List[Block], Dict[str, Any]]:
+        return asyncio.run(self._run_auto_history_async(detail))
+
+    async def _run_auto_history_async(self, detail: Dict[str, Any]) -> tuple[List[Block], Dict[str, Any]]:
         if not self.plan.history or not self.plan.history.enabled:
             return [], {"status": "disabled"}
         try:
-            blocks = self._history_blocks(detail)
+            blocks = await self._history_blocks_async(detail)
             rows = self.history_context.get("rows") if self.history_context else None
             status = {
                 "status": "ok",
@@ -1566,7 +1601,16 @@ class CIOrchestratorRunner:
                 "error": str(exc),
             }
 
+
     def _auto_graph_scope_sections(
+        self,
+        detail: Dict[str, Any],
+        auto_spec: AutoSpec,
+        graph_payloads: Dict[str, Dict[str, Any]],
+    ) -> tuple[List[Block], Dict[str, Any]]:
+        return asyncio.run(self._auto_graph_scope_sections_async(detail, auto_spec, graph_payloads))
+
+    async def _auto_graph_scope_sections_async(
         self,
         detail: Dict[str, Any],
         auto_spec: AutoSpec,
@@ -1595,7 +1639,7 @@ class CIOrchestratorRunner:
                     entries.append(entry)
                     continue
                 try:
-                    aggregate = self._metric_aggregate(
+                    aggregate = await self._metric_aggregate_async(
                         metric_name,
                         agg,
                         "last_24h",
@@ -1634,7 +1678,7 @@ class CIOrchestratorRunner:
         history_blocks: List[Block] = []
         history_trace: Dict[str, Any] = {"enabled": spec.include_history}
         if spec.include_history:
-            result = self._history_recent(
+            result = await self._history_recent_async(
                 spec,
                 {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
                 ci_ids=ci_ids,
@@ -1874,8 +1918,11 @@ class CIOrchestratorRunner:
         self.next_actions = prioritized + self.next_actions
 
     def _handle_aggregate(self) -> tuple[List[Block], str]:
+        return asyncio.run(self._handle_aggregate_async())
+
+    async def _handle_aggregate_async(self) -> tuple[List[Block], str]:
         agg_filters = [filter.dict() for filter in self.plan.aggregate.filters]
-        agg = self._ci_aggregate(
+        agg = await self._ci_aggregate_async(
             self.plan.aggregate.group_by,
             self.plan.aggregate.metrics,
             filters=agg_filters or None,
@@ -1896,21 +1943,27 @@ class CIOrchestratorRunner:
         if query and params is not None:
             blocks.append(response_builder.build_sql_reference_block(query, params))
         answer = f"Aggregated {len(agg.get('rows', []))} groups"
-        blocks.extend(self._build_list_preview_blocks())
+        blocks.extend(await self._build_list_preview_blocks_async())
         return blocks, answer
 
     def _handle_list_preview(self) -> tuple[List[Block], str]:
-        blocks = self._build_list_preview_blocks()
+        return asyncio.run(self._handle_list_preview_async())
+
+    async def _handle_list_preview_async(self) -> tuple[List[Block], str]:
+        blocks = await self._build_list_preview_blocks_async()
         if not blocks:
             return [text_block("No CI entries found", title="CI list preview")], "CI list preview"
         return blocks, "CI list preview"
 
     def _build_list_preview_blocks(self) -> List[Block]:
+        return asyncio.run(self._build_list_preview_blocks_async())
+
+    async def _build_list_preview_blocks_async(self) -> List[Block]:
         if not self.plan.list.enabled:
             return []
         spec = self.plan.list
         filters = [filter.dict() for filter in self.plan.primary.filters]
-        preview = self._ci_list_preview(limit=spec.limit, offset=spec.offset, filters=filters)
+        preview = await self._ci_list_preview_async(limit=spec.limit, offset=spec.offset, filters=filters)
         rows = preview.get("rows", [])
         columns = ["ci_id", "ci_code", "ci_name", "ci_type", "ci_subtype", "status", "owner", "location", "created_at"]
         table_rows = [[str(row.get(col) or "") for col in columns] for row in rows]
@@ -1982,24 +2035,27 @@ class CIOrchestratorRunner:
         list_trace.update(self.list_paging_info)
 
     def _handle_path(self) -> tuple[List[Block], str]:
+        return asyncio.run(self._handle_path_async())
+
+    async def _handle_path_async(self) -> tuple[List[Block], str]:
         source_keywords = self.plan.primary.keywords
         target_keywords = self.plan.secondary.keywords or source_keywords
         search_limit = max(2, self.plan.primary.limit)
-        source, source_blocks, source_message = self._resolve_path_endpoint(
+        source, source_blocks, source_message = await self._resolve_path_endpoint_async(
             role="source",
             keywords=source_keywords,
             limit=search_limit,
         )
         if source_blocks:
             return source_blocks, source_message or "Multiple source candidates"
-        target, target_blocks, target_message = self._resolve_path_endpoint(
+        target, target_blocks, target_message = await self._resolve_path_endpoint_async(
             role="target",
             keywords=target_keywords,
             limit=search_limit,
         )
         if target_blocks:
             return target_blocks, target_message or "Multiple target candidates"
-        path_payload = self._graph_path(source["ci_id"], target["ci_id"], self.plan.graph.depth)
+        path_payload = await self._graph_path_async(source["ci_id"], target["ci_id"], self.plan.graph.depth)
         blocks = response_builder.build_path_blocks(path_payload)
         answer = f"Path from {source['ci_code']} to {target['ci_code']}"
         self.next_actions.extend(
@@ -2011,12 +2067,19 @@ class CIOrchestratorRunner:
         )
         return blocks, answer
 
+
     def _resolve_ci_detail(
         self,
         role: str = "primary",
     ) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]] | None, str | None]:
+        return asyncio.run(self._resolve_ci_detail_async(role))
+
+    async def _resolve_ci_detail_async(
+        self,
+        role: str = "primary",
+    ) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]] | None, str | None]:
         if role == "primary" and self.rerun_context.selected_ci_id:
-            detail = self._ci_get(self.rerun_context.selected_ci_id)
+            detail = await self._ci_get_async(self.rerun_context.selected_ci_id)
             if not detail:
                 message = f"CI {self.rerun_context.selected_ci_id} not found."
                 return None, [text_block(message)], message
@@ -2033,7 +2096,7 @@ class CIOrchestratorRunner:
         )
         ci_search_trace = self.plan_trace.setdefault("ci_search_trace", [])
         ci_search_trace.append({"stage": "initial", "keywords": search_keywords, "source": sanitized_source})
-        candidates = self._ci_search(
+        candidates = await self._ci_search_async(
             keywords=search_keywords,
             filters=[filter.dict() for filter in self.plan.primary.filters],
             limit=self.plan.primary.limit,
@@ -2060,16 +2123,7 @@ class CIOrchestratorRunner:
                     "ci.runner.ci_search_exact_match",
                     extra={"ci_id": exact.get("ci_id"), "ci_code": exact.get("ci_code")},
                 )
-                self.logger.info(
-                    "ci.resolve.debug",
-                    extra={
-                        "keywords": search_keywords,
-                        "row_count": len(candidates),
-                        "exact_ci_id": exact.get("ci_id"),
-                        "exact_ci_code": exact.get("ci_code"),
-                    },
-                )
-                detail = self._ci_get(exact["ci_id"])
+                detail = await self._ci_get_async(exact["ci_id"])
                 if not detail:
                     message = f"CI {exact.get('ci_code') or exact['ci_id']} not found."
                     return None, [text_block(message)], message
@@ -2080,7 +2134,7 @@ class CIOrchestratorRunner:
             )
             table = response_builder.build_candidate_table(candidates, role="primary")
             return None, [text_block("Multiple candidates found"), table], "Multiple CI candidates"
-        detail = self._ci_get(candidates[0]["ci_id"])
+        detail = await self._ci_get_async(candidates[0]["ci_id"])
         if not detail:
             message = f"CI {candidates[0]['ci_code']} not found."
             return None, [text_block(message)], message
@@ -2151,16 +2205,24 @@ class CIOrchestratorRunner:
         keywords: List[str],
         limit: int,
     ) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]] | None, str | None]:
+        return asyncio.run(self._resolve_path_endpoint_async(role, keywords, limit))
+
+    async def _resolve_path_endpoint_async(
+        self,
+        role: str,
+        keywords: List[str],
+        limit: int,
+    ) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]] | None, str | None]:
         selected_id = (
             self.rerun_context.selected_ci_id if role == "source" else self.rerun_context.selected_secondary_ci_id
         )
         if selected_id:
-            detail = self._ci_get(selected_id)
+            detail = await self._ci_get_async(selected_id)
             if not detail:
                 message = f"CI {selected_id} not found."
                 return None, [text_block(message)], message
             return detail, None, None
-        candidates = self._ci_search(keywords=keywords, limit=limit)
+        candidates = await self._ci_search_async(keywords=keywords, limit=limit)
         if not candidates:
             message = f"Unable to resolve {role} endpoint."
             return None, [text_block(message)], message
@@ -2209,6 +2271,9 @@ class CIOrchestratorRunner:
         return actions
 
     def _metric_blocks(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+        return asyncio.run(self._metric_blocks_async(detail, graph_payload))
+
+    async def _metric_blocks_async(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
         metric_spec = self.plan.metric
         if not metric_spec:
             return []
@@ -2224,9 +2289,9 @@ class CIOrchestratorRunner:
             self._log_metric_blocks_return(blocks)
             return blocks
         if metric_spec.scope == "graph":
-            return self._graph_metric_blocks(detail, metric_spec, metric_trace, graph_payload=graph_payload)
+            return await self._graph_metric_blocks_async(detail, metric_spec, metric_trace, graph_payload=graph_payload)
         if metric_spec.mode == "series":
-            series = self._metric_series_table(
+            series = await self._metric_series_table_async(
                 detail["ci_id"],
                 metric_spec.metric_name,
                 metric_spec.time_range,
@@ -2278,7 +2343,7 @@ class CIOrchestratorRunner:
                     "value": float(latest[1]) if len(latest) > 1 and latest[1] not in (None, "<null>") else None,
                 }
             return blocks
-        aggregate = self._metric_aggregate(
+        aggregate = await self._metric_aggregate_async(
             metric_spec.metric_name,
             metric_spec.agg,
             metric_spec.time_range,
@@ -2318,13 +2383,22 @@ class CIOrchestratorRunner:
         metric_trace: Dict[str, Any],
         graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
+        return asyncio.run(self._graph_metric_blocks_async(detail, metric_spec, metric_trace, graph_payload))
+
+    async def _graph_metric_blocks_async(
+        self,
+        detail: Dict[str, Any],
+        metric_spec: MetricSpec,
+        metric_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
         graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
         graph_depth = self.plan.graph.depth
         graph_limits = self.plan.graph.limits.dict()
         if not graph_payload:
-            graph_payload = self._graph_expand(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
+            graph_payload = await self._graph_expand_async(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
-        aggregate = self._metric_aggregate(
+        aggregate = await self._metric_aggregate_async(
             metric_spec.metric_name,
             metric_spec.agg,
             metric_spec.time_range,
@@ -2556,14 +2630,17 @@ class CIOrchestratorRunner:
         return actions
 
     def _history_blocks(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+        return asyncio.run(self._history_blocks_async(detail, graph_payload))
+
+    async def _history_blocks_async(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
         history_spec = self.plan.history
         if not history_spec or not history_spec.enabled:
             return []
         history_trace = self.plan_trace.setdefault("history", {})
         history_trace["requested"] = history_spec.dict()
         if history_spec.scope == "graph":
-            return self._graph_history_blocks(detail, history_spec, history_trace, graph_payload=graph_payload)
-        return self._ci_history_blocks(detail, history_spec, history_trace)
+            return await self._graph_history_blocks_async(detail, history_spec, history_trace, graph_payload=graph_payload)
+        return await self._ci_history_blocks_async(detail, history_spec, history_trace)
 
     def _ci_history_blocks(
         self,
@@ -2571,7 +2648,15 @@ class CIOrchestratorRunner:
         history_spec: Any,
         history_trace: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
-        result = self._history_recent(
+        return asyncio.run(self._ci_history_blocks_async(detail, history_spec, history_trace))
+
+    async def _ci_history_blocks_async(
+        self,
+        detail: Dict[str, Any],
+        history_spec: Any,
+        history_trace: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        result = await self._history_recent_async(
             history_spec,
             {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
         )
@@ -2596,7 +2681,17 @@ class CIOrchestratorRunner:
         title = f"Recent events ({history_spec.time_range})"
         return [table_block(result["columns"], result["rows"], title=title)]
 
+
     def _graph_history_blocks(
+        self,
+        detail: Dict[str, Any],
+        history_spec: Any,
+        history_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        return asyncio.run(self._graph_history_blocks_async(detail, history_spec, history_trace, graph_payload))
+
+    async def _graph_history_blocks_async(
         self,
         detail: Dict[str, Any],
         history_spec: Any,
@@ -2607,9 +2702,655 @@ class CIOrchestratorRunner:
         graph_depth = self.plan.graph.depth
         graph_limits = self.plan.graph.limits.dict()
         if not graph_payload:
-            graph_payload = self._graph_expand(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
+            graph_payload = await self._graph_expand_async(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
-        result = self._history_recent(
+        result = await self._history_recent_async(
+            history_spec,
+            {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
+            ci_ids=node_ids,
+        )
+        if not result.get("available"):
+            history_trace["available"] = False
+            warnings = result.get("warnings", [])
+            if warnings:
+                history_trace.setdefault("warnings", []).extend(warnings)
+            message = f"event_log unavailable: {'; '.join(warnings)}" if warnings else "event_log unavailable"
+            return [text_block(message, title="History")]
+        history_trace["available"] = True
+        history_trace["scope"] = "graph"
+        history_meta = result.get("meta", {})
+        depth_applied = graph_payload.get("meta", {}).get("depth", graph_depth)
+        truncated = graph_payload.get("truncated", False)
+        history_trace["meta"] = history_meta
+        history_trace["graph"] = {
+            "view": graph_view.value,
+            "depth_requested": graph_depth,
+            "depth_applied": depth_applied,
+            "truncated": truncated,
+            "node_count": graph_payload.get("summary", {}).get("node_count"),
+            "edge_count": graph_payload.get("summary", {}).get("edge_count"),
+        }
+        history_trace["rows"] = len(result.get("rows", []))
+        ci_count_used = history_meta.get("ci_count_used")
+        history_trace["ci_ids_used"] = ci_count_used
+        history_trace["ci_ids_truncated"] = history_meta.get("ci_ids_truncated")
+        self.next_actions.extend(
+            self._graph_history_next_actions(
+                history_spec,
+                graph_view.value,
+                depth_applied,
+                truncated,
+            )
+        )
+        title = (
+            f"Recent events (graph scope, {graph_view.value}, depth={depth_applied}, {history_spec.time_range})"
+        )
+        self.history_context = {
+            "time_range": history_spec.time_range,
+            "source": self._history_context_source(history_spec),
+            "rows": len(result.get("rows", [])),
+            "recent": self._format_history_recent(result.get("rows", [])),
+        }
+        return [table_block(result["columns"], result["rows"], title=title)]
+
+
+    def _cep_blocks(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
+        return asyncio.run(self._cep_blocks_async(detail))
+
+    async def _cep_blocks_async(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
+        cep_spec = self.plan.cep
+        if not cep_spec or cep_spec.mode != "simulate":
+            return []
+        cep_trace = self.plan_trace.setdefault("cep", {})
+        cep_trace["requested"] = cep_spec.dict()
+        if not cep_spec.rule_id:
+            cep_trace["error"] = "rule_id missing"
+            return [
+                text_block(
+                    "CEP simulate requires a rule ID to be included in the question (e.g. rule <uuid>).",
+                    title="CEP simulate",
+                )
+            ]
+        ci_context = {
+            "ci_id": detail.get("ci_id"),
+            "ci_code": detail.get("ci_code"),
+            "tags": detail.get("tags") or {},
+            "attributes": detail.get("attributes") or {},
+        }
+        metric_ctx = self.metric_context
+        history_ctx = self.history_context
+        result = await self._cep_simulate_async(cep_spec.rule_id, ci_context, metric_ctx, history_ctx)
+        cep_trace["result"] = result
+        payload_meta = result.get("test_payload_meta") or {}
+        cep_trace["test_payload_built"] = payload_meta.get("built", False)
+        cep_trace["test_payload_size_bytes"] = payload_meta.get("size_bytes")
+        cep_trace["test_payload_sources"] = payload_meta.get("sources")
+        cep_trace["payload_truncated"] = payload_meta.get("truncated")
+        if payload_meta.get("built"):
+            cep_trace["test_payload"] = result.get("test_payload")
+        evidence_meta = result.get("evidence_meta") or {}
+        cep_trace["params_masked"] = evidence_meta.get("params_masked")
+        cep_trace["extracted_value_truncated"] = evidence_meta.get("extracted_value_truncated")
+        runtime_params_meta = evidence_meta.get("runtime_params_meta")
+        cep_trace["runtime_params_meta"] = runtime_params_meta
+        cep_trace["runtime_params_keys"] = evidence_meta.get("runtime_params_keys")
+        cep_trace["runtime_params_policy_source"] = evidence_meta.get("runtime_params_policy_source")
+        cep_trace["test_payload_sections"] = evidence_meta.get("test_payload_sections")
+        cep_trace["test_payload_metric_keys_present"] = evidence_meta.get("test_payload_metric_keys_present")
+        cep_trace["test_payload_history_keys_present"] = evidence_meta.get("test_payload_history_keys_present")
+        cep_trace["exec_log_id"] = result.get("exec_log_id")
+        cep_trace["simulation_id"] = result.get("simulation_id")
+        if not result.get("success"):
+            cep_trace["error"] = result.get("error")
+            message = result.get("error") or "Unknown CEP simulate failure"
+            return [text_block(f"CEP simulate failed: {message}", title="CEP simulate")]
+        simulation = result.get("simulation") or {}
+        cep_trace["simulation"] = simulation
+        summary_text = f"Condition evaluated: {simulation.get('condition_evaluated')} · triggered: {simulation.get('triggered')}"
+        cep_trace["summary"] = summary_text
+        rows = [
+            [
+                simulation.get("rule_id"),
+                str(simulation.get("condition_evaluated")),
+                str(simulation.get("triggered")),
+                str(simulation.get("operator") or "-"),
+                str(simulation.get("threshold") or "-"),
+                str(simulation.get("extracted_value") or "-"),
+                result.get("exec_log_id") or result.get("simulation_id") or "",
+            ]
+        ]
+        title = "CEP simulate results"
+        evidence = result.get("evidence") or {}
+        evidence_title = "CEP simulate evidence"
+        cep_evidence = result.get("evidence") or {}
+        cep_trace["evidence"] = cep_evidence
+        params_keys = evidence_meta.get("runtime_params_keys") or []
+        params_display = ", ".join(params_keys)
+        if len(params_display) > 200:
+            params_display = params_display[:200] + "..."
+        self.next_actions.append(
+            {
+                "type": "open_event_browser",
+                "label": "Event Browser로 보기",
+                "payload": {
+                    "exec_log_id": result.get("exec_log_id"),
+                    "simulation_id": result.get("simulation_id"),
+                    "tenant_id": self.tenant_id,
+                },
+            }
+        )
+        return [
+            text_block(summary_text, title="CEP simulate"),
+            table_block(
+                [
+                    "rule_id",
+                    "condition_evaluated",
+                    "triggered",
+                    "operator",
+                    "threshold",
+                    "extracted_value",
+                    "exec_log_id",
+                ],
+                rows,
+                title=title,
+            ),
+            table_block(
+                [
+                    "section",
+                    "status",
+                    "duration_ms",
+                    "message",
+                ],
+                evidence.get("rows", []),
+                title=evidence_title,
+            ),
+        ]
+
+    def _insert_recommended_actions(self, recommended: List[NextAction]) -> None:
+        prioritized: List[NextAction] = []
+        for rec in recommended:
+            match = None
+            for action in self.next_actions:
+                if action.get("label") == rec.get("label"):
+                    match = action
+                    break
+            if match:
+                self.next_actions.remove(match)
+                prioritized.append(match)
+            else:
+                prioritized.append(rec)
+        self.next_actions = prioritized + self.next_actions
+
+    def _register_ambiguous_candidates(self, candidates: List[Dict[str, Any]], role: str) -> None:
+        self.plan_trace["ambiguous"] = True
+        roles = self.plan_trace.setdefault("ambiguous_roles", [])
+        if role not in roles:
+            roles.append(role)
+        entries = self.plan_trace.setdefault("candidates", [])
+        entries.append({"role": role, "items": candidates})
+
+    def _finalize_next_actions(self) -> List[NextAction]:
+        actions = list(self.next_actions)
+        actions.append({"type": "open_trace", "label": "Trace details"})
+        return actions
+
+    def _candidate_next_actions(
+        self,
+        candidates: List[Dict[str, Any]],
+        use_secondary: bool,
+        role: str,
+    ) -> List[NextAction]:
+        actions: List[NextAction] = []
+        for candidate in candidates:
+            payload: RerunPayload = {}
+            if use_secondary:
+                payload["selected_secondary_ci_id"] = candidate["ci_id"]
+            else:
+                payload["selected_ci_id"] = candidate["ci_id"]
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": f"{candidate['ci_code']} 선택 ({role})",
+                    "payload": payload,
+                }
+            )
+        return actions
+
+    def _metric_blocks(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+        return asyncio.run(self._metric_blocks_async(detail, graph_payload))
+
+    async def _metric_blocks_async(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+        metric_spec = self.plan.metric
+        if not metric_spec:
+            return []
+        metric_trace = self.plan_trace.setdefault("metric", {})
+        if not metric_tools.metric_exists(self.tenant_id, metric_spec.metric_name):
+            metric_trace.update({"status": "missing", "requested": metric_spec.dict()})
+            candidates = metric_tools.list_metric_names(self.tenant_id)
+            rows = [[name] for name in candidates]
+            blocks = [
+                text_block(f"Metric '{metric_spec.metric_name}' not found", title="Metric lookup"),
+                table_block(["metric_name"], rows, title="Available metrics"),
+            ]
+            self._log_metric_blocks_return(blocks)
+            return blocks
+        if metric_spec.scope == "graph":
+            return await self._graph_metric_blocks_async(detail, metric_spec, metric_trace, graph_payload=graph_payload)
+        if metric_spec.mode == "series":
+            series = await self._metric_series_table_async(
+                detail["ci_id"],
+                metric_spec.metric_name,
+                metric_spec.time_range,
+            )
+            rows = [list(row) for row in series["rows"]]
+            metric_trace.update(
+                {
+                    "status": "series",
+                    "requested": metric_spec.dict(),
+                    "rows": len(rows),
+                }
+            )
+            self.next_actions.extend(self._metric_next_actions(metric_spec.time_range))
+            if not rows:
+                ci_code = detail.get("ci_code") or detail.get("ci_id") or "unknown"
+                reason = (
+                    f"{metric_spec.metric_name} ({metric_spec.time_range}) returned no data "
+                    f"for CI {ci_code}"
+                )
+                blocks = [
+                    text_block(reason, title="Metric data unavailable"),
+                    table_block(
+                        ["metric", "time_range", "ci_code"],
+                        [[metric_spec.metric_name, metric_spec.time_range, ci_code]],
+                        title="Metric request details",
+                    ),
+                ]
+                self._log_metric_blocks_return(blocks)
+                return blocks
+            table_block_rows = table_block(["ts", "value"], rows, title="Metric series")
+            chart = None
+            try:
+                chart = self._series_chart_block(detail, metric_spec, rows)
+                if chart:
+                    metric_trace.setdefault("chart", {})["rendered"] = True
+            except Exception as exc:  # pragma: no cover
+                metric_trace.setdefault("chart", {}).setdefault("warnings", []).append(str(exc))
+                chart = None
+            blocks: List[Dict[str, Any]] = []
+            if chart:
+                blocks.append(chart)
+            blocks.append(table_block_rows)
+            if rows:
+                latest = rows[0]
+                self.metric_context = {
+                    "metric_name": metric_spec.metric_name,
+                    "time_range": metric_spec.time_range,
+                    "agg": metric_spec.agg,
+                    "value": float(latest[1]) if len(latest) > 1 and latest[1] not in (None, "<null>") else None,
+                }
+            return blocks
+        aggregate = await self._metric_aggregate_async(
+            metric_spec.metric_name,
+            metric_spec.agg,
+            metric_spec.time_range,
+            detail["ci_id"],
+        )
+        metric_trace.update(
+            {
+                "status": "aggregate",
+                "requested": metric_spec.dict(),
+                "result": aggregate,
+            }
+        )
+        self.next_actions.extend(self._metric_next_actions(metric_spec.time_range))
+        rows = [
+            [
+                aggregate["metric_name"],
+                aggregate["agg"],
+                aggregate["time_from"],
+                aggregate["time_to"],
+                str(aggregate["value"]) if aggregate["value"] is not None else "<null>",
+            ]
+        ]
+        self.metric_context = {
+            "metric_name": aggregate["metric_name"],
+            "time_range": aggregate["time_range"],
+            "agg": aggregate["agg"],
+            "value": aggregate.get("value"),
+        }
+        blocks = [table_block(["metric_name", "agg", "time_from", "time_to", "value"], rows, title="Metric aggregate")]
+        self._log_metric_blocks_return(blocks)
+        return blocks
+
+    def _graph_metric_blocks(
+        self,
+        detail: Dict[str, Any],
+        metric_spec: MetricSpec,
+        metric_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        return asyncio.run(self._graph_metric_blocks_async(detail, metric_spec, metric_trace, graph_payload))
+
+    async def _graph_metric_blocks_async(
+        self,
+        detail: Dict[str, Any],
+        metric_spec: MetricSpec,
+        metric_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
+        graph_depth = self.plan.graph.depth
+        graph_limits = self.plan.graph.limits.dict()
+        if not graph_payload:
+            graph_payload = await self._graph_expand_async(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
+        node_ids = graph_payload.get("ids") or [detail["ci_id"]]
+        aggregate = await self._metric_aggregate_async(
+            metric_spec.metric_name,
+            metric_spec.agg,
+            metric_spec.time_range,
+            ci_ids=node_ids,
+        )
+        graph_meta = graph_payload.get("meta", {})
+        graph_summary = graph_payload.get("summary", {})
+        depth_applied = graph_meta.get("depth", graph_depth)
+        truncated = graph_payload.get("truncated", False)
+        metric_trace.update(
+            {
+                "status": "graph_aggregate",
+                "requested": metric_spec.dict(),
+                "scope": metric_spec.scope,
+                "graph_expand": {
+                    "view": graph_view.value,
+                    "depth_requested": graph_depth,
+                    "depth_applied": depth_applied,
+                    "node_count": graph_summary.get("node_count"),
+                    "edge_count": graph_summary.get("edge_count"),
+                    "rel_types": graph_meta.get("rel_types"),
+                    "truncated": truncated,
+                },
+                "result": aggregate,
+            }
+        )
+        rows = [
+            [
+                "graph",
+                graph_view.value,
+                str(depth_applied),
+                str(aggregate.get("ci_count_used")),
+                aggregate["metric_name"],
+                aggregate["agg"],
+                aggregate["time_from"],
+                aggregate["time_to"],
+                str(aggregate["value"]) if aggregate["value"] is not None else "<null>",
+            ]
+        ]
+        self.next_actions.extend(
+            self._graph_metric_next_actions(
+                graph_view.value,
+                depth_applied,
+                truncated,
+                metric_spec,
+            )
+        )
+        title = f"Graph metric ({metric_spec.metric_name})"
+        return [
+            table_block(
+                ["scope", "view", "depth", "ci_count", "metric_name", "agg", "time_from", "time_to", "value"],
+                rows,
+                title=title,
+            )
+        ]
+
+    def _metric_next_actions(self, current_range: str) -> List[NextAction]:
+        actions: List[NextAction] = []
+        ranges = [
+            ("last_1h", "최근 1시간"),
+            ("last_24h", "최근 24시간"),
+            ("last_7d", "최근 7일"),
+        ]
+        for key, label in ranges:
+            if key == current_range:
+                continue
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": f"{label}",
+                    "payload": {"patch": {"metric": {"time_range": key}}},
+                }
+            )
+        return actions
+
+    def _graph_metric_next_actions(
+        self, graph_view: str, depth: int, truncated: bool, metric_spec: MetricSpec
+    ) -> List[NextAction]:
+        actions: List[NextAction] = []
+        ranges = [
+            ("last_1h", "최근 1시간"),
+            ("last_24h", "최근 24시간"),
+            ("last_7d", "최근 7일"),
+        ]
+        for key, label in ranges:
+            if key == metric_spec.time_range:
+                continue
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": f"{label}",
+                    "payload": {"patch": {"metric": {"time_range": key}}},
+                }
+            )
+        for agg in ("count", "max", "min", "avg"):
+            if agg != metric_spec.agg:
+                actions.append(
+                    {
+                        "type": "rerun",
+                        "label": f"집계: {agg}",
+                        "payload": {"patch": {"metric": {"agg": agg}}},
+                    }
+                )
+        if truncated:
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": "depth +1",
+                    "payload": {"patch": {"graph": {"depth": depth + 1}}},
+                }
+            )
+        for target_view in ["DEPENDENCY", "NEIGHBORS", "IMPACT"]:
+            if target_view != graph_view:
+                actions.append(
+                    {
+                        "type": "rerun",
+                        "label": f"View {target_view}로 보기",
+                        "payload": {
+                            "patch": {"view": target_view, "graph": {"view": target_view}}
+                        },
+                    }
+                )
+        return actions
+
+    def _series_chart_block(
+        self, detail: Dict[str, Any], metric_spec: MetricSpec, rows: List[List[str]]
+    ) -> Dict[str, Any] | None:
+        if len(rows) <= 1:
+            return None
+        parsed_points: List[tuple[str, float]] = []
+        for row in rows:
+            if len(row) < 2:
+                continue
+            timestamp = row[0]
+            try:
+                value = float(row[1])
+            except (TypeError, ValueError):
+                continue
+            if not timestamp or value != value:
+                continue
+            parsed_points.append((timestamp, value))
+        if len(parsed_points) <= 1:
+            return None
+        parsed_points.sort(key=lambda entry: entry[0])
+        series_points = [[timestamp, value] for timestamp, value in parsed_points]
+        chart_series = [
+            {
+                "name": metric_spec.metric_name,
+                "points": series_points,
+            }
+        ]
+        meta = {
+            "ci_id": detail.get("ci_id"),
+            "metric_name": metric_spec.metric_name,
+            "time_range": metric_spec.time_range,
+        }
+        title = f"{metric_spec.metric_name} ({metric_spec.time_range})"
+        return chart_block(title + " trend", "timestamp", chart_series, meta)
+
+    def _graph_history_next_actions(
+        self, history_spec: Any, graph_view: str, depth: int, truncated: bool
+    ) -> List[NextAction]:
+        actions: List[NextAction] = []
+        ranges = [
+            ("last_24h", "최근 24시간"),
+            ("last_7d", "최근 7일"),
+            ("last_30d", "최근 30일"),
+        ]
+        for key, label in ranges:
+            if key == history_spec.time_range:
+                continue
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": f"{label}",
+                    "payload": {"patch": {"history": {"time_range": key}}},
+                }
+            )
+        if truncated:
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": "depth +1",
+                    "payload": {"patch": {"graph": {"depth": depth + 1, "view": graph_view}}},
+                }
+            )
+        for target_view in ["DEPENDENCY", "NEIGHBORS", "IMPACT"]:
+            if target_view != graph_view:
+                actions.append(
+                    {
+                        "type": "rerun",
+                        "label": f"View {target_view}로 보기",
+                        "payload": {
+                            "patch": {
+                                "view": target_view,
+                                "graph": {"view": target_view},
+                            }
+                        },
+                    }
+                )
+        return actions
+
+    def _graph_next_actions(self, view: str, depth: int, truncated: bool) -> List[NextAction]:
+        actions: List[NextAction] = []
+        if truncated:
+            actions.append(
+                {
+                    "type": "rerun",
+                    "label": "depth +1",
+                    "payload": {"patch": {"graph": {"depth": depth + 1}}},
+                }
+            )
+        for target_view in ["COMPOSITION", "DEPENDENCY", "IMPACT", "NEIGHBORS"]:
+            if target_view != view:
+                actions.append(
+                    {
+                        "type": "rerun",
+                        "label": f"View {target_view}로 보기",
+                        "payload": {"patch": {"view": target_view}},
+                    }
+                )
+        actions.append(
+            {
+                "type": "rerun",
+                "label": "집계: ci_subtype",
+                "payload": {"patch": {"aggregate": {"group_by": ["ci_subtype"], "top_n": 10}}},
+            }
+        )
+        return actions
+
+    def _history_blocks(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+        return asyncio.run(self._history_blocks_async(detail, graph_payload))
+
+    async def _history_blocks_async(self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
+        history_spec = self.plan.history
+        if not history_spec or not history_spec.enabled:
+            return []
+        history_trace = self.plan_trace.setdefault("history", {})
+        history_trace["requested"] = history_spec.dict()
+        if history_spec.scope == "graph":
+            return await self._graph_history_blocks_async(detail, history_spec, history_trace, graph_payload=graph_payload)
+        return await self._ci_history_blocks_async(detail, history_spec, history_trace)
+
+    def _ci_history_blocks(
+        self,
+        detail: Dict[str, Any],
+        history_spec: Any,
+        history_trace: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        return asyncio.run(self._ci_history_blocks_async(detail, history_spec, history_trace))
+
+    async def _ci_history_blocks_async(
+        self,
+        detail: Dict[str, Any],
+        history_spec: Any,
+        history_trace: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        result = await self._history_recent_async(
+            history_spec,
+            {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
+        )
+        if not result.get("available"):
+            history_trace["available"] = False
+            warnings = result.get("warnings", [])
+            if warnings:
+                history_trace.setdefault("warnings", []).extend(warnings)
+            message = f"event_log unavailable: {'; '.join(warnings)}" if warnings else "event_log unavailable"
+            return [text_block(message, title="History")]
+        history_trace["available"] = True
+        history_meta = result.get("meta", {})
+        history_trace["meta"] = history_meta
+        history_trace["rows"] = len(result.get("rows", []))
+        self.history_context = {
+            "time_range": history_spec.time_range,
+            "source": history_spec.source,
+            "rows": len(result.get("rows", [])),
+            "recent": self._format_history_recent(result.get("rows", [])),
+        }
+        self.next_actions.extend(self._history_time_actions(history_spec.time_range))
+        title = f"Recent events ({history_spec.time_range})"
+        return [table_block(result["columns"], result["rows"], title=title)]
+
+
+    def _graph_history_blocks(
+        self,
+        detail: Dict[str, Any],
+        history_spec: Any,
+        history_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        return asyncio.run(self._graph_history_blocks_async(detail, history_spec, history_trace, graph_payload))
+
+    async def _graph_history_blocks_async(
+        self,
+        detail: Dict[str, Any],
+        history_spec: Any,
+        history_trace: Dict[str, Any],
+        graph_payload: Dict[str, Any] | None = None,
+    ) -> List[Dict[str, Any]]:
+        graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
+        graph_depth = self.plan.graph.depth
+        graph_limits = self.plan.graph.limits.dict()
+        if not graph_payload:
+            graph_payload = await self._graph_expand_async(detail["ci_id"], graph_view.value, graph_depth, graph_limits)
+        node_ids = graph_payload.get("ids") or [detail["ci_id"]]
+        result = await self._history_recent_async(
             history_spec,
             {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
             ci_ids=node_ids,

@@ -147,6 +147,11 @@ class ToolExecutor:
         if not self.registry.is_registered(tool_type):
             raise ValueError(f"Tool type '{tool_type.value}' is not registered")
 
+        tool = self.registry.get_tool(tool_type)
+        operation = params.get("operation")
+        if not operation:
+            raise ValueError("operation parameter required")
+
         cache_key: str | None = None
         if self._cache:
             cache_key = self._cache.generate_key(tool_type.value, operation, params)
@@ -154,11 +159,6 @@ class ToolExecutor:
             if cached:
                 context.set_metadata("cache_hit", True)
                 return cached
-
-        tool = self.registry.get_tool(tool_type)
-        operation = params.get("operation")
-        if not operation:
-            raise ValueError("operation parameter required")
 
         try:
             result = await tool.safe_execute(context, params)

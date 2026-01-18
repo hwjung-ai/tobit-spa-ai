@@ -1,11 +1,14 @@
 """Authentication and authorization dependencies."""
 
+from typing import Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
 from sqlmodel import Session
 
 from apps.api.app.modules.auth.models import TbUser, UserRole
+from apps.api.app.modules.api_keys.crud import validate_api_key
 from apps.api.core.config import get_settings
 from apps.api.core.db import get_session
 from apps.api.core.security import decode_token
@@ -139,3 +142,66 @@ def require_role(*required_roles: UserRole):
         return current_user
 
     return role_checker
+
+
+def get_current_user_from_api_key(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    session: Session = Depends(get_session),
+) -> tuple[TbUser, Optional[str]]:
+    """
+    Get current user from either JWT token or API key.
+
+    Returns a tuple of (user, api_key_scope_str) where api_key_scope_str is
+    only set if authenticated via API key, None otherwise.
+
+    Args:
+        credentials: HTTP authorization credentials
+        session: Database session
+
+    Returns:
+        Tuple of (current_user, api_key_scopes) where scopes are comma-separated
+
+    Raises:
+        HTTPException: If neither JWT token nor API key is valid
+    """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = credentials.credentials
+
+    # Try JWT token first
+    settings = get_settings()
+    try:
+        payload = decode_token(
+            token,
+            settings.jwt_secret_key,
+            settings.jwt_algorithm,
+        )
+
+        if payload.get("type") == "access":
+            user_id: str = payload.get("sub")
+            if user_id:
+                user = session.get(TbUser, user_id)
+                if user and user.is_active:
+                    return user, None
+    except JWTError:
+        pass
+
+    # Try API key as fallback
+    api_key = validate_api_key(session, token)
+    if api_key:
+        user = session.get(TbUser, api_key.user_id)
+        if user and user.is_active:
+            scopes = api_key.scope  # JSON string
+            return user, scopes
+
+    # Neither worked
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )

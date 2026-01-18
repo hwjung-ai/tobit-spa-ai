@@ -30,7 +30,7 @@ def resolve_metric(question: str) -> MetricHit | None:
 
 def _fetch_metric(metric_name: str) -> MetricHit | None:
     # Load query with DB priority fallback to file
-    asset = load_query_asset("metric", "metric_resolver")
+    asset, _ = load_query_asset("metric", "metric_resolver")
     query = asset.get("sql") if asset else None
     query = query or load_text("queries/postgres/metric/metric_resolver.sql")
     if not query:

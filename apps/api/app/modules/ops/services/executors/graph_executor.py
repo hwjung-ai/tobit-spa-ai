@@ -25,7 +25,7 @@ from ..resolvers import resolve_ci, resolve_time_range
 
 def _load_query_sql(scope: str, name: str) -> str | None:
     """Load query SQL with DB priority fallback to file."""
-    asset = load_query_asset(scope, name)
+    asset, _ = load_query_asset(scope, name)
     if asset:
         return asset.get("sql")
     return None

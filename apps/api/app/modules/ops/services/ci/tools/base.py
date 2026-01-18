@@ -248,7 +248,8 @@ class ToolRegistry:
             ValueError: If a tool is already registered for this type
         """
         if tool_type in self._tools:
-            raise ValueError(f"Tool type {tool_type.value} is already registered")
+            logger.warning(f"Tool type {tool_type.value} already registered; skipping re-registration")
+            return
 
         self._tools[tool_type] = tool_class
         # Instantiate immediately for singleton access

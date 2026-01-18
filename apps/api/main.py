@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.modules.api_keys.router import router as api_keys_router
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
@@ -52,6 +53,7 @@ app.add_middleware(
 app.include_router(health_router)
 app.include_router(hello_router)
 app.include_router(auth_router)
+app.include_router(api_keys_router)
 app.include_router(chat_router)
 app.include_router(thread_router)
 app.include_router(document_router)
