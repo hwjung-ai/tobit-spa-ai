@@ -137,6 +137,12 @@
 2.  **UI 검증 및 테스트**: 스키마 유효성, 데이터 소스 엔드포인트 연결성을 저장 전에 검증해야 합니다.
 3.  **권한 관리**: UI별 접근, 수정, 공유 권한을 관리하고 테넌트별로 격리해야 합니다.
 
+#### UI Creator U1 → U2 증거
+- 위 P0 항목은 2026-01-18 기준 **U2 레벨 실현**을 목표로 한 작업이며, 상세 구현 내용과 증거는 `docs/history/U1_TO_U2_CERTIFICATION_REPORT.md`의 ‘state_patch 계약’, ‘CRUD 액션 실동작’, ‘Inspector trace’ 3개 PR 항목과 연계되어 있습니다.
+- Demo trace/결과는 `docs/history/trace_evidence.json`에 정리되어 있으며, read-only(Trace ID `b3ddfb8a…`)와 CRUD create-action (parent_trace `a553…`, child_trace `f0b4…`) 두 건의 trace_id를 포함합니다.
+- Playwright/E2E 시험 및 CI 레포트는 `docs/history/test_results.log`에서 확인 가능하며, 현재는 `pytest` 모듈이 없다는 메시지가 남아 있으므로(즉, 단순 실행 로그만 확보)를 참고합니다.
+- 테스트 안정성을 위해 `tests/test_asset_importers.py`도 마련되어 있고, 자산 데이터를 받아오는 프로세스가 준비되어 있으나, 실 테스트는 `pytest`가 설치된 환경에서 재실행이 필요합니다.
+
 ### 🟠 P1: 단기 필요
 4.  **에러 처리 및 폴백**: 데이터 소스 실패 또는 타임아웃 발생 시, UI가 깨지지 않고 사용자에게 명확한 메시지를 보여줘야 합니다.
 5.  **성능 최적화**: 데이터 로딩 성능 모니터링, 캐싱, 지연 로딩(lazy loading) 등을 도입해야 합니다.
