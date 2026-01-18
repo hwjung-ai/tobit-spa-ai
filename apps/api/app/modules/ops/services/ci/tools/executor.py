@@ -19,6 +19,7 @@ from app.modules.ops.services.ci.tools.base import (
     ToolType,
     get_tool_registry,
 )
+from app.modules.ops.services.ci.tools.cache import ToolResultCache
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -33,7 +34,7 @@ class ToolExecutor:
     work with tools dynamically.
     """
 
-    def __init__(self, registry: Optional[ToolRegistry] = None):
+    def __init__(self, registry: Optional[ToolRegistry] = None, cache: Optional[ToolResultCache] = None):
         """
         Initialize the executor.
 
@@ -42,6 +43,7 @@ class ToolExecutor:
         """
         self.registry = registry or get_tool_registry()
         self.logger = logger
+        self._cache = cache
 
     def can_execute(self, tool_type: ToolType, params: Dict[str, Any]) -> bool:
         """
@@ -113,14 +115,14 @@ class ToolExecutor:
                     "tenant_id": context.tenant_id,
                 },
             )
-            return ToolResult(
-                success=False,
-                error=str(e),
-                error_details={
-                    "exception_type": type(e).__name__,
-                    "tool_type": tool_type.value,
-                },
-            )
+        return ToolResult(
+            success=False,
+            error=str(e),
+            error_details={
+                "exception_type": type(e).__name__,
+                "tool_type": tool_type.value,
+            },
+        )
 
     async def execute_async(
         self,
@@ -145,6 +147,14 @@ class ToolExecutor:
         if not self.registry.is_registered(tool_type):
             raise ValueError(f"Tool type '{tool_type.value}' is not registered")
 
+        cache_key: str | None = None
+        if self._cache:
+            cache_key = self._cache.generate_key(tool_type.value, operation, params)
+            cached = await self._cache.get(cache_key)
+            if cached:
+                context.set_metadata("cache_hit", True)
+                return cached
+
         tool = self.registry.get_tool(tool_type)
         operation = params.get("operation")
         if not operation:
@@ -166,7 +176,19 @@ class ToolExecutor:
         if not result.success:
             raise ValueError(result.error or "Unknown tool error")
 
+        if self._cache and cache_key:
+            await self._cache.set(
+                cache_key,
+                result.data,
+                tool_type=tool_type.value,
+                operation=operation,
+            )
+
         return result.data
+
+    def set_cache(self, cache: ToolResultCache) -> None:
+        """Attach or replace the cache instance used by this executor."""
+        self._cache = cache
 
     def get_available_tools(self) -> Dict[str, ToolType]:
         """
@@ -187,9 +209,11 @@ class ToolExecutor:
 _global_executor: Optional[ToolExecutor] = None
 
 
-def get_tool_executor() -> ToolExecutor:
+def get_tool_executor(cache: Optional[ToolResultCache] = None) -> ToolExecutor:
     """Get the global tool executor, creating it if necessary."""
     global _global_executor
     if _global_executor is None:
-        _global_executor = ToolExecutor()
+        _global_executor = ToolExecutor(cache=cache)
+    elif cache:
+        _global_executor.set_cache(cache)
     return _global_executor

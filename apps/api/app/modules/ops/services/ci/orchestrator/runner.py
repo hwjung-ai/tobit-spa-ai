@@ -39,6 +39,14 @@ from app.modules.ops.services.ci.tools import (
     ToolType,
     get_tool_executor,
 )
+from app.modules.ops.services.ci.tools.cache import ToolResultCache
+from app.modules.ops.services.ci.tools.observability import ExecutionTracer
+from app.modules.ops.services.ci.orchestrator.compositions import COMPOSITION_SEARCH_WITH_CONTEXT
+from app.modules.ops.services.ci.orchestrator.tool_selector import (
+    SelectionStrategy,
+    SmartToolSelector,
+    ToolSelectionContext,
+)
 
 
 @dataclass
@@ -138,8 +146,12 @@ class CIOrchestratorRunner:
         # Flow span tracking
         self._flow_spans_enabled: bool = False
         self._runner_span_id: str | None = None
-        # Tool executor for dynamic tool invocation
-        self._tool_executor = get_tool_executor()
+        # Tool infrastructure
+        self._tool_cache = ToolResultCache()
+        self._tool_executor = get_tool_executor(cache=self._tool_cache)
+        self._tool_selector = SmartToolSelector()
+        self._tracer = ExecutionTracer()
+        self._composition_pipeline = COMPOSITION_SEARCH_WITH_CONTEXT
 
     @contextmanager
     def _tool_context(self, tool: str, input_params: Dict[str, Any] | None = None, **meta):
@@ -2852,6 +2864,58 @@ class CIOrchestratorRunner:
         params_with_op = {"operation": operation, **params}
         return await self._tool_executor.execute_async(tool_type, context, params_with_op)
 
+    async def _execute_tool_with_tracing(
+        self,
+        tool_type: ToolType,
+        operation: str,
+        **params
+    ) -> Dict[str, Any]:
+        trace_id = self._tracer.start_trace(tool_type.value, operation, params)
+        try:
+            result = await self._execute_tool_async(tool_type, operation, **params)
+            records = result.get("records") if isinstance(result, dict) else None
+            result_count = len(records) if isinstance(records, list) else None
+            self._tracer.end_trace(
+                trace_id,
+                success=True,
+                result_size=len(str(result)),
+                result_count=result_count,
+            )
+            return result
+        except Exception as exc:
+            self._tracer.end_trace(
+                trace_id,
+                success=False,
+                error=str(exc),
+            )
+            raise
+
+    async def _select_best_tools(self) -> List[str]:
+        context = ToolSelectionContext(
+            intent=self.plan.intent,
+            user_pref=self._selection_strategy(),
+            current_load=await self._get_system_load(),
+            cache_status={},
+            estimated_time=self._estimate_tool_times(),
+        )
+        ranked = await self._tool_selector.select_tools(context)
+        return [tool for tool, _ in ranked]
+
+    async def _get_system_load(self) -> Dict[str, float]:
+        # Placeholder implementation - real implementation would read from monitoring data
+        return {tool: 0.0 for tool in self._tool_selector.tool_profiles.keys()}
+
+    def _selection_strategy(self) -> SelectionStrategy:
+        if self.plan.mode == PlanMode.CI:
+            return SelectionStrategy.FASTEST
+        return SelectionStrategy.MOST_ACCURATE
+
+    def _estimate_tool_times(self) -> Dict[str, float]:
+        return {
+            name: profile.get("base_time", 100.0)
+            for name, profile in self._tool_selector.tool_profiles.items()
+        }
+
     # CI Tool Helpers
     def _ci_search_via_registry(
         self,
@@ -3079,7 +3143,7 @@ class CIOrchestratorRunner:
         limit: int | None = None,
         sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
     ) -> List[Dict[str, Any]]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.CI,
             "search",
             keywords=keywords,
@@ -3091,14 +3155,14 @@ class CIOrchestratorRunner:
 
     async def _ci_get_via_registry_async(self, ci_id: str) -> Dict[str, Any] | None:
         try:
-            result = await self._execute_tool_async(ToolType.CI, "get", ci_id=ci_id)
+            result = await self._execute_tool_with_tracing(ToolType.CI, "get", ci_id=ci_id)
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
             return None
 
     async def _ci_get_by_code_via_registry_async(self, ci_code: str) -> Dict[str, Any] | None:
         try:
-            result = await self._execute_tool_async(ToolType.CI, "get_by_code", ci_code=ci_code)
+            result = await self._execute_tool_with_tracing(ToolType.CI, "get_by_code", ci_code=ci_code)
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
             return None
@@ -3111,7 +3175,7 @@ class CIOrchestratorRunner:
         ci_ids: Iterable[str] | None = None,
         top_n: int | None = None,
     ) -> Dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.CI,
             "aggregate",
             group_by=group_by,
@@ -3128,7 +3192,7 @@ class CIOrchestratorRunner:
         offset: int = 0,
         filters: Iterable[FilterSpec] | None = None,
     ) -> Dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.CI,
             "list_preview",
             limit=limit,
@@ -3145,7 +3209,7 @@ class CIOrchestratorRunner:
         ci_id: str | None = None,
         ci_ids: Iterable[str] | None = None,
     ) -> dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.METRIC,
             "aggregate",
             metric_name=metric_name,
@@ -3163,7 +3227,7 @@ class CIOrchestratorRunner:
         time_range: str,
         limit: int | None = None,
     ) -> dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.METRIC,
             "series",
             ci_id=ci_id,
@@ -3180,7 +3244,7 @@ class CIOrchestratorRunner:
         depth: int,
         limits: dict[str, int],
     ) -> Dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.GRAPH,
             "expand",
             ci_id=ci_id,
@@ -3196,7 +3260,7 @@ class CIOrchestratorRunner:
         target_id: str,
         hops: int,
     ) -> Dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.GRAPH,
             "path",
             ci_id=source_id,
@@ -3216,7 +3280,7 @@ class CIOrchestratorRunner:
         final_time_range = time_range or getattr(history_spec, "time_range", None) or "last_7d"
         final_limit = limit or getattr(history_spec, "limit", None) or 50
 
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.HISTORY,
             "event_log",
             ci=ci_context,
@@ -3233,7 +3297,7 @@ class CIOrchestratorRunner:
         metric_context: Dict[str, Any] | None,
         history_context: Dict[str, Any] | None,
     ) -> Dict[str, Any]:
-        result = await self._execute_tool_async(
+        result = await self._execute_tool_with_tracing(
             ToolType.CEP,
             "simulate",
             rule_id=rule_id or "",
