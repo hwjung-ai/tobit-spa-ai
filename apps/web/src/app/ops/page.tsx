@@ -8,6 +8,7 @@ import BlockRenderer, {
   type AnswerMeta,
 } from "../../components/answer/BlockRenderer";
 import { type NextAction } from "./nextActions";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 type UiMode = "ci" | "metric" | "history" | "relation" | "all";
@@ -22,8 +23,6 @@ const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
 
 const MODE_STORAGE_KEY = "ops:mode";
 const HISTORY_LIMIT = 40;
-
-const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
 
 interface CiAnswerPayload {
   answer: string;
@@ -237,7 +236,6 @@ export default function OpsPage() {
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const router = useRouter();
 
-  const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
   const pushHistoryEntry = useCallback(
     (entry: OpsHistoryEntry) => {
@@ -257,16 +255,7 @@ export default function OpsPage() {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/history?feature=ops&limit=${HISTORY_LIMIT}`, {
-        headers: {
-          "X-Tenant-Id": "default",
-          "X-User-Id": "default",
-        },
-      });
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.message ?? "Failed to load history");
-      }
+      const payload = await authenticatedFetch(`/history?feature=ops&limit=${HISTORY_LIMIT}`);
       const rawHistory = (payload?.data?.history ?? []) as ServerHistoryEntry[];
       const hydrated = rawHistory
         .map(hydrateServerEntry)
@@ -286,18 +275,13 @@ export default function OpsPage() {
     } finally {
       setHistoryLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, []);
 
   const persistHistoryEntry = useCallback(
     async (entry: OpsHistoryEntry) => {
       try {
-        await fetch(`${apiBaseUrl}/history`, {
+        await authenticatedFetch(`/history`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Tenant-Id": "default",
-            "X-User-Id": "default",
-          },
           body: JSON.stringify({
             feature: "ops",
             question: entry.question,
@@ -317,28 +301,20 @@ export default function OpsPage() {
         console.error("Failed to persist OPS history", error);
       }
     },
-    [apiBaseUrl]
+    []
   );
 
   const deleteHistoryEntry = useCallback(
     async (id: string) => {
       try {
-        const response = await fetch(`${apiBaseUrl}/history/${id}`, {
+        await authenticatedFetch(`/history/${id}`, {
           method: "DELETE",
-          headers: {
-            "X-Tenant-Id": "default",
-            "X-User-Id": "default",
-          },
         });
-        if (!response.ok) {
-          const payload = await response.json().catch(() => null);
-          console.warn("Failed to delete OPS history entry", payload?.message);
-        }
       } catch (error) {
         console.error("Failed to delete OPS history entry", error);
       }
     },
-    [apiBaseUrl]
+    []
   );
 
   useEffect(() => {
@@ -460,16 +436,11 @@ export default function OpsPage() {
     let nextActions: NextAction[] | undefined;
     try {
       if (requestedMode.id === "ci") {
-        const response = await fetch(`${apiBaseUrl}/ops/ci/ask`, {
+        const data = await authenticatedFetch(`/ops/ci/ask`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: question.trim() }),
         });
-        const data = await response.json();
         console.debug("CI response", { payload, data });
-        if (!response.ok) {
-          throw new Error(data?.message ?? `${response.status} ${response.statusText}`);
-        }
         const ciPayload = data.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
@@ -490,16 +461,11 @@ export default function OpsPage() {
         trace = ciPayload.trace;
         nextActions = ciPayload.next_actions;
       } else {
-        const response = await fetch(`${apiBaseUrl}/ops/query`, {
+        const data = await authenticatedFetch(`/ops/query`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = await response.json();
         console.debug("OPS response", { payload, data });
-        if (!response.ok) {
-          throw new Error(data?.message ?? `${response.status} ${response.statusText}`);
-        }
         const answer = data.data?.answer as AnswerEnvelope | undefined;
         if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
           throw new Error("Invalid OPS response format");
@@ -538,7 +504,7 @@ export default function OpsPage() {
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [apiBaseUrl, currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry]);
+  }, [currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry];
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {
@@ -611,16 +577,11 @@ export default function OpsPage() {
         if (action.payload?.patch) {
           rerunBody.rerun.patch = action.payload.patch;
         }
-        const response = await fetch(`${apiBaseUrl}/ops/ci/ask`, {
+        const data = await authenticatedFetch(`/ops/ci/ask`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(rerunBody),
         });
-        const data = await response.json();
         console.debug("CI rerun", { action, rerunBody, data });
-        if (!response.ok) {
-          throw new Error(data?.message ?? `${response.status} ${response.statusText}`);
-        }
         const ciPayload = data.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
@@ -671,7 +632,7 @@ export default function OpsPage() {
         setTraceOpen(false);
       }
     },
-    [apiBaseUrl, currentModeDefinition.backend, pushHistoryEntry, selectedEntry]
+    [currentModeDefinition.backend, pushHistoryEntry, selectedEntry]
   );
 
   const gridColsClass = isFullScreen

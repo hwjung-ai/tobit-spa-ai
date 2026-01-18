@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -138,12 +139,6 @@ const badgeStyles: Record<DocumentStatus, string> = {
 
 const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
 
-const normalizeHeaders = () => ({
-  "Content-Type": "application/json",
-  "X-Tenant-Id": "default",
-  "X-User-Id": "default",
-});
-
 const formatTimestamp = (value: string) => {
   try {
     let dateStr = value;
@@ -161,7 +156,6 @@ const formatTimestamp = (value: string) => {
 };
 
 export default function DocumentsPage() {
-  const apiBaseUrl = sanitizeUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamAbortController = useRef<AbortController | null>(null);
 
@@ -186,8 +180,6 @@ export default function DocumentsPage() {
 
   const selectedDocumentRef = useRef<DocumentDetail | null>(null);
 
-  const headers = useMemo(() => normalizeHeaders(), []);
-
   useEffect(() => {
     selectedDocumentRef.current = selectedDocument;
   }, [selectedDocument]);
@@ -209,13 +201,8 @@ export default function DocumentsPage() {
         return;
       }
       try {
-        await fetch(`${apiBaseUrl}/history`, {
+        await authenticatedFetch("/history", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Tenant-Id": "default",
-            "X-User-Id": "default",
-          },
           body: JSON.stringify({
             feature: "docs",
             question: payload.question,
@@ -237,26 +224,16 @@ export default function DocumentsPage() {
         console.error("Failed to persist document history", error);
       }
     },
-    [apiBaseUrl]
+    []
   );
 
   const fetchDocHistory = useCallback(async () => {
     setDocHistoryLoading(true);
     setDocHistoryError(null);
     try {
-      const response = await fetch(
-        `${apiBaseUrl}/history?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`,
-        {
-          headers: {
-            "X-Tenant-Id": "default",
-            "X-User-Id": "default",
-          },
-        }
-      );
-      const payload = await response.json();
-      if (!response.ok) {
-        throw new Error(payload?.message ?? "Failed to load document history");
-      }
+      const payload = await authenticatedFetch(
+        `/history?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`
+      ) as any;
       const rawHistory = (payload?.data?.history ?? []) as DocsServerHistoryEntry[];
       const hydrated = rawHistory
         .map(buildDocHistoryEntry)
@@ -268,29 +245,21 @@ export default function DocumentsPage() {
     } finally {
       setDocHistoryLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, []);
 
   const fetchDocumentDetail = useCallback(
     async (documentId: string) => {
-      const response = await fetch(`${apiBaseUrl}/documents/${documentId}`);
-      if (!response.ok) {
-        throw new Error("Document not found");
-      }
-      const payload = await response.json();
+      const payload = await authenticatedFetch(`/documents/${documentId}`) as any;
       setSelectedDocument(payload.data.document);
     },
-    [apiBaseUrl]
+    []
   );
 
   const fetchDocuments = useCallback(async () => {
     setLoadingDocuments(true);
     setDocumentsError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/documents`);
-      if (!response.ok) {
-        throw new Error("Failed to load documents");
-      }
-      const payload = await response.json();
+      const payload = await authenticatedFetch("/documents") as any;
       setDocuments(payload.data.documents ?? []);
       const selectedId = selectedDocumentRef.current?.id;
       if (selectedId) {
@@ -305,7 +274,7 @@ export default function DocumentsPage() {
     } finally {
       setLoadingDocuments(false);
     }
-  }, [apiBaseUrl, fetchDocumentDetail]);
+  }, [fetchDocumentDetail]);
 
   useEffect(() => {
     fetchDocuments();
@@ -437,11 +406,14 @@ export default function DocumentsPage() {
     let accumulatedAnswer = "";
 
     try {
-      const response = await fetch(`${apiBaseUrl}/documents/${selectedDocument.id}/query/stream`, {
+      const token = localStorage.getItem("access_token");
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const response = await fetch(`${baseUrl}/documents/${selectedDocument.id}/query/stream`, {
         method: "POST",
         headers: {
           Accept: "text/event-stream",
-          ...headers,
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
         body: JSON.stringify({ query: queryValue.trim(), top_k: topK }),
         signal: controller.signal,
@@ -592,12 +564,13 @@ export default function DocumentsPage() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const response = await fetch(`${apiBaseUrl}/documents/upload`, {
+      const token = localStorage.getItem("access_token");
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const response = await fetch(`${baseUrl}/documents/upload`, {
         method: "POST",
         body: formData,
         headers: {
-          "X-Tenant-Id": "default",
-          "X-User-Id": "default",
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
       });
       if (!response.ok) {
@@ -618,13 +591,9 @@ export default function DocumentsPage() {
 
   const deleteDocument = async (documentId: string) => {
     try {
-      const response = await fetch(`${apiBaseUrl}/documents/${documentId}`, {
+      await authenticatedFetch(`/documents/${documentId}`, {
         method: "DELETE",
-        headers,
       });
-      if (!response.ok) {
-        throw new Error("Failed to delete document");
-      }
       setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
       if (selectedDocument?.id === documentId) {
         setSelectedDocument(null);
@@ -683,7 +652,7 @@ export default function DocumentsPage() {
               {uploading ? "Uploading…" : "문서 업로드"}
             </button>
             <span className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              API: {apiBaseUrl}/documents/upload
+              API: /documents/upload
             </span>
           </div>
         </form>

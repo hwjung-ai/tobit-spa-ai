@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 type ChunkType = "answer" | "summary" | "detail" | "done" | "error";
 
@@ -66,12 +67,6 @@ const formatTimestamp = (value: string) => {
   }
 };
 
-const normalizeHeaders = () => ({
-  "Content-Type": "application/json",
-  "X-Tenant-Id": "default",
-  "X-User-Id": "default",
-});
-
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [chunks, setChunks] = useState<StreamChunk[]>([]);
@@ -90,11 +85,7 @@ export default function Home() {
     setLoadingThreads(true);
     setThreadsError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/threads`);
-      if (!response.ok) {
-        throw new Error("Failed to load threads");
-      }
-      const payload: ThreadRead[] = await response.json();
+      const payload = await authenticatedFetch<ThreadRead[]>(`/threads`);
       setThreads(payload);
     } catch (error: any) {
       console.error("Failed to load threads", error);
@@ -102,7 +93,7 @@ export default function Home() {
     } finally {
       setLoadingThreads(false);
     }
-  }, [apiBaseUrl]);
+  }, []);
 
   useEffect(() => {
     if (!activeThread && threads.length > 0) {
@@ -113,11 +104,7 @@ export default function Home() {
 
   const fetchThreadDetail = useCallback(
     async (threadId: string) => {
-      const response = await fetch(`${apiBaseUrl}/threads/${threadId}`);
-      if (!response.ok) {
-        throw new Error("Thread not found");
-      }
-      const detail: ThreadDetail = await response.json();
+      const detail = await authenticatedFetch<ThreadDetail>(`/threads/${threadId}`);
       setActiveThread(detail);
       setThreads((prev) => {
         const existing = prev.find((thread) => thread.id === detail.id);
@@ -129,7 +116,7 @@ export default function Home() {
         return prev.map((thread) => (thread.id === detail.id ? detail : thread));
       });
     },
-    [apiBaseUrl]
+    []
   );
 
   useEffect(() => {
@@ -155,12 +142,9 @@ export default function Home() {
   };
 
   const deleteThread = async (threadId: string) => {
-    const response = await fetch(`${apiBaseUrl}/threads/${threadId}`, {
+    await authenticatedFetch(`/threads/${threadId}`, {
       method: "DELETE",
     });
-    if (!response.ok) {
-      throw new Error("Failed to delete thread");
-    }
     setThreads((prev) => prev.filter((thread) => thread.id !== threadId));
     setActiveThread((prev) => (prev?.id === threadId ? null : prev));
   };
@@ -178,21 +162,16 @@ export default function Home() {
   };
 
   const createThreadResource = useCallback(async (): Promise<ThreadDetail> => {
-    const response = await fetch(`${apiBaseUrl}/threads`, {
+    const thread = await authenticatedFetch<ThreadDetail>(`/threads`, {
       method: "POST",
-      headers: normalizeHeaders(),
       body: JSON.stringify({ title: "New conversation" }),
     });
-    if (!response.ok) {
-      throw new Error("Failed to create thread");
-    }
-    const thread: ThreadDetail = await response.json();
     setThreads((prev) => [thread, ...prev.filter((item) => item.id !== thread.id)]);
     setActiveThread(thread);
     setChunks([]);
     setStatus("idle");
     return thread;
-  }, [apiBaseUrl]);
+  }, []);
 
   const startNewConversation = useCallback(() => {
     createThreadResource().catch(console.error);
@@ -209,8 +188,14 @@ export default function Home() {
       thread = await createThreadResource();
     }
     const threadParam = `&thread_id=${thread.id}`;
+    const token = localStorage.getItem("access_token");
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
     const source = new EventSource(
-      `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}`
+      `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}`,
+      { withCredentials: true, headers }
     );
     eventSourceRef.current = source;
 

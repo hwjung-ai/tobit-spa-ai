@@ -4,6 +4,7 @@ import "./globals.css";
 import NavTabs from "../components/NavTabs";
 import CepEventBell from "../components/CepEventBell";
 import Providers from "./providers";
+import HeaderUserMenu from "../components/HeaderUserMenu";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,9 +38,10 @@ export default function RootLayout({
                   </p>
                   <h1 className="text-2xl font-semibold text-white">Intelligent Ops Studio</h1>
                 </div>
-              <nav className="flex items-center gap-4">
+              <nav className="flex items-center gap-6">
                 <CepEventBell />
                 <NavTabs />
+                <HeaderUserMenu />
               </nav>
             </header>
             <main className="min-h-[calc(100vh-96px)] w-full px-4 py-4 md:px-6">

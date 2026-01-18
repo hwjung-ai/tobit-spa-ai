@@ -53,6 +53,13 @@ class AppSettings(BaseSettings):
     langsmith_project: Optional[str] = None
     langsmith_tracing: bool = False
 
+    # Authentication settings
+    jwt_secret_key: str = "your-secret-key-change-in-production"
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
+    auth_enabled: bool = True
+
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",
         env_file_encoding="utf-8",

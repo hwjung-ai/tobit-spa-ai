@@ -25,3 +25,5 @@ pypdf
 python-multipart
 croniter
 watchdog
+passlib[bcrypt]
+python-jose[cryptography]

@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
+from app.modules.auth.router import router as auth_router
 from app.modules.audit_log.router import router as audit_log_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.operation_settings.router import router as operation_settings_router
@@ -46,6 +47,7 @@ app.add_middleware(
 )
 app.include_router(health_router)
 app.include_router(hello_router)
+app.include_router(auth_router)
 app.include_router(chat_router)
 app.include_router(thread_router)
 app.include_router(document_router)
@@ -79,7 +81,7 @@ async def on_startup() -> None:
         # Try to upgrade migrations - skip if alembic has conflicts
         try:
             # Try with explicit target first
-            command.upgrade(alembic_cfg, "0030_add_regression_rule_config")
+            command.upgrade(alembic_cfg, "0031_add_auth_tables")
             logger.info("Database migrations completed successfully")
         except Exception as upgrade_error:
             # If explicit target fails, try current version
