@@ -16,6 +16,7 @@ from app.modules.api_manager.runtime_router import runtime_router
 from app.modules.asset_registry.router import router as asset_registry_router
 from app.modules.auth.router import router as auth_router
 from app.modules.audit_log.router import router as audit_log_router
+from app.modules.permissions.router import router as permissions_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
@@ -54,6 +55,7 @@ app.include_router(health_router)
 app.include_router(hello_router)
 app.include_router(auth_router)
 app.include_router(api_keys_router)
+app.include_router(permissions_router)
 app.include_router(chat_router)
 app.include_router(thread_router)
 app.include_router(document_router)
