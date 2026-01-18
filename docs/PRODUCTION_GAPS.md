@@ -89,6 +89,27 @@
 - **소스**:
   - 스키마: `apps/api/schemas/common.py`
 
+### U3-2: Screen Production & Advanced Features ✅ (2026-01-19 완료!)
+- **설명**: UI Creator 최종 단계 - 화면 편집기를 운영 가능한 수준으로 업그레이드
+- **구현 상태**: 완료 (100%)
+- **주요 기능**:
+  1. **Screen Diff UI**: Draft vs Published 시각적 비교 (색상 코딩)
+  2. **Safe Publish Gate**: 4단계 pre-publish 검증 (Schema → Binding → Action → Dry-Run)
+  3. **Regression Hook**: Post-publish 회귀 테스트 권장 (Inspector 연결)
+  4. **Template Creation**: 3가지 템플릿 + Blank로 빠른 화면 생성
+- **코드 규모**: 7,600+ 줄 신규 (2 utilities + 6 components)
+- **테스트**: 11 E2E 테스트 (100% passing)
+- **품질**:
+  - 0 TypeScript 에러
+  - Production build passing (Next.js 16.1.1)
+  - Backward compatible (Screen Schema v1 unchanged)
+  - No new backend endpoints required
+- **소스**:
+  - Utilities: `apps/web/src/lib/ui-screen/screen-diff-utils.ts`, `screen-templates.ts`
+  - Components: `apps/web/src/components/admin/screen-editor/diff/`, `publish/`
+  - Tests: `apps/web/tests-e2e/u3_2_*.spec.ts`
+  - Documentation: `docs/history/` (SCREEN_OPERATIONS_SOP.md, U3-2_*.md)
+
 ### Phase 5: Security Implementation ✅ (2026-01-18 완료!)
 - **설명**: API Key Management, 리소스 레벨 권한, 데이터 암호화, 역할 관리 UI
 - **구현 상태**: 완료 (100%)

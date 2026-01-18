@@ -16,6 +16,11 @@
   - System APIs (flagged)
 - UI Creator UI (`/ui-creator`, `/ui-creator/chat`)
   - Builder 공통 Copilot 스모크 테스트
+  - **Screen Editor Operations** (U3-2 - NEW):
+    - Screen Diff / Compare UI
+    - Safe Publish Gate (4-step validation)
+    - Screen Regression Hook
+    - Template-based Screen Creation
 - Data Explorer UI (`/data`)
   - Postgres/Neo4j/Redis 탭 로딩 확인
   - Read-only 정책/allowlist 동작 확인
@@ -70,6 +75,78 @@
 2) **스크롤바**:
    - OPS Query History, Grid, JSON Viewer 등 스크롤이 생기는 영역을 확인합니다.
    - OS 기본 스크롤바가 아닌, **얇고 어두운 테마의 Custom Scrollbar**가 적용되었는지 확인합니다.
+
+## 3-A. UI Creator - Screen Editor Operations (U3-2)
+
+### Screen Diff / Compare UI
+
+#### 소스 맵
+- Utility: `apps/web/src/lib/ui-screen/screen-diff-utils.ts`
+- Components:
+  - `apps/web/src/components/admin/screen-editor/diff/DiffTab.tsx`
+  - `apps/web/src/components/admin/screen-editor/diff/DiffViewer.tsx`
+  - `apps/web/src/components/admin/screen-editor/diff/DiffControls.tsx`
+  - `apps/web/src/components/admin/screen-editor/diff/DiffSummary.tsx`
+- Integration: `apps/web/src/components/admin/screen-editor/ScreenEditorTabs.tsx`
+
+#### 검증 절차
+1) UI Creator에서 화면을 생성하고 컴포넌트를 추가합니다.
+2) "Diff" 탭을 클릭하여 Diff 뷰가 렌더링되는지 확인합니다.
+3) 변경사항이 색상으로 구분되는지 확인합니다:
+   - 🟢 **Green**: 추가된 항목
+   - 🔴 **Red**: 제거된 항목
+   - 🟡 **Yellow**: 수정된 항목
+   - ⚪ **Gray**: 변경 없음
+4) 요약 배너에서 정확한 변경 개수가 표시되는지 확인합니다 ("+X added, -Y removed, ~Z modified").
+
+### Safe Publish Gate (Pre-publish Validation)
+
+#### 소스 맵
+- Components:
+  - `apps/web/src/components/admin/screen-editor/publish/PublishGateModal.tsx`
+  - `apps/web/src/components/admin/screen-editor/publish/ValidationChecklist.tsx`
+- Integration: `apps/web/src/components/admin/screen-editor/ScreenEditor.tsx`
+
+#### 검증 절차
+1) 화면을 수정한 후 "Publish" 버튼을 클릭합니다.
+2) 모달이 열리고 4가지 검증 체크가 실행되는지 확인합니다:
+   - ✅ **Schema Validation**: 화면 구조 유효성 검증
+   - ✅ **Binding Validation**: 모든 {{state.*}} 경로 존재 확인
+   - ✅ **Action Validation**: 모든 액션 핸들러 등록 확인
+   - ✅ **Dry-Run Test**: 액션 실행 테스트
+3) 모든 검증이 성공(🟢 Green)하면 "Publish" 버튼이 활성화되는지 확인합니다.
+4) 검증 실패(🔴 Red)시 "Publish" 버튼이 비활성화되고 에러 메시지가 표시되는지 확인합니다.
+5) 경고(🟡 Yellow)는 배포를 차단하지 않는지 확인합니다.
+
+### Screen Regression Hook (Post-publish)
+
+#### 소스 맵
+- Integration: `apps/web/src/components/admin/screen-editor/ScreenEditorHeader.tsx`
+- Navigation: `/admin/regression`, `/admin/inspector`
+
+#### 검증 절차
+1) 유효한 화면을 배포합니다.
+2) 배포 성공 후 헤더에 파란색 "Screen published" 배너가 나타나는지 확인합니다.
+3) "Run Regression" 버튼을 클릭하여 `/admin/regression` 페이지로 이동하는지 확인합니다 (해당 화면ID로 필터링되어야 함).
+4) "View Traces" 버튼을 클릭하여 `/admin/inspector` 페이지가 새 탭에서 열리는지 확인합니다.
+
+### Template-based Screen Creation
+
+#### 소스 맵
+- Utility: `apps/web/src/lib/ui-screen/screen-templates.ts`
+- Components: `apps/web/src/components/admin/ScreenAssetPanel.tsx`
+
+#### 검증 절차
+1) "Create Screen" 버튼을 클릭하여 생성 모달을 엽니다.
+2) 4개의 템플릿 옵션이 표시되는지 확인합니다:
+   - ✅ **Blank**: 최소 화면 (빈 컴포넌트)
+   - ✅ **Read-only Detail**: 텍스트 필드와 state 바인딩
+   - ✅ **List + Filter**: DataGrid와 검색 입력
+   - ✅ **List + Modal CRUD**: DataGrid와 Modal 기반 CRUD
+3) 각 템플릿을 선택하고 화면을 생성합니다.
+4) 생성된 화면의 JSON을 확인하여 템플릿의 컴포넌트, 상태, 액션이 포함되었는지 검증합니다.
+
+---
 
 ## 4. API Manager
 

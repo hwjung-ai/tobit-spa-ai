@@ -19,6 +19,11 @@
   - UI 정의(`tb_ui_def`) 관리 + 런타임 엔드포인트 바인딩
   - Grid/Chart/Dashboard 스키마 + Preview
   - Dashboard 위젯 refresh/last updated
+  - **Screen Editor Operations (U3-2 NEW)**:
+    - Screen Diff / Compare UI (Draft vs Published)
+    - Safe Publish Gate (4-step validation)
+    - Regression Hook (post-publish testing)
+    - Template-based Creation (3 templates + Blank)
 - Data Explorer UI (`/data`)
   - Postgres/Neo4j/Redis 조회 전용 탭
   - Allowlist/limit 정책, AG Grid + 인스펙터
