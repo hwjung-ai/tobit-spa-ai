@@ -642,3 +642,33 @@
 - **전체**: 고급 분석 기능, 템플릿/라이브러리, 캐싱 등 성능 고도화
 - **OPS AI**: 이상징후 검출 (Anomaly Detection), AI 질의 추천/자동 완성, RCA 템플릿
 - **CEP 엔진**: Rule 디버깅 도구, 스케줄링 고도화 (Cron 표현식)
+
+## 14. Tool Migration Roadmap Alignment (Phase 3 & 4)
+
+### Phase 3: Async/Await Optimization (docs/PHASE3_DESIGN_PLAN.md)
+- **Immediate need for production**: All tool invocations must follow the async path described in `PHASE3_DESIGN_PLAN.md` to eliminate the `asyncio.run()` overhead and unlock reliable concurrency before go‑live.
+- **Key deliverables**:
+  - Implement `_execute_tool_async()` plus `ToolExecutor.execute_async()` and the 11 `_*_via_registry_async()` helpers so that every primary orchestrator method can `await` its registry call.
+  - Keep sync wrappers (`_*_sync()` variants and `run_sync()`) for any legacy consumers while migrating call sites in `apps/api/app/modules/ops/services/ci/orchestrator/runner.py`.
+  - Verify behavior with the async runner integration tests, fallback tests, and the new `docs/PHASE3_IMPLEMENTATION_SUMMARY.md` that must describe the performance gains, behavioral guarantees, and failure-handling story.
+- **Production checklist**:
+  - Async methods must maintain context propagation for tenant/request/trace IDs.
+  - Tool calls should continue to log `ToolCall` entries and capture `ReferenceItem`s for traceability.
+  - Performance measurements should demonstrate the 5‑10% latency improvement noted in the design doc.
+
+### Phase 4: Advanced Features (docs/PHASE4_DESIGN_PLAN.md)
+- **Goal**: Build caching, smart selection, composition, and observability on top of Phase 3 so production workloads stay performant and diagnosable.
+- **High-impact tasks**:
+  - Add `ToolResultCache` (TTL + LRU) and plug it into `ToolExecutor` with config-driven TTLs to reduce repeat query costs.
+  - Implement `SmartToolSelector`, composition helpers (`CompositionPipeline`, steps, pre-defined compositions), and the `ExecutionTracer` so that every orchestrator run emits cache metrics, load-aware selections, and traceable pipelines.
+  - Create `docs/PHASE4_IMPLEMENTATION_SUMMARY.md` and instrument the rollout flags outlined in `TOOL_MIGRATION_ROADMAP.md` to gate features (`ENABLE_TOOL_CACHING`, `ENABLE_SMART_SELECTION`, etc.).
+- **Validation concerns for production**:
+  - Cache invalidation policies must be safe for near real-time data (allow bypass flags or per-tool TTLs).
+  - Composition errors must deconflict with fallback modes (fail_fast vs skip/fallback strategies).
+  - Observability traces must export to JSON/CSV for operations review without slowing the synchronous paths.
+
+### Roadmap Coordination (docs/TOOL_MIGRATION_ROADMAP.md)
+- Keep the roadmap updated with the latest status of Phase 3 & 4 deliverables, including:
+  - Feature-flag rollout strategy for async tooling (`USE_ASYNC_TOOLS`, `ASYNC_PERCENTAGE`) and advanced enhancements (caching, smart selection, tracing).
+  - Deployment checkpoints such as `PHASE3_IMPLEMENTATION_SUMMARY.md`, `PHASE3_PERFORMANCE_ANALYSIS.md`, and `PHASE4_IMPLEMENTATION_SUMMARY.md`.
+  - Success metrics (cache hit rates, selection accuracy, composition success) so ops teams know when the system is production-ready.

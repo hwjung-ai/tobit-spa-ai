@@ -122,6 +122,52 @@ class ToolExecutor:
                 },
             )
 
+    async def execute_async(
+        self,
+        tool_type: ToolType,
+        context: ToolContext,
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Execute a tool operation asynchronously without asyncio.run overhead.
+
+        Args:
+            tool_type: Type of tool to execute
+            context: Execution context
+            params: Operation parameters
+
+        Returns:
+            ToolResult data dictionary
+
+        Raises:
+            ValueError: If tool type is not registered or execution fails
+        """
+        if not self.registry.is_registered(tool_type):
+            raise ValueError(f"Tool type '{tool_type.value}' is not registered")
+
+        tool = self.registry.get_tool(tool_type)
+        operation = params.get("operation")
+        if not operation:
+            raise ValueError("operation parameter required")
+
+        try:
+            result = await tool.safe_execute(context, params)
+        except Exception as exc:
+            self.logger.error(
+                f"Async tool execution failed for {tool_type.value}",
+                extra={
+                    "error": str(exc),
+                    "tool_type": tool_type.value,
+                    "tenant_id": context.tenant_id,
+                },
+            )
+            raise
+
+        if not result.success:
+            raise ValueError(result.error or "Unknown tool error")
+
+        return result.data
+
     def get_available_tools(self) -> Dict[str, ToolType]:
         """
         Get list of available tool types.

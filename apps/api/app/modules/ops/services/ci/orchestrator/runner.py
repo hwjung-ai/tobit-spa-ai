@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Dict, Iterable, List, Literal, Sequence, Tuple
 
+import asyncio
 import os
 import threading
 
@@ -222,6 +223,15 @@ class CIOrchestratorRunner:
         limit: int | None = None,
         sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
     ) -> List[Dict[str, Any]]:
+        return asyncio.run(self._ci_search_async(keywords, filters, limit, sort))
+
+    async def _ci_search_async(
+        self,
+        keywords: Iterable[str] | None = None,
+        filters: Iterable[FilterSpec] | None = None,
+        limit: int | None = None,
+        sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
+    ) -> List[Dict[str, Any]]:
         keywords_tuple = tuple(keywords or ())
         filters_tuple = tuple(filters or ())
         input_params = {
@@ -238,19 +248,17 @@ class CIOrchestratorRunner:
             limit=limit,
             sort_column=sort[0] if sort else None,
         ) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result_data = self._ci_search_via_registry(
+                result_data = await self._ci_search_via_registry_async(
                     keywords=keywords_tuple,
                     filters=filters_tuple,
                     limit=limit,
                     sort=sort,
                 )
                 meta["row_count"] = len(result_data)
-                result_records = result_data  # registry returns list of dicts
+                result_records = result_data
             except Exception as e:
                 self.logger.warning(f"CI search via registry failed, falling back: {e}")
-                # Fallback to direct call
                 result = ci_tools.ci_search(
                     self.tenant_id,
                     keywords=keywords_tuple,
@@ -270,7 +278,7 @@ class CIOrchestratorRunner:
                 self.plan = self.plan.copy(
                     update={"primary": self.plan.primary.copy(update={"keywords": list(recovered)})}
                 )
-                return self._ci_search(keywords=recovered, filters=filters, limit=limit, sort=sort)
+                return await self._ci_search_async(keywords=recovered, filters=filters, limit=limit, sort=sort)
         return result_records
 
     def _ci_search_broad_or(
@@ -413,10 +421,12 @@ class CIOrchestratorRunner:
         return self._has_ci_identifier_in_keywords()
 
     def _ci_get(self, ci_id: str) -> Dict[str, Any] | None:
+        return asyncio.run(self._ci_get_async(ci_id))
+
+    async def _ci_get_async(self, ci_id: str) -> Dict[str, Any] | None:
         with self._tool_context("ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                detail = self._ci_get_via_registry(ci_id)
+                detail = await self._ci_get_via_registry_async(ci_id)
                 meta["found"] = bool(detail)
             except Exception as e:
                 self.logger.warning(f"CI get via registry failed, falling back: {e}")
@@ -426,10 +436,12 @@ class CIOrchestratorRunner:
         return detail.dict() if (detail and hasattr(detail, "dict")) else detail
 
     def _ci_get_by_code(self, ci_code: str) -> Dict[str, Any] | None:
+        return asyncio.run(self._ci_get_by_code_async(ci_code))
+
+    async def _ci_get_by_code_async(self, ci_code: str) -> Dict[str, Any] | None:
         with self._tool_context("ci.get", input_params={"ci_code": ci_code}, ci_code=ci_code) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                detail = self._ci_get_by_code_via_registry(ci_code)
+                detail = await self._ci_get_by_code_via_registry_async(ci_code)
                 meta["found"] = bool(detail)
             except Exception as e:
                 self.logger.warning(f"CI get_by_code via registry failed, falling back: {e}")
@@ -439,6 +451,16 @@ class CIOrchestratorRunner:
         return detail.dict() if (detail and hasattr(detail, "dict")) else detail
 
     def _ci_aggregate(
+        self,
+        group_by: Iterable[str],
+        metrics: Iterable[str],
+        filters: Iterable[FilterSpec] | None = None,
+        ci_ids: Iterable[str] | None = None,
+        top_n: int | None = None,
+    ) -> Dict[str, Any]:
+        return asyncio.run(self._ci_aggregate_async(group_by, metrics, filters, ci_ids, top_n))
+
+    async def _ci_aggregate_async(
         self,
         group_by: Iterable[str],
         metrics: Iterable[str],
@@ -466,9 +488,8 @@ class CIOrchestratorRunner:
             ci_ids_count=len(ci_ids_tuple),
             top_n=top_n,
         ) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._ci_aggregate_via_registry(
+                result = await self._ci_aggregate_via_registry_async(
                     group_by=group_by,
                     metrics=metrics,
                     filters=filters,
@@ -497,6 +518,14 @@ class CIOrchestratorRunner:
         offset: int = 0,
         filters: Iterable[FilterSpec] | None = None,
     ) -> Dict[str, Any]:
+        return asyncio.run(self._ci_list_preview_async(limit, offset, filters))
+
+    async def _ci_list_preview_async(
+        self,
+        limit: int,
+        offset: int = 0,
+        filters: Iterable[FilterSpec] | None = None,
+    ) -> Dict[str, Any]:
         filters_tuple = tuple(filters or ())
         input_params = {
             "limit": limit,
@@ -510,9 +539,8 @@ class CIOrchestratorRunner:
             offset=offset,
             filter_count=len(filters_tuple),
         ) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._ci_list_preview_via_registry(limit=limit, offset=offset, filters=filters)
+                result = await self._ci_list_preview_via_registry_async(limit=limit, offset=offset, filters=filters)
                 meta["row_count"] = len(result.get("rows", []))
             except Exception as e:
                 self.logger.warning(f"CI list_preview via registry failed, falling back: {e}")
@@ -523,6 +551,9 @@ class CIOrchestratorRunner:
         return result
 
     def _graph_expand(self, ci_id: str, view: str, depth: int, limits: dict[str, int]) -> Dict[str, Any]:
+        return asyncio.run(self._graph_expand_async(ci_id, view, depth, limits))
+
+    async def _graph_expand_async(self, ci_id: str, view: str, depth: int, limits: dict[str, int]) -> Dict[str, Any]:
         input_params = {
             "ci_id": ci_id,
             "view": view,
@@ -530,9 +561,8 @@ class CIOrchestratorRunner:
             "limits": limits,
         }
         with self._tool_context("graph.expand", input_params=input_params, view=view, depth=depth) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                raw_payload = self._graph_expand_via_registry(ci_id=ci_id, view=view, depth=depth, limits=limits)
+                raw_payload = await self._graph_expand_via_registry_async(ci_id=ci_id, view=view, depth=depth, limits=limits)
             except Exception as e:
                 self.logger.warning(f"Graph expand via registry failed, falling back: {e}")
                 raw_payload = graph_tools.graph_expand(self.tenant_id, ci_id, view, depth=depth, limits=limits)
@@ -595,15 +625,17 @@ class CIOrchestratorRunner:
         return normalized
 
     def _graph_path(self, source_id: str, target_id: str, hops: int) -> Dict[str, Any]:
+        return asyncio.run(self._graph_path_async(source_id, target_id, hops))
+
+    async def _graph_path_async(self, source_id: str, target_id: str, hops: int) -> Dict[str, Any]:
         input_params = {
             "source_id": source_id,
             "target_id": target_id,
             "hops": hops,
         }
         with self._tool_context("graph.path", input_params=input_params, hop_count=hops) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                payload = self._graph_path_via_registry(source_id=source_id, target_id=target_id, hops=hops)
+                payload = await self._graph_path_via_registry_async(source_id=source_id, target_id=target_id, hops=hops)
             except Exception as e:
                 self.logger.warning(f"Graph path via registry failed, falling back: {e}")
                 payload = graph_tools.graph_path(self.tenant_id, source_id, target_id, hops)
@@ -614,6 +646,16 @@ class CIOrchestratorRunner:
         return payload
 
     def _metric_aggregate(
+        self,
+        metric_name: str,
+        agg: str,
+        time_range: str,
+        ci_id: str | None = None,
+        ci_ids: Iterable[str] | None = None,
+    ) -> dict[str, Any]:
+        return asyncio.run(self._metric_aggregate_async(metric_name, agg, time_range, ci_id, ci_ids))
+
+    async def _metric_aggregate_async(
         self,
         metric_name: str,
         agg: str,
@@ -637,9 +679,8 @@ class CIOrchestratorRunner:
             time_range=time_range,
             ci_ids_count=len(ci_ids_tuple),
         ) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._metric_aggregate_via_registry(
+                result = await self._metric_aggregate_via_registry_async(
                     metric_name=metric_name,
                     agg=agg,
                     time_range=time_range,
@@ -664,6 +705,15 @@ class CIOrchestratorRunner:
         time_range: str,
         limit: int | None = None,
     ) -> dict[str, Any]:
+        return asyncio.run(self._metric_series_table_async(ci_id, metric_name, time_range, limit))
+
+    async def _metric_series_table_async(
+        self,
+        ci_id: str,
+        metric_name: str,
+        time_range: str,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
         input_params = {
             "ci_id": ci_id,
             "metric_name": metric_name,
@@ -671,9 +721,8 @@ class CIOrchestratorRunner:
             "limit": limit,
         }
         with self._tool_context("metric.series", input_params=input_params, metric=metric_name, time_range=time_range, limit=limit) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._metric_series_table_via_registry(
+                result = await self._metric_series_table_via_registry_async(
                     ci_id=ci_id,
                     metric_name=metric_name,
                     time_range=time_range,
@@ -689,6 +738,16 @@ class CIOrchestratorRunner:
         return result
 
     def _history_recent(
+        self,
+        history_spec: Any,
+        ci_context: Dict[str, Any],
+        ci_ids: list[str] | None = None,
+        time_range: str | None = None,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        return asyncio.run(self._history_recent_async(history_spec, ci_context, ci_ids, time_range, limit))
+
+    async def _history_recent_async(
         self,
         history_spec: Any,
         ci_context: Dict[str, Any],
@@ -712,9 +771,8 @@ class CIOrchestratorRunner:
             scope=scope,
             limit=final_limit,
         ) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._history_recent_via_registry(
+                result = await self._history_recent_via_registry_async(
                     history_spec=history_spec,
                     ci_context=ci_context,
                     ci_ids=ci_ids,
@@ -746,6 +804,15 @@ class CIOrchestratorRunner:
         metric_context: Dict[str, Any] | None,
         history_context: Dict[str, Any] | None,
     ) -> Dict[str, Any]:
+        return asyncio.run(self._cep_simulate_async(rule_id, ci_context, metric_context, history_context))
+
+    async def _cep_simulate_async(
+        self,
+        rule_id: str | None,
+        ci_context: Dict[str, Any],
+        metric_context: Dict[str, Any] | None,
+        history_context: Dict[str, Any] | None,
+    ) -> Dict[str, Any]:
         input_params = {
             "rule_id": rule_id,
             "ci_context_keys": list(ci_context.keys()) if ci_context else [],
@@ -753,9 +820,8 @@ class CIOrchestratorRunner:
             "history_context_present": bool(history_context),
         }
         with self._tool_context("cep.simulate", input_params=input_params, rule_id=rule_id) as meta:
-            # MIGRATED TO REGISTRY (Phase 2C)
             try:
-                result = self._cep_simulate_via_registry(
+                result = await self._cep_simulate_via_registry_async(
                     rule_id=rule_id,
                     ci_context=ci_context,
                     metric_context=metric_context,
@@ -2769,6 +2835,23 @@ class CIOrchestratorRunner:
 
         return result.data
 
+    async def _execute_tool_async(
+        self,
+        tool_type: ToolType,
+        operation: str,
+        **params
+    ) -> Dict[str, Any]:
+        """
+        Execute a tool asynchronously through the registry.
+        """
+        context = ToolContext(
+            tenant_id=self.tenant_id,
+            request_id=get_request_context().get("request_id"),
+            trace_id=get_request_context().get("trace_id"),
+        )
+        params_with_op = {"operation": operation, **params}
+        return await self._tool_executor.execute_async(tool_type, context, params_with_op)
+
     # CI Tool Helpers
     def _ci_search_via_registry(
         self,
@@ -2980,6 +3063,177 @@ class CIOrchestratorRunner:
         Returns same format as primary _cep_simulate.
         """
         result = self._execute_tool(
+            ToolType.CEP,
+            "simulate",
+            rule_id=rule_id or "",
+            ci_context=ci_context,
+            metric_context=metric_context,
+            history_context=history_context,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    async def _ci_search_via_registry_async(
+        self,
+        keywords: Iterable[str] | None = None,
+        filters: Iterable[FilterSpec] | None = None,
+        limit: int | None = None,
+        sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
+    ) -> List[Dict[str, Any]]:
+        result = await self._execute_tool_async(
+            ToolType.CI,
+            "search",
+            keywords=keywords,
+            filters=filters,
+            limit=limit,
+            sort=sort,
+        )
+        return [r.dict() if hasattr(r, "dict") else r for r in result.records]
+
+    async def _ci_get_via_registry_async(self, ci_id: str) -> Dict[str, Any] | None:
+        try:
+            result = await self._execute_tool_async(ToolType.CI, "get", ci_id=ci_id)
+            return result.dict() if hasattr(result, "dict") else result
+        except ValueError:
+            return None
+
+    async def _ci_get_by_code_via_registry_async(self, ci_code: str) -> Dict[str, Any] | None:
+        try:
+            result = await self._execute_tool_async(ToolType.CI, "get_by_code", ci_code=ci_code)
+            return result.dict() if hasattr(result, "dict") else result
+        except ValueError:
+            return None
+
+    async def _ci_aggregate_via_registry_async(
+        self,
+        group_by: Iterable[str],
+        metrics: Iterable[str],
+        filters: Iterable[FilterSpec] | None = None,
+        ci_ids: Iterable[str] | None = None,
+        top_n: int | None = None,
+    ) -> Dict[str, Any]:
+        result = await self._execute_tool_async(
+            ToolType.CI,
+            "aggregate",
+            group_by=group_by,
+            metrics=metrics,
+            filters=filters,
+            ci_ids=ci_ids,
+            top_n=top_n,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    async def _ci_list_preview_via_registry_async(
+        self,
+        limit: int,
+        offset: int = 0,
+        filters: Iterable[FilterSpec] | None = None,
+    ) -> Dict[str, Any]:
+        result = await self._execute_tool_async(
+            ToolType.CI,
+            "list_preview",
+            limit=limit,
+            offset=offset,
+            filters=filters,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    async def _metric_aggregate_via_registry_async(
+        self,
+        metric_name: str,
+        agg: str,
+        time_range: str,
+        ci_id: str | None = None,
+        ci_ids: Iterable[str] | None = None,
+    ) -> dict[str, Any]:
+        result = await self._execute_tool_async(
+            ToolType.METRIC,
+            "aggregate",
+            metric_name=metric_name,
+            agg=agg,
+            time_range=time_range,
+            ci_id=ci_id,
+            ci_ids=ci_ids,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    async def _metric_series_table_via_registry_async(
+        self,
+        ci_id: str,
+        metric_name: str,
+        time_range: str,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        result = await self._execute_tool_async(
+            ToolType.METRIC,
+            "series",
+            ci_id=ci_id,
+            metric_name=metric_name,
+            time_range=time_range,
+            limit=limit,
+        )
+        return result.dict() if hasattr(result, "dict") else result
+
+    async def _graph_expand_via_registry_async(
+        self,
+        ci_id: str,
+        view: str,
+        depth: int,
+        limits: dict[str, int],
+    ) -> Dict[str, Any]:
+        result = await self._execute_tool_async(
+            ToolType.GRAPH,
+            "expand",
+            ci_id=ci_id,
+            view=view,
+            depth=depth,
+            limits=limits,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    async def _graph_path_via_registry_async(
+        self,
+        source_id: str,
+        target_id: str,
+        hops: int,
+    ) -> Dict[str, Any]:
+        result = await self._execute_tool_async(
+            ToolType.GRAPH,
+            "path",
+            ci_id=source_id,
+            target_ci_id=target_id,
+            max_hops=hops,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    async def _history_recent_via_registry_async(
+        self,
+        history_spec: Any,
+        ci_context: Dict[str, Any],
+        ci_ids: list[str] | None = None,
+        time_range: str | None = None,
+        limit: int | None = None,
+    ) -> dict[str, Any]:
+        final_time_range = time_range or getattr(history_spec, "time_range", None) or "last_7d"
+        final_limit = limit or getattr(history_spec, "limit", None) or 50
+
+        result = await self._execute_tool_async(
+            ToolType.HISTORY,
+            "event_log",
+            ci=ci_context,
+            time_range=final_time_range,
+            limit=final_limit,
+            ci_ids=ci_ids,
+        )
+        return result if isinstance(result, dict) else result.dict()
+
+    async def _cep_simulate_via_registry_async(
+        self,
+        rule_id: str | None,
+        ci_context: Dict[str, Any],
+        metric_context: Dict[str, Any] | None,
+        history_context: Dict[str, Any] | None,
+    ) -> Dict[str, Any]:
+        result = await self._execute_tool_async(
             ToolType.CEP,
             "simulate",
             rule_id=rule_id or "",
