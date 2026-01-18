@@ -33,6 +33,10 @@ from core.config import get_settings
 from apps.api.core.logging import configure_logging
 from apps.api.core.middleware import RequestIDMiddleware
 
+# Initialize OPS tool registry
+from app.modules.ops.services.ci.tools.registry_init import initialize_tools  # noqa: E402
+initialize_tools()
+
 settings = get_settings()
 configure_logging(settings.log_level)
 

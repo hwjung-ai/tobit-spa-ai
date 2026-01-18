@@ -7,6 +7,12 @@ from psycopg import Connection
 from scripts.seed.utils import get_postgres_conn
 from schemas.tool_contracts import CIRecord, CISearchResult, CIAggregateResult, CIListResult
 from app.shared.config_loader import load_text
+from app.modules.ops.services.ci.tools.base import (
+    BaseTool,
+    ToolContext,
+    ToolResult,
+    ToolType,
+)
 
 SEARCH_COLUMNS = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category"]
 FILTER_FIELDS = {"ci_type", "ci_subtype", "ci_category", "status", "location", "owner"}
@@ -381,3 +387,140 @@ def ci_list_preview(
         query=query.strip(),
         params=params,
     )
+
+
+# ==============================================================================
+# Tool Interface Implementation
+# ==============================================================================
+
+
+class CITool(BaseTool):
+    """
+    Tool for CI (Configuration Item) operations.
+
+    Provides methods to search, retrieve, aggregate, and list CI configuration items
+    from the PostgreSQL database. Supports keyword search, filtering, and various
+    aggregation operations.
+    """
+
+    @property
+    def tool_type(self) -> ToolType:
+        """Return the CI tool type."""
+        return ToolType.CI
+
+    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+        """
+        Determine if this tool should execute for the given operation.
+
+        CI tool handles operations with these parameter keys:
+        - operation: 'search', 'search_broad_or', 'get', 'get_by_code', 'aggregate', 'list_preview'
+
+        Args:
+            context: Execution context
+            params: Tool parameters
+
+        Returns:
+            True if this is a CI operation, False otherwise
+        """
+        operation = params.get("operation", "")
+        valid_operations = {
+            "search",
+            "search_broad_or",
+            "get",
+            "get_by_code",
+            "aggregate",
+            "list_preview",
+        }
+        return operation in valid_operations
+
+    async def execute(self, context: ToolContext, params: Dict[str, Any]) -> ToolResult:
+        """
+        Execute a CI operation.
+
+        Dispatches to the appropriate function based on the 'operation' parameter.
+
+        Parameters:
+            operation (str): The operation to perform
+            keywords (list[str], optional): Keywords for search
+            filters (list[dict], optional): Filter specifications
+            limit (int, optional): Result limit
+            offset (int, optional): Result offset
+            sort (tuple, optional): Sort specification
+            ci_id (str, optional): CI ID for retrieval or aggregation
+            ci_code (str, optional): CI code for retrieval
+            ci_ids (list[str], optional): Multiple CI IDs for aggregation
+            group_by (list[str], optional): Grouping fields for aggregation
+            metrics (list[str], optional): Metrics for aggregation
+            top_n (int, optional): Top N results for aggregation
+
+        Returns:
+            ToolResult with success status and operation result
+        """
+        try:
+            operation = params.get("operation", "")
+            tenant_id = context.tenant_id
+
+            if operation == "search":
+                result = ci_search(
+                    tenant_id=tenant_id,
+                    keywords=params.get("keywords"),
+                    filters=params.get("filters"),
+                    limit=params.get("limit", 10),
+                    sort=params.get("sort"),
+                )
+            elif operation == "search_broad_or":
+                result = ci_search_broad_or(
+                    tenant_id=tenant_id,
+                    keywords=params.get("keywords"),
+                    filters=params.get("filters"),
+                    limit=params.get("limit", 10),
+                    sort=params.get("sort"),
+                )
+            elif operation == "get":
+                result = ci_get(tenant_id=tenant_id, ci_id=params["ci_id"])
+                if result is None:
+                    return ToolResult(
+                        success=False,
+                        error=f"CI with ID '{params['ci_id']}' not found",
+                    )
+            elif operation == "get_by_code":
+                result = ci_get_by_code(
+                    tenant_id=tenant_id, ci_code=params["ci_code"]
+                )
+                if result is None:
+                    return ToolResult(
+                        success=False,
+                        error=f"CI with code '{params['ci_code']}' not found",
+                    )
+            elif operation == "aggregate":
+                result = ci_aggregate(
+                    tenant_id=tenant_id,
+                    group_by=params.get("group_by", []),
+                    metrics=params.get("metrics", []),
+                    filters=params.get("filters"),
+                    ci_ids=params.get("ci_ids"),
+                    top_n=params.get("top_n", 50),
+                )
+            elif operation == "list_preview":
+                result = ci_list_preview(
+                    tenant_id=tenant_id,
+                    limit=params.get("limit", 50),
+                    offset=params.get("offset", 0),
+                    filters=params.get("filters"),
+                )
+            else:
+                return ToolResult(
+                    success=False,
+                    error=f"Unknown CI operation: {operation}",
+                )
+
+            return ToolResult(success=True, data=result)
+
+        except ValueError as e:
+            return await self.format_error(context, e, params)
+        except Exception as e:
+            return await self.format_error(context, e, params)
+
+
+# Create and register the CI tool
+_ci_tool = CITool()

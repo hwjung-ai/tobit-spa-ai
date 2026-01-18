@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Iterable, Literal, List, Tuple
+from typing import Any, Dict, Iterable, Literal, List, Tuple
 
 from scripts.seed.utils import get_postgres_conn
 from schemas.tool_contracts import HistoryRecord, HistoryResult
 from app.shared.config_loader import load_text
+from app.modules.ops.services.ci.tools.base import (
+    BaseTool,
+    ToolContext,
+    ToolResult,
+    ToolType,
+)
 
 TIME_RANGES = {
     "last_24h": timedelta(hours=24),
@@ -214,3 +220,98 @@ def _fetch_sql_rows(query: str, params: Iterable) -> list[tuple]:
         with conn.cursor() as cur:
             cur.execute(query, tuple(params))
             return cur.fetchall()
+
+
+# ==============================================================================
+# Tool Interface Implementation
+# ==============================================================================
+
+
+class HistoryTool(BaseTool):
+    """
+    Tool for History and Event Log operations.
+
+    Provides methods to query event logs and historical data from the system,
+    including work history, maintenance records, and general event logs.
+    """
+
+    @property
+    def tool_type(self) -> ToolType:
+        """Return the History tool type."""
+        return ToolType.HISTORY
+
+    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+        """
+        Determine if this tool should execute for the given operation.
+
+        History tool handles operations with these parameter keys:
+        - operation: 'event_log', 'work_and_maintenance', 'detect_sections'
+
+        Args:
+            context: Execution context
+            params: Tool parameters
+
+        Returns:
+            True if this is a History operation, False otherwise
+        """
+        operation = params.get("operation", "")
+        valid_operations = {"event_log", "work_and_maintenance", "detect_sections"}
+        return operation in valid_operations
+
+    async def execute(self, context: ToolContext, params: Dict[str, Any]) -> ToolResult:
+        """
+        Execute a History operation.
+
+        Dispatches to the appropriate function based on the 'operation' parameter.
+
+        Parameters:
+            operation (str): The operation to perform
+            time_range (str): Time range ('last_24h', 'last_7d', 'last_30d')
+            limit (int, optional): Result limit
+            ci (dict, optional): CI reference for filtering
+            ci_ids (list[str], optional): Multiple CI IDs for filtering
+            question (str, optional): Question text for detecting history sections
+
+        Returns:
+            ToolResult with success status and history data
+        """
+        try:
+            operation = params.get("operation", "")
+            tenant_id = context.tenant_id
+
+            if operation == "event_log":
+                result = event_log_recent(
+                    tenant_id=tenant_id,
+                    ci=params.get("ci"),
+                    time_range=params.get("time_range", "last_24h"),
+                    limit=params.get("limit", 50),
+                    ci_ids=params.get("ci_ids"),
+                )
+            elif operation == "work_and_maintenance":
+                result = recent_work_and_maintenance(
+                    tenant_id=tenant_id,
+                    time_range=params.get("time_range", "last_24h"),
+                    limit=params.get("limit", 50),
+                )
+            elif operation == "detect_sections":
+                sections = detect_history_sections(params.get("question", ""))
+                result = {
+                    "sections": list(sections),
+                    "question": params.get("question", ""),
+                }
+            else:
+                return ToolResult(
+                    success=False,
+                    error=f"Unknown History operation: {operation}",
+                )
+
+            return ToolResult(success=True, data=result)
+
+        except ValueError as e:
+            return await self.format_error(context, e, params)
+        except Exception as e:
+            return await self.format_error(context, e, params)
+
+
+# Create and register the History tool
+_history_tool = HistoryTool()

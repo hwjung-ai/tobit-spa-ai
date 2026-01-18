@@ -10,6 +10,12 @@ from app.modules.ops.services.ci.view_registry import Direction, VIEW_REGISTRY
 from schemas.tool_contracts import GraphExpandResult, GraphPathResult
 from scripts.seed.utils import get_neo4j_driver
 from app.shared.config_loader import load_text
+from app.modules.ops.services.ci.tools.base import (
+    BaseTool,
+    ToolContext,
+    ToolResult,
+    ToolType,
+)
 
 DEFAULT_LIMITS = {"max_nodes": 200, "max_edges": 400, "max_paths": 25}
 
@@ -212,3 +218,94 @@ def graph_path(
         truncated=len(edges) > depth,
         meta={"rel_types": allowed_rel, "depth": depth},
     )
+
+
+# ==============================================================================
+# Tool Interface Implementation
+# ==============================================================================
+
+
+class GraphTool(BaseTool):
+    """
+    Tool for Graph operations.
+
+    Provides methods to explore relationship graphs and find paths between
+    configuration items using Neo4j backend.
+    """
+
+    @property
+    def tool_type(self) -> ToolType:
+        """Return the Graph tool type."""
+        return ToolType.GRAPH
+
+    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+        """
+        Determine if this tool should execute for the given operation.
+
+        Graph tool handles operations with these parameter keys:
+        - operation: 'expand', 'path'
+
+        Args:
+            context: Execution context
+            params: Tool parameters
+
+        Returns:
+            True if this is a Graph operation, False otherwise
+        """
+        operation = params.get("operation", "")
+        valid_operations = {"expand", "path"}
+        return operation in valid_operations
+
+    async def execute(self, context: ToolContext, params: Dict[str, Any]) -> ToolResult:
+        """
+        Execute a Graph operation.
+
+        Dispatches to the appropriate function based on the 'operation' parameter.
+
+        Parameters:
+            operation (str): The operation to perform ('expand' or 'path')
+            ci_id (str): Starting CI ID for expand, or source for path
+            target_ci_id (str, optional): Target CI ID for path operation
+            view (str): Graph view name (e.g., 'COMPOSITION', 'DEPENDENCY')
+            depth (int, optional): Traversal depth
+            max_hops (int, optional): Maximum hops for path finding
+            limits (dict, optional): Node/edge limits
+
+        Returns:
+            ToolResult with success status and graph data
+        """
+        try:
+            operation = params.get("operation", "")
+            tenant_id = context.tenant_id
+
+            if operation == "expand":
+                result = graph_expand(
+                    tenant_id=tenant_id,
+                    root_ci_id=params["ci_id"],
+                    view=params.get("view", "COMPOSITION"),
+                    depth=params.get("depth"),
+                    limits=params.get("limits"),
+                )
+            elif operation == "path":
+                result = graph_path(
+                    tenant_id=tenant_id,
+                    source_ci_id=params["ci_id"],
+                    target_ci_id=params["target_ci_id"],
+                    max_hops=params.get("max_hops", 10),
+                )
+            else:
+                return ToolResult(
+                    success=False,
+                    error=f"Unknown Graph operation: {operation}",
+                )
+
+            return ToolResult(success=True, data=result)
+
+        except ValueError as e:
+            return await self.format_error(context, e, params)
+        except Exception as e:
+            return await self.format_error(context, e, params)
+
+
+# Create and register the Graph tool
+_graph_tool = GraphTool()

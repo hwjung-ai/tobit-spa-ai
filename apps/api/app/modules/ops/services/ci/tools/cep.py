@@ -11,6 +11,12 @@ from fastapi import HTTPException
 from app.modules.cep_builder.crud import get_rule, record_exec_log
 from app.modules.cep_builder.executor import evaluate_trigger
 from core.db import get_session_context
+from app.modules.ops.services.ci.tools.base import (
+    BaseTool,
+    ToolContext,
+    ToolResult,
+    ToolType,
+)
 
 try:
     import yaml  # type: ignore[import]
@@ -473,3 +479,86 @@ def cep_simulate(
     else:
         response["event_browser_ref"] = {"tenant_id": tenant_id, "simulation_id": simulation_id}
     return response
+
+
+# ==============================================================================
+# Tool Interface Implementation
+# ==============================================================================
+
+
+class CEPTool(BaseTool):
+    """
+    Tool for Complex Event Processing (CEP) operations.
+
+    Provides methods to simulate and test CEP rules against CI configuration and
+    metric/history context data.
+    """
+
+    @property
+    def tool_type(self) -> ToolType:
+        """Return the CEP tool type."""
+        return ToolType.CEP
+
+    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+        """
+        Determine if this tool should execute for the given operation.
+
+        CEP tool handles operations with these parameter keys:
+        - operation: 'simulate'
+
+        Args:
+            context: Execution context
+            params: Tool parameters
+
+        Returns:
+            True if this is a CEP operation, False otherwise
+        """
+        operation = params.get("operation", "")
+        return operation == "simulate"
+
+    async def execute(self, context: ToolContext, params: Dict[str, Any]) -> ToolResult:
+        """
+        Execute a CEP operation.
+
+        Currently supports rule simulation against test payloads.
+
+        Parameters:
+            operation (str): The operation to perform ('simulate')
+            rule_id (str): ID of the CEP rule to simulate
+            ci_context (dict): CI configuration item context
+            metric_context (dict, optional): Metric data context
+            history_context (dict, optional): History/event log context
+            test_payload (dict, optional): Custom test payload
+
+        Returns:
+            ToolResult with success status and simulation results
+        """
+        try:
+            operation = params.get("operation", "")
+            tenant_id = context.tenant_id
+
+            if operation == "simulate":
+                result = cep_simulate(
+                    tenant_id=tenant_id,
+                    rule_id=params["rule_id"],
+                    ci_context=params.get("ci_context", {}),
+                    metric_context=params.get("metric_context"),
+                    history_context=params.get("history_context"),
+                    test_payload=params.get("test_payload"),
+                )
+            else:
+                return ToolResult(
+                    success=False,
+                    error=f"Unknown CEP operation: {operation}",
+                )
+
+            return ToolResult(success=True, data=result)
+
+        except ValueError as e:
+            return await self.format_error(context, e, params)
+        except Exception as e:
+            return await self.format_error(context, e, params)
+
+
+# Create and register the CEP tool
+_cep_tool = CEPTool()
