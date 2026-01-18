@@ -2,16 +2,16 @@
 
 import React, { useState } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
-import { componentRegistry, getComponentDescriptor } from "@/lib/ui-screen/component-registry";
+import { COMPONENT_REGISTRY } from "@/lib/ui-screen/component-registry";
 import { Input } from "@/components/ui/input";
 
 export default function ComponentPalette() {
   const editorState = useEditorState();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredComponents = Object.entries(componentRegistry).filter(([type, desc]) => {
+  const filteredComponents = COMPONENT_REGISTRY.filter((desc) => {
     if (!searchTerm) return true;
-    return type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    return desc.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
       desc.label.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -40,15 +40,15 @@ export default function ComponentPalette() {
             No components found
           </div>
         ) : (
-          filteredComponents.map(([type, desc]) => (
+          filteredComponents.map((desc) => (
             <button
-              key={type}
-              onClick={() => handleAddComponent(type)}
+              key={desc.type}
+              onClick={() => handleAddComponent(desc.type)}
               className="w-full text-left px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs font-medium text-slate-200 border border-slate-700 hover:border-slate-600"
-              data-testid={`palette-component-${type}`}
+              data-testid={`palette-component-${desc.type}`}
             >
               <div className="font-semibold">{desc.label}</div>
-              <div className="text-slate-400 text-[10px] mt-1">{type}</div>
+              <div className="text-slate-400 text-[10px] mt-1">{desc.type}</div>
             </button>
           ))
         )}

@@ -678,7 +678,7 @@ export default function CepBuilderPage() {
       storageKey,
     })
       .then(async (result) => {
-        setSaveTarget(result.target);
+        setSaveTarget(result.target as "server" | "local" | null);
         if (result.target === "server") {
           setStatusMessage("Saved to server.");
           setDraftNotes("서버에 저장되었습니다.");

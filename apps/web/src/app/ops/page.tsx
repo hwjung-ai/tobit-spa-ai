@@ -504,7 +504,7 @@ export default function OpsPage() {
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry];
+  }, [currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry]);
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {

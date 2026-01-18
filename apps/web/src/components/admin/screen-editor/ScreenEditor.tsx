@@ -5,7 +5,8 @@ import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ScreenEditorHeader from "./ScreenEditorHeader";
 import ScreenEditorTabs from "./ScreenEditorTabs";
 import ScreenEditorErrors from "./common/ScreenEditorErrors";
-import { Toast } from "@/components/admin/Toast";
+import Toast from "@/components/admin/Toast";
+import PublishGateModal from "./publish/PublishGateModal";
 
 interface ScreenEditorProps {
   assetId: string;
@@ -16,6 +17,8 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [showPublishGate, setShowPublishGate] = useState(false);
+  const [justPublished, setJustPublished] = useState(false);
 
   useEffect(() => {
     loadScreen();
@@ -45,9 +48,14 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublishClick = () => {
+    setShowPublishGate(true);
+  };
+
+  const handlePublishConfirm = async () => {
     try {
       await editorState.publish();
+      setJustPublished(true);
       setToast({ message: "Screen published successfully", type: "success" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to publish";
@@ -103,10 +111,12 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         canPublish={editorState.canPublish}
         canRollback={editorState.canRollback}
         onSaveDraft={handleSaveDraft}
-        onPublish={handlePublish}
+        onPublish={handlePublishClick}
         onRollback={handleRollback}
         isSaving={editorState.isSaving}
         isPublishing={editorState.isPublishing}
+        justPublished={justPublished}
+        screenId={editorState.screen?.id}
       />
 
       {/* Errors */}
@@ -124,9 +134,16 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         <Toast
           message={toast.message}
           type={toast.type}
-          onDismiss={() => setToast(null)}
+          onClose={() => setToast(null)}
         />
       )}
+
+      {/* Publish Gate Modal */}
+      <PublishGateModal
+        open={showPublishGate}
+        onOpenChange={setShowPublishGate}
+        onConfirm={handlePublishConfirm}
+      />
     </div>
   );
 }

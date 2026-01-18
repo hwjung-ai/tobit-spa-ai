@@ -1,8 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import { generatePropsFormFields } from "@/lib/ui-screen/props-schema-utils";
+import { BindingEditor } from "@/components/admin/screen-editor/visual/BindingEditor";
+import { ActionEditorModal } from "@/components/admin/screen-editor/actions/ActionEditorModal";
+import { extractStatePaths, buildPathTree } from "@/lib/ui-screen/binding-path-utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,11 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ComponentActionRef } from "@/lib/ui-screen/screen.schema";
+import { Trash2, Plus, Edit2 } from "lucide-react";
 
 export default function PropertiesPanel() {
   const editorState = useEditorState();
   const { selectedComponent } = editorState;
   const [formData, setFormData] = useState<Record<string, any>>({});
+  const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [editingAction, setEditingAction] = useState<ComponentActionRef | null>(null);
 
   // Update form data when component changes
   React.useEffect(() => {
@@ -25,6 +33,22 @@ export default function PropertiesPanel() {
       setFormData(selectedComponent.props || {});
     }
   }, [selectedComponent]);
+
+  // Build path trees for binding editor
+  const pathTrees = useMemo(() => {
+    if (!editorState.screen?.state) {
+      return { stateTree: [], contextTree: [], inputsTree: [] };
+    }
+
+    const statePaths = extractStatePaths(editorState.screen.state.schema || {});
+    const stateTree = buildPathTree(statePaths);
+
+    return {
+      stateTree,
+      contextTree: [], // Context paths would be extracted similarly if provided
+      inputsTree: [], // Inputs paths would be extracted similarly if provided
+    };
+  }, [editorState.screen?.state]);
 
   if (!selectedComponent) {
     return (
@@ -106,9 +130,139 @@ export default function PropertiesPanel() {
             />
           ))
         )}
+
+        {/* Bindings Section */}
+        <Accordion type="single" collapsible>
+          <AccordionItem value="bindings">
+            <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              Bindings
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pt-3">
+              {fields.length === 0 ? (
+                <p className="text-xs text-slate-500">
+                  No bindable properties
+                </p>
+              ) : (
+                fields.map(field => (
+                  <div key={`binding-${field.name}`}>
+                    <label className="block text-xs font-medium text-slate-300 mb-2">
+                      {field.label || field.name}
+                    </label>
+                    <BindingEditor
+                      value={formData[field.name] || ""}
+                      onChange={(value) => handlePropChange(field.name, value)}
+                      stateTree={pathTrees.stateTree}
+                      contextTree={pathTrees.contextTree}
+                      inputsTree={pathTrees.inputsTree}
+                      placeholder={`Bind ${field.name}...`}
+                      className="text-xs"
+                      showModeToggle={true}
+                    />
+                  </div>
+                ))
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Visibility Section */}
+        <Accordion type="single" collapsible>
+          <AccordionItem value="visibility">
+            <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              Visibility
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 pt-3">
+              <label className="block text-xs font-medium text-slate-300 mb-2">
+                Show when (optional)
+              </label>
+              <BindingEditor
+                value={selectedComponent.visibility?.rule || ""}
+                onChange={(value) => editorState.updateComponentVisibility(selectedComponent.id, value || null)}
+                stateTree={pathTrees.stateTree}
+                contextTree={pathTrees.contextTree}
+                inputsTree={pathTrees.inputsTree}
+                placeholder="Select visibility condition..."
+                className="text-xs"
+                showModeToggle={false}
+              />
+              <p className="text-xs text-slate-500">
+                Component will be hidden if condition is empty or false
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+
+        {/* Actions Section */}
+        <Accordion type="single" collapsible>
+          <AccordionItem value="actions">
+            <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              Actions ({selectedComponent.actions?.length || 0})
+            </AccordionTrigger>
+            <AccordionContent className="space-y-2 pt-3">
+              {!selectedComponent.actions || selectedComponent.actions.length === 0 ? (
+                <p className="text-xs text-slate-500">
+                  No actions defined. Click "Add Action" to create one.
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {selectedComponent.actions.map((action) => (
+                    <div
+                      key={action.id}
+                      className="flex items-center justify-between p-2 rounded bg-slate-800 border border-slate-700"
+                    >
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-slate-200">
+                          {action.label || action.id}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {action.handler}
+                        </p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingAction(action);
+                            setActionModalOpen(true);
+                          }}
+                          className="h-6 px-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-700"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            editorState.deleteComponentAction(selectedComponent.id, action.id);
+                          }}
+                          className="h-6 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-slate-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Button
+                onClick={() => {
+                  setEditingAction(null);
+                  setActionModalOpen(true);
+                }}
+                variant="outline"
+                size="sm"
+                className="w-full h-8 text-xs mt-2"
+              >
+                <Plus className="w-3 h-3 mr-1" />
+                Add Action
+              </Button>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
-      {/* Actions */}
+      {/* Component-level Actions */}
       <div className="border-t border-slate-800 p-3 space-y-2">
         <Button
           onClick={handleDuplicate}
@@ -135,6 +289,25 @@ export default function PropertiesPanel() {
           Delete
         </Button>
       </div>
+
+      {/* Action Editor Modal */}
+      <ActionEditorModal
+        open={actionModalOpen}
+        onOpenChange={setActionModalOpen}
+        action={editingAction}
+        actionType="component"
+        onSave={(action) => {
+          if (editingAction) {
+            editorState.updateComponentAction(selectedComponent.id, editingAction.id, action as any);
+          } else {
+            editorState.addComponentAction(selectedComponent.id, action as ComponentActionRef);
+          }
+          setEditingAction(null);
+        }}
+        stateTree={pathTrees.stateTree}
+        contextTree={pathTrees.contextTree}
+        inputsTree={pathTrees.inputsTree}
+      />
     </div>
   );
 }

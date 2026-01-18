@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VisualEditor from "./visual/VisualEditor";
 import JsonEditor from "./json/JsonEditor";
 import PreviewTab from "./preview/PreviewTab";
+import DiffTab from "./diff/DiffTab";
 
 interface ScreenEditorTabsProps {
   assetId: string;
@@ -29,6 +30,9 @@ export default function ScreenEditorTabs({ assetId }: ScreenEditorTabsProps) {
         </TabsTrigger>
         <TabsTrigger value="preview" data-testid="tab-preview">
           Preview
+        </TabsTrigger>
+        <TabsTrigger value="diff" data-testid="tab-diff">
+          Diff
         </TabsTrigger>
       </TabsList>
 
@@ -55,6 +59,14 @@ export default function ScreenEditorTabs({ assetId }: ScreenEditorTabsProps) {
           data-testid="preview-content"
         >
           <PreviewTab />
+        </TabsContent>
+
+        <TabsContent
+          value="diff"
+          className="h-full"
+          data-testid="diff-content"
+        >
+          <DiffTab />
         </TabsContent>
       </div>
     </Tabs>

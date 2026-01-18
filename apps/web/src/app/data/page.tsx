@@ -80,19 +80,19 @@ const isNeo4jRelationship = (value: unknown): value is Neo4jSerializedRelationsh
     (value as Record<string, unknown>).__neo4j_type === "relationship"
   );
 
-const getNodeDisplayName = (node: Neo4jSerializedNode) =>
-  node.properties?.ci_code ??
+const getNodeDisplayName = (node: Neo4jSerializedNode): string =>
+  String(node.properties?.ci_code ??
   node.properties?.ci_name ??
   node.properties?.name ??
   node.labels[0] ??
-  `Node:${node.id}`;
+  `Node:${node.id}`);
 
 const formatGridCellValue = (value: unknown): string | number | boolean => {
   if (value === null || value === undefined) {
     return "";
   }
   if (isNeo4jNode(value)) {
-    return getNodeDisplayName(value);
+    return getNodeDisplayName(value) as string;
   }
   if (isNeo4jRelationship(value)) {
     return `${value.type}:${value.start}->${value.end}`;
@@ -104,11 +104,11 @@ const formatGridCellValue = (value: unknown): string | number | boolean => {
       return Object.prototype.toString.call(value);
     }
   }
-  return value;
+  return value as string | number | boolean;
 };
 
 const normalizeResult = (rows: GridRow[]): NormalizedResult => {
-  const nodeMap = new Map<string, { label: string; properties: Record<string, unknown> }>();
+  const nodeMap = new Map<string, { label: string; displayName: string; properties: Record<string, unknown> }>();
   const edgeMap = new Map<string, Neo4jSerializedRelationship>();
   const rowGraphRefs: RowGraphRef[] = [];
 
@@ -579,8 +579,8 @@ export default function DataExplorerPage() {
     setSelectedRow(null);
     setHighlightedNodeIds(new Set([node.id]));
     const connectedEdges = neo4jGraphPreview.edges
-      .filter((edge) => edge.source === node.id || edge.target === node.id)
-      .map((edge) => edge.id);
+      .filter((edge) => (edge as any).source === node.id || (edge as any).target === node.id)
+      .map((edge) => (edge as any).id);
     setHighlightedEdgeIds(new Set(connectedEdges));
   };
 
@@ -591,7 +591,7 @@ export default function DataExplorerPage() {
     selectedGraphNode !== null
       ? {
         label: selectedGraphNode.data.label,
-        originalLabel: selectedGraphNode.data.originalLabel,
+        originalLabel: (selectedGraphNode.data as any).originalLabel,
         properties: selectedGraphNode.data.properties,
       }
       : selectedRow;

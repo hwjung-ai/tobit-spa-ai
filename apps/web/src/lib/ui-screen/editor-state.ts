@@ -1,6 +1,8 @@
 import { create } from "zustand";
-import { ScreenSchemaV1, Component } from "./screen.schema";
+import { ScreenSchemaV1, Component, ScreenAction, ComponentActionRef } from "./screen.schema";
 import { getComponentDescriptor } from "./component-registry";
+import { validateBindingPath, validateActionHandler, validateScreenSchema } from "./validation-utils";
+import { parseBindingExpression, formatBindingExpression } from "./binding-path-utils";
 
 export interface ValidationError {
   path: string;
@@ -38,6 +40,31 @@ export interface EditorState {
   moveComponent: (id: string, direction: "up" | "down") => void;
   updateLayout: (layout: any) => void;
   updateScreenFromJson: (json: string) => void;
+
+  // Action CRUD (screen-level)
+  addAction: (action: ScreenAction) => void;
+  updateAction: (actionId: string, updates: Partial<ScreenAction>) => void;
+  deleteAction: (actionId: string) => void;
+  getAction: (actionId: string) => ScreenAction | null;
+
+  // Component Action CRUD
+  addComponentAction: (componentId: string, action: ComponentActionRef) => void;
+  updateComponentAction: (componentId: string, actionId: string, updates: Partial<ComponentActionRef>) => void;
+  deleteComponentAction: (componentId: string, actionId: string) => void;
+  getComponentActions: (componentId: string) => ComponentActionRef[];
+
+  // Binding management
+  updateBinding: (targetPath: string, sourcePath: string) => void;
+  deleteBinding: (targetPath: string) => void;
+  getAllBindings: () => Record<string, string>;
+
+  // Component visibility
+  updateComponentVisibility: (componentId: string, visibleIf: string | null) => void;
+
+  // Action testing (Phase 4)
+  testAction: (actionId: string, payload?: Record<string, any>) => Promise<any>;
+  applyStatePatch: (patch: Record<string, any>) => void;
+
   saveDraft: () => Promise<void>;
   publish: () => Promise<void>;
   rollback: () => Promise<void>;
@@ -57,6 +84,17 @@ function generateComponentId(type: string, existingComponents: Component[]): str
   return id;
 }
 
+// Helper to generate unique action ID
+function generateActionId(existingActions: ScreenAction[]): string {
+  let counter = 1;
+  let id = `action_${counter}`;
+  while (existingActions.some(a => a.id === id)) {
+    counter++;
+    id = `action_${counter}`;
+  }
+  return id;
+}
+
 // Helper to create default component
 function createDefaultComponent(type: string, id: string): Component {
   const descriptor = getComponentDescriptor(type);
@@ -68,57 +106,42 @@ function createDefaultComponent(type: string, id: string): Component {
   };
 }
 
-// Validation function
+// Validation function - uses comprehensive validation from validation-utils
 function validateScreen(screen: ScreenSchemaV1): ValidationError[] {
-  const errors: ValidationError[] = [];
+  try {
+    // Use the comprehensive validation from validation-utils
+    return validateScreenSchema(screen);
+  } catch (error) {
+    // Fallback basic validation if comprehensive validation fails
+    console.warn("Comprehensive validation failed, using fallback:", error);
+    const errors: ValidationError[] = [];
 
-  if (!screen.screen_id) {
-    errors.push({ path: "screen_id", message: "screen_id is required", severity: "error" });
+    if (!screen.screen_id) {
+      errors.push({ path: "screen_id", message: "screen_id is required", severity: "error" });
+    }
+
+    if (!screen.layout) {
+      errors.push({ path: "layout", message: "layout is required", severity: "error" });
+    } else if (!screen.layout.type) {
+      errors.push({ path: "layout.type", message: "layout.type is required", severity: "error" });
+    } else if (!["grid", "form", "modal", "list", "dashboard", "stack"].includes(screen.layout.type)) {
+      errors.push({
+        path: "layout.type",
+        message: `layout.type must be one of: grid, form, modal, list, dashboard, stack`,
+        severity: "error",
+      });
+    }
+
+    if (!Array.isArray(screen.components)) {
+      errors.push({ path: "components", message: "components must be an array", severity: "error" });
+    }
+
+    if (!screen.state) {
+      errors.push({ path: "state", message: "state is required", severity: "error" });
+    }
+
+    return errors;
   }
-
-  if (!screen.layout) {
-    errors.push({ path: "layout", message: "layout is required", severity: "error" });
-  } else if (!screen.layout.type) {
-    errors.push({ path: "layout.type", message: "layout.type is required", severity: "error" });
-  } else if (!["grid", "form", "modal", "list", "dashboard", "stack"].includes(screen.layout.type)) {
-    errors.push({
-      path: "layout.type",
-      message: `layout.type must be one of: grid, form, modal, list, dashboard, stack`,
-      severity: "error",
-    });
-  }
-
-  if (!Array.isArray(screen.components)) {
-    errors.push({ path: "components", message: "components must be an array", severity: "error" });
-  } else {
-    screen.components.forEach((comp, idx) => {
-      if (!comp.id) {
-        errors.push({ path: `components[${idx}].id`, message: "id is required", severity: "error" });
-      }
-      if (!comp.type) {
-        errors.push({ path: `components[${idx}].type`, message: "type is required", severity: "error" });
-      } else {
-        const validTypes = ["text", "markdown", "button", "input", "table", "chart", "badge", "tabs", "modal", "keyvalue", "divider"];
-        if (!validTypes.includes(comp.type)) {
-          errors.push({
-            path: `components[${idx}].type`,
-            message: `type must be one of: ${validTypes.join(", ")}`,
-            severity: "error",
-          });
-        }
-      }
-    });
-  }
-
-  if (!screen.state) {
-    errors.push({ path: "state", message: "state is required", severity: "error" });
-  }
-
-  if (!screen.bindings) {
-    errors.push({ path: "bindings", message: "bindings is required", severity: "error" });
-  }
-
-  return errors;
 }
 
 let currentAssetId = "";
@@ -356,6 +379,307 @@ export const useEditorState = create<EditorState>((set, get) => ({
         ],
       }));
     }
+  },
+
+  // Screen-level action CRUD
+  addAction: (action: ScreenAction) => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newActions = [...(state.screen.actions || []), action];
+      const newScreen = {
+        ...state.screen,
+        actions: newActions,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  updateAction: (actionId: string, updates: Partial<ScreenAction>) => {
+    set((state) => {
+      if (!state.screen || !state.screen.actions) return state;
+
+      const newActions = state.screen.actions.map(a =>
+        a.id === actionId ? { ...a, ...updates } : a
+      );
+
+      const newScreen = {
+        ...state.screen,
+        actions: newActions,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  deleteAction: (actionId: string) => {
+    set((state) => {
+      if (!state.screen || !state.screen.actions) return state;
+
+      const newActions = state.screen.actions.filter(a => a.id !== actionId);
+      const newScreen = {
+        ...state.screen,
+        actions: newActions.length > 0 ? newActions : null,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  getAction: (actionId: string) => {
+    const state = get();
+    if (!state.screen || !state.screen.actions) return null;
+    return state.screen.actions.find(a => a.id === actionId) || null;
+  },
+
+  // Component-level action CRUD
+  addComponentAction: (componentId: string, action: ComponentActionRef) => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newComponents = state.screen.components.map(c => {
+        if (c.id === componentId) {
+          return {
+            ...c,
+            actions: [...(c.actions || []), action],
+          };
+        }
+        return c;
+      });
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  updateComponentAction: (componentId: string, actionId: string, updates: Partial<ComponentActionRef>) => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newComponents = state.screen.components.map(c => {
+        if (c.id === componentId && c.actions) {
+          return {
+            ...c,
+            actions: c.actions.map(a =>
+              a.id === actionId ? { ...a, ...updates } : a
+            ),
+          };
+        }
+        return c;
+      });
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  deleteComponentAction: (componentId: string, actionId: string) => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newComponents = state.screen.components.map(c => {
+        if (c.id === componentId && c.actions) {
+          const newActions = c.actions.filter(a => a.id !== actionId);
+          return {
+            ...c,
+            actions: newActions.length > 0 ? newActions : null,
+          };
+        }
+        return c;
+      });
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  getComponentActions: (componentId: string) => {
+    const state = get();
+    if (!state.screen) return [];
+    const component = state.screen.components.find(c => c.id === componentId);
+    return component?.actions || [];
+  },
+
+  // Binding management
+  updateBinding: (targetPath: string, sourcePath: string) => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newBindings = {
+        ...(state.screen.bindings || {}),
+        [targetPath]: sourcePath,
+      };
+
+      const newScreen = {
+        ...state.screen,
+        bindings: newBindings,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  deleteBinding: (targetPath: string) => {
+    set((state) => {
+      if (!state.screen || !state.screen.bindings) return state;
+
+      const newBindings = { ...state.screen.bindings };
+      delete newBindings[targetPath];
+
+      const newScreen = {
+        ...state.screen,
+        bindings: Object.keys(newBindings).length > 0 ? newBindings : null,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  getAllBindings: () => {
+    const state = get();
+    if (!state.screen) return {};
+    return state.screen.bindings || {};
+  },
+
+  // Component visibility
+  updateComponentVisibility: (componentId: string, visibleIf: string | null) => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newComponents = state.screen.components.map(c => {
+        if (c.id === componentId) {
+          return {
+            ...c,
+            visibility: visibleIf ? { rule: visibleIf } : null,
+          };
+        }
+        return c;
+      });
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  // Test action by calling /ops/ui-actions endpoint
+  testAction: async (actionId: string, payload?: Record<string, any>) => {
+    try {
+      const state = get();
+      if (!state.screen) throw new Error("No screen loaded");
+
+      // Find the action
+      const action = state.screen.actions?.find(a => a.id === actionId);
+      if (!action) throw new Error(`Action ${actionId} not found`);
+
+      // Prepare request body
+      const requestBody = {
+        handler: action.handler,
+        payload: payload || action.payload_template || {},
+        context: {},
+        trace_id: `test-${Date.now()}`,
+      };
+
+      // Call /ops/ui-actions endpoint
+      const response = await fetch("/ops/ui-actions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Action execution failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // Apply state patch if provided
+      if (result.state_patch) {
+        get().applyStatePatch(result.state_patch);
+      }
+
+      return result;
+    } catch (error) {
+      console.error("testAction error:", error);
+      throw error;
+    }
+  },
+
+  // Apply state patch to current screen
+  applyStatePatch: (patch: Record<string, any>) => {
+    set((state) => {
+      if (!state.screen?.state) return state;
+
+      const newInitial = {
+        ...state.screen.state.initial,
+        ...patch,
+      };
+
+      const newScreen = {
+        ...state.screen,
+        state: {
+          ...state.screen.state,
+          initial: newInitial,
+        },
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+      };
+    });
   },
 
   saveDraft: async () => {

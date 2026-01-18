@@ -5,6 +5,11 @@ import { Asset, fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
 import Link from "next/link";
+import {
+  SCREEN_TEMPLATES,
+  createMinimalScreen,
+  getTemplateById,
+} from "@/lib/ui-screen/screen-templates";
 
 interface ScreenAssetPanelProps {
   onScreenUpdate?: () => void;
@@ -24,6 +29,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     name: "",
     description: "",
   });
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchScreens();
@@ -78,15 +84,21 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     }
 
     try {
-      // Create minimal screen schema
-      const minimalSchema = {
-        screen_id: newScreenData.screen_id,
-        layout: { type: "grid" },
-        components: [],
-        state: { initial: {} },
-        actions: [],
-        bindings: {},
-      };
+      // Generate screen schema based on selected template
+      let schema;
+      if (selectedTemplate) {
+        const template = getTemplateById(selectedTemplate);
+        if (template) {
+          schema = template.generate({
+            screen_id: newScreenData.screen_id,
+            name: newScreenData.name,
+          });
+        } else {
+          schema = createMinimalScreen(newScreenData.screen_id, newScreenData.name);
+        }
+      } else {
+        schema = createMinimalScreen(newScreenData.screen_id, newScreenData.name);
+      }
 
       const response = await fetchApi("/asset-registry/assets", {
         method: "POST",
@@ -95,13 +107,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           screen_id: newScreenData.screen_id,
           name: newScreenData.name,
           description: newScreenData.description || null,
-          schema_json: minimalSchema,
+          schema_json: schema,
         }),
       });
 
       setToast({ message: "Screen created successfully", type: "success" });
       setShowCreateModal(false);
       setNewScreenData({ screen_id: "", name: "", description: "" });
+      setSelectedTemplate(null);
       await fetchScreens();
       onScreenUpdate?.();
     } catch (error: any) {
@@ -155,7 +168,45 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           >
             <h3 className="text-lg font-semibold text-slate-100 mb-4">Create New Screen</h3>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div>
+                <label className="block text-sm text-slate-300 mb-2">Choose Template (Optional)</label>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {/* Blank Option */}
+                  <button
+                    onClick={() => setSelectedTemplate(null)}
+                    className={`p-3 rounded border transition-all text-sm font-medium ${
+                      selectedTemplate === null
+                        ? "bg-sky-900/50 border-sky-500 text-sky-300"
+                        : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
+                    }`}
+                    data-testid="template-blank"
+                  >
+                    <div className="font-semibold">Blank</div>
+                    <div className="text-xs text-slate-400 mt-1">Start from scratch</div>
+                  </button>
+
+                  {/* Template Options */}
+                  {SCREEN_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => setSelectedTemplate(template.id)}
+                      className={`p-3 rounded border transition-all text-sm font-medium ${
+                        selectedTemplate === template.id
+                          ? "bg-sky-900/50 border-sky-500 text-sky-300"
+                          : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
+                      }`}
+                      data-testid={`template-${template.id}`}
+                    >
+                      <div className="font-semibold">{template.name}</div>
+                      <div className="text-xs text-slate-400 mt-1 line-clamp-2">
+                        {template.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm text-slate-300 mb-2">Screen ID *</label>
                 <input
