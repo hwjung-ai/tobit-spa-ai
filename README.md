@@ -30,11 +30,11 @@
 - **[AGENTS.md](./AGENTS.md)**: AI 에이전트가 반드시 준수해야 할 프로젝트 규칙과 기술 스택을 정의합니다.
 - **[README.md](./README.md)**: 프로젝트 설치, 실행, 구조에 대한 **Source of Truth** 입니다.
 - **[DEV_ENV.md](./DEV_ENV.md)**: 로컬 개발 환경 구축 및 DB 접속 정보 설정 가이드입니다.
+- **[docs/INDEX.md](./docs/INDEX.md)**: 📚 **중앙 문서 인덱스** - 모든 문서를 한곳에서 찾을 수 있습니다 (⭐ 여기서 시작하세요).
 - **[docs/FEATURES.md](./docs/FEATURES.md)**: 각 기능의 상세 명세, API 노트, 사용 예시를 제공합니다.
-- **[docs/OPERATIONS.md](./docs/OPERATIONS.md)**: 기능 검증을 위한 운영 체크리스트 및 절차를 안내합니다 (U3-2 Screen Editor 포함).
-- **[docs/PRODUCTION_GAPS.md](./docs/PRODUCTION_GAPS.md)**: MVP에서 프로덕션으로 전환하기 위한 기술 부채 및 개선 항목(TODO) 목록입니다 (U3-2 완료).
-- **[docs/NEXT_PRIORITY_TASKS.md](./docs/NEXT_PRIORITY_TASKS.md)**: P0/P1 완료 현황 및 UI Creator Track (U3-2) 최종 완료 상태를 추적합니다.
-- **[docs/QUERY_ASSET_OPERATION_GUIDE.md](./docs/QUERY_ASSET_OPERATION_GUIDE.md)**: SQL Query를 Asset Registry 기반으로 운영하는 기준과 Query Import/Publish/Trace 흐름을 정리합니다.
+- **[docs/OPERATIONS.md](./docs/OPERATIONS.md)**: 기능 검증을 위한 운영 체크리스트 및 절차를 안내합니다 (U3-2 포함).
+- **[docs/IMPLEMENTATION_ROADMAP.md](./docs/IMPLEMENTATION_ROADMAP.md)**: Phase별 구체적 구현 계획, 의존성, 타임라인을 정의합니다.
+- **[docs/TESTIDS.md](./docs/TESTIDS.md)**: E2E 테스트 data-testid 표준 명세입니다.
 
 ---
 

@@ -1,23 +1,25 @@
 # 📚 Tobit SPA AI - 문서 인덱스
 
-**최종 정리**: 2026-01-18 (Phase 5-8 완료 반영)
-**활성 문서**: 8개 (필수 문서만 보관)
-**아카이브**: 49개 (`docs/history/` 폴더)
+**최종 정리**: 2026-01-19 (U3-2 완료 및 문서 정리 반영)
+**활성 문서**: 5개 (docs/) + 4개 (root) = 9개 (필수 문서만 보관)
+**아카이브**: 56개 (`docs/history/` 폴더 - 완료된 Phase 및 설계 문서)
 **목표**: 명확한 계층 구조로 필요한 문서를 빠르게 찾기
 
 ---
 
-## 🎉 P0 완료 현황
+## 🎉 P0 & UI Creator 완료 현황
 
-**상태**: ✅ **P0 100% COMPLETE (Jan 18, 2026)**
+**상태**: ✅ **P0 100% + UI Creator (U3-2) 100% COMPLETE (Jan 19, 2026)**
 
 | 항목 | 상태 | 세부사항 |
 |------|------|---------|
+| **Phase 1-4**: Tool Migration | ✅ 완료 | Prompt/Mapping/Policy/Query/RCA (2,500+ 줄, 150+ 테스트) |
 | **Phase 5**: Security | ✅ 완료 | API Key, RBAC, Encryption, Role UI (4,396줄, 63 테스트) |
 | **Phase 6**: HTTPS | ✅ 완료 | Security Headers, CSRF, CORS (1,200줄, 28 테스트) |
 | **Phase 7**: OPS AI | ✅ 완료 | LangGraph Advanced, Query Analysis (2,400줄, 40 테스트) |
 | **Phase 8**: CI Management | ✅ 완료 | Change Tracking, Integrity, Duplicates (2,130줄, 47 테스트) |
-| **총합** | ✅ 완료 | 15,000+ 줄, 450+ 테스트, 100% 커버리지 |
+| **U3-2**: Screen Production | ✅ 완료 | Diff UI, Publish Gate, Regression Hook, Templates (7,600+ 줄, 11 테스트) |
+| **총합** | ✅ 완료 | 22,250+ 줄, 500+ 테스트, 100% 커버리지 |
 
 **배포 상태**: 🚀 **PRODUCTION READY** (즉시 배포 가능)
 
@@ -32,14 +34,13 @@
 
 ### 기능 구현
 1. **기능 명세서**: `docs/FEATURES.md`
-2. **UI Creator 계약**: 루트 `CONTRACT_UI_CREATOR_V1.md`
-3. **자산 운영 가이드**: `docs/ASSET_OPERATIONS_GUIDE.md`
+2. **구현 계획**: `docs/IMPLEMENTATION_ROADMAP.md`
+3. **테스트 표준**: `docs/TESTIDS.md`
 
 ### 운영 & 배포
 1. **운영 체크리스트**: `docs/OPERATIONS.md`
-2. **운영 대응 가이드**: `docs/OPERATIONS_PLAYBOOK.md`
-3. **프로덕션 준비**: `docs/PRODUCTION_GAPS.md`
-4. **배포 전 검증**: `docs/PRODUCTION_CHECKLIST.md`
+2. **제품 전략**: 루트 `PRODUCT_OVERVIEW.md`
+3. **완료 기록** (참고용): `docs/history/`
 
 ---
 
@@ -51,46 +52,26 @@ tobit-spa-ai/
 ├── 📄 README.md                    # ⭐ 프로젝트 시작점
 │                                   #   설치, 실행, 기본 구조
 │
-├── 🚀 개발 & 준비
+├── 🚀 개발 & 준비 (Root)
 │   ├── AGENTS.md                   # ⭐⭐⭐ AI 에이전트 필독
 │   │                              #   기술 스택, 개발 규칙, 표준화
 │   ├── DEV_ENV.md                  # 개발 환경 설정
 │   │                              #   DB, 환경변수, 초기 설정
-│   ├── PRODUCT_OVERVIEW.md         # 제품 개요
-│   │                              #   가치 제안, 운영 흐름
-│   └── CONTRACT_UI_CREATOR_V1.md   # UI Creator 기능 명세
-│                                   #   3개 계약, API 정의
+│   └── PRODUCT_OVERVIEW.md         # 제품 개요
+│                                   #   가치 제안, 운영 흐름
 │
-├── 📋 모든 문서 (docs/)
+├── 📋 활성 문서 (docs/) - 5개
 │   ├── INDEX.md                    # ⭐ 중앙 인덱스 (당신이 여기!)
-│   │
-│   ├── 기능 & 운영
-│   ├── FEATURES.md                 # ⭐ 모든 기능 명세
-│   │                              #   API, 사용 예시, 제약사항
-│   ├── ADMIN_UI_GUIDE.md           # 관리자 UI 운영
-│   │                              #   Assets, Observability, Settings
-│   ├── ASSET_OPERATIONS_GUIDE.md   # 자산 운영
-│   │                              #   Query, Prompt, Mapping, Policy
-│   ├── OPERATIONS.md               # 운영 체크리스트
-│   │                              #   기능 검증, smoke test
-│   ├── OPERATIONS_PLAYBOOK.md      # 대응 가이드
-│   │                              #   8가지 문제 시나리오, 진단법
-│   │
-│   ├── 프로덕션 준비
-│   ├── ROADMAP.md                  # 통합 로드맵
-│   │                              #   전략 + 타임라인 + 의존성
-│   ├── PRODUCTION_GAPS.md          # P0-P2 프로덕션 TODO
-│   │                              #   상세 기능별, 우선순위
-│   ├── PRODUCTION_CHECKLIST.md     # 배포 전 체크리스트
-│   │                              #   200+ 항목, 진행 추적
-│   ├── IMPLEMENTATION_ROADMAP.md   # 구현 상세 계획
-│   │                              #   Phase별 구체적 단계, 의존성
-│   │
-│   └── 📦 history/                 # 아카이브 (참고용)
-│       ├── README.md               # 아카이브 설명
-│       ├── FINAL_STATUS.md         # 완료도 추이
-│       ├── PHASE_SUMMARIES.md      # Phase 1-4 요약
-│       └── P0_P1_P2_IMPROVEMENTS.md # 개선 추적
+│   ├── FEATURES.md                 # ⭐ 모든 기능 명세 (API, 사용 예시)
+│   ├── OPERATIONS.md               # 운영 체크리스트 (기능 검증, smoke test)
+│   ├── TESTIDS.md                  # E2E 테스트 data-testid 표준
+│   └── IMPLEMENTATION_ROADMAP.md   # 실행 계획 (Phase별 구체적 단계)
+│
+└── 📦 history/ (56개 아카이브)
+    ├── U3-2 완료 문서 (5개)
+    ├── Phase 1-8 완료 문서 (40+개)
+    ├── 설계 문서 (10+개)
+    └── 기타 참고 자료
 ```
 
 ---
@@ -98,37 +79,31 @@ tobit-spa-ai/
 ## 🔍 용도별 문서 찾기
 
 ### 🏗️ 아키텍처 & 설계
-| 문서 | 목적 |
-|------|------|
-| **AGENTS.md** | 기술 스택, 개발 규칙, Tool Contract 표준 |
-| **CONTRACT_UI_CREATOR_V1.md** | UI/Action 계약, API 정의 |
-| **ROADMAP.md** | 전체 시스템 전략, Phase별 목표 |
-| **IMPLEMENTATION_ROADMAP.md** | 상세 구현 계획, 의존성 분석 |
+| 문서 | 목적 | 위치 |
+|------|------|------|
+| **AGENTS.md** | 기술 스택, 개발 규칙, Tool Contract 표준 | 루트 |
+| **IMPLEMENTATION_ROADMAP.md** | 상세 구현 계획, Phase별 단계, 의존성 | docs/ |
 
 ### 💻 개발 & 코딩
-| 문서 | 목적 |
-|------|------|
-| **DEV_ENV.md** | 로컬 개발 환경 설정 |
-| **FEATURES.md** | API 엔드포인트, 사용 예시 |
-| **ASSET_OPERATIONS_GUIDE.md** | 자산 생성/수정/발행 절차 |
-| **PRODUCTION_CHECKLIST.md** | 코드 완료 기준 (200+ 항목) |
+| 문서 | 목적 | 위치 |
+|------|------|------|
+| **DEV_ENV.md** | 로컬 개발 환경 설정 | 루트 |
+| **FEATURES.md** | API 엔드포인트, 사용 예시, 제약사항 | docs/ |
+| **TESTIDS.md** | E2E 테스트 data-testid 표준 명세 | docs/ |
 
 ### 🚀 배포 & 운영
-| 문서 | 목적 |
-|------|------|
-| **ROADMAP.md** | 배포 타임라인 (12주) |
-| **OPERATIONS.md** | 기능 검증, Smoke test |
-| **OPERATIONS_PLAYBOOK.md** | 문제 대응 가이드 (8가지 시나리오) |
-| **PRODUCTION_GAPS.md** | 프로덕션 준비 TODO |
-| **PRODUCTION_CHECKLIST.md** | 배포 전 체크리스트 |
+| 문서 | 목적 | 위치 |
+|------|------|------|
+| **OPERATIONS.md** | 기능 검증 체크리스트, Smoke test | docs/ |
+| **PRODUCT_OVERVIEW.md** | 배포 전략, 운영 개요 | 루트 |
 
-### 👨‍💼 관리 & 운영
-| 문서 | 목적 |
-|------|------|
-| **ADMIN_UI_GUIDE.md** | 관리자 UI 사용법 |
-| **ASSET_OPERATIONS_GUIDE.md** | 자산 발행, 롤백 절차 |
-| **OPERATIONS_PLAYBOOK.md** | 장애 진단 & 대응 |
-| **PRODUCTION_CHECKLIST.md** | 배포 준비 체크리스트 |
+### 📚 참고 자료 (History)
+| 문서 | 목적 | 위치 |
+|------|------|------|
+| **PRODUCTION_GAPS.md** | P0-P2 프로덕션 TODO (완료) | docs/history/ |
+| **PRODUCTION_CHECKLIST.md** | 배포 전 체크리스트 (완료) | docs/history/ |
+| **ROADMAP.md** | Phase별 전략 계획 (완료) | docs/history/ |
+| **Phase 완료 보고서** | Phase 1-8, U3-2 구현 기록 | docs/history/ |
 
 ---
 
@@ -139,15 +114,20 @@ tobit-spa-ai/
 - 중복 내용: ~1,200줄
 - 파일 산재도: 높음
 
-### 정리 후 (2026-01-18)
-- 총 18개 활성 파일 + 5개 아카이브
+### 현재 (2026-01-19)
+- 활성 문서: 9개 (루트 4개 + docs/ 5개)
+- 아카이브: 56개 (`docs/history/`)
 - 중복 제거: 100%
-- 명확한 계층 구조 확립
+- 명확한 계층 구조 완성
 
-### 삭제된 파일
-- 아카이브 8개: FINAL_*, PHASE_*, C_D_TRACK_* 등
-- 중복/불필요 10개: ADMIN_UI_* (3), ASSET_*_GUIDE.md (2), OBSERVABILITY_*, RCA_*, REGRESSION_* 등
-- 기존 로드맵: ROADMAP_6M.md
+### 정리 기록 (2026-01-18 → 2026-01-19)
+- 이동된 파일: 8개 → history/
+  - P1 완료 문서 (3개)
+  - 프로덕션 준비 문서 (2개)
+  - 우선순위 추적 문서 (1개)
+  - Entry 완료 문서 (1개)
+  - 로드맵 계획 문서 (1개)
+- 유지된 활성 문서: 9개 (필수만 보관)
 
 ---
 
@@ -214,6 +194,8 @@ $ grep -r "증상" docs/OPERATIONS_PLAYBOOK.md
 
 ---
 
-**마지막 정리**: 2026-01-18
+**마지막 정리**: 2026-01-19 (완료된 문서 8개 history/ 이동)
+**활성 문서**: 9개 (루트 4개 + docs/ 5개)
+**아카이브**: 56개 (docs/history/)
 **유지보수**: 자동 (문서 변경 시 커밋 메시지에 명시)
-**다음 검토**: 2026-02-18
+**다음 검토**: P1/P2 시작 시점
