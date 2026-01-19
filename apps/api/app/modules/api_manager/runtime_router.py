@@ -185,6 +185,8 @@ def _normalize_endpoint(endpoint: str) -> str:
 
 
 async def _extract_runtime_params(request: Request) -> tuple[dict[str, Any], int | None, Any | None]:
+    if request.method == "OPTIONS":
+        return {}, None, None
     if request.method == "GET":
         params = {key: value for key, value in request.query_params.items() if key != "limit"}
         limit_raw = request.query_params.get("limit")
