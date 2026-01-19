@@ -59,28 +59,28 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   const fetchScreens = async () => {
     setLoading(true);
     try {
-      // Try to fetch from /ui-defs first (new system)
-      const response = await fetchApi("/ui-defs");
-      const uiDefs = response.data?.ui_defs || [];
-
-      // Convert UI definitions to Asset format for display
-      const convertedAssets = uiDefs.map((ui: any) => ({
-        asset_id: ui.ui_id,
-        screen_id: ui.ui_id,
-        name: ui.ui_name,
-        description: ui.description,
-        status: ui.is_active ? "published" : "draft",
-        version: 1,
-        updated_at: ui.updated_at
-      }));
-
-      setScreens(convertedAssets);
+      // Fetch from asset-registry (source of truth for editor)
+      const response = await fetchApi("/asset-registry/assets?asset_type=screen");
+      setScreens(response.assets || []);
       setErrors([]);
     } catch (error: any) {
       try {
-        // Fallback to asset-registry if /ui-defs fails
-        const response = await fetchApi("/asset-registry/assets?asset_type=screen");
-        setScreens(response.assets || []);
+        // Fallback to /ui-defs if asset-registry fails
+        const response = await fetchApi("/ui-defs");
+        const uiDefs = response.data?.ui_defs || [];
+
+        // Convert UI definitions to Asset format for display
+        const convertedAssets = uiDefs.map((ui: any) => ({
+          asset_id: ui.ui_id,
+          screen_id: ui.ui_id,
+          name: ui.ui_name,
+          description: ui.description,
+          status: ui.is_active ? "published" : "draft",
+          version: 1,
+          updated_at: ui.updated_at
+        }));
+
+        setScreens(convertedAssets);
         setErrors([]);
       } catch (fallbackError: any) {
         setErrors([fallbackError.message || "Failed to fetch screens"]);
