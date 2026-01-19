@@ -272,9 +272,7 @@ def update_asset(
             asset.description = payload.description
         # Support both schema_json and screen_schema fields for compatibility
         # Note: Model field is screen_schema (DB column is schema_json)
-        if payload.schema_json is not None:
-            asset.screen_schema = payload.schema_json
-        elif payload.screen_schema is not None:
+        if payload.screen_schema is not None:
             asset.screen_schema = payload.screen_schema
         if payload.tags is not None:
             asset.tags = payload.tags
