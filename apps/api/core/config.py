@@ -54,11 +54,11 @@ class AppSettings(BaseSettings):
     langsmith_tracing: bool = False
 
     # Authentication settings
+    enable_auth: bool = False  # Toggle authentication on/off for debugging
     jwt_secret_key: str = "your-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
-    auth_enabled: bool = True
 
     # HTTPS & Security Headers settings
     https_enabled: bool = False

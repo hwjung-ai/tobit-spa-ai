@@ -22,6 +22,7 @@ def get_current_user(
 ) -> TbUser:
     """
     Get the current authenticated user from JWT token.
+    If enable_auth is False, returns a default debug user.
 
     Args:
         credentials: HTTP authorization credentials
@@ -33,6 +34,26 @@ def get_current_user(
     Raises:
         HTTPException: If token is invalid or user not found
     """
+    settings = get_settings()
+
+    # If authentication is disabled, return a default debug user
+    if not settings.enable_auth:
+        debug_user = session.exec(
+            session.query(TbUser).filter(TbUser.username == "admin@tobit.local")
+        ).first()
+        if debug_user:
+            return debug_user
+        # If no admin user exists, create a minimal user object for dev mode
+        # This is a fallback for development without authentication setup
+        return TbUser(
+            id="dev-user",
+            username="debug@dev",
+            password_hash="",
+            role=UserRole.ADMIN,
+            tenant_id="dev-tenant",
+            is_active=True,
+        )
+
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

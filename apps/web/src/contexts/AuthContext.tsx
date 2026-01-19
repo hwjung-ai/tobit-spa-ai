@@ -22,6 +22,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
+
+// Default debug user for development mode
+const DEBUG_USER: User = {
+  id: "dev-user",
+  email: "debug@dev",
+  username: "debug@dev",
+  role: "ADMIN",
+  tenant_id: "dev-tenant",
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -29,6 +39,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing token on mount
   useEffect(() => {
+    // If authentication is disabled, auto-login with debug user
+    if (!ENABLE_AUTH) {
+      setUser(DEBUG_USER);
+      setIsLoading(false);
+      return;
+    }
+
     const token = localStorage.getItem("access_token");
     if (token) {
       fetchCurrentUser();
@@ -64,6 +81,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function login(email: string, password: string) {
+    // If authentication is disabled, skip login
+    if (!ENABLE_AUTH) {
+      setUser(DEBUG_USER);
+      return;
+    }
+
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
