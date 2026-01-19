@@ -18,12 +18,15 @@ from .script_executor import execute_script_api
 runtime_router = APIRouter(tags=["runtime"])
 
 
-@runtime_router.api_route("/runtime/{path:path}", methods=["GET", "POST"])
+@runtime_router.api_route("/runtime/{path:path}", methods=["GET", "POST", "OPTIONS"])
 async def handle_runtime_request(
     path: str,
     request: Request,
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
+    # Handle CORS preflight request
+    if request.method == "OPTIONS":
+        return ResponseEnvelope.success(data={})
     normalized_path = _normalize_runtime_path(path)
     api = _find_runtime_api(session, normalized_path, request.method)
     if not api:
