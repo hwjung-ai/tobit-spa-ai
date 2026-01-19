@@ -7,11 +7,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
 from sqlmodel import Session
 
-from apps.api.app.modules.auth.models import TbUser, UserRole
-from apps.api.app.modules.api_keys.crud import validate_api_key
-from apps.api.core.config import get_settings
-from apps.api.core.db import get_session
-from apps.api.core.security import decode_token
+from app.modules.auth.models import TbUser, UserRole
+from app.modules.api_keys.crud import validate_api_key
+from core.config import get_settings
+from core.db import get_session
+from core.security import decode_token
 
 security = HTTPBearer(auto_error=False)
 
