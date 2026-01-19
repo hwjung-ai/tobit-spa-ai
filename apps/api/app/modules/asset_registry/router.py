@@ -165,7 +165,7 @@ def _to_screen_asset(asset: TbAssetRegistry, schema: dict[str, Any] | None = Non
         "description": asset.description,
         "version": asset.version,
         "status": asset.status,
-        "screen_schema": schema or asset.screen_schema,
+        "schema_json": schema or asset.screen_schema,
         "tags": asset.tags,
         "created_by": asset.created_by,
         "published_by": asset.published_by,
