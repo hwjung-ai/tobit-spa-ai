@@ -189,76 +189,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
     try {
       currentAssetId = assetId;
 
-      // Try to load from /ui-defs first (new system)
-      try {
-        console.log("[EDITOR] Attempting to load screen from /ui-defs:", assetId);
-        const response = await fetchApi(`/ui-defs/${assetId}`);
-        console.log("[EDITOR] Loaded UI definition:", response);
-        const uiDef = response.data?.ui || response.ui || response;
-        console.log("[EDITOR] Extracted uiDef:", uiDef);
-
-        // Convert UI definition schema to screen schema format
-        let schema: ScreenSchemaV1;
-
-        if (uiDef.schema) {
-          console.log("[EDITOR] Has schema, converting...");
-          // Determine layout type from ui_type or schema structure
-          let layoutType = uiDef.ui_type || "dashboard";
-          if (layoutType === "grid") layoutType = "grid";
-          else if (layoutType === "chart") layoutType = "dashboard";
-          else if (layoutType === "dashboard") layoutType = "dashboard";
-
-          // If schema already has screen_id, components, state - use it as-is
-          if (uiDef.schema.screen_id && uiDef.schema.components) {
-            schema = uiDef.schema;
-            console.log("[EDITOR] Using schema as-is");
-          } else {
-            // Otherwise convert grid/chart schema to screen schema
-            schema = {
-              screen_id: uiDef.ui_id,
-              id: uiDef.ui_id,
-              name: uiDef.ui_name,
-              version: "1.0",
-              layout: {
-                type: layoutType as any,
-                ...uiDef.schema,
-              },
-              components: [],
-              state: { initial: {} },
-            };
-            console.log("[EDITOR] Converted to ScreenSchemaV1:", schema);
-          }
-        } else {
-          // Fallback: create minimal screen schema
-          console.log("[EDITOR] No schema in uiDef, creating minimal");
-          schema = {
-            screen_id: uiDef.ui_id,
-            id: uiDef.ui_id,
-            name: uiDef.ui_name,
-            version: "1.0",
-            layout: { type: "dashboard" },
-            components: [],
-            state: { initial: {} },
-          };
-        }
-
-        const status = uiDef.is_active ? "published" : "draft";
-
-        set({
-          screen: schema,
-          draft: schema,
-          published: status === "published" ? schema : null,
-          status,
-          draftModified: false,
-          validationErrors: validateScreen(schema),
-        });
-        console.log("[EDITOR] Screen loaded successfully from /ui-defs");
-        return;
-      } catch (uiDefsError) {
-        console.warn("[EDITOR] Failed to load from /ui-defs:", uiDefsError);
-      }
-
-      // Fallback to asset-registry endpoint
+      // Load from asset-registry endpoint (source of truth)
       console.log("[EDITOR] Attempting to load screen from /asset-registry:", assetId);
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
       const data = response.data || response;
