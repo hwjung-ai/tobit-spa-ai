@@ -7,7 +7,8 @@ from .schemas import UiDefinitionCreate, UiDefinitionUpdate
 
 
 def list_ui_definitions(session: Session) -> list[TbUiDef]:
-    statement = select(TbUiDef).where(TbUiDef.is_active == True).order_by(TbUiDef.updated_at.desc())
+    # Return all UI definitions (both draft and published) ordered by updated_at
+    statement = select(TbUiDef).order_by(TbUiDef.updated_at.desc())
     return session.exec(statement).all()
 
 

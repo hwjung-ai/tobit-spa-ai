@@ -12,6 +12,7 @@ export default function AdminLayout({
 
     const tabs = [
         { label: "Assets", href: "/admin/assets" },
+        { label: "Screens", href: "/admin/screens" },
         { label: "Settings", href: "/admin/settings" },
         { label: "Inspector", href: "/admin/inspector" },
         { label: "Regression", href: "/admin/regression" },

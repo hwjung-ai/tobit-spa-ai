@@ -30,7 +30,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 class LoginRequest(BaseModel):
     """Login request schema."""
-    email: EmailStr
+    email: str
     password: str
 
 
@@ -71,8 +71,8 @@ def login(
     Raises:
         HTTPException: If credentials are invalid or user is inactive
     """
-    # Find user by email
-    statement = select(TbUser).where(TbUser.email == payload.email)
+    # Find user by email (using username field as email is encrypted and not searchable)
+    statement = select(TbUser).where(TbUser.username == payload.email)
     user = session.exec(statement).first()
 
     # Verify user exists and password matches
@@ -95,7 +95,7 @@ def login(
     access_token = create_access_token(
         data={
             "sub": user.id,
-            "email": user.email,
+            "email": user.email, # This uses the property we added
             "role": user.role,
             "tenant_id": user.tenant_id,
         },

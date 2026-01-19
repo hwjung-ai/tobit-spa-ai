@@ -169,7 +169,9 @@ function compareActions(
   const beforeMap = new Map(
     (before?.actions || []).map((a) => [a.id, a])
   );
-  const afterMap = new Map(after.actions.map((a) => [a.id, a]));
+  const afterMap = new Map(
+    (after?.actions || []).map((a) => [a.id, a])
+  );
   const allIds = new Set([...beforeMap.keys(), ...afterMap.keys()]);
 
   const items: ActionDiffItem[] = [];

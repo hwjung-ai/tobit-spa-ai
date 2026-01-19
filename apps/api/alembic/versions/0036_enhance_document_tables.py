@@ -18,7 +18,7 @@ def upgrade() -> None:
     op.add_column('documents', sa.Column('processing_progress', sa.Integer(), nullable=True, default=0))
     op.add_column('documents', sa.Column('total_chunks', sa.Integer(), nullable=True, default=0))
     op.add_column('documents', sa.Column('error_details', JSONB(), nullable=True))
-    op.add_column('documents', sa.Column('metadata', JSONB(), nullable=True))
+    op.add_column('documents', sa.Column('doc_metadata', JSONB(), nullable=True))
     op.add_column('documents', sa.Column('created_by', sa.String(36), nullable=True))
 
     # Create index for format
@@ -69,7 +69,7 @@ def downgrade() -> None:
 
     # Drop columns from documents
     op.drop_column('documents', 'created_by')
-    op.drop_column('documents', 'metadata')
+    op.drop_column('documents', 'doc_metadata')
     op.drop_column('documents', 'error_details')
     op.drop_column('documents', 'total_chunks')
     op.drop_column('documents', 'processing_progress')

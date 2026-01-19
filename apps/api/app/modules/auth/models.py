@@ -7,7 +7,7 @@ from uuid import uuid4
 
 from sqlmodel import Field, SQLModel
 
-from apps.api.core.encryption import get_encryption_manager
+from core.encryption import get_encryption_manager
 
 
 class UserRole(str, Enum):
@@ -98,10 +98,16 @@ class TbUser(TbUserBase, table=True):
             # Store plaintext if encryption fails
             self.phone_encrypted = phone
 
+    @property
+    def email(self) -> str:
+        """Property to get decrypted email."""
+        return self.get_email()
+
 
 class TbUserRead(TbUserBase):
     """User read schema (without password hash)."""
     id: str
+    email: str | None = None
 
 
 class TbRefreshTokenBase(SQLModel):

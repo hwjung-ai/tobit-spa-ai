@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VisualEditor from "./visual/VisualEditor";
 import JsonEditor from "./json/JsonEditor";
+import BindingTab from "./binding/BindingTab";
+import ActionTab from "./actions/ActionTab";
 import PreviewTab from "./preview/PreviewTab";
 import DiffTab from "./diff/DiffTab";
 
@@ -28,6 +30,12 @@ export default function ScreenEditorTabs({ assetId }: ScreenEditorTabsProps) {
         <TabsTrigger value="json" data-testid="tab-json">
           JSON
         </TabsTrigger>
+        <TabsTrigger value="binding" data-testid="tab-binding">
+          Binding
+        </TabsTrigger>
+        <TabsTrigger value="action" data-testid="tab-action">
+          Action
+        </TabsTrigger>
         <TabsTrigger value="preview" data-testid="tab-preview">
           Preview
         </TabsTrigger>
@@ -51,6 +59,22 @@ export default function ScreenEditorTabs({ assetId }: ScreenEditorTabsProps) {
           data-testid="json-editor-content"
         >
           <JsonEditor />
+        </TabsContent>
+
+        <TabsContent
+          value="binding"
+          className="h-full"
+          data-testid="binding-editor-content"
+        >
+          <BindingTab />
+        </TabsContent>
+
+        <TabsContent
+          value="action"
+          className="h-full"
+          data-testid="action-editor-content"
+        >
+          <ActionTab />
         </TabsContent>
 
         <TabsContent

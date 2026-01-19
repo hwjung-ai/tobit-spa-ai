@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveApiWithFallback } from "../../lib/apiManagerSave";
+import { authenticatedFetch } from "../../lib/apiClient";
 import Editor from "@monaco-editor/react";
 
 type ScopeType = "system" | "custom";
@@ -968,13 +969,32 @@ export default function ApiManagerPage() {
         setSystemFetchAt(new Date().toISOString());
         try {
           const url = new URL(`${apiBaseUrl}/api-manager/apis`);
+          url.searchParams.set("scope", "system");
           const response = await fetch(url.toString());
           if (!response.ok) {
             throw new Error("Failed to load system APIs");
           }
           const payload = await response.json();
-          const items: ApiDefinitionItem[] = payload.data?.apis ?? [];
-          const normalized = items.map((item) => ({ ...item, source: "server" as const }));
+          const items: any[] = payload.data?.apis ?? [];
+          const normalized: ApiDefinitionItem[] = items.map((item) => ({
+            api_id: item.id,
+            api_name: item.name,
+            api_type: item.scope,
+            method: item.method as any,
+            endpoint: item.path,
+            logic_type: item.mode || "sql",
+            logic_body: item.logic || "",
+            description: item.description,
+            tags: item.tags || [],
+            is_active: item.is_enabled,
+            created_by: null,
+            created_at: item.created_at || new Date().toISOString(),
+            updated_at: item.updated_at || new Date().toISOString(),
+            param_schema: {},
+            runtime_policy: {},
+            logic_spec: {},
+            source: "server" as const,
+          }));
           setSystemApis(normalized);
           setSystemFetchStatus("ok");
           setSelectedId((prev) => {
@@ -1008,15 +1028,33 @@ export default function ApiManagerPage() {
       try {
         const url = new URL(`${apiBaseUrl}/api-manager/apis`);
         if (scope) {
-          url.searchParams.set("api_type", scope);
+          url.searchParams.set("scope", scope);
         }
         const response = await fetch(url.toString());
         if (!response.ok) {
           throw new Error("Failed to load API definitions");
         }
         const payload = await response.json();
-        const items: ApiDefinitionItem[] = payload.data?.apis ?? [];
-        setApis(items);
+        const items: any[] = payload.data?.apis ?? [];
+        const normalized: ApiDefinitionItem[] = items.map((item) => ({
+          api_id: item.id,
+          api_name: item.name,
+          api_type: item.scope,
+          method: item.method as any,
+          endpoint: item.path,
+          logic_type: item.mode || "sql",
+          logic_body: item.logic || "",
+          description: item.description,
+          tags: item.tags || [],
+          is_active: item.is_enabled,
+          created_by: null,
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString(),
+          param_schema: {},
+          runtime_policy: {},
+          logic_spec: {},
+        }));
+        setApis(normalized);
         if (skipAutoSelectRef.current) {
           skipAutoSelectRef.current = false;
           return;
@@ -1088,18 +1126,10 @@ export default function ApiManagerPage() {
     setDiscoveredFetchStatus("idle");
     setDiscoveredFetchAt(new Date().toISOString());
     try {
-      const response = await fetch(`${apiBaseUrl}/api-manager/system/endpoints`);
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        const detail = (payload as { detail?: string }).detail;
-        throw new Error(
-          detail
-            ? `Failed to load discovered endpoints (${response.status}): ${detail}`
-            : `Failed to load discovered endpoints (${response.status})`
-        );
-      }
-      const payload = await response.json();
-      setDiscoveredEndpoints(payload.data?.endpoints ?? []);
+      // Note: Currently, there is no distinct /api-manager/system/endpoints endpoint
+      // System APIs are fetched via /api-manager/apis?scope=system
+      // For now, we'll show an empty list or fetch from the main API list
+      setDiscoveredEndpoints([]);
       setDiscoveredFetchStatus("ok");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load discovered endpoints";
@@ -1116,14 +1146,14 @@ export default function ApiManagerPage() {
     }
     setLogsLoading(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api-manager/apis/${selectedId}/exec-logs?limit=20`);
+      const response = await fetch(`${apiBaseUrl}/api-manager/apis/${selectedId}/execution-logs?limit=20`);
       if (!response.ok) {
         throw new Error("Failed to load execution logs");
       }
       const payload = await response.json();
       setExecLogs(payload.data?.logs ?? []);
     } catch (error) {
-      console.error("Unable to load logs", error);
+      // Silently fail - execution logs are optional
       setExecLogs([]);
     } finally {
       setLogsLoading(false);

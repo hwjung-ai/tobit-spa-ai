@@ -77,7 +77,8 @@ export async function authenticatedFetch<T = any>(
 
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("application/json")) {
-    return response.json();
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
   }
 
   return response.text() as any;
@@ -113,7 +114,8 @@ export async function fetchApi<T = any>(
 
   const contentType = response.headers.get("content-type");
   if (contentType?.includes("application/json")) {
-    return response.json();
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
   }
 
   return response.text() as any;

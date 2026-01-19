@@ -1,0 +1,37 @@
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
+* connect to ::1 port 8000 from ::1 port 50180 failed: Connection refused
+*   Trying 127.0.0.1:8000...
+* Connected to localhost (127.0.0.1) port 8000
+> PUT /asset-registry/assets/5b02c332-dd74-4294-bc3c-be9e46c2ed77 HTTP/1.1
+> Host: localhost:8000
+> User-Agent: curl/8.5.0
+> Accept: */*
+> Content-Type: application/json
+> Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NGEzYzBlNS03ZmQzLTQyMzItYmY5Yy1iYzQzMWM5NDg5NTciLCJlbWFpbCI6ImFkbWluQHRvYml0LmxvY2FsIiwicm9sZSI6ImFkbWluIiwidGVuYW50X2lkIjoiZGVmYXVsdCIsImV4cCI6MTc2ODc5Mzg2OCwidHlwZSI6ImFjY2VzcyJ9.myi9LHBbMDSJnpKaHxHl8k1QBmIZX2WRwpcpwcJJWy4
+> Content-Length: 19
+> 
+} [19 bytes data]
+< HTTP/1.1 404 Not Found
+< date: Mon, 19 Jan 2026 03:07:48 GMT
+< server: uvicorn
+< content-length: 28
+< content-type: application/json
+< x-request-id: 7a071da7-05a7-4b78-96f3-786780064f69
+< x-trace-id: 8f2e4c88-0fa1-4406-a317-5b95ad025f8a
+< strict-transport-security: max-age=31536000; includeSubDomains
+< content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'
+< x-frame-options: SAMEORIGIN
+< x-content-type-options: nosniff
+< x-xss-protection: 1; mode=block
+< referrer-policy: strict-origin-when-cross-origin
+< permissions-policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), picture-in-picture=(), publickey-credentials-get=(), sync-xhr=(), usb=(), vr=(), xr-spatial-tracking=()
+< 
+{ [28 bytes data]
+100    47  100    28  100    19    257    175 --:--:-- --:--:-- --:--:--   439
+* Connection #0 to host localhost left intact
+{"detail":"asset not found"}

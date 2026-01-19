@@ -22,14 +22,20 @@ import { Trash2, Plus, Edit2 } from "lucide-react";
 
 export default function PropertiesPanel() {
   const editorState = useEditorState();
-  const { selectedComponent } = editorState;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [editingAction, setEditingAction] = useState<ComponentActionRef | null>(null);
 
+  // Get selected component by finding it in the components array
+  const selectedComponent = React.useMemo(() => {
+    if (!editorState.screen || !editorState.selectedComponentId) return null;
+    return editorState.screen.components.find(c => c.id === editorState.selectedComponentId) || null;
+  }, [editorState.screen, editorState.selectedComponentId]);
+
   // Update form data when component changes
   React.useEffect(() => {
     if (selectedComponent) {
+      console.log("[PROPERTIES] Selected component updated:", selectedComponent.id, selectedComponent);
       setFormData(selectedComponent.props || {});
     }
   }, [selectedComponent]);

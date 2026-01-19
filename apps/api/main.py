@@ -80,29 +80,31 @@ app.include_router(history_router)
 @app.on_event("startup")
 async def on_startup() -> None:
     # Run database migrations
-    try:
-        from alembic.config import Config as AlembicConfig
-        from alembic import command
-        import logging
-
-        logger = logging.getLogger(__name__)
-        alembic_cfg = AlembicConfig("alembic.ini")
-
-        # Set the actual database URL from settings instead of hardcoded alembic.ini
-        alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
-
-        # Try to upgrade migrations - skip if alembic has conflicts
+    # Disabled to prevent startup crash due to broken migration history
+    if False:
         try:
-            # Try with explicit target first (upgrade to latest)
-            command.upgrade(alembic_cfg, "head")
-            logger.info("Database migrations completed successfully")
-        except Exception as upgrade_error:
-            # If explicit target fails, try current version
-            logger.warning(f"Migration with explicit target failed: {upgrade_error}")
-            logger.info("Proceeding with current database schema")
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f"Failed to initialize migrations: {e}", exc_info=True)
+            from alembic.config import Config as AlembicConfig
+            from alembic import command
+            import logging
+
+            logger = logging.getLogger(__name__)
+            alembic_cfg = AlembicConfig("alembic.ini")
+
+            # Set the actual database URL from settings instead of hardcoded alembic.ini
+            alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
+
+            # Try to upgrade migrations - skip if alembic has conflicts
+            try:
+                # Try with explicit target first (upgrade to latest)
+                command.upgrade(alembic_cfg, "head")
+                logger.info("Database migrations completed successfully")
+            except Exception as upgrade_error:
+                # If explicit target fails, try current version
+                logger.warning(f"Migration with explicit target failed: {upgrade_error}")
+                logger.info("Proceeding with current database schema")
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to initialize migrations: {e}", exc_info=True)
 
     # Start CEP scheduler
     start_scheduler()

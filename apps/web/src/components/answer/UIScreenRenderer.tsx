@@ -22,6 +22,7 @@ import {
   setError,
   setLoading,
 } from "@/lib/ui-screen/binding-engine";
+import { fetchApi } from "@/lib/adminUtils";
 import type { UIScreenBlock } from "./BlockRenderer";
 
 interface UIScreenRendererProps {
@@ -80,13 +81,62 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
       setIsLoading(true);
       setLoadError(null);
       try {
-        const assetResp = await fetch(`/asset-registry/assets/${screenId}`);
-        if (!assetResp.ok) {
-          throw new Error(`Failed to load screen asset: ${assetResp.status} ${assetResp.statusText}`);
+        let schema: ScreenSchemaV1 | null = null;
+
+        // Try to load from /ui-defs first (new system)
+        try {
+          const response = await fetchApi(`/ui-defs/${screenId}`);
+          const uiDef = response.data?.ui || response.ui || response;
+
+          if (uiDef.schema) {
+            // Determine layout type from ui_type or schema structure
+            let layoutType = uiDef.ui_type || "dashboard";
+            if (layoutType === "grid") layoutType = "grid";
+            else if (layoutType === "chart") layoutType = "dashboard";
+            else if (layoutType === "dashboard") layoutType = "dashboard";
+
+            // If schema already has screen_id, components, state - use it as-is
+            if (uiDef.schema.screen_id && uiDef.schema.components) {
+              schema = uiDef.schema;
+            } else {
+              // Otherwise convert grid/chart schema to screen schema
+              schema = {
+                screen_id: uiDef.ui_id,
+                id: uiDef.ui_id,
+                name: uiDef.ui_name,
+                version: "1.0",
+                layout: {
+                  type: layoutType as any,
+                  ...uiDef.schema,
+                },
+                components: [],
+                state: { initial: {} },
+              };
+            }
+          } else {
+            // Fallback: create minimal screen schema
+            schema = {
+              screen_id: uiDef.ui_id,
+              id: uiDef.ui_id,
+              name: uiDef.ui_name,
+              version: "1.0",
+              layout: { type: "dashboard" },
+              components: [],
+              state: { initial: {} },
+            };
+          }
+        } catch (uiDefsError) {
+          // Fall through to asset-registry fallback
+          console.warn('Failed to load from /ui-defs, trying asset-registry:', uiDefsError);
+
+          const assetResp = await fetch(`/asset-registry/assets/${screenId}`);
+          if (!assetResp.ok) {
+            throw new Error(`Failed to load screen asset: ${assetResp.status} ${assetResp.statusText}`);
+          }
+          const raw = await assetResp.json();
+          const asset = (raw?.data?.asset || raw?.asset || raw) as Record<string, any>;
+          schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
         }
-        const raw = await assetResp.json();
-        const asset = (raw?.data?.asset || raw?.asset || raw) as Record<string, any>;
-        const schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
 
         if (!schema || typeof schema !== 'object') {
           throw new Error('Invalid screen schema: missing or non-object');

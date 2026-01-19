@@ -106,15 +106,26 @@ export async function fetchApi<T = any>(
     try {
       rawText = await response.text();
       console.log("[API] Raw response text:", rawText);
+      console.log("[API] Response status:", response.status);
+      console.log("[API] Response headers:", {
+        contentType: response.headers.get("content-type"),
+        contentLength: response.headers.get("content-length"),
+      });
+
       if (rawText) {
         try {
           errorData = JSON.parse(rawText);
-        } catch {
+        } catch (parseErr) {
+          console.error("[API] JSON parse error:", parseErr);
           errorData = { message: rawText };
         }
+      } else {
+        console.warn("[API] Response body is empty!");
+        errorData = { message: "Empty response body" };
       }
     } catch (parseError) {
       console.error("[API] Failed to parse error response:", parseError);
+      errorData = { message: String(parseError) };
     }
 
     // Check if it's a 401 Unauthorized error

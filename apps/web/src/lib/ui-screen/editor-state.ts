@@ -834,20 +834,35 @@ export const useEditorState = create<EditorState>((set, get) => ({
               schema_json: state.screen,
             };
             console.log("[EDITOR] POST body:", postBody);
+            console.log("[EDITOR] POST body size:", JSON.stringify(postBody).length);
 
             const postResponse = await fetchApi(`/asset-registry/assets`, {
               method: "POST",
               body: JSON.stringify(postBody),
             });
+            console.log("[EDITOR] POST response received");
+            console.log("[EDITOR] POST response data:", postResponse);
             console.log("[EDITOR] Created new asset successfully");
-          } catch (postError) {
+          } catch (postError: any) {
             console.error("[EDITOR] POST error:", postError);
+            console.error("[EDITOR] POST error details:", {
+              message: postError?.message,
+              statusCode: (postError as any)?.statusCode,
+              errorType: typeof postError,
+            });
             throw new Error(`Failed to create screen: ${postError}`);
           }
         } else {
           console.error("[EDITOR] PUT error:", putError);
           console.error("[EDITOR] Could not determine if error was 404 or other error");
           console.error("[EDITOR] Error string:", String(putError));
+          console.error("[EDITOR] Error details:", {
+            statusCode,
+            errorStr: errStr,
+            errorMsg: errMsg,
+            errorType: typeof putError,
+            errorKeys: Object.keys(putError || {}),
+          });
           throw new Error(`Failed to save draft: ${putError}`);
         }
       }

@@ -36,7 +36,7 @@ NEO4J_PASSWORD=secret
 ```
 ```
 # start (with neo4j user) 
-/opt/bin/neo4j start
+/opt/neo4j/bin/neo4j start
 ```
 - **URI 정책**: 단일 노드는 `bolt://`, 클러스터는 `neo4j://`로 시작해야 합니다. (예: `bolt://host:7687` 혹은 `neo4j://cluster-uri:7687`)
 

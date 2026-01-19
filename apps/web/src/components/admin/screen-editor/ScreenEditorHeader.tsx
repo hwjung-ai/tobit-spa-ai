@@ -82,6 +82,7 @@ export default function ScreenEditorHeader({
                   disabled={isSaving || !isDirty}
                   variant="outline"
                   size="sm"
+                  className={isSaving || !isDirty ? "cursor-not-allowed" : "cursor-pointer"}
                   data-testid="btn-save-draft"
                 >
                   {isSaving ? "Saving..." : "Save Draft"}
@@ -91,7 +92,7 @@ export default function ScreenEditorHeader({
                   onClick={onPublish}
                   disabled={isPublishing || !canPublish}
                   size="sm"
-                  className="bg-sky-600 hover:bg-sky-700 text-white"
+                  className={`bg-sky-600 hover:bg-sky-700 text-white ${isPublishing || !canPublish ? "cursor-not-allowed" : "cursor-pointer"}`}
                   data-testid="btn-publish-screen"
                 >
                   {isPublishing ? "Publishing..." : "Publish"}
