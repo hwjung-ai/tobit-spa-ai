@@ -129,6 +129,10 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         if not self.settings.csrf_protection_enabled:
             return await call_next(request)
 
+        # Skip CSRF protection for OPTIONS requests (CORS preflight)
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Generate CSRF token for GET requests (add to response)
         if request.method == "GET":
             response = await call_next(request)

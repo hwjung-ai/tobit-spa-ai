@@ -24,7 +24,7 @@ async def handle_runtime_request(
     request: Request,
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
-    # Handle CORS preflight request
+    # Handle CORS preflight request - return immediately without session access
     if request.method == "OPTIONS":
         return ResponseEnvelope.success(data={})
     normalized_path = _normalize_runtime_path(path)
