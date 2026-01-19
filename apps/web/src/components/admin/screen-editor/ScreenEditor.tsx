@@ -31,7 +31,16 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
   // Check authentication on mount
   useEffect(() => {
+    const enableAuth = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
     const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+    // If auth is disabled, skip token check
+    if (!enableAuth) {
+      setAuthCheckDone(true);
+      return;
+    }
+
+    // If auth is enabled, require token
     if (!token) {
       console.warn("[ScreenEditor] No access token found, redirecting to login");
       router.push("/login");
