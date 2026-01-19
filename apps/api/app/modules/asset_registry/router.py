@@ -270,7 +270,10 @@ def update_asset(
             asset.name = payload.name
         if payload.description is not None:
             asset.description = payload.description
-        if payload.screen_schema is not None:
+        # Support both schema_json and screen_schema fields for compatibility
+        if payload.schema_json is not None:
+            asset.schema_json = payload.schema_json
+        elif payload.screen_schema is not None:
             asset.screen_schema = payload.screen_schema
         if payload.tags is not None:
             asset.tags = payload.tags
