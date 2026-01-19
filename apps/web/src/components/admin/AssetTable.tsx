@@ -45,6 +45,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
                     type === "mapping" ? "bg-blue-950/50 text-blue-300 border-blue-800/50" :
                     type === "policy" ? "bg-green-950/50 text-green-300 border-green-800/50" :
                     type === "query" ? "bg-orange-950/50 text-orange-300 border-orange-800/50" :
+                    type === "screen" ? "bg-cyan-950/50 text-cyan-300 border-cyan-800/50" :
                         "bg-slate-950/50 text-slate-300 border-slate-800/50";
                 return (
                     <span className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}>

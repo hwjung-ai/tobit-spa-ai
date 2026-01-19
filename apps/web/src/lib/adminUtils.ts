@@ -74,17 +74,75 @@ export async function fetchApi<T = any>(
   options?: RequestInit
 ): Promise<ResponseEnvelope<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
+
+  // Get auth token from localStorage if available
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...options?.headers,
+  };
+
+  // Add Authorization header if token exists
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+    console.log("[API] Adding Authorization header with token");
+  } else {
+    console.warn("[API] ⚠️ No token found in localStorage for endpoint:", endpoint);
+    console.warn("[API] User may not be logged in. Visit /login to authenticate.");
+  }
+
+  console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET");
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
+    let errorData: any = {};
+    let rawText = "";
+    try {
+      rawText = await response.text();
+      console.log("[API] Raw response text:", rawText);
+      if (rawText) {
+        try {
+          errorData = JSON.parse(rawText);
+        } catch {
+          errorData = { message: rawText };
+        }
+      }
+    } catch (parseError) {
+      console.error("[API] Failed to parse error response:", parseError);
+    }
+
+    // Check if it's a 401 Unauthorized error
+    if (response.status === 401) {
+      console.error("[API] ❌ Authentication failed (401 Unauthorized)");
+      console.error("[API] Possible causes:");
+      console.error("[API]   1. User not logged in - visit /login");
+      console.error("[API]   2. Token expired - log in again");
+      console.error("[API]   3. Invalid token in localStorage");
+      // Try to clear potentially stale token
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+    }
+
+    console.error("[API] Request failed:", {
+      endpoint,
+      method: options?.method || "GET",
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData,
+      rawResponse: rawText.substring(0, 500),
+    });
+
+    const errorMessage = errorData?.detail || errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
+    const error = new Error(String(errorMessage));
+    // Attach status code to error for easier checking in catch blocks
+    (error as any).statusCode = response.status;
+    throw error;
   }
 
   return response.json();

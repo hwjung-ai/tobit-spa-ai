@@ -3,6 +3,7 @@ import { ScreenSchemaV1, Component, ScreenAction, ComponentActionRef } from "./s
 import { getComponentDescriptor } from "./component-registry";
 import { validateBindingPath, validateActionHandler, validateScreenSchema } from "./validation-utils";
 import { parseBindingExpression, formatBindingExpression } from "./binding-path-utils";
+import { fetchApi } from "../adminUtils";
 
 export interface ValidationError {
   path: string;
@@ -187,13 +188,90 @@ export const useEditorState = create<EditorState>((set, get) => ({
   loadScreen: async (assetId: string) => {
     try {
       currentAssetId = assetId;
-      const response = await fetch(`/asset-registry/assets/${assetId}`);
-      if (!response.ok) throw new Error("Failed to load screen");
 
-      const data = await response.json();
+      // Try to load from /ui-defs first (new system)
+      try {
+        console.log("[EDITOR] Attempting to load screen from /ui-defs:", assetId);
+        const response = await fetchApi(`/ui-defs/${assetId}`);
+        console.log("[EDITOR] Loaded UI definition:", response);
+        const uiDef = response.data?.ui || response.ui || response;
+        console.log("[EDITOR] Extracted uiDef:", uiDef);
+
+        // Convert UI definition schema to screen schema format
+        let schema: ScreenSchemaV1;
+
+        if (uiDef.schema) {
+          console.log("[EDITOR] Has schema, converting...");
+          // Determine layout type from ui_type or schema structure
+          let layoutType = uiDef.ui_type || "dashboard";
+          if (layoutType === "grid") layoutType = "grid";
+          else if (layoutType === "chart") layoutType = "dashboard";
+          else if (layoutType === "dashboard") layoutType = "dashboard";
+
+          // If schema already has screen_id, components, state - use it as-is
+          if (uiDef.schema.screen_id && uiDef.schema.components) {
+            schema = uiDef.schema;
+            console.log("[EDITOR] Using schema as-is");
+          } else {
+            // Otherwise convert grid/chart schema to screen schema
+            schema = {
+              screen_id: uiDef.ui_id,
+              id: uiDef.ui_id,
+              name: uiDef.ui_name,
+              version: "1.0",
+              layout: {
+                type: layoutType as any,
+                ...uiDef.schema,
+              },
+              components: [],
+              state: { initial: {} },
+            };
+            console.log("[EDITOR] Converted to ScreenSchemaV1:", schema);
+          }
+        } else {
+          // Fallback: create minimal screen schema
+          console.log("[EDITOR] No schema in uiDef, creating minimal");
+          schema = {
+            screen_id: uiDef.ui_id,
+            id: uiDef.ui_id,
+            name: uiDef.ui_name,
+            version: "1.0",
+            layout: { type: "dashboard" },
+            components: [],
+            state: { initial: {} },
+          };
+        }
+
+        const status = uiDef.is_active ? "published" : "draft";
+
+        set({
+          screen: schema,
+          draft: schema,
+          published: status === "published" ? schema : null,
+          status,
+          draftModified: false,
+          validationErrors: validateScreen(schema),
+        });
+        console.log("[EDITOR] Screen loaded successfully from /ui-defs");
+        return;
+      } catch (uiDefsError) {
+        console.warn("[EDITOR] Failed to load from /ui-defs:", uiDefsError);
+      }
+
+      // Fallback to asset-registry endpoint
+      console.log("[EDITOR] Attempting to load screen from /asset-registry:", assetId);
+      const response = await fetchApi(`/asset-registry/assets/${assetId}`);
+      const data = response.data || response;
       const asset = data.asset || data;
       const schema = asset.schema_json || asset.screen_schema;
       const status = asset.status || "draft";
+
+      // IMPORTANT: Update currentAssetId to the canonical UUID from the backend
+      // This ensures subsequent PUT requests use the UUID, not a slug/screen_id
+      if (asset.asset_id) {
+        console.log("[EDITOR] Updating currentAssetId to canonical UUID:", asset.asset_id);
+        currentAssetId = asset.asset_id;
+      }
 
       set({
         screen: schema,
@@ -203,6 +281,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
         draftModified: false,
         validationErrors: validateScreen(schema),
       });
+      console.log("[EDITOR] Screen loaded successfully from /asset-registry");
     } catch (error) {
       console.error("Failed to load screen:", error);
       throw error;
@@ -221,11 +300,16 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   addComponent: (type: string, index?: number) => {
+    console.log("[EDITOR] Adding component:", type);
     set((state) => {
-      if (!state.screen) return state;
+      if (!state.screen) {
+        console.log("[EDITOR] No screen loaded");
+        return state;
+      }
 
       const newId = generateComponentId(type, state.screen.components);
       const newComponent = createDefaultComponent(type, newId);
+      console.log("[EDITOR] Created component:", newId, newComponent);
 
       const newComponents = [...state.screen.components];
       if (index !== undefined) {
@@ -238,6 +322,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
         ...state.screen,
         components: newComponents,
       };
+
+      console.log("[EDITOR] Updated screen with", newComponents.length, "components");
+      console.log("[EDITOR] Setting selectedComponentId to:", newId);
 
       return {
         screen: newScreen,
@@ -268,7 +355,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   selectComponent: (id: string | null) => {
-    set({ selectedComponentId: id });
+    console.log("[EDITOR] selectComponent called with:", id);
+    set((state) => {
+      console.log("[EDITOR] Current selectedComponentId:", state.selectedComponentId);
+      console.log("[EDITOR] Screen components:", state.screen?.components.map(c => c.id));
+      return { selectedComponentId: id };
+    });
   },
 
   updateComponentProps: (id: string, props: Record<string, any>) => {
@@ -684,7 +776,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   saveDraft: async () => {
     try {
+      console.log("[EDITOR] saveDraft called");
       const state = get();
+      console.log("[EDITOR] Current state:", { isDirty: state.draftModified, isSaving: state.isSaving });
+
       if (!state.screen) throw new Error("No screen loaded");
 
       const errors = state.validationErrors.filter(e => e.severity === "error");
@@ -694,22 +789,78 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
       set({ isSaving: true });
 
-      const response = await fetch(`/asset-registry/assets/${currentAssetId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schema_json: state.screen,
-        }),
-      });
+      console.log("[EDITOR] Attempting to save screen:", currentAssetId);
 
-      if (!response.ok) throw new Error("Failed to save draft");
+      // Save to asset-registry using fetchApi (with correct base URL)
+      try {
+        // Try PUT (update existing)
+        const putPayload = {
+          schema_json: state.screen,
+        };
+        console.log("[EDITOR] Attempting PUT to /asset-registry/assets");
+        console.log("[EDITOR] PUT payload:", putPayload);
+        console.log("[EDITOR] Screen data:", state.screen);
+        const putResponse = await fetchApi(`/asset-registry/assets/${currentAssetId}`, {
+          method: "PUT",
+          body: JSON.stringify(putPayload),
+        });
+        console.log("[EDITOR] PUT response:", putResponse);
+        console.log("[EDITOR] Saved to asset-registry successfully");
+      } catch (putError: any) {
+        // If asset doesn't exist (404), create it with POST
+        // Check for 404 status code or "not found" in error message
+        const errStr = String(putError).toLowerCase();
+        const errMsg = (putError?.message || "").toLowerCase();
+        const statusCode = (putError as any)?.statusCode;
+
+        console.log("[EDITOR] PUT failed:", putError);
+        console.log("[EDITOR] Status code:", statusCode);
+        console.log("[EDITOR] Checking error for 404/not found matches...");
+
+        if (
+          statusCode === 404 ||
+          errStr.includes("404") ||
+          errStr.includes("not found") ||
+          errMsg.includes("404") ||
+          errMsg.includes("not found")
+        ) {
+          console.log("[EDITOR] Asset not found, creating new asset with POST");
+          try {
+            const postBody = {
+              asset_type: "screen",
+              screen_id: currentAssetId,
+              name: state.screen.name || `Screen ${currentAssetId}`,
+              description: "Visual Editor Screen",
+              schema_json: state.screen,
+            };
+            console.log("[EDITOR] POST body:", postBody);
+
+            const postResponse = await fetchApi(`/asset-registry/assets`, {
+              method: "POST",
+              body: JSON.stringify(postBody),
+            });
+            console.log("[EDITOR] Created new asset successfully");
+          } catch (postError) {
+            console.error("[EDITOR] POST error:", postError);
+            throw new Error(`Failed to create screen: ${postError}`);
+          }
+        } else {
+          console.error("[EDITOR] PUT error:", putError);
+          console.error("[EDITOR] Could not determine if error was 404 or other error");
+          console.error("[EDITOR] Error string:", String(putError));
+          throw new Error(`Failed to save draft: ${putError}`);
+        }
+      }
+
 
       set({
         draft: state.screen,
         draftModified: false,
         isSaving: false,
       });
+      console.log("[EDITOR] saveDraft completed successfully");
     } catch (error) {
+      console.error("[EDITOR] saveDraft error:", error);
       set({ isSaving: false });
       throw error;
     }
@@ -730,14 +881,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
       // First save draft
       await get().saveDraft();
 
-      // Then publish
-      const response = await fetch(`/asset-registry/assets/${currentAssetId}/publish`, {
+      // Then publish via asset-registry using fetchApi with token
+      await fetchApi(`/asset-registry/assets/${currentAssetId}/publish`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-
-      if (!response.ok) throw new Error("Failed to publish");
 
       set({
         published: state.screen,
@@ -754,13 +902,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
     try {
       set({ isRollbacking: true });
 
-      const response = await fetch(`/asset-registry/assets/${currentAssetId}/unpublish`, {
+      // Rollback via asset-registry using fetchApi with token
+      await fetchApi(`/asset-registry/assets/${currentAssetId}/unpublish`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-
-      if (!response.ok) throw new Error("Failed to rollback");
 
       set((state) => ({
         status: "draft",

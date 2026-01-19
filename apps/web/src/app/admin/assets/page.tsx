@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function AssetsPage() {
     const router = useRouter();
-    const [typeFilter, setTypeFilter] = useState<"all" | "prompt" | "mapping" | "policy" | "query">("all");
+    const [typeFilter, setTypeFilter] = useState<"all" | "prompt" | "mapping" | "policy" | "query" | "screen">("all");
     const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -44,6 +44,7 @@ export default function AssetsPage() {
                             <option value="mapping">Mappings</option>
                             <option value="policy">Policies</option>
                             <option value="query">Queries</option>
+                            <option value="screen">Screens</option>
                         </select>
                     </div>
 

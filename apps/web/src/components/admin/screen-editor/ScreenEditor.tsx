@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ScreenEditorHeader from "./ScreenEditorHeader";
 import ScreenEditorTabs from "./ScreenEditorTabs";
@@ -13,16 +14,37 @@ interface ScreenEditorProps {
 }
 
 export default function ScreenEditor({ assetId }: ScreenEditorProps) {
+  const router = useRouter();
   const editorState = useEditorState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [showPublishGate, setShowPublishGate] = useState(false);
   const [justPublished, setJustPublished] = useState(false);
+  const [authCheckDone, setAuthCheckDone] = useState(false);
+
+  // Subscribe to specific state fields for re-renders
+  const isDirty = editorState.draftModified;
+  const canPublish = editorState.status === "draft" &&
+    editorState.validationErrors.filter(e => e.severity === "error").length === 0;
+  const canRollback = editorState.status === "published";
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) {
+      console.warn("[ScreenEditor] No access token found, redirecting to login");
+      router.push("/login");
+      return;
+    }
+    setAuthCheckDone(true);
+  }, [router]);
 
   useEffect(() => {
-    loadScreen();
-  }, [assetId]);
+    if (authCheckDone) {
+      loadScreen();
+    }
+  }, [assetId, authCheckDone]);
 
   const loadScreen = async () => {
     try {
@@ -75,7 +97,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     }
   };
 
-  if (loading) {
+  if (!authCheckDone || loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-slate-400">Loading screen editor...</div>
@@ -107,9 +129,9 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
       {/* Header */}
       <ScreenEditorHeader
         status={editorState.status}
-        isDirty={editorState.isDirty}
-        canPublish={editorState.canPublish}
-        canRollback={editorState.canRollback}
+        isDirty={isDirty}
+        canPublish={canPublish}
+        canRollback={canRollback}
         onSaveDraft={handleSaveDraft}
         onPublish={handlePublishClick}
         onRollback={handleRollback}
