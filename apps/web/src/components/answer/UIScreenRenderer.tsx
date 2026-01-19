@@ -29,6 +29,7 @@ interface UIScreenRendererProps {
   block: UIScreenBlock;
   traceId?: string;
   onResult?: (blocks: any[]) => void;
+  schemaOverride?: ScreenSchemaV1 | null;
 }
 
 interface ErrorBoundaryState {
@@ -67,7 +68,12 @@ class UIScreenErrorBoundary extends React.Component<
   }
 }
 
-export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenRendererProps) {
+export default function UIScreenRenderer({
+  block,
+  traceId,
+  onResult,
+  schemaOverride,
+}: UIScreenRendererProps) {
   const [screenSchema, setScreenSchema] = useState<ScreenSchemaV1 | null>(null);
   const [state, setState] = useState<Record<string, any>>({});
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
@@ -81,65 +87,67 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
       setIsLoading(true);
       setLoadError(null);
       try {
-        let schema: ScreenSchemaV1 | null = null;
+        let schema: ScreenSchemaV1 | null = schemaOverride || null;
 
-        // Try to load from /ui-defs first (new system)
-        try {
-          const response = await fetchApi(`/ui-defs/${screenId}`);
-          const uiDef = response.data?.ui || response.ui || response;
+        if (!schema) {
+          // Try to load from /ui-defs first (new system)
+          try {
+            const response = await fetchApi(`/ui-defs/${screenId}`);
+            const uiDef = response.data?.ui || response.ui || response;
 
-          if (uiDef.schema) {
-            // Determine layout type from ui_type or schema structure
-            let layoutType = uiDef.ui_type || "dashboard";
-            if (layoutType === "grid") layoutType = "grid";
-            else if (layoutType === "chart") layoutType = "dashboard";
-            else if (layoutType === "dashboard") layoutType = "dashboard";
+            if (uiDef.schema) {
+              // Determine layout type from ui_type or schema structure
+              let layoutType = uiDef.ui_type || "dashboard";
+              if (layoutType === "grid") layoutType = "grid";
+              else if (layoutType === "chart") layoutType = "dashboard";
+              else if (layoutType === "dashboard") layoutType = "dashboard";
 
-            // If schema already has screen_id, components, state - use it as-is
-            if (uiDef.schema.screen_id && uiDef.schema.components) {
-              schema = uiDef.schema;
+              // If schema already has screen_id, components, state - use it as-is
+              if (uiDef.schema.screen_id && uiDef.schema.components) {
+                schema = uiDef.schema;
+              } else {
+                // Otherwise convert grid/chart schema to screen schema
+                schema = {
+                  screen_id: uiDef.ui_id,
+                  id: uiDef.ui_id,
+                  name: uiDef.ui_name,
+                  version: "1.0",
+                  layout: {
+                    type: layoutType as any,
+                    ...uiDef.schema,
+                  },
+                  components: [],
+                  state: { initial: {} },
+                };
+              }
             } else {
-              // Otherwise convert grid/chart schema to screen schema
+              // Fallback: create minimal screen schema
               schema = {
                 screen_id: uiDef.ui_id,
                 id: uiDef.ui_id,
                 name: uiDef.ui_name,
                 version: "1.0",
-                layout: {
-                  type: layoutType as any,
-                  ...uiDef.schema,
-                },
+                layout: { type: "dashboard" },
                 components: [],
                 state: { initial: {} },
               };
             }
-          } else {
-            // Fallback: create minimal screen schema
-            schema = {
-              screen_id: uiDef.ui_id,
-              id: uiDef.ui_id,
-              name: uiDef.ui_name,
-              version: "1.0",
-              layout: { type: "dashboard" },
-              components: [],
-              state: { initial: {} },
-            };
-          }
-        } catch (uiDefsError) {
-          // Fall through to asset-registry fallback
-          console.warn('Failed to load from /ui-defs, trying asset-registry:', uiDefsError);
+          } catch (uiDefsError) {
+            // Fall through to asset-registry fallback
+            console.warn("Failed to load from /ui-defs, trying asset-registry:", uiDefsError);
 
-          const assetResp = await fetch(`/asset-registry/assets/${screenId}`);
-          if (!assetResp.ok) {
-            throw new Error(`Failed to load screen asset: ${assetResp.status} ${assetResp.statusText}`);
+            const assetResp = await fetchApi(`/asset-registry/assets/${screenId}`);
+            const assetData = assetResp.data?.asset || assetResp.data || assetResp;
+            const asset = (assetData as Record<string, any>) || {};
+            schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
+            if (!schema) {
+              throw new Error("Asset registry response missing screen schema");
+            }
           }
-          const raw = await assetResp.json();
-          const asset = (raw?.data?.asset || raw?.asset || raw) as Record<string, any>;
-          schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
         }
 
-        if (!schema || typeof schema !== 'object') {
-          throw new Error('Invalid screen schema: missing or non-object');
+        if (!schema || typeof schema !== "object") {
+          throw new Error("Invalid screen schema: missing or non-object");
         }
 
         setScreenSchema(schema);
@@ -172,7 +180,7 @@ export default function UIScreenRenderer({ block, traceId, onResult }: UIScreenR
     }
 
     load();
-  }, [screenId, block.bindings, block.params, traceId]);
+  }, [screenId, block.bindings, block.params, schemaOverride, traceId]);
 
   const context = useMemo(
     () => ({

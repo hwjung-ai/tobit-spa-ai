@@ -1,11 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import UIScreenRenderer from "@/components/answer/UIScreenRenderer";
 
 export default function PreviewTab() {
   const editorState = useEditorState();
+  const previewBlock = useMemo(() => {
+    if (!editorState.screen) return null;
+    return {
+      type: "ui_screen",
+      screen_id: editorState.screen.screen_id,
+      params: {},
+    };
+  }, [editorState.screen?.screen_id]);
 
   if (!editorState.screen) {
     return (
@@ -40,13 +48,7 @@ export default function PreviewTab() {
       )}
 
       {/* Render screen using UIScreenRenderer */}
-      <UIScreenRenderer
-        block={{
-          type: "ui_screen",
-          screen_id: editorState.screen.screen_id,
-          params: {},
-        }}
-      />
+      <UIScreenRenderer block={previewBlock!} schemaOverride={editorState.screen} />
     </div>
   );
 }

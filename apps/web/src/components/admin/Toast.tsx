@@ -49,14 +49,15 @@ export default function Toast({ message, type = "success", onClose, duration = 3
     }[type];
 
     return (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in">
-            <div className={`rounded-lg border ${bgColor} p-4 shadow-lg max-w-md`}>
-                <div className="flex items-center gap-3">
-                    <div className={textColor}>{icon}</div>
-                    <p className={`text-sm ${textColor}`}>{message}</p>
+        <div className="fixed bottom-6 right-6 z-50 flex w-full max-w-xs flex-col gap-3">
+            <div className={`animate-slide-in rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
+                <div className="flex items-start gap-3">
+                    <div className={`${textColor} mt-1`}>{icon}</div>
+                    <p className={`text-sm font-medium leading-snug ${textColor}`}>{message}</p>
                     <button
                         onClick={onClose}
-                        className={`ml-auto ${textColor} hover:opacity-70 transition-opacity`}
+                        className={`ml-auto ${textColor} rounded-full p-1 transition-opacity hover:opacity-70`}
+                        aria-label="Close toast"
                     >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

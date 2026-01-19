@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Component } from "@/lib/ui-screen/screen.schema";
 import { Button } from "@/components/ui/button";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface CanvasComponentProps {
   component: Component;
@@ -17,6 +18,7 @@ export default function CanvasComponent({
   onSelect,
 }: CanvasComponentProps) {
   const editorState = useEditorState();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div
@@ -42,20 +44,30 @@ export default function CanvasComponent({
         </div>
 
         {isSelected && (
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={e => {
-              e.stopPropagation();
-              if (confirm("Delete this component?")) {
+          <>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={e => {
+                e.stopPropagation();
+                setConfirmOpen(true);
+              }}
+              className="h-7 px-2"
+              data-testid={`btn-delete-${component.id}`}
+            >
+              ✕
+            </Button>
+            <ConfirmDialog
+              open={confirmOpen}
+              onOpenChange={setConfirmOpen}
+              title="Delete component"
+              description={`Are you sure you want to delete ${component.label || component.id}?`}
+              confirmLabel="Delete"
+              onConfirm={() => {
                 editorState.deleteComponent(component.id);
-              }
-            }}
-            className="h-7 px-2"
-            data-testid={`btn-delete-${component.id}`}
-          >
-            ✕
-          </Button>
+              }}
+            />
+          </>
         )}
       </div>
     </div>

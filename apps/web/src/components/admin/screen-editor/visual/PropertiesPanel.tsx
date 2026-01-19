@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { ComponentActionRef } from "@/lib/ui-screen/screen.schema";
 import { Trash2, Plus, Edit2 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export default function PropertiesPanel() {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [editingAction, setEditingAction] = useState<ComponentActionRef | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   // Get selected component by finding it in the components array
   const selectedComponent = React.useMemo(() => {
@@ -281,12 +283,7 @@ export default function PropertiesPanel() {
         </Button>
 
         <Button
-          onClick={() => {
-            if (confirm("Delete this component?")) {
-              editorState.deleteComponent(selectedComponent.id);
-              editorState.selectComponent(null);
-            }
-          }}
+          onClick={() => setConfirmDeleteOpen(true)}
           variant="destructive"
           size="sm"
           className="w-full text-xs"
@@ -294,6 +291,17 @@ export default function PropertiesPanel() {
         >
           Delete
         </Button>
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onOpenChange={setConfirmDeleteOpen}
+          title="Delete component"
+          description={`Delete ${selectedComponent.label || selectedComponent.id}? This action cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={() => {
+            editorState.deleteComponent(selectedComponent.id);
+            editorState.selectComponent(null);
+          }}
+        />
       </div>
 
       {/* Action Editor Modal */}
