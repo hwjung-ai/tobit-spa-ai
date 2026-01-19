@@ -209,9 +209,6 @@ def get_asset(asset_id: str, version: int | None = None):
         if asset.asset_type != "screen":
             return ResponseEnvelope.success(data={"asset": _serialize_asset(asset)})
 
-        if not asset.screen_id or asset.screen_schema is None:
-            raise HTTPException(status_code=404, detail="screen asset is not available")
-
         if version and version != asset.version:
             hist = session.exec(
                 select(TbAssetVersionHistory)
