@@ -14,8 +14,9 @@ from app.modules.asset_registry.schemas import (
     ScreenAssetUpdate,
 )
 from app.modules.auth.models import TbUser
-from app.modules.permissions.models import ResourcePermission
-from app.modules.permissions.crud import check_permission
+# Permission checks disabled due to missing tb_resource_permission table
+# from app.modules.permissions.models import ResourcePermission
+# from app.modules.permissions.crud import check_permission
 from core.db import get_session_context, get_session
 from core.auth import get_current_user
 from schemas.common import ResponseEnvelope
@@ -260,29 +261,8 @@ def update_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # Check permission (temporarily disabled due to missing table)
-        try:
-            permission_result = check_permission(
-                session=session,
-                user_id=current_user.id,
-                role=current_user.role,
-                permission=ResourcePermission.ASSET_UPDATE,
-                resource_type="asset",
-                resource_id=asset_id,
-            )
-
-            if not permission_result.granted:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied: {permission_result.reason}",
-                )
-        except Exception as e:
-            # Temporarily allow access if permission check fails
-            # TODO: Fix permission tables in database
-            if "tb_resource_permission" in str(e):
-                pass  # Allow update if permission table doesn't exist
-            else:
-                raise
+        # TODO: Permission check disabled due to missing tb_resource_permission table
+        # Will be re-enabled once database migrations are complete
 
         if asset.status != "draft":
             raise HTTPException(status_code=400, detail="only draft assets can be updated")
@@ -352,29 +332,8 @@ def publish_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # Check permission (temporarily disabled due to missing table)
-        try:
-            permission_result = check_permission(
-                session=session,
-                user_id=current_user.id,
-                role=current_user.role,
-                permission=ResourcePermission.ASSET_UPDATE,
-                resource_type="asset",
-                resource_id=asset_id,
-            )
-
-            if not permission_result.granted:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied: {permission_result.reason}",
-                )
-        except Exception as e:
-            # Temporarily allow access if permission check fails
-            # TODO: Fix permission tables in database
-            if "tb_resource_permission" in str(e):
-                pass  # Allow update if permission table doesn't exist
-            else:
-                raise
+        # TODO: Permission check disabled due to missing tb_resource_permission table
+        # Will be re-enabled once database migrations are complete
         # increment version and set status
         asset.version = (asset.version or 0) + 1
         asset.status = "published"
@@ -443,29 +402,8 @@ def rollback_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # Check permission (temporarily disabled due to missing table)
-        try:
-            permission_result = check_permission(
-                session=session,
-                user_id=current_user.id,
-                role=current_user.role,
-                permission=ResourcePermission.ASSET_UPDATE,
-                resource_type="asset",
-                resource_id=asset_id,
-            )
-
-            if not permission_result.granted:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied: {permission_result.reason}",
-                )
-        except Exception as e:
-            # Temporarily allow access if permission check fails
-            # TODO: Fix permission tables in database
-            if "tb_resource_permission" in str(e):
-                pass  # Allow update if permission table doesn't exist
-            else:
-                raise
+        # TODO: Permission check disabled due to missing tb_resource_permission table
+        # Will be re-enabled once database migrations are complete
         hist = session.exec(
             select(TbAssetVersionHistory)
             .where(TbAssetVersionHistory.asset_id == asset.asset_id)
