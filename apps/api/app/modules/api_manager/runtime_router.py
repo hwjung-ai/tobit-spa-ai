@@ -10,34 +10,33 @@ from sqlmodel import Session
 
 from core.db import get_session
 from schemas.common import ResponseEnvelope
+from models.api_definition import ApiDefinition
 from .executor import execute_sql_api, execute_http_api, normalize_limit
-from .models import TbApiDef
 from .script_executor import execute_script_api
+from .workflow_executor import execute_workflow_api
 
 
 runtime_router = APIRouter(tags=["runtime"])
 
 
-@runtime_router.api_route("/runtime/{path:path}", methods=["GET", "POST", "OPTIONS"])
+@runtime_router.api_route("/runtime/{path:path}", methods=["GET", "POST"])
 async def handle_runtime_request(
     path: str,
     request: Request,
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
-    # Handle CORS preflight request - return immediately without session access
-    if request.method == "OPTIONS":
-        return ResponseEnvelope.success(data={})
     normalized_path = _normalize_runtime_path(path)
     api = _find_runtime_api(session, normalized_path, request.method)
     if not api:
         raise HTTPException(status_code=404, detail="Runtime API not found")
     params, raw_limit, input_payload = await _extract_runtime_params(request)
     executed_by = request.headers.get("X-Executed-By") or "anonymous"
-    if api.logic_type == "sql":
+
+    if api.mode == "sql":
         result = execute_sql_api(
             session=session,
-            api_id=str(api.api_id),
-            logic_body=api.logic_body,
+            api_id=str(api.id),
+            logic_body=api.logic,
             params=params,
             limit=raw_limit,
             executed_by=executed_by,
@@ -46,9 +45,9 @@ async def handle_runtime_request(
         return ResponseEnvelope.success(
             data={
                 "api": {
-                    "api_id": str(api.api_id),
-                    "api_name": api.api_name,
-                    "endpoint": api.endpoint,
+                    "api_id": str(api.id),
+                    "api_name": api.name,
+                    "endpoint": api.path,
                     "method": api.method,
                 },
                 "result": {
@@ -58,13 +57,13 @@ async def handle_runtime_request(
                     "duration_ms": result.duration_ms,
                 },
                 "references": {
-                    "sql_template": api.logic_body,
+                    "sql_template": api.logic,
                     "params": result.params,
                     "limit": runtime_limit,
                 },
             }
         )
-    if api.logic_type == "workflow":
+    if api.mode == "workflow":
         workflow_result = execute_workflow_api(
             session=session,
             workflow_api=api,
@@ -76,51 +75,51 @@ async def handle_runtime_request(
         return ResponseEnvelope.success(
             data={
                 "api": {
-                    "api_id": str(api.api_id),
-                    "api_name": api.api_name,
-                    "endpoint": api.endpoint,
+                    "api_id": str(api.id),
+                    "api_name": api.name,
+                    "endpoint": api.path,
                     "method": api.method,
                 },
                 "result": workflow_result.model_dump(),
                 "references": workflow_result.references,
             }
         )
-    if api.logic_type == "script":
+    if api.mode == "script":
         script_result = execute_script_api(
             session=session,
-            api_id=str(api.api_id),
-            logic_body=api.logic_body,
+            api_id=str(api.id),
+            logic_body=api.logic,
             params=params,
             input_payload=input_payload,
             executed_by=executed_by,
-            runtime_policy=api.runtime_policy,
+            runtime_policy={},
         )
         return ResponseEnvelope.success(
             data={
                 "api": {
-                    "api_id": str(api.api_id),
-                    "api_name": api.api_name,
-                    "endpoint": api.endpoint,
+                    "api_id": str(api.id),
+                    "api_name": api.name,
+                    "endpoint": api.path,
                     "method": api.method,
                 },
                 "result": script_result.model_dump(),
                 "references": script_result.references,
             }
         )
-    if api.logic_type == "http":
+    if api.mode == "http":
         result = execute_http_api(
             session=session,
-            api_id=str(api.api_id),
-            logic_body=api.logic_body,
+            api_id=str(api.id),
+            logic_body=api.logic,
             params=params,
             executed_by=executed_by,
         )
         return ResponseEnvelope.success(
             data={
                 "api": {
-                    "api_id": str(api.api_id),
-                    "api_name": api.api_name,
-                    "endpoint": api.endpoint,
+                    "api_id": str(api.id),
+                    "api_name": api.name,
+                    "endpoint": api.path,
                     "method": api.method,
                 },
                 "result": {
@@ -130,7 +129,7 @@ async def handle_runtime_request(
                     "duration_ms": result.duration_ms,
                 },
                 "references": {
-                    "http_spec": api.logic_body,
+                    "http_spec": api.logic,
                     "params": result.params,
                 },
             }
@@ -145,12 +144,12 @@ def _normalize_runtime_path(path: str) -> str:
     return f"/runtime{cleaned}"
 
 
-def _find_runtime_api(session: Session, endpoint: str, method: str) -> TbApiDef | None:
+def _find_runtime_api(session: Session, endpoint: str, method: str) -> ApiDefinition | None:
     cleaned = _normalize_endpoint(endpoint)
     statement = (
-        select(TbApiDef)
+        select(ApiDefinition)
         .where(
-            TbApiDef.endpoint.in_(
+            ApiDefinition.path.in_(
                 [
                     cleaned,
                     f"/runtime{cleaned}",
@@ -158,20 +157,20 @@ def _find_runtime_api(session: Session, endpoint: str, method: str) -> TbApiDef 
                 ]
             )
         )
-        .where(TbApiDef.method == method)
-        .where(TbApiDef.is_active == True)
+        .where(ApiDefinition.method == method)
+        .where(ApiDefinition.is_enabled == True)
         .limit(1)
     )
     api = session.exec(statement).scalars().first()
     if api:
         return api
     return session.exec(
-        select(TbApiDef)
+        select(ApiDefinition)
         .where(
-            TbApiDef.endpoint == cleaned.rstrip("/")
+            ApiDefinition.path == cleaned.rstrip("/")
         )
-        .where(TbApiDef.method == method)
-        .where(TbApiDef.is_active == True)
+        .where(ApiDefinition.method == method)
+        .where(ApiDefinition.is_enabled == True)
         .limit(1)
     ).scalars().first()
 
@@ -185,8 +184,6 @@ def _normalize_endpoint(endpoint: str) -> str:
 
 
 async def _extract_runtime_params(request: Request) -> tuple[dict[str, Any], int | None, Any | None]:
-    if request.method == "OPTIONS":
-        return {}, None, None
     if request.method == "GET":
         params = {key: value for key, value in request.query_params.items() if key != "limit"}
         limit_raw = request.query_params.get("limit")

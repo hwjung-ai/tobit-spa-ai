@@ -163,16 +163,21 @@ def execute_sql_api(
         raise HTTPException(status_code=500, detail="SQL execution failed") from exc
     finally:
         duration_ms = int((perf_counter() - start) * 1000)
-        record_exec_log(
-            session=session,
-            api_id=api_id,
-            status=status,
-            duration_ms=duration_ms,
-            row_count=row_count,
-            params=params or {},
-            executed_by=executed_by,
-            error_message=error_message,
-        )
+        try:
+            record_exec_log(
+                session=session,
+                api_id=api_id,
+                status=status,
+                duration_ms=duration_ms,
+                row_count=row_count,
+                params=params or {},
+                executed_by=executed_by,
+                error_message=error_message,
+            )
+        except Exception:
+            # Silently ignore logging errors (table may not exist)
+            # Reset session state to avoid PendingRollbackError
+            session.rollback()
     return ApiExecuteResponse(
         executed_sql=logic_body,
         params=params or {},
@@ -218,16 +223,21 @@ def execute_http_api(session: Session, api_id: str, logic_body: str, params: dic
         raise HTTPException(status_code=502, detail="External HTTP request failed") from exc
     finally:
         duration_ms = int((perf_counter() - start) * 1000)
-        record_exec_log(
-            session=session,
-            api_id=api_id,
-            status=status,
-            duration_ms=duration_ms,
-            row_count=0,
-            params=params or {},
-            executed_by=executed_by,
-            error_message=error_message,
-        )
+        try:
+            record_exec_log(
+                session=session,
+                api_id=api_id,
+                status=status,
+                duration_ms=duration_ms,
+                row_count=0,
+                params=params or {},
+                executed_by=executed_by,
+                error_message=error_message,
+            )
+        except Exception:
+            # Silently ignore logging errors (table may not exist)
+            # Reset session state to avoid PendingRollbackError
+            session.rollback()
     try:
         body = response.json()
     except ValueError:
