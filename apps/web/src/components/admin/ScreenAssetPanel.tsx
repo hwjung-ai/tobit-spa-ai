@@ -61,7 +61,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     try {
       // Fetch from asset-registry (source of truth for editor)
       const response = await fetchApi("/asset-registry/assets?asset_type=screen");
-      setScreens(response.assets || []);
+      setScreens(response.data?.assets || []);
       setErrors([]);
     } catch (error: any) {
       try {
