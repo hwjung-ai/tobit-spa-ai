@@ -69,6 +69,8 @@ export const API_BASE_URL =
     ? (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000")
     : "http://localhost:8000";
 
+const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
+
 export async function fetchApi<T = any>(
   endpoint: string,
   options?: RequestInit
@@ -84,13 +86,17 @@ export async function fetchApi<T = any>(
     ...options?.headers,
   };
 
-  // Add Authorization header if token exists
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-    console.log("[API] Adding Authorization header with token");
+  // Add Authorization header if auth is enabled and token exists
+  if (ENABLE_AUTH) {
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+      console.log("[API] Adding Authorization header with token");
+    } else {
+      console.warn("[API] ⚠️ No token found in localStorage for endpoint:", endpoint);
+      console.warn("[API] User may not be logged in. Visit /login to authenticate.");
+    }
   } else {
-    console.warn("[API] ⚠️ No token found in localStorage for endpoint:", endpoint);
-    console.warn("[API] User may not be logged in. Visit /login to authenticate.");
+    console.log("[API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.");
   }
 
   console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET");
@@ -128,8 +134,8 @@ export async function fetchApi<T = any>(
       errorData = { message: String(parseError) };
     }
 
-    // Check if it's a 401 Unauthorized error
-    if (response.status === 401) {
+    // Check if it's a 401 Unauthorized error (only if auth is enabled)
+    if (response.status === 401 && ENABLE_AUTH) {
       console.error("[API] ❌ Authentication failed (401 Unauthorized)");
       console.error("[API] Possible causes:");
       console.error("[API]   1. User not logged in - visit /login");
@@ -152,6 +158,8 @@ export async function fetchApi<T = any>(
       error: errorData,
       rawResponse: rawText.substring(0, 500),
     });
+    console.error("[API] Full error data:", errorData);
+    console.error("[API] Full raw text:", rawText);
 
     const errorMessage = errorData?.detail || errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
     const error = new Error(String(errorMessage));

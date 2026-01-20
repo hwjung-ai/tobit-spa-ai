@@ -10,12 +10,12 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from core.config import get_settings
 from models.chat import ChatMessage, ChatThread
 from models.document import Document, DocumentChunk
 from app.modules.api_manager.models import ApiExecLog, TbApiDef
-from app.modules.ui_creator.models import TbUiDef
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.inspector.models import TbExecutionTrace
 from sqlmodel import SQLModel

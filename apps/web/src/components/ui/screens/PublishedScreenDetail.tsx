@@ -12,7 +12,8 @@ type ScreenAssetResponse = {
     description: string | null;
     version: number;
     status: string;
-    screen_schema: Record<string, any>;
+    schema_json: Record<string, any>;
+    tags?: Record<string, any> | null;
     created_at: string;
     updated_at: string;
     published_at: string | null;
@@ -34,12 +35,20 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
       setLoading(true);
       setError(null);
       try {
+        console.log("[PublishedScreenDetail] Loading screen:", assetId);
         const envelope = await fetchApi<ScreenAssetResponse>(`/asset-registry/assets/${assetId}?stage=published`);
+        console.log("[PublishedScreenDetail] Response envelope:", envelope);
         if (!cancelled) {
-          setAsset(envelope.data.asset);
+          if (envelope.data?.asset) {
+            setAsset(envelope.data.asset);
+          } else {
+            setError("Asset data not found in response");
+            console.error("[PublishedScreenDetail] No asset in response:", envelope);
+          }
         }
       } catch (err: any) {
         if (!cancelled) {
+          console.error("[PublishedScreenDetail] Error loading screen:", err);
           const status = err?.statusCode;
           if (status === 404) {
             setError("Screen not found or not published");
@@ -113,7 +122,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
         )}
       </div>
       <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <UIScreenRenderer block={previewBlock!} schemaOverride={asset.screen_schema} />
+        <UIScreenRenderer block={previewBlock!} schemaOverride={asset.schema_json} />
       </div>
     </div>
   );

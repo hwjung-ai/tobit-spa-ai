@@ -116,9 +116,11 @@ def list_assets(asset_type: str | None = None, status: str | None = None):
                         "screen_id": a.screen_id,
                         "asset_type": a.asset_type,
                         "name": a.name,
+                        "description": a.description,
                         "version": a.version,
                         "status": a.status,
                         "published_at": a.published_at,
+                        "updated_at": a.updated_at,
                     } for a in assets
                 ],
                 "total": len(assets)

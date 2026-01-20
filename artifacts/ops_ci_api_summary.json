@@ -1,0 +1,356 @@
+{
+  "metadata": {
+    "ops_assume_real_mode": "true",
+    "base_url": "http://localhost:8000",
+    "ci_endpoint": "/ops/ci/ask",
+    "seed_range": {
+      "from": "2025-12-01",
+      "to": "2025-12-31"
+    },
+    "ci_code_strategy": "seed",
+    "ci_codes": {
+      "server": "srv-erp-01",
+      "os": "os-erp-01",
+      "app": "app-erp-alert-01-1"
+    }
+  },
+  "entries": [
+    {
+      "test_name": "lookup_server_status",
+      "query": "srv-erp-01의 현재 상태와 기본 정보를 알려줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": false,
+      "reason": "status code must be 200\nassert 500 == 200\n +  where 500 = <Response [500 Internal Server Error]>.status_code",
+      "status": "fail",
+      "status_code": 500,
+      "raw_response": "artifacts/ops_ci_api_raw/lookup_server_status.json"
+    },
+    {
+      "test_name": "metric_cpu_usage",
+      "query": "srv-erp-01의 2025-12-01~2025-12-31 cpu_usage 평균과 마지막 값을 알려줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/metric_cpu_usage.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 10
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "AGGREGATE",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "SUMMARY",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    },
+    {
+      "test_name": "history_events",
+      "query": "srv-erp-01의 2025-12-01~2025-12-31 severity 2 이상 이벤트를 요약해줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/history_events.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 10
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LOOKUP",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "NEIGHBORS",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    },
+    {
+      "test_name": "list_servers",
+      "query": "owner=erp-platform status=monitoring 서버 목록을 보여줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/list_servers.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 10
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LIST",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "NEIGHBORS",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    },
+    {
+      "test_name": "multi_step_app_history",
+      "query": "app-erp-alert-01-1의 2025-12-01~2025-12-31 작업/배포 이력과 구동 호스트를 함께 보여줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/multi_step_app_history.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 10
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LOOKUP",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "SUMMARY",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    },
+    {
+      "test_name": "no_data_guidance",
+      "query": "srv-erp-99의 상태를 알려줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/no_data_guidance.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 10
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LOOKUP",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "NEIGHBORS",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    },
+    {
+      "test_name": "ambiguous_integration",
+      "query": "integration 앱의 최근 배포 상태를 알려줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/ambiguous_integration.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 9
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LOOKUP",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "NEIGHBORS",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    },
+    {
+      "test_name": "policy_depth",
+      "query": "app-erp-alert-01-1 영향 그래프를 depth 10으로 확장해줘.",
+      "endpoint": "/ops/ci/ask",
+      "seed_range": {
+        "from": "2025-12-01",
+        "to": "2025-12-31"
+      },
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/policy_depth.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        },
+        {
+          "type": "table",
+          "title": "CI candidates (primary endpoint)",
+          "rows": 10
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [
+          "ci.search",
+          "ci.search",
+          "ci.search_broad"
+        ],
+        "summary": "Multiple CI candidates",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LOOKUP",
+        "graph_depth": 2,
+        "policy_decisions": {
+          "view": "IMPACT",
+          "requested_depth": 2,
+          "clamped_depth": 2,
+          "allowed_rel_types": [
+            "DEPENDS_ON"
+          ],
+          "discovered_rel_types": []
+        }
+      },
+      "mock_terms": []
+    }
+  ]
+}

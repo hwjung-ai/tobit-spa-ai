@@ -1,0 +1,475 @@
+{
+  "time": "2026-01-20T02:49:01.369820",
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "answer": "Multiple CI candidates",
+    "blocks": [
+      {
+        "type": "text",
+        "text": "Multiple candidates found"
+      },
+      {
+        "type": "table",
+        "columns": [
+          "ci_id",
+          "ci_code",
+          "ci_name",
+          "ci_type",
+          "ci_subtype",
+          "ci_category",
+          "status",
+          "location",
+          "owner"
+        ],
+        "rows": [
+          [
+            "deda439d-90fb-483a-affe-fab678f4997b",
+            "app-analytics-integration-03-1",
+            "Analytics_App_Integration_03-1",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-c",
+            "analytics-apps"
+          ],
+          [
+            "64ba406d-9c27-4b97-b668-af38f091336e",
+            "app-apm-integration-02-1",
+            "APM_App_Integration_02-1",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-a",
+            "apm-apps"
+          ],
+          [
+            "ed6f3278-3dfb-4316-a646-13c6251c1991",
+            "app-cmdb-integration-01-1",
+            "CMDB_App_Integration_01-1",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-a",
+            "cmdb-apps"
+          ],
+          [
+            "28f47106-bb5e-4795-81cd-6ca6fa426d1a",
+            "app-erp-integration-03-2",
+            "ERP_App_Integration_03-2",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-a",
+            "erp-apps"
+          ],
+          [
+            "fb43575e-6078-4abe-a89e-4bb9e2a8f48f",
+            "app-erp-integration-04-3",
+            "ERP_App_Integration_04-3",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-c",
+            "erp-apps"
+          ],
+          [
+            "4947ebd8-cafd-456a-84bb-9a6e8c073b28",
+            "app-mes-integration-01-1",
+            "MES_App_Integration_01-1",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-a",
+            "mes-apps"
+          ],
+          [
+            "c60a9d81-bb89-4161-b561-fa63d4b98ee0",
+            "app-mes-integration-04-2",
+            "MES_App_Integration_04-2",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-c",
+            "mes-apps"
+          ],
+          [
+            "cb40a1b4-e582-4def-9a4c-e75b435fa8e0",
+            "app-scada-integration-03-3",
+            "SCADA_App_Integration_03-3",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-a",
+            "scada-apps"
+          ],
+          [
+            "06d4daf4-3210-4006-9975-bb698c674f71",
+            "app-secops-integration-03-2",
+            "SECOPS_App_Integration_03-2",
+            "SW",
+            "app",
+            "application",
+            "active",
+            "zone-b",
+            "secops-apps"
+          ]
+        ],
+        "title": "CI candidates (primary endpoint)",
+        "id": "ci-candidates-primary"
+      }
+    ],
+    "trace": {
+      "plan_raw": {
+        "intent": "LOOKUP",
+        "view": "SUMMARY",
+        "mode": "auto",
+        "primary": {
+          "keywords": [
+            "integration",
+            "앱의",
+            "최근",
+            "배포",
+            "상태를"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "secondary": {
+          "keywords": [
+            "integration",
+            "앱의",
+            "최근",
+            "배포",
+            "상태를"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "aggregate": {
+          "group_by": [],
+          "metrics": [],
+          "filters": [],
+          "scope": "ci",
+          "top_n": 10
+        },
+        "graph": {
+          "depth": 2,
+          "limits": {
+            "max_nodes": 200,
+            "max_edges": 400,
+            "max_paths": 25
+          },
+          "view": null
+        },
+        "output": {
+          "blocks": [
+            "text"
+          ],
+          "primary": "text"
+        },
+        "metric": null,
+        "history": {
+          "enabled": false,
+          "source": "event_log",
+          "scope": "ci",
+          "mode": "recent",
+          "time_range": "last_7d",
+          "limit": 50
+        },
+        "cep": null,
+        "auto": {
+          "views": [
+            "NEIGHBORS"
+          ],
+          "depth_hint": null,
+          "include_metric": false,
+          "metric_mode": "aggregate",
+          "include_history": false,
+          "include_cep": false,
+          "path": {
+            "source_ci_code": null,
+            "target_ci_code": null
+          },
+          "graph_scope": {
+            "include_metric": false,
+            "include_history": false
+          }
+        },
+        "list": {
+          "enabled": false,
+          "limit": 50,
+          "offset": 0
+        },
+        "normalized_from": null,
+        "normalized_to": null,
+        "steps": [],
+        "branches": [],
+        "loops": [],
+        "budget": {
+          "max_steps": 10,
+          "max_depth": 5,
+          "max_branches": 3,
+          "max_iterations": 100,
+          "timeout_seconds": null
+        },
+        "enable_multistep": false
+      },
+      "plan_validated": {
+        "intent": "LOOKUP",
+        "view": "SUMMARY",
+        "mode": "auto",
+        "primary": {
+          "keywords": [
+            "integration",
+            "앱의",
+            "최근",
+            "배포",
+            "상태를"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "secondary": {
+          "keywords": [
+            "integration",
+            "앱의",
+            "최근",
+            "배포",
+            "상태를"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "aggregate": {
+          "group_by": [],
+          "metrics": [],
+          "filters": [],
+          "scope": "ci",
+          "top_n": 10
+        },
+        "graph": {
+          "depth": 1,
+          "limits": {
+            "max_nodes": 200,
+            "max_edges": 400,
+            "max_paths": 25
+          },
+          "view": "NEIGHBORS"
+        },
+        "output": {
+          "blocks": [
+            "text"
+          ],
+          "primary": "text"
+        },
+        "metric": null,
+        "history": {
+          "enabled": false,
+          "source": "event_log",
+          "scope": "ci",
+          "mode": "recent",
+          "time_range": "last_7d",
+          "limit": 50
+        },
+        "cep": null,
+        "auto": {
+          "views": [
+            "NEIGHBORS"
+          ],
+          "depth_hint": null,
+          "include_metric": false,
+          "metric_mode": "aggregate",
+          "include_history": false,
+          "include_cep": false,
+          "path": {
+            "source_ci_code": null,
+            "target_ci_code": null
+          },
+          "graph_scope": {
+            "include_metric": false,
+            "include_history": false
+          }
+        },
+        "list": {
+          "enabled": false,
+          "limit": 50,
+          "offset": 0
+        },
+        "normalized_from": null,
+        "normalized_to": null,
+        "steps": [],
+        "branches": [],
+        "loops": [],
+        "budget": {
+          "max_steps": 10,
+          "max_depth": 5,
+          "max_branches": 3,
+          "max_iterations": 100,
+          "timeout_seconds": null
+        },
+        "enable_multistep": false
+      },
+      "policy_decisions": {
+        "view": "NEIGHBORS",
+        "requested_depth": 1,
+        "clamped_depth": 1,
+        "allowed_rel_types": [],
+        "discovered_rel_types": []
+      },
+      "tool_calls": [
+        {
+          "tool": "ci.search",
+          "elapsed_ms": 142,
+          "input_params": {
+            "keywords": [
+              "integration",
+              "앱의",
+              "최근",
+              "배포",
+              "상태를"
+            ],
+            "filter_count": 0,
+            "limit": 5,
+            "sort": null
+          },
+          "output_summary": {
+            "keyword_count": 5,
+            "filter_count": 0,
+            "limit": 5,
+            "sort_column": null,
+            "row_count": 0
+          },
+          "error": null,
+          "query_asset": null
+        },
+        {
+          "tool": "ci.search_broad",
+          "elapsed_ms": 152,
+          "input_params": {},
+          "output_summary": {
+            "keyword_count": 5,
+            "filter_count": 0,
+            "limit": 10,
+            "sort_column": null,
+            "row_count": 9
+          },
+          "error": null,
+          "query_asset": null
+        }
+      ],
+      "references": [],
+      "errors": [],
+      "tenant_id": "t1",
+      "trace_id": null,
+      "parent_trace_id": null,
+      "auto": {
+        "auto_recipe_applied": true,
+        "views": [],
+        "metrics": {},
+        "history": {},
+        "graph_scope": {},
+        "path": {},
+        "cep": {},
+        "status": "ci_unresolved"
+      },
+      "graph_expected_but_missing": true
+    },
+    "next_actions": [
+      {
+        "type": "rerun",
+        "label": "app-analytics-integration-03-1 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "deda439d-90fb-483a-affe-fab678f4997b"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-apm-integration-02-1 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "64ba406d-9c27-4b97-b668-af38f091336e"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-cmdb-integration-01-1 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "ed6f3278-3dfb-4316-a646-13c6251c1991"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-erp-integration-03-2 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "28f47106-bb5e-4795-81cd-6ca6fa426d1a"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-erp-integration-04-3 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "fb43575e-6078-4abe-a89e-4bb9e2a8f48f"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-mes-integration-01-1 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "4947ebd8-cafd-456a-84bb-9a6e8c073b28"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-mes-integration-04-2 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "c60a9d81-bb89-4161-b561-fa63d4b98ee0"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-scada-integration-03-3 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "cb40a1b4-e582-4def-9a4c-e75b435fa8e0"
+        }
+      },
+      {
+        "type": "rerun",
+        "label": "app-secops-integration-03-2 선택 (primary)",
+        "payload": {
+          "selected_ci_id": "06d4daf4-3210-4006-9975-bb698c674f71"
+        }
+      },
+      {
+        "type": "open_trace",
+        "label": "Trace details"
+      }
+    ],
+    "meta": {
+      "route": "ci",
+      "route_reason": "CI tab",
+      "timing_ms": 0,
+      "summary": "Multiple CI candidates",
+      "used_tools": [
+        "ci.search",
+        "ci.search_broad"
+      ],
+      "fallback": false,
+      "runner_context": {
+        "marker": "RUNNER_PATCH_GRAPH_20260112",
+        "file": "/home/spa/tobit-spa-ai/apps/api/app/modules/ops/services/ci/orchestrator/runner.py",
+        "pid": 422680,
+        "thread_id": 140636934096576
+      },
+      "trace_id": null,
+      "parent_trace_id": null
+    }
+  }
+}

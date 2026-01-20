@@ -109,7 +109,6 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           parsedTags = JSON.parse(newScreenData.tags);
         } catch (tagError: any) {
           setErrors([`Invalid tags JSON: ${tagError.message || "syntax error"}`]);
-          setSaving(false);
           return;
         }
       }
@@ -420,7 +419,10 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   async function handlePublishScreen(assetId: string) {
     try {
       setErrors([]);
-      await fetchApi(`/asset-registry/assets/${assetId}/publish`, { method: "POST" });
+      await fetchApi(`/asset-registry/assets/${assetId}/publish`, {
+        method: "POST",
+        body: JSON.stringify({ published_by: "admin" }),
+      });
       setToast({ message: "Screen published successfully", type: "success" });
       await fetchScreens();
       onScreenUpdate?.();

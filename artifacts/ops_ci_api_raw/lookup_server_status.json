@@ -1,0 +1,6 @@
+{
+  "time": "2026-01-20T02:48:58.960978",
+  "code": 1,
+  "message": "CIOrchestratorRunner._run_auto_history_async() takes 2 positional arguments but 3 were given",
+  "data": null
+}

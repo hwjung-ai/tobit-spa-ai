@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { label: "Docs", href: "/documents" },
   { label: "Ops", href: "/ops" },
   { label: "API", href: "/api-manager" },
-  { label: "UI Creator", href: "/ui-creator" },
   { label: "Screens", href: "/ui/screens" },
   { label: "CEP", href: "/cep-builder" },
   { label: "Data", href: "/data", adminOnly: true },

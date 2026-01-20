@@ -27,14 +27,18 @@ export default function PublishedScreensList() {
       setLoading(true);
       setError(null);
       try {
+        console.log("[PublishedScreensList] Loading published screens...");
         const envelope = await fetchApi<{
           assets: PublishedScreenAsset[];
           total: number;
         }>("/asset-registry/assets?asset_type=screen&status=published");
+        console.log("[PublishedScreensList] Response envelope:", envelope);
+        console.log("[PublishedScreensList] Assets loaded:", envelope.data?.assets);
         if (!cancelled) {
           setAssets(envelope.data.assets || []);
         }
       } catch (err: any) {
+        console.error("[PublishedScreensList] Error loading:", err);
         if (!cancelled) {
           setError(err.message || "Unable to load published screens");
         }

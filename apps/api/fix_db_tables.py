@@ -13,7 +13,6 @@ from apps.api.core.config import get_settings
 # Import all models
 from apps.api.app.modules.auth.models import TbUser, TbRefreshToken
 from apps.api.app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
-from apps.api.app.modules.ui_creator.models import TbUiDef
 from apps.api.app.modules.permissions.models import TbResourcePermission
 
 settings = get_settings()
