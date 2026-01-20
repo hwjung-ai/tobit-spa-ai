@@ -222,6 +222,54 @@ def validate_query_asset(asset: TbAssetRegistry) -> None:
         asset.query_params = {}
 
 
+def _validate_layout_width(width: dict[str, Any]) -> None:
+    if "type" not in width:
+        raise ValueError("layout.width must include a type")
+    width_type = width["type"]
+    if width_type == "auto":
+        return
+    if width_type == "percent":
+        value = width.get("value")
+        if value is None or not isinstance(value, (int, float)) or not (0 < value <= 100):
+            raise ValueError("layout.width percent value must be numeric between 0 (exclusive) and 100")
+        return
+    if width_type == "ratio":
+        ratio = width.get("value")
+        if (
+            not isinstance(ratio, (list, tuple))
+            or len(ratio) != 2
+            or not all(isinstance(n, (int, float)) and n > 0 for n in ratio)
+        ):
+            raise ValueError("layout.width ratio must be a two-element list of positive numbers")
+        return
+    raise ValueError(f"Unknown layout.width type '{width_type}'")
+
+
+def _validate_layout_children(node: dict[str, Any], component_ids: set[str]) -> None:
+    direction = node.get("direction")
+    if direction is not None and direction not in {"horizontal", "vertical"}:
+        raise ValueError("layout.direction must be 'horizontal' or 'vertical'")
+
+    width = node.get("width")
+    if width is not None:
+        if not isinstance(width, dict):
+            raise ValueError("layout.width must be an object")
+        _validate_layout_width(width)
+
+    children = node.get("children")
+    if children is None:
+        return
+    if not isinstance(children, list):
+        raise ValueError("layout.children must be an array")
+    for idx, child in enumerate(children):
+        if not isinstance(child, dict):
+            raise ValueError(f"layout.children[{idx}] must be an object")
+        component_id = child.get("component_id")
+        if component_id and component_id not in component_ids:
+            raise ValueError(f"layout child component_id '{component_id}' does not match any component")
+        _validate_layout_children(child, component_ids)
+
+
 def validate_screen_asset(asset: TbAssetRegistry) -> None:
     """Validate screen asset fields - comprehensive schema and binding validation"""
     import re
@@ -256,42 +304,13 @@ def validate_screen_asset(asset: TbAssetRegistry) -> None:
     if layout["type"] not in valid_layout_types:
         raise ValueError(f"layout.type must be one of {valid_layout_types}")
 
+    component_ids = {comp.get("id") for comp in schema.get("components", []) if isinstance(comp, dict) and "id" in comp}
+    _validate_layout_children(layout, component_ids)
+
     # Validate components array
     components = schema.get("components", [])
     if not isinstance(components, list):
         raise ValueError("components must be an array")
-
-    if len(components) == 0:
-        raise ValueError("components must contain at least one component")
-
-    valid_component_types = {"text", "markdown", "button", "input", "table", "chart", "badge", "tabs", "modal", "keyvalue", "divider"}
-
-    for idx, comp in enumerate(components):
-        if not isinstance(comp, dict):
-            raise ValueError(f"components[{idx}] must be a dictionary")
-
-        if "id" not in comp:
-            raise ValueError(f"components[{idx}] must have 'id' field")
-
-        if "type" not in comp:
-            raise ValueError(f"components[{idx}] must have 'type' field")
-
-        comp_type = comp["type"]
-        if comp_type not in valid_component_types:
-            raise ValueError(f"components[{idx}].type must be one of {valid_component_types}, got '{comp_type}'")
-
-    # Validate bindings format (dot-path only, no expressions)
-    bindings = schema.get("bindings", {})
-    if bindings and isinstance(bindings, dict):
-        binding_pattern = re.compile(r'^{{(state|inputs|context)\.[a-zA-Z0-9_\.]+}}$')
-        for target, source in bindings.items():
-            # Source should be in format "state.x", "inputs.x", etc. (without {{}} when stored as string)
-            if not isinstance(source, str):
-                raise ValueError(f"bindings['{target}'] value must be a string")
-
-            # Validate dot-path format (state.x, inputs.x, etc.)
-            if not re.match(r'^(state|inputs|context)\.[a-zA-Z0-9_\.]+$', source):
-                raise ValueError(f"bindings['{target}'] = '{source}' must use dot-path format like 'state.x' or 'inputs.fieldName'")
 
     # Validate binding expressions in component props ({{...}} format)
     def validate_binding_expressions(obj: Any, path: str = ""):

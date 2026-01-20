@@ -18,6 +18,8 @@ interface ScreenEditorHeaderProps {
   isPublishing: boolean;
   justPublished?: boolean;
   screenId?: string;
+  assetId?: string;
+  screenVersion?: string | null;
 }
 
 export default function ScreenEditorHeader({
@@ -32,15 +34,43 @@ export default function ScreenEditorHeader({
   isPublishing,
   justPublished,
   screenId,
+  assetId,
+  screenVersion,
 }: ScreenEditorHeaderProps) {
   const router = useRouter();
 
-  const handleRunRegression = () => {
-    router.push(`/admin/regression?screen_id=${screenId}`);
+  const buildContextQuery = () => {
+    const params = new URLSearchParams();
+    if (screenId) {
+      params.set("screen_id", screenId);
+    }
+    if (assetId) {
+      params.set("asset_id", assetId);
+    }
+    if (screenVersion) {
+      params.set("version", screenVersion);
+    }
+    return params.toString();
   };
 
-  const handleViewTraces = () => {
-    window.open(`/admin/inspector?screen_id=${screenId}`, "_blank");
+  const contextQuery = buildContextQuery();
+  const contextQueryString = contextQuery ? `?${contextQuery}` : "";
+
+  const isPublished = status === "published";
+  const ctaDisabled = !isPublished || !screenId || !assetId;
+  const publishHint =
+    !isPublished
+      ? "Publish the screen to access runtime, regression, and inspector tools."
+      : null;
+
+  const handleRunRegression = () => {
+    if (!screenId) return;
+    router.push(`/admin/regression${contextQueryString}`);
+  };
+
+  const handleOpenInspector = () => {
+    if (!screenId && !assetId) return;
+    window.open(`/admin/inspector${contextQueryString}`, "_blank");
   };
   return (
     <>
@@ -111,6 +141,54 @@ export default function ScreenEditorHeader({
                 Rollback to Draft
               </Button>
             )}
+            <div className="flex flex-col items-end gap-2">
+              <Button
+                onClick={() => {
+                  if (status === "published" && assetId) {
+                    router.push(`/ui/screens/${assetId}`);
+                  }
+                }}
+                variant="outline"
+                size="sm"
+                className={`flex items-center gap-1 text-slate-200 border-slate-600 hover:border-slate-500 ${
+                  status === "draft" || !assetId ? "cursor-not-allowed opacity-70" : "hover:bg-slate-800"
+                }`}
+                disabled={status === "draft" || !assetId}
+                data-testid="btn-open-runtime"
+              >
+                <ExternalLink className="w-3 h-3" />
+                <span className="text-[11px]">Open in UI</span>
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleRunRegression}
+                  disabled={ctaDisabled}
+                  size="sm"
+                  className={`text-[11px] uppercase tracking-wider ${
+                    ctaDisabled
+                      ? "cursor-not-allowed opacity-70 border border-slate-700 text-slate-500"
+                      : "bg-slate-800 hover:bg-slate-700 text-white"
+                  }`}
+                >
+                  Run Regression
+                </Button>
+                <Button
+                  onClick={handleOpenInspector}
+                  disabled={ctaDisabled}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center gap-1 text-slate-200 border-slate-600 ${
+                    ctaDisabled ? "cursor-not-allowed opacity-70" : "hover:border-slate-500 hover:bg-slate-800"
+                  }`}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span className="text-[11px]">Open Inspector</span>
+                </Button>
+              </div>
+              {publishHint && (
+                <p className="text-[10px] text-slate-500">{publishHint}</p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -125,7 +203,7 @@ export default function ScreenEditorHeader({
           </div>
           <div className="flex items-center gap-2">
             <Button
-              onClick={handleViewTraces}
+              onClick={handleOpenInspector}
               variant="outline"
               size="sm"
               className="text-blue-300 border-blue-700 hover:bg-blue-950/50"

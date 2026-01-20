@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ComponentPalette from "./ComponentPalette";
 import Canvas from "./Canvas";
+import ComponentTreeView from "./ComponentTreeView";
 import PropertiesPanel from "./PropertiesPanel";
 
 export default function VisualEditor() {
@@ -46,10 +47,15 @@ export default function VisualEditor() {
 
   return (
     <div
-      className="h-full grid grid-cols-4 gap-4"
-      style={{ gridTemplateColumns: "200px 1fr 300px" }}
+      className="h-full grid gap-4 relative"
+      style={{ gridTemplateColumns: "200px 1fr 220px 300px" }}
       data-testid="visual-editor"
     >
+      {editorState.previewEnabled && (
+        <div className="absolute inset-x-6 top-6 z-10 rounded-lg border border-sky-500/40 bg-sky-950/60 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-sky-200">
+          Preview overlay active
+        </div>
+      )}
       {/* Left: Component Palette */}
       <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
         <ComponentPalette />
@@ -58,6 +64,11 @@ export default function VisualEditor() {
       {/* Center: Canvas */}
       <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
         <Canvas />
+      </div>
+
+      {/* Tree: Component hierarchy */}
+      <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+        <ComponentTreeView />
       </div>
 
       {/* Right: Properties Panel */}

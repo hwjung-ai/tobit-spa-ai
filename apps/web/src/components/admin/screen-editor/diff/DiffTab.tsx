@@ -12,8 +12,9 @@ export default function DiffTab() {
   const [compareMode, setCompareMode] = useState<"draft-published">("draft-published");
 
   const diff = useMemo(() => {
-    if (!editorState.screen) return null;
-    return compareScreens(editorState.published, editorState.screen);
+    const effective = editorState.screen;
+    if (!effective) return null;
+    return compareScreens(editorState.published, effective);
   }, [editorState.screen, editorState.published]);
 
   if (!diff) {

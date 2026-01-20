@@ -41,6 +41,19 @@ function validateScreenSchema(schema: any): string[] {
   return errors;
 }
 
+function parseTagsInput(value: string): Record<string, any> | null {
+  if (!value.trim()) return null;
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error("Tags must be a JSON object");
+    }
+    return parsed;
+  } catch (error: any) {
+    throw new Error(error?.message || "Invalid JSON for tags");
+  }
+}
+
 interface ScreenAssetEditorProps {
   assetId: string;
 }
@@ -57,6 +70,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
     name: "",
     description: "",
     schema_json: "",
+    tags: "",
   });
 
   const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
@@ -75,6 +89,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
         name: assetData.name || "",
         description: assetData.description || "",
         schema_json: JSON.stringify(assetData.schema_json || assetData.screen_schema || {}, null, 2),
+        tags: assetData.tags ? JSON.stringify(assetData.tags, null, 2) : "",
       });
       setErrors([]);
       setSchemaErrors([]);
@@ -112,12 +127,22 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       }
 
       // Save
+      let parsedTags = null;
+      try {
+        parsedTags = parseTagsInput(formData.tags);
+      } catch (tagError: any) {
+        setErrors([tagError.message || "Invalid tags JSON"]);
+        setSaving(false);
+        return;
+      }
+
       await fetchApi(`/asset-registry/assets/${assetId}`, {
         method: "PUT",
         body: JSON.stringify({
           name: formData.name,
           description: formData.description || null,
           schema_json: schema,
+          tags: parsedTags,
         }),
       });
 
@@ -151,12 +176,26 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
     try {
       // First save the draft
+      let updatedSchema = JSON.parse(formData.schema_json);
+      const validationErrors = validateScreenSchema(updatedSchema);
+      if (validationErrors.length > 0) {
+        setSchemaErrors(validationErrors);
+        return;
+      }
+      let parsedTags = null;
+      try {
+        parsedTags = parseTagsInput(formData.tags);
+      } catch (tagError: any) {
+        setErrors([tagError.message || "Invalid tags JSON"]);
+        return;
+      }
       await fetchApi(`/asset-registry/assets/${assetId}`, {
         method: "PUT",
         body: JSON.stringify({
           name: formData.name,
           description: formData.description || null,
-          schema_json: JSON.parse(formData.schema_json),
+          schema_json: updatedSchema,
+          tags: parsedTags,
         }),
       });
 
@@ -295,6 +334,21 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Tags (JSON)
+            </label>
+            <textarea
+              value={formData.tags}
+              onChange={e => setFormData({ ...formData, tags: e.target.value })}
+              disabled={!isDraft}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+              rows={2}
+              placeholder='{"team":"ops","audience":"mobile"}'
+              data-testid="textarea-screen-tags"
+            />
+          </div>
+
           <div className="bg-slate-900/40 rounded-lg p-4 border border-slate-800">
             <h3 className="text-sm font-semibold text-slate-300 mb-3">Metadata</h3>
             <div className="space-y-2 text-xs text-slate-400">
@@ -305,6 +359,18 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               <div><strong>Updated:</strong> {new Date(asset.updated_at).toLocaleString()}</div>
               {asset.published_at && (
                 <div><strong>Published:</strong> {new Date(asset.published_at).toLocaleString()}</div>
+              )}
+              {asset.tags && Object.keys(asset.tags).length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(asset.tags).map(([key, value]) => (
+                    <span
+                      key={key}
+                      className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300"
+                    >
+                      {key}: {String(value)}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
           </div>

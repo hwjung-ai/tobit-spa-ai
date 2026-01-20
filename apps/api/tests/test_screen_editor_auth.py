@@ -9,6 +9,17 @@ from fastapi.testclient import TestClient
 from main import app
 
 
+def _extract_asset_id(response):
+    body = response.json()
+    if isinstance(body, dict):
+        return (
+            body.get("asset_id")
+            or (body.get("data") or {}).get("asset_id")
+            or (body.get("asset") or {}).get("asset_id")
+        )
+    return None
+
+
 @pytest.fixture
 def client():
     """Create a test client."""
@@ -151,7 +162,9 @@ class TestScreenEditorAuth:
         if create_response.status_code not in [200, 201]:
             pytest.skip("Failed to create test screen")
 
-        asset_id = create_response.json()["data"].get("asset_id")
+        asset_id = _extract_asset_id(create_response)
+        if not asset_id:
+            pytest.skip("Failed to extract asset_id after asset creation")
 
         # Try to publish without token
         response = client.post(f"/asset-registry/assets/{asset_id}/publish")
@@ -182,7 +195,9 @@ class TestScreenEditorAuth:
         if create_response.status_code not in [200, 201]:
             pytest.skip("Failed to create test screen")
 
-        asset_id = create_response.json()["data"].get("asset_id")
+        asset_id = _extract_asset_id(create_response)
+        if not asset_id:
+            pytest.skip("Failed to extract asset_id after asset creation")
 
         # Try to rollback without token
         response = client.post(f"/asset-registry/assets/{asset_id}/unpublish")
@@ -222,7 +237,7 @@ class TestScreenEditorAuthFlow:
         )
 
         assert create_response.status_code in [200, 201]
-        asset_id = create_response.json()["data"].get("asset_id")
+        asset_id = _extract_asset_id(create_response)
         assert asset_id is not None
 
         # Step 2: Update screen (PUT)
@@ -266,6 +281,87 @@ class TestScreenEditorAuthFlow:
         # Should succeed or at least not fail due to auth
         assert rollback_response.status_code != 401
 
+    def test_publish_invalid_asset_returns_validation_error(self, client, auth_token):
+        """Publish should fail when screen schema validation fails on the server."""
+        create_response = client.post(
+            "/asset-registry/assets",
+            json={
+                "asset_type": "screen",
+                "screen_id": "invalid-screen",
+                "name": "Invalid Screen",
+                "description": "Missing components in schema",
+                "schema_json": {
+                    "screen_id": "invalid-screen",
+                    "layout": {"type": "dashboard"},
+                    "components": [],  # Validator requires at least one component
+                    "state": {"initial": {}},
+                },
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+
+        assert create_response.status_code in [200, 201]
+        asset_id = _extract_asset_id(create_response)
+        assert asset_id is not None
+
+        publish_response = client.post(
+            f"/asset-registry/assets/{asset_id}/publish",
+            headers={"Authorization": f"Bearer {auth_token}"},
+            json={"published_by": "system-test"},
+        )
+
+        assert publish_response.status_code == 422
+        assert "components must contain at least one component" in publish_response.json().get("detail", "")
+
+    def test_stage_published_endpoint_blocks_drafts(self, client, auth_token):
+        """Requesting ?stage=published should hide draft screens and succeed after publish."""
+        create_response = client.post(
+            "/asset-registry/assets",
+            json={
+                "asset_type": "screen",
+                "screen_id": "stage-test-screen",
+                "name": "Stage Test Screen",
+                "description": "Stage filter test",
+                "schema_json": {
+                    "screen_id": "stage-test-screen",
+                    "layout": {"type": "dashboard"},
+                    "components": [
+                        {
+                            "id": "stage_button",
+                            "type": "button",
+                            "label": "Stage",
+                            "props": {},
+                        }
+                    ],
+                    "state": {"initial": {}},
+                },
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+
+        assert create_response.status_code in [200, 201]
+        asset_id = _extract_asset_id(create_response)
+        assert asset_id is not None
+
+        pre_publish = client.get(
+            f"/asset-registry/assets/{asset_id}?stage=published",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert pre_publish.status_code == 404
+
+        publish_response = client.post(
+            f"/asset-registry/assets/{asset_id}/publish",
+            headers={"Authorization": f"Bearer {auth_token}"},
+            json={"published_by": "stage-test"},
+        )
+        assert publish_response.status_code in [200, 201]
+
+        post_publish = client.get(
+            f"/asset-registry/assets/{asset_id}?stage=published",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert post_publish.status_code == 200
+    
     def test_token_in_authorization_header(self, client, auth_token):
         """Verify that token is correctly sent in Authorization header."""
         # This test verifies the format expected by the backend

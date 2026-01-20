@@ -28,6 +28,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     screen_id: "",
     name: "",
     description: "",
+    tags: "",
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -64,28 +65,8 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setScreens(response.data?.assets || []);
       setErrors([]);
     } catch (error: any) {
-      try {
-        // Fallback to /ui-defs if asset-registry fails
-        const response = await fetchApi("/ui-defs");
-        const uiDefs = response.data?.ui_defs || [];
-
-        // Convert UI definitions to Asset format for display
-        const convertedAssets = uiDefs.map((ui: any) => ({
-          asset_id: ui.ui_id,
-          screen_id: ui.ui_id,
-          name: ui.ui_name,
-          description: ui.description,
-          status: ui.is_active ? "published" : "draft",
-          version: 1,
-          updated_at: ui.updated_at
-        }));
-
-        setScreens(convertedAssets);
-        setErrors([]);
-      } catch (fallbackError: any) {
-        setErrors([fallbackError.message || "Failed to fetch screens"]);
-        setScreens([]);
-      }
+      setErrors([error.message || "Failed to fetch screens from asset-registry"]);
+      setScreens([]);
     } finally {
       setLoading(false);
     }
@@ -122,6 +103,17 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
         schema = createMinimalScreen(newScreenData.screen_id, newScreenData.name);
       }
 
+      let parsedTags = null;
+      if (newScreenData.tags.trim()) {
+        try {
+          parsedTags = JSON.parse(newScreenData.tags);
+        } catch (tagError: any) {
+          setErrors([`Invalid tags JSON: ${tagError.message || "syntax error"}`]);
+          setSaving(false);
+          return;
+        }
+      }
+
       const response = await fetchApi("/asset-registry/assets", {
         method: "POST",
         body: JSON.stringify({
@@ -129,13 +121,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           screen_id: newScreenData.screen_id,
           name: newScreenData.name,
           description: newScreenData.description || null,
+          tags: parsedTags,
           schema_json: schema,
         }),
       });
 
       setToast({ message: "Screen created successfully", type: "success" });
       setShowCreateModal(false);
-      setNewScreenData({ screen_id: "", name: "", description: "" });
+      setNewScreenData({ screen_id: "", name: "", description: "", tags: "" });
       setSelectedTemplate(null);
       await fetchScreens();
       onScreenUpdate?.();
@@ -262,6 +255,17 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500 resize-none"
                   rows={3}
                   data-testid="input-screen-description"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-slate-300 mb-2">Tags (Optional JSON)</label>
+                <textarea
+                  value={newScreenData.tags}
+                  onChange={e => setNewScreenData({ ...newScreenData, tags: e.target.value })}
+                  placeholder='e.g., {"team":"ops","audience":"mobile"}'
+                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500 resize-none"
+                  rows={2}
+                  data-testid="input-screen-tags"
                 />
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveUiWithFallback } from "../../lib/uiCreatorSave";
@@ -16,6 +17,11 @@ import {
 } from "recharts";
 
 const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+
+const UI_CREATOR_READ_ONLY = true;
+const ADMIN_SCREENS_PATH = "/admin/screens";
+const UI_CREATOR_DEPRECATION_MESSAGE =
+  "UI Creator is deprecated. Manage screen assets under Admin > Screens.";
 
 const DEFAULT_SCHEMA = {
   data_source: {
@@ -687,6 +693,12 @@ export default function UiCreatorPage() {
   const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
 
+  const announcementMessage = UI_CREATOR_DEPRECATION_MESSAGE;
+  const announceReadOnlyMode = useCallback(() => {
+    setStatusMessage(announcementMessage);
+    setDraftNotes((prev) => prev ?? announcementMessage);
+  }, [announcementMessage]);
+
   const draftStorageId = selectedId ?? "new";
   const finalStorageId = selectedId ?? (uiName.trim() || "new");
 
@@ -815,6 +827,14 @@ export default function UiCreatorPage() {
 
   useEffect(() => {
     const key = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
+    if (UI_CREATOR_READ_ONLY) {
+      window.localStorage.removeItem(key);
+      setDraftApi(null);
+      setDraftStatus("idle");
+      setDraftNotes(announcementMessage);
+      setDraftTestOk(null);
+      return;
+    }
     const raw = window.localStorage.getItem(key);
     if (!raw) {
       setDraftApi(null);
@@ -838,6 +858,10 @@ export default function UiCreatorPage() {
 
   useEffect(() => {
     const key = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
+    if (UI_CREATOR_READ_ONLY) {
+      window.localStorage.removeItem(key);
+      return;
+    }
     if (!draftApi) {
       window.localStorage.removeItem(key);
       return;
@@ -892,6 +916,10 @@ export default function UiCreatorPage() {
   };
 
   const handleSave = async () => {
+    if (UI_CREATOR_READ_ONLY) {
+      announceReadOnlyMode();
+      return;
+    }
     let schemaPayload: Record<string, unknown>;
     let tagsPayload: Record<string, unknown>;
     try {
@@ -970,6 +998,9 @@ export default function UiCreatorPage() {
 
   useEffect(() => {
     const key = `${FINAL_STORAGE_PREFIX}${finalStorageId}`;
+    if (UI_CREATOR_READ_ONLY) {
+      return;
+    }
     const raw = window.localStorage.getItem(key);
     if (!raw) {
       return;
@@ -1032,6 +1063,10 @@ export default function UiCreatorPage() {
   };
 
   const handleSaveDraft = () => {
+    if (UI_CREATOR_READ_ONLY) {
+      announceReadOnlyMode();
+      return;
+    }
     if (!draftApi) {
       setDraftErrors(["UI 드래프트가 없습니다."]);
       return;
@@ -1249,8 +1284,8 @@ export default function UiCreatorPage() {
         </div>
         <button
           onClick={handleSave}
-          disabled={isSaving}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          disabled={isSaving || UI_CREATOR_READ_ONLY}
+          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400 disabled:opacity-50 disabled:bg-slate-700"
         >
           {isSaving ? "Saving…" : selectedId ? "Update UI" : "Create UI"}
         </button>
@@ -1308,7 +1343,8 @@ export default function UiCreatorPage() {
         <span>Schema</span>
         <button
           onClick={handleInsertMetricPollingTemplate}
-          className="rounded-2xl border border-slate-800 bg-emerald-600/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-500"
+          disabled={UI_CREATOR_READ_ONLY}
+          className="rounded-2xl border border-slate-800 bg-emerald-600/80 px-3 py-1 text-[10px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-500 disabled:opacity-50"
         >
           Insert Metric Polling Template
         </button>
@@ -1540,14 +1576,14 @@ export default function UiCreatorPage() {
           <button
             onClick={handleApplyDraft}
             className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-indigo-400"
-            disabled={!draftApi || draftTestOk !== true}
+            disabled={!draftApi || draftTestOk !== true || UI_CREATOR_READ_ONLY}
           >
             Apply
           </button>
           <button
             onClick={handleSaveDraft}
             className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400"
-            disabled={!draftApi || draftTestOk !== true}
+            disabled={!draftApi || draftTestOk !== true || UI_CREATOR_READ_ONLY}
           >
             Save
           </button>
@@ -1624,6 +1660,16 @@ export default function UiCreatorPage() {
       <p className="mb-6 text-sm text-slate-400">
         Define runtime-backed dashboards and tables with JSON specs and preview the results immediately.
       </p>
+      <div className="mb-6 rounded-2xl border border-rose-500/60 bg-rose-500/10 p-4 text-sm text-rose-100">
+        <p className="text-xs uppercase tracking-wide text-rose-200">Deprecated</p>
+        <p className="mt-1 text-white">{announcementMessage}</p>
+        <Link
+          href={ADMIN_SCREENS_PATH}
+          className="mt-2 inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-sky-300 transition hover:text-sky-200"
+        >
+          Go to Admin &gt; Screens
+        </Link>
+      </div>
       <BuilderShell leftPane={leftPane} centerTop={centerTop} centerBottom={centerBottom} rightPane={rightPane} />
     </div>
   );

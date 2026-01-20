@@ -6,6 +6,7 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException, Body, Depends, status
 from sqlmodel import Session, select
+from .validators import validate_asset
 
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.asset_registry.schemas import (
@@ -176,32 +177,40 @@ def _to_screen_asset(asset: TbAssetRegistry, schema: dict[str, Any] | None = Non
 
 
 @router.get("/assets/{asset_id}")
-def get_asset(asset_id: str, version: int | None = None):
+def get_asset(asset_id: str, stage: str | None = None, version: int | None = None):
     with get_session_context() as session:
+        if stage:
+            stage = stage.lower()
+            if stage not in {"draft", "published"}:
+                raise HTTPException(status_code=400, detail="stage must be 'draft' or 'published'")
         asset = None
         try:
             asset_uuid = uuid.UUID(asset_id)
             asset = session.get(TbAssetRegistry, asset_uuid)
         except ValueError:
             asset = None
+        if asset and stage and asset.status != stage:
+            asset = None
 
         # If not found by UUID, try to find by screen_id (draft or published)
         if not asset:
-            # For screens, try to find draft first, then published
-            asset = session.exec(
-                select(TbAssetRegistry)
-                .where(TbAssetRegistry.asset_type == "screen")
-                .where(TbAssetRegistry.screen_id == asset_id)
-                .where(TbAssetRegistry.status == "draft")
-            ).first()
-
-            if not asset:
-                asset = session.exec(
+            # For screens, optionally restrict to a stage
+            def _find_by_stage(stage_status: str) -> TbAssetRegistry | None:
+                return session.exec(
                     select(TbAssetRegistry)
                     .where(TbAssetRegistry.asset_type == "screen")
                     .where(TbAssetRegistry.screen_id == asset_id)
-                    .where(TbAssetRegistry.status == "published")
+                    .where(TbAssetRegistry.status == stage_status)
                 ).first()
+
+            if stage == "published":
+                asset = _find_by_stage("published")
+            elif stage == "draft":
+                asset = _find_by_stage("draft")
+            else:
+                asset = _find_by_stage("draft")
+                if not asset:
+                    asset = _find_by_stage("published")
 
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
@@ -333,6 +342,14 @@ def publish_asset(
 
         # TODO: Permission check disabled due to missing tb_resource_permission table
         # Will be re-enabled once database migrations are complete
+        # Run validation before publish
+        try:
+            validate_asset(asset)
+        except ValueError as err:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(err),
+            )
         # increment version and set status
         asset.version = (asset.version or 0) + 1
         asset.status = "published"

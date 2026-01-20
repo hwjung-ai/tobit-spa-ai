@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,11 +44,15 @@ interface RegressionRunDetail extends RegressionRun {
 }
 
 export default function RegressionWatchPanel() {
+  const searchParams = useSearchParams();
   const [queries, setQueries] = useState<GoldenQuery[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [runs, setRuns] = useState<RegressionRun[]>([]);
   const [runsLoading, setRunsLoading] = useState(false);
+  const [contextScreenId, setContextScreenId] = useState<string | null>(null);
+  const [contextAssetId, setContextAssetId] = useState<string | null>(null);
+  const [contextVersion, setContextVersion] = useState<string | null>(null);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showBaselineDialog, setShowBaselineDialog] = useState(false);
@@ -105,6 +110,12 @@ export default function RegressionWatchPanel() {
     loadQueries();
     loadRuns();
   }, []);
+
+  useEffect(() => {
+    setContextScreenId(searchParams.get("screen_id"));
+    setContextAssetId(searchParams.get("asset_id"));
+    setContextVersion(searchParams.get("version"));
+  }, [searchParams]);
 
   const handleCreateQuery = async () => {
     try {
@@ -208,6 +219,18 @@ export default function RegressionWatchPanel() {
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {contextScreenId && (
+        <Alert
+          className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-300"
+        >
+          <AlertDescription>
+            Regression context: screen{" "}
+            <span className="font-semibold text-white">{contextScreenId}</span>
+            {contextVersion ? ` · v${contextVersion}` : ""}
+            {contextAssetId ? ` · asset ${contextAssetId}` : ""}
+          </AlertDescription>
         </Alert>
       )}
 

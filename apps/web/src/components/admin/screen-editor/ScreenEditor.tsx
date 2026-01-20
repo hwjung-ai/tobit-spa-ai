@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
+import ScreenEditorCopilotPanel from "./CopilotPanel";
 import ScreenEditorHeader from "./ScreenEditorHeader";
 import ScreenEditorTabs from "./ScreenEditorTabs";
 import ScreenEditorErrors from "./common/ScreenEditorErrors";
@@ -55,6 +56,20 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     }
   }, [assetId, authCheckDone]);
 
+  const resolveLoadErrorMessage = (err: unknown) => {
+    const statusCode = typeof err === "object" && err !== null ? (err as any).statusCode : undefined;
+    if (statusCode === 404) {
+      return "Screen asset not found or not accessible.";
+    }
+    if (statusCode === 403) {
+      return "You don't have permission to view this screen asset.";
+    }
+    if (statusCode) {
+      return `Unable to load screen asset (status ${statusCode}).`;
+    }
+    return err instanceof Error ? err.message : "Failed to load screen asset.";
+  };
+
   const loadScreen = async () => {
     try {
       setLoading(true);
@@ -62,8 +77,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
       editorState.setAssetId(assetId);
       await editorState.loadScreen(assetId);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to load screen";
-      setError(message);
+      setError(resolveLoadErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -106,6 +120,16 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     }
   };
 
+  const schemaSummary = useMemo(() => {
+    const screen = editorState.screen;
+    if (!screen) {
+      return "No screen loaded";
+    }
+    const layoutType = screen.layout?.type || "unknown";
+    const componentCount = Array.isArray(screen.components) ? screen.components.length : 0;
+    return `${layoutType} · ${componentCount} component${componentCount === 1 ? "" : "s"}`;
+  }, [editorState.screen]);
+
   if (!authCheckDone || loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -135,29 +159,42 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
   return (
     <div className="flex flex-col h-full bg-slate-950 text-slate-100" data-testid="screen-editor">
-      {/* Header */}
-      <ScreenEditorHeader
-        status={editorState.status}
-        isDirty={isDirty}
-        canPublish={canPublish}
-        canRollback={canRollback}
-        onSaveDraft={handleSaveDraft}
-        onPublish={handlePublishClick}
-        onRollback={handleRollback}
-        isSaving={editorState.isSaving}
-        isPublishing={editorState.isPublishing}
-        justPublished={justPublished}
-        screenId={editorState.screen?.id}
-      />
+      <div className="flex flex-1 gap-6 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Header */}
+          <ScreenEditorHeader
+            status={editorState.status}
+            isDirty={isDirty}
+            canPublish={canPublish}
+            canRollback={canRollback}
+            onSaveDraft={handleSaveDraft}
+            onPublish={handlePublishClick}
+            onRollback={handleRollback}
+            isSaving={editorState.isSaving}
+            isPublishing={editorState.isPublishing}
+            justPublished={justPublished}
+            screenId={editorState.screen?.id}
+            assetId={assetId}
+            screenVersion={editorState.screen?.version ?? null}
+          />
 
-      {/* Errors */}
-      {editorState.validationErrors.length > 0 && (
-        <ScreenEditorErrors errors={editorState.validationErrors} />
-      )}
+          {/* Errors */}
+          {editorState.validationErrors.length > 0 && (
+            <ScreenEditorErrors errors={editorState.validationErrors} />
+          )}
 
-      {/* Tabs */}
-      <div className="flex-1 overflow-hidden">
-        <ScreenEditorTabs assetId={assetId} />
+          {/* Tabs */}
+          <div className="flex-1 overflow-hidden">
+            <ScreenEditorTabs assetId={assetId} />
+          </div>
+        </div>
+
+        <ScreenEditorCopilotPanel
+          screenId={editorState.screen?.screen_id ?? assetId}
+          stage={editorState.status}
+          schemaSummary={schemaSummary}
+          selectedComponentId={editorState.selectedComponentId}
+        />
       </div>
 
       {/* Toast */}
