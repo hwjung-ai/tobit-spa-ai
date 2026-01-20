@@ -16,11 +16,35 @@
 export type LayoutType = "grid" | "form" | "modal" | "list" | "dashboard";
 export type LayoutDirection = "horizontal" | "vertical";
 
+export interface LayoutWidthAuto {
+  type: "auto";
+}
+
+export interface LayoutWidthPercent {
+  type: "percent";
+  value: number;
+}
+
+export interface LayoutWidthRatio {
+  type: "ratio";
+  value: [number, number];
+}
+
+export type LayoutWidth = LayoutWidthAuto | LayoutWidthPercent | LayoutWidthRatio;
+
+export interface LayoutChild {
+  component_id?: string;
+  direction?: LayoutDirection;
+  width?: LayoutWidth;
+  children?: LayoutChild[];
+}
+
 export interface Layout {
   type: LayoutType;
   direction?: LayoutDirection; // default: vertical
   spacing?: number; // pixels
   max_width?: string; // css width
+  children?: LayoutChild[];
 }
 
 // Minimal primitive prop types used in MVP
@@ -38,7 +62,9 @@ export type ComponentType =
   | "tabs"
   | "modal"
   | "keyvalue"
-  | "divider";
+  | "divider"
+  | "row"
+  | "column";
 
 export interface ScreenAction {
   id: string; // unique within the screen

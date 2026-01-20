@@ -108,6 +108,25 @@ const DIVIDER_PROPS: JsonSchema = {
   },
 };
 
+const ROW_PROPS: JsonSchema = {
+  type: "object",
+  properties: {
+    gap: { type: "number" },
+    align: { type: "string" }, // "start" | "center" | "end" | "stretch"
+    justify: { type: "string" }, // "start" | "center" | "end" | "between" | "around"
+    components: { type: "array" },
+  },
+};
+
+const COLUMN_PROPS: JsonSchema = {
+  type: "object",
+  properties: {
+    gap: { type: "number" },
+    align: { type: "string" }, // "start" | "center" | "end" | "stretch"
+    components: { type: "array" },
+  },
+};
+
 export const COMPONENT_REGISTRY: ComponentDescriptor[] = [
   {
     type: "text",
@@ -183,6 +202,20 @@ export const COMPONENT_REGISTRY: ComponentDescriptor[] = [
     type: "divider",
     label: "Divider",
     propsSchema: DIVIDER_PROPS,
+    supportedBindings: [],
+    events: [],
+  },
+  {
+    type: "row",
+    label: "Row (horizontal)",
+    propsSchema: ROW_PROPS,
+    supportedBindings: [],
+    events: [],
+  },
+  {
+    type: "column",
+    label: "Column (vertical)",
+    propsSchema: COLUMN_PROPS,
     supportedBindings: [],
     events: [],
   },

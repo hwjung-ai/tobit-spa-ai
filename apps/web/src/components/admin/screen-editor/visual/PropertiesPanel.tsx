@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
-import { generatePropsFormFields } from "@/lib/ui-screen/props-schema-utils";
+import { generatePropsFormFields, type PropsFormField as PropsFormFieldSchema } from "@/lib/ui-screen/props-schema-utils";
 import { BindingEditor } from "@/components/admin/screen-editor/visual/BindingEditor";
 import { ActionEditorModal } from "@/components/admin/screen-editor/actions/ActionEditorModal";
 import { extractStatePaths, buildPathTree } from "@/lib/ui-screen/binding-path-utils";
@@ -18,21 +18,39 @@ import {
 } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { ComponentActionRef } from "@/lib/ui-screen/screen.schema";
+import { ComponentActionRef, ScreenSchemaV1 } from "@/lib/ui-screen/screen.schema";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PathPicker, type PathTreeNode } from "@/components/admin/screen-editor/common/PathPicker";
+import { validateBindingPath } from "@/lib/ui-screen/validation-utils";
 import { Trash2, Plus, Edit2 } from "lucide-react";
+import { Component } from "@/lib/ui-screen/screen.schema";
+
+// Helper to find component by ID (including nested)
+function findComponentById(components: Component[], id: string): Component | null {
+  for (const c of components) {
+    if (c.id === id) return c;
+    const nested = c.props?.components as Component[] | undefined;
+    if (nested && Array.isArray(nested)) {
+      const found = findComponentById(nested, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 export default function PropertiesPanel() {
   const editorState = useEditorState();
+  const displayScreen = editorState.screen;
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [editingAction, setEditingAction] = useState<ComponentActionRef | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  // Get selected component by finding it in the components array
+  // Get selected component by finding it in the components array (including nested)
   const selectedComponent = React.useMemo(() => {
-    if (!editorState.screen || !editorState.selectedComponentId) return null;
-    return editorState.screen.components.find(c => c.id === editorState.selectedComponentId) || null;
-  }, [editorState.screen, editorState.selectedComponentId]);
+    if (!displayScreen || !editorState.selectedComponentId) return null;
+    return findComponentById(displayScreen.components, editorState.selectedComponentId);
+  }, [displayScreen, editorState.selectedComponentId]);
 
   // Update form data when component changes
   React.useEffect(() => {
@@ -44,11 +62,11 @@ export default function PropertiesPanel() {
 
   // Build path trees for binding editor
   const pathTrees = useMemo(() => {
-    if (!editorState.screen?.state) {
+    if (!displayScreen?.state) {
       return { stateTree: [], contextTree: [], inputsTree: [] };
     }
 
-    const statePaths = extractStatePaths(editorState.screen.state.schema || {});
+    const statePaths = extractStatePaths(displayScreen.state.schema || {});
     const stateTree = buildPathTree(statePaths);
 
     return {
@@ -56,7 +74,7 @@ export default function PropertiesPanel() {
       contextTree: [], // Context paths would be extracted similarly if provided
       inputsTree: [], // Inputs paths would be extracted similarly if provided
     };
-  }, [editorState.screen?.state]);
+  }, [displayScreen?.state]);
 
   if (!selectedComponent) {
     return (
@@ -67,6 +85,10 @@ export default function PropertiesPanel() {
   }
 
   const fields = generatePropsFormFields(selectedComponent.type);
+  const normalizedType = (selectedComponent.type || "").toLowerCase();
+  const isTextComponent = TEXT_COMPONENT_TYPES.has(normalizedType);
+  const isTextField = (name: string) => isTextComponent && TEXT_PROPERTY_FIELDS.has(name);
+  const bindableFields = fields.filter(field => !isTextField(field.name));
 
   const handlePropChange = (name: string, value: any) => {
     const newData = { ...formData, [name]: value };
@@ -79,7 +101,7 @@ export default function PropertiesPanel() {
   };
 
   const handleDuplicate = () => {
-    const idx = editorState.screen?.components.findIndex(c => c.id === selectedComponent.id) ?? -1;
+    const idx = displayScreen?.components.findIndex(c => c.id === selectedComponent.id) ?? -1;
     if (idx >= 0) {
       editorState.addComponent(selectedComponent.type, idx + 1);
     }
@@ -130,12 +152,23 @@ export default function PropertiesPanel() {
           </div>
         ) : (
           fields.map(field => (
-            <PropsFormField
-              key={field.name}
-              field={field}
-              value={formData[field.name]}
-              onChange={(value) => handlePropChange(field.name, value)}
-            />
+            isTextField(field.name) ? (
+              <TextPropertyField
+                key={field.name}
+                field={field}
+                value={formData[field.name]}
+                onChange={(value) => handlePropChange(field.name, value)}
+                bindingTrees={pathTrees}
+                screenSchema={displayScreen}
+              />
+            ) : (
+              <PropsFormField
+                key={field.name}
+                field={field}
+                value={formData[field.name]}
+                onChange={(value) => handlePropChange(field.name, value)}
+              />
+            )
           ))
         )}
 
@@ -146,12 +179,12 @@ export default function PropertiesPanel() {
               Bindings
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-3">
-              {fields.length === 0 ? (
+              {bindableFields.length === 0 ? (
                 <p className="text-xs text-slate-500">
                   No bindable properties
                 </p>
               ) : (
-                fields.map(field => (
+                bindableFields.map(field => (
                   <div key={`binding-${field.name}`}>
                     <label className="block text-xs font-medium text-slate-300 mb-2">
                       {field.label || field.name}
@@ -424,4 +457,236 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
       />
     </div>
   );
+}
+
+interface BindingTrees {
+  stateTree: PathTreeNode[];
+  contextTree: PathTreeNode[];
+  inputsTree: PathTreeNode[];
+}
+
+function TextPropertyField({
+  field,
+  value,
+  onChange,
+  bindingTrees,
+  screenSchema,
+}: {
+  field: PropsFormFieldSchema;
+  value: any;
+  onChange: (value: string) => void;
+  bindingTrees: BindingTrees;
+  screenSchema: ScreenSchemaV1 | null;
+}) {
+  const description =
+    field.description ||
+    (field.name === "variant"
+      ? "Variant is a design token (heading, label, body, caption)."
+      : field.name === "color"
+        ? "Color is a design token (default, primary, muted, danger)."
+        : undefined);
+
+  const renderStatic = (staticValue: string, handleStaticChange: (val: string) => void) => {
+    if (field.name === "content") {
+      return (
+        <Textarea
+          value={staticValue}
+          onChange={(e) => handleStaticChange(e.target.value)}
+          placeholder={field.placeholder || "Enter text..."}
+          className="min-h-16 text-xs bg-slate-800 border-slate-700 resize-none"
+        />
+      );
+    }
+
+    if (field.name === "variant") {
+      return (
+        <Select value={staticValue || ""} onValueChange={(val) => handleStaticChange(val)}>
+          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+            <SelectValue placeholder="Select variant" />
+          </SelectTrigger>
+          <SelectContent>
+            {TEXT_VARIANT_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (field.name === "color") {
+      return (
+        <Select value={staticValue || ""} onValueChange={(val) => handleStaticChange(val)}>
+          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+            <SelectValue placeholder="Select color" />
+          </SelectTrigger>
+          <SelectContent>
+            {TEXT_COLOR_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    return (
+      <Input
+        value={staticValue}
+        onChange={(e) => handleStaticChange(e.target.value)}
+        placeholder={field.placeholder || ""}
+        className="h-8 text-xs bg-slate-800 border-slate-700"
+      />
+    );
+  };
+
+  return (
+    <FieldBindingControl
+      label={field.label || field.name}
+      description={description}
+      value={value}
+      onChange={onChange}
+      bindingTrees={bindingTrees}
+      screenSchema={screenSchema}
+      renderStaticInput={renderStatic}
+    />
+  );
+}
+
+const TEXT_COMPONENT_TYPES = new Set(["text", "markdown"]);
+const TEXT_PROPERTY_FIELDS = new Set(["content", "variant", "color"]);
+const TEXT_VARIANT_OPTIONS = [
+  { value: "heading", label: "Heading" },
+  { value: "label", label: "Label" },
+  { value: "body", label: "Body" },
+  { value: "caption", label: "Caption" },
+];
+const TEXT_COLOR_OPTIONS = [
+  { value: "default", label: "Default" },
+  { value: "primary", label: "Primary" },
+  { value: "muted", label: "Muted" },
+  { value: "danger", label: "Danger" },
+];
+
+function FieldBindingControl({
+  label,
+  description,
+  value,
+  onChange,
+  bindingTrees,
+  screenSchema,
+  renderStaticInput,
+}: {
+  label: string;
+  description?: string;
+  value?: string;
+  onChange: (value: string) => void;
+  bindingTrees: BindingTrees;
+  screenSchema: ScreenSchemaV1 | null;
+  renderStaticInput: (value: string, onChange: (val: string) => void) => React.ReactNode;
+}) {
+  const normalizedValue = typeof value === "string" ? value : "";
+  const [mode, setMode] = useState<"binding" | "static">(isBindingExpression(normalizedValue) ? "binding" : "static");
+  const [staticValue, setStaticValue] = useState<string>(isBindingExpression(normalizedValue) ? "" : normalizedValue);
+  const [bindingValue, setBindingValue] = useState<string>(normalizedValue);
+
+  React.useEffect(() => {
+    setBindingValue(normalizedValue);
+    if (isBindingExpression(normalizedValue)) {
+      setMode("binding");
+    } else {
+      setMode("static");
+      setStaticValue(normalizedValue);
+    }
+  }, [normalizedValue]);
+
+  const handleStaticChange = (next: string) => {
+    setStaticValue(next);
+    setMode("static");
+    onChange(next);
+  };
+
+  const handleBindingChange = (next: string) => {
+    setBindingValue(next);
+    setMode("binding");
+    onChange(next);
+  };
+
+  const bindingError = React.useMemo(() => {
+    if (mode !== "binding" || !bindingValue) return "";
+    const errors = validateBindingPath(bindingValue, screenSchema);
+    return errors.length ? errors[0].message : "";
+  }, [bindingValue, mode, screenSchema]);
+
+  const prefixOptions = [
+    { label: "state", value: "state" },
+    { label: "inputs", value: "inputs" },
+    { label: "context", value: "context" },
+    { label: "trace_id", value: "trace_id" },
+  ];
+
+  const handlePrefixInsert = (source: string) => {
+    const payload = source === "trace_id" ? "{{trace_id}}" : `{{${source}}}`;
+    handleBindingChange(payload);
+  };
+
+  return (
+    <div className="space-y-2 rounded border border-slate-800 bg-slate-900/60 p-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-medium text-slate-300">{label}</p>
+          {description && (
+            <p className="text-[10px] text-slate-500">
+              {description}
+            </p>
+          )}
+        </div>
+        <span className="text-[10px] uppercase tracking-[0.4em] text-slate-400">
+          {mode === "binding" ? "Binding" : "Static"}
+        </span>
+      </div>
+      <Tabs value={mode} onValueChange={(val) => setMode(val as "binding" | "static")}>
+        <TabsList className="grid grid-cols-2 gap-2">
+          <TabsTrigger className="h-8 text-[10px] uppercase tracking-[0.1em] px-2" value="static">
+            Static
+          </TabsTrigger>
+          <TabsTrigger className="h-8 text-[10px] uppercase tracking-[0.1em] px-2" value="binding">
+            Binding
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="static" className="space-y-2">
+          {renderStaticInput(staticValue, handleStaticChange)}
+        </TabsContent>
+        <TabsContent value="binding" className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {prefixOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className="rounded-full border border-slate-700 px-2 py-1 text-[10px] text-slate-200 hover:border-slate-500"
+                onClick={() => handlePrefixInsert(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <PathPicker
+            value={bindingValue}
+            onChange={(val) => handleBindingChange(val)}
+            stateTree={bindingTrees.stateTree}
+            contextTree={bindingTrees.contextTree}
+            inputsTree={bindingTrees.inputsTree}
+            placeholder={`Bind ${label.toLowerCase()}...`}
+            error={bindingError}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function isBindingExpression(value: string) {
+  return value.startsWith("{{") && value.endsWith("}}");
 }

@@ -6,16 +6,24 @@ import UIScreenRenderer from "@/components/answer/UIScreenRenderer";
 
 export default function PreviewTab() {
   const editorState = useEditorState();
+  const screen = editorState.screen;
+
+  // Generate a key based on screen content to force re-render when screen changes
+  const screenKey = useMemo(() => {
+    if (!screen) return "empty";
+    return JSON.stringify(screen);
+  }, [screen]);
+
   const previewBlock = useMemo(() => {
-    if (!editorState.screen) return null;
+    if (!screen) return null;
     return {
       type: "ui_screen",
-      screen_id: editorState.screen.screen_id,
+      screen_id: screen.screen_id,
       params: {},
     };
-  }, [editorState.screen?.screen_id]);
+  }, [screen]);
 
-  if (!editorState.screen) {
+  if (!screen) {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-slate-400">Loading preview...</p>
@@ -47,8 +55,8 @@ export default function PreviewTab() {
         </div>
       )}
 
-      {/* Render screen using UIScreenRenderer */}
-      <UIScreenRenderer block={previewBlock!} schemaOverride={editorState.screen} />
+      {/* Render screen using UIScreenRenderer - key forces re-render on screen changes */}
+      <UIScreenRenderer key={screenKey} block={previewBlock!} schemaOverride={screen} />
     </div>
   );
 }

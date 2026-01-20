@@ -90,59 +90,12 @@ export default function UIScreenRenderer({
         let schema: ScreenSchemaV1 | null = schemaOverride || null;
 
         if (!schema) {
-          // Try to load from /ui-defs first (new system)
-          try {
-            const response = await fetchApi(`/ui-defs/${screenId}`);
-            const uiDef = response.data?.ui || response.ui || response;
-
-            if (uiDef.schema) {
-              // Determine layout type from ui_type or schema structure
-              let layoutType = uiDef.ui_type || "dashboard";
-              if (layoutType === "grid") layoutType = "grid";
-              else if (layoutType === "chart") layoutType = "dashboard";
-              else if (layoutType === "dashboard") layoutType = "dashboard";
-
-              // If schema already has screen_id, components, state - use it as-is
-              if (uiDef.schema.screen_id && uiDef.schema.components) {
-                schema = uiDef.schema;
-              } else {
-                // Otherwise convert grid/chart schema to screen schema
-                schema = {
-                  screen_id: uiDef.ui_id,
-                  id: uiDef.ui_id,
-                  name: uiDef.ui_name,
-                  version: "1.0",
-                  layout: {
-                    type: layoutType as any,
-                    ...uiDef.schema,
-                  },
-                  components: [],
-                  state: { initial: {} },
-                };
-              }
-            } else {
-              // Fallback: create minimal screen schema
-              schema = {
-                screen_id: uiDef.ui_id,
-                id: uiDef.ui_id,
-                name: uiDef.ui_name,
-                version: "1.0",
-                layout: { type: "dashboard" },
-                components: [],
-                state: { initial: {} },
-              };
-            }
-          } catch (uiDefsError) {
-            // Fall through to asset-registry fallback
-            console.warn("Failed to load from /ui-defs, trying asset-registry:", uiDefsError);
-
-            const assetResp = await fetchApi(`/asset-registry/assets/${screenId}`);
-            const assetData = assetResp.data?.asset || assetResp.data || assetResp;
-            const asset = (assetData as Record<string, any>) || {};
-            schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
-            if (!schema) {
-              throw new Error("Asset registry response missing screen schema");
-            }
+          const assetResp = await fetchApi(`/asset-registry/assets/${screenId}?stage=published`);
+          const assetData = assetResp.data?.asset || assetResp.data || assetResp;
+          const asset = (assetData as Record<string, any>) || {};
+          schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
+          if (!schema) {
+            throw new Error("Asset registry response missing screen schema");
           }
         }
 
@@ -467,6 +420,62 @@ export default function UIScreenRenderer({
       const orientation = props.orientation || "horizontal";
       return (
         <div key={comp.id} className={orientation === "vertical" ? "h-full w-px bg-slate-700" : "h-px w-full bg-slate-700"} data-testid={`component-divider-${comp.id}`} />
+      );
+    }
+
+    if (comp.type === "row") {
+      const gap = props.gap ?? 4;
+      const align = props.align || "stretch";
+      const justify = props.justify || "start";
+      const children = (props.components as Component[]) || [];
+      const alignClass = {
+        start: "items-start",
+        center: "items-center",
+        end: "items-end",
+        stretch: "items-stretch",
+      }[align] || "items-stretch";
+      const justifyClass = {
+        start: "justify-start",
+        center: "justify-center",
+        end: "justify-end",
+        between: "justify-between",
+        around: "justify-around",
+      }[justify] || "justify-start";
+      return (
+        <div
+          key={comp.id}
+          className={`flex flex-row ${alignClass} ${justifyClass}`}
+          style={{ gap: `${gap * 4}px` }}
+          data-testid={`component-row-${comp.id}`}
+        >
+          {children.map((child) => (
+            <div key={child.id} className="flex-1">
+              {renderComponent(child)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (comp.type === "column") {
+      const gap = props.gap ?? 4;
+      const align = props.align || "stretch";
+      const children = (props.components as Component[]) || [];
+      const alignClass = {
+        start: "items-start",
+        center: "items-center",
+        end: "items-end",
+        stretch: "items-stretch",
+      }[align] || "items-stretch";
+      return (
+        <div
+          key={comp.id}
+          className={`flex flex-col ${alignClass}`}
+          style={{ gap: `${gap * 4}px` }}
+          data-testid={`component-column-${comp.id}`}
+        >
+          {children.map((child) => renderComponent(child))}
+        </div>
       );
     }
 

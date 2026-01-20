@@ -34,11 +34,14 @@ export interface EditorState {
   loadScreen: (assetId: string) => Promise<void>;
   initializeScreen: (screen: ScreenSchemaV1, status: "draft" | "published") => void;
   addComponent: (type: string, index?: number) => void;
+  addComponentToParent: (type: string, parentId: string) => void;
   deleteComponent: (id: string) => void;
   selectComponent: (id: string | null) => void;
   updateComponentProps: (id: string, props: Record<string, any>) => void;
   updateComponentLabel: (id: string, label: string) => void;
   moveComponent: (id: string, direction: "up" | "down") => void;
+  moveComponentToParent: (componentId: string, targetParentId: string) => void;
+  reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => void;
   updateLayout: (layout: any) => void;
   updateScreenFromJson: (json: string) => void;
 
@@ -99,12 +102,181 @@ function generateActionId(existingActions: ScreenAction[]): string {
 // Helper to create default component
 function createDefaultComponent(type: string, id: string): Component {
   const descriptor = getComponentDescriptor(type);
-  return {
+  const component: Component = {
     id,
     type,
     label: descriptor?.label || type,
     props: {},
   };
+  // Initialize empty components array for container types
+  if (type === "row" || type === "column") {
+    component.props = { components: [] };
+  }
+  return component;
+}
+
+// Helper to collect all component IDs (including nested)
+function collectAllComponentIds(components: Component[]): string[] {
+  const ids: string[] = [];
+  for (const c of components) {
+    ids.push(c.id);
+    const nested = c.props?.components as Component[] | undefined;
+    if (nested && Array.isArray(nested)) {
+      ids.push(...collectAllComponentIds(nested));
+    }
+  }
+  return ids;
+}
+
+// Helper to generate unique ID across all components (including nested)
+function generateUniqueComponentId(type: string, allComponents: Component[]): string {
+  const allIds = new Set(collectAllComponentIds(allComponents));
+  let counter = 1;
+  let id = `${type}_${counter}`;
+  while (allIds.has(id)) {
+    counter++;
+    id = `${type}_${counter}`;
+  }
+  return id;
+}
+
+// Helper to check if component is a container type
+function isContainerComponent(type: string): boolean {
+  return type === "row" || type === "column" || type === "modal";
+}
+
+// Helper to add component to a parent container (returns new components array)
+function addToParent(
+  components: Component[],
+  parentId: string,
+  newComponent: Component
+): Component[] {
+  return components.map(c => {
+    if (c.id === parentId && isContainerComponent(c.type)) {
+      const children = (c.props?.components as Component[]) || [];
+      return {
+        ...c,
+        props: {
+          ...c.props,
+          components: [...children, newComponent],
+        },
+      };
+    }
+    // Recurse into nested components
+    const nested = c.props?.components as Component[] | undefined;
+    if (nested && Array.isArray(nested)) {
+      return {
+        ...c,
+        props: {
+          ...c.props,
+          components: addToParent(nested, parentId, newComponent),
+        },
+      };
+    }
+    return c;
+  });
+}
+
+// Helper to delete component by ID (including from nested)
+function deleteComponentById(components: Component[], id: string): Component[] {
+  return components
+    .filter(c => c.id !== id)
+    .map(c => {
+      const nested = c.props?.components as Component[] | undefined;
+      if (nested && Array.isArray(nested)) {
+        return {
+          ...c,
+          props: {
+            ...c.props,
+            components: deleteComponentById(nested, id),
+          },
+        };
+      }
+      return c;
+    });
+}
+
+// Helper to find a component by ID (including nested)
+function findComponentById(components: Component[], id: string): Component | null {
+  for (const c of components) {
+    if (c.id === id) return c;
+    const nested = c.props?.components as Component[] | undefined;
+    if (nested && Array.isArray(nested)) {
+      const found = findComponentById(nested, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// Helper to update a component by ID (including nested) with a transformer function
+function updateComponentById(
+  components: Component[],
+  id: string,
+  updater: (c: Component) => Component
+): Component[] {
+  return components.map(c => {
+    if (c.id === id) {
+      return updater(c);
+    }
+    // Recurse into nested components
+    const nested = c.props?.components as Component[] | undefined;
+    if (nested && Array.isArray(nested)) {
+      return {
+        ...c,
+        props: {
+          ...c.props,
+          components: updateComponentById(nested, id, updater),
+        },
+      };
+    }
+    return c;
+  });
+}
+
+// Helper to insert component at a specific index in a parent (or root)
+function insertComponentAtIndex(
+  components: Component[],
+  component: Component,
+  targetIndex: number,
+  targetParentId: string | null
+): Component[] {
+  // If target parent is null, insert at root level
+  if (targetParentId === null) {
+    const newComponents = [...components];
+    const safeIndex = Math.min(Math.max(0, targetIndex), newComponents.length);
+    newComponents.splice(safeIndex, 0, component);
+    return newComponents;
+  }
+
+  // Otherwise, insert into the target parent's children
+  return components.map(c => {
+    if (c.id === targetParentId && isContainerComponent(c.type)) {
+      const children = (c.props?.components as Component[]) || [];
+      const newChildren = [...children];
+      const safeIndex = Math.min(Math.max(0, targetIndex), newChildren.length);
+      newChildren.splice(safeIndex, 0, component);
+      return {
+        ...c,
+        props: {
+          ...c.props,
+          components: newChildren,
+        },
+      };
+    }
+    // Recurse into nested components
+    const nested = c.props?.components as Component[] | undefined;
+    if (nested && Array.isArray(nested)) {
+      return {
+        ...c,
+        props: {
+          ...c.props,
+          components: insertComponentAtIndex(nested, component, targetIndex, targetParentId),
+        },
+      };
+    }
+    return c;
+  });
 }
 
 // Validation function - uses comprehensive validation from validation-utils
@@ -164,7 +336,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
   get selectedComponent() {
     const state = get();
     if (!state.screen || !state.selectedComponentId) return null;
-    return state.screen.components.find(c => c.id === state.selectedComponentId) || null;
+    // Use findComponentById to find nested components too
+    return findComponentById(state.screen.components, state.selectedComponentId);
   },
 
   get isDirty() {
@@ -238,7 +411,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
         return state;
       }
 
-      const newId = generateComponentId(type, state.screen.components);
+      const newId = generateUniqueComponentId(type, state.screen.components);
       const newComponent = createDefaultComponent(type, newId);
       console.log("[EDITOR] Created component:", newId, newComponent);
 
@@ -266,11 +439,42 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
+  addComponentToParent: (type: string, parentId: string) => {
+    console.log("[EDITOR] Adding component to parent:", type, parentId);
+    set((state) => {
+      if (!state.screen) {
+        console.log("[EDITOR] No screen loaded");
+        return state;
+      }
+
+      const newId = generateUniqueComponentId(type, state.screen.components);
+      const newComponent = createDefaultComponent(type, newId);
+      console.log("[EDITOR] Created component:", newId, newComponent);
+
+      const newComponents = addToParent(state.screen.components, parentId, newComponent);
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      console.log("[EDITOR] Added component to parent:", parentId);
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+        selectedComponentId: newId,
+      };
+    });
+  },
+
   deleteComponent: (id: string) => {
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.filter(c => c.id !== id);
+      // Use recursive delete to handle nested components
+      const newComponents = deleteComponentById(state.screen.components, id);
       const newScreen = {
         ...state.screen,
         components: newComponents,
@@ -298,10 +502,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.map(c =>
-        c.id === id
-          ? { ...c, props: { ...c.props, ...props } }
-          : c
+      // Use updateComponentById to handle nested components
+      const newComponents = updateComponentById(
+        state.screen.components,
+        id,
+        (c) => ({ ...c, props: { ...c.props, ...props } })
       );
 
       const newScreen = {
@@ -321,10 +526,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.map(c =>
-        c.id === id
-          ? { ...c, label }
-          : c
+      // Use updateComponentById to handle nested components
+      const newComponents = updateComponentById(
+        state.screen.components,
+        id,
+        (c) => ({ ...c, label })
       );
 
       const newScreen = {
@@ -352,6 +558,79 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
       const newComponents = [...state.screen.components];
       [newComponents[idx], newComponents[newIndex]] = [newComponents[newIndex], newComponents[idx]];
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  moveComponentToParent: (componentId: string, targetParentId: string) => {
+    console.log("[EDITOR] moveComponentToParent:", componentId, "->", targetParentId);
+    set((state) => {
+      if (!state.screen) return state;
+
+      // Find the component to move
+      const componentToMove = findComponentById(state.screen.components, componentId);
+      if (!componentToMove) {
+        console.log("[EDITOR] Component not found:", componentId);
+        return state;
+      }
+
+      // Can't move into itself or its children
+      if (componentId === targetParentId) {
+        console.log("[EDITOR] Cannot move component into itself");
+        return state;
+      }
+
+      // Remove from current location
+      let newComponents = deleteComponentById(state.screen.components, componentId);
+
+      // Add to new parent
+      newComponents = addToParent(newComponents, targetParentId, componentToMove);
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
+  reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => {
+    console.log("[EDITOR] reorderComponentAtIndex:", componentId, "-> index", targetIndex, "parent:", targetParentId);
+    set((state) => {
+      if (!state.screen) return state;
+
+      // Find the component to move
+      const componentToMove = findComponentById(state.screen.components, componentId);
+      if (!componentToMove) {
+        console.log("[EDITOR] Component not found:", componentId);
+        return state;
+      }
+
+      // Remove from current location
+      let newComponents = deleteComponentById(state.screen.components, componentId);
+
+      // Insert at new position
+      newComponents = insertComponentAtIndex(
+        newComponents,
+        componentToMove,
+        targetIndex,
+        targetParentId ?? null
+      );
 
       const newScreen = {
         ...state.screen,
@@ -473,15 +752,15 @@ export const useEditorState = create<EditorState>((set, get) => ({
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.map(c => {
-        if (c.id === componentId) {
-          return {
-            ...c,
-            actions: [...(c.actions || []), action],
-          };
-        }
-        return c;
-      });
+      // Use updateComponentById to handle nested components
+      const newComponents = updateComponentById(
+        state.screen.components,
+        componentId,
+        (c) => ({
+          ...c,
+          actions: [...(c.actions || []), action],
+        })
+      );
 
       const newScreen = {
         ...state.screen,
@@ -500,17 +779,17 @@ export const useEditorState = create<EditorState>((set, get) => ({
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.map(c => {
-        if (c.id === componentId && c.actions) {
-          return {
-            ...c,
-            actions: c.actions.map(a =>
-              a.id === actionId ? { ...a, ...updates } : a
-            ),
-          };
-        }
-        return c;
-      });
+      // Use updateComponentById to handle nested components
+      const newComponents = updateComponentById(
+        state.screen.components,
+        componentId,
+        (c) => ({
+          ...c,
+          actions: c.actions
+            ? c.actions.map(a => a.id === actionId ? { ...a, ...updates } : a)
+            : [],
+        })
+      );
 
       const newScreen = {
         ...state.screen,
@@ -529,16 +808,18 @@ export const useEditorState = create<EditorState>((set, get) => ({
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.map(c => {
-        if (c.id === componentId && c.actions) {
-          const newActions = c.actions.filter(a => a.id !== actionId);
+      // Use updateComponentById to handle nested components
+      const newComponents = updateComponentById(
+        state.screen.components,
+        componentId,
+        (c) => {
+          const newActions = c.actions?.filter(a => a.id !== actionId) || [];
           return {
             ...c,
-            actions: newActions.length > 0 ? newActions : null,
+            actions: newActions.length > 0 ? newActions : undefined,
           };
         }
-        return c;
-      });
+      );
 
       const newScreen = {
         ...state.screen,
@@ -556,7 +837,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
   getComponentActions: (componentId: string) => {
     const state = get();
     if (!state.screen) return [];
-    const component = state.screen.components.find(c => c.id === componentId);
+    // Use findComponentById to handle nested components
+    const component = findComponentById(state.screen.components, componentId);
     return component?.actions || [];
   },
 
@@ -614,15 +896,15 @@ export const useEditorState = create<EditorState>((set, get) => ({
     set((state) => {
       if (!state.screen) return state;
 
-      const newComponents = state.screen.components.map(c => {
-        if (c.id === componentId) {
-          return {
-            ...c,
-            visibility: visibleIf ? { rule: visibleIf } : null,
-          };
-        }
-        return c;
-      });
+      // Use updateComponentById to handle nested components
+      const newComponents = updateComponentById(
+        state.screen.components,
+        componentId,
+        (c) => ({
+          ...c,
+          visibility: visibleIf ? { rule: visibleIf } : undefined,
+        })
+      );
 
       const newScreen = {
         ...state.screen,
