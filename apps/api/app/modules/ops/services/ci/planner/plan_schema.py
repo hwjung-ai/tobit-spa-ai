@@ -58,6 +58,7 @@ class GraphLimits(BaseModel):
 
 class GraphSpec(BaseModel):
     depth: int = 2
+    user_requested_depth: int | None = None  # 사용자가 질의에서 명시한 depth
     limits: GraphLimits = Field(default_factory=lambda: GraphLimits())
     view: View | None = None
 

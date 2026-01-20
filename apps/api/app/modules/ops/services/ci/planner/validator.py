@@ -405,6 +405,15 @@ def validate_plan(plan: Plan) -> Tuple[Plan, Dict[str, Any]]:
     trace: Dict[str, Any] = {
         "policy_decisions": policy.build_policy_trace(graph_view.value, requested_depth)
     }
+    # 깊이 관련 정책 결정 명시 (세 가지 값 분리 기록)
+    # - user_requested_depth: 사용자가 질의에서 명시한 깊이 (예: "depth 10")
+    # - policy_max_depth: 정책에서 허용하는 최대 깊이
+    # - effective_depth: 실제 적용된 깊이 (사용자 요청 vs 정책 상한선 중 작은 값)
+    if normalized.graph.user_requested_depth is not None:
+        trace["policy_decisions"]["user_requested_depth"] = normalized.graph.user_requested_depth
+    # requested_depth는 정책 결정 후의 effective_depth와 같음
+    trace["policy_decisions"]["policy_max_depth"] = requested_depth  # build_policy_trace에서 결정된 상한
+    trace["policy_decisions"]["effective_depth"] = requested_depth   # 최종 적용 깊이
     graph_views = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}
     if normalized.list.enabled and (
         view in graph_views

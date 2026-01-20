@@ -24,12 +24,26 @@ def _load_query(name: str) -> str:
 
 
 def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIHit]:
+    """
+    CI 해석: 3단계 검색 (우선도 기반)
+
+    명시 CI코드가 있을 때:
+    - 정확 매칭만 수행 (score 1.0)
+    - 정확 매칭 성공 시 즉시 반환
+    - 정확 매칭 실패 시 빈 리스트 반환 (no-data, broad search 금지)
+
+    명시 CI코드가 없을 때:
+    - ci_code 패턴 검색 (score 0.8)
+    - ci_name 패턴 검색 (score 0.6)
+    """
     codes = _extract_codes(question)
     hits: list[CIHit] = []
     seen_codes: set[str] = set()
+
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
             if codes:
+                # 단계 1: 명시 CI코드의 정확 매칭만 수행
                 exact_query = _load_query("ci_resolver_exact.sql")
                 for code in dict.fromkeys(codes):
                     cur.execute(exact_query, (code, tenant_id, limit))
@@ -38,6 +52,17 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
                         seen_codes.add(row[1])
                         if len(hits) >= limit:
                             return hits
+
+                # 명시 CI코드가 있는데 정확 매칭 결과가 있으면 그것만 반환
+                if hits:
+                    return hits
+
+                # 명시 CI코드가 있는데 정확 매칭 실패 → no-data (빈 리스트)
+                # broad search(ci_code/ci_name 패턴)로 폴백하지 않음
+                return []
+
+            # 명시 CI코드가 없을 때만 broad search 진행
+            # 단계 2: ci_code 패턴 검색
             remaining = limit - len(hits)
             if remaining > 0:
                 for row in _query_pattern(cur, tenant_id, question, "ci_code", remaining):
@@ -47,12 +72,15 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
                     seen_codes.add(row[1])
                     if len(hits) >= limit:
                         return hits
+
+            # 단계 3: ci_name 패턴 검색
             remaining = limit - len(hits)
             if remaining > 0:
                 for row in _query_pattern(cur, tenant_id, question, "ci_name", remaining):
                     if row[1] in seen_codes:
                         continue
                     hits.append(_row_to_hit(row, 0.6))
+
     return hits
 
 

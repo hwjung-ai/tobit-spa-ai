@@ -966,6 +966,11 @@ class CIOrchestratorRunner:
             trace["graph_expected_but_missing"] = True
             self.plan_trace["graph_expected_but_missing"] = True
         runner_context_meta = getattr(self, "_runner_context", _runner_context())
+        # OPS_MODE 환경변수에서 읽음 (real/mock)
+        ops_mode_config = os.environ.get("OPS_MODE", "real").lower()
+        # fallback_used: CI 조회 실패 시 후보 리스트로 폴백했는지 여부
+        ops_mode_effective = ops_mode_config  # 현재는 config와 같음, 향후 fallback 로직 추가 가능
+
         meta = {
             "route": "ci",
             "route_reason": "CI tab",
@@ -973,6 +978,12 @@ class CIOrchestratorRunner:
             "summary": answer,
             "used_tools": used_tools,
             "fallback": len(self.errors) > 0,
+            "runtime": {
+                "ops_mode_config": ops_mode_config,        # 환경변수 설정값 (real/mock)
+                "ops_mode_effective": ops_mode_effective,  # 실제 적용된 값
+                "fallback_used": len(self.errors) > 0,     # 폴백 사용 여부
+            },
+            "plan_mode": self.plan.mode.value if self.plan and self.plan.mode else "ci",  # ci|auto
             "runner_context": runner_context_meta,
             "trace_id": trace_id if trace_id != "-" else None,
             "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
@@ -1223,6 +1234,15 @@ class CIOrchestratorRunner:
     async def _run_auto_recipe_async(self) -> tuple[List[Block], str, Dict[str, Any]]:
         detail, fallback_blocks, fallback_message = await self._resolve_ci_detail_async()
         auto_spec = self.plan.auto
+
+        # 깊이 관련 정책 결정 명시 (AUTO mode에서도 세 가지 값 분리 기록)
+        user_requested_depth = self.plan.graph.user_requested_depth if self.plan.graph else None
+        if user_requested_depth is not None:
+            policy_decisions = self.plan_trace.setdefault("policy_decisions", {})
+            policy_decisions["user_requested_depth"] = user_requested_depth
+            # policy_max_depth와 effective_depth는 AUTO mode에서는 실행 후 결정되므로
+            # 여기서는 user_requested_depth만 미리 기록
+
         auto_trace: Dict[str, Any] = {
             "auto_recipe_applied": True,
             "views": [],
@@ -1581,10 +1601,10 @@ class CIOrchestratorRunner:
             return blocks, status
         return await self._auto_metric_candidate_blocks_async(detail)
 
-    def _run_auto_history(self, detail: Dict[str, Any]) -> tuple[List[Block], Dict[str, Any]]:
-        return asyncio.run(self._run_auto_history_async(detail))
+    def _run_auto_history(self, detail: Dict[str, Any], auto_spec: AutoSpec | None = None) -> tuple[List[Block], Dict[str, Any]]:
+        return asyncio.run(self._run_auto_history_async(detail, auto_spec))
 
-    async def _run_auto_history_async(self, detail: Dict[str, Any]) -> tuple[List[Block], Dict[str, Any]]:
+    async def _run_auto_history_async(self, detail: Dict[str, Any], auto_spec: AutoSpec | None = None) -> tuple[List[Block], Dict[str, Any]]:
         if not self.plan.history or not self.plan.history.enabled:
             return [], {"status": "disabled"}
         try:
@@ -2084,6 +2104,20 @@ class CIOrchestratorRunner:
                 message = f"CI {self.rerun_context.selected_ci_id} not found."
                 return None, [text_block(message)], message
             return detail, None, None
+
+        # 명시 CI코드 추출 및 정확 매칭 (선호도 높음)
+        from app.modules.ops.services.resolvers.ci_resolver import resolve_ci, _extract_codes
+        explicit_codes = _extract_codes(self.question or "")
+        if explicit_codes:
+            exact_hits = resolve_ci(self.question or "", self.tenant_id, limit=10)
+            if exact_hits:
+                # 명시 코드로 찾음
+                detail = await self._ci_get_async(exact_hits[0].ci_id)
+                if detail:
+                    return detail, None, None
+            # 명시 코드가 있는데 찾지 못함 → no-data
+            return None, [text_block(f"CI '{explicit_codes[0]}' not found.")], f"CI {explicit_codes[0]} not found"
+
         requested_keywords = list(self.plan.primary.keywords)
         if not requested_keywords:
             secondary_ids = self._extract_ci_identifiers(self.plan.secondary.keywords or [])
@@ -2116,6 +2150,7 @@ class CIOrchestratorRunner:
                 blocks, hist_message = history_fallback
                 return None, blocks, hist_message
             return None, [text_block(message, title="Lookup")], message
+
         if len(candidates) > 1:
             exact = _find_exact_candidate(candidates, search_keywords)
             if exact:

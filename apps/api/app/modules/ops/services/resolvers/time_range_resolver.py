@@ -13,6 +13,14 @@ ASIA_SEOUL = ZoneInfo("Asia/Seoul")
 MONTH_PATTERN = re.compile(r"(\d+)\s*개월", re.IGNORECASE)
 YEAR_PATTERN = re.compile(r"(\d+)\s*년", re.IGNORECASE)
 
+# 범위 날짜 파싱: "2025-12-01부터 2025-12-31까지", "2025-12-01 ~ 2025-12-31"
+DATE_RANGE_PATTERN = re.compile(
+    r"(\d{4})[-년/.](\d{1,2})[-월/.](\d{1,2})(?:\s*부터|\s*에서)?\s*(?:[-~부터]|에서)?\s*(\d{4})[-년/.](\d{1,2})[-월/.](\d{1,2})(?:\s*까지)?",
+    re.IGNORECASE,
+)
+# 단일 명시적 날짜 패턴
+ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/.](\d{1,2})[-월/.](\d{1,2})")
+
 WEEK_PATTERN = re.compile(
     r"(?P<year>\d{4})\s*년\s*(?P<month>\d{1,2})\s*월\s*(?P<week>[^\\s]+?)\s*주",
     re.IGNORECASE,
@@ -56,6 +64,12 @@ def resolve_time_range(question: str, now: datetime, tz: ZoneInfo | None = None)
     zone = tz or ASIA_SEOUL
     current = now.astimezone(zone)
     text = question.lower()
+
+    # 범위 날짜 파싱 우선 (예: "2025-12-01부터 2025-12-31까지")
+    date_range = _parse_date_range(text, zone)
+    if date_range:
+        return date_range
+
     week_range = _parse_week_of_month(text, zone)
     if week_range:
         return week_range
@@ -177,3 +191,27 @@ def _shift_years(timestamp: datetime, years: int) -> datetime:
     except ValueError:
         # handle leap day
         return timestamp.replace(month=2, day=28, year=timestamp.year - years, hour=0, minute=0, second=0, microsecond=0)
+
+
+def _parse_date_range(text: str, zone: ZoneInfo) -> TimeRange | None:
+    """범위 날짜 파싱: '2025-12-01부터 2025-12-31까지' 형태"""
+    match = DATE_RANGE_PATTERN.search(text)
+    if not match:
+        return None
+
+    try:
+        # 시작 날짜
+        start_year = int(match.group(1))
+        start_month = int(match.group(2))
+        start_day = int(match.group(3))
+        start = datetime(start_year, start_month, start_day, 0, 0, 0, 0, tzinfo=zone)
+
+        # 종료 날짜
+        end_year = int(match.group(4))
+        end_month = int(match.group(5))
+        end_day = int(match.group(6))
+        end = datetime(end_year, end_month, end_day, 23, 59, 59, 0, tzinfo=zone)
+
+        return TimeRange(start=start, end=end, bucket="1 day")
+    except (ValueError, IndexError):
+        return None

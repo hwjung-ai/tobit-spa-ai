@@ -30,6 +30,8 @@ logger = get_logger(__name__)
 
 
 ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
+# Depth 파싱: "depth 10", "깊이 10" 등
+DEPTH_PATTERN = re.compile(r"(?:depth|깊이)\s+(\d+)", re.IGNORECASE)
 
 
 def determine_output_types(text: str) -> Set[str]:
@@ -517,8 +519,24 @@ def create_plan(question: str) -> Plan:
         plan.aggregate = plan.aggregate.copy(
             update={"group_by": group_by, "metrics": ["count"], "top_n": 10}
         )
+    # Depth 요청 추출 (사용자 질의에서 depth 명시)
+    requested_depth = 1  # 기본값
+    depth_match = DEPTH_PATTERN.search(normalized)
+    if depth_match:
+        try:
+            requested_depth = int(depth_match.group(1))
+            requested_depth = max(1, min(10, requested_depth))  # 1-10 범위
+        except ValueError:
+            requested_depth = 1
+
     if plan.intent == Intent.PATH:
-        plan.graph = plan.graph.copy(update={"depth": 4})
+        plan.graph = plan.graph.copy(update={
+            "depth": requested_depth if requested_depth > 1 else 4,
+            "user_requested_depth": requested_depth
+        })
+    else:
+        # PATH가 아니어도 user_requested_depth 항상 기록
+        plan.graph = plan.graph.copy(update={"user_requested_depth": requested_depth})
     metric_spec = None
     if llm_payload:
         metric_spec = _metric_payload_to_spec(llm_payload.get("metric"))
