@@ -18,7 +18,8 @@ class RCASummarizer:
 
     def __init__(self):
         self.llm = get_llm_client()
-        self.model = "gpt-4o-mini"
+        # Use the default model from LLM client (from CHAT_MODEL environment variable)
+        # self.model is no longer needed as llm.create_response uses default_model when model=None
 
     def summarize_hypotheses(
         self,
@@ -84,10 +85,12 @@ class RCASummarizer:
         )
 
         try:
+            # Format input as messages list for OpenAI API
             response = self.llm.create_response(
-                system_prompt=system_prompt,
-                user_prompt=user_prompt,
-                model=self.model,
+                input=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
                 temperature=0.2,  # Low temp for consistency
                 max_tokens=150,  # ~3-6 sentences
             )

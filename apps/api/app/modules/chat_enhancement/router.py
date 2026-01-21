@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from core.auth import get_current_user
+from core.config import get_settings
 from .services.chat_service import ChatEnhancementService
 from .services.export_service import ChatExportService, ExportFormat
 
@@ -24,13 +25,16 @@ class CreateThreadRequest(BaseModel):
     description: Optional[str] = None
 
 
+# Get settings for default model
+settings = get_settings()
+
 class AddMessageRequest(BaseModel):
     """Request for adding a message to thread"""
     role: str  # "user" or "assistant"
     content: str
     tokens_in: Optional[int] = None
     tokens_out: Optional[int] = None
-    model: Optional[str] = "gpt-4"
+    model: Optional[str] = settings.chat_model  # Use environment variable
 
 
 class ThreadResponse(BaseModel):

@@ -332,7 +332,7 @@ LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
 SERVER_FILTER_KEYWORDS = {"서버", "server"}
 CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
-OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", "gpt-4o-mini")
+OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", os.environ.get("CHAT_MODEL", "gpt-4o-mini"))
 
 PROMPT_SCOPE = "ci"
 PROMPT_ENGINE = "planner"
