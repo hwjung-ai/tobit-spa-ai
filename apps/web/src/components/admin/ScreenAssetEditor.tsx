@@ -7,33 +7,47 @@ import Toast from "./Toast";
 import Link from "next/link";
 
 // Minimal JSON schema validator for screen schema
-function validateScreenSchema(schema: any): string[] {
+function validateScreenSchema(schema: unknown): string[] {
   const errors: string[] = [];
 
+  // Type guard
+  if (typeof schema !== "object" || schema === null) {
+    errors.push("Schema must be an object");
+    return errors;
+  }
+
+  const screenSchema = schema as Record<string, unknown>;
+
   // Required fields
-  if (!schema.screen_id) errors.push("screen_id is required");
-  if (!schema.layout) errors.push("layout is required");
-  if (!schema.components) errors.push("components is required");
-  if (!schema.state) errors.push("state is required");
-  if (!schema.bindings) errors.push("bindings is required");
+  if (!screenSchema.screen_id) errors.push("screen_id is required");
+  if (!screenSchema.layout) errors.push("layout is required");
+  if (!screenSchema.components) errors.push("components is required");
+  if (!screenSchema.state) errors.push("state is required");
+  if (!screenSchema.bindings) errors.push("bindings is required");
 
   // Layout validation
-  if (schema.layout && typeof schema.layout === "object") {
-    if (!schema.layout.type) {
+  if (screenSchema.layout && typeof screenSchema.layout === "object") {
+    const layout = screenSchema.layout as Record<string, unknown>;
+    if (!layout.type) {
       errors.push("layout.type is required");
-    } else if (!["grid", "form", "modal", "list", "dashboard", "stack"].includes(schema.layout.type)) {
-      errors.push(`layout.type must be one of: grid, form, modal, list, dashboard, stack (got: ${schema.layout.type})`);
+    } else if (typeof layout.type === "string" && !["grid", "form", "modal", "list", "dashboard", "stack"].includes(layout.type)) {
+      errors.push(`layout.type must be one of: grid, form, modal, list, dashboard, stack (got: ${layout.type})`);
     }
   }
 
   // Components array validation
-  if (schema.components && Array.isArray(schema.components)) {
-    schema.components.forEach((comp: any, idx: number) => {
-      if (!comp.id) errors.push(`components[${idx}]: id is required`);
-      if (!comp.type) errors.push(`components[${idx}]: type is required`);
-      const validTypes = ["text", "markdown", "button", "input", "table", "chart", "badge", "tabs", "modal", "keyvalue", "divider"];
-      if (comp.type && !validTypes.includes(comp.type)) {
-        errors.push(`components[${idx}]: type must be one of: ${validTypes.join(", ")} (got: ${comp.type})`);
+  if (screenSchema.components && Array.isArray(screenSchema.components)) {
+    screenSchema.components.forEach((comp: unknown, idx: number) => {
+      if (typeof comp === "object" && comp !== null) {
+        const component = comp as Record<string, unknown>;
+        if (!component.id) errors.push(`components[${idx}]: id is required`);
+        if (!component.type) errors.push(`components[${idx}]: type is required`);
+        if (typeof component.type === "string") {
+          const validTypes = ["text", "markdown", "button", "input", "table", "chart", "badge", "tabs", "modal", "keyvalue", "divider"];
+          if (!validTypes.includes(component.type)) {
+            errors.push(`components[${idx}]: type must be one of: ${validTypes.join(", ")} (got: ${component.type})`);
+          }
+        }
       }
     });
   }
@@ -41,7 +55,7 @@ function validateScreenSchema(schema: any): string[] {
   return errors;
 }
 
-function parseTagsInput(value: string): Record<string, any> | null {
+function parseTagsInput(value: string): Record<string, unknown> | null {
   if (!value.trim()) return null;
   try {
     const parsed = JSON.parse(value);

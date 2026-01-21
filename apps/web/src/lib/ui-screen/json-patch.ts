@@ -8,8 +8,8 @@
  */
 
 export type JsonPatchOperation =
-  | { op: "add"; path: string; value: any }
-  | { op: "replace"; path: string; value: any }
+  | { op: "add"; path: string; value: unknown }
+  | { op: "replace"; path: string; value: unknown }
   | { op: "remove"; path: string };
 
 type PathSegment = string;
@@ -29,7 +29,7 @@ function parsePointer(path: string): PathSegment[] {
     .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"));
 }
 
-function getParent(root: any, segments: PathSegment[]): { parent: any; key: string | number | null } {
+function getParent(root: unknown, segments: PathSegment[]): { parent: unknown; key: string | number | null } {
   if (segments.length === 0) {
     return { parent: null, key: null };
   }
@@ -61,7 +61,7 @@ function getParent(root: any, segments: PathSegment[]): { parent: any; key: stri
   return { parent: node, key: lastSegment };
 }
 
-function applySingleOp(doc: any, op: JsonPatchOperation) {
+function applySingleOp(doc: unknown, op: JsonPatchOperation) {
   const segments = parsePointer(op.path);
   if (segments.length === 0) {
     if (op.op === "remove") {
