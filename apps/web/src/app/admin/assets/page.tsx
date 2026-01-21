@@ -7,10 +7,15 @@ import CreateAssetModal from "../../../components/admin/CreateAssetModal";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
+// Define types for select options
+type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "screen";
+type AssetStatus = "all" | "draft" | "published";
+type SelectOption = string;
+
 export default function AssetsPage() {
     const router = useRouter();
-    const [typeFilter, setTypeFilter] = useState<"all" | "prompt" | "mapping" | "policy" | "query" | "screen">("all");
-    const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published">("all");
+    const [typeFilter, setTypeFilter] = useState<AssetType>("all");
+    const [statusFilter, setStatusFilter] = useState<AssetStatus>("all");
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     const { data: assets = [], isLoading, error, refetch } = useQuery({
@@ -36,7 +41,13 @@ export default function AssetsPage() {
                         <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Asset Type</label>
                         <select
                             value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value as any)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === "all" || value === "prompt" || value === "mapping" ||
+                                    value === "policy" || value === "query" || value === "screen") {
+                                    setTypeFilter(value);
+                                }
+                            }}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
                         >
                             <option value="all">All Categories</option>
@@ -52,7 +63,12 @@ export default function AssetsPage() {
                         <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1">Lifecycle</label>
                         <select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value as any)}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === "all" || value === "draft" || value === "published") {
+                                    setStatusFilter(value);
+                                }
+                            }}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-200 text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
                         >
                             <option value="all">Any Status</option>
@@ -88,7 +104,7 @@ export default function AssetsPage() {
                     </div>
                 ) : error ? (
                     <div className="text-center py-20">
-                        <p className="text-red-400 mb-4 text-sm font-medium">{(error as any)?.message || "Failed to load assets"}</p>
+                        <p className="text-red-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load assets"}</p>
                         <button
                             onClick={() => refetch()}
                             className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold uppercase tracking-widest transition-all"

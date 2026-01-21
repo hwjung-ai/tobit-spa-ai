@@ -8,8 +8,8 @@ export interface UIInput {
   kind: "text" | "number" | "select" | "date" | "datetime" | "checkbox";
   required?: boolean;
   placeholder?: string;
-  default?: any;
-  options?: Array<{ label: string; value: any }>;
+  default?: unknown;
+  options?: Array<{ label: string; value: unknown }>;
 }
 
 export interface UIAction {
@@ -17,7 +17,7 @@ export interface UIAction {
   label: string;
   endpoint?: string;
   method?: "POST";
-  payload_template: Record<string, any>;
+  payload_template: Record<string, unknown>;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 

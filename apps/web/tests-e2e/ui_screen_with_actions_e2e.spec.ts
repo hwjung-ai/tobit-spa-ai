@@ -243,7 +243,7 @@ test.describe('Trace Collection for Regression', () => {
 
   test('Collect and validate trace_ids for regression baseline', async ({ page }) => {
     const apiRequest = page.request;
-    const collectedTraces: any[] = [];
+    const collectedTraces: unknown[] = [];
 
     console.log('\n========== Collecting traces for regression baseline ==========');
 

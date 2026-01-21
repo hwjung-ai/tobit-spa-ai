@@ -49,7 +49,7 @@ export interface Layout {
 
 // Minimal primitive prop types used in MVP
 export type Primitive = string | number | boolean | null;
-export type PropsMap = { [k: string]: any };
+export type PropsMap = Record<string, unknown>;
 
 export type ComponentType =
   | "text"
@@ -72,7 +72,7 @@ export interface ScreenAction {
   handler: string; // executor action_id (routed to /ops/ui-actions)
   endpoint?: string; // default: /ops/ui-actions (allowed but ignored by runtime)
   method?: "POST"; // fixed to POST in contract
-  payload_template?: { [k: string]: any };
+  payload_template?: Record<string, unknown>;
   context_required?: string[];
 }
 
@@ -80,7 +80,7 @@ export interface ComponentActionRef {
   id: string;
   label?: string;
   handler: string;
-  payload_template?: { [k: string]: any };
+  payload_template?: Record<string, unknown>;
 }
 
 export interface ComponentBase {
@@ -98,7 +98,7 @@ export interface TableComponent extends ComponentBase {
   type: "table";
   props?: PropsMap & {
     columns?: string[];
-    rows?: any; // typically bound like "{{state.items}}"
+    rows?: unknown[]; // typically bound like "{{state.items}}"
     selectable?: boolean;
   };
 }
@@ -109,8 +109,8 @@ export type StateSchemaPrimitive =
   | { type: "string" }
   | { type: "number" }
   | { type: "boolean" }
-  | { type: "object"; properties?: { [k: string]: any } }
-  | { type: "array"; items?: any }
+  | { type: "object"; properties?: Record<string, unknown> }
+  | { type: "array"; items?: unknown }
   | { type: "any" };
 
 export interface StateSchema {

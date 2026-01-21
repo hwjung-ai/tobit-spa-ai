@@ -303,7 +303,7 @@ test.describe('RCA API Contract Tests', () => {
 
   test('RCA single mode request body validation', async ({ page }) => {
     const testTraceId = 'trace-contract-001';
-    let capturedRequest: any = null;
+    let capturedRequest: unknown = null;
 
     await page.route('**/ops/rca', (route) => {
       capturedRequest = route.request().postDataJSON();

@@ -9,9 +9,9 @@ import { ScreenSchemaV1, Component, ScreenAction } from "./screen.schema";
 export interface DiffItem {
   changeType: "added" | "removed" | "modified" | "unchanged";
   path: string;
-  before?: any;
-  after?: any;
-  changes?: Record<string, { before: any; after: any }>;
+  before?: unknown;
+  after?: unknown;
+  changes?: Record<string, { before: unknown; after: unknown }>;
 }
 
 export interface ComponentDiffItem extends DiffItem {

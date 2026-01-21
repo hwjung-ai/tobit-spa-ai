@@ -335,7 +335,10 @@ test.describe('Ops Query and Inspector Integration', () => {
 test.describe('Network Request Validation', () => {
 
   test('Validate RCA API request/response contract', async ({ page }) => {
-    let capturedRequests: any[] = [];
+    const capturedRequests: Array<{
+    method: string;
+    body: unknown;
+  }> = [];
 
     await page.route('**/ops/rca', (route) => {
       capturedRequests.push({

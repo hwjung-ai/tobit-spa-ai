@@ -206,7 +206,6 @@ test.describe("UI Screen Contract V1", () => {
     });
 
     test("should include screen asset in execution trace", async ({
-      page,
       request,
     }) => {
       // Get recent trace
