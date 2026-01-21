@@ -153,8 +153,8 @@ class TestDocumentExportService:
     def test_export_to_text(self):
         """Test plain text export"""
         chunks = [
-            {"id": "1", "text": "Chunk 1", "page": 1},
-            {"id": "2", "text": "Chunk 2", "page": 2},
+            {"id": "1", "text": "Chunk 1", "page_number": 1},
+            {"id": "2", "text": "Chunk 2", "page_number": 2},
         ]
 
         text_str = DocumentExportService.export_chunks_to_text(chunks, "Test Doc")

@@ -198,10 +198,10 @@ class DocumentExportService:
             return DocumentExportService.export_chunks_to_text(chunks, document_name)
 
         elif format == ExportFormat.PDF:
-            raise NotImplementedError("PDF export requires reportlab library")
+            raise ValueError("PDF export requires reportlab library")
 
         elif format == ExportFormat.PNG:
-            raise NotImplementedError("PNG export requires PIL library")
+            raise ValueError("PNG export requires PIL library")
 
         else:
             raise ValueError(f"Unsupported export format: {format}")
