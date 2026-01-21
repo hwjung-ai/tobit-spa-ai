@@ -8,7 +8,7 @@ export interface PropsFormField {
   required?: boolean;
   description?: string;
   options?: { value: string; label: string }[];
-  defaultValue?: any;
+  defaultValue?: unknown;
   multiline?: boolean;
   min?: number;
   max?: number;
@@ -25,7 +25,7 @@ export function generatePropsFormFields(componentType: string): PropsFormField[]
   const properties = descriptor.propsSchema.properties || {};
   const required = descriptor.propsSchema.required || [];
 
-  Object.entries(properties).forEach(([name, prop]: [string, any]) => {
+  Object.entries(properties).forEach(([name, prop]: [string, Record<string, unknown>]) => {
     const field: PropsFormField = {
       name,
       type: mapJsonTypeToFormType(prop),
@@ -64,15 +64,15 @@ export function generatePropsFormFields(componentType: string): PropsFormField[]
  * Map JSON Schema type to form input type
  */
 function mapJsonTypeToFormType(
-  prop: any
+  prop: Record<string, unknown>
 ): PropsFormField["type"] {
-  if (prop.enum) return "select";
+  if ((prop as { enum?: unknown }).enum) return "select";
   if (prop.type === "boolean") return "boolean";
   if (prop.type === "number" || prop.type === "integer") return "number";
   if (prop.type === "array") return "array";
   if (prop.type === "object") return "object";
   if (prop.type === "string") {
-    if (prop.minLength || prop.maxLength || prop.description?.includes("multiline")) {
+    if ((prop as { minLength?: unknown }).minLength || (prop as { maxLength?: unknown }).maxLength || (prop as { description?: string }).description?.includes("multiline")) {
       return "textarea";
     }
     return "text";
@@ -83,7 +83,7 @@ function mapJsonTypeToFormType(
 /**
  * Normalize props value based on type
  */
-export function normalizePropsValue(type: string, value: any): any {
+export function normalizePropsValue(type: string, value: unknown): unknown {
   if (value === null || value === undefined) return undefined;
 
   switch (type) {
@@ -106,9 +106,9 @@ export function normalizePropsValue(type: string, value: any): any {
 /**
  * Get displayable props for a component (excluding internal fields)
  */
-export function getDisplayableProps(props: Record<string, any>): Record<string, any> {
+export function getDisplayableProps(props: Record<string, unknown>): Record<string, unknown> {
   const exclude = ["key", "ref", "children"];
-  const result: Record<string, any> = {};
+  const result: Record<string, unknown> = {};
 
   Object.entries(props).forEach(([key, value]) => {
     if (!exclude.includes(key) && value !== undefined && value !== null) {

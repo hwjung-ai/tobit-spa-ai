@@ -119,7 +119,7 @@ function applySingleOp(doc: unknown, op: JsonPatchOperation) {
   throw new Error(`Unsupported operation "${op.op}"`);
 }
 
-export function applyJsonPatch(doc: any, patch: JsonPatchOperation[]) {
+export function applyJsonPatch(doc: unknown, patch: JsonPatchOperation[]) {
   if (!Array.isArray(patch)) {
     throw new Error("Patch must be an array");
   }

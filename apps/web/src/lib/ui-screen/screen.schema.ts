@@ -141,7 +141,7 @@ export interface ScreenSchemaV1 {
   actions: ScreenAction[] | null;
 
   // Initial state schema / shape. Runtime will initialize state according to this.
-  state: { initial: { [k: string]: any }; schema?: StateSchema } | null;
+  state: { initial: { [k: string]: unknown }; schema?: StateSchema } | null;
 
   // Optional top-level bindings map for quick state initialization
   // key: target path in screen (e.g. params.device_id), value: source e.g. "state.selected_device_id"
@@ -163,6 +163,6 @@ export type ScreenSchemaMVPSlim = Pick<
 >;
 
 // Export a runtime helper type guard
-export function isScreenSchemaV1(obj: any): obj is ScreenSchemaV1 {
-  return !!(obj && typeof obj.screen_id === "string" && Array.isArray(obj.components) && obj.layout);
+export function isScreenSchemaV1(obj: unknown): obj is ScreenSchemaV1 {
+  return !!(obj && typeof obj === "object" && "screen_id" in obj && typeof (obj as ScreenSchemaV1).screen_id === "string" && Array.isArray((obj as ScreenSchemaV1).components) && (obj as ScreenSchemaV1).layout);
 }

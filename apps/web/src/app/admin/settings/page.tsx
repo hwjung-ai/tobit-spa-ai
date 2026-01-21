@@ -14,7 +14,7 @@ export default function SettingsPage() {
     const { data: settings = [], isLoading, error, refetch } = useQuery({
         queryKey: ["settings"],
         queryFn: async () => {
-            const response = await fetchApi<{ settings: Record<string, any> }>("/settings/operations");
+            const response = await fetchApi<{ settings: Record<string, unknown> }>("/settings/operations");
             const settingsData = response.data.settings;
             return Object.entries(settingsData).map(([key, value]) => ({
                 key,
@@ -75,7 +75,7 @@ export default function SettingsPage() {
                     </div>
                 ) : error ? (
                     <div className="text-center py-24">
-                        <p className="text-red-400 font-medium mb-4 text-sm">{(error as any)?.message || "Unable to load settings"}</p>
+                        <p className="text-red-400 font-medium mb-4 text-sm">{(error as Error)?.message || "Unable to load settings"}</p>
                         <button
                             onClick={() => refetch()}
                             className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest"

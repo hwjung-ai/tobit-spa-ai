@@ -50,7 +50,7 @@ export interface ScreenDiff {
 /**
  * Deep equality check for any two values
  */
-function deepEqual(a: any, b: any): boolean {
+function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a == null || b == null) return a === b;
   if (typeof a !== "object" || typeof b !== "object") return false;
@@ -74,22 +74,22 @@ function deepEqual(a: any, b: any): boolean {
  * Returns object mapping changed properties to { before, after }
  */
 function detectPropertyChanges(
-  before: any,
-  after: any
-): Record<string, { before: any; after: any }> | undefined {
+  before: unknown,
+  after: unknown
+): Record<string, { before: unknown; after: unknown }> | undefined {
   if (!before || !after) return undefined;
 
-  const changes: Record<string, { before: any; after: any }> = {};
+  const changes: Record<string, { before: unknown; after: unknown }> = {};
   const allKeys = new Set([
-    ...Object.keys(before || {}),
-    ...Object.keys(after || {}),
+    ...Object.keys(before as object || {}),
+    ...Object.keys(after as object || {}),
   ]);
 
   for (const key of allKeys) {
-    if (!deepEqual(before?.[key], after?.[key])) {
+    if (!deepEqual((before as Record<string, unknown>)?.[key], (after as Record<string, unknown>)?.[key])) {
       changes[key] = {
-        before: before?.[key],
-        after: after?.[key],
+        before: (before as Record<string, unknown>)?.[key],
+        after: (after as Record<string, unknown>)?.[key],
       };
     }
   }

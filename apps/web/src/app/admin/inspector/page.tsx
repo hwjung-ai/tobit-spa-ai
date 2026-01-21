@@ -9,7 +9,6 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
-  useReactFlow,
   ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
@@ -98,7 +97,7 @@ interface ReferenceEntry {
   name: string;
   engine?: string | null;
   statement?: string | null;
-  params?: Record<string, any> | null;
+  params?: Record<string, unknown> | null;
   row_count?: number | null;
   latency_ms?: number | null;
   source_id?: string | null;
@@ -109,7 +108,7 @@ interface AnswerBlock {
   title?: string | null;
   payload_summary?: string | null;
   references?: ReferenceEntry[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface UIRenderedBlock {
@@ -195,7 +194,6 @@ function InspectorContent() {
   const [showDiffView, setShowDiffView] = useState(false);
   const [singleRcaLoading, setSingleRcaLoading] = useState(false);
   const [singleRcaError, setSingleRcaError] = useState<string | null>(null);
-  const reactFlowInstance = useReactFlow();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -219,8 +217,8 @@ function InspectorContent() {
         );
         setTotal(response.data.total);
         setOffset(nextOffset + response.data.traces.length);
-      } catch (err: any) {
-        setError(err.message || "업무 추적 데이터를 불러오는 데 실패했습니다.");
+      } catch (err: unknown) {
+        setError((err as Error).message || "업무 추적 데이터를 불러오는 데 실패했습니다.");
       } finally {
         setLoading(false);
       }
@@ -242,8 +240,8 @@ function InspectorContent() {
       setTraceDetail(response.data.trace);
       setTraceAuditLogs(response.data.audit_logs || []);
       setSelectedTraceId(response.data.trace.trace_id);
-    } catch (err: any) {
-      setDetailError(err.message || "실행 증거를 불러오지 못했습니다.");
+    } catch (err: unknown) {
+      setDetailError((err as Error).message || "실행 증거를 불러오지 못했습니다.");
       setTraceDetail(null);
       setTraceAuditLogs([]);
     } finally {
@@ -348,8 +346,8 @@ function InspectorContent() {
       setCompareTraceDetail(response.data.trace);
       setShowDiffView(true);
       setShowCompareModal(false);
-    } catch (err: any) {
-      setCompareError(err.message || "비교 trace를 불러오는데 실패했습니다.");
+    } catch (err: unknown) {
+      setCompareError((err as Error).message || "비교 trace를 불러오는데 실패했습니다.");
     } finally {
       setCompareFetching(false);
     }
@@ -385,8 +383,8 @@ function InspectorContent() {
       setSelectedTraceId(null);
       setDetailError(null);
       router.push(`/admin/inspector?trace_id=${encodeURIComponent(response.data.trace_id)}`);
-    } catch (err: any) {
-      setSingleRcaError(err.message || "Failed to run RCA analysis.");
+    } catch (err: unknown) {
+      setSingleRcaError((err as Error).message || "Failed to run RCA analysis.");
     } finally {
       setSingleRcaLoading(false);
     }
@@ -450,7 +448,7 @@ function InspectorContent() {
     );
   };
 
-  const summarizeStepPayload = (payload: Record<string, any> | null) => {
+  const summarizeStepPayload = (payload: Record<string, unknown> | null) => {
     if (!payload) {
       return "";
     }
