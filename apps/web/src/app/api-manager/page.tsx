@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveApiWithFallback } from "../../lib/apiManagerSave";
-import { authenticatedFetch } from "../../lib/apiClient";
 import Editor from "@monaco-editor/react";
 
 type ScopeType = "system" | "custom";
@@ -731,7 +730,7 @@ export default function ApiManagerPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [logicFilter, setLogicFilter] = useState<"all" | LogicType>("all");
-  const [formDirty, setFormDirty] = useState(false);
+  // const [formDirty, setFormDirty] = useState(false); // TODO: Implement form dirty tracking
   const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
   const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
@@ -879,6 +878,7 @@ export default function ApiManagerPage() {
     logicType,
     scriptLanguage,
     definitionDraft,
+    scope,
   ]);
 
   const buildFormSnapshot = useCallback(() => {

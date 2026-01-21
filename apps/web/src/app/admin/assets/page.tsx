@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 // Define types for select options
 type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "screen";
 type AssetStatus = "all" | "draft" | "published";
-type SelectOption = string;
 
 export default function AssetsPage() {
     const router = useRouter();

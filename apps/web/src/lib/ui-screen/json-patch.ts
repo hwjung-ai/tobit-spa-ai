@@ -124,7 +124,7 @@ export function applyJsonPatch(doc: any, patch: JsonPatchOperation[]) {
     throw new Error("Patch must be an array");
   }
 
-  let worked = cloneDeep(doc);
+  const worked = cloneDeep(doc);
   patch.forEach((op) => {
     applySingleOp(worked, op);
   });

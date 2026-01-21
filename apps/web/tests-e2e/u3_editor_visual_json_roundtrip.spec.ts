@@ -14,7 +14,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
 
     // Verify empty initial state
     const textarea = page.locator('[data-testid="json-textarea"]');
-    let content = await textarea.inputValue();
+    const content = await textarea.inputValue();
     expect(content.includes('"components"')).toBeTruthy();
   });
 

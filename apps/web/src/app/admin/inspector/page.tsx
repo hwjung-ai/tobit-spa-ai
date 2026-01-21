@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ReactFlow, {
   Node,
@@ -66,9 +66,9 @@ interface ExecutionStep {
   tool_name: string | null;
   status: string;
   duration_ms: number;
-  request: Record<string, any> | null;
-  response: Record<string, any> | null;
-  error: Record<string, any> | null;
+  request: Record<string, unknown> | null;
+  response: Record<string, unknown> | null;
+  error: Record<string, unknown> | null;
   references?: ReferenceEntry[];
 }
 
@@ -130,7 +130,7 @@ interface ExecutionTraceDetail {
   question: string;
   status: string;
   duration_ms: number;
-  request_payload: Record<string, any> | null;
+  request_payload: Record<string, unknown> | null;
   applied_assets: {
     prompt?: AssetSummary | null;
     policy?: AssetSummary | null;
@@ -140,13 +140,13 @@ interface ExecutionTraceDetail {
   } | null;
   asset_versions: string[] | null;
   fallbacks: Record<string, boolean> | null;
-  plan_raw: Record<string, any> | null;
-  plan_validated: Record<string, any> | null;
+  plan_raw: Record<string, unknown> | null;
+  plan_validated: Record<string, unknown> | null;
   execution_steps: ExecutionStep[] | null;
   references: ReferenceEntry[] | null;
-  answer: { envelope_meta: Record<string, any> | null; blocks: AnswerBlock[] } | null;
+  answer: { envelope_meta: Record<string, unknown> | null; blocks: AnswerBlock[] } | null;
   ui_render: { rendered_blocks: UIRenderedBlock[]; warnings: string[] } | null;
-  audit_links: Record<string, any> | null;
+  audit_links: Record<string, unknown> | null;
   flow_spans: FlowSpan[] | null;
 }
 

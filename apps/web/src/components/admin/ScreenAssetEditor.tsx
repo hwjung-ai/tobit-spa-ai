@@ -176,7 +176,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
     try {
       // First save the draft
-      let updatedSchema = JSON.parse(formData.schema_json);
+      const updatedSchema = JSON.parse(formData.schema_json);
       const validationErrors = validateScreenSchema(updatedSchema);
       if (validationErrors.length > 0) {
         setSchemaErrors(validationErrors);

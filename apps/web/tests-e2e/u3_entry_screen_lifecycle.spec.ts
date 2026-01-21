@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
   const testScreenId = `test_screen_${Date.now()}`;
-  let createdAssetId: string = '';
+  const createdAssetId: string = '';
 
   test.beforeEach(async ({ page }) => {
     // Navigate to screens admin page
