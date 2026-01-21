@@ -207,7 +207,7 @@ const applyPatchToDraft = (base: ApiDraft, patchOps: { op: string; path: string;
     if (segments.length === 0) {
       continue;
     }
-    let cursor: any = draftClone;
+    let cursor: Record<string, unknown> | unknown[] = draftClone;
     for (let idx = 0; idx < segments.length - 1; idx += 1) {
       const segment = segments[idx];
       const numericIndex = Number.parseInt(segment, 10);
@@ -265,7 +265,7 @@ const validateDraftShape = (draft: ApiDraft) => {
       return "draft.logic.spec.method 값이 필요합니다.";
     }
   } else {
-    return `지원하지 않는 logic.type 입니다: ${(draft.logic as any).type}`;
+    return `지원하지 않는 logic.type 입니다: ${(draft.logic as { type?: string }).type}`;
   }
   return null;
 };
@@ -291,9 +291,12 @@ const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {
     if (!obj.draft || typeof obj.draft !== "object") {
       return { ok: false, error: "draft 필드가 없습니다." };
     }
-    const rawDraft = obj.draft as any;
-    if (rawDraft?.logic?.type === "http" && rawDraft.logic.request && !rawDraft.logic.spec) {
-      rawDraft.logic.spec = rawDraft.logic.request;
+    const rawDraft = obj.draft as Record<string, unknown>;
+    if (rawDraft?.logic && typeof rawDraft.logic === 'object' && rawDraft.logic !== null) {
+      const logic = rawDraft.logic as Record<string, unknown>;
+      if (logic.type === "http" && logic.request && !logic.spec) {
+        logic.spec = logic.request;
+      }
     }
     const draft = normalizeApiDraft(rawDraft);
     const shapeError = validateDraftShape(draft);
@@ -306,9 +309,9 @@ const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {
     if (!Array.isArray(obj.patch)) {
       return { ok: false, error: "patch 배열이 필요합니다." };
     }
-    const patched = applyPatchToDraft(baseDraft, obj.patch as any);
-    if (patched?.logic?.type === "http" && (patched.logic as any).request && !patched.logic.spec) {
-      patched.logic.spec = (patched.logic as any).request;
+    const patched = applyPatchToDraft(baseDraft, obj.patch as { op: string; path: string; value: unknown }[]);
+    if (patched?.logic?.type === "http" && 'request' in patched.logic && patched.logic.request && !patched.logic.spec) {
+      patched.logic.spec = patched.logic.request as Record<string, unknown>;
     }
     const draft = normalizeApiDraft(patched);
     const shapeError = validateDraftShape(draft);
@@ -440,7 +443,7 @@ const parseApiDraft = (text: string, baseDraft: ApiDraft) => {
   return { ok: false, error: lastError ?? "JSON 객체를 추출할 수 없습니다." };
 };
 
-const normalizeApiDraft = (input: any): ApiDraft => {
+const normalizeApiDraft = (input: Record<string, unknown>): ApiDraft => {
   const draft: ApiDraft = {
     api_name: (input.api_name || "").trim(),
     method: (input.method || "GET").toUpperCase() as ApiDraft["method"],
@@ -558,7 +561,7 @@ const validateApiDraft = (draft: ApiDraft) => {
       errors.push("HTTP Logic에 URL은 필수입니다.");
     }
   } else {
-    errors.push(`지원하지 않는 로직 타입입니다: ${(draft.logic as any).type}`);
+    errors.push(`지원하지 않는 로직 타입입니다: ${(draft.logic as { type?: string }).type}`);
   }
 
   return { ok: errors.length === 0, errors, warnings };
@@ -622,8 +625,8 @@ interface ApiDraft {
       method: string;
       url: string;
       headers?: Record<string, string>;
-      params?: Record<string, any>;
-      body?: any;
+      params?: Record<string, unknown>;
+      body?: unknown;
     };
     timeout_ms?: number;
   };
@@ -730,7 +733,6 @@ export default function ApiManagerPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [logicFilter, setLogicFilter] = useState<"all" | LogicType>("all");
-  // const [formDirty, setFormDirty] = useState(false); // TODO: Implement form dirty tracking
   const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
   const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
@@ -819,7 +821,7 @@ export default function ApiManagerPage() {
     }
 
     return draft;
-  }, [definitionDraft, paramSchemaText, logicType, httpSpec, logicBody]);
+  }, [definitionDraft, paramSchemaText, runtimePolicyText, logicType, httpSpec, logicBody]);
 
   const buildSavePayload = useCallback(() => {
     if (isSystemScope) {
@@ -871,7 +873,6 @@ export default function ApiManagerPage() {
     };
   }, [
     isSystemScope,
-    selectedApi,
     logicBody,
     paramSchemaText,
     runtimePolicyText,
@@ -975,12 +976,12 @@ export default function ApiManagerPage() {
             throw new Error("Failed to load system APIs");
           }
           const payload = await response.json();
-          const items: any[] = payload.data?.apis ?? [];
+          const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
           const normalized: ApiDefinitionItem[] = items.map((item) => ({
-            api_id: item.id,
-            api_name: item.name,
-            api_type: item.scope,
-            method: item.method as any,
+            api_id: item.id as string,
+            api_name: item.name as string,
+            api_type: item.scope as ScopeType,
+            method: item.method as "GET" | "POST" | "PUT" | "DELETE",
             endpoint: item.path,
             logic_type: item.mode || "sql",
             logic_body: item.logic || "",
@@ -1035,12 +1036,12 @@ export default function ApiManagerPage() {
           throw new Error("Failed to load API definitions");
         }
         const payload = await response.json();
-        const items: any[] = payload.data?.apis ?? [];
+        const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
         const normalized: ApiDefinitionItem[] = items.map((item) => ({
-          api_id: item.id,
-          api_name: item.name,
-          api_type: item.scope,
-          method: item.method as any,
+          api_id: item.id as string,
+          api_name: item.name as string,
+          api_type: item.scope as ScopeType,
+          method: item.method as "GET" | "POST" | "PUT" | "DELETE",
           endpoint: item.path,
           logic_type: item.mode || "sql",
           logic_body: item.logic || "",
@@ -1137,7 +1138,7 @@ export default function ApiManagerPage() {
       setDiscoveredFetchStatus("error");
       setDiscoveredEndpoints([]);
     }
-  }, [apiBaseUrl, isSystemScope]);
+  }, [isSystemScope]);
 
   const fetchExecLogs = useCallback(async () => {
     if (!selectedId || selectedId === "applied-draft-temp" || selectedId.startsWith("local") || selectedId.startsWith("system:")) {
@@ -1152,7 +1153,7 @@ export default function ApiManagerPage() {
       }
       const payload = await response.json();
       setExecLogs(payload.data?.logs ?? []);
-    } catch (error) {
+    } catch {
       // Silently fail - execution logs are optional
       setExecLogs([]);
     } finally {
@@ -1198,7 +1199,7 @@ export default function ApiManagerPage() {
       setDraftApi(null);
       setDraftStatus("idle");
     }
-  }, [draftStorageId, selectedId]);
+  }, [draftStorageId, selectedId, draftApi]);
 
   useEffect(() => {
     const key = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
@@ -1218,7 +1219,6 @@ export default function ApiManagerPage() {
     try {
       const parsed = JSON.parse(raw) as ApiDraft;
       applyFinalToForm(parsed);
-      setFormDirty(false);
       setFormBaselineSnapshot(JSON.stringify(parsed));
       setAppliedDraftSnapshot(null);
       setStatusMessage("로컬 저장된 API 정의를 불러왔습니다.");
@@ -1235,7 +1235,8 @@ export default function ApiManagerPage() {
     const baseline = selectedApi ? apiToDraft(selectedApi) : buildDraftFromForm();
     const diffSummary = computeDraftDiff(draftApi, baseline);
     setDraftDiff(diffSummary.length ? diffSummary : ["변경 사항이 없습니다."]);
-  }, [draftApi, selectedApi, buildDraftFromForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftApi, selectedApi]);
 
   useEffect(() => {
     const currentSnapshot = buildFormSnapshot();
@@ -1243,12 +1244,12 @@ export default function ApiManagerPage() {
       setFormBaselineSnapshot(currentSnapshot);
       return;
     }
-    setFormDirty(currentSnapshot !== formBaselineSnapshot);
     if (draftApi && appliedDraftSnapshot && currentSnapshot !== appliedDraftSnapshot) {
       setDraftStatus("outdated");
       setDraftNotes("폼이 변경되어 드래프트가 오래되었습니다.");
     }
-  }, [buildFormSnapshot, formBaselineSnapshot, draftApi, appliedDraftSnapshot]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formBaselineSnapshot, draftApi, appliedDraftSnapshot]);
 
   useEffect(() => {
     if (skipResetRef.current) {
@@ -1278,7 +1279,6 @@ export default function ApiManagerPage() {
       setExecLogs([]);
       setWorkflowResult(null);
       setTestInput("{}");
-      setFormDirty(false);
       setFormBaselineSnapshot(JSON.stringify(buildDraftFromForm()));
       return;
     }
@@ -1325,8 +1325,7 @@ export default function ApiManagerPage() {
     fetchExecLogs();
     const baseline = apiToDraft(selectedApi);
     setFormBaselineSnapshot(JSON.stringify(baseline));
-    setFormDirty(false);
-  }, [selectedApi, fetchExecLogs]);
+  }, [selectedApi, fetchExecLogs, buildDraftFromForm]);
 
   const filteredApis = useMemo(() => {
     // Combine server-fetched APIs and local-stored APIs
@@ -1534,7 +1533,6 @@ export default function ApiManagerPage() {
 
     setDraftNotes("드래프트가 폼에 적용되었습니다. 저장 전입니다.");
     setStatusMessage("Draft applied. 리스트에서 [NEW] 항목을 확인하세요.");
-    setFormDirty(true);
     // Explicitly normalize before snapshotting to guarantee key order matches buildDraftFromForm
     setAppliedDraftSnapshot(JSON.stringify(normalizeApiDraft(draft)));
     setLocalApis((prev) => {
@@ -1599,8 +1597,7 @@ export default function ApiManagerPage() {
         setDraftApi(null);
         setDraftStatus("saved");
         setDraftTestOk(null);
-        setFormDirty(false);
-        setFormBaselineSnapshot(JSON.stringify(finalPayload));
+          setFormBaselineSnapshot(JSON.stringify(finalPayload));
         setAppliedDraftSnapshot(null);
         const draftKey = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
         window.localStorage.removeItem(draftKey);
@@ -1637,32 +1634,9 @@ export default function ApiManagerPage() {
     setParamSchemaText("{}");
     setRuntimePolicyText("{}");
     setStatusMessage("새 API 정의를 작성하세요.");
-    setFormDirty(false);
     setFormBaselineSnapshot(JSON.stringify(buildDraftFromForm()));
     setAppliedDraftSnapshot(null);
   }, [buildDraftFromForm]);
-
-  const handleImportSystemApi = useCallback(() => {
-    if (!selectedApi) {
-      return;
-    }
-    const imported = apiToDraft(selectedApi);
-    skipAutoSelectRef.current = true;
-    setScope("custom");
-    setSelectedId(null);
-    applyFinalToForm(imported);
-    setDefinitionDraft((prev) => ({
-      ...prev,
-      created_by: "imported",
-    }));
-    setStatusMessage("System API imported into Custom (unsaved).");
-    setFormDirty(true);
-    setFormBaselineSnapshot(JSON.stringify(imported));
-    setAppliedDraftSnapshot(null);
-    setDraftApi(null);
-    setDraftStatus("idle");
-    setDraftNotes(null);
-  }, [selectedApi]);
 
   const handleImportDiscoveredEndpoint = useCallback((endpoint: DiscoveredEndpoint) => {
     const draft: ApiDraft = {
@@ -1693,7 +1667,6 @@ export default function ApiManagerPage() {
       created_by: "imported",
     }));
     setStatusMessage("System API imported into Custom (unsaved).");
-    setFormDirty(true);
     setFormBaselineSnapshot(JSON.stringify(draft));
     setAppliedDraftSnapshot(null);
     setDraftApi(null);
@@ -1738,7 +1711,7 @@ export default function ApiManagerPage() {
       if (typeof parsedParams !== "object" || Array.isArray(parsedParams)) {
         throw new Error("Params must be an object");
       }
-    } catch (error) {
+    } catch {
       setTestError("Params should be valid JSON object.");
       return;
     }
@@ -1746,7 +1719,7 @@ export default function ApiManagerPage() {
     if (selectedApi.logic_type === "workflow") {
       try {
         parsedInput = testInput.trim() ? JSON.parse(testInput) : null;
-      } catch (error) {
+      } catch {
         setTestError("Input should be valid JSON.");
         return;
       }
@@ -1802,7 +1775,6 @@ export default function ApiManagerPage() {
     setIsExecuting(true);
     const start = Date.now();
     try {
-      const formPayload = buildDraftFromForm();
       // For HTTP, logic_body is already updated by useEffect to be the spec JSON
       const dryPayload = {
         logic_type: logicType,
@@ -2612,8 +2584,7 @@ export default function ApiManagerPage() {
                             const draft = buildDraftFromDiscovered(endpoint);
                             applyFinalToForm(draft);
                             setStatusMessage("Discovered endpoint loaded (read-only).");
-                            setFormDirty(false);
-                            setFormBaselineSnapshot(JSON.stringify(draft));
+                                                  setFormBaselineSnapshot(JSON.stringify(draft));
                             setAppliedDraftSnapshot(null);
                             setDraftApi(null);
                             setDraftStatus("idle");

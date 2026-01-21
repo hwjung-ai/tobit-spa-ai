@@ -3,7 +3,7 @@
  * Manage user permissions and view audit logs
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Shield, Clock } from 'lucide-react';
 
 interface UserPermission {
@@ -25,7 +25,7 @@ interface UserPermissionsPanelProps {
 }
 
 const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [newPermission, setNewPermission] = useState('');
@@ -44,13 +44,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
     'create_backups',
   ];
 
-  useEffect(() => {
-    if (userId) {
-      fetchUserDetails();
-    }
-  }, [userId]);
-
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     if (!userId) return;
 
     setLoading(true);
@@ -75,7 +69,13 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserDetails();
+    }
+  }, [userId, fetchUserDetails]);
 
   const handleGrantPermission = async () => {
     if (!newPermission || !userId) return;

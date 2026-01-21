@@ -3,10 +3,10 @@
  * Manages user administration, system monitoring, and settings
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell
+  Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import {
   Users, Settings, Activity, AlertCircle, TrendingUp,
@@ -22,9 +22,9 @@ interface DashboardTab {
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [systemHealth, setSystemHealth] = useState<any>(null);
-  const [metrics, setMetrics] = useState<any>(null);
-  const [alerts, setAlerts] = useState<any[]>([]);
+  const [systemHealth, setSystemHealth] = useState<unknown>(null);
+  const [metrics, setMetrics] = useState<unknown>(null);
+  const [alerts, setAlerts] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -239,15 +239,11 @@ export default AdminDashboard;
 
 // Sub-components
 const UserManagementPanel: React.FC = () => {
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [users, setUsers] = useState<unknown[]>([]);
+  const [, setLoading] = useState(false);
+  const [page] = useState(1);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [page]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`/api/admin/users?page=${page}&per_page=20`);
@@ -260,7 +256,11 @@ const UserManagementPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   return (
     <div className="space-y-6">
@@ -308,7 +308,7 @@ const UserManagementPanel: React.FC = () => {
   );
 };
 
-const MonitoringPanel: React.FC<{ metrics: any; systemHealth: any }> = ({ metrics, systemHealth }) => (
+const MonitoringPanel: React.FC<{ metrics: unknown; systemHealth: unknown }> = ({ systemHealth }) => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Monitoring</h2>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -375,7 +375,7 @@ const MonitoringPanel: React.FC<{ metrics: any; systemHealth: any }> = ({ metric
   </div>
 );
 
-const AlertsPanel: React.FC<{ alerts: any[] }> = ({ alerts }) => (
+const AlertsPanel: React.FC<{ alerts: unknown[] }> = ({ alerts }) => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Alerts</h2>
     <div className="space-y-3">

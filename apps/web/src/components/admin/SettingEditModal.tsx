@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { OperationSetting, fetchApi, AuditLog } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import AuditLogTable from "./AuditLogTable";
-import { useEffect } from "react";
 
 interface SettingEditModalProps {
     setting: OperationSetting;
@@ -23,7 +22,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
     const [history, setHistory] = useState<AuditLog[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-    const loadHistory = async () => {
+    const loadHistory = useCallback(async () => {
         setIsLoadingHistory(true);
         try {
             const response = await fetchApi<{ audit_logs: AuditLog[] }>(
@@ -35,11 +34,11 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
         } finally {
             setIsLoadingHistory(false);
         }
-    };
+    }, [setting.key]);
 
     useEffect(() => {
         loadHistory();
-    }, [setting.key]);
+    }, [loadHistory]);
 
     const handleSave = async () => {
         setErrors([]);
@@ -47,7 +46,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
 
         try {
             // Parse value if it looks like JSON
-            let parsedValue: any = value;
+            let parsedValue: unknown = value;
             if (value.trim().startsWith("{") || value.trim().startsWith("[")) {
                 try {
                     parsedValue = JSON.parse(value);
@@ -67,7 +66,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
 
             onSuccess();
             onClose();
-        } catch (err: any) {
+        } catch (err: unknown) {
             setErrors([err.message || "Failed to update setting"]);
         } finally {
             setIsSaving(false);

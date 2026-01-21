@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -34,21 +34,16 @@ export default function PublishGateModal({
   const [checks, setChecks] = useState<CheckResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      runValidationChecks();
-    }
-  }, [open]);
-
-  const runValidationChecks = async () => {
-    if (!editorState.screen) return;
+  const runValidation = useCallback(async () => {
+    const screen = editorState.screen;
+    if (!screen) return;
 
     setIsRunning(true);
     const results: CheckResult[] = [];
 
     // Check 1: Schema Validation
     try {
-      const schemaErrors = validateScreenSchema(editorState.screen);
+      const schemaErrors = validateScreenSchema(screen);
       results.push({
         name: "Schema Validation",
         status: schemaErrors.length === 0 ? "pass" : "fail",
@@ -67,11 +62,11 @@ export default function PublishGateModal({
       const bindingErrors: string[] = [];
 
       // Check all component props
-      editorState.screen.components.forEach((comp) => {
+      screen.components.forEach((comp) => {
         if (comp.props) {
           Object.entries(comp.props).forEach(([key, value]) => {
             if (typeof value === "string" && value.includes("{{")) {
-              const errors = validateBindingPath(value, editorState.screen!);
+              const errors = validateBindingPath(value, screen!);
               errors.forEach((e) => {
                 bindingErrors.push(
                   `Component "${comp.label || comp.id}" prop "${key}": ${e.message}`
@@ -83,7 +78,7 @@ export default function PublishGateModal({
 
         // Check visibility rule
         if (comp.visibility?.rule && typeof comp.visibility.rule === "string") {
-          const errors = validateBindingPath(comp.visibility.rule, editorState.screen!);
+          const errors = validateBindingPath(comp.visibility.rule, screen!);
           errors.forEach((e) => {
             bindingErrors.push(
               `Component "${comp.label || comp.id}" visibility: ${e.message}`
@@ -97,7 +92,7 @@ export default function PublishGateModal({
             if (action.payload_template) {
               Object.entries(action.payload_template).forEach(([key, value]) => {
                 if (typeof value === "string" && value.includes("{{")) {
-                  const errors = validateBindingPath(value, editorState.screen!);
+                  const errors = validateBindingPath(value, screen!);
                   errors.forEach((e) => {
                     bindingErrors.push(
                       `Component "${comp.label || comp.id}" action "${action.id}" payload "${key}": ${e.message}`
@@ -128,7 +123,7 @@ export default function PublishGateModal({
       const actionErrors: string[] = [];
 
       // Check screen-level actions
-      editorState.screen.actions?.forEach((action) => {
+      screen.actions?.forEach((action) => {
         const errors = validateActionHandler(action.handler);
         errors.forEach((e) => {
           actionErrors.push(`Action "${action.id}": ${e.message}`);
@@ -136,7 +131,7 @@ export default function PublishGateModal({
       });
 
       // Check component-level actions
-      editorState.screen.components.forEach((comp) => {
+      screen.components.forEach((comp) => {
         comp.actions?.forEach((action) => {
           const errors = validateActionHandler(action.handler);
           errors.forEach((e) => {
@@ -181,12 +176,27 @@ export default function PublishGateModal({
 
     setChecks(results);
     setIsRunning(false);
-  };
+  }, [editorState.screen]);
+
+  // Handle dialog open state change - run validation on open, reset on close
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (newOpen) {
+        // Dialog is opening - run validation
+        runValidation();
+      } else {
+        // Dialog is closing - reset checks
+        setChecks([]);
+      }
+      onOpenChange(newOpen);
+    },
+    [onOpenChange, runValidation]
+  );
 
   const canPublish = checks.every((c) => c.status !== "fail");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Publish Validation</DialogTitle>
@@ -213,7 +223,7 @@ export default function PublishGateModal({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={isRunning}
           >
             Cancel
@@ -221,7 +231,7 @@ export default function PublishGateModal({
           <Button
             onClick={() => {
               onConfirm();
-              onOpenChange(false);
+              handleOpenChange(false);
             }}
             disabled={!canPublish || isRunning}
           >

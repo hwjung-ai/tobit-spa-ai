@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Asset, fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
@@ -63,7 +63,7 @@ function parseTagsInput(value: string): Record<string, unknown> | null {
       throw new Error("Tags must be a JSON object");
     }
     return parsed;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw new Error(error?.message || "Invalid JSON for tags");
   }
 }
@@ -89,11 +89,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
   const [schemaErrors, setSchemaErrors] = useState<string[]>([]);
 
-  useEffect(() => {
-    fetchScreenAsset();
-  }, [assetId]);
-
-  const fetchScreenAsset = async () => {
+  const fetchScreenAsset = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
@@ -107,12 +103,17 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       });
       setErrors([]);
       setSchemaErrors([]);
-    } catch (error: any) {
-      setErrors([error.message || "Failed to fetch screen asset"]);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : "Failed to fetch screen asset";
+      setErrors([errMsg]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [assetId]);
+
+  useEffect(() => {
+    fetchScreenAsset();
+  }, [fetchScreenAsset]);
 
   const handleSaveDraft = async () => {
     if (!asset) return;
@@ -126,7 +127,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       let schema;
       try {
         schema = JSON.parse(formData.schema_json);
-      } catch (e: any) {
+      } catch (e: unknown) {
         setSchemaErrors(["Invalid JSON in schema: " + e.message]);
         setSaving(false);
         return;
@@ -144,7 +145,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       let parsedTags = null;
       try {
         parsedTags = parseTagsInput(formData.tags);
-      } catch (tagError: any) {
+      } catch (tagError: unknown) {
         setErrors([tagError.message || "Invalid tags JSON"]);
         setSaving(false);
         return;
@@ -162,7 +163,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
       setToast({ message: "Screen draft saved successfully", type: "success" });
       await fetchScreenAsset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error.message || "Failed to save screen"]);
     } finally {
       setSaving(false);
@@ -180,7 +181,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
         setSchemaErrors(validationErrors);
         return;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setSchemaErrors(["Invalid JSON in schema: " + e.message]);
       return;
     }
@@ -199,7 +200,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       let parsedTags = null;
       try {
         parsedTags = parseTagsInput(formData.tags);
-      } catch (tagError: any) {
+      } catch (tagError: unknown) {
         setErrors([tagError.message || "Invalid tags JSON"]);
         return;
       }
@@ -221,7 +222,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       setToast({ message: "Screen published successfully", type: "success" });
       setSchemaErrors([]);
       await fetchScreenAsset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error.message || "Failed to publish screen"]);
     } finally {
       setPublishing(false);
@@ -240,7 +241,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
       setToast({ message: "Screen rolled back to draft", type: "success" });
       await fetchScreenAsset();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error.message || "Failed to rollback screen"]);
     }
   };

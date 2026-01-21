@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { Search, Plus, Trash2 } from "lucide-react";
 
 interface Permission {
   id: string;
@@ -90,7 +90,8 @@ export function PermissionManagementDashboard() {
   const fetchUserPermissions = async (userId: string) => {
     try {
       setLoading(true);
-      // Mock API call - replace with actual API
+      // Mock API call - replace with actual API using userId
+      console.debug(`Fetching permissions for user: ${userId}`);
       const mockPermissions: Permission[] = [
         { id: "p1", resource_type: "api", permission: "api:read", is_granted: true },
         { id: "p2", resource_type: "api", permission: "api:create", is_granted: true },
@@ -98,7 +99,7 @@ export function PermissionManagementDashboard() {
       ];
       setUserPermissions(mockPermissions);
       setError(null);
-    } catch (err) {
+    } catch {
       setError("Failed to fetch permissions");
     } finally {
       setLoading(false);
@@ -124,7 +125,7 @@ export function PermissionManagementDashboard() {
       setGrantForm({ user_id: "", resource_type: "", permission: "" });
       setIsGrantDialogOpen(false);
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch {
       setError("Failed to grant permission");
     } finally {
       setLoading(false);
@@ -138,7 +139,7 @@ export function PermissionManagementDashboard() {
       setUserPermissions(userPermissions.filter(p => p.id !== permissionId));
       setSuccess("Permission revoked successfully!");
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch {
       setError("Failed to revoke permission");
     } finally {
       setLoading(false);

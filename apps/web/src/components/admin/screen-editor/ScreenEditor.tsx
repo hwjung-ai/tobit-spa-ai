@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ScreenEditorCopilotPanel from "./CopilotPanel";
@@ -50,14 +50,8 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     setAuthCheckDone(true);
   }, [router]);
 
-  useEffect(() => {
-    if (authCheckDone) {
-      loadScreen();
-    }
-  }, [assetId, authCheckDone]);
-
   const resolveLoadErrorMessage = (err: unknown) => {
-    const statusCode = typeof err === "object" && err !== null ? (err as any).statusCode : undefined;
+    const statusCode = typeof err === "object" && err !== null ? (err as Record<string, unknown>).statusCode : undefined;
     if (statusCode === 404) {
       return "Screen asset not found or not accessible.";
     }
@@ -70,7 +64,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     return err instanceof Error ? err.message : "Failed to load screen asset.";
   };
 
-  const loadScreen = async () => {
+  const loadScreen = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -81,7 +75,13 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [assetId, editorState]);
+
+  useEffect(() => {
+    if (authCheckDone) {
+      loadScreen();
+    }
+  }, [authCheckDone, loadScreen]);
 
   const handleSaveDraft = async () => {
     try {

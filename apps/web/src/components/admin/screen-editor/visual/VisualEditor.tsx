@@ -32,7 +32,7 @@ export default function VisualEditor() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editorState.selectedComponentId]);
+  }, [editorState]);
 
   if (editorState.status === "published") {
     return (

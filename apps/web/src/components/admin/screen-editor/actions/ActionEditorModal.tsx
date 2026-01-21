@@ -105,7 +105,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
     });
 
     const [isTestingAction, setIsTestingAction] = useState(false);
-    const [testResult, setTestResult] = useState<any>(null);
+    const [testResult, setTestResult] = useState<unknown>(null);
     const [testError, setTestError] = useState<string | null>(null);
 
     // Generate action ID if new
@@ -115,7 +115,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
         const newId = `action_${timestamp}`;
         setFormData((prev) => ({ ...prev, id: newId }));
       }
-    }, [action]);
+    }, [action, formData.id]);
 
     const handleSave = () => {
       if (!formData.id || !formData.handler) {

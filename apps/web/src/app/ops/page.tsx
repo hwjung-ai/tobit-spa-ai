@@ -269,7 +269,7 @@ export default function OpsPage() {
           prev && hydrated.some((item) => item.id === prev) ? prev : hydrated[0].id
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load OPS history", error);
       setHistoryError(error?.message || "Failed to load history");
     } finally {
@@ -504,7 +504,7 @@ export default function OpsPage() {
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [currentModeDefinition.backend, isRunning, question, uiMode, pushHistoryEntry, persistHistoryEntry]);
+  }, [currentModeDefinition, isRunning, question, pushHistoryEntry, persistHistoryEntry]);
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {
