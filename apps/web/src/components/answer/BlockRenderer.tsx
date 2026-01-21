@@ -11,7 +11,6 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import ReactFlow, { Background, Controls, type Edge, type Node } from "reactflow";
 import "reactflow/dist/style.css";
 import { type NextAction } from "../../app/ops/nextActions";
 import UIPanelRenderer from "./UIPanelRenderer";
@@ -515,7 +514,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                   })}
                 </svg>
               );
-            } catch (error) {
+            } catch {
               chartContent = (
                 <div className="mt-4 rounded-2xl border border-dashed border-slate-700/80 bg-slate-950/40 p-4 text-sm text-slate-400">
                   Chart rendering not enabled yet; see the table block below.
@@ -680,7 +679,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 <UIPanelRenderer
                   block={block as UIPanelBlock}
                   traceId={traceId}
-                  onResult={(blocks) => {
+                  onResult={() => {
                     // Optional: handle result blocks
                     // Could append to current view or replace
                   }}
@@ -698,7 +697,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 <UIScreenRenderer
                   block={screenBlock}
                   traceId={traceId}
-                  onResult={(resultBlocks) => {
+                  onResult={() => {
                     // Optional: handle result blocks from screen actions
                   }}
                 />

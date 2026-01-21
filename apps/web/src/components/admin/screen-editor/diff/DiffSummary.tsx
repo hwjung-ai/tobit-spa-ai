@@ -1,6 +1,6 @@
 "use client";
 
-import { ScreenDiff, getDiffSummaryText } from "@/lib/ui-screen/screen-diff-utils";
+import { ScreenDiff } from "@/lib/ui-screen/screen-diff-utils";
 
 interface DiffSummaryProps {
   diff: ScreenDiff;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ScreenDiff, ComponentDiffItem, ActionDiffItem, BindingDiffItem, StateSchemaDiffItem } from "@/lib/ui-screen/screen-diff-utils";
+import { ScreenDiff } from "@/lib/ui-screen/screen-diff-utils";
 import {
   Accordion,
   AccordionContent,
@@ -43,7 +43,7 @@ function getChangeTypeIcon(changeType: string) {
   }
 }
 
-function DiffItemRenderer({ item }: { item: any }) {
+function DiffItemRenderer({ item }: { item: unknown }) {
   const { changeType, path } = item;
 
   return (
@@ -67,7 +67,7 @@ function DiffItemRenderer({ item }: { item: any }) {
 
           {item.changes && (
             <div className="mt-2 space-y-1">
-              {Object.entries(item.changes).map(([key, change]: [string, any]) => (
+              {Object.entries(item.changes).map(([key, change]: [string, unknown]) => (
                 <div key={key} className="text-xs">
                   <span className="font-mono text-slate-700">{key}:</span>
                   <span className="ml-2 line-through text-red-700">

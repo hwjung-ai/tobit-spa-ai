@@ -12,7 +12,7 @@ import { test, expect } from '@playwright/test';
  */
 
 const BASE_URL = 'http://localhost:3000';
-const API_URL = 'http://localhost:8000';
+// API_URL removed - not used in tests
 
 test.describe('Inspector E2E Tests', () => {
 
@@ -273,7 +273,7 @@ test.describe('Inspector E2E Tests', () => {
     expect(count).toBeGreaterThan(0);
 
     // Log page structure for debugging
-    const content = await page.content();
+    // Content logging disabled: await page.content();
     console.log(`Regression page loaded with ${count} buttons`);
   });
 

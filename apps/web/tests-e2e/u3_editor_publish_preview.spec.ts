@@ -59,7 +59,7 @@ test.describe("U3 Visual Editor - Publish & Preview", () => {
 
   test("should track unsaved changes indicator", async ({ page }) => {
     // Initially should not show unsaved indicator
-    const header = page.locator('[data-testid="screen-editor"]');
+    // Header locator removed - unsaved indicator check implementation pending
 
     // Add component to trigger changes
     await page.click('[data-testid="palette-component-button"]');

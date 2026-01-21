@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push("/");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);

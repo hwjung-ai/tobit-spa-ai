@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
   const testScreenId = `test_screen_${Date.now()}`;
-  const createdAssetId: string = '';
+  // createdAssetId tracking - to be implemented in future tests
 
   test.beforeEach(async ({ page }) => {
     // Navigate to screens admin page
@@ -214,7 +214,7 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
     await page.waitForTimeout(500);
 
     // Verify only draft screens are shown (if any exist)
-    const screenCards = page.locator('[data-testid^="screen-asset-"]');
+    // screenCards locator - awaiting use in assertions
     const draftBadges = page.locator('[data-testid^="status-badge-"]');
 
     for (let i = 0; i < await draftBadges.count(); i++) {

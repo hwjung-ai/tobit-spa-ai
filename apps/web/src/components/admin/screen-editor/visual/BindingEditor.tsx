@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { PathPicker, type PathTreeNode } from "@/components/admin/screen-editor/common/PathPicker";
+
+export type { PathTreeNode };
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { validateBindingPath } from "@/lib/ui-screen/validation-utils";
@@ -61,7 +63,6 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
     ref
   ) => {
     const [localMode, setLocalMode] = useState<"binding" | "static">(mode);
-    const [staticValue, setStaticValue] = useState("");
 
     // Initialize static value when switching to static mode
     const handleModeChange = (newMode: "binding" | "static") => {
@@ -74,23 +75,18 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
       if (newMode === "static" && value.startsWith("{{")) {
         const parsed = parseBindingExpression(value);
         if (parsed) {
-          setStaticValue(value);
+          onChange("");
+          return;
         }
-      } else if (newMode === "static") {
-        setStaticValue(value);
       }
     };
 
     // Validate binding path
     const validationError = useMemo(() => {
       if (localMode !== "binding" || !value) return "";
-      const error = validateBindingPath(value, {
-        state: stateTree,
-        context: contextTree,
-        inputs: inputsTree,
-      });
-      return error ? error.message : "";
-    }, [value, localMode, stateTree, contextTree, inputsTree]);
+      const errors = validateBindingPath(value);
+      return errors.length > 0 ? errors[0].message : "";
+    }, [value, localMode]);
 
     // Determine which trees to show based on supportedSources
     const filteredStatePaths = supportedSources?.includes("state") !== false ? stateTree : [];
@@ -124,11 +120,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
             <TabsContent value="static" className="space-y-2">
               <Input
                 value={localMode === "static" ? (typeof value === "string" ? value : "") : ""}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setStaticValue(val);
-                  onChange(val);
-                }}
+                onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Enter a static value..."}
               />
               <p className="text-xs text-gray-500">

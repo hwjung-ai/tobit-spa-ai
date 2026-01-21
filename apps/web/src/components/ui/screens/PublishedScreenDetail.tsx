@@ -12,8 +12,8 @@ type ScreenAssetResponse = {
     description: string | null;
     version: number;
     status: string;
-    schema_json: Record<string, any>;
-    tags?: Record<string, any> | null;
+    schema_json: Record<string, unknown>;
+    tags?: Record<string, unknown> | null;
     created_at: string;
     updated_at: string;
     published_at: string | null;
@@ -46,7 +46,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
             console.error("[PublishedScreenDetail] No asset in response:", envelope);
           }
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) {
           console.error("[PublishedScreenDetail] Error loading screen:", err);
           const status = err?.statusCode;
@@ -77,7 +77,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
       screen_id: asset.screen_id,
       params: {},
     };
-  }, [asset?.screen_id]);
+  }, [asset]);
 
   if (loading) {
     return (

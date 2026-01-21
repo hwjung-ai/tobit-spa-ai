@@ -1,21 +1,19 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 export default function JsonEditor() {
   const editorState = useEditorState();
-  const [jsonText, setJsonText] = useState("");
-  const [localErrors, setLocalErrors] = useState<string[]>([]);
-
-  // Initialize JSON text
-  useEffect(() => {
+  const [jsonText, setJsonText] = useState(() => {
     if (editorState.screen) {
-      setJsonText(JSON.stringify(editorState.screen, null, 2));
+      return JSON.stringify(editorState.screen, null, 2);
     }
-  }, [editorState.screen]);
+    return "";
+  });
+  const [localErrors, setLocalErrors] = useState<string[]>([]);
 
   const handleJsonChange = (text: string) => {
     setJsonText(text);
@@ -31,7 +29,6 @@ export default function JsonEditor() {
 
   const handleApplyJson = () => {
     try {
-      const parsed = JSON.parse(jsonText);
       editorState.updateScreenFromJson(jsonText);
       setLocalErrors([]);
     } catch (err) {

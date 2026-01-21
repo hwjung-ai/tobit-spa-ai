@@ -131,10 +131,6 @@ test.describe('Save Draft - Live Issue Reproduction', () => {
 
     if (isEnabled) {
       // Collect console errors before save
-      const consoleBefore = await page.evaluate(() => {
-        const logs: string[] = [];
-        return logs;
-      });
 
       // Capture all console messages after clicking
       const errorMessages: string[] = [];

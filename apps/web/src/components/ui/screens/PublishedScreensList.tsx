@@ -37,7 +37,7 @@ export default function PublishedScreensList() {
         if (!cancelled) {
           setAssets(envelope.data.assets || []);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("[PublishedScreensList] Error loading:", err);
         if (!cancelled) {
           setError(err.message || "Unable to load published screens");

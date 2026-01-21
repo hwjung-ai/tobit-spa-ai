@@ -15,7 +15,7 @@ export interface FetchOptions extends RequestInit {
  * - Automatically refreshes token on 401 response
  * - Redirects to login on refresh failure
  */
-export async function authenticatedFetch<T = any>(
+export async function authenticatedFetch<T = unknown>(
   endpoint: string,
   options?: FetchOptions
 ): Promise<T> {
@@ -81,14 +81,14 @@ export async function authenticatedFetch<T = any>(
     return text ? JSON.parse(text) : null;
   }
 
-  return response.text() as any;
+  return response.text() as T;
 }
 
 /**
  * Make a simple API request without authentication.
  * Use for login, signup, and other public endpoints.
  */
-export async function fetchApi<T = any>(
+export async function fetchApi<T = unknown>(
   endpoint: string,
   options?: FetchOptions
 ): Promise<T> {
@@ -118,5 +118,5 @@ export async function fetchApi<T = any>(
     return text ? JSON.parse(text) : null;
   }
 
-  return response.text() as any;
+  return response.text() as T;
 }

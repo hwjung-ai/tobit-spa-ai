@@ -28,13 +28,6 @@ interface FlowSpan {
 
 const X_GAP = 260;
 const Y_GAP = 90;
-const NODE_WIDTH = 220;
-const NODE_HEIGHT = 60;
-
-interface LayoutNode extends FlowSpan {
-  depth: number;
-  children: string[];
-}
 
 /**
  * Calculate depth for each span in the hierarchy
@@ -85,38 +78,10 @@ function calculateDepths(spans: FlowSpan[]): Map<string, number> {
 }
 
 /**
- * Build parent-child relationships
- */
-function buildHierarchy(spans: FlowSpan[]): Map<string, string[]> {
-  const spanMap = new Map<string, FlowSpan>(spans.map((s) => [s.span_id, s]));
-  const children = new Map<string, string[]>();
-
-  // Initialize
-  for (const span of spans) {
-    if (!children.has(span.span_id)) {
-      children.set(span.span_id, []);
-    }
-  }
-
-  // Build hierarchy
-  for (const span of spans) {
-    if (span.parent_span_id && spanMap.has(span.parent_span_id)) {
-      const siblings = children.get(span.parent_span_id) ?? [];
-      siblings.push(span.span_id);
-      children.set(span.parent_span_id, siblings);
-    }
-  }
-
-  return children;
-}
-
-/**
  * Calculate Y positions for siblings and stagger
  */
-function calculateYPositions(spans: FlowSpan[], depthMap: Map<string, number>): Map<string, number> {
+function calculateYPositions(spans: FlowSpan[]): Map<string, number> {
   const yMap = new Map<string, number>();
-  const spanMap = new Map<string, FlowSpan>(spans.map((s) => [s.span_id, s]));
-  const hierarchy = buildHierarchy(spans);
 
   // Group spans by parent
   const byParent = new Map<string | null, FlowSpan[]>();
@@ -163,7 +128,7 @@ export function generateNodes(spans: FlowSpan[] | null | undefined): Node[] {
 
   try {
     const depthMap = calculateDepths(validSpans);
-    const yMap = calculateYPositions(validSpans, depthMap);
+    const yMap = calculateYPositions(validSpans);
 
     const nodes: Node[] = validSpans.map((span) => {
       const depth = Math.max(0, depthMap.get(span.span_id) ?? 0);

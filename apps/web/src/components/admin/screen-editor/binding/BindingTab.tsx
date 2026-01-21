@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
-import { BindingEditor, type PathTreeNode } from "@/components/admin/screen-editor/visual/BindingEditor";
 
 /**
  * BindingTab Component
@@ -24,18 +23,6 @@ export default function BindingTab() {
 
   const bindings = editorState.getAllBindings();
   const bindingEntries = Object.entries(bindings);
-
-  // Build state tree from screen state
-  const stateTree: PathTreeNode[] = [
-    {
-      path: "state",
-      label: "State",
-      children: Object.keys(editorState.screen.state?.initial || {}).map((key) => ({
-        path: `state.${key}`,
-        label: key,
-      })),
-    },
-  ];
 
   return (
     <div className="h-full flex flex-col gap-4 p-4">

@@ -58,7 +58,7 @@ export const VisibilityEditor = React.forwardRef<HTMLDivElement, VisibilityEdito
         <div className="text-xs text-gray-500 space-y-1">
           <p>• Component is <strong>visible</strong> when binding is true</p>
           <p>• Component is <strong>hidden</strong> when binding is false or empty</p>
-          <p>• Example: {{`{{state.show_modal}}`}} shows component only if state.show_modal is true</p>
+          <p>• Example: {`{{state.show_modal}}`} shows component only if state.show_modal is true</p>
         </div>
       </div>
     );

@@ -122,7 +122,7 @@ const parseCepDraft = (text: string) => {
     if (!candidate.trim()) {
       continue;
     }
-    let parsed: any = null;
+    let parsed: unknown = null;
     try {
       parsed = JSON.parse(candidate);
     } catch {
@@ -204,7 +204,6 @@ export default function CepBuilderPage() {
   const [lastParseError, setLastParseError] = useState<string | null>(null);
   const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
-  const [formDirty, setFormDirty] = useState(false);
   const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
   const draftStorageId = selectedId ?? "new";
@@ -386,7 +385,6 @@ export default function CepBuilderPage() {
       setPayloadText("{}");
       fetchLogs();
       setFormBaselineSnapshot(null);
-      setFormDirty(false);
       setAppliedDraftSnapshot(null);
     } else {
       setRuleName("");
@@ -398,10 +396,9 @@ export default function CepBuilderPage() {
       setStatusMessage("Define a new CEP rule to get started.");
       setLogs([]);
       setFormBaselineSnapshot(buildFormSnapshot());
-      setFormDirty(false);
       setAppliedDraftSnapshot(null);
     }
-  }, [selectedRule, fetchLogs]);
+  }, [selectedRule, fetchLogs, buildFormSnapshot]);
 
   useEffect(() => {
     const currentSnapshot = buildFormSnapshot();
@@ -409,7 +406,6 @@ export default function CepBuilderPage() {
       setFormBaselineSnapshot(currentSnapshot);
       return;
     }
-    setFormDirty(currentSnapshot !== formBaselineSnapshot);
     if (draftApi && appliedDraftSnapshot && currentSnapshot !== appliedDraftSnapshot) {
       setDraftStatus("outdated");
       setDraftNotes("폼이 변경되어 드래프트가 오래되었습니다.");
@@ -443,7 +439,6 @@ export default function CepBuilderPage() {
     setDraftStatus("applied");
     setDraftNotes("드래프트가 폼에 적용되었습니다. 저장 전입니다.");
     setStatusMessage("Draft applied to editor (not saved).");
-    setFormDirty(true);
     setAppliedDraftSnapshot(JSON.stringify(draft));
   };
 
@@ -456,7 +451,6 @@ export default function CepBuilderPage() {
     try {
       const parsed = JSON.parse(raw) as CepDraft;
       applyCepDraftToForm(parsed);
-      setFormDirty(false);
       setFormBaselineSnapshot(buildFormSnapshot());
       setAppliedDraftSnapshot(null);
       setStatusMessage("로컬 저장된 룰을 불러왔습니다.");
@@ -471,13 +465,13 @@ export default function CepBuilderPage() {
     let parsedActionSpec;
     try {
       parsedTriggerSpec = parseJsonObject(triggerSpecText);
-    } catch (error) {
+    } catch {
       setStatusError("Trigger spec must be valid JSON.");
       return;
     }
     try {
       parsedActionSpec = parseJsonObject(actionSpecText);
-    } catch (error) {
+    } catch {
       setStatusError("Action spec must be valid JSON.");
       return;
     }
@@ -521,7 +515,7 @@ export default function CepBuilderPage() {
     }
   };
 
-  const handleNew = () => {
+  const handleNew = useCallback(() => {
     setSelectedId(null);
     setActiveTab("definition");
     setStatusMessage("Define a new rule here.");
@@ -534,10 +528,9 @@ export default function CepBuilderPage() {
     setRuleName("");
     setRuleDescription("");
     setIsActive(true);
-    setFormDirty(false);
     setFormBaselineSnapshot(buildFormSnapshot());
     setAppliedDraftSnapshot(null);
-  };
+  }, [buildFormSnapshot]);
 
   const handleSimulate = async () => {
     if (!selectedRule?.rule_id) {
@@ -547,7 +540,7 @@ export default function CepBuilderPage() {
     let payload = {};
     try {
       payload = parseJsonObject(payloadText);
-    } catch (error) {
+    } catch {
       setStatusError("Payload must be valid JSON.");
       return;
     }
@@ -580,7 +573,7 @@ export default function CepBuilderPage() {
     let payload = {};
     try {
       payload = parseJsonObject(payloadText);
-    } catch (error) {
+    } catch {
       setStatusError("Payload must be valid JSON.");
       return;
     }
@@ -697,8 +690,7 @@ export default function CepBuilderPage() {
         setDraftApi(null);
         setDraftStatus("saved");
         setDraftTestOk(null);
-        setFormDirty(false);
-        setFormBaselineSnapshot(buildFormSnapshot());
+          setFormBaselineSnapshot(buildFormSnapshot());
         setAppliedDraftSnapshot(null);
         const draftKey = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
         window.localStorage.removeItem(draftKey);

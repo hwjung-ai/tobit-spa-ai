@@ -20,7 +20,7 @@ export default function SettingsPage() {
         try {
             const response = await fetchApi<{ settings: OperationSetting[] }>("/settings/operations");
             setSettings(response.data.settings);
-        } catch (err: any) {
+        } catch (err: unknown) {
             setError(err.message || "Failed to load settings");
         } finally {
             setIsLoading(false);

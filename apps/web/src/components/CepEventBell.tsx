@@ -32,8 +32,6 @@ const normalizeError = (error: unknown) => {
 
 export default function CepEventBell() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
-  const [summary, setSummary] = useState<SummaryPayload | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [pulse, setPulse] = useState(false);
   const previousCount = useRef<number>(0);
   const queryClient = useQueryClient();
@@ -53,26 +51,10 @@ export default function CepEventBell() {
   });
 
   useEffect(() => {
-    if (summaryQuery.data) {
-      setSummary(summaryQuery.data);
-      setError(null);
-      previousCount.current = summaryQuery.data.unacked_count ?? 0;
-    }
-  }, [summaryQuery.data]);
-
-  useEffect(() => {
-    if (summaryQuery.error) {
-      setError(normalizeError(summaryQuery.error));
-    }
-  }, [summaryQuery.error]);
-
-  useEffect(() => {
     const eventSource = new EventSource(`${apiBaseUrl}/cep/events/stream`);
     const handleSummary = (event: MessageEvent) => {
       const data = JSON.parse(event.data) as SummaryPayload;
       queryClient.setQueryData(["cep-events-summary"], data);
-      setSummary(data);
-      setError(null);
       const current = data?.unacked_count ?? 0;
       if (current > previousCount.current) {
         setPulse(true);
@@ -82,11 +64,13 @@ export default function CepEventBell() {
     };
     eventSource.addEventListener("summary", handleSummary);
     eventSource.addEventListener("error", () => {
-      setError("SSE disconnected");
+      // Error is handled by summaryQuery.error
     });
     return () => eventSource.close();
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, queryClient]);
 
+  const summary = summaryQuery.data ?? null;
+  const error = summaryQuery.error ? normalizeError(summaryQuery.error) : null;
   const count = summary?.unacked_count ?? 0;
 
   return (

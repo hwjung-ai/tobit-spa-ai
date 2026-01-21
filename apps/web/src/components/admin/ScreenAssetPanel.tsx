@@ -31,7 +31,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     tags: "",
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [refreshTrigger] = useState(0);
 
   useEffect(() => {
     fetchScreens();
@@ -64,7 +64,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       const response = await fetchApi("/asset-registry/assets?asset_type=screen");
       setScreens(response.data?.assets || []);
       setErrors([]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error.message || "Failed to fetch screens from asset-registry"]);
       setScreens([]);
     } finally {
@@ -107,13 +107,13 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       if (newScreenData.tags.trim()) {
         try {
           parsedTags = JSON.parse(newScreenData.tags);
-        } catch (tagError: any) {
+        } catch (tagError: unknown) {
           setErrors([`Invalid tags JSON: ${tagError.message || "syntax error"}`]);
           return;
         }
       }
 
-      const response = await fetchApi("/asset-registry/assets", {
+      await fetchApi("/asset-registry/assets", {
         method: "POST",
         body: JSON.stringify({
           asset_type: "screen",
@@ -131,7 +131,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setSelectedTemplate(null);
       await fetchScreens();
       onScreenUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error.message || "Failed to create screen";
       if (message.includes("403") || message.includes("Permission")) {
         setErrors(["You don't have permission to create screens"]);
@@ -302,7 +302,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
 
         <select
           value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value as any)}
+          onChange={e => setFilterStatus(e.target.value)}
           className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-sky-500"
           data-testid="select-filter-status"
         >
@@ -426,7 +426,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setToast({ message: "Screen published successfully", type: "success" });
       await fetchScreens();
       onScreenUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error.message || "Failed to publish screen"]);
     }
   }
@@ -440,7 +440,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setToast({ message: "Screen rolled back to draft", type: "success" });
       await fetchScreens();
       onScreenUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error.message || "Failed to rollback screen"]);
     }
   }

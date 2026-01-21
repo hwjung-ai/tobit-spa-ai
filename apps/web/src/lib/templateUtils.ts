@@ -4,13 +4,13 @@
  */
 
 export function substituteTemplate(
-  template: any,
+  template: unknown,
   context: {
     trace_id: string;
     action_id: string;
-    inputs: Record<string, any>;
+    inputs: Record<string, unknown>;
   }
-): any {
+): unknown {
   if (typeof template === "string") {
     return template
       .replace(/\{\{trace_id\}\}/g, context.trace_id)
@@ -26,7 +26,7 @@ export function substituteTemplate(
   }
 
   if (typeof template === "object" && template !== null) {
-    const result: Record<string, any> = {};
+    const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(template)) {
       result[key] = substituteTemplate(value, context);
     }

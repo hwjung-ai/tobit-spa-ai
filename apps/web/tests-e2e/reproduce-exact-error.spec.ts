@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
 /**
  * Exact Reproduction Test

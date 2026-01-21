@@ -48,7 +48,7 @@ export default function ComponentTreeView() {
   const tree = useMemo(() => {
     if (!screen?.components) return [];
     return buildTree(screen.components);
-  }, [screen?.components]);
+  }, [screen]);
 
   const nodeLookup = useMemo(() => {
     const map = new Map<string, TreeNode>();

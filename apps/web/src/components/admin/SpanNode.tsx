@@ -15,11 +15,11 @@ interface SpanNodeData {
     error_type?: string;
     error_message?: string;
   };
-  links: Record<string, any>;
-  span: any;
+  links: Record<string, unknown>;
+  span: unknown;
 }
 
-function SpanNode({ data, isConnecting, selected }: NodeProps<SpanNodeData>) {
+function SpanNode({ data, selected }: NodeProps<SpanNodeData>) {
   const statusClass =
     data.status === "ok"
       ? "bg-emerald-900/40 border-emerald-700 text-emerald-200"

@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
-import { ScreenAction, ComponentActionRef } from "@/lib/ui-screen/screen.schema";
-import { Button } from "@/components/ui/button";
+import { ScreenAction,  } from "@/lib/ui-screen/screen.schema";
+
 
 /**
  * ActionTab Component

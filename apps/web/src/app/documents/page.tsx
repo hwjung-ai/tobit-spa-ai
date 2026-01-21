@@ -137,7 +137,6 @@ const badgeStyles: Record<DocumentStatus, string> = {
   failed: "bg-rose-500/10 text-rose-200 border-rose-500/60",
 };
 
-const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
 
 const formatTimestamp = (value: string) => {
   try {
@@ -233,13 +232,13 @@ export default function DocumentsPage() {
     try {
       const payload = await authenticatedFetch(
         `/history?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`
-      ) as any;
+      ) as { data: { history: DocsServerHistoryEntry[] } };
       const rawHistory = (payload?.data?.history ?? []) as DocsServerHistoryEntry[];
       const hydrated = rawHistory
         .map(buildDocHistoryEntry)
         .filter((entry): entry is DocsHistoryEntry => Boolean(entry));
       setDocHistory(hydrated);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load document history", error);
       setDocHistoryError(error?.message || "Failed to load document history");
     } finally {
@@ -249,7 +248,7 @@ export default function DocumentsPage() {
 
   const fetchDocumentDetail = useCallback(
     async (documentId: string) => {
-      const payload = await authenticatedFetch(`/documents/${documentId}`) as any;
+      const payload = await authenticatedFetch(`/documents/${documentId}`) as { data: { document: DocumentDetail } };
       setSelectedDocument(payload.data.document);
     },
     []
@@ -259,17 +258,17 @@ export default function DocumentsPage() {
     setLoadingDocuments(true);
     setDocumentsError(null);
     try {
-      const payload = await authenticatedFetch("/documents") as any;
+      const payload = await authenticatedFetch("/documents") as { data: { documents: DocumentItem[] } };
       setDocuments(payload.data.documents ?? []);
       const selectedId = selectedDocumentRef.current?.id;
       if (selectedId) {
         try {
           await fetchDocumentDetail(selectedId);
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Failed to refresh selected document", error);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setDocumentsError(error?.message || "Failed to load documents");
     } finally {
       setLoadingDocuments(false);
@@ -304,7 +303,7 @@ export default function DocumentsPage() {
       return [];
     }
     return docHistory.filter((entry) => entry.documentId === selectedDocument.id);
-  }, [docHistory, selectedDocument?.id]);
+  }, [docHistory, selectedDocument]);
 
   useEffect(() => {
     if (documentHistoryEntries.length === 0) {
@@ -492,7 +491,7 @@ export default function DocumentsPage() {
         }
       }
       setStreamStatus("idle");
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error?.name === "AbortError") {
         return;
       }
@@ -582,7 +581,7 @@ export default function DocumentsPage() {
       setDocuments((prev) => [document, ...prev.filter((item) => item.id !== document.id)]);
       selectDocument(document.id);
       fileInputRef.current!.value = "";
-    } catch (error: any) {
+    } catch (error: unknown) {
       setUploadError(error?.message || "Upload failed");
     } finally {
       setUploading(false);
@@ -599,7 +598,7 @@ export default function DocumentsPage() {
         setSelectedDocument(null);
         clearStream();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setDocumentsError(error?.message || "Failed to delete document");
     }
   };

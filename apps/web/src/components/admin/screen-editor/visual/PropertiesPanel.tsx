@@ -41,7 +41,7 @@ function findComponentById(components: Component[], id: string): Component | nul
 export default function PropertiesPanel() {
   const editorState = useEditorState();
   const displayScreen = editorState.screen;
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [editingAction, setEditingAction] = useState<ComponentActionRef | null>(null);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -74,7 +74,7 @@ export default function PropertiesPanel() {
       contextTree: [], // Context paths would be extracted similarly if provided
       inputsTree: [], // Inputs paths would be extracted similarly if provided
     };
-  }, [displayScreen?.state]);
+  }, [displayScreen]);
 
   if (!selectedComponent) {
     return (
@@ -90,7 +90,7 @@ export default function PropertiesPanel() {
   const isTextField = (name: string) => isTextComponent && TEXT_PROPERTY_FIELDS.has(name);
   const bindableFields = fields.filter(field => !isTextField(field.name));
 
-  const handlePropChange = (name: string, value: any) => {
+  const handlePropChange = (name: string, value: unknown) => {
     const newData = { ...formData, [name]: value };
     setFormData(newData);
     editorState.updateComponentProps(selectedComponent.id, newData);
@@ -242,7 +242,7 @@ export default function PropertiesPanel() {
             <AccordionContent className="space-y-2 pt-3">
               {!selectedComponent.actions || selectedComponent.actions.length === 0 ? (
                 <p className="text-xs text-slate-500">
-                  No actions defined. Click "Add Action" to create one.
+                  No actions defined. Click &quot;Add Action&quot; to create one.
                 </p>
               ) : (
                 <div className="space-y-1">
@@ -345,7 +345,7 @@ export default function PropertiesPanel() {
         actionType="component"
         onSave={(action) => {
           if (editingAction) {
-            editorState.updateComponentAction(selectedComponent.id, editingAction.id, action as any);
+            editorState.updateComponentAction(selectedComponent.id, editingAction.id, action as ComponentActionRef);
           } else {
             editorState.addComponentAction(selectedComponent.id, action as ComponentActionRef);
           }
@@ -360,9 +360,9 @@ export default function PropertiesPanel() {
 }
 
 interface PropsFormFieldProps {
-  field: any;
-  value: any;
-  onChange: (value: any) => void;
+  field: unknown;
+  value: unknown;
+  onChange: (value: unknown) => void;
 }
 
 function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
@@ -394,7 +394,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
           <SelectContent>
-            {field.options.map((opt: any) => (
+            {field.options.map((opt: unknown) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
@@ -473,7 +473,7 @@ function TextPropertyField({
   screenSchema,
 }: {
   field: PropsFormFieldSchema;
-  value: any;
+  value: unknown;
   onChange: (value: string) => void;
   bindingTrees: BindingTrees;
   screenSchema: ScreenSchemaV1 | null;

@@ -144,7 +144,7 @@ export default function CepEventBrowserPage() {
         headerName: "Severity",
         field: "severity",
         minWidth: 110,
-        cellRenderer: (params: any) => {
+        cellRenderer: (params: unknown) => {
           const val = params.value?.toUpperCase() || "";
           let color = "text-slate-400";
           if (val === "HIGH" || val === "CRITICAL") color = "text-rose-400 font-bold";
@@ -168,7 +168,7 @@ export default function CepEventBrowserPage() {
         headerName: "ACK",
         field: "ack",
         minWidth: 90,
-        cellRenderer: (params: any) => {
+        cellRenderer: (params: unknown) => {
           const isAck = params.value === true;
           return (
             <span className={isAck ? "text-emerald-400/80" : "text-rose-400 font-semibold"}>

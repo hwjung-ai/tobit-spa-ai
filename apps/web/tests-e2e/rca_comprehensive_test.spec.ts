@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:3000';
+// BASE_URL not used in these tests
 const API_BASE_URL = 'http://localhost:8000';
 
 test.describe('RCA Comprehensive Test Suite', () => {

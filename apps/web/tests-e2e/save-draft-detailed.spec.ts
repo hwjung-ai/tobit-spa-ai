@@ -32,7 +32,7 @@ test.describe('Save Draft - Detailed Testing', () => {
     // Wait for redirect
     try {
       await page.waitForURL(/admin|home/, { timeout: 10000 });
-    } catch (e) {
+    } catch {
       console.log('[TEST] URL change timeout, checking token');
     }
 
@@ -127,7 +127,7 @@ test.describe('Save Draft - Detailed Testing', () => {
     try {
       await saveDraftButton.click();
       console.log('[TEST] Save Draft button clicked successfully');
-    } catch (e) {
+    } catch {
       console.log(`[TEST] Error clicking Save Draft: ${e}`);
     }
 

@@ -4,7 +4,7 @@
  * Handles: Components, Actions, Bindings, State Schema
  */
 
-import { ScreenSchemaV1, Component, ScreenAction } from "./screen.schema";
+import { ScreenSchemaV1, Component } from "./screen.schema";
 
 export interface DiffItem {
   changeType: "added" | "removed" | "modified" | "unchanged";

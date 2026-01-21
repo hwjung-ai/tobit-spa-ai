@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'http://localhost:3000';
+// BASE_URL not used in these tests
 
 test.describe('RCA Simple Test', () => {
   test('RCA API should return valid trace_id', async ({ page }) => {

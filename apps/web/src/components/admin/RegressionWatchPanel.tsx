@@ -38,7 +38,7 @@ interface RegressionRun {
 }
 
 interface RegressionRunDetail extends RegressionRun {
-  diff_summary: Record<string, any> | null;
+  diff_summary: Record<string, unknown> | null;
   triggered_by: string;
   execution_duration_ms: number | null;
 }

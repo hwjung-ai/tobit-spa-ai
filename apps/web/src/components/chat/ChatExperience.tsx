@@ -34,7 +34,20 @@ export default function ChatExperience({
   instructionPrompt,
   inputPlaceholder = "메시지를 입력하세요.",
 }: ChatExperienceProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === "undefined") return [];
+    const key = `${STORAGE_PREFIX}${builderSlug}`;
+    const raw = window.localStorage.getItem(key);
+    if (raw) {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        window.localStorage.removeItem(key);
+        return [];
+      }
+    }
+    return [];
+  });
   const [inputValue, setInputValue] = useState("");
   const [status, setStatus] = useState<"idle" | "streaming" | "error">("idle");
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -42,18 +55,6 @@ export default function ChatExperience({
   const assistantMessageIdRef = useRef<string | null>(null);
   const assistantBufferRef = useRef<string>("");
   const apiBaseUrl = useMemo(() => normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL), []);
-
-  useEffect(() => {
-    const key = `${STORAGE_PREFIX}${builderSlug}`;
-    const raw = window.localStorage.getItem(key);
-    if (raw) {
-      try {
-        setMessages(JSON.parse(raw));
-      } catch {
-        window.localStorage.removeItem(key);
-      }
-    }
-  }, [builderSlug]);
 
   useEffect(() => {
     const key = `${STORAGE_PREFIX}${builderSlug}`;

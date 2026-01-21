@@ -9,11 +9,8 @@ import ActionTab from "./actions/ActionTab";
 import PreviewTab from "./preview/PreviewTab";
 import DiffTab from "./diff/DiffTab";
 
-interface ScreenEditorTabsProps {
-  assetId: string;
-}
 
-export default function ScreenEditorTabs({ assetId }: ScreenEditorTabsProps) {
+export default function ScreenEditorTabs() {
   const [activeTab, setActiveTab] = useState("visual");
 
   return (

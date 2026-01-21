@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('Explore UI structure', async ({ browser }) => {
   const page = await browser.newPage();
@@ -16,7 +16,6 @@ test('Explore UI structure', async ({ browser }) => {
 
   // Get full HTML structure
   const html = await page.evaluate(() => {
-    const doc = document.documentElement;
     return {
       bodyHTML: document.body.innerHTML.substring(0, 5000),
       hasScreenEditor: !!document.querySelector('[data-testid*="screen"]'),

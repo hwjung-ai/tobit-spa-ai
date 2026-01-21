@@ -8,20 +8,20 @@ import { Save, RotateCcw, Eye, EyeOff } from 'lucide-react';
 
 interface Setting {
   key: string;
-  value: any;
+  value: unknown;
   category: string;
 }
 
 interface SystemSettingsPanelProps {
-  onUpdate?: (settings: Record<string, any>) => void;
+  onUpdate?: (settings: Record<string, unknown>) => void;
 }
 
 const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) => {
-  const [settings, setSettings] = useState<Record<string, any>>({});
+  const [, setSettings] = useState<Record<string, unknown>>({});
   const [categories, setCategories] = useState<Record<string, Setting[]>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('api');
   const [loading, setLoading] = useState(false);
-  const [changes, setChanges] = useState<Record<string, any>>({});
+  const [changes, setChanges] = useState<Record<string, unknown>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
@@ -53,7 +53,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
     }
   };
 
-  const handleSettingChange = (key: string, value: any) => {
+  const handleSettingChange = (key: string, value: unknown) => {
     setChanges({
       ...changes,
       [key]: value,
@@ -110,7 +110,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
     }
   };
 
-  const renderSettingInput = (key: string, value: any, currentValue?: any) => {
+  const renderSettingInput = (key: string, value: unknown, currentValue?: unknown) => {
     const displayValue = currentValue !== undefined ? currentValue : value;
 
     if (typeof displayValue === 'boolean') {

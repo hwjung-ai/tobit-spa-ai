@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('Exact User Flow: List > First Screen > Add Text > Save Draft', async ({ browser }) => {
   const page = await browser.newPage();

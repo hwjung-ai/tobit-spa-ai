@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import { AuditLog, formatTimestamp } from "../../lib/adminUtils";
 
 interface AuditLogTableProps {

@@ -11,7 +11,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-export interface Neo4jFlowNode extends Node<{ label: string; properties?: Record<string, unknown> }> {}
+export type Neo4jFlowNode = Node<{ label: string; properties?: Record<string, unknown> }>;
 export interface Neo4jFlowEdge extends Edge {
   label?: string;
 }

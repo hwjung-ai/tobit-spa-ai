@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import { ScreenSchemaV1, Component, ScreenAction, ComponentActionRef } from "./screen.schema";
 import { getComponentDescriptor } from "./component-registry";
-import { validateBindingPath, validateActionHandler, validateScreenSchema } from "./validation-utils";
-import { parseBindingExpression, formatBindingExpression } from "./binding-path-utils";
+import { validateScreenSchema } from "./validation-utils";
 import { fetchApi } from "../adminUtils";
 
 export interface ValidationError {
@@ -37,12 +36,12 @@ export interface EditorState {
   addComponentToParent: (type: string, parentId: string) => void;
   deleteComponent: (id: string) => void;
   selectComponent: (id: string | null) => void;
-  updateComponentProps: (id: string, props: Record<string, any>) => void;
+  updateComponentProps: (id: string, props: Record<string, unknown>) => void;
   updateComponentLabel: (id: string, label: string) => void;
   moveComponent: (id: string, direction: "up" | "down") => void;
   moveComponentToParent: (componentId: string, targetParentId: string) => void;
   reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => void;
-  updateLayout: (layout: any) => void;
+  updateLayout: (layout: unknown) => void;
   updateScreenFromJson: (json: string) => void;
 
   // Action CRUD (screen-level)
@@ -66,8 +65,8 @@ export interface EditorState {
   updateComponentVisibility: (componentId: string, visibleIf: string | null) => void;
 
   // Action testing (Phase 4)
-  testAction: (actionId: string, payload?: Record<string, any>) => Promise<any>;
-  applyStatePatch: (patch: Record<string, any>) => void;
+  testAction: (actionId: string, payload?: Record<string, unknown>) => Promise<unknown>;
+  applyStatePatch: (patch: Record<string, unknown>) => void;
 
   saveDraft: () => Promise<void>;
   publish: () => Promise<void>;
@@ -77,27 +76,6 @@ export interface EditorState {
   setAssetId: (assetId: string) => void;
 }
 
-// Helper to generate unique component ID
-function generateComponentId(type: string, existingComponents: Component[]): string {
-  let counter = 1;
-  let id = `${type}_${counter}`;
-  while (existingComponents.some(c => c.id === id)) {
-    counter++;
-    id = `${type}_${counter}`;
-  }
-  return id;
-}
-
-// Helper to generate unique action ID
-function generateActionId(existingActions: ScreenAction[]): string {
-  let counter = 1;
-  let id = `action_${counter}`;
-  while (existingActions.some(a => a.id === id)) {
-    counter++;
-    id = `action_${counter}`;
-  }
-  return id;
-}
 
 // Helper to create default component
 function createDefaultComponent(type: string, id: string): Component {
@@ -498,7 +476,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
-  updateComponentProps: (id: string, props: Record<string, any>) => {
+  updateComponentProps: (id: string, props: Record<string, unknown>) => {
     set((state) => {
       if (!state.screen) return state;
 
@@ -645,7 +623,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
-  updateLayout: (layout: any) => {
+  updateLayout: (layout: unknown) => {
     set((state) => {
       if (!state.screen) return state;
 
@@ -665,7 +643,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
   updateScreenFromJson: (jsonString: string) => {
     try {
       const parsed = JSON.parse(jsonString);
-      set((state) => {
+      set(() => {
         return {
           screen: parsed,
           draftModified: true,
@@ -675,7 +653,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
       });
     } catch (error) {
       console.error("Invalid JSON:", error);
-      set((state) => ({
+      set(() => ({
         validationErrors: [
           { path: "json", message: `Invalid JSON: ${error instanceof Error ? error.message : "Unknown error"}`, severity: "error" },
         ],
@@ -685,12 +663,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   // Screen-level action CRUD
   addAction: (action: ScreenAction) => {
-    set((state) => {
-      if (!state.screen) return state;
+    set(() => {
+      if (!get().screen) return {};
 
-      const newActions = [...(state.screen.actions || []), action];
+      const newActions = [...(get().screen!.actions || []), action];
       const newScreen = {
-        ...state.screen,
+        ...get().screen!,
         actions: newActions,
       };
 
@@ -703,15 +681,15 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   updateAction: (actionId: string, updates: Partial<ScreenAction>) => {
-    set((state) => {
-      if (!state.screen || !state.screen.actions) return state;
+    set(() => {
+      if (!get().screen || !get().screen!.actions) return {};
 
-      const newActions = state.screen.actions.map(a =>
+      const newActions = get().screen!.actions!.map(a =>
         a.id === actionId ? { ...a, ...updates } : a
       );
 
       const newScreen = {
-        ...state.screen,
+        ...get().screen!,
         actions: newActions,
       };
 
@@ -724,12 +702,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   deleteAction: (actionId: string) => {
-    set((state) => {
-      if (!state.screen || !state.screen.actions) return state;
+    set(() => {
+      if (!get().screen || !get().screen!.actions) return {};
 
-      const newActions = state.screen.actions.filter(a => a.id !== actionId);
+      const newActions = get().screen!.actions!.filter(a => a.id !== actionId);
       const newScreen = {
-        ...state.screen,
+        ...get().screen!,
         actions: newActions.length > 0 ? newActions : null,
       };
 
@@ -920,7 +898,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   // Test action by calling /ops/ui-actions endpoint
-  testAction: async (actionId: string, payload?: Record<string, any>) => {
+  testAction: async (actionId: string, payload?: Record<string, unknown>) => {
     try {
       const state = get();
       if (!state.screen) throw new Error("No screen loaded");
@@ -963,7 +941,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   // Apply state patch to current screen
-  applyStatePatch: (patch: Record<string, any>) => {
+  applyStatePatch: (patch: Record<string, unknown>) => {
     set((state) => {
       if (!state.screen?.state) return state;
 
@@ -1019,12 +997,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
         });
         console.log("[EDITOR] PUT response:", putResponse);
         console.log("[EDITOR] Saved to asset-registry successfully");
-      } catch (putError: any) {
+      } catch (putError: unknown) {
         // If asset doesn't exist (404), create it with POST
         // Check for 404 status code or "not found" in error message
         const errStr = String(putError).toLowerCase();
-        const errMsg = (putError?.message || "").toLowerCase();
-        const statusCode = (putError as any)?.statusCode;
+        const errMsg = ((putError as Error)?.message || "").toLowerCase();
+        const statusCode = (putError as { statusCode?: number })?.statusCode;
 
         console.log("[EDITOR] PUT failed:", putError);
         console.log("[EDITOR] Status code:", statusCode);
@@ -1056,11 +1034,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
             console.log("[EDITOR] POST response received");
             console.log("[EDITOR] POST response data:", postResponse);
             console.log("[EDITOR] Created new asset successfully");
-          } catch (postError: any) {
+          } catch (postError: unknown) {
             console.error("[EDITOR] POST error:", postError);
             console.error("[EDITOR] POST error details:", {
-              message: postError?.message,
-              statusCode: (postError as any)?.statusCode,
+              message: (postError as Error)?.message,
+              statusCode: (postError as { statusCode?: number })?.statusCode,
               errorType: typeof postError,
             });
             throw new Error(`Failed to create screen: ${postError}`);
@@ -1136,10 +1114,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
         body: JSON.stringify({}),
       });
 
-      set((state) => ({
+      set({
         status: "draft",
         isRollbacking: false,
-      }));
+      });
 
       // Reload screen to sync state
       await get().loadScreen(currentAssetId);

@@ -13,8 +13,8 @@ interface PayloadField {
 }
 
 interface PayloadTemplateEditorProps {
-  template?: Record<string, any>;
-  onChange: (template: Record<string, any>) => void;
+  template?: Record<string, unknown>;
+  onChange: (template: Record<string, unknown>) => void;
   stateTree?: PathTreeNode[];
   contextTree?: PathTreeNode[];
   inputsTree?: PathTreeNode[];
@@ -44,14 +44,13 @@ export const PayloadTemplateEditor = React.forwardRef<
   HTMLDivElement,
   PayloadTemplateEditorProps
 >(
-  (
+    (
     {
       template = {},
       onChange,
       stateTree = [],
       contextTree = [],
       inputsTree = [],
-      placeholder,
       className = "",
     },
     ref
@@ -68,7 +67,7 @@ export const PayloadTemplateEditor = React.forwardRef<
     // Update template whenever fields change
     const updateTemplate = (newFields: PayloadField[]) => {
       setFields(newFields);
-      const newTemplate: Record<string, any> = {};
+      const newTemplate: Record<string, unknown> = {};
       newFields.forEach((field) => {
         if (field.key) {
           newTemplate[field.key] = field.value;
@@ -114,7 +113,7 @@ export const PayloadTemplateEditor = React.forwardRef<
         <div className="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded p-3 bg-gray-50">
           {fields.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-4">
-              No fields. Click "Add Field" to get started.
+              No fields. Click &quot;Add Field&quot; to get started.
             </p>
           ) : (
             fields.map((field, index) => (
@@ -200,7 +199,7 @@ export const PayloadTemplateEditor = React.forwardRef<
                   acc[field.key] = field.value;
                 }
                 return acc;
-              }, {} as Record<string, any>),
+              }, {} as Record<string, unknown>),
               null,
               2
             )}

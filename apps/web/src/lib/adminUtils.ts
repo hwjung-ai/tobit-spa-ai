@@ -1,6 +1,6 @@
 // Admin UI shared types and utilities
 
-export interface ResponseEnvelope<T = any> {
+export interface ResponseEnvelope<T = unknown> {
   time: string;
   code: number;
   message: string;
@@ -19,15 +19,15 @@ export interface Asset {
   scope: string | null;
   engine: string | null;
   template: string | null;
-  input_schema: Record<string, any> | null;
-  output_contract: Record<string, any> | null;
+  input_schema: Record<string, unknown> | null;
+  output_contract: Record<string, unknown> | null;
   mapping_type: string | null;
-  content: Record<string, any> | null;
+  content: Record<string, unknown> | null;
   policy_type: string | null;
-  limits: Record<string, any> | null;
+  limits: Record<string, unknown> | null;
   query_sql: string | null;
-  query_params: Record<string, any> | null;
-  query_metadata: Record<string, any> | null;
+  query_params: Record<string, unknown> | null;
+  query_metadata: Record<string, unknown> | null;
 
   // Metadata
   created_by: string | null;
@@ -39,12 +39,12 @@ export interface Asset {
 
 export interface OperationSetting {
   key: string;
-  value: any;
+  value: unknown;
   source: "published" | "env" | "default";
   restart_required: boolean;
   description: string;
-  default: any;
-  allowed_values: any[] | null;
+  default: unknown;
+  allowed_values: unknown[] | null;
   published_by: string | null;
   published_at: string | null;
 }
@@ -57,10 +57,10 @@ export interface AuditLog {
   resource_id: string;
   action: string;
   actor: string;
-  changes: Record<string, any>;
-  old_values: Record<string, any> | null;
-  new_values: Record<string, any> | null;
-  audit_metadata: Record<string, any> | null;
+  changes: Record<string, unknown>;
+  old_values: Record<string, unknown> | null;
+  new_values: Record<string, unknown> | null;
+  audit_metadata: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -71,7 +71,7 @@ export const API_BASE_URL =
 
 const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
 
-export async function fetchApi<T = any>(
+export async function fetchApi<T = unknown>(
   endpoint: string,
   options?: RequestInit
 ): Promise<ResponseEnvelope<T>> {
@@ -107,7 +107,7 @@ export async function fetchApi<T = any>(
   });
 
   if (!response.ok) {
-    let errorData: any = {};
+    let errorData: unknown = {};
     let rawText = "";
     try {
       rawText = await response.text();
@@ -161,10 +161,10 @@ export async function fetchApi<T = any>(
     console.error("[API] Full error data:", errorData);
     console.error("[API] Full raw text:", rawText);
 
-    const errorMessage = errorData?.detail || errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
+    const errorMessage = (errorData as Record<string, unknown>)?.detail || (errorData as Record<string, unknown>)?.message || `HTTP ${response.status}: ${response.statusText}`;
     const error = new Error(String(errorMessage));
     // Attach status code to error for easier checking in catch blocks
-    (error as any).statusCode = response.status;
+    (error as unknown as { statusCode: number }).statusCode = response.status;
     throw error;
   }
 

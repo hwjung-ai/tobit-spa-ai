@@ -10,7 +10,6 @@ interface ScreenEditorHeaderProps {
   status: "draft" | "published";
   isDirty: boolean;
   canPublish: boolean;
-  canRollback: boolean;
   onSaveDraft: () => void;
   onPublish: () => void;
   onRollback: () => void;
@@ -26,7 +25,6 @@ export default function ScreenEditorHeader({
   status,
   isDirty,
   canPublish,
-  canRollback,
   onSaveDraft,
   onPublish,
   onRollback,

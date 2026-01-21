@@ -6,15 +6,15 @@
 */
 
 export type BindingContext = {
-  inputs?: Record<string, any>;
-  state?: Record<string, any>;
-  context?: Record<string, any>;
+  inputs?: Record<string, unknown>;
+  state?: Record<string, unknown>;
+  context?: Record<string, unknown>;
   trace_id?: string | null;
 };
 
-export type BindingState = Record<string, any>;
+export type BindingState = Record<string, unknown>;
 
-export function renderTemplate(template: any, ctx: BindingContext) {
+export function renderTemplate(template: unknown, ctx: BindingContext) {
   if (template == null) return template;
   if (typeof template === "string") {
     const exactMatch = template.match(/^{{\s*([^}]+)\s*}}$/);
@@ -36,7 +36,7 @@ export function renderTemplate(template: any, ctx: BindingContext) {
     return template.map((t) => renderTemplate(t, ctx));
   }
   if (typeof template === "object") {
-    const out: any = {};
+    const out: unknown = {};
     for (const k of Object.keys(template)) {
       out[k] = renderTemplate(template[k], ctx);
     }
@@ -58,7 +58,7 @@ export function applyBindings(
   }
 }
 
-export function applyActionResultToState(state: BindingState, actionId: string, result: any) {
+export function applyActionResultToState(state: BindingState, actionId: string, result: unknown) {
   const results = state.results || {};
   results[actionId] = result;
   state.results = results;
@@ -146,7 +146,7 @@ function parsePathWithIndices(path: string): string[] {
   return parts;
 }
 
-export function get(obj: any, path?: string) {
+export function get(obj: unknown, path?: string) {
   if (!path) return undefined;
   const parts = parsePathWithIndices(path);
   let cur = obj;
@@ -163,7 +163,7 @@ export function get(obj: any, path?: string) {
   return cur;
 }
 
-export function set(obj: any, path: string, value: any) {
+export function set(obj: unknown, path: string, value: unknown) {
   const parts = parsePathWithIndices(path);
   if (parts.length === 0) return;
 

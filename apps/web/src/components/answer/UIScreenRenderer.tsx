@@ -28,7 +28,7 @@ import type { UIScreenBlock } from "./BlockRenderer";
 interface UIScreenRendererProps {
   block: UIScreenBlock;
   traceId?: string;
-  onResult?: (blocks: any[]) => void;
+  onResult?: (blocks: unknown[]) => void;
   schemaOverride?: ScreenSchemaV1 | null;
 }
 
@@ -75,7 +75,7 @@ export default function UIScreenRenderer({
   schemaOverride,
 }: UIScreenRendererProps) {
   const [screenSchema, setScreenSchema] = useState<ScreenSchemaV1 | null>(null);
-  const [state, setState] = useState<Record<string, any>>({});
+  const [state, setState] = useState<Record<string, unknown>>({});
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
   const screenId = block.screen_id;
 
@@ -92,7 +92,7 @@ export default function UIScreenRenderer({
         if (!schema) {
           const assetResp = await fetchApi(`/asset-registry/assets/${screenId}?stage=published`);
           const assetData = assetResp.data?.asset || assetResp.data || assetResp;
-          const asset = (assetData as Record<string, any>) || {};
+          const asset = (assetData as Record<string, unknown>) || {};
           schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
           if (!schema) {
             throw new Error("Asset registry response missing screen schema");
@@ -106,7 +106,7 @@ export default function UIScreenRenderer({
         setScreenSchema(schema);
 
         const initial = schema.state?.initial || {};
-        const baseState: Record<string, any> = { ...initial, params: block.params || {} };
+        const baseState: Record<string, unknown> = { ...initial, params: block.params || {} };
 
         applyBindings(baseState, schema.bindings || null, {
           state: baseState,
@@ -145,7 +145,7 @@ export default function UIScreenRenderer({
     [state, traceId]
   );
 
-  const handleAction = async (action: any) => {
+  const handleAction = async (action: unknown) => {
     setState((prev) => {
       const next = { ...prev };
       setLoading(next, action.handler, true);
@@ -183,7 +183,7 @@ export default function UIScreenRenderer({
       if (resultBlocks.length && onResult) {
         onResult(resultBlocks);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setState((prev) => {
         const next = { ...prev };
         setLoading(next, action.handler, false);
@@ -193,7 +193,7 @@ export default function UIScreenRenderer({
     }
   };
 
-  const handleInputChange = (component: Component, value: any) => {
+  const handleInputChange = (component: Component, value: unknown) => {
     setState((prev) => {
       const next = { ...prev };
       const path = component.bind || `state.${component.id}`;
@@ -302,7 +302,7 @@ export default function UIScreenRenderer({
         <table key={comp.id} className="min-w-full border border-slate-800 text-xs" data-testid={`component-table-${comp.id}`}>
           <thead className="bg-slate-900/80 text-slate-300">
             <tr>
-              {columns.map((col: any) => (
+              {columns.map((col: unknown) => (
                 <th key={col} className="border border-slate-800 px-2 py-1 text-left">
                   {col}
                 </th>
@@ -310,9 +310,9 @@ export default function UIScreenRenderer({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row: any, index: number) => (
+            {rows.map((row: unknown, index: number) => (
               <tr key={`${comp.id}-row-${index}`} className="border border-slate-800">
-                {columns.map((col: any) => (
+                {columns.map((col: unknown) => (
                   <td key={`${comp.id}-${col}-${index}`} className="border border-slate-800 px-2 py-1">
                     {row[col] ?? ""}
                   </td>
@@ -358,7 +358,7 @@ export default function UIScreenRenderer({
       return (
         <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4" data-testid={`component-tabs-${comp.id}`}>
           <div className="flex gap-2">
-            {tabs.map((tab: any, index: number) => (
+            {tabs.map((tab: unknown, index: number) => (
               <button
                 key={`${comp.id}-tab-${index}`}
                 type="button"
@@ -406,7 +406,7 @@ export default function UIScreenRenderer({
       const items = props.items || boundValue || [];
       return (
         <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-xs" data-testid={`component-keyvalue-${comp.id}`}>
-          {items.map((item: any, index: number) => (
+          {items.map((item: unknown, index: number) => (
             <div key={`${comp.id}-kv-${index}`} className="flex items-center justify-between border-b border-slate-800 py-1 last:border-b-0">
               <span className="text-slate-400">{item.key}</span>
               <span className="text-slate-100">{item.value}</span>

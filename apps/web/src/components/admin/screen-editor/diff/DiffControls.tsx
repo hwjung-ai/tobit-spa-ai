@@ -1,11 +1,6 @@
 "use client";
 
-interface DiffControlsProps {
-  mode: "draft-published";
-  onModeChange?: (mode: "draft-published") => void;
-}
-
-export default function DiffControls({ mode, onModeChange }: DiffControlsProps) {
+export default function DiffControls() {
   return (
     <div className="px-4 py-3 border-b border-slate-200 bg-white">
       <div className="flex items-center gap-4">

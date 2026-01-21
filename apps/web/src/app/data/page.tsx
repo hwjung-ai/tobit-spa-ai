@@ -579,8 +579,8 @@ export default function DataExplorerPage() {
     setSelectedRow(null);
     setHighlightedNodeIds(new Set([node.id]));
     const connectedEdges = neo4jGraphPreview.edges
-      .filter((edge) => (edge as any).source === node.id || (edge as any).target === node.id)
-      .map((edge) => (edge as any).id);
+      .filter((edge: Neo4jFlowEdge) => edge.source === node.id || edge.target === node.id)
+      .map((edge: Neo4jFlowEdge) => edge.id);
     setHighlightedEdgeIds(new Set(connectedEdges));
   };
 
@@ -591,7 +591,7 @@ export default function DataExplorerPage() {
     selectedGraphNode !== null
       ? {
         label: selectedGraphNode.data.label,
-        originalLabel: (selectedGraphNode.data as any).originalLabel,
+        originalLabel: (selectedGraphNode.data as Record<string, unknown>).originalLabel as string | undefined,
         properties: selectedGraphNode.data.properties,
       }
       : selectedRow;
@@ -839,7 +839,7 @@ export default function DataExplorerPage() {
                   columnDefs={gridColDefs}
                   rowData={gridRows}
                   rowSelection="single"
-                  defaultColDef={{ resizable: true, sortable: true, filter: true }}
+                  defaultColDef={{ resizable: true, sortable: true, filter: true } satisfies ColDef}
                   onRowClicked={handleTableRowClick}
                 />
               </div>

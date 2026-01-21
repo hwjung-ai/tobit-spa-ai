@@ -3,20 +3,11 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "../../lib/adminUtils";
 import {
   computeTraceDiff,
-  diffAppliedAssets,
-  diffPlan,
-  diffToolCalls,
-  diffReferences,
-  diffAnswerBlocks,
-  diffUIRender,
-  TraceDiff,
-  AssetsDiff,
-  AssetInfo,
 } from "../../lib/traceDiffUtils";
 
 interface TraceDiffViewProps {
-  traceA: any;
-  traceB: any;
+  traceA: unknown;
+  traceB: unknown;
   onClose: () => void;
 }
 
@@ -125,7 +116,7 @@ function AssetsDiffSection({ diff, showOnlyChanges }: { diff: AssetsDiff; showOn
 /**
  * Asset comparison row (prompt/policy/mapping)
  */
-function AssetComparisonRow({ label, asset }: { label: string; asset: any }) {
+function AssetComparisonRow({ label, asset }: { label: string; asset: unknown }) {
   if (asset.changeType === "unchanged") {
     return null;
   }
@@ -190,7 +181,7 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: any }) {
         <div className="bg-slate-900/60 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-amber-600 mb-2">Changes</p>
           <div className="text-[11px] text-slate-400 space-y-1">
-            {Object.entries(asset.changes).map(([key, change]: [string, any]) => (
+            {Object.entries(asset.changes).map(([key, change]: [string, unknown]) => (
               <div key={key}>
                 <span className="text-slate-500">{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before)}</span>
@@ -208,7 +199,7 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: any }) {
 /**
  * Section: Plan Diff
  */
-function PlanDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges: boolean }) {
+function PlanDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
   if (showOnlyChanges && diff.changeType === "same") {
     return null;
   }
@@ -225,7 +216,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges
         <div className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-slate-500 mb-2">Validated Plan Changes</p>
           <div className="text-[11px] text-slate-400 space-y-1 max-h-40 overflow-y-auto">
-            {Object.entries(diff.validated.changes || {}).map(([key, change]: [string, any]) => (
+            {Object.entries(diff.validated.changes || {}).map(([key, change]: [string, unknown]) => (
               <div key={key} className="font-mono text-[10px]">
                 <span className="text-slate-500">{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before).substring(0, 30)}...</span>
@@ -242,7 +233,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges
         <div className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-slate-500 mb-2">Raw Plan Changes</p>
           <div className="text-[11px] text-slate-400 space-y-1 max-h-40 overflow-y-auto">
-            {Object.entries(diff.raw.changes || {}).map(([key, change]: [string, any]) => (
+            {Object.entries(diff.raw.changes || {}).map(([key, change]: [string, unknown]) => (
               <div key={key} className="font-mono text-[10px]">
                 <span className="text-slate-500">{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before).substring(0, 30)}...</span>
@@ -264,7 +255,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges
 /**
  * Section: Tool Calls Diff
  */
-function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges: boolean }) {
+function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
   const hasChanges = diff.added.length > 0 || diff.removed.length > 0 || diff.modified.length > 0;
 
   if (showOnlyChanges && !hasChanges) {
@@ -285,7 +276,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyCh
         <div className="bg-blue-900/20 border border-blue-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-blue-400 mb-2">Added ({diff.added.length})</p>
           <div className="text-[11px] text-blue-300 space-y-1">
-            {diff.added.map((tool: any, idx: number) => (
+            {diff.added.map((tool: unknown, idx: number) => (
               <div key={idx}>
                 <span className="font-mono">{tool.tool_name}</span>
               </div>
@@ -299,7 +290,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyCh
         <div className="bg-rose-900/20 border border-rose-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-rose-400 mb-2">Removed ({diff.removed.length})</p>
           <div className="text-[11px] text-rose-300 space-y-1">
-            {diff.removed.map((tool: any, idx: number) => (
+            {diff.removed.map((tool: unknown, idx: number) => (
               <div key={idx}>
                 <span className="font-mono">{tool.tool_name}</span>
               </div>
@@ -313,7 +304,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyCh
         <div className="bg-amber-900/20 border border-amber-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-amber-400 mb-2">Modified ({diff.modified.length})</p>
           <div className="text-[11px] text-amber-300 space-y-1">
-            {diff.modified.map((tool: any, idx: number) => (
+            {diff.modified.map((tool: unknown, idx: number) => (
               <div key={idx} className="font-mono">
                 {tool.tool_name}
                 {tool.changes && Object.keys(tool.changes).length > 0 && (
@@ -331,8 +322,8 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyCh
 /**
  * Section: References Diff
  */
-function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges: boolean }) {
-  const hasChanges = Object.values(diff.byType).some((rt: any) => rt.added.length > 0 || rt.removed.length > 0);
+function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
+  const hasChanges = Object.values(diff.byType).some((rt: unknown) => rt.added.length > 0 || rt.removed.length > 0);
 
   if (showOnlyChanges && !hasChanges) {
     return null;
@@ -347,7 +338,7 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyC
         </span>
       </div>
 
-      {Object.entries(diff.byType).map(([type, refs]: [string, any]) => (
+      {Object.entries(diff.byType).map(([type, refs]: [string, unknown]) => (
         <div key={type} className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-slate-500 mb-2">
             {type} ({refs.before.length} → {refs.after.length})
@@ -376,8 +367,8 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyC
 /**
  * Section: Answer Blocks Diff
  */
-function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges: boolean }) {
-  const hasChanges = diff.blocks.some((b: any) => b.changeType !== "unchanged");
+function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
+  const hasChanges = diff.blocks.some((b: unknown) => b.changeType !== "unchanged");
 
   if (showOnlyChanges && !hasChanges) {
     return null;
@@ -393,7 +384,7 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: any; showOnl
       </div>
 
       <div className="space-y-2">
-        {diff.blocks.map((block: any, idx: number) => (
+        {diff.blocks.map((block: unknown, idx: number) => (
           <div key={idx} className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[11px] font-semibold text-slate-300">Block {block.index}</span>
@@ -422,7 +413,7 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: any; showOnl
 /**
  * Section: UI Render Diff
  */
-function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyChanges: boolean }) {
+function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
   const hasChanges = diff.changes.length > 0 || diff.error_count_before !== diff.error_count_after;
 
   if (showOnlyChanges && !hasChanges) {
@@ -450,7 +441,7 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: any; showOnlyCha
       )}
 
       {/* Changes */}
-      {diff.changes.map((change: any, idx: number) => (
+      {diff.changes.map((change: unknown, idx: number) => (
         <div key={idx} className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold text-slate-300">Component {change.index}</span>
@@ -499,7 +490,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
       });
       router.push(`/admin/inspector?trace_id=${encodeURIComponent(response.data.trace_id)}`);
       onClose(); // Close the diff view after kicking off RCA
-    } catch (err: any) {
+    } catch (err: unknown) {
       setRcaError(err.message || "Failed to run RCA analysis.");
     } finally {
       setRcaLoading(false);
@@ -520,9 +511,9 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
           traceDiff.tool_calls.removed.length > 0 ||
           traceDiff.tool_calls.modified.length > 0;
       case "references":
-        return Object.values(traceDiff.references.byType).some((rt: any) => rt.added.length > 0 || rt.removed.length > 0);
+        return Object.values(traceDiff.references.byType).some((rt: unknown) => rt.added.length > 0 || rt.removed.length > 0);
       case "answers":
-        return traceDiff.answer_blocks.blocks.some((b: any) => b.changeType !== "unchanged");
+        return traceDiff.answer_blocks.blocks.some((b: unknown) => b.changeType !== "unchanged");
       case "ui":
         return traceDiff.ui_render.changes.length > 0 || traceDiff.ui_render.error_count_before !== traceDiff.ui_render.error_count_after;
       default:

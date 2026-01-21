@@ -69,7 +69,7 @@ export function extractStatePaths(schema?: StateSchema): string[] {
 
   const paths: string[] = [];
 
-  function traverse(obj: any, prefix: string = "") {
+  function traverse(obj: unknown, prefix: string = "") {
     if (!obj || typeof obj !== "object") return;
 
     if (obj.type === "object" && obj.properties) {
@@ -93,7 +93,7 @@ export function extractStatePaths(schema?: StateSchema): string[] {
  * Extract all available context paths
  * Usually comes from inputs schema or fixed structure
  */
-export function extractContextPaths(contextSchema?: any): string[] {
+export function extractContextPaths(contextSchema?: unknown): string[] {
   if (!contextSchema) {
     // Default context paths from runtime
     return ["user_id", "user_email", "tenant_id", "permissions"];
@@ -105,7 +105,7 @@ export function extractContextPaths(contextSchema?: any): string[] {
 /**
  * Extract all available inputs paths
  */
-export function extractInputsPaths(inputsSchema?: any): string[] {
+export function extractInputsPaths(inputsSchema?: unknown): string[] {
   if (!inputsSchema) return [];
   return extractStatePaths(inputsSchema as StateSchema);
 }
@@ -185,7 +185,7 @@ export function isValidPath(path: string, schema?: StateSchema): boolean {
   if (!schema || !path) return false;
 
   const parts = path.split(".");
-  let current: any = schema;
+  let current: unknown = schema;
 
   for (const part of parts) {
     if (part === "[]") {
@@ -213,7 +213,7 @@ export function getPathType(path: string, schema?: StateSchema): string {
   if (!schema || !path) return "any";
 
   const parts = path.split(".");
-  let current: any = schema;
+  let current: unknown = schema;
 
   for (const part of parts) {
     if (part === "[]") {
@@ -240,10 +240,10 @@ export function getPathType(path: string, schema?: StateSchema): string {
  * Extract all binding expressions from an object/map
  * Recursively searches for {{...}} patterns
  */
-export function extractBindingsFromObject(obj: any): string[] {
+export function extractBindingsFromObject(obj: unknown): string[] {
   const bindings: Set<string> = new Set();
 
-  function traverse(value: any) {
+  function traverse(value: unknown) {
     if (typeof value === "string") {
       const parsed = parseBindingExpression(value);
       if (parsed) {
@@ -266,14 +266,14 @@ export function extractBindingsFromObject(obj: any): string[] {
  * Note: This is for preview/validation only. Runtime binding is done differently.
  */
 export function renderPayloadTemplate(
-  template: any,
+  template: unknown,
   context: {
-    state?: any;
-    inputs?: any;
-    context?: any;
+    state?: unknown;
+    inputs?: unknown;
+    context?: unknown;
     trace_id?: string;
   }
-): any {
+): unknown {
   if (typeof template === "string") {
     const parsed = parseBindingExpression(template);
     if (parsed) {
@@ -287,7 +287,7 @@ export function renderPayloadTemplate(
       if (!sourceObj || !path) return template;
 
       const parts = path.split(".");
-      let value: any = sourceObj;
+      let value: unknown = sourceObj;
 
       for (const part of parts) {
         if (value && typeof value === "object") {
@@ -305,7 +305,7 @@ export function renderPayloadTemplate(
       renderPayloadTemplate(item, context)
     );
   } else if (template !== null && typeof template === "object") {
-    const result: any = {};
+    const result: unknown = {};
     for (const [key, value] of Object.entries(template)) {
       result[key] = renderPayloadTemplate(value, context);
     }

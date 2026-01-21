@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Document, Page, pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
@@ -35,18 +34,15 @@ export default function DocumentViewerPage() {
   const searchParams = useSearchParams();
   const chunkId = searchParams?.get("chunkId") ?? undefined;
   const initialPageParam = Number(searchParams?.get("page") ?? 1) || 1;
-  if (!documentId) {
-    return (
-      <div className="p-6 text-sm text-rose-400">
-        Document ID is unavailable. Please navigate from the document list.
-      </div>
-    );
-  }
+
   const [currentPage, setCurrentPage] = useState(initialPageParam);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [chunkInfo, setChunkInfo] = useState<ChunkInfo | null>(null);
   const [documentMeta, setDocumentMeta] = useState<DocumentMeta | null>(null);
   const [pageWidth, setPageWidth] = useState(800);
+
+  // Derive currentPage from searchParams and chunkInfo
+  const derivedCurrentPage = Number(searchParams?.get("page") ?? chunkInfo?.page ?? 1) || 1;
 
   const highlightVisible = chunkInfo && chunkInfo.page === currentPage;
 
@@ -125,33 +121,33 @@ export default function DocumentViewerPage() {
   }, []);
 
   useEffect(() => {
-    if (chunkId) {
-      const fetchChunk = async () => {
-        const response = await fetch(
-          `${apiBaseUrl}/documents/${documentId}/chunks/${chunkId}`,
-          {
-            headers: {
-              "X-Tenant-Id": "default",
-              "X-User-Id": "default",
-            },
-          }
-        );
-        if (!response.ok) {
-          return;
+    const fetchChunk = async () => {
+      if (!chunkId) {
+        setChunkInfo(null);
+        return;
+      }
+      const response = await fetch(
+        `${apiBaseUrl}/documents/${documentId}/chunks/${chunkId}`,
+        {
+          headers: {
+            "X-Tenant-Id": "default",
+            "X-User-Id": "default",
+          },
         }
-        const payload = await response.json();
-        setChunkInfo(payload.data.chunk);
-      };
-      void fetchChunk();
-    } else {
-      setChunkInfo(null);
-    }
+      );
+      if (!response.ok) {
+        return;
+      }
+      const payload = await response.json();
+      setChunkInfo(payload.data.chunk);
+    };
+    void fetchChunk();
   }, [apiBaseUrl, chunkId, documentId]);
 
+  // Sync currentPage with derived value when it changes from external source
   useEffect(() => {
-    const pageParam = Number(searchParams?.get("page") ?? chunkInfo?.page ?? 1) || 1;
-    setCurrentPage(pageParam);
-  }, [chunkInfo, searchParams]);
+    setCurrentPage(derivedCurrentPage);
+  }, [derivedCurrentPage]);
 
   useEffect(() => {
     if (!chunkInfo || !highlightVisible) {
@@ -214,6 +210,14 @@ export default function DocumentViewerPage() {
       label: chunkInfo.snippet,
     };
   }, [chunkInfo]);
+
+  if (!documentId) {
+    return (
+      <div className="p-6 text-sm text-rose-400">
+        Document ID is unavailable. Please navigate from the document list.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

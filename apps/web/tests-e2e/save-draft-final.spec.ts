@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test('Save Draft - Full Detailed Test', async ({ browser }) => {
   const page = await browser.newPage();
@@ -70,7 +70,7 @@ test('Save Draft - Full Detailed Test', async ({ browser }) => {
 
     // Capture network requests during save
     const saveStartTime = Date.now();
-    const requestsBefore = networkRequests.length;
+    // Track network requests count
 
     // Get Save Draft button
     const saveDraftBtn = page.locator('[data-testid="btn-save-draft"]');

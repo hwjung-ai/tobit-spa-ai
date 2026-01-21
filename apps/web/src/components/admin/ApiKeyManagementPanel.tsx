@@ -90,7 +90,7 @@ export function ApiKeyManagementPanel() {
       ];
       setApiKeys(mockKeys);
       setError(null);
-    } catch (err) {
+    } catch {
       setError("Failed to fetch API keys");
     } finally {
       setLoading(false);
@@ -132,7 +132,7 @@ export function ApiKeyManagementPanel() {
         setCreatedKey(null);
         setShowKeySecret(false);
       }, 10000);
-    } catch (err) {
+    } catch {
       setError("Failed to create API key");
     } finally {
       setLoading(false);
@@ -152,7 +152,7 @@ export function ApiKeyManagementPanel() {
       setIsRevokeDialogOpen(false);
       setSelectedKeyForRevoke(null);
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch {
       setError("Failed to revoke API key");
     } finally {
       setLoading(false);

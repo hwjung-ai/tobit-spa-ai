@@ -16,19 +16,19 @@ import BlockRenderer from "./BlockRenderer";
 interface UIPanelRendererProps {
   block: UIPanelBlock;
   traceId: string;
-  onResult?: (blocks: any[]) => void;
+  onResult?: (blocks: unknown[]) => void;
 }
 
 export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRendererProps) {
-  const [inputValues, setInputValues] = useState<Record<string, any>>(() => {
-    const defaults: Record<string, any> = {};
+  const [inputValues, setInputValues] = useState<Record<string, unknown>>(() => {
+    const defaults: Record<string, unknown> = {};
     for (const input of block.inputs) {
       defaults[input.id] = input.default ?? (input.kind === "checkbox" ? false : "");
     }
     return defaults;
   });
 
-  const [resultBlocks, setResultBlocks] = useState<any[]>([]);
+  const [resultBlocks, setResultBlocks] = useState<unknown[]>([]);
   const [actionTraceId, setActionTraceId] = useState<string | null>(null);
 
   const executeMutation = useMutation({
@@ -40,7 +40,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
       });
 
       const endpoint = action.endpoint || "/ops/ui-actions";
-      const response = await fetchApi<any>(endpoint, {
+      const response = await fetchApi<unknown>(endpoint, {
         method: action.method || "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -57,7 +57,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
     },
   });
 
-  const handleInputChange = (inputId: string, value: any) => {
+  const handleInputChange = (inputId: string, value: unknown) => {
     setInputValues((prev) => ({ ...prev, [inputId]: value }));
   };
 
@@ -151,7 +151,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
   );
 }
 
-function renderInput(input: UIInput, value: any, onChange: (value: any) => void) {
+function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) => void) {
   switch (input.kind) {
     case "text":
       return (

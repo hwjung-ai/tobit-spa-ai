@@ -91,7 +91,7 @@ export function findComponentById(
 export function updateComponentPropsInSchema(
   schema: ScreenSchemaV1,
   componentId: string,
-  props: Record<string, any>
+  props: Record<string, unknown>
 ): ScreenSchemaV1 {
   const newComponents = schema.components.map(c =>
     c.id === componentId
@@ -175,7 +175,7 @@ export function findComponentIndex(
 /**
  * Validate component structure
  */
-export function isValidComponent(component: any): boolean {
+export function isValidComponent(component: unknown): boolean {
   return (
     component &&
     typeof component === "object" &&
@@ -188,7 +188,7 @@ export function isValidComponent(component: any): boolean {
 /**
  * Validate schema structure
  */
-export function isValidSchema(schema: any): boolean {
+export function isValidSchema(schema: unknown): boolean {
   return (
     schema &&
     typeof schema === "object" &&
@@ -196,7 +196,7 @@ export function isValidSchema(schema: any): boolean {
     schema.layout &&
     typeof schema.layout === "object" &&
     Array.isArray(schema.components) &&
-    schema.components.every((c: any) => isValidComponent(c)) &&
+    schema.components.every((c: unknown) => isValidComponent(c)) &&
     schema.state &&
     typeof schema.state === "object" &&
     typeof schema.bindings === "object"

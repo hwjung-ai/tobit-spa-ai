@@ -48,7 +48,7 @@ test.describe('UI Screen + UI Actions + Inspector Traces (PR-C)', () => {
                 traceIdFromResponse = data.trace_id;
                 console.log(`✓ Captured trace_id: ${traceIdFromResponse}`);
               }
-            } catch (e) {
+            } catch {
               // Response not JSON
             }
           }

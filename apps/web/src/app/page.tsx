@@ -87,7 +87,7 @@ export default function Home() {
     try {
       const payload = await authenticatedFetch<ThreadRead[]>(`/threads`);
       setThreads(payload);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to load threads", error);
       setThreadsError(error?.message || "Failed to load threads");
     } finally {

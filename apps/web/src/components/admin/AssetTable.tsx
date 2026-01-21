@@ -22,7 +22,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             field: "name",
             flex: 2,
             minWidth: 200,
-            cellRenderer: (params: any) => {
+            cellRenderer: (params: unknown) => {
                 if (!params.data) return null;
                 return (
                     <Link
@@ -39,7 +39,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             field: "asset_type",
             flex: 1,
             minWidth: 120,
-            cellRenderer: (params: any) => {
+            cellRenderer: (params: unknown) => {
                 const type = params.value;
                 const colors = type === "prompt" ? "bg-purple-950/50 text-purple-300 border-purple-800/50" :
                     type === "mapping" ? "bg-blue-950/50 text-blue-300 border-blue-800/50" :
@@ -59,7 +59,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             field: "status",
             flex: 1,
             minWidth: 120,
-            cellRenderer: (params: any) => {
+            cellRenderer: (params: unknown) => {
                 const status = params.value;
                 const colors = status === "published" ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50" :
                     "bg-slate-800/50 text-slate-400 border-slate-700/50";
@@ -74,7 +74,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             headerName: "Version",
             field: "version",
             width: 100,
-            cellRenderer: (params: any) => (
+            cellRenderer: (params: unknown) => (
                 <span className="text-slate-400 font-mono text-xs">v{params.value}</span>
             )
         },
@@ -83,7 +83,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             field: "updated_at",
             flex: 1,
             minWidth: 150,
-            cellRenderer: (params: any) => (
+            cellRenderer: (params: unknown) => (
                 <span className="text-slate-500 text-xs">
                     {formatRelativeTime(params.value)}
                 </span>
@@ -96,7 +96,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             sortable: false,
             filter: false,
             pinned: "right",
-            cellRenderer: (params: any) => (
+            cellRenderer: (params: unknown) => (
                 <div className="flex justify-end w-full pr-2">
                     <Link
                         href={`/admin/assets/${params.value}`}
