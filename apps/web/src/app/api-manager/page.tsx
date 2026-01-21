@@ -1325,7 +1325,8 @@ export default function ApiManagerPage() {
     fetchExecLogs();
     const baseline = apiToDraft(selectedApi);
     setFormBaselineSnapshot(JSON.stringify(baseline));
-  }, [selectedApi, fetchExecLogs, buildDraftFromForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedApi, fetchExecLogs]);
 
   const filteredApis = useMemo(() => {
     // Combine server-fetched APIs and local-stored APIs
