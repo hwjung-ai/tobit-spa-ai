@@ -28,8 +28,8 @@ export default function AssetDetailPage() {
         try {
             await fetchApi(`/asset-registry/assets/${assetId}`, { method: "DELETE" });
             router.push("/admin/assets");
-        } catch (err: any) {
-            alert(err.message || "Failed to delete asset");
+        } catch (err: unknown) {
+            alert((err as Error).message || "Failed to delete asset");
         }
     };
 
@@ -39,8 +39,8 @@ export default function AssetDetailPage() {
         try {
             await fetchApi(`/asset-registry/assets/${assetId}/unpublish`, { method: "POST" });
             refetch();
-        } catch (err: any) {
-            alert(err.message || "Failed to rollback asset");
+        } catch (err: unknown) {
+            alert((err as Error).message || "Failed to rollback asset");
         }
     };
 
@@ -65,7 +65,7 @@ export default function AssetDetailPage() {
                         </svg>
                     </div>
                     <h2 className="text-xl font-bold text-white mb-2">Error Loading Asset</h2>
-                    <p className="text-slate-400 mb-8 max-w-xl text-center">{(error as any)?.message || "The requested asset could not be found or retrieved from the server."}</p>
+                    <p className="text-slate-400 mb-8 max-w-xl text-center">{(error as Error)?.message || "The requested asset could not be found or retrieved from the server."}</p>
                     <Link
                         href="/admin/assets"
                         className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium inline-block"

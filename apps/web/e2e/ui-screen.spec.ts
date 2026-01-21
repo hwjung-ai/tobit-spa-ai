@@ -64,7 +64,7 @@ test.describe("UI Screen Contract V1", () => {
   });
 
   test.describe("C0-2: Screen Asset operation model", () => {
-    test("should persist screen asset in draft status", async ({ page, request }) => {
+    test("should persist screen asset in draft status", async ({ request }) => {
       const createResponse = await request.post(
         "http://localhost:8000/asset-registry/assets",
         {
@@ -92,7 +92,6 @@ test.describe("UI Screen Contract V1", () => {
     });
 
     test("should publish screen asset and increment version", async ({
-      page,
       request,
     }) => {
       // Create draft
@@ -379,9 +378,6 @@ test.describe("UI Screen Contract V1", () => {
         // 3. Verify action executed and state updated
         await page.waitForTimeout(1500);
 
-        const resultText = page.locator(
-          'text="Device GT-1 details loaded successfully"'
-        );
         // May or may not appear depending on backend response
       }
 
@@ -438,7 +434,6 @@ test.describe("UI Screen Contract V1", () => {
           await page.waitForTimeout(2000);
 
           // Modal should close or success message appear
-          const successMsg = page.locator('text="successfully"');
           // May appear depending on backend response
         }
       }
@@ -450,7 +445,6 @@ test.describe("UI Screen Contract V1", () => {
       // Try to render non-existent screen
       await page.goto("/?test=missing_screen_screen");
 
-      const errorMessage = page.locator("text=Screen not found");
       // Should show error or be handled gracefully
     });
 
