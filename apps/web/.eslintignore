@@ -1,6 +1,0 @@
-# Ignore PDF worker file (external library)
-pdf.worker.min.mjs
-
-# Ignore third-party files in public directory
-public/**/*.min.js
-public/**/*.min.mjs
