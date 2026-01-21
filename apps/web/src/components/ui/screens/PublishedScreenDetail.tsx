@@ -97,8 +97,8 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+    <div className="flex h-full flex-col gap-4">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex-shrink-0">
         <h2 className="text-lg font-semibold text-white">
           {asset.name || asset.screen_id}
         </h2>
@@ -121,7 +121,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
           </div>
         )}
       </div>
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+      <div className="flex-1 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
         <UIScreenRenderer block={previewBlock!} schemaOverride={asset.schema_json} />
       </div>
     </div>
