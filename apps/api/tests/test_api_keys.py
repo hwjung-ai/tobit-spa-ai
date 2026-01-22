@@ -19,29 +19,7 @@ from core.db import get_session
 from core.security import get_password_hash
 from fastapi.testclient import TestClient
 from main import app
-from sqlmodel import Session, create_engine
-from sqlmodel.pool import StaticPool
-
-
-@pytest.fixture
-def session():
-    """Create an in-memory SQLite database for testing."""
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-
-    # Create all tables
-    from apps.api.app.modules.api_keys.models import TbApiKey
-    from apps.api.app.modules.auth.models import TbRefreshToken, TbUser
-
-    TbUser.metadata.create_all(engine)
-    TbRefreshToken.metadata.create_all(engine)
-    TbApiKey.metadata.create_all(engine)
-
-    with Session(engine) as session:
-        yield session
+from sqlmodel import Session
 
 
 @pytest.fixture
@@ -49,7 +27,7 @@ def test_user(session: Session) -> TbUser:
     """Create a test user."""
     user = TbUser(
         id="test-user-001",
-        email="test@example.com",
+        email_encrypted="test@example.com",
         username="Test User",
         password_hash=get_password_hash("testpass123"),
         role=UserRole.DEVELOPER,
