@@ -1,18 +1,17 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Badge } from "../../../components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../../components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { formatError } from "../../../lib/utils";
 
 type ResolverType = "alias_mapping" | "pattern_rule" | "transformation";
@@ -53,36 +52,6 @@ interface ResolverAssetResponse {
   updated_at: string;
 }
 
-interface AliasMapping {
-  source_entity: string;
-  target_entity: string;
-  namespace?: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-  metadata?: Record<string, unknown>;
-}
-
-interface PatternRule {
-  name: string;
-  pattern: string;
-  replacement: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-  metadata?: Record<string, unknown>;
-}
-
-interface TransformationRule {
-  name: string;
-  transformation_type: string;
-  field_name: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-  parameters?: Record<string, unknown>;
-  metadata?: Record<string, unknown>;
-}
 
 interface ResolverSimulationRequest {
   config: ResolverConfig;
@@ -121,7 +90,6 @@ export default function ResolversPage() {
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
   const [selectedResolver, setSelectedResolver] = useState<ResolverAssetResponse | null>(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
   const [isSimulateDialogOpen, setIsSimulateDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<ResolverRule | null>(null);

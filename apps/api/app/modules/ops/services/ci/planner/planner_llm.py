@@ -474,11 +474,11 @@ def create_plan(question: str) -> Plan:
             offset_int = 0
         limit_int = max(1, min(50, limit_int))
         offset_int = max(0, min(5000, offset_int))
-        plan.list = plan.list.copy(update={"enabled": True, "limit": limit_int, "offset": offset_int})
+        plan.list = plan.list.model_copy(update={"enabled": True, "limit": limit_int, "offset": offset_int})
         plan.intent = Intent.LIST
-        plan.output = plan.output.copy(update={"blocks": ["table"], "primary": "table"})
-        plan.primary = plan.primary.copy(update={"keywords": []})
-        plan.secondary = plan.secondary.copy(update={"keywords": []})
+        plan.output = plan.output.model_copy(update={"blocks": ["table"], "primary": "table"})
+        plan.primary = plan.primary.model_copy(update={"keywords": []})
+        plan.secondary = plan.secondary.model_copy(update={"keywords": []})
         logger.info(
             "ci.planner.llm.used",
             extra={"ci_identifiers": len(ci_keywords), "output_types": ",".join(sorted(output_types)), "list_enabled": True, "list_limit": limit_int},
@@ -498,27 +498,27 @@ def create_plan(question: str) -> Plan:
         keywords = list(ci_keywords)
     else:
         keywords = _extract_keywords(normalized)
-    plan.primary = plan.primary.copy(update={"keywords": keywords})
+    plan.primary = plan.primary.model_copy(update={"keywords": keywords})
     parsed_filters = _extract_filters(normalized)
     if parsed_filters:
-        plan.primary = plan.primary.copy(update={"filters": parsed_filters})
+        plan.primary = plan.primary.model_copy(update={"filters": parsed_filters})
     server_filter = FilterSpec(field="ci_subtype", value="server") if _should_filter_server(normalized) else None
     aggregate_filters = _merge_filters(
         plan.primary.filters,
         llm_filters,
         [server_filter] if server_filter else [],
     )
-    plan.aggregate = plan.aggregate.copy(update={"filters": aggregate_filters})
+    plan.aggregate = plan.aggregate.model_copy(update={"filters": aggregate_filters})
     secondary_text = normalized
     if plan.intent == Intent.PATH:
         left, right = _split_path_candidates(normalized)
-        plan.primary = plan.primary.copy(update={"keywords": _extract_keywords(left)})
+        plan.primary = plan.primary.model_copy(update={"keywords": _extract_keywords(left)})
         secondary_text = right
-    plan.secondary = plan.secondary.copy(update={"keywords": _extract_keywords(secondary_text)})
+    plan.secondary = plan.secondary.model_copy(update={"keywords": _extract_keywords(secondary_text)})
     if plan.intent == Intent.AGGREGATE:
         should_group = _determine_type_aggregation(normalized) and not aggregate_filters
         group_by = ["ci_type"] if should_group else []
-        plan.aggregate = plan.aggregate.copy(
+        plan.aggregate = plan.aggregate.model_copy(
             update={"group_by": group_by, "metrics": ["count"], "top_n": 10}
         )
     # Depth 요청 추출 (사용자 질의에서 depth 명시)
@@ -532,18 +532,18 @@ def create_plan(question: str) -> Plan:
             requested_depth = 1
 
     if plan.intent == Intent.PATH:
-        plan.graph = plan.graph.copy(update={
+        plan.graph = plan.graph.model_copy(update={
             "depth": requested_depth if requested_depth > 1 else 4,
             "user_requested_depth": requested_depth
         })
     else:
         # PATH가 아니어도 user_requested_depth 항상 기록
-        plan.graph = plan.graph.copy(update={"user_requested_depth": requested_depth})
+        plan.graph = plan.graph.model_copy(update={"user_requested_depth": requested_depth})
     metric_spec = None
     if llm_payload:
         metric_spec = _metric_payload_to_spec(llm_payload.get("metric"))
         if metric_spec and "chart" in output_types and metric_spec.mode != "series":
-            metric_spec = metric_spec.copy(update={"mode": "series"})
+            metric_spec = metric_spec.model_copy(update={"mode": "series"})
     if not metric_spec:
         metric_spec = _determine_metric_spec(normalized)
     if metric_spec:
@@ -560,14 +560,14 @@ def create_plan(question: str) -> Plan:
     if not llm_payload:
         list_spec = _determine_list_spec(normalized)
         if list_spec:
-            plan = plan.copy(update={"list": list_spec})
+            plan = plan.model_copy(update={"list": list_spec})
             plan.intent = Intent.LIST
-            plan.primary = plan.primary.copy(update={"keywords": []})
+            plan.primary = plan.primary.model_copy(update={"keywords": []})
     if plan.metric and _has_graph_scope_keyword(normalized):
         plan = _apply_graph_scope(plan, normalized)
     if plan.mode == PlanMode.AUTO:
-        plan = plan.copy(update={"auto": _determine_auto_spec(normalized, plan)})
-    plan = plan.copy(update={"output": plan.output.copy(update=_build_output_updates(output_types))})
+        plan = plan.model_copy(update={"auto": _determine_auto_spec(normalized, plan)})
+    plan = plan.model_copy(update={"output": plan.output.model_copy(update=_build_output_updates(output_types))})
     if llm_payload:
         logger.info("ci.planner.llm.used", extra={"ci_identifiers": len(ci_keywords), "output_types": ",".join(sorted(output_types)), "list_enabled": False})
     else:
@@ -643,8 +643,8 @@ def _apply_ci_type_aggregation(plan: Plan, text: str) -> Plan:
         return plan
     if plan.intent == Intent.AGGREGATE and "ci_type" in plan.aggregate.group_by:
         return plan
-    aggregate = plan.aggregate.copy(update={"group_by": ["ci_type"], "metrics": ["count"], "top_n": 10})
-    return plan.copy(
+    aggregate = plan.aggregate.model_copy(update={"group_by": ["ci_type"], "metrics": ["count"], "top_n": 10})
+    return plan.model_copy(
         update={
             "intent": Intent.AGGREGATE,
             "aggregate": aggregate,
@@ -708,12 +708,12 @@ def _apply_graph_scope(plan: Plan, text: str) -> Plan:
     metric_spec = plan.metric
     if not metric_spec:
         return plan
-    updated_metric = metric_spec.copy(update={"scope": "graph", "mode": "aggregate"})
-    return plan.copy(
+    updated_metric = metric_spec.model_copy(update={"scope": "graph", "mode": "aggregate"})
+    return plan.model_copy(
         update={
             "metric": updated_metric,
             "view": graph_view,
-            "graph": plan.graph.copy(update={"view": graph_view, "depth": depth}),
+            "graph": plan.graph.model_copy(update={"view": graph_view, "depth": depth}),
         }
     )
 
@@ -721,10 +721,10 @@ def _apply_graph_scope(plan: Plan, text: str) -> Plan:
 def _apply_graph_history_scope(plan: Plan, text: str) -> Plan:
     graph_view = _determine_graph_view(text)
     depth = _determine_graph_depth(text, graph_view)
-    return plan.copy(
+    return plan.model_copy(
         update={
             "view": graph_view,
-            "graph": plan.graph.copy(update={"view": graph_view, "depth": depth}),
+            "graph": plan.graph.model_copy(update={"view": graph_view, "depth": depth}),
         }
     )
 

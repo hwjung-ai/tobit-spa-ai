@@ -1,0 +1,32 @@
+
+> web@0.1.0 test:e2e
+> playwright test --reporter=list
+
+[2m[WebServer] [22mTool type ci already registered; skipping re-registration
+[2m[WebServer] [22mTool type graph already registered; skipping re-registration
+[2m[WebServer] [22mTool type metric already registered; skipping re-registration
+[2m[WebServer] [22mTool type history already registered; skipping re-registration
+[2m[WebServer] [22mTool type cep already registered; skipping re-registration
+[2m[WebServer] [22mINFO:     Started server process [219586]
+[2m[WebServer] [22mINFO:     Waiting for application startup.
+[2m[WebServer] [22m2026-01-22T18:30:37+0900 INFO app.modules.cep_builder.scheduler request_id=- tenant_id=- trace_id=- mode=- [CEP] Scheduler disabled by environment variable taskName=Task-2 asctime=2026-01-22T18:30:37+0900
+[2m[WebServer] [22m2026-01-22T18:30:37+0900 INFO app.shared.config_loader request_id=- tenant_id=- trace_id=- mode=- Started watching for changes in /home/spa/tobit-spa-ai/apps/api/resources taskName=Task-2 asctime=2026-01-22T18:30:37+0900
+[2m[WebServer] [22mINFO:     Application startup complete.
+[2m[WebServer] [22mINFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[2m[WebServer] [22m2026-01-22T18:30:38+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- select pg_catalog.version() taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:38+0900
+[2m[WebServer] [22m2026-01-22T18:30:38+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- [raw sql] {} taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:38+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- select current_schema() taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- [raw sql] {} taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- show standard_conforming_strings taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- [raw sql] {} taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- BEGIN (implicit) taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- SELECT count(*) AS count_1 
+[2m[WebServer] [22mFROM tb_cep_notification_log 
+[2m[WebServer] [22mWHERE tb_cep_notification_log.ack IS false taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- [generated in 0.00045s] {} taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- SELECT coalesce(tb_cep_notification.trigger ->> %(trigger_1)s::TEXT, %(coalesce_1)s::VARCHAR) AS severity, count(*) AS count_1 
+[2m[WebServer] [22mFROM tb_cep_notification_log JOIN tb_cep_notification ON tb_cep_notification_log.notification_id = tb_cep_notification.notification_id GROUP BY coalesce(tb_cep_notification.trigger ->> %(trigger_1)s::TEXT, %(coalesce_1)s::VARCHAR) taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:30:39+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- [generated in 0.00048s] {'trigger_1': 'severity', 'coalesce_1': 'info'} taskName=starlette.middleware.base.BaseHTTPMiddleware.__call__.<locals>.call_next.<locals>.coro asctime=2026-01-22T18:30:39+0900
+[2m[WebServer] [22m2026-01-22T18:31:41+0900 INFO sqlalchemy.engine.Engine request_id=- tenant_id=- trace_id=- mode=- ROLLBACK taskName=None asctime=2026-01-22T18:31:41+0900
+Error: Timed out waiting 300000ms from config.webServer.
+

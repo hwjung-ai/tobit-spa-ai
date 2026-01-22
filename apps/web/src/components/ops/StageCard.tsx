@@ -3,7 +3,6 @@
 import { useState } from "react";
 import {
   PlayCircle,
-  PauseCircle,
   RotateCcw,
   Clock,
   CheckCircle,
@@ -16,7 +15,6 @@ import {
   MoreVertical,
   Copy,
   Trash2,
-  Edit3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

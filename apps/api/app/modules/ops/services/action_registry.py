@@ -284,7 +284,7 @@ async def handle_create_maintenance_ticket(
         AnswerBlock confirming creation + state_patch with new ticket
     """
     import uuid
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     from core.config import get_settings
     from core.db_pg import get_pg_connection
@@ -336,7 +336,7 @@ async def handle_create_maintenance_ticket(
                     RETURNING id
                 """
 
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 conn.execute(
                     insert_query,
                     (
@@ -379,7 +379,7 @@ async def handle_create_maintenance_ticket(
                         "scheduled_date": scheduled_date,
                         "assigned_to": assigned_to,
                         "status": "Scheduled",
-                        "created_at": datetime.utcnow().isoformat(),
+                        "created_at": datetime.now(timezone.utc).isoformat(),
                     },
                     "modal_open": False,  # Close modal after creation
                 },

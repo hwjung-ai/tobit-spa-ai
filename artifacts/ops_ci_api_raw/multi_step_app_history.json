@@ -1,141 +1,13 @@
 {
-  "time": "2026-01-20T02:49:00.560756",
+  "time": "2026-01-22T13:26:59.827754Z",
   "code": 0,
   "message": "OK",
   "data": {
-    "answer": "Multiple CI candidates",
+    "answer": "CI app-erp-alert-01- not found",
     "blocks": [
       {
         "type": "text",
-        "text": "Multiple candidates found"
-      },
-      {
-        "type": "table",
-        "columns": [
-          "ci_id",
-          "ci_code",
-          "ci_name",
-          "ci_type",
-          "ci_subtype",
-          "ci_category",
-          "status",
-          "location",
-          "owner"
-        ],
-        "rows": [
-          [
-            "bf253be6-881c-4cc8-8ed8-a1c2c1f38356",
-            "app-analytics-audit-04-1",
-            "Analytics_App_Audit_04-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-b",
-            "analytics-apps"
-          ],
-          [
-            "64cf8131-ad3d-4618-bf37-ec74e5ace1ff",
-            "app-analytics-audit-05-1",
-            "Analytics_App_Audit_05-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-b",
-            "analytics-apps"
-          ],
-          [
-            "deda439d-90fb-483a-affe-fab678f4997b",
-            "app-analytics-integration-03-1",
-            "Analytics_App_Integration_03-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "analytics-apps"
-          ],
-          [
-            "ef3fe5d5-83eb-4509-993b-6fe5995841e6",
-            "app-analytics-pricing-05-2",
-            "Analytics_App_Pricing_05-2",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "analytics-apps"
-          ],
-          [
-            "c416dd9b-17c1-4079-8fc7-6db1bf91eda7",
-            "app-analytics-report-01-1",
-            "Analytics_App_Report_01-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "analytics-apps"
-          ],
-          [
-            "5ef1f62c-a503-4c93-87f6-e69fc8f07c43",
-            "app-analytics-scheduler-02-1",
-            "Analytics_App_Scheduler_02-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-a",
-            "analytics-apps"
-          ],
-          [
-            "bbfd367f-5b15-4209-a47f-5a00ff7b778e",
-            "app-apm-audit-03-3",
-            "APM_App_Audit_03-3",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-a",
-            "apm-apps"
-          ],
-          [
-            "64ba406d-9c27-4b97-b668-af38f091336e",
-            "app-apm-integration-02-1",
-            "APM_App_Integration_02-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-a",
-            "apm-apps"
-          ],
-          [
-            "e7576aff-6c86-4fae-b8b3-b6f07f7f3d4c",
-            "app-apm-inventory-03-1",
-            "APM_App_Inventory_03-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-b",
-            "apm-apps"
-          ],
-          [
-            "53d68ddc-2565-46d2-8f7d-835cdbc4382f",
-            "app-apm-pricing-01-1",
-            "APM_App_Pricing_01-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "apm-apps"
-          ]
-        ],
-        "title": "CI candidates (primary endpoint)",
-        "id": "ci-candidates-primary"
+        "text": "CI 'app-erp-alert-01-' not found."
       }
     ],
     "trace": {
@@ -174,6 +46,7 @@
         },
         "graph": {
           "depth": 2,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -240,9 +113,11 @@
         "mode": "ci",
         "primary": {
           "keywords": [
-            "app-erp-alert-01-1",
+            "app-erp-alert-01-1의",
             "2025-12-01",
-            "2025-12-31"
+            "2025-12-31",
+            "작업",
+            "배포"
           ],
           "filters": [],
           "limit": 5
@@ -267,6 +142,7 @@
         },
         "graph": {
           "depth": 1,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -332,70 +208,12 @@
         "requested_depth": 1,
         "clamped_depth": 1,
         "allowed_rel_types": [],
-        "discovered_rel_types": []
+        "discovered_rel_types": [],
+        "user_requested_depth": 1,
+        "policy_max_depth": 1,
+        "effective_depth": 1
       },
-      "tool_calls": [
-        {
-          "tool": "ci.search",
-          "elapsed_ms": 130,
-          "input_params": {
-            "keywords": [
-              "app-erp-alert-01-1",
-              "2025-12-01",
-              "2025-12-31"
-            ],
-            "filter_count": 0,
-            "limit": 5,
-            "sort": null
-          },
-          "output_summary": {
-            "keyword_count": 3,
-            "filter_count": 0,
-            "limit": 5,
-            "sort_column": null,
-            "row_count": 0
-          },
-          "error": null,
-          "query_asset": null
-        },
-        {
-          "tool": "ci.search",
-          "elapsed_ms": 0,
-          "input_params": {
-            "keywords": [
-              "app-erp-alert-01-1",
-              "2025-12-01",
-              "2025-12-31"
-            ],
-            "filter_count": 0,
-            "limit": 5,
-            "sort": null
-          },
-          "output_summary": {
-            "keyword_count": 3,
-            "filter_count": 0,
-            "limit": 5,
-            "sort_column": null,
-            "row_count": 0
-          },
-          "error": null,
-          "query_asset": null
-        },
-        {
-          "tool": "ci.search_broad",
-          "elapsed_ms": 160,
-          "input_params": {},
-          "output_summary": {
-            "keyword_count": 11,
-            "filter_count": 0,
-            "limit": 10,
-            "sort_column": null,
-            "row_count": 10
-          },
-          "error": null,
-          "query_asset": null
-        }
-      ],
+      "tool_calls": [],
       "references": [],
       "errors": [],
       "tenant_id": "t1",
@@ -403,76 +221,6 @@
       "parent_trace_id": null
     },
     "next_actions": [
-      {
-        "type": "rerun",
-        "label": "app-analytics-audit-04-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "bf253be6-881c-4cc8-8ed8-a1c2c1f38356"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-analytics-audit-05-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "64cf8131-ad3d-4618-bf37-ec74e5ace1ff"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-analytics-integration-03-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "deda439d-90fb-483a-affe-fab678f4997b"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-analytics-pricing-05-2 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "ef3fe5d5-83eb-4509-993b-6fe5995841e6"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-analytics-report-01-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "c416dd9b-17c1-4079-8fc7-6db1bf91eda7"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-analytics-scheduler-02-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "5ef1f62c-a503-4c93-87f6-e69fc8f07c43"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-apm-audit-03-3 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "bbfd367f-5b15-4209-a47f-5a00ff7b778e"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-apm-integration-02-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "64ba406d-9c27-4b97-b668-af38f091336e"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-apm-inventory-03-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "e7576aff-6c86-4fae-b8b3-b6f07f7f3d4c"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-apm-pricing-01-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "53d68ddc-2565-46d2-8f7d-835cdbc4382f"
-        }
-      },
       {
         "type": "open_trace",
         "label": "Trace details"
@@ -482,18 +230,20 @@
       "route": "ci",
       "route_reason": "CI tab",
       "timing_ms": 0,
-      "summary": "Multiple CI candidates",
-      "used_tools": [
-        "ci.search",
-        "ci.search",
-        "ci.search_broad"
-      ],
+      "summary": "CI app-erp-alert-01- not found",
+      "used_tools": [],
       "fallback": false,
+      "runtime": {
+        "ops_mode_config": "real",
+        "ops_mode_effective": "real",
+        "fallback_used": false
+      },
+      "plan_mode": "ci",
       "runner_context": {
         "marker": "RUNNER_PATCH_GRAPH_20260112",
         "file": "/home/spa/tobit-spa-ai/apps/api/app/modules/ops/services/ci/orchestrator/runner.py",
-        "pid": 422680,
-        "thread_id": 140636934096576
+        "pid": 247299,
+        "thread_id": 140486803175104
       },
       "trace_id": null,
       "parent_trace_id": null

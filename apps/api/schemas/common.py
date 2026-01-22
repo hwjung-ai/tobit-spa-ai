@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
@@ -21,7 +21,7 @@ class ResponseEnvelope(BaseModel, Generic[T]):
         message: str = "OK",
         code: int = 0,
     ) -> "ResponseEnvelope":
-        return cls(time=datetime.utcnow(), code=code, message=message, data=data)
+        return cls(time=datetime.now(timezone.utc), code=code, message=message, data=data)
 
     @classmethod
     def error(
@@ -31,4 +31,4 @@ class ResponseEnvelope(BaseModel, Generic[T]):
         code: int = 1,
         data: dict[str, Any] | None = None,
     ) -> "ResponseEnvelope":
-        return cls(time=datetime.utcnow(), code=code, message=message, data=data)
+        return cls(time=datetime.now(timezone.utc), code=code, message=message, data=data)

@@ -438,12 +438,12 @@ export default function OpsPage() {
     let nextActions: NextAction[] | undefined;
     try {
       if (requestedMode.id === "ci") {
-        const data = await authenticatedFetch(`/ops/ci/ask`, {
+        const response = await authenticatedFetch(`/ops/ci/ask`, {
           method: "POST",
           body: JSON.stringify({ question: question.trim() }),
         });
-        console.debug("CI response", { payload, data });
-        const ciPayload = data.data;
+        console.debug("CI response", { payload, response });
+        const ciPayload = response.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
         }
@@ -648,7 +648,7 @@ export default function OpsPage() {
       <div className="mb-6">
         <OpsSummaryStrip
           selectedEntry={selectedEntry}
-          onUpdateData={(data) => {
+          onUpdateData={() => {
             // Handle summary data updates if needed
           }}
         />

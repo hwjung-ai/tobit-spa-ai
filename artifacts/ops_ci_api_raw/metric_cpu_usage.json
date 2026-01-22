@@ -1,141 +1,13 @@
 {
-  "time": "2026-01-20T02:48:59.378722",
+  "time": "2026-01-22T13:26:59.468400Z",
   "code": 0,
   "message": "OK",
   "data": {
-    "answer": "Multiple CI candidates",
+    "answer": "CI srv-erp- not found",
     "blocks": [
       {
         "type": "text",
-        "text": "Multiple candidates found"
-      },
-      {
-        "type": "table",
-        "columns": [
-          "ci_id",
-          "ci_code",
-          "ci_name",
-          "ci_type",
-          "ci_subtype",
-          "ci_category",
-          "status",
-          "location",
-          "owner"
-        ],
-        "rows": [
-          [
-            "c416dd9b-17c1-4079-8fc7-6db1bf91eda7",
-            "app-analytics-report-01-1",
-            "Analytics_App_Report_01-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "analytics-apps"
-          ],
-          [
-            "53d68ddc-2565-46d2-8f7d-835cdbc4382f",
-            "app-apm-pricing-01-1",
-            "APM_App_Pricing_01-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "apm-apps"
-          ],
-          [
-            "ed6f3278-3dfb-4316-a646-13c6251c1991",
-            "app-cmdb-integration-01-1",
-            "CMDB_App_Integration_01-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-a",
-            "cmdb-apps"
-          ],
-          [
-            "e754253e-9963-4981-b465-2a5703c3ca63",
-            "app-erp-alert-04-2",
-            "ERP_App_Alert_04-2",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "erp-apps"
-          ],
-          [
-            "f38b1478-420e-44d7-b402-b25d8fcccf11",
-            "app-erp-alert-05-1",
-            "ERP_App_Alert_05-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-b",
-            "erp-apps"
-          ],
-          [
-            "28f47106-bb5e-4795-81cd-6ca6fa426d1a",
-            "app-erp-integration-03-2",
-            "ERP_App_Integration_03-2",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-a",
-            "erp-apps"
-          ],
-          [
-            "fb43575e-6078-4abe-a89e-4bb9e2a8f48f",
-            "app-erp-integration-04-3",
-            "ERP_App_Integration_04-3",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "erp-apps"
-          ],
-          [
-            "379c7d44-2a8d-468f-b25d-d75999c37edf",
-            "app-erp-order-03-1",
-            "ERP_App_Order_03-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "erp-apps"
-          ],
-          [
-            "7f4567a3-d926-4e49-9d8f-0ebb0871a269",
-            "app-erp-pricing-01-1",
-            "ERP_App_Pricing_01-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-b",
-            "erp-apps"
-          ],
-          [
-            "31ff24c3-3517-481f-9f17-423ac6b7a056",
-            "app-erp-report-02-1",
-            "ERP_App_Report_02-1",
-            "SW",
-            "app",
-            "application",
-            "active",
-            "zone-c",
-            "erp-apps"
-          ]
-        ],
-        "title": "CI candidates (primary endpoint)",
-        "id": "ci-candidates-primary"
+        "text": "CI 'srv-erp-' not found."
       }
     ],
     "trace": {
@@ -176,6 +48,7 @@
         },
         "graph": {
           "depth": 2,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -248,9 +121,11 @@
         "mode": "ci",
         "primary": {
           "keywords": [
-            "srv-erp-01",
+            "srv-erp-01의",
             "2025-12-01",
-            "2025-12-31"
+            "2025-12-31",
+            "cpu_usage",
+            "평균과"
           ],
           "filters": [],
           "limit": 5
@@ -277,6 +152,7 @@
         },
         "graph": {
           "depth": 1,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -348,70 +224,12 @@
         "requested_depth": 1,
         "clamped_depth": 1,
         "allowed_rel_types": [],
-        "discovered_rel_types": []
+        "discovered_rel_types": [],
+        "user_requested_depth": 1,
+        "policy_max_depth": 1,
+        "effective_depth": 1
       },
-      "tool_calls": [
-        {
-          "tool": "ci.search",
-          "elapsed_ms": 123,
-          "input_params": {
-            "keywords": [
-              "srv-erp-01",
-              "2025-12-01",
-              "2025-12-31"
-            ],
-            "filter_count": 0,
-            "limit": 5,
-            "sort": null
-          },
-          "output_summary": {
-            "keyword_count": 3,
-            "filter_count": 0,
-            "limit": 5,
-            "sort_column": null,
-            "row_count": 0
-          },
-          "error": null,
-          "query_asset": null
-        },
-        {
-          "tool": "ci.search",
-          "elapsed_ms": 0,
-          "input_params": {
-            "keywords": [
-              "srv-erp-01",
-              "2025-12-01",
-              "2025-12-31"
-            ],
-            "filter_count": 0,
-            "limit": 5,
-            "sort": null
-          },
-          "output_summary": {
-            "keyword_count": 3,
-            "filter_count": 0,
-            "limit": 5,
-            "sort_column": null,
-            "row_count": 0
-          },
-          "error": null,
-          "query_asset": null
-        },
-        {
-          "tool": "ci.search_broad",
-          "elapsed_ms": 136,
-          "input_params": {},
-          "output_summary": {
-            "keyword_count": 11,
-            "filter_count": 0,
-            "limit": 10,
-            "sort_column": null,
-            "row_count": 10
-          },
-          "error": null,
-          "query_asset": null
-        }
-      ],
+      "tool_calls": [],
       "references": [],
       "errors": [],
       "tenant_id": "t1",
@@ -419,76 +237,6 @@
       "parent_trace_id": null
     },
     "next_actions": [
-      {
-        "type": "rerun",
-        "label": "app-analytics-report-01-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "c416dd9b-17c1-4079-8fc7-6db1bf91eda7"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-apm-pricing-01-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "53d68ddc-2565-46d2-8f7d-835cdbc4382f"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-cmdb-integration-01-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "ed6f3278-3dfb-4316-a646-13c6251c1991"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-alert-04-2 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "e754253e-9963-4981-b465-2a5703c3ca63"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-alert-05-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "f38b1478-420e-44d7-b402-b25d8fcccf11"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-integration-03-2 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "28f47106-bb5e-4795-81cd-6ca6fa426d1a"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-integration-04-3 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "fb43575e-6078-4abe-a89e-4bb9e2a8f48f"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-order-03-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "379c7d44-2a8d-468f-b25d-d75999c37edf"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-pricing-01-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "7f4567a3-d926-4e49-9d8f-0ebb0871a269"
-        }
-      },
-      {
-        "type": "rerun",
-        "label": "app-erp-report-02-1 선택 (primary)",
-        "payload": {
-          "selected_ci_id": "31ff24c3-3517-481f-9f17-423ac6b7a056"
-        }
-      },
       {
         "type": "open_trace",
         "label": "Trace details"
@@ -498,18 +246,20 @@
       "route": "ci",
       "route_reason": "CI tab",
       "timing_ms": 0,
-      "summary": "Multiple CI candidates",
-      "used_tools": [
-        "ci.search",
-        "ci.search",
-        "ci.search_broad"
-      ],
+      "summary": "CI srv-erp- not found",
+      "used_tools": [],
       "fallback": false,
+      "runtime": {
+        "ops_mode_config": "real",
+        "ops_mode_effective": "real",
+        "fallback_used": false
+      },
+      "plan_mode": "ci",
       "runner_context": {
         "marker": "RUNNER_PATCH_GRAPH_20260112",
         "file": "/home/spa/tobit-spa-ai/apps/api/app/modules/ops/services/ci/orchestrator/runner.py",
-        "pid": 422680,
-        "thread_id": 140636934096576
+        "pid": 247299,
+        "thread_id": 140486803175104
       },
       "trace_id": null,
       "parent_trace_id": null

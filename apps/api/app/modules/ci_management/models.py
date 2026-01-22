@@ -49,6 +49,7 @@ class IntegrityStatus(str, Enum):
 
 class TbCIChangeBase(SQLModel):
     """Base model for CI changes."""
+    tenant_id: str = Field(max_length=36, index=True)
     ci_id: str = Field(max_length=100, index=True)
     change_type: ChangeType
     status: ChangeStatus = Field(default=ChangeStatus.PENDING, index=True)
@@ -61,11 +62,13 @@ class TbCIChangeBase(SQLModel):
 
     approved_by_user_id: Optional[str] = Field(default=None, max_length=36)
     approved_at: Optional[datetime] = Field(default=None)
+    applied_at: Optional[datetime] = Field(default=None)
     approval_notes: Optional[str] = Field(default=None, max_length=1000)
 
 
 class TbCIIntegrityIssueBase(SQLModel):
     """Base model for CI integrity issues."""
+    tenant_id: str = Field(max_length=36, index=True)
     ci_id: str = Field(max_length=100, index=True)
     issue_type: str = Field(max_length=50)  # duplicate, missing_field, inconsistent, etc.
     severity: str = Field(max_length=20)  # info, warning, error
@@ -81,6 +84,7 @@ class TbCIIntegrityIssueBase(SQLModel):
 
 class TbCIDuplicateBase(SQLModel):
     """Base model for duplicate CI detection."""
+    tenant_id: str = Field(max_length=36, index=True)
     ci_id_1: str = Field(max_length=100, index=True)
     ci_id_2: str = Field(max_length=100, index=True)
 
@@ -138,6 +142,7 @@ class TbCIDuplicate(TbCIDuplicateBase, table=True):
 class CIChangeRead(BaseModel):
     """Schema for reading CI changes."""
     id: str
+    tenant_id: str
     ci_id: str
     change_type: ChangeType
     status: ChangeStatus
@@ -147,6 +152,7 @@ class CIChangeRead(BaseModel):
     new_values: Optional[str]
     approved_by_user_id: Optional[str]
     approved_at: Optional[datetime]
+    applied_at: Optional[datetime]
     approval_notes: Optional[str]
     created_at: datetime
     updated_at: datetime
@@ -154,6 +160,7 @@ class CIChangeRead(BaseModel):
 
 class CIChangeCreate(BaseModel):
     """Schema for creating CI changes."""
+    tenant_id: str
     ci_id: str
     change_type: ChangeType
     changed_by_user_id: str

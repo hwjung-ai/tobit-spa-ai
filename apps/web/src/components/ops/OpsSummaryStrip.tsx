@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { formatTimestamp } from "./utils/TimeUtils";
 import {
   BarChart3,
   Clock,

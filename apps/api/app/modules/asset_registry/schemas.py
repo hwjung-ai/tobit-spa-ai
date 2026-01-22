@@ -12,9 +12,22 @@ class AssetStatus(str, Enum):
     published = "published"
 
 
+class PromptAssetCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    asset_type: str = "prompt"
+    name: str
+    scope: str
+    engine: str
+    template: str
+    input_schema: dict[str, Any]
+    output_contract: dict[str, Any]
+    tags: dict[str, Any] | None = None
+    created_by: str | None = None
+
+
 class ScreenAssetCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    asset_type: str
+    asset_type: str = "screen"
     screen_id: str
     name: str
     description: str | None = None
@@ -37,6 +50,26 @@ class ScreenAssetRead(BaseModel):
     version: int
     status: str
     screen_schema: dict[str, Any] = Field(alias="schema_json")
+    tags: dict[str, Any] | None = None
+    created_by: str | None = None
+    published_by: str | None = None
+    published_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class PromptAssetRead(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    asset_id: str
+    asset_type: str
+    name: str
+    scope: str
+    engine: str
+    version: int
+    status: str
+    template: str
+    input_schema: dict[str, Any]
+    output_contract: dict[str, Any]
     tags: dict[str, Any] | None = None
     created_by: str | None = None
     published_by: str | None = None

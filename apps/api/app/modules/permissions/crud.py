@@ -6,8 +6,8 @@ from uuid import uuid4
 
 from sqlmodel import Session, select
 
-from apps.api.app.modules.auth.models import UserRole
-from apps.api.app.modules.permissions.models import (
+from app.modules.auth.models import UserRole
+from app.modules.permissions.models import (
     PermissionCheck,
     ResourcePermission,
     RolePermissionDefault,
@@ -26,6 +26,7 @@ ROLE_PERMISSION_DEFAULTS = {
         ResourcePermission.API_READ,
         ResourcePermission.API_CREATE,
         ResourcePermission.API_UPDATE,
+        ResourcePermission.API_DELETE,
         ResourcePermission.API_EXECUTE,
         ResourcePermission.API_EXPORT,
         ResourcePermission.CI_READ,
@@ -186,7 +187,7 @@ def check_permission(
         resource_perm = session.exec(stmt).first()
         if resource_perm:
             # Check expiration
-            if resource_perm.expires_at and resource_perm.expires_at <= datetime.now(timezone.utc):
+            if resource_perm.expires_at and resource_perm.expires_at.replace(tzinfo=timezone.utc) <= datetime.now(timezone.utc):
                 return PermissionCheck(
                     granted=False,
                     reason="Resource permission has expired",

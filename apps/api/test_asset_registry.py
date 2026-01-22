@@ -100,18 +100,12 @@ def test_validation_error():
         # missing output_contract
     }
     
-    # Create
+    # Create - should fail validation
     response = client.post("/asset-registry/assets", json=payload)
-    assert response.status_code == 200
-    asset_id = response.json()["data"]["asset"]["asset_id"]
-    
-    # Try publish
-    response = client.post(f"/asset-registry/assets/{asset_id}/publish", 
-                          json={"published_by": "admin"})
-    print(f"Error status: {response.status_code}")
-    print(f"Error response: {response.json()}")
-    
-    assert response.status_code == 400  # validation error
+    print(f"Validation error status: {response.status_code}")
+    print(f"Validation response: {response.json()}")
+
+    assert response.status_code == 422  # validation error
 
 
 if __name__ == "__main__":

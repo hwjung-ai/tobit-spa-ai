@@ -8,7 +8,7 @@ This test demonstrates:
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -65,9 +65,9 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
     }
 
     # Mock external dependencies
-    with patch('app.modules.ops.services.action_registry.get_pg_connection') as mock_pg_func, \
-         patch('app.modules.ops.services.action_registry.load_text') as mock_load, \
-         patch('app.modules.ops.services.action_registry.get_settings'):
+    with patch('core.db_pg.get_pg_connection') as mock_pg_func, \
+         patch('core.config.get_settings'), \
+         patch('app.shared.config_loader.load_text') as mock_load:
 
         # Setup mocks
         mock_pg_conn = MagicMock()
@@ -121,7 +121,7 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
     )
 
     # Simulate parent trace from a previous screen render
-    parent_trace_id = f"screen-render-{datetime.utcnow().timestamp()}"
+    parent_trace_id = f"screen-render-{datetime.now(timezone.utc).timestamp()}"
 
     inputs = {
         "device_id": "DEVICE-001",
@@ -135,8 +135,8 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
         "mode": "real",
     }
 
-    with patch('app.modules.ops.services.action_registry.get_pg_connection') as mock_pg_func, \
-         patch('app.modules.ops.services.action_registry.get_settings'):
+    with patch('core.db_pg.get_pg_connection') as mock_pg_func, \
+         patch('core.config.get_settings'):
 
         # Setup mocks
         mock_pg_conn = MagicMock()

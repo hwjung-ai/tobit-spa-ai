@@ -15,7 +15,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  /* Shared settings for all of the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:3000',
@@ -29,13 +29,24 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      // Set timeout for webServer
+      timeout: 120000, // 2 minutes
+      // Set timeout for each test
+      testTimeout: 120000, // 2 minutes
     },
   ],
 
-  /* Run your local dev server before starting the tests */
+  // Global test timeout
+  timeout: 300000, // 5 minutes
+
+  // Configure web server - disable since server is already running
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: true,
+    timeout: 30000, // 30 seconds
+    stdout: 'pipe',
+    stderr: 'pipe',
+    reuseExistingServerProcess: true,
   },
 });

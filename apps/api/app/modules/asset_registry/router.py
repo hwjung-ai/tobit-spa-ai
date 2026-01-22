@@ -46,6 +46,7 @@ from app.modules.asset_registry.schema_models import (
     SchemaListResponse,
 )
 from app.modules.asset_registry.schemas import (
+    PromptAssetCreate,
     ScreenAssetCreate,
     ScreenAssetRead,
     ScreenAssetUpdate,
@@ -59,16 +60,33 @@ from app.modules.asset_registry.source_models import (
 )
 from app.modules.auth.models import TbUser
 
+from .schemas import PromptAssetRead
 from .validators import validate_asset
 
 router = APIRouter(prefix="/asset-registry")
 
 
-@router.post("/assets", response_model=ScreenAssetRead)
-def create_screen_asset(
-    payload: ScreenAssetCreate,
+from typing import Union
+
+
+@router.post("/assets", response_model=ResponseEnvelope)
+def create_asset(
+    payload: Union[PromptAssetCreate, ScreenAssetCreate],
     current_user: TbUser = Depends(get_current_user),
     session: Session = Depends(get_session),
+):
+    if isinstance(payload, ScreenAssetCreate):
+        return create_screen_asset_impl(payload, session, current_user)
+    elif isinstance(payload, PromptAssetCreate):
+        return create_prompt_asset_impl(payload, session, current_user)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid asset type")
+
+
+def create_screen_asset_impl(
+    payload: ScreenAssetCreate,
+    session: Session,
+    current_user: TbUser
 ):
     if payload.asset_type != "screen":
         raise HTTPException(status_code=400, detail="asset_type must be 'screen'")
@@ -117,21 +135,92 @@ def create_screen_asset(
         session.add(history)
         session.commit()
 
-        return ScreenAssetRead(
-            asset_id=str(asset.asset_id),
-            asset_type=asset.asset_type,
-            screen_id=asset.screen_id,
-            name=asset.name,
-            description=asset.description,
+        return ResponseEnvelope.success(
+            data={
+                "asset": ScreenAssetRead(
+                    asset_id=str(asset.asset_id),
+                    asset_type=asset.asset_type,
+                    screen_id=asset.screen_id,
+                    name=asset.name,
+                    description=asset.description,
+                    version=asset.version,
+                    status=asset.status,
+                    screen_schema=asset.screen_schema,
+                    tags=asset.tags,
+                    created_by=asset.created_by,
+                    published_by=asset.published_by,
+                    published_at=asset.published_at,
+                    created_at=asset.created_at,
+                    updated_at=asset.updated_at,
+                )
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create asset: {str(e)}")
+
+
+def create_prompt_asset_impl(
+    payload: PromptAssetCreate,
+    session: Session,
+    current_user: TbUser
+):
+    """Create a prompt asset"""
+    if payload.asset_type != "prompt":
+        raise HTTPException(status_code=400, detail="asset_type must be 'prompt'")
+
+    try:
+        asset = TbAssetRegistry(
+            asset_type="prompt",
+            name=payload.name,
+            scope=payload.scope,
+            engine=payload.engine,
+            template=payload.template,
+            input_schema=payload.input_schema,
+            output_contract=payload.output_contract,
+            tags=payload.tags,
+            created_by=payload.created_by,
+            status="draft",
+        )
+        session.add(asset)
+        session.commit()
+        session.refresh(asset)
+
+        # Create initial version history
+        history = TbAssetVersionHistory(
+            asset_id=asset.asset_id,
             version=asset.version,
-            status=asset.status,
-            screen_schema=asset.screen_schema,
-            tags=asset.tags,
-            created_by=asset.created_by,
-            published_by=asset.published_by,
-            published_at=asset.published_at,
-            created_at=asset.created_at,
-            updated_at=asset.updated_at,
+            snapshot={
+                "input_schema": asset.input_schema,
+                "output_contract": asset.output_contract,
+                "template": asset.template,
+                "name": asset.name,
+            },
+        )
+        session.add(history)
+        session.commit()
+
+        return ResponseEnvelope.success(
+            data={
+                "asset": PromptAssetRead(
+                    asset_id=str(asset.asset_id),
+                    asset_type=asset.asset_type,
+                    name=asset.name,
+                    scope=asset.scope,
+                    engine=asset.engine,
+                    version=asset.version,
+                    status=asset.status,
+                    template=asset.template,
+                    input_schema=asset.input_schema,
+                    output_contract=asset.output_contract,
+                    tags=asset.tags,
+                    created_by=asset.created_by,
+                    published_by=asset.published_by,
+                    published_at=asset.published_at,
+                    created_at=asset.created_at,
+                    updated_at=asset.updated_at,
+                )
+            }
         )
     except Exception as e:
         session.rollback()
@@ -327,21 +416,25 @@ def update_asset(
         session.add(asset)
         session.commit()
         session.refresh(asset)
-        return ScreenAssetRead(
-            asset_id=str(asset.asset_id),
-            asset_type=asset.asset_type,
-            screen_id=asset.screen_id,
-            name=asset.name,
-            description=asset.description,
-            version=asset.version,
-            status=asset.status,
-            screen_schema=asset.screen_schema,
-            tags=asset.tags,
-            created_by=asset.created_by,
-            published_by=asset.published_by,
-            published_at=asset.published_at,
-            created_at=asset.created_at,
-            updated_at=asset.updated_at,
+        return ResponseEnvelope.success(
+            data={
+                "asset": ScreenAssetRead(
+                    asset_id=str(asset.asset_id),
+                    asset_type=asset.asset_type,
+                    screen_id=asset.screen_id,
+                    name=asset.name,
+                    description=asset.description,
+                    version=asset.version,
+                    status=asset.status,
+                    screen_schema=asset.screen_schema,
+                    tags=asset.tags,
+                    created_by=asset.created_by,
+                    published_by=asset.published_by,
+                    published_at=asset.published_at,
+                    created_at=asset.created_at,
+                    updated_at=asset.updated_at,
+                )
+            }
         )
 
 
@@ -413,13 +506,22 @@ def publish_asset(
         session.add(history)
         session.commit()
         session.refresh(asset)
-        return {
-            "asset_id": str(asset.asset_id),
-            "version": asset.version,
-            "status": asset.status,
-            "published_at": asset.published_at,
-            "published_by": asset.published_by,
-        }
+        return ResponseEnvelope.success(
+            data={
+                "asset": {
+                    "asset_id": str(asset.asset_id),
+                    "asset_type": asset.asset_type,
+                    "name": asset.name,
+                    "description": asset.description,
+                    "version": asset.version,
+                    "status": asset.status,
+                    "published_at": asset.published_at,
+                    "published_by": asset.published_by,
+                    "created_at": asset.created_at,
+                    "updated_at": asset.updated_at,
+                }
+            }
+        )
 
 
 @router.post("/assets/{asset_id}/rollback")
@@ -487,13 +589,22 @@ def rollback_asset(
         session.add(history)
         session.commit()
         session.refresh(asset)
-        return {
-            "asset_id": str(asset.asset_id),
-            "version": asset.version,
-            "status": asset.status,
-            "published_at": asset.published_at,
-            "rollback_from_version": hist.version,
-        }
+        return ResponseEnvelope.success(
+            data={
+                "asset": {
+                    "asset_id": str(asset.asset_id),
+                    "asset_type": asset.asset_type,
+                    "name": asset.name,
+                    "description": asset.description,
+                    "version": asset.version,
+                    "status": asset.status,
+                    "published_at": asset.published_at,
+                    "rollback_from_version": hist.version,
+                    "created_at": asset.created_at,
+                    "updated_at": asset.updated_at,
+                }
+            }
+        )
 
 
 @router.delete("/assets/{asset_id}")

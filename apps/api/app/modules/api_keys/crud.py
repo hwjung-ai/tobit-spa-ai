@@ -96,8 +96,16 @@ def validate_api_key(session: Session, key: str) -> Optional[TbApiKey]:
     # Verify full key against hash (only one should match)
     for candidate in candidates:
         # Check if expired
-        if candidate.expires_at and candidate.expires_at <= datetime.now(timezone.utc):
-            continue
+        if candidate.expires_at:
+            now = datetime.now(timezone.utc)
+            if candidate.expires_at.tzinfo is None:
+                # Handle naive datetime
+                if candidate.expires_at <= now.replace(tzinfo=None):
+                    continue
+            else:
+                # Handle timezone-aware datetime
+                if candidate.expires_at <= now:
+                    continue
 
         # Verify key hash
         if pwd_context.verify(key, candidate.key_hash):

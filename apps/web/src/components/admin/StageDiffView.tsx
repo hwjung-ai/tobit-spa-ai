@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { fetchApi } from "../../lib/adminUtils";
-import { ChevronDown, ChevronRight, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { ChevronDown, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 interface StageDiffViewProps {
   baselineTraceId: string;

@@ -1,5 +1,5 @@
 {
-  "time": "2026-01-20T02:49:00.149818",
+  "time": "2026-01-22T13:26:59.733281Z",
   "code": 0,
   "message": "OK",
   "data": {
@@ -24,9 +24,9 @@
         ],
         "rows": [
           [
-            "e754253e-9963-4981-b465-2a5703c3ca63",
+            "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
             "app-erp-alert-04-2",
-            "ERP_App_Alert_04-2",
+            "ERP App Alert 04-2",
             "SW",
             "app",
             "application",
@@ -35,9 +35,9 @@
             "erp-apps"
           ],
           [
-            "f38b1478-420e-44d7-b402-b25d8fcccf11",
+            "df02369c-3782-4e89-b02e-11e3846f7e4a",
             "app-erp-alert-05-1",
-            "ERP_App_Alert_05-1",
+            "ERP App Alert 05-1",
             "SW",
             "app",
             "application",
@@ -46,9 +46,9 @@
             "erp-apps"
           ],
           [
-            "28f47106-bb5e-4795-81cd-6ca6fa426d1a",
+            "2a000edc-6041-495b-8c9d-7511c513d5e1",
             "app-erp-integration-03-2",
-            "ERP_App_Integration_03-2",
+            "ERP App Integration 03-2",
             "SW",
             "app",
             "application",
@@ -57,9 +57,9 @@
             "erp-apps"
           ],
           [
-            "fb43575e-6078-4abe-a89e-4bb9e2a8f48f",
+            "e702e9c3-7d61-4d49-80b6-c9a87b4a1533",
             "app-erp-integration-04-3",
-            "ERP_App_Integration_04-3",
+            "ERP App Integration 04-3",
             "SW",
             "app",
             "application",
@@ -68,9 +68,9 @@
             "erp-apps"
           ],
           [
-            "379c7d44-2a8d-468f-b25d-d75999c37edf",
+            "11f723a1-4a40-4a04-93d6-c64d8537d059",
             "app-erp-order-03-1",
-            "ERP_App_Order_03-1",
+            "ERP App Order 03-1",
             "SW",
             "app",
             "application",
@@ -79,9 +79,9 @@
             "erp-apps"
           ],
           [
-            "7f4567a3-d926-4e49-9d8f-0ebb0871a269",
+            "463018cd-ca9d-4d16-a549-5de5ac631835",
             "app-erp-pricing-01-1",
-            "ERP_App_Pricing_01-1",
+            "ERP App Pricing 01-1",
             "SW",
             "app",
             "application",
@@ -90,9 +90,9 @@
             "erp-apps"
           ],
           [
-            "31ff24c3-3517-481f-9f17-423ac6b7a056",
+            "a3cce17c-fffc-4df9-b465-7fa44727abdf",
             "app-erp-report-02-1",
-            "ERP_App_Report_02-1",
+            "ERP App Report 02-1",
             "SW",
             "app",
             "application",
@@ -101,9 +101,9 @@
             "erp-apps"
           ],
           [
-            "2aa8f124-65c8-4e6e-8099-25b923a51f47",
+            "30f88c8e-a9e5-449d-98f4-6ebd810a17d5",
             "app-erp-scheduler-04-1",
-            "ERP_App_Scheduler_04-1",
+            "ERP App Scheduler 04-1",
             "SW",
             "app",
             "application",
@@ -112,9 +112,9 @@
             "erp-apps"
           ],
           [
-            "3e1f2da3-a9c5-4e71-9486-5cc929f02fe5",
+            "c64a1dea-2341-46c2-abe5-72c34512b254",
             "db-erp-02",
-            "ERP_DB_02",
+            "ERP DB 02",
             "SW",
             "db",
             "application",
@@ -123,9 +123,9 @@
             "erp-db"
           ],
           [
-            "b52eabb2-db9a-4434-b7fa-c01beeb0a9de",
+            "ca6b9d71-17d8-465a-8149-ff90ff803246",
             "db-erp-05",
-            "ERP_DB_05",
+            "ERP DB 05",
             "SW",
             "db",
             "application",
@@ -174,6 +174,7 @@
         },
         "graph": {
           "depth": 2,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -271,6 +272,7 @@
         },
         "graph": {
           "depth": 1,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -336,12 +338,15 @@
         "requested_depth": 1,
         "clamped_depth": 1,
         "allowed_rel_types": [],
-        "discovered_rel_types": []
+        "discovered_rel_types": [],
+        "user_requested_depth": 1,
+        "policy_max_depth": 1,
+        "effective_depth": 1
       },
       "tool_calls": [
         {
           "tool": "ci.search",
-          "elapsed_ms": 124,
+          "elapsed_ms": 78,
           "input_params": {
             "keywords": [
               "erp-platform"
@@ -383,7 +388,7 @@
         },
         {
           "tool": "ci.search_broad",
-          "elapsed_ms": 145,
+          "elapsed_ms": 67,
           "input_params": {},
           "output_summary": {
             "keyword_count": 5,
@@ -418,70 +423,70 @@
         "type": "rerun",
         "label": "app-erp-alert-04-2 선택 (primary)",
         "payload": {
-          "selected_ci_id": "e754253e-9963-4981-b465-2a5703c3ca63"
+          "selected_ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-alert-05-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "f38b1478-420e-44d7-b402-b25d8fcccf11"
+          "selected_ci_id": "df02369c-3782-4e89-b02e-11e3846f7e4a"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-integration-03-2 선택 (primary)",
         "payload": {
-          "selected_ci_id": "28f47106-bb5e-4795-81cd-6ca6fa426d1a"
+          "selected_ci_id": "2a000edc-6041-495b-8c9d-7511c513d5e1"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-integration-04-3 선택 (primary)",
         "payload": {
-          "selected_ci_id": "fb43575e-6078-4abe-a89e-4bb9e2a8f48f"
+          "selected_ci_id": "e702e9c3-7d61-4d49-80b6-c9a87b4a1533"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-order-03-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "379c7d44-2a8d-468f-b25d-d75999c37edf"
+          "selected_ci_id": "11f723a1-4a40-4a04-93d6-c64d8537d059"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-pricing-01-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "7f4567a3-d926-4e49-9d8f-0ebb0871a269"
+          "selected_ci_id": "463018cd-ca9d-4d16-a549-5de5ac631835"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-report-02-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "31ff24c3-3517-481f-9f17-423ac6b7a056"
+          "selected_ci_id": "a3cce17c-fffc-4df9-b465-7fa44727abdf"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-scheduler-04-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "2aa8f124-65c8-4e6e-8099-25b923a51f47"
+          "selected_ci_id": "30f88c8e-a9e5-449d-98f4-6ebd810a17d5"
         }
       },
       {
         "type": "rerun",
         "label": "db-erp-02 선택 (primary)",
         "payload": {
-          "selected_ci_id": "3e1f2da3-a9c5-4e71-9486-5cc929f02fe5"
+          "selected_ci_id": "c64a1dea-2341-46c2-abe5-72c34512b254"
         }
       },
       {
         "type": "rerun",
         "label": "db-erp-05 선택 (primary)",
         "payload": {
-          "selected_ci_id": "b52eabb2-db9a-4434-b7fa-c01beeb0a9de"
+          "selected_ci_id": "ca6b9d71-17d8-465a-8149-ff90ff803246"
         }
       },
       {
@@ -500,11 +505,17 @@
         "ci.search_broad"
       ],
       "fallback": false,
+      "runtime": {
+        "ops_mode_config": "real",
+        "ops_mode_effective": "real",
+        "fallback_used": false
+      },
+      "plan_mode": "auto",
       "runner_context": {
         "marker": "RUNNER_PATCH_GRAPH_20260112",
         "file": "/home/spa/tobit-spa-ai/apps/api/app/modules/ops/services/ci/orchestrator/runner.py",
-        "pid": 422680,
-        "thread_id": 140636934096576
+        "pid": 247299,
+        "thread_id": 140486803175104
       },
       "trace_id": null,
       "parent_trace_id": null

@@ -23,11 +23,37 @@
         "from": "2025-12-01",
         "to": "2025-12-31"
       },
-      "pass": false,
-      "reason": "status code must be 200\nassert 500 == 200\n +  where 500 = <Response [500 Internal Server Error]>.status_code",
-      "status": "fail",
-      "status_code": 500,
-      "raw_response": "artifacts/ops_ci_api_raw/lookup_server_status.json"
+      "pass": true,
+      "reason": "ok",
+      "status": "pass",
+      "status_code": 200,
+      "raw_response": "artifacts/ops_ci_api_raw/lookup_server_status.json",
+      "blocks_summary": [
+        {
+          "type": "text",
+          "title": null
+        }
+      ],
+      "meta_excerpt": {
+        "used_tools": [],
+        "summary": "CI srv-erp- not found",
+        "route": "ci"
+      },
+      "trace_excerpt": {
+        "intent": "LOOKUP",
+        "graph_depth": 1,
+        "policy_decisions": {
+          "view": "NEIGHBORS",
+          "requested_depth": 1,
+          "clamped_depth": 1,
+          "allowed_rel_types": [],
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
+        }
+      },
+      "mock_terms": []
     },
     {
       "test_name": "metric_cpu_usage",
@@ -46,20 +72,11 @@
         {
           "type": "text",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 10
         }
       ],
       "meta_excerpt": {
-        "used_tools": [
-          "ci.search",
-          "ci.search",
-          "ci.search_broad"
-        ],
-        "summary": "Multiple CI candidates",
+        "used_tools": [],
+        "summary": "CI srv-erp- not found",
         "route": "ci"
       },
       "trace_excerpt": {
@@ -70,7 +87,10 @@
           "requested_depth": 1,
           "clamped_depth": 1,
           "allowed_rel_types": [],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
         }
       },
       "mock_terms": []
@@ -92,20 +112,11 @@
         {
           "type": "text",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 10
         }
       ],
       "meta_excerpt": {
-        "used_tools": [
-          "ci.search",
-          "ci.search",
-          "ci.search_broad"
-        ],
-        "summary": "Multiple CI candidates",
+        "used_tools": [],
+        "summary": "CI srv-erp- not found",
         "route": "ci"
       },
       "trace_excerpt": {
@@ -116,7 +127,10 @@
           "requested_depth": 1,
           "clamped_depth": 1,
           "allowed_rel_types": [],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
         }
       },
       "mock_terms": []
@@ -162,7 +176,10 @@
           "requested_depth": 1,
           "clamped_depth": 1,
           "allowed_rel_types": [],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
         }
       },
       "mock_terms": []
@@ -184,20 +201,11 @@
         {
           "type": "text",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 10
         }
       ],
       "meta_excerpt": {
-        "used_tools": [
-          "ci.search",
-          "ci.search",
-          "ci.search_broad"
-        ],
-        "summary": "Multiple CI candidates",
+        "used_tools": [],
+        "summary": "CI app-erp-alert-01- not found",
         "route": "ci"
       },
       "trace_excerpt": {
@@ -208,7 +216,10 @@
           "requested_depth": 1,
           "clamped_depth": 1,
           "allowed_rel_types": [],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
         }
       },
       "mock_terms": []
@@ -230,20 +241,11 @@
         {
           "type": "text",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 10
         }
       ],
       "meta_excerpt": {
-        "used_tools": [
-          "ci.search",
-          "ci.search",
-          "ci.search_broad"
-        ],
-        "summary": "Multiple CI candidates",
+        "used_tools": [],
+        "summary": "CI srv-erp- not found",
         "route": "ci"
       },
       "trace_excerpt": {
@@ -254,7 +256,10 @@
           "requested_depth": 1,
           "clamped_depth": 1,
           "allowed_rel_types": [],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
         }
       },
       "mock_terms": []
@@ -299,7 +304,10 @@
           "requested_depth": 1,
           "clamped_depth": 1,
           "allowed_rel_types": [],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 1,
+          "policy_max_depth": 1,
+          "effective_depth": 1
         }
       },
       "mock_terms": []
@@ -321,20 +329,11 @@
         {
           "type": "text",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 10
         }
       ],
       "meta_excerpt": {
-        "used_tools": [
-          "ci.search",
-          "ci.search",
-          "ci.search_broad"
-        ],
-        "summary": "Multiple CI candidates",
+        "used_tools": [],
+        "summary": "CI app-erp-alert-01-1 not found",
         "route": "ci"
       },
       "trace_excerpt": {
@@ -347,7 +346,10 @@
           "allowed_rel_types": [
             "DEPENDS_ON"
           ],
-          "discovered_rel_types": []
+          "discovered_rel_types": [],
+          "user_requested_depth": 10,
+          "policy_max_depth": 2,
+          "effective_depth": 2
         }
       },
       "mock_terms": []

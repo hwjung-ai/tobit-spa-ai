@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Ignore PDF worker file (external library)
     "public/pdf.worker.min.mjs",
+    // Ignore E2E test files (they use Playwright, not React)
+    "tests-e2e/**",
   ]),
 ]);
 

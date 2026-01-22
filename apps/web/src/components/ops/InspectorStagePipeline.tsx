@@ -257,7 +257,6 @@ export default function InspectorStagePipeline({
           {/* Connection Lines */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
             {pipelineStages.map((stage) => {
-              const stageConfig = getStageConfig(stage.type);
               const stageElement = document.getElementById(`stage-${stage.id}`);
               if (!stageElement || !stage.connections.length) return null;
 

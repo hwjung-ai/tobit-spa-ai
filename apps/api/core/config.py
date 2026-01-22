@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import ClassVar, List, Literal, Optional
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -47,7 +48,7 @@ class AppSettings(BaseSettings):
     chat_model: str = "gpt-4o-mini"
     openai_api_key: Optional[str] = None
     embedding_dimension: int = 1536
-    document_storage_root: Optional[Path] = None
+    document_storage_root: Optional[Path] = Field(default=None, env="DOCUMENT_STORAGE_ROOT")
 
     langsmith_api_key: Optional[str] = None
     langsmith_project: Optional[str] = None

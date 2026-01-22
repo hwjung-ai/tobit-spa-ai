@@ -1,11 +1,11 @@
 """Tests for permissions and access control."""
 
-import pytest
-from sqlmodel import Session, create_engine, select
-from sqlmodel.pool import StaticPool
+import importlib
 
-from apps.api.app.modules.auth.models import TbUser, UserRole
-from apps.api.app.modules.permissions.crud import (
+import pytest
+import sqlalchemy
+from app.modules.auth.models import TbUser, UserRole
+from app.modules.permissions.crud import (
     check_permission,
     get_role_permissions,
     grant_resource_permission,
@@ -13,28 +13,67 @@ from apps.api.app.modules.permissions.crud import (
     list_user_permissions,
     revoke_resource_permission,
 )
-from apps.api.app.modules.permissions.models import (
+from app.modules.permissions.models import (
     ResourcePermission,
     RolePermissionDefault,
-    TbResourcePermission,
     TbRolePermission,
 )
-from apps.api.core.security import get_password_hash
+from core.security import get_password_hash
+from sqlmodel import Session, SQLModel, create_engine, select
+from sqlmodel.pool import StaticPool
 
 
 @pytest.fixture
 def session():
     """Create an in-memory SQLite database for testing."""
+    from sqlalchemy import text
+
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
 
+    # Clear and reload models to avoid metadata caching
+    try:
+        for table_name in list(SQLModel.metadata.tables.keys()):
+            del SQLModel.metadata.tables[table_name]
+    except Exception:
+        pass
+
+    import app.modules.auth.models as auth_models  # noqa: F401
+    import app.modules.permissions.models as perm_models  # noqa: F401
+
+    importlib.reload(auth_models)
+    importlib.reload(perm_models)
+
+    # Drop all existing tables
+    with engine.connect() as conn:
+        inspector = sqlalchemy.inspect(engine)
+        for table_name in inspector.get_table_names():
+            try:
+                conn.execute(text(f"DROP TABLE IF EXISTS {table_name}"))
+            except Exception:
+                pass
+        try:
+            conn.commit()
+        except Exception:
+            pass
+
     # Create all tables
-    TbUser.metadata.create_all(engine)
-    TbRolePermission.metadata.create_all(engine)
-    TbResourcePermission.metadata.create_all(engine)
+    try:
+        SQLModel.metadata.create_all(engine)
+    except Exception as e:
+        if "already exists" in str(e):
+            # Handle metadata caching issue
+            with engine.begin() as conn:
+                for table in SQLModel.metadata.tables.values():
+                    try:
+                        table.create(conn, checkfirst=True)
+                    except Exception:
+                        pass
+        else:
+            raise
 
     with Session(engine) as session:
         # Initialize default role permissions
@@ -47,7 +86,7 @@ def admin_user(session: Session) -> TbUser:
     """Create an admin user."""
     user = TbUser(
         id="admin-001",
-        email="admin@example.com",
+        email_encrypted="admin@example.com",
         username="Admin",
         password_hash=get_password_hash("admin123"),
         role=UserRole.ADMIN,
@@ -65,7 +104,7 @@ def manager_user(session: Session) -> TbUser:
     """Create a manager user."""
     user = TbUser(
         id="manager-001",
-        email="manager@example.com",
+        email_encrypted="manager@example.com",
         username="Manager",
         password_hash=get_password_hash("manager123"),
         role=UserRole.MANAGER,
@@ -83,7 +122,7 @@ def developer_user(session: Session) -> TbUser:
     """Create a developer user."""
     user = TbUser(
         id="dev-001",
-        email="dev@example.com",
+        email_encrypted="dev@example.com",
         username="Developer",
         password_hash=get_password_hash("dev123"),
         role=UserRole.DEVELOPER,
@@ -101,7 +140,7 @@ def viewer_user(session: Session) -> TbUser:
     """Create a viewer user."""
     user = TbUser(
         id="viewer-001",
-        email="viewer@example.com",
+        email_encrypted="viewer@example.com",
         username="Viewer",
         password_hash=get_password_hash("viewer123"),
         role=UserRole.VIEWER,

@@ -46,7 +46,7 @@ class TestToolCallContract:
             error=None,
         )
 
-        call_dict = tool_call.dict()
+        call_dict = tool_call.model_dump()
 
         assert call_dict["tool"] == "metric.aggregate"
         assert call_dict["elapsed_ms"] == 250
@@ -99,7 +99,7 @@ class TestToolCallTrace:
         assert tool_calls[2].tool == "graph.expand"
 
         # Verify serialization
-        serialized = [call.dict() for call in tool_calls]
+        serialized = [call.model_dump() for call in tool_calls]
         assert len(serialized) == 3
         assert serialized[0]["tool"] == "ci.search"
         assert serialized[1]["tool"] == "ci.get"
@@ -128,7 +128,7 @@ class TestToolCallTrace:
         assert tool_calls[1].error == "Connection timeout"
 
         # Verify in serialization
-        call_dicts = [call.dict() for call in tool_calls]
+        call_dicts = [call.model_dump() for call in tool_calls]
         assert call_dicts[0]["error"] is None
         assert call_dicts[1]["error"] == "Connection timeout"
 

@@ -3,7 +3,7 @@
 import csv
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from io import StringIO
 from typing import List, Optional, Union
@@ -44,7 +44,7 @@ class DocumentExportService:
         data = {
             "document": document_metadata or {},
             "chunks": chunks,
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "chunk_count": len(chunks)
         }
 
@@ -105,7 +105,7 @@ class DocumentExportService:
         lines = [
             f"# Document: {document_name}",
             "",
-            f"Exported: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             f"Total chunks: {len(chunks)}",
             ""
@@ -147,7 +147,7 @@ class DocumentExportService:
 
         lines = [
             f"Document: {document_name}",
-            f"Exported: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             "=" * 80,
             ""
@@ -222,7 +222,7 @@ class ChatExportService:
             "thread_id": thread_id,
             "metadata": metadata or {},
             "messages": messages,
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "message_count": len(messages)
         }
 
@@ -238,7 +238,7 @@ class ChatExportService:
         lines = [
             f"# {title}",
             "",
-            f"Exported: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
+            f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             ""
         ]
 

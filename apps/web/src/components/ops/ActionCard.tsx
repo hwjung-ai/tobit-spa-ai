@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { formatError } from "../lib/utils";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import type { ReplanTrigger, ReplanEvent } from "../../types/ops-schemas";
+import { useMutation } from "@tanstack/react-query";
+import type { ReplanTrigger } from "../../types/ops-schemas";
 
 interface ActionCardProps {
   trigger?: ReplanTrigger;

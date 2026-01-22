@@ -6,17 +6,13 @@ import {
   CheckCircle,
   AlertTriangle,
   X,
-  Eye,
   RefreshCw,
   Play,
-  Filter,
-  X as CloseIcon,
-  Clock,
-  Check,
   Star,
-  Trash2,
+  Filter,
   Copy,
-  Plus
+  Plus,
+  Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -160,12 +156,6 @@ export default function AssetOverrideModal({
     } finally {
       setIsRunning(false);
     }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const AssetItem = ({ asset, isSelected }: { asset: AssetVersion; isSelected: boolean }) => {

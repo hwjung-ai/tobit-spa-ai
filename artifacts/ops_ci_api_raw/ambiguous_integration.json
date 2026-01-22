@@ -1,5 +1,5 @@
 {
-  "time": "2026-01-20T02:49:01.369820",
+  "time": "2026-01-22T13:27:00.100169Z",
   "code": 0,
   "message": "OK",
   "data": {
@@ -24,9 +24,9 @@
         ],
         "rows": [
           [
-            "deda439d-90fb-483a-affe-fab678f4997b",
+            "259a201e-aee2-4bd1-be53-d21be314a786",
             "app-analytics-integration-03-1",
-            "Analytics_App_Integration_03-1",
+            "Analytics App Integration 03-1",
             "SW",
             "app",
             "application",
@@ -35,9 +35,9 @@
             "analytics-apps"
           ],
           [
-            "64ba406d-9c27-4b97-b668-af38f091336e",
+            "c6c20d91-de44-40a3-9691-04c25eeb3e7d",
             "app-apm-integration-02-1",
-            "APM_App_Integration_02-1",
+            "APM App Integration 02-1",
             "SW",
             "app",
             "application",
@@ -46,9 +46,9 @@
             "apm-apps"
           ],
           [
-            "ed6f3278-3dfb-4316-a646-13c6251c1991",
+            "7352f51b-fcc4-4a3b-920b-2600a2ba4984",
             "app-cmdb-integration-01-1",
-            "CMDB_App_Integration_01-1",
+            "CMDB App Integration 01-1",
             "SW",
             "app",
             "application",
@@ -57,9 +57,9 @@
             "cmdb-apps"
           ],
           [
-            "28f47106-bb5e-4795-81cd-6ca6fa426d1a",
+            "2a000edc-6041-495b-8c9d-7511c513d5e1",
             "app-erp-integration-03-2",
-            "ERP_App_Integration_03-2",
+            "ERP App Integration 03-2",
             "SW",
             "app",
             "application",
@@ -68,9 +68,9 @@
             "erp-apps"
           ],
           [
-            "fb43575e-6078-4abe-a89e-4bb9e2a8f48f",
+            "e702e9c3-7d61-4d49-80b6-c9a87b4a1533",
             "app-erp-integration-04-3",
-            "ERP_App_Integration_04-3",
+            "ERP App Integration 04-3",
             "SW",
             "app",
             "application",
@@ -79,9 +79,9 @@
             "erp-apps"
           ],
           [
-            "4947ebd8-cafd-456a-84bb-9a6e8c073b28",
+            "874327f4-8dae-445b-b86e-55eb1fae2f6f",
             "app-mes-integration-01-1",
-            "MES_App_Integration_01-1",
+            "MES App Integration 01-1",
             "SW",
             "app",
             "application",
@@ -90,9 +90,9 @@
             "mes-apps"
           ],
           [
-            "c60a9d81-bb89-4161-b561-fa63d4b98ee0",
+            "3d747fe8-3747-422a-b935-170a2bd36902",
             "app-mes-integration-04-2",
-            "MES_App_Integration_04-2",
+            "MES App Integration 04-2",
             "SW",
             "app",
             "application",
@@ -101,9 +101,9 @@
             "mes-apps"
           ],
           [
-            "cb40a1b4-e582-4def-9a4c-e75b435fa8e0",
+            "740a14cf-aac9-4b7c-8966-835130e5b652",
             "app-scada-integration-03-3",
-            "SCADA_App_Integration_03-3",
+            "SCADA App Integration 03-3",
             "SW",
             "app",
             "application",
@@ -112,9 +112,9 @@
             "scada-apps"
           ],
           [
-            "06d4daf4-3210-4006-9975-bb698c674f71",
+            "5974abe4-156e-4b65-b8e3-9937269134e0",
             "app-secops-integration-03-2",
-            "SECOPS_App_Integration_03-2",
+            "SECOPS App Integration 03-2",
             "SW",
             "app",
             "application",
@@ -163,6 +163,7 @@
         },
         "graph": {
           "depth": 2,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -258,6 +259,7 @@
         },
         "graph": {
           "depth": 1,
+          "user_requested_depth": 1,
           "limits": {
             "max_nodes": 200,
             "max_edges": 400,
@@ -323,12 +325,15 @@
         "requested_depth": 1,
         "clamped_depth": 1,
         "allowed_rel_types": [],
-        "discovered_rel_types": []
+        "discovered_rel_types": [],
+        "user_requested_depth": 1,
+        "policy_max_depth": 1,
+        "effective_depth": 1
       },
       "tool_calls": [
         {
           "tool": "ci.search",
-          "elapsed_ms": 142,
+          "elapsed_ms": 67,
           "input_params": {
             "keywords": [
               "integration",
@@ -353,7 +358,7 @@
         },
         {
           "tool": "ci.search_broad",
-          "elapsed_ms": 152,
+          "elapsed_ms": 80,
           "input_params": {},
           "output_summary": {
             "keyword_count": 5,
@@ -388,63 +393,63 @@
         "type": "rerun",
         "label": "app-analytics-integration-03-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "deda439d-90fb-483a-affe-fab678f4997b"
+          "selected_ci_id": "259a201e-aee2-4bd1-be53-d21be314a786"
         }
       },
       {
         "type": "rerun",
         "label": "app-apm-integration-02-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "64ba406d-9c27-4b97-b668-af38f091336e"
+          "selected_ci_id": "c6c20d91-de44-40a3-9691-04c25eeb3e7d"
         }
       },
       {
         "type": "rerun",
         "label": "app-cmdb-integration-01-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "ed6f3278-3dfb-4316-a646-13c6251c1991"
+          "selected_ci_id": "7352f51b-fcc4-4a3b-920b-2600a2ba4984"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-integration-03-2 선택 (primary)",
         "payload": {
-          "selected_ci_id": "28f47106-bb5e-4795-81cd-6ca6fa426d1a"
+          "selected_ci_id": "2a000edc-6041-495b-8c9d-7511c513d5e1"
         }
       },
       {
         "type": "rerun",
         "label": "app-erp-integration-04-3 선택 (primary)",
         "payload": {
-          "selected_ci_id": "fb43575e-6078-4abe-a89e-4bb9e2a8f48f"
+          "selected_ci_id": "e702e9c3-7d61-4d49-80b6-c9a87b4a1533"
         }
       },
       {
         "type": "rerun",
         "label": "app-mes-integration-01-1 선택 (primary)",
         "payload": {
-          "selected_ci_id": "4947ebd8-cafd-456a-84bb-9a6e8c073b28"
+          "selected_ci_id": "874327f4-8dae-445b-b86e-55eb1fae2f6f"
         }
       },
       {
         "type": "rerun",
         "label": "app-mes-integration-04-2 선택 (primary)",
         "payload": {
-          "selected_ci_id": "c60a9d81-bb89-4161-b561-fa63d4b98ee0"
+          "selected_ci_id": "3d747fe8-3747-422a-b935-170a2bd36902"
         }
       },
       {
         "type": "rerun",
         "label": "app-scada-integration-03-3 선택 (primary)",
         "payload": {
-          "selected_ci_id": "cb40a1b4-e582-4def-9a4c-e75b435fa8e0"
+          "selected_ci_id": "740a14cf-aac9-4b7c-8966-835130e5b652"
         }
       },
       {
         "type": "rerun",
         "label": "app-secops-integration-03-2 선택 (primary)",
         "payload": {
-          "selected_ci_id": "06d4daf4-3210-4006-9975-bb698c674f71"
+          "selected_ci_id": "5974abe4-156e-4b65-b8e3-9937269134e0"
         }
       },
       {
@@ -462,11 +467,17 @@
         "ci.search_broad"
       ],
       "fallback": false,
+      "runtime": {
+        "ops_mode_config": "real",
+        "ops_mode_effective": "real",
+        "fallback_used": false
+      },
+      "plan_mode": "auto",
       "runner_context": {
         "marker": "RUNNER_PATCH_GRAPH_20260112",
         "file": "/home/spa/tobit-spa-ai/apps/api/app/modules/ops/services/ci/orchestrator/runner.py",
-        "pid": 422680,
-        "thread_id": 140636934096576
+        "pid": 247299,
+        "thread_id": 140486803175104
       },
       "trace_id": null,
       "parent_trace_id": null

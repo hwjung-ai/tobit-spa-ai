@@ -7,7 +7,7 @@ from app.modules.auth.models import TbUser, UserRole
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from core.config import get_settings
 from core.db import get_session
@@ -39,7 +39,7 @@ def get_current_user(
     # If authentication is disabled, return a default debug user
     if not settings.enable_auth:
         debug_user = session.exec(
-            session.query(TbUser).filter(TbUser.username == "admin@tobit.local")
+            select(TbUser).where(TbUser.username == "admin@tobit.local")
         ).first()
         if debug_user:
             return debug_user

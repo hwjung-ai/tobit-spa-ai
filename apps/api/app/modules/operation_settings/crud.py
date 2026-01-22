@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from core.logging import get_request_context
@@ -49,7 +49,7 @@ def create_or_update_setting(
         }
 
         # Prepare update data
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         update_values = {
             "setting_value": setting_value,
             "source": "published",
@@ -96,7 +96,7 @@ def create_or_update_setting(
             restart_required=restart_required,
             description=description,
             published_by=published_by,
-            published_at=datetime.utcnow(),
+            published_at=datetime.now(timezone.utc),
         )
 
         session.add(new_setting)

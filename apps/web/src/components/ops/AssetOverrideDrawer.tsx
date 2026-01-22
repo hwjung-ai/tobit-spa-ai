@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Trash2, Plus, Settings, Play, CheckCircle, AlertCircle } from "lucide-react";
+import { Trash2, Settings, Play, CheckCircle, AlertCircle } from "lucide-react";
 import { type AssetSummary } from "@/types/asset-registry";
 
 interface AssetOverride {
@@ -28,11 +28,6 @@ interface AssetOverride {
 interface AssetOverrideDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onTestRun?: (overrides: AssetOverride[]) => void;
-}
-
-interface AssetListResponse {
-  assets: AssetSummary[];
 }
 
 const ASSET_TYPES = [
@@ -54,7 +49,6 @@ const DEFAULT_ASSETS = {
 export default function AssetOverrideDrawer({
   open,
   onOpenChange,
-  onTestRun,
 }: AssetOverrideDrawerProps) {
   const [overrides, setOverrides] = useState<AssetOverride[]>([]);
   const [availableAssets, setAvailableAssets] = useState<Record<string, AssetSummary[]>>({});

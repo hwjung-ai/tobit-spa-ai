@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { formatTimestamp, formatRelativeTime } from "./utils/TimeUtils";
+import { formatRelativeTime } from "./utils/TimeUtils";
 import {
   Activity,
   Clock,
@@ -9,8 +9,6 @@ import {
   AlertTriangle,
   RefreshCw,
   Search,
-  Filter,
-  Calendar,
   Server,
   Database,
   Network,
@@ -35,7 +33,6 @@ interface TimelineEntry {
 
 interface OpsTimelineTabProps {
   className?: string;
-  selectedEntry?: OpsHistoryEntry | null;
   onSelectEntry?: (entry: OpsHistoryEntry) => void;
 }
 
@@ -71,7 +68,6 @@ const generateMockTimeline = (): TimelineEntry[] => {
 
 export default function OpsTimelineTab({
   className,
-  selectedEntry,
   onSelectEntry
 }: OpsTimelineTabProps) {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
@@ -153,8 +149,7 @@ export default function OpsTimelineTab({
       {/* Header */}
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
+          <h2 className="text-sm font-semibold text-white">
             OPS Timeline
           </h2>
           <div className="flex items-center gap-2">

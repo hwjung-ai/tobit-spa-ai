@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ChevronDown,
-  ChevronRight,
   Clock,
   AlertTriangle,
   CheckCircle,
   Eye,
   Copy,
-  Download,
   RotateCcw,
   Maximize2,
   Minimize2
@@ -82,7 +80,7 @@ const STATUS_COLORS = {
   error: "text-rose-400",
 };
 
-const JsonViewer = ({ data, title, maxHeight = "300px" }: { data: unknown; title: string; maxHeight?: string }) => {
+const JsonViewer = ({ data, title }: { data: unknown; title: string }) => {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -308,7 +306,6 @@ export default function StageInOutPanel({
                       <JsonViewer
                         data={stage.input || {}}
                         title="Stage Input"
-                        maxHeight="200px"
                       />
                     </div>
 
@@ -318,7 +315,6 @@ export default function StageInOutPanel({
                       <JsonViewer
                         data={stage.output || {}}
                         title="Stage Output"
-                        maxHeight="200px"
                       />
                     </div>
 

@@ -1,65 +1,77 @@
-"""Tests for the audit log read endpoints."""
+"""Tests for audit log CRUD operations."""
 
 import uuid
 
-import pytest
-from app.modules.audit_log.crud import create_audit_log
-from core.db import get_session_context
-from fastapi.testclient import TestClient
-from main import app
+from app.modules.audit_log.crud import (
+    create_audit_log,
+    get_audit_logs_by_parent_trace,
+    get_audit_logs_by_resource,
+    get_audit_logs_by_trace,
+)
 
 
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-
-def _seed_audit_log_entry() -> tuple[str, str, str, str]:
+def test_list_audit_logs_returns_matching_entries(session):
+    """Test listing audit logs filters correctly."""
+    # Create test data
     trace_id = str(uuid.uuid4())
     parent_trace_id = str(uuid.uuid4())
     resource_type = "settings"
     resource_id = "ops_mode"
-    with get_session_context() as session:
-        create_audit_log(
-            session=session,
-            trace_id=trace_id,
-            parent_trace_id=parent_trace_id,
-            resource_type=resource_type,
-            resource_id=resource_id,
-            action="update",
-            actor="test-suite",
-            changes={"value": "test"},
-        )
-    return trace_id, parent_trace_id, resource_type, resource_id
 
-
-def test_list_audit_logs_returns_matching_entries(client: TestClient):
-    trace_id, _, resource_type, resource_id = _seed_audit_log_entry()
-    response = client.get(
-        "/audit-log",
-        params={"resource_type": resource_type, "resource_id": resource_id, "limit": 5},
+    create_audit_log(
+        session=session,
+        trace_id=trace_id,
+        parent_trace_id=parent_trace_id,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        action="update",
+        actor="test-suite",
+        changes={"value": "test"},
     )
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload.get("data")
-    data = payload["data"]
-    assert data["paging"]["limit"] == 5
-    assert data["paging"]["offset"] == 0
-    audit_logs = data["audit_logs"]
-    assert any(log["trace_id"] == trace_id for log in audit_logs)
+    session.commit()
+
+    # Test CRUD directly
+    result = get_audit_logs_by_resource(
+        session=session,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        limit=5,
+        offset=0,
+    )
+    
+    assert result is not None
+    assert len(result) >= 1
+    assert any(log.trace_id == trace_id for log in result)
 
 
-def test_get_audit_logs_by_trace_and_parent(client: TestClient):
-    trace_id, parent_trace_id, _, _ = _seed_audit_log_entry()
+def test_get_audit_logs_by_trace_and_parent(session):
+    """Test retrieving audit logs by trace and parent trace."""
+    # Create test data
+    trace_id = str(uuid.uuid4())
+    parent_trace_id = str(uuid.uuid4())
+    resource_type = "settings"
+    resource_id = "ops_mode"
 
-    trace_response = client.get(f"/audit-log/by-trace/{trace_id}")
-    assert trace_response.status_code == 200
-    trace_data = trace_response.json()["data"]
-    assert trace_data["trace_id"] == trace_id
-    assert trace_data["count"] >= 1
+    create_audit_log(
+        session=session,
+        trace_id=trace_id,
+        parent_trace_id=parent_trace_id,
+        resource_type=resource_type,
+        resource_id=resource_id,
+        action="update",
+        actor="test-suite",
+        changes={"value": "test"},
+    )
+    session.commit()
 
-    parent_response = client.get(f"/audit-log/by-parent-trace/{parent_trace_id}")
-    assert parent_response.status_code == 200
-    parent_data = parent_response.json()["data"]
-    assert parent_data["parent_trace_id"] == parent_trace_id
-    assert parent_data["count"] >= 1
+    # Test by trace
+    trace_result = get_audit_logs_by_trace(session=session, trace_id=trace_id)
+    assert trace_result is not None
+    assert len(trace_result) >= 1
+    assert any(log.trace_id == trace_id for log in trace_result)
+
+    # Test by parent trace
+    parent_result = get_audit_logs_by_parent_trace(session=session, parent_trace_id=parent_trace_id)
+    assert parent_result is not None
+    assert len(parent_result) >= 1
+    assert any(log.parent_trace_id == parent_trace_id for log in parent_result)

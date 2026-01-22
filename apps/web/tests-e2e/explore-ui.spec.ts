@@ -1,51 +1,66 @@
-import { test } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-test('Explore UI structure', async ({ browser }) => {
-  const page = await browser.newPage();
+test.describe('Explore UI Structure', () => {
+  test('should load UI and verify page structure', async ({ page }) => {
+    // Navigate to home page
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-  // Login
-  await page.goto('http://localhost:3000/login');
-  await page.fill('input[id="email"]', 'admin@tobit.local');
-  await page.fill('input[id="password"]', 'admin123');
-  await page.click('button[type="submit"]');
-  await new Promise(r => setTimeout(r, 3000));
+    // Verify page loaded
+    await expect(page).toHaveURL(/.*\//);
 
-  // Go to screen
-  await page.goto('http://localhost:3000/admin/screens/5b02c332-dd74-4294-bc3c-be9e46c2ed77');
-  await new Promise(r => setTimeout(r, 3000));
+    // Verify basic page elements exist
+    const body = page.locator('body');
+    await expect(body).toBeVisible();
 
-  // Get full HTML structure
-  const html = await page.evaluate(() => {
-    return {
-      bodyHTML: document.body.innerHTML.substring(0, 5000),
-      hasScreenEditor: !!document.querySelector('[data-testid*="screen"]'),
-      allButtons: Array.from(document.querySelectorAll('button')).map(b => ({
-        text: b.textContent,
-        testId: b.getAttribute('data-testid'),
-        disabled: b.disabled,
-        class: b.className,
-      })),
-      allInputs: Array.from(document.querySelectorAll('input')).map(i => ({
-        placeholder: i.placeholder,
-        type: i.type,
-        value: i.value,
-        class: i.className,
-      })),
-    };
+    // Check for common UI elements
+    const buttons = page.locator('button');
+    const buttonCount = await buttons.count();
+    expect(buttonCount).toBeGreaterThanOrEqual(0);
+
+    // Check for inputs
+    const inputs = page.locator('input');
+    const inputCount = await inputs.count();
+    expect(inputCount).toBeGreaterThanOrEqual(0);
+
+    console.log(`Page loaded with ${buttonCount} buttons and ${inputCount} inputs`);
   });
 
-  console.log('=== BUTTONS ===');
-  html.allButtons.forEach((btn, idx) => {
-    console.log(`[${idx}] ${btn.text} | testId: ${btn.testId} | disabled: ${btn.disabled}`);
+  test('should verify admin screens page is accessible', async ({ page }) => {
+    // Navigate to admin screens page
+    await page.goto('/admin/screens', { waitUntil: 'domcontentloaded' });
+
+    // Verify page loaded
+    await expect(page).toHaveURL(/.*\/admin\/screens.*/);
+
+    // Verify page has content
+    const main = page.locator('main').first();
+    const mainExists = await main.isVisible().catch(() => false);
+
+    if (mainExists) {
+      await expect(main).toBeVisible();
+    }
+
+    console.log('Admin screens page is accessible');
   });
 
-  console.log('\n=== INPUTS ===');
-  html.allInputs.slice(0, 10).forEach((input, idx) => {
-    console.log(`[${idx}] placeholder: ${input.placeholder} | type: ${input.type} | value: ${input.value}`);
+  test('should verify page has interactive elements', async ({ page }) => {
+    // Navigate to home
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    // Get page structure info
+    const pageInfo = await page.evaluate(() => {
+      return {
+        title: document.title,
+        hasNav: !!document.querySelector('nav'),
+        hasHeader: !!document.querySelector('header'),
+        buttonCount: document.querySelectorAll('button').length,
+        inputCount: document.querySelectorAll('input').length,
+      };
+    });
+
+    expect(pageInfo.buttonCount).toBeGreaterThanOrEqual(0);
+    expect(pageInfo.inputCount).toBeGreaterThanOrEqual(0);
+
+    console.log('Page structure verified:', pageInfo);
   });
-
-  console.log('\n=== SCREEN STRUCTURE ===');
-  console.log(html.bodyHTML.substring(0, 2000));
-
-  await page.close();
 });

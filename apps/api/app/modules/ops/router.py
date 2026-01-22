@@ -405,7 +405,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             logger.exception("ci.trace.persist_failed", exc_info=exc)
         status = "error" if trace_status == "error" else "ok"
         response: CiAskResponse = CiAskResponse(**result)
-        response_payload = ResponseEnvelope.success(data=response.dict())
+        response_payload = ResponseEnvelope.success(data=response.model_dump())
     except Exception as exc: 
         status = "error"
         logger.exception("ci.ask.error", exc_info=exc)

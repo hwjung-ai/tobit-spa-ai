@@ -1,17 +1,15 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
 import { Badge } from "../../../components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../../components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { formatError } from "../../../lib/utils";
 import type { SchemaAssetResponse, ScanResult } from "../../../types/asset-registry";
@@ -138,13 +136,6 @@ export default function CatalogPage() {
       scan_options: scanOptions.scan_options,
     };
     scanMutation.mutate({ source_ref: sourceRef, options });
-  };
-
-  const getTableColumns = (table: SchemaTable) => {
-    return table.columns.map((col) => ({
-      ...col,
-      fullName: `${table.schema_name}.${table.name}.${col.name}`,
-    }));
   };
 
   const renderScanDialog = (sourceRef: string) => {

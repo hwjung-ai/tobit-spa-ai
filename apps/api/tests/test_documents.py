@@ -6,19 +6,14 @@ from pathlib import Path
 import core.db as core_db
 import pytest
 import workers.queue
-from core.config import AppSettings
 from httpx import ASGITransport, AsyncClient
-from models import Document, DocumentChunk, DocumentStatus
-from sqlalchemy import JSON, select
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import sessionmaker
-from sqlmodel import Session, SQLModel, create_engine
 
-# Ensure uploads go to a temp storage before FastAPI loads settings
-storage_root = Path(tempfile.mkdtemp(prefix="codex-docs-"))
-os.environ.setdefault("DOCUMENT_STORAGE_ROOT", str(storage_root))
-
+# Storage root will be set per test
 from main import app
+from models.document import Document, DocumentChunk, DocumentStatus
+from sqlalchemy import JSON
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlmodel import Session, SQLModel, select
 
 
 def _patch_jsonb_for_sqlite():
@@ -29,25 +24,27 @@ def _patch_jsonb_for_sqlite():
 
 
 @pytest.fixture(autouse=True)
-def override_session(monkeypatch: pytest.MonkeyPatch):
-    AppSettings.connection_cache.clear()
-    _patch_jsonb_for_sqlite()
-    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
-    SQLModel.metadata.create_all(engine)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=Session)
+def setup_test_environment(session, monkeypatch):
+    # Setup test environment
+    storage_root = Path(tempfile.mkdtemp(prefix="codex-docs-"))
+    os.environ["DOCUMENT_STORAGE_ROOT"] = str(storage_root)
+
+    # Clear settings cache to force reload with new env var
+    from core.config import AppSettings as AppSettingsClass
+    AppSettingsClass.connection_cache.clear()
+
+    # Override the default session with our test session
+    from unittest.mock import patch
 
     def get_session_override():
-        with SessionLocal() as session:
-            yield session
+        yield session
 
-    monkeypatch.setattr(core_db, "SessionLocal", SessionLocal)
-    monkeypatch.setattr(core_db, "get_session", get_session_override)
-    monkeypatch.setattr(core_db, "engine", engine)
-    yield
+    with patch.object(core_db, "get_session", get_session_override):
+        yield session
 
 
 @pytest.mark.asyncio
-async def test_upload_creates_metadata_and_list(monkeypatch: pytest.MonkeyPatch):
+async def test_upload_creates_metadata_and_list(setup_test_environment, monkeypatch: pytest.MonkeyPatch):
     enqueued_ids: list[str] = []
 
     def fake_enqueue(document_id: str):
@@ -63,6 +60,7 @@ async def test_upload_creates_metadata_and_list(monkeypatch: pytest.MonkeyPatch)
         response = await client.post(
             "/documents/upload",
             files={"file": ("notes.txt", b"Hello world", "text/plain")},
+            headers={"X-Tenant-Id": "default", "X-User-Id": "default"},
         )
 
     assert response.status_code == 201
@@ -73,6 +71,7 @@ async def test_upload_creates_metadata_and_list(monkeypatch: pytest.MonkeyPatch)
     assert len(enqueued_ids) == 1
     assert enqueued_ids[0] == document["id"]
 
+    storage_root = Path(os.environ["DOCUMENT_STORAGE_ROOT"])
     stored_path = storage_root / document["tenant_id"] / document["id"] / document["filename"]
     assert stored_path.exists()
     assert stored_path.read_bytes() == b"Hello world"
@@ -83,7 +82,7 @@ async def test_upload_creates_metadata_and_list(monkeypatch: pytest.MonkeyPatch)
 
 
 @pytest.mark.asyncio
-async def test_document_stream_done_contains_references(monkeypatch: pytest.MonkeyPatch):
+async def test_document_stream_done_contains_references(setup_test_environment, monkeypatch: pytest.MonkeyPatch):
     from api.routes import documents as documents_module
 
     class FakeSearchService:
@@ -95,7 +94,7 @@ async def test_document_stream_done_contains_references(monkeypatch: pytest.Monk
 
         def fetch_top_chunks(self, session: Session, document_id: str, top_k: int, embedding: list[float]):
             statement = select(DocumentChunk).where(DocumentChunk.document_id == document_id)
-            return session.exec(statement).scalars().all()
+            return session.exec(statement).all()
 
         def score_chunk(self, chunk: DocumentChunk, query_embedding: list[float]) -> float:
             return 0.5

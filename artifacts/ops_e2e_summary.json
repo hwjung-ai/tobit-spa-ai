@@ -1,0 +1,124 @@
+{
+  "metadata": {
+    "base_url": "http://localhost:8000",
+    "assume_real_mode": "true",
+    "test_environment": "development"
+  },
+  "total_tests": 11,
+  "passed": 3,
+  "failed": 6,
+  "skipped": 2,
+  "entries": [
+    {
+      "test_name": "orchestration_trace_lifecycle",
+      "query": "서버 상태를 확인해주세요",
+      "endpoint": "/ops/ci/ask",
+      "pass": false,
+      "reason": "Trace ID must be present\nassert None is not None\n +  where None = <built-in method get of dict object at 0x7ffadb9e6ac0>('trace_id')\n +    where <built-in method get of dict object at 0x7ffadb9e6ac0> = {'auto': {'auto_recipe_applied': True, 'cep': {}, 'graph_scope': {}, 'history': {}, ...}, 'errors': [], 'graph_expected_but_missing': True, 'parent_trace_id': None, ...}.get",
+      "status": "fail",
+      "status_code": 200,
+      "duration_ms": 169.29
+    },
+    {
+      "test_name": "inspector_trace_search",
+      "endpoint": "/inspector/traces",
+      "pass": false,
+      "reason": "Status code must be 200\nassert 500 == 200\n +  where 500 = <Response [500 Internal Server Error]>.status_code",
+      "status": "fail",
+      "status_code": 500
+    },
+    {
+      "test_name": "control_loop_replan_mechanism",
+      "query": "complex query that needs replan",
+      "endpoint": "/ops/ci/ask",
+      "pass": false,
+      "reason": "[Errno 104] Connection reset by peer",
+      "status": "fail"
+    },
+    {
+      "test_name": "ci_ask_endpoint_performance",
+      "endpoint": "/ops/ci/ask",
+      "iterations": 5,
+      "pass": false,
+      "reason": "Performance requirements met",
+      "status": "pass",
+      "mean": 175.4962921142578,
+      "median": 174.71885681152344,
+      "min": 169.83628273010254,
+      "max": 182.50179290771484,
+      "stddev": 4.775069966123397,
+      "p95": 182.50179290771484,
+      "measurements": [
+        169.83628273010254,
+        173.05278778076172,
+        182.50179290771484,
+        177.37174034118652,
+        174.71885681152344
+      ],
+      "mean_duration_ms": 175.5,
+      "p95_duration_ms": 182.5,
+      "max_duration_ms": 182.5,
+      "performance_profile": "acceptable"
+    },
+    {
+      "test_name": "inspector_traces_performance",
+      "endpoint": "/inspector/traces",
+      "iterations": 3,
+      "pass": false,
+      "reason": "Status code must be 200, got 405\nassert 405 == 200\n +  where 405 = <Response [405 Method Not Allowed]>.status_code",
+      "status": "fail"
+    },
+    {
+      "test_name": "memory_usage_profiling",
+      "endpoint": "/ops/ci/ask",
+      "pass": false,
+      "reason": "Memory usage within limits",
+      "status": "pass",
+      "simple_response_size_bytes": 4022,
+      "complex_response_size_bytes": 5483
+    },
+    {
+      "test_name": "concurrent_requests_performance",
+      "concurrent_count": 5,
+      "pass": false,
+      "reason": "Concurrent performance requirements met",
+      "status": "pass",
+      "total_duration_ms": 335.65,
+      "average_duration_ms": 67.13
+    },
+    {
+      "test_name": "regression_analysis_endpoint",
+      "baseline_trace_id": null,
+      "comparison_trace_id": null,
+      "endpoint": "/inspector/regression/stage-compare",
+      "pass": false,
+      "reason": "Regression endpoint not implemented (expected for now)",
+      "status": "skipped",
+      "status_code": 422
+    },
+    {
+      "test_name": "analyze_regression_workflow",
+      "base_traces": 2,
+      "endpoint": "/inspector/regression/analyze",
+      "pass": false,
+      "reason": "Regression analysis endpoint not implemented",
+      "status": "skipped",
+      "status_code": 422
+    },
+    {
+      "test_name": "stage_execution_with_override",
+      "trace_id": null,
+      "endpoint": "/inspector/traces",
+      "pass": false,
+      "reason": "assert 500 == 200\n +  where 500 = <Response [500 Internal Server Error]>.status_code",
+      "status": "fail"
+    },
+    {
+      "test_name": "stage_isolation_and_testing",
+      "endpoint": "/ops/ci/ask",
+      "pass": false,
+      "reason": "[Errno 104] Connection reset by peer",
+      "status": "fail"
+    }
+  ]
+}

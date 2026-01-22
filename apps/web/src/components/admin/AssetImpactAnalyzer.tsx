@@ -2,19 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
-  Legend,
-  PieChart,
-  Pie,
-  Cell,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -22,35 +10,19 @@ import {
   Radar
 } from "recharts";
 import {
-  Eye,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
   CheckCircle,
   Clock,
-  Zap,
-  Filter,
-  Download,
   RefreshCw,
   Compare,
   Target,
   Layers,
-  Activity
+  Activity,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface AssetVersion {
-  id: string;
-  asset_id: string;
-  version: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  status: "published" | "draft" | "archived";
-  author: string;
-  size: number;
-  metadata?: Record<string, unknown>;
-}
 
 interface AssetMetrics {
   version: string;
@@ -108,8 +80,6 @@ const QualityRadarData = [
   { subject: 'Usability', A: 65, fullMark: 150 },
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
-
 export default function AssetImpactAnalyzer({
   className,
   assetType,
@@ -125,7 +95,7 @@ export default function AssetImpactAnalyzer({
   const [compareVersions, setCompareVersions] = useState<string[]>([]);
 
   // Mock data for demonstration
-  const mockMetrics: AssetMetrics[] = [
+  const mockMetrics = useMemo(() => [
     {
       version: "1.0.0",
       usage_count: 150,
@@ -181,7 +151,7 @@ export default function AssetImpactAnalyzer({
       quality_score: 78,
       performance_impact: 25
     },
-  ];
+  ] as AssetMetrics[], []);
 
   useEffect(() => {
     // Simulate loading impact data
@@ -215,7 +185,7 @@ export default function AssetImpactAnalyzer({
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [assetId, selectedVersion]);
+  }, [assetId, selectedVersion, mockMetrics]);
 
   const handleVersionSelect = (version: string) => {
     setSelectedVersion(version);

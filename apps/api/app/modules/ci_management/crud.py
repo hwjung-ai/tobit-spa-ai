@@ -35,12 +35,14 @@ def create_change(
     ci_id: str,
     change_type: ChangeType,
     changed_by_user_id: str,
+    tenant_id: str,
     change_reason: Optional[str] = None,
     old_values: Optional[Dict[str, Any]] = None,
     new_values: Optional[Dict[str, Any]] = None,
 ) -> TbCIChange:
     """Create a new CI change record."""
     change = TbCIChange(
+        tenant_id=tenant_id,
         ci_id=ci_id,
         change_type=change_type,
         changed_by_user_id=changed_by_user_id,
@@ -64,12 +66,15 @@ def list_changes(
     ci_id: Optional[str] = None,
     status: Optional[ChangeStatus] = None,
     change_type: Optional[ChangeType] = None,
+    tenant_id: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
 ) -> Tuple[List[TbCIChange], int]:
     """List CI changes with filtering."""
     statement = select(TbCIChange)
 
+    if tenant_id:
+        statement = statement.where(TbCIChange.tenant_id == tenant_id)
     if ci_id:
         statement = statement.where(TbCIChange.ci_id == ci_id)
     if status:
@@ -81,6 +86,8 @@ def list_changes(
 
     # Get total count
     count_statement = select(func.count()).select_from(TbCIChange)
+    if tenant_id:
+        count_statement = count_statement.where(TbCIChange.tenant_id == tenant_id)
     if ci_id:
         count_statement = count_statement.where(TbCIChange.ci_id == ci_id)
     if status:
@@ -133,6 +140,7 @@ def apply_change(session: Session, change_id: str) -> Optional[TbCIChange]:
         raise ValueError(f"Cannot apply non-approved change (status: {change.status})")
 
     change.status = ChangeStatus.APPLIED
+    change.applied_at = datetime.now(timezone.utc)
     change.updated_at = datetime.now(timezone.utc)
 
     session.add(change)
@@ -141,9 +149,11 @@ def apply_change(session: Session, change_id: str) -> Optional[TbCIChange]:
     return change
 
 
-def get_change_history(session: Session, ci_id: str) -> CIChangeHistory:
+def get_change_history(session: Session, ci_id: str, tenant_id: Optional[str] = None) -> CIChangeHistory:
     """Get change history summary for a CI."""
     statement = select(TbCIChange).where(TbCIChange.ci_id == ci_id)
+    if tenant_id:
+        statement = statement.where(TbCIChange.tenant_id == tenant_id)
     changes = session.exec(statement).all()
 
     create_count = sum(1 for c in changes if c.change_type == ChangeType.CREATE)
@@ -183,10 +193,12 @@ def create_integrity_issue(
     issue_type: str,
     severity: str,
     description: str,
+    tenant_id: str,
     related_ci_ids: Optional[List[str]] = None,
 ) -> TbCIIntegrityIssue:
     """Create a CI integrity issue."""
     issue = TbCIIntegrityIssue(
+        tenant_id=tenant_id,
         ci_id=ci_id,
         issue_type=issue_type,
         severity=severity,
@@ -203,10 +215,13 @@ def get_integrity_issues(
     session: Session,
     ci_id: Optional[str] = None,
     resolved: Optional[bool] = None,
+    tenant_id: Optional[str] = None,
 ) -> List[TbCIIntegrityIssue]:
     """Get integrity issues for a CI."""
     statement = select(TbCIIntegrityIssue)
 
+    if tenant_id:
+        statement = statement.where(TbCIIntegrityIssue.tenant_id == tenant_id)
     if ci_id:
         statement = statement.where(TbCIIntegrityIssue.ci_id == ci_id)
     if resolved is not None:
@@ -239,9 +254,9 @@ def resolve_integrity_issue(
     return issue
 
 
-def get_integrity_summary(session: Session, ci_id: str) -> CIIntegritySummary:
+def get_integrity_summary(session: Session, ci_id: str, tenant_id: Optional[str] = None) -> CIIntegritySummary:
     """Get integrity summary for a CI."""
-    issues = get_integrity_issues(session, ci_id=ci_id, resolved=False)
+    issues = get_integrity_issues(session, ci_id=ci_id, resolved=False, tenant_id=tenant_id)
 
     warning_count = sum(1 for i in issues if i.severity == "warning")
     error_count = sum(1 for i in issues if i.severity == "error")
@@ -255,7 +270,7 @@ def get_integrity_summary(session: Session, ci_id: str) -> CIIntegritySummary:
         status = IntegrityStatus.VALID
 
     # Check for duplicates
-    duplicates = get_duplicates_for_ci(session, ci_id)
+    duplicates = get_duplicates_for_ci(session, ci_id, tenant_id=tenant_id)
     duplicate_count = sum(1 for d in duplicates if not d.is_merged)
 
     last_validation = None
@@ -285,10 +300,12 @@ def create_duplicate_entry(
     ci_id_1: str,
     ci_id_2: str,
     similarity_score: float,
+    tenant_id: str,
     match_fields: Optional[List[str]] = None,
 ) -> TbCIDuplicate:
     """Create a duplicate detection entry."""
     duplicate = TbCIDuplicate(
+        tenant_id=tenant_id,
         ci_id_1=ci_id_1,
         ci_id_2=ci_id_2,
         similarity_score=similarity_score,
@@ -300,11 +317,15 @@ def create_duplicate_entry(
     return duplicate
 
 
-def get_duplicates_for_ci(session: Session, ci_id: str) -> List[TbCIDuplicate]:
+def get_duplicates_for_ci(session: Session, ci_id: str, tenant_id: Optional[str] = None) -> List[TbCIDuplicate]:
     """Get all duplicates for a CI."""
     statement = select(TbCIDuplicate).where(
         (TbCIDuplicate.ci_id_1 == ci_id) | (TbCIDuplicate.ci_id_2 == ci_id)
     )
+
+    if tenant_id:
+        statement = statement.where(TbCIDuplicate.tenant_id == tenant_id)
+
     return session.exec(statement.order_by(TbCIDuplicate.similarity_score.desc())).all()
 
 
@@ -312,11 +333,22 @@ def confirm_duplicate(
     session: Session,
     duplicate_id: str,
     confirmed_by_user_id: str,
+    tenant_id: Optional[str] = None,
     action: str = "review",  # merge, ignore, review
     merge_into_ci_id: Optional[str] = None,
 ) -> Optional[TbCIDuplicate]:
     """Confirm a duplicate detection."""
-    duplicate = session.get(TbCIDuplicate, duplicate_id)
+    if tenant_id:
+        # Filter by tenant_id to ensure we're only getting duplicates for this tenant
+        duplicate = session.exec(
+            select(TbCIDuplicate).where(
+                TbCIDuplicate.id == duplicate_id,
+                TbCIDuplicate.tenant_id == tenant_id
+            )
+        ).first()
+    else:
+        duplicate = session.get(TbCIDuplicate, duplicate_id)
+
     if not duplicate:
         return None
 
@@ -336,9 +368,13 @@ def confirm_duplicate(
     return duplicate
 
 
-def get_duplicate_statistics(session: Session) -> Dict[str, Any]:
-    """Get global duplicate statistics."""
+def get_duplicate_statistics(session: Session, tenant_id: Optional[str] = None) -> Dict[str, Any]:
+    """Get duplicate statistics for a tenant or globally."""
     statement = select(TbCIDuplicate)
+
+    if tenant_id:
+        statement = statement.where(TbCIDuplicate.tenant_id == tenant_id)
+
     duplicates = session.exec(statement).all()
 
     total = len(duplicates)
@@ -351,7 +387,7 @@ def get_duplicate_statistics(session: Session) -> Dict[str, Any]:
     )
 
     return {
-        "total_duplicates": total,
+        "total": total,
         "confirmed": confirmed,
         "merged": merged,
         "pending": pending,
@@ -363,14 +399,17 @@ def get_duplicate_statistics(session: Session) -> Dict[str, Any]:
 # Overall Statistics
 # ============================================================================
 
-def get_change_statistics(session: Session, days: int = 30) -> CIChangeStats:
-    """Get change statistics for the last N days."""
-    datetime.now(timezone.utc) - timedelta(days=days)
+def get_change_statistics(session: Session, tenant_id: Optional[str] = None, days: int = 30) -> CIChangeStats:
+    """Get change statistics for the last N days, filtered by tenant if provided."""
     cutoff_date_today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     cutoff_date_week = cutoff_date_today - timedelta(days=7)
 
     # All changes
     all_changes_stmt = select(TbCIChange)
+
+    if tenant_id:
+        all_changes_stmt = all_changes_stmt.where(TbCIChange.tenant_id == tenant_id)
+
     all_changes = session.exec(all_changes_stmt).all()
 
     # By type
@@ -386,10 +425,16 @@ def get_change_statistics(session: Session, days: int = 30) -> CIChangeStats:
         by_status[status.value] = count
 
     # Today's changes
-    changes_today = sum(1 for c in all_changes if c.created_at >= cutoff_date_today)
+    changes_today = sum(1 for c in all_changes if (
+        (c.created_at.tzinfo is None and c.created_at.date() == cutoff_date_today.date()) or
+        (c.created_at.tzinfo is not None and c.created_at >= cutoff_date_today)
+    ))
 
     # This week's changes
-    changes_this_week = sum(1 for c in all_changes if c.created_at >= cutoff_date_week)
+    changes_this_week = sum(1 for c in all_changes if (
+        (c.created_at.tzinfo is None and c.created_at.date() >= cutoff_date_week.date()) or
+        (c.created_at.tzinfo is not None and c.created_at >= cutoff_date_week)
+    ))
 
     # Most changed CI
     ci_change_counts = {}
@@ -423,6 +468,7 @@ def validate_ci_integrity(
     session: Session,
     ci_id: str,
     ci_data: Dict[str, Any],
+    tenant_id: Optional[str] = None,
 ) -> Tuple[bool, List[str]]:
     """Validate CI integrity against predefined rules."""
     issues = []
@@ -452,6 +498,7 @@ def validate_ci_integrity(
             issue_type="validation",
             severity=severity,
             description=issue_desc,
+            tenant_id=tenant_id,
         )
 
     is_valid = not any("Missing" in i for i in issues)

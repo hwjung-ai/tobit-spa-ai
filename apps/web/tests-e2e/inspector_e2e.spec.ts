@@ -22,7 +22,7 @@ test.describe('Inspector E2E Tests', () => {
     await page.goto(`${BASE_URL}/ops/query`);
 
     // Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for "Open in Inspector" button - may be in a results panel or action bar
     const openBtn = page.locator('[data-testid="ops-open-in-inspector"]');
@@ -50,7 +50,7 @@ test.describe('Inspector E2E Tests', () => {
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
 
     // Wait for page load
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify drawer is visible
     const drawer = page.locator('[data-testid="inspector-drawer"]');
@@ -104,7 +104,7 @@ test.describe('Inspector E2E Tests', () => {
 
     // Navigate to inspector
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify drawer is visible
     const drawer = page.locator('[data-testid="inspector-drawer"]');
@@ -153,7 +153,7 @@ test.describe('Inspector E2E Tests', () => {
 
     // Navigate to inspector
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Listen for alert/error message
     let alertMessage = '';
@@ -207,7 +207,7 @@ test.describe('Inspector E2E Tests', () => {
 
     // Navigate to inspector with baseline trace
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${baselineTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click Compare button
     const compareBtn = page.locator('[data-testid="compare-button"]');
@@ -257,7 +257,7 @@ test.describe('Inspector E2E Tests', () => {
   test('Case5: /admin/regression page loads and renders panel', async ({ page }) => {
     // Navigate to regression page
     await page.goto(`${BASE_URL}/admin/regression`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify page loaded
     await expect(page).toHaveURL(/.*\/admin\/regression.*/);
@@ -281,7 +281,7 @@ test.describe('Inspector E2E Tests', () => {
   test('Additional: Inspector trace row navigation', async ({ page }) => {
     // Navigate to inspector
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=test-trace-nav`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for trace rows (may be in a list or table)
     const traceRow = page.locator('[data-testid="inspector-trace-row"]');
@@ -315,7 +315,7 @@ test.describe('RCA API Contract Tests', () => {
     });
 
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const runRcaBtn = page.locator('[data-testid="drawer-run-rca"]');
     if (await runRcaBtn.isVisible()) {

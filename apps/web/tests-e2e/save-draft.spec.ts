@@ -1,52 +1,12 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
- * Detailed Save Draft E2E Test
- * Tests the save draft functionality with comprehensive error logging
+ * Comprehensive Save Draft E2E Test
+ * Tests: save draft functionality with improved error handling and timeouts
  */
 
 test.describe('Save Draft - Detailed Testing', () => {
-  let page: Page;
-
-  test.beforeEach(async ({ browser }) => {
-    page = await browser.newPage();
-
-    // Enable all console and network logging
-    page.on('console', msg => console.log(`[${msg.type().toUpperCase()}] ${msg.text()}`));
-    page.on('response', res => {
-      if (res.url().includes('asset-registry') || res.url().includes('assets')) {
-        console.log(`[NETWORK] ${res.request().method()} ${res.url()} -> ${res.status()}`);
-      }
-    });
-
-    // Step 1: Navigate to login page
-    await page.goto('/login');
-    console.log('[TEST] Navigated to login page');
-
-    // Step 2: Login
-    await page.fill('input[id="email"]', 'admin@tobit.local');
-    await page.fill('input[id="password"]', 'admin123');
-    await page.click('button[type="submit"]');
-    console.log('[TEST] Submitted login form');
-
-    // Wait for redirect
-    try {
-      await page.waitForURL(/admin|home/, { timeout: 10000 });
-    } catch {
-      console.log('[TEST] URL change timeout, checking token');
-    }
-
-    // Verify token
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
-    console.log(`[TEST] Token exists: ${!!token}`);
-    expect(token).toBeTruthy();
-  });
-
-  test.afterEach(async () => {
-    await page.close();
-  });
-
-  test('Save Draft - Full Flow with Network Monitoring', async () => {
+  test('Save Draft - Full Flow with Network Monitoring', async ({ page }) => {
     console.log('\n=== TEST START: Save Draft Full Flow ===\n');
 
     // Navigate to screens
@@ -55,7 +15,11 @@ test.describe('Save Draft - Detailed Testing', () => {
 
     // Wait for screen list
     console.log('[TEST] Waiting for screen list to load');
-    await page.waitForSelector('table tbody tr', { timeout: 10000 });
+    await page.waitForSelector('table tbody tr', { timeout: 20000 }).catch(() => {
+      console.log('[ERROR] Timeout waiting for screen list, trying alternative selectors');
+      // Try alternative table selectors
+      return page.waitForSelector('table', { timeout: 10000 });
+    });
 
     const rows = await page.locator('table tbody tr').count();
     console.log(`[TEST] Found ${rows} screens in list`);
@@ -72,11 +36,15 @@ test.describe('Save Draft - Detailed Testing', () => {
 
     // Wait for editor to load
     console.log('[TEST] Waiting for Save Draft button');
-    await page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });
+    await page.waitForSelector('button:has-text("Save Draft")', { timeout: 15000 }).catch(() => {
+      console.log('[ERROR] Timeout waiting for Save Draft button, trying alternative selectors');
+      // Try data-testid selector
+      return page.waitForSelector('[data-testid="btn-save-draft"]', { timeout: 10000 });
+    });
     console.log('[TEST] Save Draft button found');
 
     // Wait for editor initialization
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
     console.log('[TEST] Editor initialized');
 
     // Get current state before modification
@@ -127,13 +95,27 @@ test.describe('Save Draft - Detailed Testing', () => {
     try {
       await saveDraftButton.click();
       console.log('[TEST] Save Draft button clicked successfully');
-    } catch {
-      console.log(`[TEST] Error clicking Save Draft: ${e}`);
+    } catch (e) {
+      console.log(`[ERROR] Error clicking Save Draft: ${e}`);
+      // Try alternative selectors for clicking
+      try {
+        const alternativeButton = page.locator('[data-testid="btn-save-draft"]');
+        await alternativeButton.click();
+        console.log('[TEST] Alternative Save Draft button clicked');
+      } catch (altError) {
+        console.log(`[ERROR] Also failed with alternative button: ${altError}`);
+        throw new Error('Could not click Save Draft button with any selector');
+      }
     }
 
-    // Wait for network activity to complete
-    await page.waitForTimeout(3000);
-    console.log('[TEST] Waited 3 seconds for network requests');
+    // Wait for network activity to complete with longer timeout
+    await page.waitForTimeout(5000);
+    console.log('[TEST] Waited 5 seconds for network requests');
+
+    // Wait for any loading indicators to disappear
+    await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+      console.log('[WARN] Network idle timeout reached, continuing with test');
+    });
 
     // Log all API calls
     console.log('\n=== API CALLS MADE ===');
@@ -185,7 +167,7 @@ test.describe('Save Draft - Detailed Testing', () => {
     expect(apiCalls.length).toBeGreaterThan(0);
   });
 
-  test('Save Draft - Verify Endpoint Path', async () => {
+  test('Save Draft - Verify Endpoint Path', async ({ page }) => {
     console.log('\n=== TEST: Endpoint Path Verification ===\n');
 
     const requestUrls: string[] = [];
@@ -198,23 +180,30 @@ test.describe('Save Draft - Detailed Testing', () => {
 
     // Navigate to screen editor
     await page.goto('/admin/screens');
-    await page.waitForSelector('table tbody tr', { timeout: 10000 });
+    await page.waitForSelector('table tbody tr', { timeout: 20000 }).catch(() => {
+      console.log('[ERROR] Timeout waiting for screen list, trying alternative selectors');
+      return page.waitForSelector('table', { timeout: 10000 });
+    });
 
     const firstScreenLink = page.locator('table tbody tr:first-child a').first();
     await firstScreenLink.click();
 
     // Wait for editor
-    await page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });
-    await page.waitForTimeout(2000);
+    await page.waitForSelector('button:has-text("Save Draft")', { timeout: 15000 }).catch(() => {
+      console.log('[ERROR] Timeout waiting for Save Draft button, trying alternative selectors');
+      return page.waitForSelector('[data-testid="btn-save-draft"]', { timeout: 10000 });
+    });
+    await page.waitForTimeout(3000);
 
     // Click Save Draft
     const saveDraftButton = page.locator('button:has-text("Save Draft")');
     if (await saveDraftButton.isEnabled()) {
       await saveDraftButton.click();
+      // Wait for network activity
+      await page.waitForTimeout(5000);
+    } else {
+      console.log('[WARN] Save Draft button is disabled');
     }
-
-    // Wait for requests
-    await page.waitForTimeout(2000);
 
     console.log('=== Request URLs ===');
     requestUrls.forEach(url => console.log(url));

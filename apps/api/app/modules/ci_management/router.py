@@ -8,7 +8,8 @@ from datetime import datetime
 from typing import List, Optional
 
 from core.db import get_session
-from fastapi import APIRouter, Depends, HTTPException, Query
+from core.tenant import get_current_tenant
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session
 
@@ -38,14 +39,17 @@ router = APIRouter(prefix="/api/ci-management", tags=["CI Management"])
 def create_ci_change(
     change: CIChangeCreate,
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Create a new CI change record."""
     try:
+        tenant_id = get_current_tenant(request)
         db_change = crud.create_change(
             session=session,
             ci_id=change.ci_id,
             change_type=change.change_type,
             changed_by_user_id=change.changed_by_user_id,
+            tenant_id=tenant_id,
             change_reason=change.change_reason,
             old_values=change.old_values,
             new_values=change.new_values,
@@ -85,13 +89,16 @@ def list_ci_changes(
     limit: int = Query(100, le=1000),
     offset: int = Query(0),
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """List CI changes with filtering."""
+    tenant_id = get_current_tenant(request)
     changes, total = crud.list_changes(
         session,
         ci_id=ci_id,
         status=status,
         change_type=change_type,
+        tenant_id=tenant_id,
         limit=limit,
         offset=offset,
     )
@@ -153,9 +160,11 @@ def apply_ci_change(
 def get_ci_change_history(
     ci_id: str,
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Get change history for a CI."""
-    history = crud.get_change_history(session, ci_id)
+    tenant_id = get_current_tenant(request)
+    history = crud.get_change_history(session, ci_id, tenant_id=tenant_id)
 
     return ResponseEnvelope(
         code=200,
@@ -173,9 +182,11 @@ def get_ci_integrity_issues(
     ci_id: str,
     resolved: Optional[bool] = Query(None),
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Get integrity issues for a CI."""
-    issues = crud.get_integrity_issues(session, ci_id=ci_id, resolved=resolved)
+    tenant_id = get_current_tenant(request)
+    issues = crud.get_integrity_issues(session, ci_id=ci_id, resolved=resolved, tenant_id=tenant_id)
 
     return ResponseEnvelope(
         code=200,
@@ -188,9 +199,11 @@ def get_ci_integrity_issues(
 def get_ci_integrity_summary(
     ci_id: str,
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Get integrity summary for a CI."""
-    summary = crud.get_integrity_summary(session, ci_id)
+    tenant_id = get_current_tenant(request)
+    summary = crud.get_integrity_summary(session, ci_id, tenant_id=tenant_id)
 
     return ResponseEnvelope(
         code=200,
@@ -232,9 +245,11 @@ def resolve_integrity_issue(
 def get_ci_duplicates(
     ci_id: str,
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Get duplicates for a CI."""
-    duplicates = crud.get_duplicates_for_ci(session, ci_id)
+    tenant_id = get_current_tenant(request)
+    duplicates = crud.get_duplicates_for_ci(session, ci_id, tenant_id=tenant_id)
 
     return ResponseEnvelope(
         code=200,
@@ -248,12 +263,15 @@ def confirm_duplicate(
     duplicate_id: str,
     confirmation: CIDuplicateConfirm,
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Confirm a duplicate detection."""
+    tenant_id = get_current_tenant(request)
     duplicate = crud.confirm_duplicate(
         session,
         duplicate_id=duplicate_id,
         confirmed_by_user_id=confirmation.confirmed_by_user_id,
+        tenant_id=tenant_id,
         action=confirmation.action,
         merge_into_ci_id=confirmation.merge_into_ci_id,
     )
@@ -271,9 +289,11 @@ def confirm_duplicate(
 @router.get("/duplicates/statistics", response_model=ResponseEnvelope)
 def get_duplicate_statistics(
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Get duplicate statistics."""
-    stats = crud.get_duplicate_statistics(session)
+    tenant_id = get_current_tenant(request)
+    stats = crud.get_duplicate_statistics(session, tenant_id=tenant_id)
 
     return ResponseEnvelope(
         code=200,
@@ -290,9 +310,11 @@ def get_duplicate_statistics(
 def get_change_statistics(
     days: int = Query(30, ge=1, le=365),
     session: Session = Depends(get_session),
+    request: Request = None,  # For dependency injection
 ) -> ResponseEnvelope:
     """Get change statistics for the last N days."""
-    stats = crud.get_change_statistics(session, days=days)
+    tenant_id = get_current_tenant(request)
+    stats = crud.get_change_statistics(session, tenant_id=tenant_id, days=days)
 
     return ResponseEnvelope(
         code=200,

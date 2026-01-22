@@ -3,7 +3,7 @@ Comprehensive tests for CI Management module.
 Tests cover change tracking, integrity validation, and duplicate detection.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from app.modules.ci_management import crud
@@ -24,10 +24,10 @@ class TestCIChangeCreation:
             ci_id="ci-001",
             change_type=ChangeType.UPDATE,
             changed_by_user_id="user-001",
-            change_reason="Configuration update",
-            old_values='{"key": "old_value"}',
-            new_values='{"key": "new_value"}',
             tenant_id="t1",
+            change_reason="Configuration update",
+            old_values={"key": "old_value"},
+            new_values={"key": "new_value"},
         )
 
         assert change.id is not None
@@ -465,8 +465,8 @@ class TestCIIntegrityValidation:
         summary = crud.get_integrity_summary(session, ci_id, tenant_id="t1")
 
         assert summary.ci_id == ci_id
-        assert summary.total_issues >= 2
-        assert summary.critical_count >= 0
+        assert summary.issue_count >= 2
+        assert summary.error_count >= 0
         assert summary.warning_count >= 0
 
 
@@ -526,8 +526,8 @@ class TestCIDuplicateDetection:
         assert confirmed is not None
         assert confirmed.is_confirmed is True
         assert confirmed.confirmed_by_user_id == "user-001"
-        assert confirmed.action == "merge"
-        assert confirmed.merge_into_ci_id == "ci-001"
+        assert confirmed.is_merged is True
+        assert confirmed.merged_into_ci_id == "ci-001"
 
     def test_duplicate_statistics(self, session: Session):
         """Test duplicate statistics."""
@@ -554,7 +554,7 @@ class TestCIDuplicateDetection:
         assert stats["total"] >= 5
         assert stats["confirmed"] >= 2
         assert stats["pending"] >= 0
-        assert "avg_similarity" in stats
+        assert "average_similarity" in stats
 
 
 class TestCIChangeStatistics:
@@ -589,7 +589,7 @@ class TestCIChangeStatistics:
         )
 
         # Manually update to old date
-        old_change.created_at = datetime.utcnow() - timedelta(days=100)
+        old_change.created_at = datetime.now(timezone.utc) - timedelta(days=100)
         session.add(old_change)
         session.commit()
 
@@ -665,7 +665,7 @@ class TestCIIntegrationWorkflow:
             merge_into_ci_id="ci-master",
         )
         assert confirmed.is_confirmed is True
-        assert confirmed.merge_into_ci_id == "ci-master"
+        assert confirmed.merged_into_ci_id == "ci-master"
 
         # Create merge change
         merge_change = crud.create_change(
@@ -707,7 +707,7 @@ class TestCIIntegrationWorkflow:
 
         # Verify summary updated
         summary = crud.get_integrity_summary(session, ci_id, tenant_id="t1")
-        assert summary.resolved_count >= 0
+        assert summary.issue_count >= 0
 
 
 class TestTenantIsolation:

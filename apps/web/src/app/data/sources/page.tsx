@@ -1,15 +1,14 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Badge } from "../../../components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "../../../components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
@@ -229,7 +228,7 @@ export default function SourcesPage() {
     testMutation.mutate(source.asset_id);
   };
 
-  const renderConnectionForm = (isCreate: boolean) => {
+  const renderConnectionForm = () => {
     if (!editingSource) return null;
 
     const sourceTypes = Object.keys(SOURCE_TYPE_LABELS) as SourceType[];
@@ -668,7 +667,7 @@ export default function SourcesPage() {
               Configure a new data source connection
             </DialogDescription>
           </DialogHeader>
-          {renderConnectionForm(isCreateDialogOpen)}
+          {renderConnectionForm()}
         </DialogContent>
       </Dialog>
 

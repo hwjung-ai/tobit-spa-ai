@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Clock,
   AlertTriangle,
   RefreshCw,
-  Eye,
-  Filter,
   X,
-  Calendar,
-  Zap,
   Bug,
   Lightbulb,
   TrendingUp,
-  Info
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -45,7 +41,6 @@ interface ReplanTimelineProps {
   traceId?: string;
   triggerFilter?: string[];
   onEventSelect?: (event: ReplanEvent) => void;
-  compact?: boolean;
 }
 
 const TRIGGER_CONFIG = {
@@ -96,7 +91,7 @@ const StageColors = {
   present: "bg-rose-500/10 border-rose-400/30",
 };
 
-const PatchDiffViewer = ({ patch, stageName }: { patch: unknown; stageName: string }) => {
+const PatchDiffViewer = ({ patch }: { patch: unknown }) => {
   const [expanded, setExpanded] = useState(false);
 
   if (!patch || (!patch.before && !patch.after)) {
@@ -136,27 +131,15 @@ export default function ReplanTimeline({
   traceId,
   triggerFilter = [],
   onEventSelect,
-  compact = false,
 }: ReplanTimelineProps) {
   const [selectedEvent, setSelectedEvent] = useState<ReplanEvent | null>(null);
   const [filteredTriggers, setFilteredTriggers] = useState<Set<string>>(
     new Set(triggerFilter)
   );
-  const [timelineWidth, setTimelineWidth] = useState(0);
-  const [scrollPosition, setScrollPosition] = useState(0);
 
   const sortedEvents = [...events].sort((a, b) =>
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
-
-  const timelineRef = React.useRef<HTMLDivElement>(null);
-
-  // Calculate timeline width
-  useEffect(() => {
-    if (timelineRef.current) {
-      setTimelineWidth(timelineRef.current.offsetWidth);
-    }
-  }, [events]);
 
   const handleTriggerFilter = (trigger: string) => {
     const newSet = new Set(filteredTriggers);
@@ -171,9 +154,6 @@ export default function ReplanTimeline({
   const filteredEvents = sortedEvents.filter(event =>
     filteredTriggers.size === 0 || filteredTriggers.has(event.trigger.trigger_type)
   );
-
-  const timelineDuration = events.length > 0 ?
-    new Date(events[0].timestamp).getTime() - new Date(events[events.length - 1].timestamp).getTime() : 0;
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString();
@@ -249,12 +229,6 @@ export default function ReplanTimeline({
                 const triggerConfig = TRIGGER_CONFIG[event.trigger.trigger_type] || TRIGGER_CONFIG.error;
                 const Icon = triggerConfig.icon;
                 const stageColor = StageColors[event.stage_name as keyof typeof StageColors] || StageColors.route_plan;
-
-                // Calculate position
-                const eventTime = new Date(event.timestamp).getTime();
-                const firstEventTime = new Date(sortedEvents[0].timestamp).getTime();
-                const position = timelineDuration > 0 ?
-                  ((eventTime - firstEventTime) / timelineDuration) * 100 : 0;
 
                 return (
                   <div
@@ -335,7 +309,7 @@ export default function ReplanTimeline({
 
                       {/* Patch Diff Toggle */}
                       {event.patch && (
-                        <PatchDiffViewer patch={event.patch} stageName={event.stage_name} />
+                        <PatchDiffViewer patch={event.patch} />
                       )}
                     </div>
 

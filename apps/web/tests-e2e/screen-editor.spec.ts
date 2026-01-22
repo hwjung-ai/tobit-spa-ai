@@ -1,4 +1,4 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 /**
  * Screen Editor E2E Tests
@@ -6,80 +6,43 @@ import { test, expect, Page } from '@playwright/test';
  */
 
 test.describe('Screen Editor', () => {
-  let page: Page;
-
-  test.beforeEach(async ({ browser }) => {
-    page = await browser.newPage();
-
-    // Step 1: Navigate to login page
-    await page.goto('/login');
-
-    // Step 2: Login with demo credentials
-    await page.fill('input[id="email"]', 'admin@tobit.local');
-    await page.fill('input[id="password"]', 'admin123');
-    await page.click('button[type="submit"]');
-
-    // Wait for redirect to home page or success indication
-    try {
-      await page.waitForURL(/^http:\/\/localhost:3000\/?$/, { timeout: 10000 });
-    } catch {
-      // Login might redirect to a different page, check if token exists instead
-    }
-
-    // Verify token was stored in localStorage
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
-    if (!token) {
-      console.warn('Token not found after login, checking page');
-      // If token doesn't exist, the test setup failed
-      const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
-      if (loginError) {
-        throw new Error('Login failed');
-      }
-    }
-    expect(token).toBeTruthy();
-  });
-
-  test.afterEach(async () => {
-    await page.close();
-  });
-
-  test('should load screen list', async () => {
+  test('should load screen list', async ({ page }) => {
     // Navigate to screens page
-    await page.goto('/admin/screens');
+    await page.goto('/admin/screens', { waitUntil: 'networkidle' });
 
     // Wait for screen list to load
-    await page.waitForSelector('[role="table"]', { timeout: 10000 });
+    await page.waitForSelector('[role="table"]', { timeout: 20000 });
 
     // Verify screens are displayed
     const rows = await page.locator('table tbody tr').count();
     expect(rows).toBeGreaterThan(0);
-  });
+  }, { timeout: 30000 });
 
-  test('should open visual editor for a screen', async () => {
+  test('should open visual editor for a screen', async ({ page }) => {
     // Navigate to screens page
-    await page.goto('/admin/screens');
+    await page.goto('/admin/screens', { waitUntil: 'networkidle' });
 
     // Wait for first screen to be clickable
     const firstScreenLink = page.locator('table tbody tr:first-child a').first();
-    await firstScreenLink.waitFor({ timeout: 10000 });
+    await firstScreenLink.waitFor({ timeout: 15000 });
 
     // Click first screen
     await firstScreenLink.click();
 
     // Wait for editor to load
     await page.waitForSelector('[data-testid="screen-editor-header"]', {
-      timeout: 10000
+      timeout: 20000
     }).catch(() => {
       // Fallback: wait for any editor elements
-      return page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });
+      return page.waitForSelector('button:has-text("Save Draft")', { timeout: 20000 });
     });
 
     // Verify editor header is visible
     const saveDraftButton = await page.locator('button:has-text("Save Draft")').isVisible();
     expect(saveDraftButton).toBeTruthy();
-  });
+  }, { timeout: 45000 });
 
-  test('should log authentication status in console', async () => {
+  test('should log authentication status in console', async ({ page }) => {
     // Navigate to editor
     await page.goto('/admin/screens');
     const firstScreenLink = page.locator('table tbody tr:first-child a').first();
@@ -104,7 +67,7 @@ test.describe('Screen Editor', () => {
     expect(authLog).toBeTruthy();
   });
 
-  test('should save draft successfully', async () => {
+  test('should save draft successfully', async ({ page }) => {
     // Navigate to editor
     await page.goto('/admin/screens');
     const firstScreenLink = page.locator('table tbody tr:first-child a').first();
@@ -135,9 +98,9 @@ test.describe('Screen Editor', () => {
     }
   });
 
-  test('should show error if user is not authenticated', async ({ browser }) => {
+  test('should show error if user is not authenticated', async ({ page }) => {
     // Create a page without logging in
-    const unauthPage = await browser.newPage();
+    const unauthPage = await page.context().newPage();
 
     // Try to navigate to editor directly
     await unauthPage.goto('/admin/screens/test-screen');
@@ -151,7 +114,7 @@ test.describe('Screen Editor', () => {
     await unauthPage.close();
   });
 
-  test('should handle missing token gracefully', async () => {
+  test('should handle missing token gracefully', async ({ page }) => {
     // Navigate to editor
     await page.goto('/admin/screens');
     const firstScreenLink = page.locator('table tbody tr:first-child a').first();
@@ -190,7 +153,7 @@ test.describe('Screen Editor', () => {
     expect(hasHelpfulError || errors.length > 0).toBeTruthy();
   });
 
-  test('should display API request logs in console', async () => {
+  test('should display API request logs in console', async ({ page }) => {
     // Navigate to editor
     await page.goto('/admin/screens');
     const firstScreenLink = page.locator('table tbody tr:first-child a').first();

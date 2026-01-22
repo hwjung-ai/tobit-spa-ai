@@ -357,7 +357,7 @@ class CIOrchestratorRunner:
                 sort=None,
             )
             meta["row_count"] = len(result.records)
-        return [r.dict() for r in result.records]
+        return [r.model_dump() for r in result.records]
 
     def _recover_ci_identifiers(self) -> tuple[str, ...] | None:
         if not self.question:
@@ -956,10 +956,10 @@ class CIOrchestratorRunner:
         parent_trace_id = context.get("parent_trace_id") or "-"
 
         trace = {
-            "plan_raw": self.plan_raw.dict(),
-            "plan_validated": self.plan.dict(),
+            "plan_raw": self.plan_raw.model_dump(),
+            "plan_validated": self.plan.model_dump(),
             "policy_decisions": self.plan_trace.get("policy_decisions"),
-            "tool_calls": [call.dict() for call in self.tool_calls],
+            "tool_calls": [call.model_dump() for call in self.tool_calls],
             "references": self.references,
             "errors": self.errors,
             "tenant_id": self.tenant_id,
@@ -4203,7 +4203,7 @@ class CIOrchestratorRunner:
             "stage_inputs": stage_inputs,
             "stage_outputs": stage_outputs,
             "replan_events": [],  # Will be populated in future iterations
-            "tool_calls": [call.dict() for call in self.tool_calls],
+            "tool_calls": [call.model_dump() for call in self.tool_calls],
             "references": self.references,
             "errors": self.errors,
             "tenant_id": self.tenant_id,

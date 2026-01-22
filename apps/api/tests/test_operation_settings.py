@@ -6,8 +6,20 @@ from main import app
 
 
 @pytest.fixture
-def client():
-    return TestClient(app)
+def client(session):
+    # Override the default session in the app
+    from unittest.mock import patch
+
+    import core.db
+
+    def get_session_override():
+        yield session
+
+    with patch.object(core.db, "get_session", get_session_override):
+        with TestClient(app) as test_client:
+            yield test_client
+
+
 
 
 def test_get_all_operation_settings(client):
