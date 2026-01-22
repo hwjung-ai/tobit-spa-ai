@@ -1,9 +1,8 @@
 """Admin dashboard settings management service"""
 
 import logging
-import json
 from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -209,12 +208,12 @@ class AdminSettingsService:
         logs = self.audit_logs
 
         if key:
-            logs = [l for l in logs if l.setting_key == key]
+            logs = [log for log in logs if log.setting_key == key]
 
         # Sort by creation time (newest first)
-        logs.sort(key=lambda l: l.created_at, reverse=True)
+        logs.sort(key=lambda log: log.created_at, reverse=True)
 
-        return [l.to_dict() for l in logs[:limit]]
+        return [log.to_dict() for log in logs[:limit]]
 
     def reset_to_defaults(self, admin_id: str, reason: Optional[str] = None) -> int:
         """Reset all settings to defaults"""

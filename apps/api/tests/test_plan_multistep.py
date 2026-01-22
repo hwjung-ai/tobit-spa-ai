@@ -25,9 +25,10 @@ try:
     from app.modules.ops.services.ci.planner.validator import validate_plan
 except ImportError:
     # Fallback: define minimal classes for testing
-    from pydantic import BaseModel, Field
     from enum import Enum
-    from typing import List, Literal, Optional, Dict, Any
+    from typing import Any, Dict, List, Literal, Optional
+
+    from pydantic import BaseModel, Field
 
     class Intent(str, Enum):
         LOOKUP = "LOOKUP"
@@ -193,7 +194,7 @@ except ImportError:
             "total_branches": len(plan.branches),
             "total_loops": len(plan.loops),
             "steps_in_branches": sum(len(b.steps) for b in plan.branches),
-            "steps_in_loops": sum(len(l.steps) for l in plan.loops),
+            "steps_in_loops": sum(len(loop.steps) for loop in plan.loops),
         }
 
         is_valid = (len(duplicates) == 0) and (len(errors) == 0) and (len(budget_errors) == 0)

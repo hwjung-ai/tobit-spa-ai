@@ -3,17 +3,22 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import time
+from time import perf_counter
 from typing import Any, Dict, Tuple
 from uuid import UUID
 
 import httpx
+from core.config import get_settings
+from core.db import engine, get_session_context
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
+from sqlmodel import Session
 
-from core.config import get_settings
-from core.db import engine, get_session_context
+from app.modules.api_manager.schemas import ApiExecuteResponse
+
 from .crud import record_exec_log
 from .models import TbCepRule
 

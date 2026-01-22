@@ -5,7 +5,6 @@ Simple webhook notification engine for metric polling.
 from __future__ import annotations
 
 import ipaddress
-import json
 import socket
 import uuid
 from datetime import datetime, timedelta
@@ -13,10 +12,10 @@ from typing import Any, Dict, List
 from urllib.parse import urlparse
 
 import httpx
-from sqlalchemy import func, select
-
 from core.config import get_settings
 from core.db import get_session_context
+from sqlalchemy import desc, func, select
+
 from .crud import (
     get_rule,
     insert_notification_log,

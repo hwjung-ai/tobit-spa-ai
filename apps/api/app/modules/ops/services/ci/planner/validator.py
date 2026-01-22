@@ -1,22 +1,17 @@
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Tuple
 
-import re
-
 from core.logging import get_logger
+
 from app.modules.ops.services.ci import policy
 from app.modules.ops.services.ci.planner.plan_schema import (
     AutoSpec,
     BudgetSpec,
     Intent,
-    ListSpec,
     Plan,
-    PlanBranch,
-    PlanLoop,
     PlanMode,
-    PlanStep,
-    StepCondition,
     View,
 )
 
@@ -236,7 +231,7 @@ def _validate_multistep_structure(plan: Plan) -> tuple[bool, Dict[str, Any]]:
         "total_branches": len(plan.branches),
         "total_loops": len(plan.loops),
         "steps_in_branches": sum(len(b.steps) for b in plan.branches),
-        "steps_in_loops": sum(len(l.steps) for l in plan.loops),
+        "steps_in_loops": sum(len(loop.steps) for loop in plan.loops),
     }
 
     is_valid = unique_ok and refs_ok and budget_ok

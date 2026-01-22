@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -206,12 +206,12 @@ class AdminUserService:
         logs = self.audit_logs
 
         if user_id:
-            logs = [l for l in logs if l.user_id == user_id]
+            logs = [log for log in logs if log.user_id == user_id]
 
         # Sort by creation time (newest first)
-        logs.sort(key=lambda l: l.created_at, reverse=True)
+        logs.sort(key=lambda log: log.created_at, reverse=True)
 
-        return [l.to_dict() for l in logs[:limit]]
+        return [log.to_dict() for log in logs[:limit]]
 
     def get_user_activity_summary(self) -> Dict[str, Any]:
         """Get user activity summary"""

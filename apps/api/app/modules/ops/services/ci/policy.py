@@ -6,8 +6,11 @@ from pathlib import Path
 from typing import Iterable, List
 
 import yaml
+from core.logging import get_logger
 
 from app.modules.ops.services.ci.view_registry import VIEW_REGISTRY
+
+logger = get_logger(__name__)
 
 RELATION_MAPPING_PATH = Path(__file__).resolve().parent / "relation_mapping.yaml"
 CATALOG_DIR = Path(__file__).resolve().parent / "catalog"
@@ -49,7 +52,7 @@ def _load_relation_mapping() -> dict[str, object]:
         logger.warning(f"Using legacy mapping file: {RELATION_MAPPING_PATH}")
         return payload
 
-    raise FileNotFoundError(f"No relation mapping found in DB or files")
+    raise FileNotFoundError("No relation mapping found in DB or files")
 
 
 # Lazy loading caches (avoid circular imports and DB access at module load time)

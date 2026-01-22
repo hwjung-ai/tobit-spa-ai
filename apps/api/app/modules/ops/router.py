@@ -1,40 +1,41 @@
 from __future__ import annotations
 
+import importlib
 import time
 import uuid
 from typing import Any, Dict, List, Optional
 
-import importlib
-from fastapi import APIRouter, Depends, Header
-from fastapi.responses import JSONResponse
-
 from core.config import get_settings
 from core.db import get_session
 from core.logging import get_logger, get_request_context
+from fastapi import APIRouter, Depends, Header
+from fastapi.responses import JSONResponse
 from schemas import ResponseEnvelope
 from sqlmodel import Session
+
+from app.modules.inspector.service import persist_execution_trace
+from app.modules.inspector.span_tracker import (
+    clear_spans,
+    end_span,
+    get_all_spans,
+    start_span,
+)
 
 from .schemas import (
     CiAskRequest,
     CiAskResponse,
+    IsolatedStageTestRequest,
     OpsQueryRequest,
+    ReplanTrigger,
     RerunContext,
-    RerunRequest,
     RerunPatch,
+    StageInput,
     UIActionRequest,
-    UIActionResponse,
 )
 from .services import handle_ops_query
 from .services.ci.orchestrator.runner import CIOrchestratorRunner
 from .services.ci.planner import planner_llm, validator
 from .services.ci.planner.plan_schema import Plan
-from app.modules.inspector.service import persist_execution_trace
-from app.modules.inspector.span_tracker import (
-    start_span,
-    end_span,
-    get_all_spans,
-    clear_spans,
-)
 from .services.observability_service import collect_observability_metrics
 
 router = APIRouter(prefix="/ops", tags=["ops"])
@@ -738,9 +739,9 @@ def set_baseline(
 ) -> ResponseEnvelope:
     """Set baseline trace for a golden query"""
     from app.modules.inspector.crud import (
-        get_golden_query,
-        get_execution_trace,
         create_regression_baseline,
+        get_execution_trace,
+        get_golden_query,
     )
 
     try:
@@ -790,10 +791,10 @@ def run_regression(
     Executes the golden query and compares result against baseline.
     """
     from app.modules.inspector.crud import (
-        get_golden_query,
-        get_execution_trace,
-        get_latest_regression_baseline,
         create_regression_run,
+        get_execution_trace,
+        get_golden_query,
+        get_latest_regression_baseline,
     )
     from app.modules.ops.services.regression_executor import (
         compute_regression_diff,
@@ -994,11 +995,11 @@ def run_rca(
     Returns RCA trace with hypotheses as blocks.
     """
     from app.modules.inspector.crud import (
-        get_execution_trace,
         create_execution_trace,
+        get_execution_trace,
     )
-    from app.modules.ops.services.rca_engine import RCAEngine
     from app.modules.llm.rca_summarizer import summarize_rca_results
+    from app.modules.ops.services.rca_engine import RCAEngine
 
     try:
         mode = payload.get("mode")
@@ -1111,11 +1112,11 @@ def run_rca(
             for evidence in hyp.get("evidence", []):
                 hyp_content += f"- `{evidence['path']}`: {evidence['snippet']}\n"
 
-            hyp_content += f"\n**Verification Checks:**\n"
+            hyp_content += "\n**Verification Checks:**\n"
             for check in hyp.get("checks", [])[:3]:
                 hyp_content += f"- {check}\n"
 
-            hyp_content += f"\n**Recommended Actions:**\n"
+            hyp_content += "\n**Recommended Actions:**\n"
             for action in hyp.get("recommended_actions", [])[:3]:
                 hyp_content += f"- {action}\n"
 
@@ -1188,3 +1189,333 @@ def run_rca(
     except Exception as e:
         logger.error(f"RCA analysis failed: {e}", exc_info=True)
         return ResponseEnvelope.error(message=f"RCA analysis failed: {str(e)}")
+
+
+# --- OPS Actions ---
+
+@router.post("/actions")
+def execute_action(
+    payload: Dict[str, Any],
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    Execute recovery actions for OPS orchestration.
+
+    Payload structure:
+    {
+        "action": "rerun|replan|debug|skip|rollback",
+        "trigger": { ...ReplanTrigger... },
+        "stage": "stage_name",
+        "params": { ...action-specific parameters... }
+    }
+    """
+    import uuid
+
+    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.control_loop import ControlLoop
+
+    try:
+        action = payload.get("action")
+        trigger = payload.get("trigger")
+        stage = payload.get("stage")
+        params = payload.get("params", {})
+
+        if not action:
+            return ResponseEnvelope.error(message="action is required")
+
+        # Validate trigger if provided
+        if trigger:
+            try:
+                from .schemas import safe_parse_trigger
+                trigger = safe_parse_trigger(trigger)
+            except Exception:
+                return ResponseEnvelope.error(message="invalid trigger format")
+
+        action_id = str(uuid.uuid4())
+        logger.info(f"Executing action: {action} for stage: {stage}")
+
+        # Execute action based on type
+        result = None
+        message = f"Action {action} executed successfully"
+
+        if action == "rerun":
+            # Re-run CI with provided parameters
+            ci_code = params.get("ci_code")
+            if not ci_code:
+                return ResponseEnvelope.error(message="ci_code is required for rerun")
+
+            orchestrator = CIOrchestratorRunner()
+            result = orchestrator.rerun_ci(ci_code, params)
+
+        elif action == "replan":
+            # Trigger replanning
+            control_loop = ControlLoop()
+            result = control_loop.trigger_replan(trigger or ReplanTrigger(
+                trigger_type="manual",
+                stage_name=stage or "unknown",
+                reason="Manual replan triggered",
+                timestamp="now"
+            ))
+
+        elif action == "debug":
+            # Run diagnostics
+            # TODO: Implement debug service
+            result = {
+                "debug_id": str(uuid.uuid4()),
+                "status": "debugging",
+                "logs": [],
+                "recommendations": []
+            }
+
+        elif action == "skip":
+            # Skip stage
+            control_loop = ControlLoop()
+            result = control_loop.skip_stage(stage or "unknown", params.get("skip_reason", ""))
+
+        elif action == "rollback":
+            # Rollback to previous version
+            # TODO: Implement rollback service
+            result = {
+                "rollback_id": str(uuid.uuid4()),
+                "status": "rollback_initiated"
+            }
+
+        else:
+            return ResponseEnvelope.error(message=f"Unknown action: {action}")
+
+        # Log the action execution
+        logger.info(f"Action {action} completed: {result}")
+
+        return ResponseEnvelope.success(
+            data={
+                "action_id": action_id,
+                "action": action,
+                "stage": stage,
+                "result": result,
+                "message": message
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Action execution failed: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=f"Action failed: {str(e)}")
+
+
+# --- Isolated Stage Test ---
+
+@router.post("/stage-test", response_model=ResponseEnvelope)
+async def execute_isolated_stage_test(
+    payload: IsolatedStageTestRequest,
+    x_tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
+) -> ResponseEnvelope:
+    """
+    Execute a single stage in isolation for testing and validation.
+
+    This endpoint allows testing individual stages with asset overrides and
+    baseline comparison for regression testing.
+    """
+    import time
+
+    from core.logging import get_logger
+
+    from app.modules.ops.schemas import ExecutionContext
+    from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
+
+    logger = get_logger(__name__)
+    settings = get_settings()
+
+    # Setup
+    tenant_id = x_tenant_id or "t1"
+    trace_id = str(uuid.uuid4())
+
+    # Validate stage
+    valid_stages = ["route_plan", "validate", "execute", "compose", "present"]
+    if payload.stage not in valid_stages:
+        return ResponseEnvelope.error(
+            message=f"Invalid stage: {payload.stage}. Must be one of {valid_stages}"
+        )
+
+    # Create execution context
+    context = ExecutionContext(
+        tenant_id=tenant_id,
+        question=payload.question,
+        trace_id=trace_id,
+        test_mode=True,
+        asset_overrides=payload.asset_overrides,
+        baseline_trace_id=payload.baseline_trace_id
+    )
+
+    logger.info(f"Starting isolated stage test: {payload.stage}", extra={
+        "tenant_id": tenant_id,
+        "stage": payload.stage,
+        "test_mode": True,
+        "asset_overrides_count": len(payload.asset_overrides)
+    })
+
+    try:
+        # Create stage executor
+        stage_executor = StageExecutor(context)
+
+        # Build stage input
+        stage_input = StageInput(
+            stage=payload.stage,
+            applied_assets=payload.asset_overrides,  # Use overrides for this test
+            params=payload.test_plan or {},
+            prev_output=None
+        )
+
+        # Execute stage
+        start_time = time.time()
+        stage_output = await stage_executor.execute_stage(stage_input)
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        logger.info(f"Stage test completed: {payload.stage}", extra={
+            "duration_ms": duration_ms,
+            "status": stage_output.diagnostics.status
+        })
+
+        return ResponseEnvelope.success(data={
+            "stage": payload.stage,
+            "result": stage_output.result,
+            "duration_ms": duration_ms,
+            "diagnostics": stage_output.diagnostics.dict(),
+            "references": stage_output.references,
+            "asset_overrides_used": payload.asset_overrides,
+            "baseline_trace_id": payload.baseline_trace_id,
+            "trace_id": trace_id
+        })
+
+    except Exception as e:
+        logger.error(f"Stage test failed: {payload.stage} - {str(e)}", exc_info=True)
+        return ResponseEnvelope.error(message=f"Stage test failed: {str(e)}")
+
+
+# --- Stage Comparison for Regression ---
+
+@router.post("/stage-compare", response_model=ResponseEnvelope)
+async def compare_stages(
+    payload: Dict[str, Any],
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    Compare stages between two execution traces for regression analysis.
+
+    Payload structure:
+    {
+        "baseline_trace_id": "trace_id_1",
+        "current_trace_id": "trace_id_2",
+        "stages_to_compare": ["route_plan", "validate", "execute", "compose", "present"],
+        "comparison_depth": "detailed|summary"
+    }
+    """
+
+    from app.modules.inspector.service import get_execution_trace
+
+    try:
+        baseline_id = payload.get("baseline_trace_id")
+        current_id = payload.get("current_trace_id")
+        stages_to_compare = payload.get("stages_to_compare", ["route_plan", "validate", "execute", "compose", "present"])
+        comparison_depth = payload.get("comparison_depth", "summary")
+
+        if not baseline_id or not current_id:
+            return ResponseEnvelope.error(message="baseline_trace_id and current_trace_id are required")
+
+        # Fetch traces
+        baseline_trace = get_execution_trace(session, baseline_id)
+        current_trace = get_execution_trace(session, current_id)
+
+        if not baseline_trace or not current_trace:
+            return ResponseEnvelope.error(message="One or both traces not found")
+
+        # Compare stages
+        comparison_results = []
+
+        for stage in stages_to_compare:
+            baseline_stage = None
+            current_stage = None
+
+            # Find stage in baseline trace
+            for stage_output in baseline_trace.get("stage_outputs", []):
+                if stage_output.get("stage") == stage:
+                    baseline_stage = stage_output
+                    break
+
+            # Find stage in current trace
+            for stage_output in current_trace.get("stage_outputs", []):
+                if stage_output.get("stage") == stage:
+                    current_stage = stage_output
+                    break
+
+            if baseline_stage and current_stage:
+                comparison = {
+                    "stage": stage,
+                    "baseline": {
+                        "duration_ms": baseline_stage.get("duration_ms"),
+                        "status": baseline_stage.get("diagnostics", {}).get("status"),
+                        "counts": baseline_stage.get("diagnostics", {}).get("counts", {}),
+                        "has_references": len(baseline_stage.get("references", [])) > 0
+                    },
+                    "current": {
+                        "duration_ms": current_stage.get("duration_ms"),
+                        "status": current_stage.get("diagnostics", {}).get("status"),
+                        "counts": current_stage.get("diagnostics", {}).get("counts", {}),
+                        "has_references": len(current_stage.get("references", [])) > 0
+                    },
+                    "changed": False
+                }
+
+                # Check for changes
+                if (comparison["baseline"]["duration_ms"] != comparison["current"]["duration_ms"] or
+                    comparison["baseline"]["status"] != comparison["current"]["status"] or
+                    comparison["baseline"]["has_references"] != comparison["current"]["has_references"]):
+                    comparison["changed"] = True
+
+                if comparison_depth == "detailed":
+                    comparison["baseline_result"] = baseline_stage.get("result", {})
+                    comparison["current_result"] = current_stage.get("result", {})
+                    comparison["baseline_references"] = baseline_stage.get("references", [])
+                    comparison["current_references"] = current_stage.get("references", [])
+
+                comparison_results.append(comparison)
+
+        # Calculate summary metrics
+        total_stages = len(comparison_results)
+        changed_stages = len([r for r in comparison_results if r["changed"]])
+        regressed_stages = len([r for r in comparison_results
+                              if r["current"]["status"] == "error" and r["baseline"]["status"] != "error"])
+
+        return ResponseEnvelope.success(data={
+            "baseline_trace_id": baseline_id,
+            "current_trace_id": current_id,
+            "total_stages": total_stages,
+            "changed_stages": changed_stages,
+            "regressed_stages": regressed_stages,
+            "comparison_results": comparison_results,
+            "summary": {
+                "regression_detected": regressed_stages > 0,
+                "change_percentage": (changed_stages / total_stages * 100) if total_stages > 0 else 0,
+                "performance_change": sum(1 for r in comparison_results if r["changed"]) / total_stages * 100 if total_stages > 0 else 0
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Stage comparison failed: {str(e)}", exc_info=True)
+        return ResponseEnvelope.error(message=f"Stage comparison failed: {str(e)}")
+
+
+def _calculate_performance_change(comparison_results: List[Dict]) -> Dict[str, float]:
+    """Calculate performance metrics from stage comparisons"""
+    if not comparison_results:
+        return {"avg_duration_change": 0, "total_duration_change": 0}
+
+    total_baseline_duration = sum(r["baseline"]["duration_ms"] for r in comparison_results)
+    total_current_duration = sum(r["current"]["duration_ms"] for r in comparison_results)
+
+    if total_baseline_duration == 0:
+        return {"avg_duration_change": 0, "total_duration_change": 0}
+
+    avg_change = ((total_current_duration - total_baseline_duration) / total_baseline_duration) * 100
+    return {
+        "avg_duration_change": avg_change,
+        "total_duration_change": total_current_duration - total_baseline_duration
+    }

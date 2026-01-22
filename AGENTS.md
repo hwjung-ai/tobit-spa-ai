@@ -13,7 +13,7 @@
 3. **표준화**: 도메인 로직, 도구 계약(Tool Contract), 참조(Reference) 등의 표준 스키마를 준수합니다. (`schemas/tool_contracts.py`, `schemas/answer_blocks.py` 참조)
 4. **보안**: DB, Redis, Neo4j 등 외부 서비스 접속 정보는 환경 변수로만 관리하며, 코드에 하드코딩하지 않습니다.
 5. **버전 관리**: 큰 규모의 변경 전후에는 `checkpoint` 커밋을 통해 작업 단계를 명확히 남깁니다.
-6. **경로 명확성**: 파일 경로는 프로젝트 루트 기준 절대 경로를 사용합니다. 문맥상 명확한 경우에만 제한적으로 상대 경로를 사용합니다.
+6. **경로 명확성**: 파일 경로는 프로젝트 루트 기준 절대 경로를 사용합니다. 문맥상 명확한 경우에만 제한적으로 상대 경로를 사용합니다./
 
 ---
 
@@ -24,7 +24,12 @@
 - **Database Driver**: psycopg (>=3.1) - PostgreSQL 접근의 필수 드라이버
 - **Data**: PostgreSQL, pgvector, TimescaleDB, Neo4j, Redis
 - **Observability**: LangSmith (선택 사항)
-- **E2E Testing**: Playwright (@playwright/test)
+- **Testing Stack**:
+  - **Backend Unit Testing**: pytest, pytest-asyncio (비동기 테스트), pytest-anyio (멀티플랫폼 async 지원)
+  - **Backend Lint**: Ruff (Python linter/formatter), mypy (타입 체커)
+  - **Frontend E2E Testing**: Playwright (@playwright/test)
+  - **Frontend Lint**: ESLint, Prettier, TypeScript strict mode
+  - **Test Coverage**: 유닛 테스트는 `apps/api/tests/`, E2E 테스트는 `apps/web/tests-e2e/`
 
 ---
 
@@ -172,21 +177,50 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 ### 3-1) 테스트 실행 (필독)
    **코드를 수정한 후에는 반드시 아래 테스트를 실행하여 변경사항을 검증해야 합니다.**
 
-   - **Backend 유닛 테스트**:
+   - **Backend 유닛 테스트 (pytest)**:
      ```bash
-     pytest apps/api/tests/
+     # apps/api 디렉토리에서 실행
+     pytest tests/                           # 전체 테스트 실행
+     pytest tests/test_specific.py          # 특정 파일 테스트
+     pytest tests/test_specific.py::test_func  # 특정 함수 테스트
+     pytest -v                               # Verbose 모드 (상세 출력)
+     pytest -k "pattern"                     # 패턴 매칭으로 테스트 필터링
+     pytest --tb=short                       # 간략한 traceback 출력
+
+     # 또는 프로젝트 루트에서
+     make api-test                           # 전체 백엔드 테스트 실행
      ```
-     비즈니스 로직, API 엔드포인트, 데이터베이스 작업 수정 시 필수 실행
+
+     **테스트 작성 규칙**:
+     - 비동기 함수는 `@pytest.mark.asyncio` 데코레이터 필수
+     - 모든 Pydantic 모델은 실제 필드 구조와 일치해야 함
+     - Mock 객체는 `AsyncMock`(비동기) 또는 `Mock`(동기) 사용
+     - 테스트 파일명은 반드시 `test_*.py` 형식 준수
+
+     **주요 테스트 카테고리**:
+     - 비즈니스 로직 테스트: `tests/test_*_service.py`
+     - API 엔드포인트 테스트: `tests/test_*_router.py`
+     - 데이터베이스 CRUD 테스트: `tests/test_*_crud.py`
+     - 통합 테스트: `tests/test_*_integration.py`
 
    - **Frontend E2E 테스트 (Playwright)**:
      ```bash
      npm run test:e2e          # apps/web 디렉토리에서 실행
      # 또는
      make web-test-e2e         # 프로젝트 루트에서 실행
+
+     # 특정 테스트만 실행
+     npx playwright test ui-screen.spec.ts
+
+     # UI 모드로 실행 (디버깅용)
+     npx playwright test --ui
+
+     # 헤드풀 모드 (브라우저 표시)
+     npx playwright test --headed
      ```
      UI 컴포넌트, 사용자 흐름, 대화 상자, 버튼 동작 등 변경 시 필수 실행
      - **테스트 파일 위치**: `apps/web/tests-e2e/*.spec.ts`
-     - **주요 테스트**: Inspector 흐름, RCA 실행, Regression Watch 기능
+     - **주요 테스트**: Inspector 흐름, RCA 실행, Regression Watch 기능, UI Screen 렌더링
 
    - **Backend API 수동 테스트**:
      ```bash
@@ -196,13 +230,25 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
      response = requests.post("http://localhost:8000/ops/endpoint-path", json={...})
      print(response.json())
      EOF
+
+     # 또는 curl 사용
+     curl -X POST http://localhost:8000/ops/endpoint-path \
+       -H "Content-Type: application/json" \
+       -d '{"key": "value"}'
      ```
      새로운 API 엔드포인트 추가 또는 응답 형식 변경 시 실행
 
    - **코드 품질 검사** (pre-commit 훅과 동일):
      ```bash
-     make api-lint              # Backend: Ruff, mypy
+     make api-lint              # Backend: Ruff (linter + formatter)
      make web-lint              # Frontend: ESLint, Prettier
+
+     # Ruff 자동 수정
+     ruff check . --fix         # apps/api 디렉토리에서 실행
+     ruff format .              # 코드 포맷팅
+
+     # TypeScript 타입 체크
+     npm run type-check         # apps/web 디렉토리에서 실행
      ```
 
 ### 4) 품질 관리
@@ -210,8 +256,18 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - 핵심 로직을 수정할 경우, 반드시 `pytest`(백엔드) 또는 관련 UI 테스트(프론트엔드)를 통해 검증해야 합니다.
    - **Frontend UI 변경 시**: Playwright E2E 테스트(`make web-test-e2e` 또는 `npm run test:e2e`)를 실행하여 사용자 흐름이 정상 작동하는지 확인합니다.
    - **Backend API 변경 시**: `curl` 또는 Python 스크립트로 엔드포인트를 테스트하여 응답 형식과 에러 처리가 올바른지 확인합니다.
+   - **Backend 신규 기능 추가 시**:
+     - 반드시 `tests/test_*.py` 유닛 테스트를 작성합니다.
+     - pytest 비동기 테스트는 `@pytest.mark.asyncio` 데코레이터 사용
+     - Pydantic 모델 테스트는 실제 필드 구조와 일치하도록 작성
+     - 모든 테스트는 `pytest -v` 실행 시 100% 통과해야 함
    - **Tool Contract 변경 시**: `ToolCall`, `ReferenceItem` 등의 스키마 수정 후에는 반드시 관련 executor/runner 테스트를 실행합니다.
    - **Database 드라이버 변경 시**: psycopg 버전 업그레이드 시 모든 DB 호출 코드를 검증하고, SQLAlchemy/SQLModel 마이그레이션이 필요한지 확인합니다.
+   - **Lint 오류 대응**:
+     - Backend: `ruff check . --fix`로 자동 수정 가능한 문제는 즉시 수정
+     - Frontend: `npm run lint -- --fix`로 자동 수정 가능한 문제는 즉시 수정
+     - E402 (import not at top), F841 (unused variable) 등은 개발 중 경고로 허용
+     - E741 (ambiguous variable name `l`), F821 (undefined name) 등은 반드시 수정
 
 ---
 

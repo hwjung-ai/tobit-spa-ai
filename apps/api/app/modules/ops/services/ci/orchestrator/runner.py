@@ -1,24 +1,48 @@
 from __future__ import annotations
 
-import importlib
+import asyncio
+import os
 import re
-
+import threading
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Any, Dict, Iterable, List, Literal, Sequence, Tuple
-
-import asyncio
-import os
-import threading
+from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
 
 from core.logging import get_logger, get_request_context
 from schemas.tool_contracts import ToolCall
+
+from app.modules.inspector.span_tracker import end_span, start_span
+from app.modules.ops.schemas import StageInput
 from app.modules.ops.services.ci import policy, response_builder
-from app.modules.inspector.span_tracker import start_span, end_span
 from app.modules.ops.services.ci.actions import NextAction, RerunPayload
-from app.modules.ops.services.ci.blocks import Block, chart_block, number_block, table_block, text_block
-from app.modules.ops.services.ci.planner.plan_schema import AutoSpec, Intent, MetricSpec, Plan, PlanMode, View
+from app.modules.ops.services.ci.blocks import (
+    Block,
+    chart_block,
+    number_block,
+    table_block,
+    text_block,
+)
+from app.modules.ops.services.ci.orchestrator.compositions import (
+    COMPOSITION_SEARCH_WITH_CONTEXT,
+)
+from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
+from app.modules.ops.services.ci.orchestrator.tool_selector import (
+    SelectionStrategy,
+    SmartToolSelector,
+    ToolSelectionContext,
+)
+from app.modules.ops.services.ci.planner.plan_schema import (
+    AutoSpec,
+    Intent,
+    MetricSpec,
+    Plan,
+    PlanMode,
+    PlanOutput,
+    PlanOutputKind,
+    View,
+)
 from app.modules.ops.services.ci.planner.planner_llm import (
     AGG_KEYWORDS,
     ISO_DATE_PATTERN,
@@ -28,25 +52,19 @@ from app.modules.ops.services.ci.planner.planner_llm import (
     SERIES_KEYWORDS,
     TIME_RANGE_MAP,
 )
-from app.modules.ops.services.ci.tools import cep as cep_tools
-from app.modules.ops.services.ci.tools import ci as ci_tools
-from app.modules.ops.services.ci.tools import graph as graph_tools
-from app.modules.ops.services.ci.tools import history as history_tools
-from app.modules.ops.services.ci.tools import metric as metric_tools
-from app.modules.ops.services.ci.tools.ci import FilterSpec
 from app.modules.ops.services.ci.tools import (
     ToolContext,
     ToolType,
     get_tool_executor,
 )
+from app.modules.ops.services.ci.tools import cep as cep_tools
+from app.modules.ops.services.ci.tools import ci as ci_tools
+from app.modules.ops.services.ci.tools import graph as graph_tools
+from app.modules.ops.services.ci.tools import history as history_tools
+from app.modules.ops.services.ci.tools import metric as metric_tools
 from app.modules.ops.services.ci.tools.cache import ToolResultCache
+from app.modules.ops.services.ci.tools.ci import FilterSpec
 from app.modules.ops.services.ci.tools.observability import ExecutionTracer
-from app.modules.ops.services.ci.orchestrator.compositions import COMPOSITION_SEARCH_WITH_CONTEXT
-from app.modules.ops.services.ci.orchestrator.tool_selector import (
-    SelectionStrategy,
-    SmartToolSelector,
-    ToolSelectionContext,
-)
 
 
 @dataclass
@@ -151,6 +169,8 @@ class CIOrchestratorRunner:
         self._tool_executor = get_tool_executor(cache=self._tool_cache)
         self._tool_selector = SmartToolSelector()
         self._tracer = ExecutionTracer()
+        # Stage execution infrastructure
+        self._stage_executor = StageExecutor(self._tool_executor)
         self._composition_pipeline = COMPOSITION_SEARCH_WITH_CONTEXT
 
     @contextmanager
@@ -2106,7 +2126,10 @@ class CIOrchestratorRunner:
             return detail, None, None
 
         # 명시 CI코드 추출 및 정확 매칭 (선호도 높음)
-        from app.modules.ops.services.resolvers.ci_resolver import resolve_ci, _extract_codes
+        from app.modules.ops.services.resolvers.ci_resolver import (
+            _extract_codes,
+            resolve_ci,
+        )
         explicit_codes = _extract_codes(self.question or "")
         if explicit_codes:
             exact_hits = resolve_ci(self.question or "", self.tenant_id, limit=10)
@@ -4082,3 +4105,161 @@ class CIOrchestratorRunner:
             history_context=history_context,
         )
         return result if isinstance(result, dict) else result.dict()
+
+    async def _run_async_with_stages(self, plan_output: PlanOutput) -> Dict[str, Any]:
+        """
+        Run orchestration with explicit stages.
+
+        This method demonstrates the new stage-based execution pipeline.
+        """
+        blocks: List[Block] = []
+        answer = "CI insight ready"
+        start = perf_counter()
+
+        self.logger.info("ci.runner.stages.start", extra={
+            "plan_kind": plan_output.kind.value,
+            "stages": ["route_plan", "validate", "execute", "compose", "present"]
+        })
+
+        stage_inputs = []
+        stage_outputs = []
+
+        try:
+            # Stage 1: ROUTE+PLAN (already completed by planner)
+            if plan_output.kind == PlanOutputKind.DIRECT:
+                # Direct answer - skip to present
+                stage_input = self._build_stage_input("route_plan", plan_output)
+                stage_outputs.append({"stage": "route_plan", "result": {"route": "direct"}})
+
+                # Skip to present for direct answer
+                final_result = await self._present_stage_async(plan_output)
+                blocks = final_result.get("blocks", [])
+                answer = final_result.get("summary", "Direct answer")
+
+            elif plan_output.kind == PlanOutputKind.REJECT:
+                # Reject case
+                stage_input = self._build_stage_input("route_plan", plan_output)
+                stage_outputs.append({"stage": "route_plan", "result": {"route": "reject"}})
+
+                # Return reject response
+                blocks = [text_block(f"Query rejected: {plan_output.reject_payload.reason}")]
+                answer = f"Query rejected: {plan_output.reject_payload.reason}"
+
+            else:
+                # Normal orchestration plan
+                stage_input = self._build_stage_input("route_plan", plan_output)
+                route_output = await self._stage_executor.execute_stage(stage_input)
+                stage_inputs.append(stage_input.dict())
+                stage_outputs.append(route_output.dict())
+
+                # Stage 2: VALIDATE
+                validate_input = self._build_stage_input("validate", plan_output, route_output.dict())
+                validate_output = await self._stage_executor.execute_stage(validate_input)
+                stage_inputs.append(validate_input.dict())
+                stage_outputs.append(validate_output.dict())
+
+                # Check if validation passed
+                if not validate_output.result.get("is_valid", True):
+                    answer = "Validation failed"
+                    blocks = [text_block(f"Validation failed: {', '.join(validate_output.result.get('validation_errors', []))}")]
+                else:
+                    # Stage 3: EXECUTE
+                    execute_input = self._build_stage_input("execute", plan_output, validate_output.dict())
+                    execute_output = await self._stage_executor.execute_stage(execute_input)
+                    stage_inputs.append(execute_input.dict())
+                    stage_outputs.append(execute_output.dict())
+
+                    # Stage 4: COMPOSE
+                    compose_input = self._build_stage_input("compose", plan_output, execute_output.dict())
+                    compose_output = await self._stage_executor.execute_stage(compose_input)
+                    stage_inputs.append(compose_input.dict())
+                    stage_outputs.append(compose_output.dict())
+
+                    # Stage 5: PRESENT
+                    present_input = self._build_stage_input("present", plan_output, compose_output.dict())
+                    present_output = await self._stage_executor.execute_stage(present_input)
+                    stage_inputs.append(present_input.dict())
+                    stage_outputs.append(present_output.dict())
+
+                    blocks = present_output.result.get("blocks", [])
+                    answer = present_output.result.get("summary", "Execution completed")
+
+        except Exception as exc:
+            self.errors.append(str(exc))
+            self.logger.error("ci.runner.stages.error", extra={"error": str(exc)})
+            blocks = [text_block(f"Error during execution: {str(exc)}")]
+            answer = f"Error during execution: {str(exc)}"
+
+        # Build trace with stage information
+        context = get_request_context()
+        trace_id = context.get("trace_id") or "-"
+        parent_trace_id = context.get("parent_trace_id") or "-"
+
+        trace = {
+            "route": "orch" if plan_output.kind == PlanOutputKind.PLAN else "direct",
+            "plan_raw": plan_output.plan.dict() if plan_output.plan else None,
+            "plan_validated": plan_output.plan.dict() if plan_output.plan else None,
+            "policy_decisions": self.plan_trace.get("policy_decisions"),
+            "stage_inputs": stage_inputs,
+            "stage_outputs": stage_outputs,
+            "replan_events": [],  # Will be populated in future iterations
+            "tool_calls": [call.dict() for call in self.tool_calls],
+            "references": self.references,
+            "errors": self.errors,
+            "tenant_id": self.tenant_id,
+            "trace_id": trace_id if trace_id != "-" else None,
+            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
+        }
+
+        # Calculate timing
+        elapsed_ms = int((perf_counter() - start) * 1000)
+
+        meta = {
+            "route": "orch" if plan_output.kind == PlanOutputKind.PLAN else "direct",
+            "route_reason": "Stage-based execution",
+            "timing_ms": elapsed_ms,
+            "summary": answer,
+            "used_tools": [call.tool for call in self.tool_calls if call.tool],
+            "fallback": len(self.errors) > 0,
+            "stages_executed": len(stage_outputs),
+            "plan_kind": plan_output.kind.value,
+            "trace_id": trace_id if trace_id != "-" else None,
+            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
+        }
+
+        return {
+            "answer": answer,
+            "blocks": blocks,
+            "trace": trace,
+            "next_actions": self.next_actions,
+            "meta": meta
+        }
+
+    def _build_stage_input(self, stage: str, plan_output: PlanOutput, prev_output: Optional[Dict[str, Any]] = None) -> StageInput:
+        """Build StageInput from plan output and previous output."""
+        from app.modules.ops.schemas import StageInput
+
+        return StageInput(
+            stage=stage,
+            applied_assets=getattr(self, 'applied_assets', {}),
+            params={"plan_output": plan_output.dict()},
+            prev_output=prev_output
+        )
+
+    async def _present_stage_async(self, plan_output: PlanOutput) -> Dict[str, Any]:
+        """Handle present stage for direct answers."""
+        from app.modules.ops.services.ci.blocks import text_block
+
+        if plan_output.direct_answer:
+            blocks = [text_block(plan_output.direct_answer.answer)]
+            summary = plan_output.direct_answer.answer
+        else:
+            blocks = [text_block("No answer available")]
+            summary = "No answer available"
+
+        return {
+            "blocks": blocks,
+            "references": plan_output.direct_answer.references if plan_output.direct_answer else [],
+            "summary": summary,
+            "presented_at": time.time()
+        }

@@ -8,11 +8,12 @@ tool imports or dependencies.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
 import asyncio
+from typing import Any, Dict, Optional
+
+from core.logging import get_logger
 
 from app.modules.ops.services.ci.tools.base import (
-    BaseTool,
     ToolContext,
     ToolRegistry,
     ToolResult,
@@ -20,7 +21,6 @@ from app.modules.ops.services.ci.tools.base import (
     get_tool_registry,
 )
 from app.modules.ops.services.ci.tools.cache import ToolResultCache
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -115,14 +115,14 @@ class ToolExecutor:
                     "tenant_id": context.tenant_id,
                 },
             )
-        return ToolResult(
-            success=False,
-            error=str(e),
-            error_details={
-                "exception_type": type(e).__name__,
-                "tool_type": tool_type.value,
-            },
-        )
+            return ToolResult(
+                success=False,
+                error=str(e),
+                error_details={
+                    "exception_type": type(e).__name__,
+                    "tool_type": tool_type.value,
+                },
+            )
 
     async def execute_async(
         self,

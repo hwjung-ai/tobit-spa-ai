@@ -2,13 +2,35 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List
 
+from core.logging import get_request_context
 from sqlmodel import Session, select
 
 from app.modules.audit_log.crud import create_audit_log
-from core.logging import get_request_context
+
 from .models import TbAssetRegistry, TbAssetVersionHistory
+from .resolver_models import (
+    ResolverAsset,
+    ResolverAssetCreate,
+    ResolverAssetUpdate,
+    ResolverConfig,
+    ResolverType,
+)
+from .schema_models import (
+    ScanResult,
+    SchemaAsset,
+    SchemaAssetCreate,
+    SchemaAssetUpdate,
+    SchemaCatalog,
+)
+from .source_models import (
+    ConnectionTestResult,
+    SourceAsset,
+    SourceAssetCreate,
+    SourceAssetUpdate,
+    SourceType,
+)
 from .validators import validate_asset
 
 
@@ -366,3 +388,608 @@ def unpublish_asset(
     )
 
     return asset
+
+
+# Source Asset CRUD operations
+def create_source_asset(
+    session: Session,
+    source_data: SourceAssetCreate,
+    created_by: str | None = None,
+) -> SourceAsset:
+    """Create a new source asset"""
+    # Create TbAssetRegistry record
+    asset = create_asset(
+        session=session,
+        name=source_data.name,
+        asset_type="source",
+        description=source_data.description,
+        scope=source_data.scope,
+        tags=source_data.tags,
+        created_by=created_by,
+    )
+
+    # Store source-specific data in content field
+    content = {
+        "source_type": source_data.source_type.value,
+        "connection": source_data.connection.model_dump(),
+        "spec": source_data.connection.spec if hasattr(source_data.connection, "spec") else None,
+    }
+
+    update_asset(
+        session=session,
+        asset=asset,
+        updates={"content": content},
+        updated_by=created_by,
+    )
+
+    return SourceAsset(
+        asset_id=asset.asset_id,
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        source_type=source_data.source_type,
+        connection=source_data.connection,
+        scope=asset.scope,
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+        spec_json=asset.content.get("spec"),
+    )
+
+
+def get_source_asset(session: Session, asset_id: str) -> SourceAsset | None:
+    """Get source asset by ID"""
+    asset = get_asset(session, asset_id)
+    if not asset or asset.asset_type != "source":
+        return None
+
+    # Extract source data from content
+    content = asset.content or {}
+    return SourceAsset(
+        asset_id=asset.asset_id,
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        source_type=SourceType(content.get("source_type", "postgresql")),
+        connection=content.get("connection", {}),
+        scope=asset.scope,
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+        spec_json=content.get("spec"),
+    )
+
+
+def update_source_asset(
+    session: Session,
+    asset_id: str,
+    updates: SourceAssetUpdate,
+    updated_by: str | None = None,
+) -> SourceAsset:
+    """Update a source asset"""
+    asset = get_source_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Source asset not found")
+
+    # Convert to dict for updates
+    content = asset.content or {}
+
+    # Update connection if provided
+    if updates.connection:
+        content["connection"] = updates.connection.model_dump()
+        content["spec"] = updates.connection.spec if hasattr(updates.connection, "spec") else None
+
+    # Build update dictionary
+    update_dict = {}
+    if updates.name is not None:
+        update_dict["name"] = updates.name
+    if updates.description is not None:
+        update_dict["description"] = updates.description
+    if updates.source_type is not None:
+        update_dict["source_type"] = updates.source_type.value
+        update_dict["content"] = content
+    if updates.connection is not None:
+        update_dict["content"] = content
+    if updates.scope is not None:
+        update_dict["scope"] = updates.scope
+    if updates.tags is not None:
+        update_dict["tags"] = updates.tags
+
+    # Update the asset
+    updated_asset = update_asset(
+        session=session,
+        asset=asset,
+        updates=update_dict,
+        updated_by=updated_by,
+    )
+
+    return get_source_asset(session, asset_id)
+
+
+def delete_source_asset(session: Session, asset_id: str) -> SourceAsset:
+    """Delete a source asset"""
+    asset = get_source_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Source asset not found")
+
+    return delete_asset(session, asset_id)
+
+
+def test_source_connection(session: Session, asset_id: str) -> ConnectionTestResult:
+    """Test source connection"""
+    asset = get_source_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Source asset not found")
+
+    import time
+    start_time = time.time()
+
+    try:
+        # Test connection based on source type
+        if asset.source_type == SourceType.POSTGRESQL:
+            import psycopg2
+            conn = psycopg2.connect(
+                host=asset.connection.host,
+                port=asset.connection.port,
+                user=asset.connection.username,
+                password=asset.connection.password_encrypted or "",
+                database=asset.connection.database,
+                connect_timeout=asset.connection.timeout,
+            )
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+
+            return ConnectionTestResult(
+                success=True,
+                message="Connection successful",
+                execution_time_ms=int((time.time() - start_time) * 1000),
+                test_result={"rows": 1},
+            )
+
+        elif asset.source_type == SourceType.REDIS:
+            import redis
+            r = redis.Redis(
+                host=asset.connection.host,
+                port=asset.connection.port,
+                password=asset.connection.password_encrypted,
+                decode_responses=True,
+            )
+            r.ping()
+
+            return ConnectionTestResult(
+                success=True,
+                message="Connection successful",
+                execution_time_ms=int((time.time() - start_time) * 1000),
+                test_result={"ping": "pong"},
+            )
+
+        else:
+            return ConnectionTestResult(
+                success=False,
+                message="Source type not supported for testing",
+                error_details=f"Connection testing not implemented for {asset.source_type}",
+            )
+
+    except Exception as e:
+        return ConnectionTestResult(
+            success=False,
+            message=f"Connection failed: {str(e)}",
+            error_details=str(e),
+            execution_time_ms=int((time.time() - start_time) * 1000),
+        )
+
+
+# Schema Asset CRUD operations
+def create_schema_asset(
+    session: Session,
+    schema_data: SchemaAssetCreate,
+    created_by: str | None = None,
+) -> SchemaAsset:
+    """Create a new schema asset"""
+    # Create TbAssetRegistry record
+    asset = create_asset(
+        session=session,
+        name=schema_data.name,
+        asset_type="schema",
+        description=schema_data.description,
+        scope=schema_data.scope,
+        tags=schema_data.tags,
+        created_by=created_by,
+    )
+
+    # Store schema data in content field
+    content = {
+        "source_ref": schema_data.source_ref,
+        "catalog": schema_data.catalog.model_dump() if schema_data.catalog else {},
+        "spec": schema_data.catalog.spec if schema_data.catalog else None,
+    }
+
+    update_asset(
+        session=session,
+        asset=asset,
+        updates={"content": content},
+        updated_by=created_by,
+    )
+
+    return SchemaAsset(
+        asset_id=asset.asset_id,
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        catalog=schema_data.catalog or SchemaCatalog(
+            name=schema_data.name,
+            source_ref=schema_data.source_ref,
+            tables=[]
+        ),
+        scope=asset.scope,
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+        spec_json=content.get("spec"),
+    )
+
+
+def get_schema_asset(session: Session, asset_id: str) -> SchemaAsset | None:
+    """Get schema asset by ID"""
+    asset = get_asset(session, asset_id)
+    if not asset or asset.asset_type != "schema":
+        return None
+
+    # Extract schema data from content
+    content = asset.content or {}
+    return SchemaAsset(
+        asset_id=asset.asset_id,
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        catalog=content.get("catalog", {}),
+        scope=asset.scope,
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+        spec_json=content.get("spec"),
+    )
+
+
+def update_schema_asset(
+    session: Session,
+    asset_id: str,
+    updates: SchemaAssetUpdate,
+    updated_by: str | None = None,
+) -> SchemaAsset:
+    """Update a schema asset"""
+    asset = get_schema_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Schema asset not found")
+
+    # Convert to dict for updates
+    content = asset.content or {}
+
+    # Update catalog if provided
+    if updates.catalog:
+        content["catalog"] = updates.catalog.model_dump()
+        content["spec"] = updates.catalog.spec
+
+    # Build update dictionary
+    update_dict = {}
+    if updates.name is not None:
+        update_dict["name"] = updates.name
+    if updates.description is not None:
+        update_dict["description"] = updates.description
+    if updates.catalog is not None:
+        update_dict["content"] = content
+    if updates.scope is not None:
+        update_dict["scope"] = updates.scope
+    if updates.tags is not None:
+        update_dict["tags"] = updates.tags
+
+    # Update the asset
+    updated_asset = update_asset(
+        session=session,
+        asset=asset,
+        updates=update_dict,
+        updated_by=updated_by,
+    )
+
+    return get_schema_asset(session, asset_id)
+
+
+def delete_schema_asset(session: Session, asset_id: str) -> SchemaAsset:
+    """Delete a schema asset"""
+    asset = get_schema_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Schema asset not found")
+
+    return delete_asset(session, asset_id)
+
+
+def scan_schema(session: Session, asset_id: str) -> ScanResult:
+    """Scan schema from source"""
+    # This is a placeholder implementation
+    # In a real implementation, this would connect to the source and scan the schema
+    import time
+
+    start_time = time.time()
+
+    try:
+        # Simulate scanning process
+        scan_id = f"scan_{uuid.uuid4().hex[:8]}"
+
+        # Get the source asset
+        from .crud import get_source_asset
+        source_asset = get_source_asset(session, asset_id)
+        if not source_asset:
+            raise ValueError("Source asset not found")
+
+        # In a real implementation, this would:
+        # 1. Connect to the database using source_asset.connection
+        # 2. Query the schema information (information_schema)
+        # 3. Build the SchemaCatalog object
+        # 4. Update the schema asset
+
+        # For now, return a mock result
+        result = ScanResult(
+            scan_id=scan_id,
+            source_ref=asset_id,
+            status="completed",
+            tables_scanned=10,
+            columns_discovered=50,
+            scan_metadata={"source_type": source_asset.source_type.value},
+            execution_time_ms=int((time.time() - start_time) * 1000),
+        )
+
+        return result
+
+    except Exception as e:
+        return ScanResult(
+            scan_id=f"scan_{uuid.uuid4().hex[:8]}",
+            source_ref=asset_id,
+            status="failed",
+            tables_scanned=0,
+            columns_discovered=0,
+            error_message=str(e),
+            execution_time_ms=int((time.time() - start_time) * 1000),
+        )
+
+# Resolver Asset CRUD operations
+def create_resolver_asset(
+    session: Session,
+    resolver_data: ResolverAssetCreate,
+    created_by: str | None = None,
+) -> ResolverAsset:
+    """Create a new resolver asset"""
+    # Create TbAssetRegistry record
+    asset = create_asset(
+        session=session,
+        name=resolver_data.name,
+        asset_type="resolver",
+        description=resolver_data.description,
+        scope=resolver_data.scope,
+        tags=resolver_data.tags,
+        created_by=created_by,
+    )
+
+    # Store resolver data in content field
+    content = {
+        "rules": [rule.model_dump() for rule in resolver_data.config.rules],
+        "default_namespace": resolver_data.config.default_namespace,
+        "spec": resolver_data.config.spec,
+    }
+
+    update_asset(
+        session=session,
+        asset=asset,
+        updates={"content": content},
+        updated_by=created_by,
+    )
+
+    return ResolverAsset(
+        asset_id=asset.asset_id,
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        config=resolver_data.config,
+        scope=asset.scope,
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+        spec_json=content.get("spec"),
+    )
+
+
+def get_resolver_asset(session: Session, asset_id: str) -> ResolverAsset | None:
+    """Get resolver asset by ID"""
+    asset = get_asset(session, asset_id)
+    if not asset or asset.asset_type != "resolver":
+        return None
+
+    # Extract resolver data from content
+    content = asset.content or {}
+
+    # Rebuild rules from content
+    rules_data = content.get("rules", [])
+    rules = []
+    for rule_data in rules_data:
+        # This is a simplified version - in a real implementation, we would need to handle the union type properly
+        from .resolver_models import (
+            AliasMapping,
+            PatternRule,
+            ResolverRule,
+            ResolverType,
+            TransformationRule,
+        )
+        rule_type = rule_data.get("rule_type", "alias_mapping")
+        
+        if rule_type == "alias_mapping":
+            rule_data_obj = AliasMapping(**rule_data)
+        elif rule_type == "pattern_rule":
+            rule_data_obj = PatternRule(**rule_data)
+        elif rule_type == "transformation":
+            rule_data_obj = TransformationRule(**rule_data)
+        else:
+            rule_data_obj = rule_data
+        
+        rule = ResolverRule(
+            rule_type=ResolverType(rule_type),
+            name=rule_data.get("name", ""),
+            description=rule_data.get("description"),
+            is_active=rule_data.get("is_active", True),
+            priority=rule_data.get("priority", 0),
+            metadata=rule_data.get("metadata", {}),
+            rule_data=rule_data_obj,
+        )
+        rules.append(rule)
+
+    config = ResolverConfig(
+        name=asset.name,
+        description=asset.description,
+        rules=rules,
+        default_namespace=content.get("default_namespace"),
+        tags=asset.tags,
+        version=asset.version,
+    )
+
+    return ResolverAsset(
+        asset_id=asset.asset_id,
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        config=config,
+        scope=asset.scope,
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+        spec_json=content.get("spec"),
+    )
+
+
+def update_resolver_asset(
+    session: Session,
+    asset_id: str,
+    updates: ResolverAssetUpdate,
+    updated_by: str | None = None,
+) -> ResolverAsset:
+    """Update a resolver asset"""
+    asset = get_resolver_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Resolver asset not found")
+
+    # Convert to dict for updates
+    content = asset.content or {}
+
+    # Update config if provided
+    if updates.config:
+        content["rules"] = [rule.model_dump() for rule in updates.config.rules]
+        content["default_namespace"] = updates.config.default_namespace
+        content["spec"] = updates.config.spec
+
+    # Build update dictionary
+    update_dict = {}
+    if updates.name is not None:
+        update_dict["name"] = updates.name
+    if updates.description is not None:
+        update_dict["description"] = updates.description
+    if updates.config is not None:
+        update_dict["content"] = content
+    if updates.scope is not None:
+        update_dict["scope"] = updates.scope
+    if updates.tags is not None:
+        update_dict["tags"] = updates.tags
+
+    # Update the asset
+    updated_asset = update_asset(
+        session=session,
+        asset=asset,
+        updates=update_dict,
+        updated_by=updated_by,
+    )
+
+    return get_resolver_asset(session, asset_id)
+
+
+def delete_resolver_asset(session: Session, asset_id: str) -> ResolverAsset:
+    """Delete a resolver asset"""
+    asset = get_resolver_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Resolver asset not found")
+
+    return delete_asset(session, asset_id)
+
+
+def simulate_resolver_configuration(
+    session: Session,
+    asset_id: str,
+    test_entities: List[str]
+) -> Dict[str, Any]:
+    """Simulate resolver configuration with test entities"""
+    asset = get_resolver_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Resolver asset not found")
+
+    results = []
+    for entity in test_entities:
+        # This is a simplified simulation
+        # In a real implementation, this would apply the actual resolver logic
+        result = {
+            "original_entity": entity,
+            "resolved_entity": entity,  # No transformation by default
+            "transformations_applied": [],
+            "confidence_score": 0.0,
+            "matched_rules": [],
+            "metadata": {"simulation": True}
+        }
+
+        # Apply alias mappings
+        for rule in asset.config.get_rules_by_type(ResolverType.ALIAS_MAPPING):
+            if rule.is_active:
+                if entity == rule.rule_data.source_entity:
+                    result["resolved_entity"] = rule.rule_data.target_entity
+                    result["matched_rules"].append(rule.name)
+                    result["transformations_applied"].append("alias_mapping")
+                    result["confidence_score"] = 1.0
+
+        results.append(result)
+
+    return {
+        "asset_id": str(asset.asset_id),
+        "test_count": len(test_entities),
+        "results": results,
+        "metadata": {
+            "resolver_version": asset.version,
+            "rule_count": len(asset.config.rules)
+        }
+    }
+

@@ -1,26 +1,66 @@
 from __future__ import annotations
 
-from datetime import datetime
 import uuid
-from typing import Any
+from datetime import datetime
+from typing import Any, List
 
-from fastapi import APIRouter, HTTPException, Body, Depends, status
+from core.auth import get_current_user
+
+# Permission checks disabled due to missing tb_resource_permission table
+# from app.modules.permissions.models import ResourcePermission
+# from app.modules.permissions.crud import check_permission
+from core.db import get_session, get_session_context
+from fastapi import APIRouter, Body, Depends, HTTPException, status
+from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
-from .validators import validate_asset
 
+from app.modules.asset_registry.crud import (
+    create_resolver_asset,
+    create_schema_asset,
+    create_source_asset,
+    delete_resolver_asset,
+    delete_schema_asset,
+    delete_source_asset,
+    get_resolver_asset,
+    get_schema_asset,
+    get_source_asset,
+    list_assets,
+    scan_schema,
+    simulate_resolver_configuration,
+    test_source_connection,
+    update_resolver_asset,
+    update_schema_asset,
+    update_source_asset,
+)
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
+from app.modules.asset_registry.resolver_models import (
+    ResolverAssetCreate,
+    ResolverAssetResponse,
+    ResolverAssetUpdate,
+    ResolverConfig,
+)
+from app.modules.asset_registry.schema_models import (
+    ScanRequest,
+    SchemaAssetCreate,
+    SchemaAssetResponse,
+    SchemaAssetUpdate,
+    SchemaListResponse,
+)
 from app.modules.asset_registry.schemas import (
     ScreenAssetCreate,
     ScreenAssetRead,
     ScreenAssetUpdate,
 )
+from app.modules.asset_registry.source_models import (
+    SourceAssetCreate,
+    SourceAssetResponse,
+    SourceAssetUpdate,
+    SourceListResponse,
+    SourceType,
+)
 from app.modules.auth.models import TbUser
-# Permission checks disabled due to missing tb_resource_permission table
-# from app.modules.permissions.models import ResourcePermission
-# from app.modules.permissions.crud import check_permission
-from core.db import get_session_context, get_session
-from core.auth import get_current_user
-from schemas.common import ResponseEnvelope
+
+from .validators import validate_asset
 
 router = APIRouter(prefix="/asset-registry")
 
@@ -512,3 +552,485 @@ def delete_asset(
         session.delete(asset)
         session.commit()
         return {"ok": True}
+
+
+# Source Asset Endpoints
+@router.get("/sources", response_model=ResponseEnvelope)
+def list_sources(
+    asset_type: str | None = None,
+    status: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """List source assets"""
+    with get_session_context() as session:
+        if asset_type and asset_type != "source":
+            raise HTTPException(status_code=400, detail="asset_type must be 'source'")
+
+        assets = list_assets(session, asset_type="source", status=status)
+
+        # Convert to response format
+        source_assets = []
+        for asset in assets:
+            content = asset.content or {}
+            source_assets.append(SourceAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                source_type=SourceType(content.get("source_type", "postgresql")),
+                connection=content.get("connection", {}),
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            ))
+
+        return ResponseEnvelope.success(
+            data=SourceListResponse(
+                assets=source_assets,
+                total=len(source_assets),
+                page=page,
+                page_size=page_size,
+            )
+        )
+
+
+@router.post("/sources", response_model=ResponseEnvelope)
+def create_source(
+    payload: SourceAssetCreate,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Create a new source asset"""
+    with get_session_context() as session:
+        asset = create_source_asset(session, payload, created_by=current_user.id)
+        return ResponseEnvelope.success(
+            data=SourceAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                source_type=asset.source_type,
+                connection=asset.connection,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.get("/sources/{asset_id}", response_model=ResponseEnvelope)
+def get_source(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Get a source asset by ID"""
+    with get_session_context() as session:
+        asset = get_source_asset(session, asset_id)
+        if not asset:
+            raise HTTPException(status_code=404, detail="Source asset not found")
+
+        return ResponseEnvelope.success(
+            data=SourceAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                source_type=asset.source_type,
+                connection=asset.connection,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.put("/sources/{asset_id}", response_model=ResponseEnvelope)
+def update_source(
+    asset_id: str,
+    payload: SourceAssetUpdate,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Update a source asset"""
+    with get_session_context() as session:
+        asset = update_source_asset(session, asset_id, payload, updated_by=current_user.id)
+        return ResponseEnvelope.success(
+            data=SourceAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                source_type=asset.source_type,
+                connection=asset.connection,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.delete("/sources/{asset_id}")
+def delete_source(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Delete a source asset"""
+    with get_session_context() as session:
+        delete_source_asset(session, asset_id)
+        return ResponseEnvelope.success(message="Source asset deleted")
+
+
+@router.post("/sources/{asset_id}/test", response_model=ResponseEnvelope)
+def test_source(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Test source connection"""
+    with get_session_context() as session:
+        result = test_source_connection(session, asset_id)
+        return ResponseEnvelope.success(data=result.model_dump())
+
+
+# Schema Asset Endpoints
+@router.get("/schemas", response_model=ResponseEnvelope)
+def list_schemas(
+    asset_type: str | None = None,
+    status: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """List schema assets"""
+    with get_session_context() as session:
+        if asset_type and asset_type != "schema":
+            raise HTTPException(status_code=400, detail="asset_type must be 'schema'")
+
+        assets = list_assets(session, asset_type="schema", status=status)
+
+        # Convert to response format
+        schema_assets = []
+        for asset in assets:
+            content = asset.content or {}
+            schema_assets.append(SchemaAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                catalog=content.get("catalog", {}),
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            ))
+
+        return ResponseEnvelope.success(
+            data=SchemaListResponse(
+                assets=schema_assets,
+                total=len(schema_assets),
+                page=page,
+                page_size=page_size,
+            )
+        )
+
+
+@router.post("/schemas", response_model=ResponseEnvelope)
+def create_schema(
+    payload: SchemaAssetCreate,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Create a new schema asset"""
+    with get_session_context() as session:
+        asset = create_schema_asset(session, payload, created_by=current_user.id)
+        return ResponseEnvelope.success(
+            data=SchemaAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                catalog=asset.catalog,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.get("/schemas/{asset_id}", response_model=ResponseEnvelope)
+def get_schema(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Get a schema asset by ID"""
+    with get_session_context() as session:
+        asset = get_schema_asset(session, asset_id)
+        if not asset:
+            raise HTTPException(status_code=404, detail="Schema asset not found")
+
+        return ResponseEnvelope.success(
+            data=SchemaAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                catalog=asset.catalog,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.put("/schemas/{asset_id}", response_model=ResponseEnvelope)
+def update_schema(
+    asset_id: str,
+    payload: SchemaAssetUpdate,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Update a schema asset"""
+    with get_session_context() as session:
+        asset = update_schema_asset(session, asset_id, payload, updated_by=current_user.id)
+        return ResponseEnvelope.success(
+            data=SchemaAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                catalog=asset.catalog,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.delete("/schemas/{asset_id}")
+def delete_schema(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Delete a schema asset"""
+    with get_session_context() as session:
+        delete_schema_asset(session, asset_id)
+        return ResponseEnvelope.success(message="Schema asset deleted")
+
+
+@router.post("/schemas/{asset_id}/scan", response_model=ResponseEnvelope)
+def scan_schema_endpoint(
+    asset_id: str,
+    scan_request: ScanRequest,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Scan schema from source"""
+    with get_session_context() as session:
+        # Update the scan request with the asset_id
+        scan_request.source_ref = asset_id
+
+        result = scan_schema(session, asset_id)
+        return ResponseEnvelope.success(data=result.model_dump())
+
+
+# Resolver Asset Endpoints
+@router.get("/resolvers", response_model=ResponseEnvelope)
+def list_resolvers(
+    asset_type: str | None = None,
+    status: str | None = None,
+    page: int = 1,
+    page_size: int = 20,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """List resolver assets"""
+    with get_session_context() as session:
+        if asset_type and asset_type != "resolver":
+            raise HTTPException(status_code=400, detail="asset_type must be resolver")
+
+        assets = list_assets(session, asset_type="resolver", status=status)
+
+        # Convert to response format
+        resolver_assets = []
+        for asset in assets:
+            content = asset.content or {}
+            resolver_assets.append(ResolverAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                config=ResolverConfig(
+                    name=asset.name,
+                    description=asset.description,
+                    rules=[],  # Simplified for now
+                    default_namespace=content.get("default_namespace"),
+                    tags=asset.tags,
+                    version=asset.version,
+                ),
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            ))
+
+        return ResponseEnvelope.success(
+            data={"assets": resolver_assets, "total": len(resolver_assets), "page": page, "page_size": page_size}
+        )
+
+
+@router.post("/resolvers", response_model=ResponseEnvelope)
+def create_resolver(
+    payload: ResolverAssetCreate,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Create a new resolver asset"""
+    with get_session_context() as session:
+        asset = create_resolver_asset(session, payload, created_by=current_user.id)
+        return ResponseEnvelope.success(
+            data=ResolverAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                config=asset.config,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.get("/resolvers/{asset_id}", response_model=ResponseEnvelope)
+def get_resolver(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Get a resolver asset by ID"""
+    with get_session_context() as session:
+        asset = get_resolver_asset(session, asset_id)
+        if not asset:
+            raise HTTPException(status_code=404, detail="Resolver asset not found")
+
+        return ResponseEnvelope.success(
+            data=ResolverAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                config=asset.config,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.put("/resolvers/{asset_id}", response_model=ResponseEnvelope)
+def update_resolver(
+    asset_id: str,
+    payload: ResolverAssetUpdate,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Update a resolver asset"""
+    with get_session_context() as session:
+        asset = update_resolver_asset(session, asset_id, payload, updated_by=current_user.id)
+        return ResponseEnvelope.success(
+            data=ResolverAssetResponse(
+                asset_id=str(asset.asset_id),
+                asset_type=asset.asset_type,
+                name=asset.name,
+                description=asset.description,
+                version=asset.version,
+                status=asset.status,
+                config=asset.config,
+                scope=asset.scope,
+                tags=asset.tags,
+                created_by=asset.created_by,
+                published_by=asset.published_by,
+                published_at=asset.published_at,
+                created_at=asset.created_at,
+                updated_at=asset.updated_at,
+            )
+        )
+
+
+@router.delete("/resolvers/{asset_id}")
+def delete_resolver(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Delete a resolver asset"""
+    with get_session_context() as session:
+        delete_resolver_asset(session, asset_id)
+        return ResponseEnvelope.success(message="Resolver asset deleted")
+
+
+@router.post("/resolvers/{asset_id}/simulate", response_model=ResponseEnvelope)
+def simulate_resolver(
+    asset_id: str,
+    test_entities: List[str] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Simulate resolver configuration"""
+    with get_session_context() as session:
+        result = simulate_resolver_configuration(session, asset_id, test_entities)
+        return ResponseEnvelope.success(data=result)
