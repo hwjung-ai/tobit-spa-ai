@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -40,6 +39,7 @@ class ApiDefinitionUpdate(BaseModel):
     logic: str | None = None
 
     @model_validator(mode="after")
+    @classmethod
     def ensure_editable_fields(cls, values: ApiDefinitionUpdate) -> "ApiDefinitionUpdate":
         if values.logic is not None and values.mode is None:
             raise ValueError("mode must accompany logic changes")

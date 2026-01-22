@@ -78,7 +78,6 @@ export default function SourcesPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
-  const [sources, setSources] = useState<SourceAssetResponse[]>([]);
   const [selectedSource, setSelectedSource] = useState<SourceAssetResponse | null>(null);
   const [editingSource, setEditingSource] = useState<Partial<SourceAsset> | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -174,13 +173,8 @@ export default function SourcesPage() {
     },
   });
 
-  useEffect(() => {
-    if (sourcesQuery.data) {
-      setSources(sourcesQuery.data);
-    }
-  }, [sourcesQuery.data, setSources]);
 
-  const filteredSources = sources.filter(source =>
+  const filteredSources = (sourcesQuery.data ?? []).filter(source =>
     source.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     source.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );

@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlmodel import Session, select
-
 from core.db import get_session
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from models import ApiDefinition, ApiMode, ApiScope
 from schemas import (
     ApiDefinitionCreate,
     ApiDefinitionRead,
     ApiDefinitionUpdate,
-    ApiSyncResponse,
-    ApiTestResult,
     ResponseEnvelope,
 )
 from services.api_manager import (
@@ -22,6 +18,7 @@ from services.api_manager import (
     sync_system_definitions,
     update_definition,
 )
+from sqlmodel import Session
 
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])
 

@@ -10,11 +10,10 @@ All handlers follow this signature:
 
 from __future__ import annotations
 
-import asyncio
 from typing import Any, Callable, Dict
-from sqlalchemy.orm import Session
 
 from core.logging import get_logger
+from sqlalchemy.orm import Session
 
 logger = get_logger(__name__)
 
@@ -130,15 +129,12 @@ async def handle_fetch_device_detail(
     Returns:
         AnswerBlock with device details
     """
-    from ..services import handle_ops_query
 
     device_id = inputs.get("device_id")
     if not device_id:
         raise ValueError("device_id required")
 
     # Use existing config executor
-    mode = "config"
-    question = f"Show device detail for {device_id}"
 
     # TODO: Call config executor directly (refactor handle_ops_query to expose executor)
     # For now, placeholder
@@ -167,10 +163,10 @@ async def handle_list_maintenance_filtered(
     Returns:
         AnswerBlock with table of maintenance tickets
     """
-    from app.shared.config_loader import load_text
-    from core.db_pg import get_pg_connection
     from core.config import get_settings
-    import psycopg
+    from core.db_pg import get_pg_connection
+
+    from app.shared.config_loader import load_text
 
     device_id = inputs.get("device_id", "").strip()
     offset = inputs.get("offset", 0)
@@ -287,11 +283,11 @@ async def handle_create_maintenance_ticket(
     Returns:
         AnswerBlock confirming creation + state_patch with new ticket
     """
-    from app.shared.config_loader import load_text
-    from core.db_pg import get_pg_connection
-    from core.config import get_settings
-    from datetime import datetime
     import uuid
+    from datetime import datetime
+
+    from core.config import get_settings
+    from core.db_pg import get_pg_connection
 
     device_id = inputs.get("device_id", "").strip()
     maint_type = inputs.get("maintenance_type", "").strip()

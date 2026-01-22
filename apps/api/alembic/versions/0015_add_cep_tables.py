@@ -6,8 +6,8 @@ Revises: 0014_add_ui_definitions
 Create Date: 2025-12-31 18:30:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

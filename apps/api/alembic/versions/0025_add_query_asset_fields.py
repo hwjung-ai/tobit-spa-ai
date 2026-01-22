@@ -6,8 +6,8 @@ Revises: 0024_add_operation_settings
 Create Date: 2026-01-17 12:30:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "0025_add_query_asset_fields"

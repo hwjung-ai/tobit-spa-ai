@@ -4,13 +4,12 @@ Setup sample Golden Queries for Regression Watch demonstration
 """
 import sys
 from uuid import uuid4
-from datetime import datetime
 
 # Add the project to path
 sys.path.insert(0, '/home/spa/tobit-spa-ai/apps/api')
 
-from core.db import engine, get_session_context
 from app.modules.inspector.models import TbGoldenQuery, TbRegressionBaseline
+from core.db import get_session_context
 
 # Sample Golden Queries to create
 SAMPLE_QUERIES = [
@@ -83,7 +82,7 @@ def setup_samples():
             session.commit()
 
             print(f"   📌 Baseline set to trace: {BASELINE_TRACE_ID[:12]}...")
-            print(f"   Status: Enabled ✓\n")
+            print("   Status: Enabled ✓\n")
 
             created_queries.append(query_id)
 

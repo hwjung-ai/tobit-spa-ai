@@ -3,15 +3,15 @@ from __future__ import annotations
 import uuid
 from typing import Tuple
 
+from core.db import get_session
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from models.history import QueryHistory
+from schemas.common import ResponseEnvelope
+from schemas.history import HistoryCreate, HistoryRead
 from sqlalchemy import select
 from sqlmodel import Session
 
 from apps.api.core.logging import get_logger
-from core.db import get_session
-from models.history import QueryHistory
-from schemas.common import ResponseEnvelope
-from schemas.history import HistoryCreate, HistoryRead
 
 router = APIRouter(prefix="/history", tags=["history"])
 logger = get_logger(__name__)

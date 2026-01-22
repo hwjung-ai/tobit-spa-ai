@@ -33,7 +33,7 @@ class RegressionService:
         Perform stage-level regression analysis between two traces.
         """
         analysis_id = f"reg_{int(time.time())}"
-        start_time = time.time()
+        time.time()
 
         # Initialize analysis result
         result = RegressionAnalysisResult(

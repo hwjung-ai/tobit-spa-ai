@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
+T = TypeVar('T')
 
-class ResponseEnvelope(BaseModel):
+class ResponseEnvelope(BaseModel, Generic[T]):
     time: datetime
     code: int = 0
     message: str = "OK"

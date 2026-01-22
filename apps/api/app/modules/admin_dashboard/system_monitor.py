@@ -1,9 +1,10 @@
 """Admin dashboard system monitoring and health service"""
 
 import logging
-import psutil
 from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
+
+import psutil
 
 logger = logging.getLogger(__name__)
 

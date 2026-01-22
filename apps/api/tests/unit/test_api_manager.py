@@ -88,7 +88,7 @@ class TestSQLValidator:
         validator = SQLValidator()
         sql = "SELECT id, name FROM users"
 
-        result = validator.validate(sql)
+        validator.validate(sql)
 
         # May have warning about missing WHERE
         # (depends on table name heuristics)

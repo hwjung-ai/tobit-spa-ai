@@ -4,29 +4,28 @@ API Router for CI Management endpoints.
 
 from __future__ import annotations
 
-from typing import List, Optional
 from datetime import datetime
-
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session
+from typing import List, Optional
 
 from core.db import get_session
+from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
-from .models import (
-    ChangeType,
-    ChangeStatus,
-    CIChangeRead,
-    CIChangeCreate,
-    CIChangeApprove,
-    CIIntegrityIssueRead,
-    CIDuplicateRead,
-    CIDuplicateConfirm,
-    CIChangeHistory,
-    CIIntegritySummary,
-    CIChangeStats,
-)
-from . import crud
+from sqlmodel import Session
 
+from . import crud
+from .models import (
+    ChangeStatus,
+    ChangeType,
+    CIChangeApprove,
+    CIChangeCreate,
+    CIChangeHistory,
+    CIChangeRead,
+    CIChangeStats,
+    CIDuplicateConfirm,
+    CIDuplicateRead,
+    CIIntegrityIssueRead,
+    CIIntegritySummary,
+)
 
 router = APIRouter(prefix="/api/ci-management", tags=["CI Management"])
 

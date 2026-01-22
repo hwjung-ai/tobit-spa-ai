@@ -14,7 +14,8 @@ templates:
         "mode": "aggregate"
       },
       "ambiguity": false,
-      "list": { "enabled": false, "limit": 50, "offset": 0 }
+      "list": { "enabled": false, "limit": 50, "offset": 0 },
+      "route": "orch"
     }
     - Always return JSON only, without markdown, bullet points, or text.
     - Use null or empty arrays when the value is not applicable.
@@ -22,9 +23,10 @@ templates:
     - ci_identifiers should include specifiers such as CI code/ci_name when available.
     - metric must be null if there is no metric/history intent.
     - filters should contain field/op/value entries for any narrowing context (e.g. server filter when applicable).
+    - route must be one of: "direct" (for simple queries that don't need orchestration), "orch" (requires orchestration), or "reject" (unsupported or inappropriate queries)
     - LIST RULES:
-      - Only enable list for explicit list requests such as “목록/리스트/전체 목록”.
-      - Do not enable list for output format hints like “표로 보여줘/테이블로 보여줘/보여줘”.
+      - Only enable list for explicit list requests such as "목록/리스트/전체 목록".
+      - Do not enable list for output format hints like "표로 보여줘/테이블로 보여줘/보여줘".
       - In list mode: output_types must be ["table"] and ci_identifiers may be [].
       - If N is present (e.g. 10개), set list.limit=N, otherwise default to 50.
   user: |

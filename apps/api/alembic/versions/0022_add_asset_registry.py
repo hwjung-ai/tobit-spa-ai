@@ -6,8 +6,8 @@ Revises: 0021_add_builder_to_thread
 Create Date: 2026-01-16 10:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "0022_add_asset_registry"

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Any, List
+from typing import Any, Callable, Dict, List
 
 from core.logging import get_logger
+
 from app.modules.ops.services.ci.tools.base import ToolType
 from app.modules.ops.services.ci.tools.executor import ToolExecutor
 

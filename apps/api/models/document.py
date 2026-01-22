@@ -3,10 +3,10 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from enum import Enum
 from uuid import uuid4
+
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import Column, JSON
-from sqlalchemy.orm import Mapped
-from sqlmodel import Field, Relationship, SQLModel
+from sqlalchemy import JSON, Column
+from sqlmodel import Field, SQLModel
 
 
 class DocumentStatus(str, Enum):

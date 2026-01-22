@@ -24,7 +24,6 @@ from app.modules.asset_registry.crud import (
     get_resolver_asset,
     get_schema_asset,
     get_source_asset,
-    list_assets,
     scan_schema,
     simulate_resolver_configuration,
     test_source_connection,

@@ -5,8 +5,8 @@ Compares candidate trace against baseline trace and determines if regression occ
 Uses fixed rules (no LLM) for PASS/WARN/FAIL classification.
 """
 
-from typing import Any, Dict, List
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass

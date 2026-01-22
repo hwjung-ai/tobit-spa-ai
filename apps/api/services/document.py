@@ -6,16 +6,15 @@ import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator, List
+from typing import Iterator
 
 import docx
 from app.llm.client import get_llm_client
+from core.config import AppSettings
+from models import Document, DocumentChunk, DocumentStatus
 from pypdf import PdfReader
 from sqlalchemy import delete, select
 from sqlmodel import Session
-
-from core.config import AppSettings
-from models import Document, DocumentChunk, DocumentStatus
 
 MAX_CHUNK_CHARS = 1100
 EMBED_BATCH_SIZE = 16

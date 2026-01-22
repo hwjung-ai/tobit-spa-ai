@@ -1,14 +1,15 @@
 """Admin dashboard API routes"""
 
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
+from core.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from core.auth import get_current_user
-from .user_service import AdminUserService
-from .system_monitor import SystemMonitor
 from .settings_service import AdminSettingsService
+from .system_monitor import SystemMonitor
+from .user_service import AdminUserService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/admin", tags=["admin"])

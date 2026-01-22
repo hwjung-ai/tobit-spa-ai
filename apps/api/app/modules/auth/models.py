@@ -5,9 +5,8 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
-from sqlmodel import Field, SQLModel
-
 from core.encryption import get_encryption_manager
+from sqlmodel import Field, SQLModel
 
 
 class UserRole(str, Enum):

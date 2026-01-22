@@ -4,10 +4,8 @@ Security middleware for HTTPS, security headers, CORS, and CSRF protection.
 
 from __future__ import annotations
 
-import os
 import secrets
-from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Callable
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, Response

@@ -5,8 +5,8 @@ from typing import Any, Dict, List
 
 from sqlmodel import Session, select
 
-from app.modules.inspector.asset_context import get_tracked_assets
 from app.modules.asset_registry.models import TbAssetRegistry
+from app.modules.inspector.asset_context import get_tracked_assets
 from app.modules.inspector.crud import create_execution_trace
 from app.modules.inspector.models import TbExecutionTrace
 
@@ -199,5 +199,10 @@ def persist_execution_trace(
         ui_render=None,
         audit_links={"related_audit_log_ids": []},
         flow_spans=flow_spans,
+        # New orchestration fields
+        route=trace_payload.get("route", "orch"),
+        stage_inputs=trace_payload.get("stage_inputs", []),
+        stage_outputs=trace_payload.get("stage_outputs", []),
+        replan_events=trace_payload.get("replan_events", []),
     )
     return create_execution_trace(session, trace_entry)

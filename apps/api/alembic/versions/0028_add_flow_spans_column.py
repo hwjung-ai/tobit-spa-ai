@@ -6,8 +6,8 @@ Revises: 0027_add_execution_trace_table
 Create Date: 2026-01-18 02:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "0028_add_flow_spans_column"

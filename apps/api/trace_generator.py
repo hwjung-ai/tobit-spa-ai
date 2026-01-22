@@ -7,10 +7,11 @@ Generates trace evidence for UI Actions with state_patch
 Run: python3 trace_generator.py
 """
 
-import uuid
 import json
+import uuid
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 def generate_trace_id() -> str:
     """Generate a unique trace_id"""
@@ -210,12 +211,12 @@ def main():
     print("-" * 70)
     demo_a_trace = generate_demo_a_trace()
     print(f"Trace ID:           {demo_a_trace['trace_id']}")
-    print(f"Action:             list_maintenance_filtered")
+    print("Action:             list_maintenance_filtered")
     print(f"Feature:            {demo_a_trace['feature']}")
     print(f"Status:             {demo_a_trace['status']}")
     print(f"Duration:           {demo_a_trace['duration_ms']}ms")
     print(f"Applied Assets:     {list(demo_a_trace['applied_assets']['screens'].keys())}")
-    print(f"State Patch:        None (read-only action)")
+    print("State Patch:        None (read-only action)")
     print(f"Timestamp:          {demo_a_trace['created_at']}\n")
 
     # Demo B: CRUD trace with hierarchy
@@ -224,16 +225,16 @@ def main():
     parent_trace, child_trace = generate_demo_b_trace_pair()
 
     print(f"Screen Render Trace ID:     {parent_trace['trace_id']}")
-    print(f"  - Action:                 list_maintenance_filtered")
+    print("  - Action:                 list_maintenance_filtered")
     print(f"  - Status:                 {parent_trace['status']}")
     print(f"  - Duration:               {parent_trace['duration_ms']}ms\n")
 
     print(f"Create Action Trace ID:     {child_trace['trace_id']}")
     print(f"  - Parent Trace ID:        {child_trace['parent_trace_id']}")
-    print(f"  - Action:                 create_maintenance_ticket")
+    print("  - Action:                 create_maintenance_ticket")
     print(f"  - Status:                 {child_trace['status']}")
     print(f"  - Duration:               {child_trace['duration_ms']}ms")
-    print(f"  - State Patch Applied:    YES")
+    print("  - State Patch Applied:    YES")
     print(f"  - State Patch Keys:       {list(child_trace['state_patch'].keys())}")
     print(f"  - Ticket Created:         {child_trace['state_patch']['last_created_ticket']['id']}")
     print(f"  - Modal Closed:           {not child_trace['state_patch']['modal_open']}\n")
@@ -273,9 +274,9 @@ def main():
     print("="*70)
     print("CERTIFICATION SUMMARY")
     print("="*70)
-    print(f"✓ PR-A: state_patch in response - IMPLEMENTED")
-    print(f"✓ PR-B: CRUD handlers with state_patch - IMPLEMENTED")
-    print(f"✓ PR-C: Trace evidence collected")
+    print("✓ PR-A: state_patch in response - IMPLEMENTED")
+    print("✓ PR-B: CRUD handlers with state_patch - IMPLEMENTED")
+    print("✓ PR-C: Trace evidence collected")
     print(f"  - Demo A trace_id: {demo_a_trace['trace_id']}")
     print(f"  - Demo B parent_trace_id: {parent_trace['trace_id']}")
     print(f"  - Demo B child_trace_id: {child_trace['trace_id']}")

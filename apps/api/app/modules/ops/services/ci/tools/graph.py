@@ -1,21 +1,20 @@
 from __future__ import annotations
 
 from collections import Counter
-from typing import Any, Dict, List, Literal
+from typing import Any, Dict, List
 
-from neo4j import Driver
-
-from app.modules.ops.services.ci import policy
-from app.modules.ops.services.ci.view_registry import Direction, VIEW_REGISTRY
 from schemas.tool_contracts import GraphExpandResult, GraphPathResult
 from scripts.seed.utils import get_neo4j_driver
-from app.shared.config_loader import load_text
+
+from app.modules.ops.services.ci import policy
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
     ToolContext,
     ToolResult,
     ToolType,
 )
+from app.modules.ops.services.ci.view_registry import VIEW_REGISTRY, Direction
+from app.shared.config_loader import load_text
 
 DEFAULT_LIMITS = {"max_nodes": 200, "max_edges": 400, "max_paths": 25}
 

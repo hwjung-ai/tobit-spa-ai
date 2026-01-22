@@ -6,8 +6,8 @@ Revises: 0017_add_metric_poll_snapshot
 Create Date: 2025-12-31 23:50:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

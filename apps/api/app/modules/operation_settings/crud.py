@@ -4,11 +4,12 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from core.logging import get_request_context
 from sqlalchemy import update
 from sqlmodel import Session, select
 
 from app.modules.audit_log.crud import create_audit_log
-from core.logging import get_request_context
+
 from .models import TbOperationSettings
 
 

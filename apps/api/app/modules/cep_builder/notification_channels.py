@@ -1,12 +1,13 @@
 """Multi-channel notification service for CEP rule actions (Slack, Email, SMS, Webhook)"""
 
 import logging
-import httpx
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any
 from datetime import datetime
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Any, Dict, List, Optional
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ class SlackNotificationChannel(NotificationChannel):
                 success = response.status_code == 200
 
                 if success:
-                    logger.info(f"Slack notification sent successfully")
+                    logger.info("Slack notification sent successfully")
                 else:
                     logger.error(
                         f"Slack notification failed: {response.status_code} {response.text}"

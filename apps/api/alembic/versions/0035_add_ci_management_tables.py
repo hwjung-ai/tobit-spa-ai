@@ -1,7 +1,7 @@
 """add CI management tables for change tracking, integrity validation, and duplicate detection"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0035_add_ci_management_tables"
 down_revision = "0034_add_encryption_fields"

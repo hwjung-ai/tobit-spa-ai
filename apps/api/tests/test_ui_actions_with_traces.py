@@ -7,12 +7,12 @@ This test demonstrates:
 3. Trace hierarchy (parent_trace_id linking)
 """
 
-import asyncio
 import uuid
 from datetime import datetime
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+
 
 # Mock the database dependencies for testing
 @pytest.fixture
@@ -49,7 +49,9 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
     - State patch contains maintenance_list and pagination info
     - Trace can be recorded with applied_assets
     """
-    from app.modules.ops.services.action_registry import handle_list_maintenance_filtered
+    from app.modules.ops.services.action_registry import (
+        handle_list_maintenance_filtered,
+    )
 
     inputs = {
         "device_id": "",
@@ -98,7 +100,7 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
         print("="*60)
         print(f"Action: {trace_evidence['action_id']}")
         print(f"Blocks returned: {trace_evidence['blocks_count']}")
-        print(f"State patch applied: YES")
+        print("State patch applied: YES")
         print(f"State patch keys: {', '.join(trace_evidence['state_patch_keys'])}")
         print(f"Maintenance items: {trace_evidence['maintenance_items']}")
         print("="*60 + "\n")
@@ -114,7 +116,9 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
     - State patch includes newly created ticket and modal state
     - Trace includes parent_trace_id for hierarchy
     """
-    from app.modules.ops.services.action_registry import handle_create_maintenance_ticket
+    from app.modules.ops.services.action_registry import (
+        handle_create_maintenance_ticket,
+    )
 
     # Simulate parent trace from a previous screen render
     parent_trace_id = f"screen-render-{datetime.utcnow().timestamp()}"
@@ -174,17 +178,17 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
         print("DEMO B - CRUD CREATE ACTION TRACE EVIDENCE")
         print("="*60)
         print(f"Action: {trace_evidence['action_id']}")
-        print(f"\nTrace Hierarchy:")
+        print("\nTrace Hierarchy:")
         print(f"  Parent Trace ID:  {trace_evidence['parent_trace_id']}")
         print(f"  Action Trace ID:  {trace_evidence['action_trace_id']}")
-        print(f"\nTicket Created:")
+        print("\nTicket Created:")
         print(f"  Ticket ID:        {trace_evidence['ticket_id']}")
         print(f"  Device ID:        {trace_evidence['device_id']}")
-        print(f"  Type:             Preventive")
+        print("  Type:             Preventive")
         print(f"  Created At:       {trace_evidence['created_at']}")
-        print(f"\nState Patch Applied:")
+        print("\nState Patch Applied:")
         print(f"  Keys:             {', '.join(trace_evidence['state_patch_keys'])}")
-        print(f"  Modal Closed:     YES")
+        print("  Modal Closed:     YES")
         print("="*60 + "\n")
 
 
@@ -218,7 +222,7 @@ async def test_ui_action_response_includes_state_patch():
     print("UIActionResponse Schema Validation")
     print("="*60)
     print(f"✓ state_patch field present: {bool(data.get('state_patch'))}")
-    print(f"✓ Response serializable: YES")
+    print("✓ Response serializable: YES")
     print(f"✓ State patch value: {data['state_patch']}")
     print("="*60 + "\n")
 

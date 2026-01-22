@@ -6,8 +6,8 @@ Revises: 0023_add_audit_log
 Create Date: 2026-01-16 13:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "0024_add_operation_settings"

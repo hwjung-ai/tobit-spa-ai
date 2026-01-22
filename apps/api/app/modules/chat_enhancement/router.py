@@ -1,15 +1,16 @@
 """Chat enhancement routes for thread management and conversation export"""
 
 import logging
-from typing import Optional, List
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from typing import Optional
 
 from core.auth import get_current_user
 from core.config import get_settings
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+
 from .services.chat_service import ChatEnhancementService
-from .services.export_service import ChatExportService, ExportFormat
+from .services.export_service import ChatExportService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -238,7 +239,7 @@ async def get_thread_messages(
     """
 
     try:
-        offset = (page - 1) * per_page
+        (page - 1) * per_page
 
         logger.info(
             f"Fetching messages for thread {thread_id}, "
@@ -417,7 +418,7 @@ async def list_threads(
     """
 
     try:
-        offset = (page - 1) * per_page
+        (page - 1) * per_page
 
         logger.info(
             f"Listing threads for user {current_user.get('id')}, "

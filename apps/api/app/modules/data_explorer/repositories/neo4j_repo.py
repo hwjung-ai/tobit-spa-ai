@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Iterable
+from typing import Any
 
 from core.config import AppSettings
 from core.db_neo4j import get_neo4j_driver

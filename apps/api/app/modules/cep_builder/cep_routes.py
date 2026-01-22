@@ -2,13 +2,14 @@
 
 import logging
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
+from core.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from core.auth import get_current_user
 from .bytewax_engine import BytewaxCEPEngine, CEPRuleDefinition
-from .notification_channels import NotificationService, NotificationMessage
+from .notification_channels import NotificationService
 from .rule_monitor import RulePerformanceMonitor
 
 logger = logging.getLogger(__name__)
@@ -353,7 +354,7 @@ async def register_notification_channel(
             "status": "ok",
             "channel_id": request.channel_id,
             "channel_type": request.channel_type,
-            "message": f"Notification channel registered"
+            "message": "Notification channel registered"
         }
 
     except HTTPException:

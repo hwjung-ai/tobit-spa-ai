@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-from typing import AsyncGenerator, Generator, Optional, Tuple
-
 import logging
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from sse_starlette.sse import EventSourceResponse
-from sqlmodel import select
+from datetime import datetime, timezone
+from typing import AsyncGenerator, Optional, Tuple
 
 from core.db import Session, get_session
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from models import ChatMessage, ChatThread
 from services import (
     BaseOrchestrator,
@@ -18,6 +14,8 @@ from services import (
     get_orchestrator,
     get_summary_service,
 )
+from sqlmodel import select
+from sse_starlette.sse import EventSourceResponse
 
 router = APIRouter(prefix="/chat")
 

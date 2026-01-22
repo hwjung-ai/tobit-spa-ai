@@ -1,11 +1,10 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from sqlalchemy import select
-
 from core.db import Session, get_session
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from models.chat import ChatMessage, ChatThread
-from schemas.thread import MessageRead, ThreadCreate, ThreadDetail, ThreadRead
+from schemas.thread import ThreadCreate, ThreadDetail, ThreadRead
+from sqlalchemy import select
 
 router = APIRouter(prefix="/threads", tags=["threads"])
 

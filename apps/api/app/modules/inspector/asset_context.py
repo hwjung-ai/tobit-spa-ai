@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 AssetInfo = Dict[str, Any]
 

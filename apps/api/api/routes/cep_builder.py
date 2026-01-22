@@ -4,7 +4,6 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
-
 from schemas import ResponseEnvelope
 
 router = APIRouter(prefix="/cep-builder", tags=["cep-builder"])

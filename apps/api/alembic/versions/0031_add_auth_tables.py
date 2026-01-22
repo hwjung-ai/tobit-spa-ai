@@ -1,8 +1,7 @@
 """add authentication tables"""
 
-from datetime import datetime
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0031_add_auth_tables"
 down_revision = "0030_add_regression_rule_config"

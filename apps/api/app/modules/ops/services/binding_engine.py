@@ -172,7 +172,7 @@ class BindingEngine:
         if expr == "trace_id":
             value = context.get("trace_id")
             if value is None:
-                raise BindingError(f"trace_id not found in context")
+                raise BindingError("trace_id not found in context")
             return value
 
         # Split first part

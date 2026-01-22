@@ -9,6 +9,8 @@ import BlockRenderer, {
 } from "../../components/answer/BlockRenderer";
 import { type NextAction } from "./nextActions";
 import { authenticatedFetch } from "@/lib/apiClient";
+import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
+import { type OpsHistoryEntry } from "@/components/ops/types/opsTypes";
 
 type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 type UiMode = "ci" | "metric" | "history" | "relation" | "all";
@@ -642,6 +644,16 @@ export default function OpsPage() {
 
   return (
     <div className="py-6">
+      {/* OPS Summary Strip */}
+      <div className="mb-6">
+        <OpsSummaryStrip
+          selectedEntry={selectedEntry}
+          onUpdateData={(data) => {
+            // Handle summary data updates if needed
+          }}
+        />
+      </div>
+
       <div className={`grid gap-6 ${gridColsClass}`}>
         <div
           className={`h-[80vh] flex-col gap-4 ${shouldShowSidebar ? "flex" : "hidden"}`}

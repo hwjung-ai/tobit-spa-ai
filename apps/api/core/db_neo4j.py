@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional
-
-from neo4j import GraphDatabase, Driver, basic_auth
+from neo4j import Driver, GraphDatabase, basic_auth
 
 from .config import AppSettings
 

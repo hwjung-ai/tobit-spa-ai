@@ -10,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 # Make sure the apps/api package is importable when this script runs from the repo root.
 sys.path.append(str(ROOT / "apps" / "api"))
 
-from app.llm.client import get_llm_client  # type: ignore[import]  # path is injected above
+from app.llm.client import (
+    get_llm_client,  # type: ignore[import]  # path is injected above
+)
 
 
 def send_hello() -> str:

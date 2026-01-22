@@ -15,7 +15,6 @@ from apps.api.app.modules.permissions.models import (
     TbRolePermission,
 )
 
-
 # Default role permission sets
 ROLE_PERMISSION_DEFAULTS = {
     RolePermissionDefault.ADMIN: [
@@ -344,7 +343,7 @@ def list_user_permissions(
     # Get resource-specific permissions
     stmt = select(TbResourcePermission).where(
         TbResourcePermission.user_id == user_id,
-        TbResourcePermission.is_granted == True,
+        TbResourcePermission.is_granted,
     )
 
     resource_perms = session.exec(stmt).all()

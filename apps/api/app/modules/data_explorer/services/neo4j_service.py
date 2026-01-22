@@ -4,8 +4,8 @@ import re
 from typing import Any
 
 from core.config import AppSettings
-from app.modules.data_explorer.repositories import neo4j_repo
 
+from app.modules.data_explorer.repositories import neo4j_repo
 
 _FORBIDDEN_CYPHER = (
     "create",

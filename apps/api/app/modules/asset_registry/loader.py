@@ -3,16 +3,17 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from sqlmodel import Session, select
-
-from app.shared import config_loader
 from core.db import get_session_context
+from sqlmodel import select
+
 from app.modules.inspector.asset_context import (
     track_mapping_asset,
     track_policy_asset,
     track_prompt_asset,
     track_query_asset,
 )
+from app.shared import config_loader
+
 from .models import TbAssetRegistry
 
 logger = logging.getLogger(__name__)
@@ -252,7 +253,7 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
         }
     elif policy_type == "view_depth":
         # Return a minimal view_depth policy (this shouldn't normally be used)
-        logger.warning(f"No view_depth policy found in DB or seed file, returning None")
+        logger.warning("No view_depth policy found in DB or seed file, returning None")
         payload = {
             "max_steps": 10,
             "timeout_ms": 120000,
@@ -351,3 +352,168 @@ def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str 
 
     logger.warning(f"Query asset not found: {name} (scope={scope})")
     return None, None
+
+
+def load_source_asset(name: str) -> dict[str, Any] | None:
+    """
+    Load source asset with fallback priority:
+    1. Published asset from DB
+    2. Config file from config/sources/
+
+    Args:
+        name: Name of the source asset
+
+    Returns:
+        Dictionary containing source connection details
+    """
+    with get_session_context() as session:
+        # Try DB first
+        asset = session.exec(
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "source")
+            .where(TbAssetRegistry.name == name)
+            .where(TbAssetRegistry.status == "published")
+        ).first()
+
+        if asset:
+            logger.info(f"Loaded source from asset registry: {name} (v{asset.version})")
+            content = asset.content or {}
+
+            payload = {
+                "source_type": content.get("source_type"),
+                "connection": content.get("connection", {}),
+                "spec": content.get("spec"),
+                "source": "asset_registry",
+                "asset_id": str(asset.asset_id),
+                "version": asset.version,
+                "name": asset.name,
+                "scope": asset.scope,
+                "tags": asset.tags,
+            }
+
+            return payload
+
+    # Fallback to config file
+    config_file = f"sources/{name}.yaml"
+    source_config = config_loader.load_yaml(config_file)
+
+    if source_config:
+        logger.warning(f"Using config file for source '{name}': {config_file}")
+        source_data = dict(source_config)
+        source_data["source"] = "file_fallback"
+        source_data["asset_id"] = None
+        source_data["version"] = None
+        return source_data
+
+    logger.warning(f"Source asset not found: {name}")
+    return None
+
+
+def load_schema_asset(name: str) -> dict[str, Any] | None:
+    """
+    Load schema asset with fallback priority:
+    1. Published asset from DB
+    2. Config file from config/schemas/
+
+    Args:
+        name: Name of the schema asset
+
+    Returns:
+        Dictionary containing schema catalog information
+    """
+    with get_session_context() as session:
+        # Try DB first
+        asset = session.exec(
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "schema")
+            .where(TbAssetRegistry.name == name)
+            .where(TbAssetRegistry.status == "published")
+        ).first()
+
+        if asset:
+            logger.info(f"Loaded schema from asset registry: {name} (v{asset.version})")
+            content = asset.content or {}
+
+            payload = {
+                "name": asset.name,
+                "source_ref": content.get("source_ref"),
+                "catalog": content.get("catalog", {}),
+                "spec": content.get("spec"),
+                "source": "asset_registry",
+                "asset_id": str(asset.asset_id),
+                "version": asset.version,
+                "scope": asset.scope,
+                "tags": asset.tags,
+            }
+
+            return payload
+
+    # Fallback to config file
+    config_file = f"schemas/{name}.yaml"
+    schema_config = config_loader.load_yaml(config_file)
+
+    if schema_config:
+        logger.warning(f"Using config file for schema '{name}': {config_file}")
+        schema_data = dict(schema_config)
+        schema_data["source"] = "file_fallback"
+        schema_data["asset_id"] = None
+        schema_data["version"] = None
+        return schema_data
+
+    logger.warning(f"Schema asset not found: {name}")
+    return None
+
+
+def load_resolver_asset(name: str) -> dict[str, Any] | None:
+    """
+    Load resolver asset with fallback priority:
+    1. Published asset from DB
+    2. Config file from config/resolvers/
+
+    Args:
+        name: Name of the resolver asset
+
+    Returns:
+        Dictionary containing resolver configuration
+    """
+    with get_session_context() as session:
+        # Try DB first
+        asset = session.exec(
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "resolver")
+            .where(TbAssetRegistry.name == name)
+            .where(TbAssetRegistry.status == "published")
+        ).first()
+
+        if asset:
+            logger.info(f"Loaded resolver from asset registry: {name} (v{asset.version})")
+            content = asset.content or {}
+
+            payload = {
+                "name": asset.name,
+                "rules": content.get("rules", []),
+                "default_namespace": content.get("default_namespace"),
+                "spec": content.get("spec"),
+                "source": "asset_registry",
+                "asset_id": str(asset.asset_id),
+                "version": asset.version,
+                "scope": asset.scope,
+                "tags": asset.tags,
+            }
+
+            return payload
+
+    # Fallback to config file
+    config_file = f"resolvers/{name}.yaml"
+    resolver_config = config_loader.load_yaml(config_file)
+
+    if resolver_config:
+        logger.warning(f"Using config file for resolver {name}: {config_file}")
+        resolver_data = dict(resolver_config)
+        resolver_data["source"] = "file_fallback"
+        resolver_data["asset_id"] = None
+        resolver_data["version"] = None
+        return resolver_data
+
+    logger.warning(f"Resolver asset not found: {name}")
+    return None

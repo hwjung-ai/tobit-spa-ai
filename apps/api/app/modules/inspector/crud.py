@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Iterable, Tuple
+from typing import Tuple
 from uuid import uuid4
 
-from sqlalchemy import func, or_, desc
+from sqlalchemy import func, or_
 from sqlmodel import Session, select
 
 from app.modules.inspector.models import (
@@ -35,6 +35,8 @@ def list_execution_traces(
     to_ts: datetime | None = None,
     asset_id: str | None = None,
     parent_trace_id: str | None = None,
+    route: str | None = None,
+    replan_count: int | None = None,
     limit: int = 20,
     offset: int = 0,
 ) -> Tuple[list[TbExecutionTrace], int]:
@@ -60,6 +62,11 @@ def list_execution_traces(
         )
     if asset_id:
         filters.append(TbExecutionTrace.asset_versions.contains([asset_id]))
+    if route:
+        filters.append(TbExecutionTrace.route == route)
+    if replan_count is not None:
+        # replan_events의 개수가 replan_count와 일치하는 것만 필터링
+        filters.append(func.coalesce(func.array_length(TbExecutionTrace.replan_events, 1), 0) == replan_count)
 
     statement = select(TbExecutionTrace)
     if filters:
@@ -109,7 +116,7 @@ def list_golden_queries(session: Session, enabled_only: bool = False) -> list[Tb
     """List all golden queries"""
     statement = select(TbGoldenQuery)
     if enabled_only:
-        statement = statement.where(TbGoldenQuery.enabled == True)
+        statement = statement.where(TbGoldenQuery.enabled)
     statement = statement.order_by(TbGoldenQuery.created_at.desc())
     return session.exec(statement).all()
 

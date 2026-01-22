@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Iterable
-
-from sqlalchemy import select, text
-from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import Session
+from typing import Any
 
 from models import ApiDefinition, ApiMode, ApiScope
 from schemas import AnswerEnvelope, AnswerMeta, MarkdownBlock, TableBlock
+from sqlalchemy import select, text
+from sqlalchemy.exc import SQLAlchemyError
+from sqlmodel import Session
 
 
 def list_api_definitions(session: Session, scope: ApiScope | None = None) -> list[ApiDefinition]:
@@ -125,5 +124,5 @@ def run_sql_logic(session: Session, logic: str) -> list[dict[str, Any]]:
         result = session.exec(text(clean))
         rows = [dict(row._mapping) for row in result]
         return rows
-    except SQLAlchemyError as exc:
+    except SQLAlchemyError:
         raise

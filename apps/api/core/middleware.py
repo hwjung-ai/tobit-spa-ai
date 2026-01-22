@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from app.modules.inspector.asset_context import reset_asset_context
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
 from apps.api.core.logging import clear_request_context, set_request_context
-from app.modules.inspector.asset_context import reset_asset_context
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

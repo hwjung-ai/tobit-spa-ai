@@ -1,6 +1,5 @@
-from fastapi import APIRouter
-
 from core.config import get_settings
+from fastapi import APIRouter
 from schemas.common import ResponseEnvelope
 
 router = APIRouter()

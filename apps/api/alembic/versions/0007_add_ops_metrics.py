@@ -5,8 +5,8 @@ Revises: 0006_add_ops_ci
 Create Date: 2025-12-30 00:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

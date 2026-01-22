@@ -18,15 +18,14 @@ if str(ROOT) not in sys.path:
 # Load environment
 os.chdir(str(ROOT))
 from dotenv import load_dotenv
+
 load_dotenv(str(ROOT / "apps/api/.env"))
 
 import json
-from apps.api.scripts.seed.seed_ci import SYSTEM_DEFINITIONS
 
 
 def get_postgres_conn():
     """Postgres 연결"""
-    import psycopg
     from apps.api.scripts.seed.utils import get_postgres_conn as get_conn
     return get_conn()
 
@@ -80,7 +79,7 @@ def select_ci_codes() -> dict[str, str] | None:
         if verify_unique_match(ci_code):
             print("✅", file=sys.stderr)
         else:
-            print(f"❌ (1건 이상 중복 또는 0건)", file=sys.stderr)
+            print("❌ (1건 이상 중복 또는 0건)", file=sys.stderr)
             return None
 
     print("✅ 모든 코드가 유일하게 매칭됨", file=sys.stderr)

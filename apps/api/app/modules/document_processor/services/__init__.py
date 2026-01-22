@@ -1,13 +1,13 @@
 """Document processor services"""
 
-from .format_processor import DocumentProcessor, DocumentProcessingError
 from .chunk_service import ChunkingStrategy, ChunkMetadata
-from .search_service import DocumentSearchService, SearchFilters, SearchResult
 from .export_service import (
-    DocumentExportService,
     ChatExportService,
+    DocumentExportService,
     ExportFormat,
 )
+from .format_processor import DocumentProcessingError, DocumentProcessor
+from .search_service import DocumentSearchService, SearchFilters, SearchResult
 
 __all__ = [
     "DocumentProcessor",

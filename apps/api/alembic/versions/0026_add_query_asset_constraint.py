@@ -7,8 +7,6 @@ Create Date: 2026-01-17 12:00:00.000000
 """
 
 from alembic import op
-import sqlalchemy as sa
-
 
 revision = "0026_add_query_asset_constraint"
 down_revision = "0025_add_query_asset_fields"

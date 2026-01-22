@@ -1,4 +1,5 @@
 from app.modules.api_manager.router import router as api_manager_router
+
 from .cep_builder import router as cep_builder_router
 from .chat import router as chat_router
 from .documents import router as document_router

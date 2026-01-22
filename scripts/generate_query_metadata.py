@@ -10,6 +10,7 @@ Usage:
 """
 
 from pathlib import Path
+
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -103,12 +104,12 @@ def main():
         print(f"  ✓ Created: {yaml_file.relative_to(REPO_ROOT)}")
         created_count += 1
 
-    print(f"\n--- Metadata generation complete ---")
+    print("\n--- Metadata generation complete ---")
     print(f"  Created: {created_count} YAML files")
     print(f"  Skipped: {skipped_count} (already exist)")
-    print(f"\nNext steps:")
-    print(f"  1. Review generated YAML files")
-    print(f"  2. Run: python scripts/query_asset_importer.py --scope ci --apply --publish")
+    print("\nNext steps:")
+    print("  1. Review generated YAML files")
+    print("  2. Run: python scripts/query_asset_importer.py --scope ci --apply --publish")
 
 
 if __name__ == "__main__":

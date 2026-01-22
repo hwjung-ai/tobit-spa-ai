@@ -6,8 +6,8 @@ Revises: 0015_add_cep_tables
 Create Date: 2025-12-31 22:45:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

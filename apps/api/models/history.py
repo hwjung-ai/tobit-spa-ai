@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any
 
 import sqlalchemy as sa
-from sqlalchemy import Column, JSON, Text
+from sqlalchemy import JSON, Column, Text
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Field, SQLModel
 

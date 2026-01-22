@@ -3,10 +3,9 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 import psycopg
-from psycopg import sql
-
 from core.config import AppSettings
 from core.db_pg import get_pg_connection
+from psycopg import sql
 
 
 def list_tables(settings: AppSettings, schemas: Iterable[str]) -> list[tuple[str, str]]:

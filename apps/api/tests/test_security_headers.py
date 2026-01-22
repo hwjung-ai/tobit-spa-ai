@@ -2,19 +2,18 @@
 Tests for security headers and HTTPS protection.
 """
 
-import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from unittest.mock import patch
 
+import pytest
 from core.config import AppSettings
+from core.cors_config import CORSConfig
 from core.security_middleware import (
-    SecurityHeadersMiddleware,
-    HTTPSRedirectMiddleware,
     CSRFMiddleware,
+    HTTPSRedirectMiddleware,
+    SecurityHeadersMiddleware,
     add_security_middleware,
 )
-from core.cors_config import CORSConfig
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 
 class TestSecurityHeaders:
@@ -250,7 +249,7 @@ class TestCSRFMiddleware:
         client = TestClient(app_csrf)
 
         # GET to get token
-        get_response = client.get("/test")
+        client.get("/test")
 
         # POST with wrong token
         post_response = client.post(

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Iterable
-
 from scripts.seed.utils import get_postgres_conn
 
-from app.shared.config_loader import load_text
 from app.modules.asset_registry.loader import load_query_asset
+from app.shared.config_loader import load_text
 
 from .types import MetricHit
 

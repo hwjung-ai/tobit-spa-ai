@@ -1,20 +1,20 @@
 from __future__ import annotations
 
+import time
 from typing import Any, Dict, List, Literal, Optional
 
-import time
+from core.logging import get_logger
 from fastapi import APIRouter, Depends, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-
-from core.logging import get_logger
-
 from schemas import ResponseEnvelope
 
-from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner, RerunContext
+from app.modules.ops.services.ci.orchestrator.runner import (
+    CIOrchestratorRunner,
+    RerunContext,
+)
 from app.modules.ops.services.ci.planner import planner_llm, validator
 from app.modules.ops.services.ci.planner.plan_schema import Plan, View
-
 
 router = APIRouter(prefix="/ops/ci", tags=["ops-ci"])
 

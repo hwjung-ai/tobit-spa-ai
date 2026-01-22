@@ -3,10 +3,9 @@
 import json
 import math
 import random
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone
-
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]

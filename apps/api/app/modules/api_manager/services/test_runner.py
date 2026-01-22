@@ -1,8 +1,8 @@
 """API test runner for automated testing"""
 
 import logging
-from typing import List, Dict, Any
 from dataclasses import dataclass
+from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class ApiTestRunner:
                 error = ""
             else:
                 status = "fail"
-                error = f"Output mismatch"
+                error = "Output mismatch"
 
             result = TestResult(
                 test_id=test_id, status=status, error_message=error

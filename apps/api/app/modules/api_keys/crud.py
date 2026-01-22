@@ -8,7 +8,7 @@ from uuid import uuid4
 from passlib.context import CryptContext
 from sqlmodel import Session, select
 
-from apps.api.app.modules.api_keys.models import TbApiKey, ApiKeyScope
+from app.modules.api_keys.models import TbApiKey
 
 # Password context for API key hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -88,7 +88,7 @@ def validate_api_key(session: Session, key: str) -> Optional[TbApiKey]:
     # Query for active keys with matching prefix
     statement = select(TbApiKey).where(
         TbApiKey.key_prefix == key_prefix,
-        TbApiKey.is_active == True,
+        TbApiKey.is_active,
     )
 
     candidates = session.exec(statement).all()
@@ -148,7 +148,7 @@ def list_api_keys(
     statement = select(TbApiKey).where(TbApiKey.user_id == user_id)
 
     if not include_inactive:
-        statement = statement.where(TbApiKey.is_active == True)
+        statement = statement.where(TbApiKey.is_active)
 
     statement = statement.order_by(TbApiKey.created_at.desc())
     return session.exec(statement).all()

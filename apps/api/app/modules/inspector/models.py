@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List
 
-from sqlalchemy import Column, Integer, Text, TIMESTAMP, text
+from sqlalchemy import TIMESTAMP, Column, Integer, Text, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field, SQLModel
 
@@ -78,6 +78,23 @@ class TbExecutionTrace(SQLModel, table=True):
     )
     flow_spans: List[Dict[str, Any]] | None = Field(
         default=None,
+        sa_column=Column(JSONB, nullable=True),
+    )
+    # New fields for orchestration
+    route: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+    )
+    stage_inputs: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        sa_column=Column(JSONB, nullable=True),
+    )
+    stage_outputs: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        sa_column=Column(JSONB, nullable=True),
+    )
+    replan_events: List[Dict[str, Any]] = Field(
+        default_factory=list,
         sa_column=Column(JSONB, nullable=True),
     )
     created_at: datetime = Field(

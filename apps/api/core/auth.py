@@ -2,13 +2,13 @@
 
 from typing import Optional
 
+from app.modules.api_keys.crud import validate_api_key
+from app.modules.auth.models import TbUser, UserRole
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlmodel import Session
 
-from app.modules.auth.models import TbUser, UserRole
-from app.modules.api_keys.crud import validate_api_key
 from core.config import get_settings
 from core.db import get_session
 from core.security import decode_token

@@ -8,12 +8,9 @@ Tests verify:
 4. All importers have consistent behavior
 """
 
-import json
 import sys
-import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

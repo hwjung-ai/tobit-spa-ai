@@ -13,8 +13,8 @@ from sqlmodel import Session
 from .crud import record_exec_log, record_exec_step
 from .executor import execute_sql_api
 from .models import TbApiDef
-from .script_executor import execute_script_api
 from .schemas import WorkflowExecuteResult, WorkflowStep
+from .script_executor import execute_script_api
 
 PLACEHOLDER_PATTERN = re.compile(r"{{\s*([^}\s]+)\s*}}")
 
@@ -84,7 +84,6 @@ def execute_workflow_api(
             node_params = _render_templates(node.get("params") or {}, workflow_params, steps_context)
             node_input = _render_templates(node.get("input"), workflow_params, steps_context) if node_type == "script" else None
             node_limit = _parse_node_limit(node.get("limit"), limit)
-            step_result: _WorkflowStepRecord
             step_refs: dict[str, Any] | None = None
             step_rows: list[dict[str, Any]] = []
             step_columns: list[str] | None = None

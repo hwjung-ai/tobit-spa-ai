@@ -6,11 +6,11 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Literal
+from uuid import uuid4
 
+from core.config import get_settings
 from core.db import get_session_context
 from core.logging import get_request_context
-from core.config import get_settings
-from uuid import uuid4
 from schemas import (
     AnswerBlock,
     AnswerEnvelope,
@@ -26,15 +26,16 @@ from schemas import (
     TimeSeriesPoint,
     TimeSeriesSeries,
 )
+from schemas.tool_contracts import ExecutorResult
+
+from app.modules.inspector.service import persist_execution_trace
 
 from .executors.config_executor import run_config as run_config_executor
 from .executors.graph_executor import run_graph
-from .executors.metric_executor import run_metric
 from .executors.hist_executor import run_hist
+from .executors.metric_executor import run_metric
 from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
-from schemas.tool_contracts import ExecutorResult
-from app.modules.inspector.service import persist_execution_trace
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 

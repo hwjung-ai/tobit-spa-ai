@@ -1,5 +1,5 @@
+
 import requests
-import json
 
 # 1. 설정: Ollama API 주소 및 모델
 url = "http://115.21.12.41:11434/api/chat"

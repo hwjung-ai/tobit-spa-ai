@@ -1,8 +1,8 @@
 """Enhance document tables with multi-format support and advanced search"""
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSON, JSONB, UUID as PG_UUID
+from alembic import op
+from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "0036_enhance_document_tables"
 down_revision = "0035_add_ci_management_tables"

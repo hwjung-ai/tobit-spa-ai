@@ -6,25 +6,28 @@ import re
 from time import perf_counter
 from typing import Any, Iterable, List, Set, Tuple
 
-import openai
+from core.logging import get_logger
 
 from app.llm.client import get_llm_client
+from app.modules.asset_registry.loader import load_prompt_asset
 from app.modules.ops.services.ci.planner.plan_schema import (
     AutoGraphScopeSpec,
     AutoPathSpec,
     AutoSpec,
     CepSpec,
+    DirectAnswerPayload,
     FilterSpec,
     HistorySpec,
     Intent,
+    ListSpec,
     MetricSpec,
     Plan,
     PlanMode,
+    PlanOutput,
+    PlanOutputKind,
+    RejectPayload,
     View,
-    ListSpec,
 )
-from app.modules.asset_registry.loader import load_prompt_asset
-from core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -226,7 +229,6 @@ METRIC_KEYWORDS = set(METRIC_ALIASES.keys()) | {"지표", "지수"}
 TIME_RANGE_MAP = {
     "최근 1시간": "last_1h",
     "한시간": "last_1h",
-    "최근 1시간": "last_1h",
     "최근 한시간": "last_1h",
     "최근 시간": "last_1h",
     "최근 24시간": "last_24h",
@@ -841,3 +843,123 @@ def _determine_mode(text: str):
     if any(keyword in normalized for keyword in AUTO_KEYWORDS):
         return PlanMode.AUTO
     return PlanMode.CI
+
+
+def create_plan_output(question: str) -> PlanOutput:
+    """Create a plan output with route determination (direct, plan, or reject)"""
+    normalized = question.strip()
+    start = perf_counter()
+    logger.info("ci.planner.start", extra={"query_len": len(normalized)})
+
+    # Try to get route from LLM first
+    route = "orch"  # default
+    llm_payload = None
+    try:
+        llm_payload = _call_output_parser_llm(normalized)
+        if llm_payload and llm_payload.get("route"):
+            route = llm_payload["route"]
+    except Exception:
+        logger.warning("ci.planner.route_fallback", extra={"reason": "heuristic"})
+
+    # Use LLM-determined route if available, otherwise use heuristic
+    if route == "direct":
+        end = perf_counter()
+        elapsed_ms = int((end - start) * 1000)
+        logger.info("ci.planner.direct_answer", extra={"elapsed_ms": elapsed_ms})
+
+        return PlanOutput(
+            kind=PlanOutputKind.DIRECT,
+            direct_answer=DirectAnswerPayload(
+                answer=_generate_direct_answer(normalized),
+                confidence=0.95,
+                reasoning="Simple query that doesn't require orchestration"
+            ),
+            confidence=0.95,
+            reasoning="Direct answer route selected",
+            metadata={"elapsed_ms": elapsed_ms, "llm_route": route}
+        )
+
+    if route == "reject":
+        end = perf_counter()
+        elapsed_ms = int((end - start) * 1000)
+        logger.info("ci.planner.reject", extra={"elapsed_ms": elapsed_ms})
+
+        return PlanOutput(
+            kind=PlanOutputKind.REJECT,
+            reject_payload=RejectPayload(
+                reason="This query is not supported or cannot be processed",
+                policy="content_policy",
+                confidence=1.0,
+                reasoning="Query violates content policy or is not supported"
+            ),
+            confidence=1.0,
+            reasoning="Reject route selected",
+            metadata={"elapsed_ms": elapsed_ms, "llm_route": route}
+        )
+
+    # Otherwise, create a normal plan
+    plan = create_plan(normalized)
+    end = perf_counter()
+    elapsed_ms = int((end - start) * 1000)
+    logger.info("ci.planner.plan_created", extra={"elapsed_ms": elapsed_ms})
+
+    return PlanOutput(
+        kind=PlanOutputKind.PLAN,
+        plan=plan,
+        confidence=1.0,
+        reasoning="Orchestration plan created",
+        metadata={"elapsed_ms": elapsed_ms, "llm_route": route}
+    )
+
+
+def _should_direct_answer(text: str) -> bool:
+    """Determine if a question should be answered directly without orchestration"""
+    normalized = text.lower()
+
+    # Simple greetings and common questions
+    if any(greeting in normalized for greeting in ["hello", "hi", "안녕", "안녕하세요"]):
+        return True
+
+    if any(keyword in normalized for keyword in ["what is", "who is", "how to", "help"]):
+        return True
+
+    # Very simple queries that don't need database access
+    if len(normalized) < 20 and any(keyword in normalized for keyword in ["simple", "basic"]):
+        return True
+
+    return False
+
+
+def _should_reject(text: str) -> bool:
+    """Determine if a question should be rejected"""
+    normalized = text.lower()
+
+    # Security concerns
+    if any(keyword in normalized for keyword in ["delete all", "drop table", "format", "hack"]):
+        return True
+
+    # Inappropriate content
+    if any(keyword in normalized for keyword in ["inappropriate", "offensive", "spam"]):
+        return True
+
+    # Queries that would be too expensive
+    if any(keyword in normalized for keyword in ["all data", "everything", "infinite"]):
+        return True
+
+    return False
+
+
+def _generate_direct_answer(text: str) -> str:
+    """Generate a direct answer for simple queries"""
+    normalized = text.lower()
+
+    if "hello" in normalized or "hi" in normalized:
+        return "Hello! I'm here to help you with your IT operations questions. What would you like to know?"
+
+    if "안녕" in normalized:
+        return "안녕하세요! IT 운영 문제에 도움이 필요하신가요?"
+
+    if "what is" in normalized:
+        return "This is the IT Operations Assistant. I can help you with queries about your infrastructure, services, and operational data."
+
+    return "I understand you're asking about something simple. Could you please clarify what you'd like to know?"

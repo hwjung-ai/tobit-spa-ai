@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, Any
-
-from app.modules.ops.services.ci.orchestrator.tool_composition import CompositionPipeline, CompositionStep
+from app.modules.ops.services.ci.orchestrator.tool_composition import (
+    CompositionPipeline,
+    CompositionStep,
+)
 from app.modules.ops.services.ci.tools.base import ToolType
-
 
 COMPOSITION_SEARCH_WITH_CONTEXT = CompositionPipeline([
     CompositionStep(

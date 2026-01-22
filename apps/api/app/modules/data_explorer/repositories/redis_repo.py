@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from redis import Redis
-
 from core.config import AppSettings
 from core.redis import create_redis_client
+from redis import Redis
 
 
 def get_client(settings: AppSettings) -> Redis:

@@ -1,6 +1,6 @@
 
-import sys
 import os
+import sys
 
 # Add project root to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -8,12 +8,9 @@ project_root = os.path.abspath(os.path.join(current_dir, "../.."))
 sys.path.append(project_root)
 
 from sqlmodel import SQLModel, create_engine, text
-from apps.api.core.config import get_settings
 
 # Import all models
-from apps.api.app.modules.auth.models import TbUser, TbRefreshToken
-from apps.api.app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
-from apps.api.app.modules.permissions.models import TbResourcePermission
+from apps.api.core.config import get_settings
 
 settings = get_settings()
 engine = create_engine(settings.postgres_dsn)

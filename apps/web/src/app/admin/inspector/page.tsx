@@ -17,6 +17,7 @@ import AuditLogTable, { AuditLogDetailsModal } from "../../../components/admin/A
 import ValidationAlert from "../../../components/admin/ValidationAlert";
 import SpanNode from "../../../components/admin/SpanNode";
 import TraceDiffView from "../../../components/admin/TraceDiffView";
+import StageDiffView from "../../../components/admin/StageDiffView";
 import { generateNodes, generateEdges, filterToolSpans } from "../../../lib/flowGraphUtils";
 
 const PER_PAGE = 20;
@@ -38,6 +39,8 @@ interface TraceSummaryRow {
   duration_ms: number;
   question_snippet: string;
   applied_asset_versions: string[];
+  route?: string;
+  replan_count?: number;
 }
 
 interface TraceListResponse {
@@ -192,6 +195,8 @@ function InspectorContent() {
   const [compareFetching, setCompareFetching] = useState(false);
   const [compareError, setCompareError] = useState<string | null>(null);
   const [showDiffView, setShowDiffView] = useState(false);
+  const [showStageDiffView, setShowStageDiffView] = useState(false);
+  const [baselineStageTraceId, setBaselineStageTraceId] = useState("");
   const [singleRcaLoading, setSingleRcaLoading] = useState(false);
   const [singleRcaError, setSingleRcaError] = useState<string | null>(null);
   const router = useRouter();
@@ -329,6 +334,15 @@ function InspectorContent() {
     setShowCompareModal(true);
     setCompareTraceId("");
     setCompareError(null);
+  };
+
+  const handleStageCompareClick = () => {
+    if (!selectedTraceId) {
+      alert("Please select a trace first");
+      return;
+    }
+    setShowStageDiffView(true);
+    setBaselineStageTraceId(selectedTraceId);
   };
 
   const handleFetchCompareTrace = async () => {
@@ -619,6 +633,8 @@ function InspectorContent() {
                   <th className="px-4 py-3">Feature</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Duration</th>
+                  <th className="px-4 py-3">Route</th>
+                  <th className="px-4 py-3">Replans</th>
                   <th className="px-4 py-3">Question</th>
                   <th className="px-4 py-3">Assets</th>
                 </tr>
@@ -642,6 +658,20 @@ function InspectorContent() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-200">{formatDuration(trace.duration_ms)}</td>
+                    <td className="px-4 py-3">
+                      {trace.route && (
+                        <span className="px-2 py-1 rounded-full text-xs font-mono bg-blue-500/10 text-blue-400">
+                          {trace.route}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {trace.replan_count !== undefined && trace.replan_count > 0 && (
+                        <span className="px-2 py-1 rounded-full text-xs bg-amber-500/10 text-amber-400">
+                          {trace.replan_count}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-slate-400">{trace.question_snippet}</td>
                     <td className="px-4 py-3 text-xs text-slate-300">{formatAppliedAssetSummary(trace)}</td>
                   </tr>
@@ -735,6 +765,12 @@ function InspectorContent() {
                   className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-[0.2em] text-emerald-200 hover:bg-emerald-900/40 transition"
                 >
                   Compare
+                </button>
+                <button
+                  onClick={handleStageCompareClick}
+                  className="px-3 py-2 rounded-xl border border-amber-700 bg-amber-900/20 text-xs uppercase tracking-[0.2em] text-amber-200 hover:bg-amber-900/40 transition"
+                >
+                  Stage Compare
                 </button>
                 <button
                   onClick={() => {
@@ -1352,6 +1388,18 @@ function InspectorContent() {
           onClose={() => {
             setShowDiffView(false);
             setCompareTraceDetail(null);
+          }}
+        />
+      )}
+
+      {/* Stage Diff View */}
+      {showStageDiffView && traceDetail && baselineStageTraceId && (
+        <StageDiffView
+          baselineTraceId={baselineStageTraceId}
+          currentTraceId={traceDetail.trace_id}
+          onClose={() => {
+            setShowStageDiffView(false);
+            setBaselineStageTraceId("");
           }}
         />
       )}

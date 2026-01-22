@@ -4,6 +4,8 @@ import json
 from datetime import datetime, timezone
 from typing import AsyncGenerator, Tuple
 
+from core.config import AppSettings, get_settings
+from core.db import Session, get_session
 from fastapi import (
     APIRouter,
     Depends,
@@ -14,12 +16,6 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from sse_starlette.sse import EventSourceResponse
-from sqlalchemy import delete, func, select
-
-from api.routes.chat import _resolve_identity  # reuse identity resolver
-from core.config import AppSettings, get_settings
-from core.db import Session, get_session
 from models import Document, DocumentChunk, DocumentStatus
 from schemas import (
     DocumentChunkDetail,
@@ -29,9 +25,17 @@ from schemas import (
     DocumentUploadResponse,
     ResponseEnvelope,
 )
-from services.document import DocumentProcessingError, DocumentSearchService, DocumentStorage
+from services.document import (
+    DocumentProcessingError,
+    DocumentSearchService,
+    DocumentStorage,
+)
 from services.orchestrator import OpenAIOrchestrator
+from sqlalchemy import delete, func, select
+from sse_starlette.sse import EventSourceResponse
 from workers.queue import enqueue_parse_document
+
+from api.routes.chat import _resolve_identity  # reuse identity resolver
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 

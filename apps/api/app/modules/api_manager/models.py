@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-
 from typing import Any
 
-from sqlalchemy import Column, Text, Boolean, Integer, text
+from sqlalchemy import Boolean, Column, Integer, Text, text
 from sqlalchemy.dialects.postgresql import JSONB, TIMESTAMP, UUID
 from sqlmodel import Field, SQLModel
 

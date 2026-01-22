@@ -1,7 +1,7 @@
 """add encryption fields to tb_user for encrypted email and phone"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0034_add_encryption_fields"
 down_revision = "0033_add_permission_tables"

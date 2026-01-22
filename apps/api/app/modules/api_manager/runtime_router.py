@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Request
+from models.api_definition import ApiDefinition
+from schemas.common import ResponseEnvelope
 from sqlalchemy import select
 from sqlmodel import Session
 
-from core.db import get_session
-from schemas.common import ResponseEnvelope
-from models.api_definition import ApiDefinition
-from .executor import execute_sql_api, execute_http_api, normalize_limit
+from .executor import execute_http_api, execute_sql_api, normalize_limit
 from .script_executor import execute_script_api
 from .workflow_executor import execute_workflow_api
-
 
 runtime_router = APIRouter(tags=["runtime"])
 
@@ -158,7 +157,7 @@ def _find_runtime_api(session: Session, endpoint: str, method: str) -> ApiDefini
             )
         )
         .where(ApiDefinition.method == method)
-        .where(ApiDefinition.is_enabled == True)
+        .where(ApiDefinition.is_enabled)
         .limit(1)
     )
     api = session.exec(statement).scalars().first()
@@ -170,7 +169,7 @@ def _find_runtime_api(session: Session, endpoint: str, method: str) -> ApiDefini
             ApiDefinition.path == cleaned.rstrip("/")
         )
         .where(ApiDefinition.method == method)
-        .where(ApiDefinition.is_enabled == True)
+        .where(ApiDefinition.is_enabled)
         .limit(1)
     ).scalars().first()
 

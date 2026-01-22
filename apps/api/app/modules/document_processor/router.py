@@ -1,20 +1,19 @@
 """Document processor routes for multi-format document handling"""
 
 import logging
-from typing import Optional, List
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query
-from pydantic import BaseModel
+from typing import List, Optional
 
 from core.auth import get_current_user
-from models import Document, DocumentChunk
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from pydantic import BaseModel
+
 from .services import (
-    DocumentProcessor,
-    DocumentProcessingError,
     ChunkingStrategy,
+    DocumentExportService,
+    DocumentProcessingError,
+    DocumentProcessor,
     DocumentSearchService,
     SearchFilters,
-    DocumentExportService,
-    ExportFormat,
 )
 
 logger = logging.getLogger(__name__)
@@ -208,7 +207,7 @@ async def search_documents(
         )
 
         # Create filters
-        filters = SearchFilters(
+        SearchFilters(
             tenant_id=current_user.get("tenant_id", ""),
             date_from=None,  # Parse from request if provided
             date_to=None,
@@ -258,7 +257,7 @@ async def get_document_chunks(
     """
 
     try:
-        offset = (page - 1) * per_page
+        (page - 1) * per_page
 
         # In real implementation: db.query(DocumentChunk).filter(...)
         # For now, return placeholder
@@ -406,7 +405,7 @@ async def list_documents(
     """
 
     try:
-        offset = (page - 1) * per_page
+        (page - 1) * per_page
 
         # In real implementation: db.query(Document).filter(...)
         # For now, return placeholder

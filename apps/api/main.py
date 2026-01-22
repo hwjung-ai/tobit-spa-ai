@@ -7,38 +7,42 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-from apps.api.core.security_middleware import add_security_middleware
-from apps.api.core.cors_config import CORSConfig
-from app.modules.api_keys.router import router as api_keys_router
-from app.modules.api_manager.router import router as api_manager_router
-from app.modules.api_manager.runtime_router import runtime_router
-from app.modules.asset_registry.router import router as asset_registry_router
-from app.modules.auth.router import router as auth_router
-from app.modules.audit_log.router import router as audit_log_router
-# from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type issues
-from app.modules.permissions.router import router as permissions_router
-from app.modules.cep_builder import router as cep_builder_router
-from app.modules.operation_settings.router import router as operation_settings_router
-from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
-from app.modules.data_explorer import router as data_explorer_router
-from app.modules.inspector.router import router as inspector_router
-from app.shared import config_loader
 from api.routes.chat import router as chat_router
 from api.routes.documents import router as document_router
 from api.routes.health import router as health_router
 from api.routes.hello import router as hello_router
 from api.routes.history import router as history_router
-from app.modules.ops.router import router as ops_router
 from api.routes.threads import router as thread_router
-from core.config import get_settings
-from apps.api.core.logging import configure_logging
-from apps.api.core.middleware import RequestIDMiddleware
+from app.modules.api_keys.router import router as api_keys_router
+from app.modules.api_manager.router import router as api_manager_router
+from app.modules.api_manager.runtime_router import runtime_router
+from app.modules.asset_registry.router import router as asset_registry_router
+from app.modules.audit_log.router import router as audit_log_router
+from app.modules.auth.router import router as auth_router
+from app.modules.cep_builder import router as cep_builder_router
+from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+from app.modules.data_explorer import router as data_explorer_router
+from app.modules.inspector.router import router as inspector_router
+from app.modules.operation_settings.router import router as operation_settings_router
+from app.modules.ops.router import router as ops_router
 
 # Initialize OPS tool registry
-from app.modules.ops.services.ci.tools.registry_init import initialize_tools  # noqa: E402
+from app.modules.ops.services.ci.tools.registry_init import (
+    initialize_tools,  # noqa: E402
+)
+
+# from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type issues
+from app.modules.permissions.router import router as permissions_router
+from app.shared import config_loader
+from core.config import get_settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from apps.api.core.cors_config import CORSConfig
+from apps.api.core.logging import configure_logging
+from apps.api.core.middleware import RequestIDMiddleware
+from apps.api.core.security_middleware import add_security_middleware
+
 initialize_tools()
 
 settings = get_settings()
@@ -81,9 +85,10 @@ async def on_startup() -> None:
     # Disabled to prevent startup crash due to broken migration history
     if False:
         try:
-            from alembic.config import Config as AlembicConfig
-            from alembic import command
             import logging
+
+            from alembic import command
+            from alembic.config import Config as AlembicConfig
 
             logger = logging.getLogger(__name__)
             alembic_cfg = AlembicConfig("alembic.ini")

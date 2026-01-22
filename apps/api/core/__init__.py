@@ -1,1 +1,1 @@
-from .config import get_settings, AppSettings
+from .config import AppSettings, get_settings  # noqa: F401

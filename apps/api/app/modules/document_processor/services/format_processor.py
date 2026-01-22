@@ -1,13 +1,11 @@
 """Format processor for multi-format document extraction"""
 
 import logging
-from typing import Any, Dict, List
-from pathlib import Path
-import io
+from typing import Any, Dict
 
 try:
-    from pypdf import PdfReader
     import pdf2image
+    from pypdf import PdfReader
 except ImportError:
     PdfReader = None
     pdf2image = None
@@ -32,8 +30,8 @@ except ImportError:
     MSO_SHAPE_TYPE = None
 
 try:
-    from PIL import Image
     import pytesseract
+    from PIL import Image
 except ImportError:
     Image = None
     pytesseract = None

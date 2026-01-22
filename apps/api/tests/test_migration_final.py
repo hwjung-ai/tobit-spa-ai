@@ -1,8 +1,9 @@
-import pytest
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+
+import pytest
 from app.llm.client import get_llm_client
+from dotenv import load_dotenv
 from services.orchestrator import get_orchestrator
 
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")

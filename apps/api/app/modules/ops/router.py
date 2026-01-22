@@ -459,7 +459,6 @@ async def execute_ui_action(
     from .services.ui_actions import execute_action_deterministic, mask_sensitive_inputs
 
     # Setup
-    tenant_id = x_tenant_id or "t1"
     trace_id = str(uuid.uuid4())
     parent_trace_id = payload.trace_id
     settings = get_settings()
@@ -828,7 +827,7 @@ def run_regression(
 
             # Create execution trace for candidate
             candidate_trace_id = str(uuid.uuid4())
-            all_spans = get_all_spans()
+            get_all_spans()
 
             # Build candidate trace dict for comparison
             candidate_trace = {
@@ -1006,7 +1005,7 @@ def run_rca(
         options = payload.get("options", {})
         max_hypotheses = options.get("max_hypotheses", 5)
         use_llm = options.get("use_llm", True)
-        include_snippets = options.get("include_snippets", True)
+        options.get("include_snippets", True)
 
         ts_start = time.time()
         rca_engine = RCAEngine()
@@ -1023,7 +1022,7 @@ def run_rca(
                 return ResponseEnvelope.error(message=f"Trace {trace_id} not found")
 
             # Generate hypotheses
-            hypotheses_list = rca_engine.analyze_single_trace(
+            rca_engine.analyze_single_trace(
                 trace.model_dump(),
                 max_hypotheses=max_hypotheses,
             )
@@ -1052,7 +1051,7 @@ def run_rca(
 
             # Generate hypotheses
             try:
-                hypotheses_list = rca_engine.analyze_diff(
+                rca_engine.analyze_diff(
                     baseline.model_dump(),
                     candidate.model_dump(),
                     max_hypotheses=max_hypotheses,
@@ -1163,7 +1162,7 @@ def run_rca(
             flow_spans=None,
         )
         try:
-            rca_trace = create_execution_trace(session, rca_trace_obj)
+            create_execution_trace(session, rca_trace_obj)
             logger.info(f"RCA trace created successfully: {rca_trace_id}")
         except Exception as trace_err:
             logger.error(f"Failed to create RCA trace: {trace_err}", exc_info=True)
@@ -1322,7 +1321,7 @@ async def execute_isolated_stage_test(
     from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
 
     logger = get_logger(__name__)
-    settings = get_settings()
+    get_settings()
 
     # Setup
     tenant_id = x_tenant_id or "t1"

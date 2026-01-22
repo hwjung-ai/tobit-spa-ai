@@ -1,0 +1,2051 @@
+E712 Avoid equality comparisons to `True`; use `TbApiKey.is_active:` for truth checks
+  --> apps/api/app/modules/api_keys/crud.py:91:9
+   |
+89 |     statement = select(TbApiKey).where(
+90 |         TbApiKey.key_prefix == key_prefix,
+91 |         TbApiKey.is_active == True,
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+92 |     )
+   |
+help: Replace with `TbApiKey.is_active`
+
+E712 Avoid equality comparisons to `True`; use `TbApiKey.is_active:` for truth checks
+   --> apps/api/app/modules/api_keys/crud.py:151:37
+    |
+150 |     if not include_inactive:
+151 |         statement = statement.where(TbApiKey.is_active == True)
+    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+152 |
+153 |     statement = statement.order_by(TbApiKey.created_at.desc())
+    |
+help: Replace with `TbApiKey.is_active`
+
+F841 Local variable `api_scope` is assigned to but never used
+   --> apps/api/app/modules/api_manager/router.py:270:9
+    |
+269 |         # Map frontend field names to backend field names
+270 |         api_scope = ApiScope(request.api_type) if request.api_type in ["system", "custom"] else ApiScope.custom
+    |         ^^^^^^^^^
+271 |         api_mode = ApiMode(request.logic_type) if request.logic_type in ["sql", "python", "workflow"] else ApiMode.sql
+    |
+help: Remove assignment to unused variable `api_scope`
+
+E712 Avoid equality comparisons to `True`; use `ApiDefinition.is_enabled:` for truth checks
+   --> apps/api/app/modules/api_manager/runtime_router.py:160:16
+    |
+158 |         )
+159 |         .where(ApiDefinition.method == method)
+160 |         .where(ApiDefinition.is_enabled == True)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+161 |         .limit(1)
+162 |     )
+    |
+help: Replace with `ApiDefinition.is_enabled`
+
+E712 Avoid equality comparisons to `True`; use `ApiDefinition.is_enabled:` for truth checks
+   --> apps/api/app/modules/api_manager/runtime_router.py:172:16
+    |
+170 |         )
+171 |         .where(ApiDefinition.method == method)
+172 |         .where(ApiDefinition.is_enabled == True)
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+173 |         .limit(1)
+174 |     ).scalars().first()
+    |
+help: Replace with `ApiDefinition.is_enabled`
+
+F841 Local variable `version_rec` is assigned to but never used
+  --> apps/api/app/modules/api_manager/services/api_service.py:68:13
+   |
+66 |             # In real implementation: db.insert(api_def)
+67 |             # Create version record
+68 |             version_rec = {
+   |             ^^^^^^^^^^^
+69 |                 "version_id": str(uuid4()),
+70 |                 "api_id": api_id,
+   |
+help: Remove assignment to unused variable `version_rec`
+
+F841 Local variable `old_data` is assigned to but never used
+   --> apps/api/app/modules/api_manager/services/api_service.py:116:13
+    |
+115 |             # Track changes
+116 |             old_data = api.copy()
+    |             ^^^^^^^^
+117 |
+118 |             # Update fields
+    |
+help: Remove assignment to unused variable `old_data`
+
+F841 Local variable `version_rec` is assigned to but never used
+   --> apps/api/app/modules/api_manager/services/api_service.py:130:13
+    |
+129 |             # Create version record
+130 |             version_rec = {
+    |             ^^^^^^^^^^^
+131 |                 "version_id": str(uuid4()),
+132 |                 "api_id": api_id,
+    |
+help: Remove assignment to unused variable `version_rec`
+
+F841 Local variable `version_rec` is assigned to but never used
+   --> apps/api/app/modules/api_manager/services/api_service.py:180:13
+    |
+179 |             # Create rollback version record
+180 |             version_rec = {
+    |             ^^^^^^^^^^^
+181 |                 "version_id": str(uuid4()),
+182 |                 "api_id": api_id,
+    |
+help: Remove assignment to unused variable `version_rec`
+
+F841 Local variable `api` is assigned to but never used
+   --> apps/api/app/modules/api_manager/services/api_service.py:221:13
+    |
+219 |         try:
+220 |             # In real implementation: db.get(ApiDefinition, api_id)
+221 |             api = {"id": api_id, "mode": "sql", "logic": "SELECT 1"}
+    |             ^^^
+222 |
+223 |             # In real implementation:
+    |
+help: Remove assignment to unused variable `api`
+
+F842 Local variable `step_result` is annotated but never used
+  --> apps/api/app/modules/api_manager/workflow_executor.py:87:13
+   |
+85 |             node_input = _render_templates(node.get("input"), workflow_params, steps_context) if node_type == "script" else None
+86 |             node_limit = _parse_node_limit(node.get("limit"), limit)
+87 |             step_result: _WorkflowStepRecord
+   |             ^^^^^^^^^^^
+88 |             step_refs: dict[str, Any] | None = None
+89 |             step_rows: list[dict[str, Any]] = []
+   |
+
+F841 Local variable `updated_asset` is assigned to but never used
+   --> apps/api/app/modules/asset_registry/crud.py:509:5
+    |
+508 |     # Update the asset
+509 |     updated_asset = update_asset(
+    |     ^^^^^^^^^^^^^
+510 |         session=session,
+511 |         asset=asset,
+    |
+help: Remove assignment to unused variable `updated_asset`
+
+F841 Local variable `result` is assigned to but never used
+   --> apps/api/app/modules/asset_registry/crud.py:551:13
+    |
+549 |             cursor = conn.cursor()
+550 |             cursor.execute("SELECT 1")
+551 |             result = cursor.fetchone()
+    |             ^^^^^^
+552 |             cursor.close()
+553 |             conn.close()
+    |
+help: Remove assignment to unused variable `result`
+
+F841 Local variable `updated_asset` is assigned to but never used
+   --> apps/api/app/modules/asset_registry/crud.py:710:5
+    |
+709 |     # Update the asset
+710 |     updated_asset = update_asset(
+    |     ^^^^^^^^^^^^^
+711 |         session=session,
+712 |         asset=asset,
+    |
+help: Remove assignment to unused variable `updated_asset`
+
+F841 Local variable `updated_asset` is assigned to but never used
+   --> apps/api/app/modules/asset_registry/crud.py:933:5
+    |
+932 |     # Update the asset
+933 |     updated_asset = update_asset(
+    |     ^^^^^^^^^^^^^
+934 |         session=session,
+935 |         asset=asset,
+    |
+help: Remove assignment to unused variable `updated_asset`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> apps/api/app/modules/asset_registry/router.py:1:1
+   |
+ 1 | / from __future__ import annotations
+ 2 | |
+ 3 | | import uuid
+ 4 | | from datetime import datetime
+ 5 | | from typing import Any, Dict, List
+ 6 | |
+ 7 | | from core.auth import get_current_user
+ 8 | |
+ 9 | | # Permission checks disabled due to missing tb_resource_permission table
+10 | | # from app.modules.permissions.models import ResourcePermission
+11 | | # from app.modules.permissions.crud import check_permission
+12 | | from core.db import get_session, get_session_context
+13 | | from fastapi import APIRouter, Body, Depends, HTTPException, status
+14 | | from schemas.common import ResponseEnvelope
+15 | | from sqlmodel import Session, select
+16 | |
+17 | | from app.modules.asset_registry.crud import (
+18 | |     create_schema_asset,
+19 | |     create_source_asset,
+20 | |     delete_schema_asset,
+21 | |     delete_source_asset,
+22 | |     get_schema_asset,
+23 | |     get_source_asset,
+24 | |     list_assets,
+25 | |     scan_schema,
+26 | |     test_source_connection,
+27 | |     update_schema_asset,
+28 | |     update_source_asset,
+29 | | )
+30 | | from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
+31 | | from app.modules.asset_registry.resolver_models import (
+32 | |     ResolverAssetCreate,
+33 | |     ResolverAssetResponse,
+34 | |     ResolverAssetUpdate,
+35 | |     ResolverConfig,
+36 | | )
+37 | | from app.modules.asset_registry.crud import (
+38 | |     create_resolver_asset,
+39 | |     get_resolver_asset,
+40 | |     update_resolver_asset,
+41 | |     delete_resolver_asset,
+42 | |     simulate_resolver_configuration,
+43 | | )
+44 | | from app.modules.asset_registry.schema_models import (
+45 | |     ScanRequest,
+46 | |     SchemaAssetCreate,
+47 | |     SchemaAssetResponse,
+48 | |     SchemaAssetUpdate,
+49 | |     SchemaListResponse,
+50 | | )
+51 | | from app.modules.asset_registry.schemas import (
+52 | |     ScreenAssetCreate,
+53 | |     ScreenAssetRead,
+54 | |     ScreenAssetUpdate,
+55 | | )
+56 | | from app.modules.asset_registry.source_models import (
+57 | |     SourceAssetCreate,
+58 | |     SourceAssetResponse,
+59 | |     SourceAssetUpdate,
+60 | |     SourceListResponse,
+61 | |     SourceType,
+62 | | )
+63 | | from app.modules.auth.models import TbUser
+64 | |
+65 | | from .validators import validate_asset
+   | |______________________________________^
+66 |
+67 |   router = APIRouter(prefix="/asset-registry")
+   |
+help: Organize imports
+
+F401 [*] `typing.Dict` imported but unused
+ --> apps/api/app/modules/asset_registry/router.py:5:25
+  |
+3 | import uuid
+4 | from datetime import datetime
+5 | from typing import Any, Dict, List
+  |                         ^^^^
+6 |
+7 | from core.auth import get_current_user
+  |
+help: Remove unused import: `typing.Dict`
+
+F811 Redefinition of unused `list_assets` from line 24
+   --> apps/api/app/modules/asset_registry/router.py:145:5
+    |
+144 | @router.get("/assets", response_model=ResponseEnvelope)
+145 | def list_assets(asset_type: str | None = None, status: str | None = None):
+    |     ^^^^^^^^^^^ `list_assets` redefined here
+146 |     with get_session_context() as session:
+147 |         q = select(TbAssetRegistry)
+    |
+   ::: apps/api/app/modules/asset_registry/router.py:24:5
+    |
+ 22 |     get_schema_asset,
+ 23 |     get_source_asset,
+ 24 |     list_assets,
+    |     ----------- previous definition of `list_assets` here
+ 25 |     scan_schema,
+ 26 |     test_source_connection,
+    |
+help: Remove definition: `list_assets`
+
+F841 Local variable `formula` is assigned to but never used
+   --> apps/api/app/modules/cep_builder/bytewax_engine.py:234:17
+    |
+232 |                 # Calculate derived field
+233 |                 field_name = enrichment_spec.get("name")
+234 |                 formula = enrichment_spec.get("formula")
+    |                 ^^^^^^^
+235 |                 # Simple field mapping for now
+236 |                 enriched[field_name] = "calculated_value"
+    |
+help: Remove assignment to unused variable `formula`
+
+F841 Local variable `offset` is assigned to but never used
+   --> apps/api/app/modules/chat_enhancement/router.py:242:9
+    |
+241 |     try:
+242 |         offset = (page - 1) * per_page
+    |         ^^^^^^
+243 |
+244 |         logger.info(
+    |
+help: Remove assignment to unused variable `offset`
+
+F841 Local variable `offset` is assigned to but never used
+   --> apps/api/app/modules/chat_enhancement/router.py:421:9
+    |
+420 |     try:
+421 |         offset = (page - 1) * per_page
+    |         ^^^^^^
+422 |
+423 |         logger.info(
+    |
+help: Remove assignment to unused variable `offset`
+
+F841 Local variable `query_embedding` is assigned to but never used
+   --> apps/api/app/modules/chat_enhancement/services/chat_service.py:161:21
+    |
+159 |                 # Vector similarity search
+160 |                 if self.embedding_service:
+161 |                     query_embedding = await self.embedding_service.embed(query)
+    |                     ^^^^^^^^^^^^^^^
+162 |                     pass
+    |
+help: Remove assignment to unused variable `query_embedding`
+
+F841 Local variable `cutoff_date` is assigned to but never used
+   --> apps/api/app/modules/ci_management/crud.py:368:5
+    |
+366 | def get_change_statistics(session: Session, days: int = 30) -> CIChangeStats:
+367 |     """Get change statistics for the last N days."""
+368 |     cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+    |     ^^^^^^^^^^^
+369 |     cutoff_date_today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+370 |     cutoff_date_week = cutoff_date_today - timedelta(days=7)
+    |
+help: Remove assignment to unused variable `cutoff_date`
+
+F401 `.neo4j_service.run_query` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+ --> apps/api/app/modules/data_explorer/services/__init__.py:2:41
+  |
+1 | from .neo4j_service import list_labels  # noqa: F401
+2 | from .neo4j_service import run_query as run_neo4j_query
+  |                                         ^^^^^^^^^^^^^^^
+3 | from .postgres_service import list_tables, preview_table, run_query  # noqa: F401
+4 | from .redis_service import get_key, run_command, scan  # noqa: F401
+  |
+help: Use an explicit re-export: `run_query as run_query`
+
+F841 Local variable `filters` is assigned to but never used
+   --> apps/api/app/modules/document_processor/router.py:210:9
+    |
+209 |         # Create filters
+210 |         filters = SearchFilters(
+    |         ^^^^^^^
+211 |             tenant_id=current_user.get("tenant_id", ""),
+212 |             date_from=None,  # Parse from request if provided
+    |
+help: Remove assignment to unused variable `filters`
+
+F841 Local variable `offset` is assigned to but never used
+   --> apps/api/app/modules/document_processor/router.py:260:9
+    |
+259 |     try:
+260 |         offset = (page - 1) * per_page
+    |         ^^^^^^
+261 |
+262 |         # In real implementation: db.query(DocumentChunk).filter(...)
+    |
+help: Remove assignment to unused variable `offset`
+
+F841 Local variable `offset` is assigned to but never used
+   --> apps/api/app/modules/document_processor/router.py:408:9
+    |
+407 |     try:
+408 |         offset = (page - 1) * per_page
+    |         ^^^^^^
+409 |
+410 |         # In real implementation: db.query(Document).filter(...)
+    |
+help: Remove assignment to unused variable `offset`
+
+E712 Avoid equality comparisons to `True`; use `TbGoldenQuery.enabled:` for truth checks
+   --> apps/api/app/modules/inspector/crud.py:119:37
+    |
+117 |     statement = select(TbGoldenQuery)
+118 |     if enabled_only:
+119 |         statement = statement.where(TbGoldenQuery.enabled == True)
+    |                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+120 |     statement = statement.order_by(TbGoldenQuery.created_at.desc())
+121 |     return session.exec(statement).all()
+    |
+help: Replace with `TbGoldenQuery.enabled`
+
+F841 Local variable `start_time` is assigned to but never used
+  --> apps/api/app/modules/inspector/regression/service.py:36:9
+   |
+34 |         """
+35 |         analysis_id = f"reg_{int(time.time())}"
+36 |         start_time = time.time()
+   |         ^^^^^^^^^^
+37 |
+38 |         # Initialize analysis result
+   |
+help: Remove assignment to unused variable `start_time`
+
+F401 `.router.router` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+ --> apps/api/app/modules/ops/__init__.py:1:21
+  |
+1 | from .router import router
+  |                     ^^^^^^
+  |
+help: Use an explicit re-export: `router as router`
+
+F841 Local variable `tenant_id` is assigned to but never used
+   --> apps/api/app/modules/ops/router.py:462:5
+    |
+461 |     # Setup
+462 |     tenant_id = x_tenant_id or "t1"
+    |     ^^^^^^^^^
+463 |     trace_id = str(uuid.uuid4())
+464 |     parent_trace_id = payload.trace_id
+    |
+help: Remove assignment to unused variable `tenant_id`
+
+F841 Local variable `all_spans` is assigned to but never used
+   --> apps/api/app/modules/ops/router.py:831:13
+    |
+829 |             # Create execution trace for candidate
+830 |             candidate_trace_id = str(uuid.uuid4())
+831 |             all_spans = get_all_spans()
+    |             ^^^^^^^^^
+832 |
+833 |             # Build candidate trace dict for comparison
+    |
+help: Remove assignment to unused variable `all_spans`
+
+F841 Local variable `include_snippets` is assigned to but never used
+    --> apps/api/app/modules/ops/router.py:1009:9
+     |
+1007 |         max_hypotheses = options.get("max_hypotheses", 5)
+1008 |         use_llm = options.get("use_llm", True)
+1009 |         include_snippets = options.get("include_snippets", True)
+     |         ^^^^^^^^^^^^^^^^
+1010 |
+1011 |         ts_start = time.time()
+     |
+help: Remove assignment to unused variable `include_snippets`
+
+F841 Local variable `hypotheses_list` is assigned to but never used
+    --> apps/api/app/modules/ops/router.py:1055:17
+     |
+1053 |             # Generate hypotheses
+1054 |             try:
+1055 |                 hypotheses_list = rca_engine.analyze_diff(
+     |                 ^^^^^^^^^^^^^^^
+1056 |                     baseline.model_dump(),
+1057 |                     candidate.model_dump(),
+     |
+help: Remove assignment to unused variable `hypotheses_list`
+
+F841 Local variable `rca_trace` is assigned to but never used
+    --> apps/api/app/modules/ops/router.py:1166:13
+     |
+1164 |         )
+1165 |         try:
+1166 |             rca_trace = create_execution_trace(session, rca_trace_obj)
+     |             ^^^^^^^^^
+1167 |             logger.info(f"RCA trace created successfully: {rca_trace_id}")
+1168 |         except Exception as trace_err:
+     |
+help: Remove assignment to unused variable `rca_trace`
+
+F841 Local variable `settings` is assigned to but never used
+    --> apps/api/app/modules/ops/router.py:1325:5
+     |
+1324 |     logger = get_logger(__name__)
+1325 |     settings = get_settings()
+     |     ^^^^^^^^
+1326 |
+1327 |     # Setup
+     |
+help: Remove assignment to unused variable `settings`
+
+E402 Module level import not at top of file
+ --> apps/api/app/modules/ops/schemas.py:9:1
+  |
+7 | OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
+8 |
+9 | from app.modules.ops.services.ci.planner.plan_schema import Plan, View
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+F841 Local variable `mode` is assigned to but never used
+   --> apps/api/app/modules/ops/services/action_registry.py:138:5
+    |
+137 |     # Use existing config executor
+138 |     mode = "config"
+    |     ^^^^
+139 |     question = f"Show device detail for {device_id}"
+    |
+help: Remove assignment to unused variable `mode`
+
+F841 Local variable `question` is assigned to but never used
+   --> apps/api/app/modules/ops/services/action_registry.py:139:5
+    |
+137 |     # Use existing config executor
+138 |     mode = "config"
+139 |     question = f"Show device detail for {device_id}"
+    |     ^^^^^^^^
+140 |
+141 |     # TODO: Call config executor directly (refactor handle_ops_query to expose executor)
+    |
+help: Remove assignment to unused variable `question`
+
+F821 Undefined name `StageInput`
+    --> apps/api/app/modules/ops/services/ci/orchestrator/runner.py:4237:120
+     |
+4235 |         }
+4236 |
+4237 |     def _build_stage_input(self, stage: str, plan_output: PlanOutput, prev_output: Optional[Dict[str, Any]] = None) -> StageInput:
+     |                                                                                                                        ^^^^^^^^^^
+4238 |         """Build StageInput from plan output and previous output."""
+4239 |         from app.modules.ops.schemas import StageInput
+     |
+
+F601 Dictionary key literal `"최근 1시간"` repeated
+   --> apps/api/app/modules/ops/services/ci/planner/planner_llm.py:232:5
+    |
+230 |     "최근 1시간": "last_1h",
+231 |     "한시간": "last_1h",
+232 |     "최근 1시간": "last_1h",
+    |     ^^^^^^^^^^^^
+233 |     "최근 한시간": "last_1h",
+234 |     "최근 시간": "last_1h",
+    |
+help: Remove repeated key literal `"최근 1시간"`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> apps/api/app/modules/ops/services/ci/policy.py:1:1
+   |
+ 1 | / from __future__ import annotations
+ 2 | |
+ 3 | | import json
+ 4 | | from datetime import datetime, timezone
+ 5 | | from pathlib import Path
+ 6 | | from typing import Iterable, List
+ 7 | |
+ 8 | | import yaml
+ 9 | |
+10 | | from core.logging import get_logger
+11 | | from app.modules.ops.services.ci.view_registry import VIEW_REGISTRY
+   | |___________________________________________________________________^
+12 |
+13 |   logger = get_logger(__name__)
+   |
+help: Organize imports
+
+F841 Local variable `total_count` is assigned to but never used
+   --> apps/api/app/modules/ops/services/ci/tools/ci.py:334:13
+    |
+332 |         with conn.cursor() as cur:
+333 |             cur.execute(count_query, count_params)
+334 |             total_count = cur.fetchone()[0]
+    |             ^^^^^^^^^^^
+335 |             cur.execute(query, query_params)
+336 |             columns = [field for field in group_list] + metric_list
+    |
+help: Remove assignment to unused variable `total_count`
+
+F841 Local variable `elapsed_ms` is assigned to but never used
+   --> apps/api/app/modules/ops/services/executors/graph_executor.py:139:5
+    |
+137 |     blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+138 |
+139 |     elapsed_ms = int((perf_counter() - start_time) * 1000)
+    |     ^^^^^^^^^^
+140 |     return ExecutorResult(
+141 |         blocks=blocks_dict,
+    |
+help: Remove assignment to unused variable `elapsed_ms`
+
+F841 Local variable `elapsed_ms` is assigned to but never used
+   --> apps/api/app/modules/ops/services/executors/hist_executor.py:128:5
+    |
+126 |     blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+127 |
+128 |     elapsed_ms = int((perf_counter() - start_time) * 1000)
+    |     ^^^^^^^^^^
+129 |     return ExecutorResult(
+130 |         blocks=blocks_dict,
+    |
+help: Remove assignment to unused variable `elapsed_ms`
+
+F841 Local variable `elapsed_ms` is assigned to but never used
+   --> apps/api/app/modules/ops/services/executors/metric_executor.py:132:5
+    |
+130 |     blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+131 |
+132 |     elapsed_ms = int((perf_counter() - start_time) * 1000)
+    |     ^^^^^^^^^^
+133 |     return ExecutorResult(
+134 |         blocks=blocks_dict,
+    |
+help: Remove assignment to unused variable `elapsed_ms`
+
+F841 Local variable `tools` is assigned to but never used
+   --> apps/api/app/modules/ops/services/langgraph_advanced.py:464:9
+    |
+462 |         """Execute a simple query."""
+463 |         blocks = []
+464 |         tools = []
+    |         ^^^^^
+465 |
+466 |         state["execution_path"].append(f"simple_{analysis.query_type.value}")
+    |
+help: Remove assignment to unused variable `tools`
+
+F841 Local variable `asset_info` is assigned to but never used
+   --> apps/api/app/modules/ops/services/rca_engine.py:322:13
+    |
+320 |         fallback_list = [k for k, v in fallbacks.items() if v]
+321 |         for asset_key in fallback_list:
+322 |             asset_info = applied_assets.get(asset_key, {})
+    |             ^^^^^^^^^^
+323 |             self.hypotheses.append(RCAHypothesis(
+324 |                 rank=2,
+    |
+help: Remove assignment to unused variable `asset_info`
+
+F841 Local variable `total_components` is assigned to but never used
+   --> apps/api/app/modules/ops/services/rca_engine.py:437:9
+    |
+435 |         """Rule 6: Detect UI component mapping issues"""
+436 |         error_count = ui_render.get("error_count", 0)
+437 |         total_components = ui_render.get("rendered_count", 0)
+    |         ^^^^^^^^^^^^^^^^
+438 |         error_details = ui_render.get("errors", [])
+    |
+help: Remove assignment to unused variable `total_components`
+
+E712 Avoid equality comparisons to `True`; use `TbResourcePermission.is_granted:` for truth checks
+   --> apps/api/app/modules/permissions/crud.py:346:9
+    |
+344 |     stmt = select(TbResourcePermission).where(
+345 |         TbResourcePermission.user_id == user_id,
+346 |         TbResourcePermission.is_granted == True,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+347 |     )
+    |
+help: Replace with `TbResourcePermission.is_granted`
+
+E402 Module level import not at top of file
+  --> apps/api/check_db.py:10:1
+   |
+ 8 | sys.path.append(project_root)
+ 9 |
+10 | from sqlmodel import create_engine, text
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 |
+12 | from apps.api.core.config import get_settings
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/check_db.py:12:1
+   |
+10 | from sqlmodel import create_engine, text
+11 |
+12 | from apps.api.core.config import get_settings
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 |
+14 | settings = get_settings()
+   |
+
+F401 `.config.AppSettings` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+ --> apps/api/core/__init__.py:1:21
+  |
+1 | from .config import AppSettings, get_settings
+  |                     ^^^^^^^^^^^
+  |
+help: Use an explicit re-export: `AppSettings as AppSettings`
+
+F401 `.config.get_settings` imported but unused; consider removing, adding to `__all__`, or using a redundant alias
+ --> apps/api/core/__init__.py:1:34
+  |
+1 | from .config import AppSettings, get_settings
+  |                                  ^^^^^^^^^^^^
+  |
+help: Use an explicit re-export: `get_settings as get_settings`
+
+E402 Module level import not at top of file
+  --> apps/api/fix_db_tables.py:10:1
+   |
+ 8 | sys.path.append(project_root)
+ 9 |
+10 | from sqlmodel import SQLModel, create_engine, text
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 |
+12 | # Import all models
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/fix_db_tables.py:13:1
+   |
+12 | # Import all models
+13 | from apps.api.core.config import get_settings
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |
+15 | settings = get_settings()
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:10:1
+   |
+ 8 |     sys.path.insert(0, str(ROOT))
+ 9 |
+10 | from api.routes.chat import router as chat_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | from api.routes.documents import router as document_router
+12 | from api.routes.health import router as health_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:11:1
+   |
+10 | from api.routes.chat import router as chat_router
+11 | from api.routes.documents import router as document_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+12 | from api.routes.health import router as health_router
+13 | from api.routes.hello import router as hello_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:12:1
+   |
+10 | from api.routes.chat import router as chat_router
+11 | from api.routes.documents import router as document_router
+12 | from api.routes.health import router as health_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 | from api.routes.hello import router as hello_router
+14 | from api.routes.history import router as history_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:13:1
+   |
+11 | from api.routes.documents import router as document_router
+12 | from api.routes.health import router as health_router
+13 | from api.routes.hello import router as hello_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 | from api.routes.history import router as history_router
+15 | from api.routes.threads import router as thread_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:14:1
+   |
+12 | from api.routes.health import router as health_router
+13 | from api.routes.hello import router as hello_router
+14 | from api.routes.history import router as history_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 | from api.routes.threads import router as thread_router
+16 | from app.modules.api_keys.router import router as api_keys_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:15:1
+   |
+13 | from api.routes.hello import router as hello_router
+14 | from api.routes.history import router as history_router
+15 | from api.routes.threads import router as thread_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 | from app.modules.api_keys.router import router as api_keys_router
+17 | from app.modules.api_manager.router import router as api_manager_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:16:1
+   |
+14 | from api.routes.history import router as history_router
+15 | from api.routes.threads import router as thread_router
+16 | from app.modules.api_keys.router import router as api_keys_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+17 | from app.modules.api_manager.router import router as api_manager_router
+18 | from app.modules.api_manager.runtime_router import runtime_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:17:1
+   |
+15 | from api.routes.threads import router as thread_router
+16 | from app.modules.api_keys.router import router as api_keys_router
+17 | from app.modules.api_manager.router import router as api_manager_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+18 | from app.modules.api_manager.runtime_router import runtime_router
+19 | from app.modules.asset_registry.router import router as asset_registry_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:18:1
+   |
+16 | from app.modules.api_keys.router import router as api_keys_router
+17 | from app.modules.api_manager.router import router as api_manager_router
+18 | from app.modules.api_manager.runtime_router import runtime_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+19 | from app.modules.asset_registry.router import router as asset_registry_router
+20 | from app.modules.audit_log.router import router as audit_log_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:19:1
+   |
+17 | from app.modules.api_manager.router import router as api_manager_router
+18 | from app.modules.api_manager.runtime_router import runtime_router
+19 | from app.modules.asset_registry.router import router as asset_registry_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+20 | from app.modules.audit_log.router import router as audit_log_router
+21 | from app.modules.auth.router import router as auth_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:20:1
+   |
+18 | from app.modules.api_manager.runtime_router import runtime_router
+19 | from app.modules.asset_registry.router import router as asset_registry_router
+20 | from app.modules.audit_log.router import router as audit_log_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | from app.modules.auth.router import router as auth_router
+22 | from app.modules.cep_builder import router as cep_builder_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:21:1
+   |
+19 | from app.modules.asset_registry.router import router as asset_registry_router
+20 | from app.modules.audit_log.router import router as audit_log_router
+21 | from app.modules.auth.router import router as auth_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+22 | from app.modules.cep_builder import router as cep_builder_router
+23 | from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:22:1
+   |
+20 | from app.modules.audit_log.router import router as audit_log_router
+21 | from app.modules.auth.router import router as auth_router
+22 | from app.modules.cep_builder import router as cep_builder_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+23 | from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+24 | from app.modules.data_explorer import router as data_explorer_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:23:1
+   |
+21 | from app.modules.auth.router import router as auth_router
+22 | from app.modules.cep_builder import router as cep_builder_router
+23 | from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+24 | from app.modules.data_explorer import router as data_explorer_router
+25 | from app.modules.inspector.router import router as inspector_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:24:1
+   |
+22 | from app.modules.cep_builder import router as cep_builder_router
+23 | from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+24 | from app.modules.data_explorer import router as data_explorer_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+25 | from app.modules.inspector.router import router as inspector_router
+26 | from app.modules.operation_settings.router import router as operation_settings_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:25:1
+   |
+23 | from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+24 | from app.modules.data_explorer import router as data_explorer_router
+25 | from app.modules.inspector.router import router as inspector_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+26 | from app.modules.operation_settings.router import router as operation_settings_router
+27 | from app.modules.ops.router import router as ops_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:26:1
+   |
+24 | from app.modules.data_explorer import router as data_explorer_router
+25 | from app.modules.inspector.router import router as inspector_router
+26 | from app.modules.operation_settings.router import router as operation_settings_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+27 | from app.modules.ops.router import router as ops_router
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:27:1
+   |
+25 | from app.modules.inspector.router import router as inspector_router
+26 | from app.modules.operation_settings.router import router as operation_settings_router
+27 | from app.modules.ops.router import router as ops_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+28 |
+29 | # Initialize OPS tool registry
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:30:1
+   |
+29 |   # Initialize OPS tool registry
+30 | / from app.modules.ops.services.ci.tools.registry_init import (
+31 | |     initialize_tools,  # noqa: E402
+32 | | )
+   | |_^
+33 |
+34 |   # from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type …
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:35:1
+   |
+34 | # from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type …
+35 | from app.modules.permissions.router import router as permissions_router
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+36 | from app.shared import config_loader
+37 | from core.config import get_settings
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:36:1
+   |
+34 | # from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type …
+35 | from app.modules.permissions.router import router as permissions_router
+36 | from app.shared import config_loader
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+37 | from core.config import get_settings
+38 | from fastapi import FastAPI
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:37:1
+   |
+35 | from app.modules.permissions.router import router as permissions_router
+36 | from app.shared import config_loader
+37 | from core.config import get_settings
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+38 | from fastapi import FastAPI
+39 | from fastapi.middleware.cors import CORSMiddleware
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:38:1
+   |
+36 | from app.shared import config_loader
+37 | from core.config import get_settings
+38 | from fastapi import FastAPI
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+39 | from fastapi.middleware.cors import CORSMiddleware
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:39:1
+   |
+37 | from core.config import get_settings
+38 | from fastapi import FastAPI
+39 | from fastapi.middleware.cors import CORSMiddleware
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+40 |
+41 | from apps.api.core.cors_config import CORSConfig
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:41:1
+   |
+39 | from fastapi.middleware.cors import CORSMiddleware
+40 |
+41 | from apps.api.core.cors_config import CORSConfig
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+42 | from apps.api.core.logging import configure_logging
+43 | from apps.api.core.middleware import RequestIDMiddleware
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:42:1
+   |
+41 | from apps.api.core.cors_config import CORSConfig
+42 | from apps.api.core.logging import configure_logging
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+43 | from apps.api.core.middleware import RequestIDMiddleware
+44 | from apps.api.core.security_middleware import add_security_middleware
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:43:1
+   |
+41 | from apps.api.core.cors_config import CORSConfig
+42 | from apps.api.core.logging import configure_logging
+43 | from apps.api.core.middleware import RequestIDMiddleware
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+44 | from apps.api.core.security_middleware import add_security_middleware
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/main.py:44:1
+   |
+42 | from apps.api.core.logging import configure_logging
+43 | from apps.api.core.middleware import RequestIDMiddleware
+44 | from apps.api.core.security_middleware import add_security_middleware
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+45 |
+46 | initialize_tools()
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_all.py:10:1
+   |
+ 8 |     sys.path.insert(0, str(ROOT))
+ 9 |
+10 | from scripts.seed import seed_ci, seed_events, seed_history, seed_metrics, seed_neo4j
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+11 | from scripts.seed.utils import get_neo4j_driver, get_postgres_conn
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_all.py:11:1
+   |
+10 | from scripts.seed import seed_ci, seed_events, seed_history, seed_metrics, seed_neo4j
+11 | from scripts.seed.utils import get_neo4j_driver, get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_ci.py:15:1
+   |
+13 |     sys.path.insert(0, str(ROOT))
+14 |
+15 | from scripts.seed.utils import get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | random.seed(0)
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_events.py:13:1
+   |
+11 |     sys.path.insert(0, str(ROOT))
+12 |
+13 | from scripts.seed.utils import get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |
+15 | random.seed(1)
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_history.py:13:1
+   |
+11 |     sys.path.insert(0, str(ROOT))
+12 |
+13 | from scripts.seed.utils import get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |
+15 | random.seed(2)
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_history_copy.py:13:1
+   |
+11 |     sys.path.insert(0, str(ROOT))
+12 |
+13 | from scripts.seed.utils import get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |
+15 | random.seed(2)
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_metrics.py:15:1
+   |
+13 |     sys.path.insert(0, str(ROOT))
+14 |
+15 | from scripts.seed.utils import get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | random.seed(0)
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_metrics_copy.py:15:1
+   |
+13 |     sys.path.insert(0, str(ROOT))
+14 |
+15 | from scripts.seed.utils import get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+16 |
+17 | random.seed(0)
+   |
+
+E402 Module level import not at top of file
+  --> apps/api/scripts/seed/seed_neo4j.py:14:1
+   |
+12 |     sys.path.insert(0, str(ROOT))
+13 |
+14 | from scripts.seed.utils import get_neo4j_driver, get_postgres_conn
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+15 |
+16 | SYSTEM_DEPENDENCIES = {
+   |
+
+F841 Local variable `source` is assigned to but never used
+   --> apps/api/tests/test_asset_models.py:519:9
+    |
+517 |             host="prod.example.com",
+518 |         )
+519 |         source = SourceAsset(
+    |         ^^^^^^
+520 |             name="Production DB",
+521 |             version=1,
+    |
+help: Remove assignment to unused variable `source`
+
+E402 Module level import not at top of file
+ --> apps/api/tests/test_ci_exact_candidate.py:8:1
+  |
+6 |     sys.path.insert(0, str(ROOT))
+7 |
+8 | from app.modules.ops.services.ci.orchestrator.runner import _find_exact_candidate
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+E402 Module level import not at top of file
+ --> apps/api/tests/test_ci_list_llm_output.py:8:1
+  |
+6 |     sys.path.insert(0, str(ROOT))
+7 |
+8 | from app.modules.ops.services.ci.planner import planner_llm
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+9 | from app.modules.ops.services.ci.planner.plan_schema import Intent
+  |
+
+E402 Module level import not at top of file
+ --> apps/api/tests/test_ci_list_llm_output.py:9:1
+  |
+8 | from app.modules.ops.services.ci.planner import planner_llm
+9 | from app.modules.ops.services.ci.planner.plan_schema import Intent
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+
+F841 Local variable `change2` is assigned to but never used
+   --> apps/api/tests/test_ci_management.py:136:9
+    |
+134 |         )
+135 |
+136 |         change2 = crud.create_change(
+    |         ^^^^^^^
+137 |             session=session,
+138 |             ci_id="ci-002",
+    |
+help: Remove assignment to unused variable `change2`
+
+F841 Local variable `change2` is assigned to but never used
+   --> apps/api/tests/test_ci_management.py:323:9
+    |
+321 |         )
+322 |
+323 |         change2 = crud.create_change(
+    |         ^^^^^^^
+324 |             session=session,
+325 |             ci_id=ci_id,
+    |
+help: Remove assignment to unused variable `change2`
+
+F841 Local variable `issue2` is assigned to but never used
+   --> apps/api/tests/test_ci_management.py:387:9
+    |
+385 |         )
+386 |
+387 |         issue2 = crud.create_integrity_issue(
+    |         ^^^^^^
+388 |             session=session,
+389 |             ci_id=ci_id,
+    |
+help: Remove assignment to unused variable `issue2`
+
+E402 Module level import not at top of file
+  --> apps/api/tests/test_documents.py:21:1
+   |
+19 | os.environ.setdefault("DOCUMENT_STORAGE_ROOT", str(storage_root))
+20 |
+21 | from main import app
+   | ^^^^^^^^^^^^^^^^^^^^
+   |
+
+F841 Local variable `conn` is assigned to but never used
+  --> apps/api/tests/test_ops_resolvers.py:15:37
+   |
+13 | def _has_postgres() -> bool:
+14 |     try:
+15 |         with get_postgres_conn() as conn:
+   |                                     ^^^^
+16 |             pass
+17 |         return True
+   |
+help: Remove assignment to unused variable `conn`
+
+F841 Local variable `get_response` is assigned to but never used
+   --> apps/api/tests/test_security_headers.py:252:9
+    |
+251 |         # GET to get token
+252 |         get_response = client.get("/test")
+    |         ^^^^^^^^^^^^
+253 |
+254 |         # POST with wrong token
+    |
+help: Remove assignment to unused variable `get_response`
+
+F841 Local variable `mock_references` is assigned to but never used
+   --> apps/api/tests/test_stage_executor.py:312:9
+    |
+310 |             "data": {"metric": "cpu"},
+311 |         }
+312 |         mock_references = [
+    |         ^^^^^^^^^^^^^^^
+313 |             {"kind": "sql", "title": "CPU Query", "payload": "SELECT * FROM metrics"},
+314 |         ]
+    |
+help: Remove assignment to unused variable `mock_references`
+
+F841 Local variable `handler` is assigned to but never used
+   --> apps/api/tests/test_ui_contract.py:367:13
+    |
+366 |         for handler_id in handlers:
+367 |             handler = registry.get(handler_id)
+    |             ^^^^^^^
+368 |             # Some may exist, that's ok for MVP
+    |
+help: Remove assignment to unused variable `handler`
+
+F841 Local variable `screen_asset_data` is assigned to but never used
+   --> apps/api/tests/test_ui_contract.py:377:9
+    |
+375 |         """Verify screen asset works with ui_screen block"""
+376 |         # Create screen asset
+377 |         screen_asset_data = {
+    |         ^^^^^^^^^^^^^^^^^
+378 |             "asset_type": "screen",
+379 |             "screen_id": "integration_test_screen",
+    |
+help: Remove assignment to unused variable `screen_asset_data`
+
+F841 Local variable `result` is assigned to but never used
+  --> apps/api/tests/unit/test_api_manager.py:91:9
+   |
+89 |         sql = "SELECT id, name FROM users"
+90 |
+91 |         result = validator.validate(sql)
+   |         ^^^^^^
+92 |
+93 |         # May have warning about missing WHERE
+   |
+help: Remove assignment to unused variable `result`
+
+F841 Local variable `data` is assigned to but never used
+   --> scripts/generate_ops_ci_report.py:153:5
+    |
+152 |     # 응답 상태
+153 |     data = response.get("data") or {}
+    |     ^^^^
+154 |     sections.append("**응답 상태:**")
+155 |     sections.append(f"- HTTP Status: 200 OK")
+    |
+help: Remove assignment to unused variable `data`
+
+F541 [*] f-string without any placeholders
+   --> scripts/generate_ops_ci_report.py:155:21
+    |
+153 |     data = response.get("data") or {}
+154 |     sections.append("**응답 상태:**")
+155 |     sections.append(f"- HTTP Status: 200 OK")
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^
+156 |     sections.append(f"- API Code: {response.get('code', 'N/A')}")
+157 |     sections.append(f"- Message: {response.get('message', 'N/A')}")
+    |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+   --> scripts/generate_ops_ci_report.py:204:21
+    |
+202 |     # 원본 응답 경로
+203 |     raw_path = f"artifacts/ops_ci_api_raw/{test_name}.json"
+204 |     sections.append(f"**원본 응답:**")
+    |                     ^^^^^^^^^^^^^^^^^
+205 |     sections.append(f"- [`{raw_path}`]({raw_path})")
+206 |     sections.append("")
+    |
+help: Remove extraneous `f` prefix
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/generate_query_metadata.py:12:1
+   |
+10 |   """
+11 |
+12 | / from pathlib import Path
+13 | | import yaml
+   | |___________^
+14 |
+15 |   REPO_ROOT = Path(__file__).resolve().parents[1]
+   |
+help: Organize imports
+
+F541 [*] f-string without any placeholders
+   --> scripts/generate_query_metadata.py:106:11
+    |
+104 |         created_count += 1
+105 |
+106 |     print(f"\n--- Metadata generation complete ---")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+107 |     print(f"  Created: {created_count} YAML files")
+108 |     print(f"  Skipped: {skipped_count} (already exist)")
+    |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+   --> scripts/generate_query_metadata.py:109:11
+    |
+107 |     print(f"  Created: {created_count} YAML files")
+108 |     print(f"  Skipped: {skipped_count} (already exist)")
+109 |     print(f"\nNext steps:")
+    |           ^^^^^^^^^^^^^^^^
+110 |     print(f"  1. Review generated YAML files")
+111 |     print(f"  2. Run: python scripts/query_asset_importer.py --scope ci --apply --publish")
+    |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+   --> scripts/generate_query_metadata.py:110:11
+    |
+108 |     print(f"  Skipped: {skipped_count} (already exist)")
+109 |     print(f"\nNext steps:")
+110 |     print(f"  1. Review generated YAML files")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+111 |     print(f"  2. Run: python scripts/query_asset_importer.py --scope ci --apply --publish")
+    |
+help: Remove extraneous `f` prefix
+
+F541 [*] f-string without any placeholders
+   --> scripts/generate_query_metadata.py:111:11
+    |
+109 |     print(f"\nNext steps:")
+110 |     print(f"  1. Review generated YAML files")
+111 |     print(f"  2. Run: python scripts/query_asset_importer.py --scope ci --apply --publish")
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+help: Remove extraneous `f` prefix
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> scripts/hello_ollama_1.py:1:1
+  |
+1 | / import requests
+2 | | import json
+  | |___________^
+3 |
+4 |   # 1. 설정: Ollama API 주소 및 모델
+  |
+help: Organize imports
+
+F401 [*] `json` imported but unused
+ --> scripts/hello_ollama_1.py:2:8
+  |
+1 | import requests
+2 | import json
+  |        ^^^^
+3 |
+4 | # 1. 설정: Ollama API 주소 및 모델
+  |
+help: Remove unused import: `json`
+
+E402 Module level import not at top of file
+  --> scripts/hello_openai.py:13:1
+   |
+11 | sys.path.append(str(ROOT / "apps" / "api"))
+12 |
+13 | from app.llm.client import get_llm_client  # type: ignore[import]  # path is injected above
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/hello_openai.py:13:1
+   |
+11 | sys.path.append(str(ROOT / "apps" / "api"))
+12 |
+13 | from app.llm.client import get_llm_client  # type: ignore[import]  # path is injected above
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: Organize imports
+
+F401 [*] `json` imported but unused
+  --> scripts/query_asset_importer.py:19:8
+   |
+18 | import argparse
+19 | import json
+   |        ^^^^
+20 | import sys
+21 | from pathlib import Path
+   |
+help: Remove unused import: `json`
+
+E402 Module level import not at top of file
+  --> scripts/select_ci_codes.py:20:1
+   |
+18 | # Load environment
+19 | os.chdir(str(ROOT))
+20 | from dotenv import load_dotenv
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | load_dotenv(str(ROOT / "apps/api/.env"))
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/select_ci_codes.py:20:1
+   |
+18 | # Load environment
+19 | os.chdir(str(ROOT))
+20 | from dotenv import load_dotenv
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+21 | load_dotenv(str(ROOT / "apps/api/.env"))
+   |
+help: Organize imports
+
+E402 Module level import not at top of file
+  --> scripts/select_ci_codes.py:23:1
+   |
+21 | load_dotenv(str(ROOT / "apps/api/.env"))
+22 |
+23 | import json
+   | ^^^^^^^^^^^
+24 | from apps.api.scripts.seed.seed_ci import SYSTEM_DEFINITIONS
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/select_ci_codes.py:23:1
+   |
+21 |   load_dotenv(str(ROOT / "apps/api/.env"))
+22 |
+23 | / import json
+24 | | from apps.api.scripts.seed.seed_ci import SYSTEM_DEFINITIONS
+   | |____________________________________________________________^
+   |
+help: Organize imports
+
+E402 Module level import not at top of file
+  --> scripts/select_ci_codes.py:24:1
+   |
+23 | import json
+24 | from apps.api.scripts.seed.seed_ci import SYSTEM_DEFINITIONS
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+F401 [*] `apps.api.scripts.seed.seed_ci.SYSTEM_DEFINITIONS` imported but unused
+  --> scripts/select_ci_codes.py:24:43
+   |
+23 | import json
+24 | from apps.api.scripts.seed.seed_ci import SYSTEM_DEFINITIONS
+   |                                           ^^^^^^^^^^^^^^^^^^
+   |
+help: Remove unused import: `apps.api.scripts.seed.seed_ci.SYSTEM_DEFINITIONS`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> scripts/select_ci_codes.py:29:5
+   |
+27 |   def get_postgres_conn():
+28 |       """Postgres 연결"""
+29 | /     import psycopg
+30 | |     from apps.api.scripts.seed.utils import get_postgres_conn as get_conn
+   | |_________________________________________________________________________^
+31 |       return get_conn()
+   |
+help: Organize imports
+
+F401 [*] `psycopg` imported but unused
+  --> scripts/select_ci_codes.py:29:12
+   |
+27 | def get_postgres_conn():
+28 |     """Postgres 연결"""
+29 |     import psycopg
+   |            ^^^^^^^
+30 |     from apps.api.scripts.seed.utils import get_postgres_conn as get_conn
+31 |     return get_conn()
+   |
+help: Remove unused import: `psycopg`
+
+F541 [*] f-string without any placeholders
+  --> scripts/select_ci_codes.py:83:19
+   |
+81 |             print("✅", file=sys.stderr)
+82 |         else:
+83 |             print(f"❌ (1건 이상 중복 또는 0건)", file=sys.stderr)
+   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+84 |             return None
+   |
+help: Remove extraneous `f` prefix
+
+I001 [*] Import block is un-sorted or un-formatted
+ --> test_stage_executor.py:6:1
+  |
+4 |   """
+5 |
+6 | / import sys
+7 | | import os
+  | |_________^
+8 |   sys.path.append('/home/spa/tobit-spa-ai/apps/api')
+  |
+help: Organize imports
+
+F401 [*] `os` imported but unused
+ --> test_stage_executor.py:7:8
+  |
+6 | import sys
+7 | import os
+  |        ^^
+8 | sys.path.append('/home/spa/tobit-spa-ai/apps/api')
+  |
+help: Remove unused import: `os`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> test_stage_executor.py:10:1
+   |
+ 8 |   sys.path.append('/home/spa/tobit-spa-ai/apps/api')
+ 9 |
+10 | / from app.modules.ops.services.ci.planner.plan_schema import PlanOutput, PlanOutputKind, Plan
+11 | | from app.modules.ops.schemas import StageInput
+12 | | from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
+13 | | import asyncio
+   | |______________^
+14 |
+15 |   async def test_stage_executor():
+   |
+help: Organize imports
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:9:1
+   |
+ 7 | if str(ROOT) not in sys.path:
+ 8 |     sys.path.insert(0, str(ROOT))
+ 9 | import json
+   | ^^^^^^^^^^^
+10 | import os
+11 | import random
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/ops_ci_api/conftest.py:9:1
+   |
+ 7 |   if str(ROOT) not in sys.path:
+ 8 |       sys.path.insert(0, str(ROOT))
+ 9 | / import json
+10 | | import os
+11 | | import random
+12 | | from dataclasses import dataclass
+13 | | from typing import Any, Dict
+14 | |
+15 | | import pytest
+16 | | import httpx
+17 | |
+18 | | from apps.api.scripts.seed import seed_ci
+   | |_________________________________________^
+   |
+help: Organize imports
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:10:1
+   |
+ 8 |     sys.path.insert(0, str(ROOT))
+ 9 | import json
+10 | import os
+   | ^^^^^^^^^
+11 | import random
+12 | from dataclasses import dataclass
+   |
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:11:1
+   |
+ 9 | import json
+10 | import os
+11 | import random
+   | ^^^^^^^^^^^^^
+12 | from dataclasses import dataclass
+13 | from typing import Any, Dict
+   |
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:12:1
+   |
+10 | import os
+11 | import random
+12 | from dataclasses import dataclass
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+13 | from typing import Any, Dict
+   |
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:13:1
+   |
+11 | import random
+12 | from dataclasses import dataclass
+13 | from typing import Any, Dict
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+14 |
+15 | import pytest
+   |
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:15:1
+   |
+13 | from typing import Any, Dict
+14 |
+15 | import pytest
+   | ^^^^^^^^^^^^^
+16 | import httpx
+   |
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:16:1
+   |
+15 | import pytest
+16 | import httpx
+   | ^^^^^^^^^^^^
+17 |
+18 | from apps.api.scripts.seed import seed_ci
+   |
+
+E402 Module level import not at top of file
+  --> tests/ops_ci_api/conftest.py:18:1
+   |
+16 | import httpx
+17 |
+18 | from apps.api.scripts.seed import seed_ci
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+F841 Local variable `zone` is assigned to but never used
+  --> tests/ops_ci_api/conftest.py:48:17
+   |
+46 |             server_count = self.rnd.randint(4, 6)
+47 |             for server_idx in range(1, server_count + 1):
+48 |                 zone = self.rnd.choice(seed_ci.ZONE_OPTIONS)
+   |                 ^^^^
+49 |                 self.rnd.choice(["active", "monitoring"])
+50 |                 server_code = f"srv-{system['code']}-{server_idx:02d}"
+   |
+help: Remove assignment to unused variable `zone`
+
+F401 [*] `os` imported but unused
+ --> tests/ops_ci_api/test_ops_ci_api.py:4:8
+  |
+3 | import json
+4 | import os
+  |        ^^
+5 | from pathlib import Path
+6 | from typing import Any, Dict
+  |
+help: Remove unused import: `os`
+
+F401 [*] `pathlib.Path` imported but unused
+ --> tests/ops_ci_api/test_ops_ci_api.py:5:21
+  |
+3 | import json
+4 | import os
+5 | from pathlib import Path
+  |                     ^^^^
+6 | from typing import Any, Dict
+  |
+help: Remove unused import: `pathlib.Path`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/ops_ci_api/test_ops_ci_ask_api.py:6:1
+   |
+ 4 |   검증: HTTP 200 + blocks + trace/meta 존재 + mock 금지
+ 5 |   """
+ 6 | / from __future__ import annotations
+ 7 | |
+ 8 | | import json
+ 9 | | import os
+10 | | import sys
+11 | | from datetime import datetime
+12 | | from pathlib import Path
+13 | | from typing import Any
+14 | |
+15 | | import httpx
+16 | | import pytest
+   | |_____________^
+   |
+help: Organize imports
+
+F401 [*] `sys` imported but unused
+  --> tests/ops_ci_api/test_ops_ci_ask_api.py:10:8
+   |
+ 8 | import json
+ 9 | import os
+10 | import sys
+   |        ^^^
+11 | from datetime import datetime
+12 | from pathlib import Path
+   |
+help: Remove unused import: `sys`
+
+F401 [*] `datetime.datetime` imported but unused
+  --> tests/ops_ci_api/test_ops_ci_ask_api.py:11:22
+   |
+ 9 | import os
+10 | import sys
+11 | from datetime import datetime
+   |                      ^^^^^^^^
+12 | from pathlib import Path
+13 | from typing import Any
+   |
+help: Remove unused import: `datetime.datetime`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:112:9
+    |
+111 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+112 |         raw_path = _save_raw_response(artifacts_dir, "test_a_lookup_server_status", response.json())
+    |         ^^^^^^^^
+113 |
+114 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:138:9
+    |
+137 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+138 |         raw_path = _save_raw_response(artifacts_dir, "test_b_metric_cpu_usage", response.json())
+    |         ^^^^^^^^
+139 |
+140 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:167:9
+    |
+166 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+167 |         raw_path = _save_raw_response(artifacts_dir, "test_c_history_events", response.json())
+    |         ^^^^^^^^
+168 |
+169 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:195:9
+    |
+194 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+195 |         raw_path = _save_raw_response(artifacts_dir, "test_d_list_servers", response.json())
+    |         ^^^^^^^^
+196 |
+197 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:221:9
+    |
+220 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+221 |         raw_path = _save_raw_response(artifacts_dir, "test_e_multi_step_app_history", response.json())
+    |         ^^^^^^^^
+222 |
+223 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:244:9
+    |
+243 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+244 |         raw_path = _save_raw_response(artifacts_dir, "test_f_no_data_guidance", response.json())
+    |         ^^^^^^^^
+245 |
+246 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:266:9
+    |
+265 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+266 |         raw_path = _save_raw_response(artifacts_dir, "test_g_ambiguous_integration", response.json())
+    |         ^^^^^^^^
+267 |
+268 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+F841 Local variable `raw_path` is assigned to but never used
+   --> tests/ops_ci_api/test_ops_ci_ask_api.py:289:9
+    |
+288 |         response = http_client.post(CI_ENDPOINT, json={"question": question})
+289 |         raw_path = _save_raw_response(artifacts_dir, "test_h_policy_depth_clamp", response.json())
+    |         ^^^^^^^^
+290 |
+291 |         assert response.status_code == 200
+    |
+help: Remove assignment to unused variable `raw_path`
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/ops_e2e/conftest.py:3:1
+   |
+ 1 |   """Configuration for OPS E2E tests."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import json
+ 6 | | import os
+ 7 | | import sys
+ 8 | | from pathlib import Path
+ 9 | | from typing import Any, Dict
+10 | |
+11 | | import pytest
+12 | | import httpx
+   | |____________^
+13 |
+14 |   ROOT = Path(__file__).resolve().parents[2]
+   |
+help: Organize imports
+
+E402 Module level import not at top of file
+  --> tests/ops_e2e/conftest.py:18:1
+   |
+16 |     sys.path.insert(0, str(ROOT))
+17 |
+18 | from apps.api.scripts.seed import seed_ci
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+
+F401 [*] `apps.api.scripts.seed.seed_ci` imported but unused
+  --> tests/ops_e2e/conftest.py:18:35
+   |
+16 |     sys.path.insert(0, str(ROOT))
+17 |
+18 | from apps.api.scripts.seed import seed_ci
+   |                                   ^^^^^^^
+   |
+help: Remove unused import: `apps.api.scripts.seed.seed_ci`
+
+F401 [*] `typing.Any` imported but unused
+ --> tests/ops_e2e/test_orchestration_e2e.py:6:20
+  |
+5 | import time
+6 | from typing import Any
+  |                    ^^^
+7 |
+8 | import pytest
+  |
+help: Remove unused import: `typing.Any`
+
+F401 [*] `pytest` imported but unused
+  --> tests/ops_e2e/test_orchestration_e2e.py:8:8
+   |
+ 6 | from typing import Any
+ 7 |
+ 8 | import pytest
+   |        ^^^^^^
+ 9 |
+10 | from tests.ops_e2e.conftest import E2EArtifactCollector
+   |
+help: Remove unused import: `pytest`
+
+F401 [*] `tests.ops_e2e.conftest.E2EArtifactCollector` imported but unused
+  --> tests/ops_e2e/test_orchestration_e2e.py:10:36
+   |
+ 8 | import pytest
+ 9 |
+10 | from tests.ops_e2e.conftest import E2EArtifactCollector
+   |                                    ^^^^^^^^^^^^^^^^^^^^
+   |
+help: Remove unused import: `tests.ops_e2e.conftest.E2EArtifactCollector`
+
+F821 Undefined name `json`
+  --> tests/ops_e2e/test_orchestration_e2e.py:62:29
+   |
+60 |         # Store raw response
+61 |         raw_path = e2e_artifact_collector.raw_dir / f"{test_name}.json"
+62 |         raw_path.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+   |                             ^^^^
+63 |         entry["raw_response"] = str(raw_path)
+64 |         entry["trace_id"] = trace.get("trace_id")
+   |
+
+I001 [*] Import block is un-sorted or un-formatted
+  --> tests/ops_e2e/test_performance_profiling.py:3:1
+   |
+ 1 |   """Performance profiling tests for OPS orchestration system."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import time
+ 6 | | import statistics
+ 7 | | from typing import Any, List
+ 8 | |
+ 9 | | import pytest
+10 | |
+11 | | from tests.ops_e2e.conftest import E2EArtifactCollector
+   | |_______________________________________________________^
+   |
+help: Organize imports
+
+F401 [*] `typing.Any` imported but unused
+ --> tests/ops_e2e/test_performance_profiling.py:7:20
+  |
+5 | import time
+6 | import statistics
+7 | from typing import Any, List
+  |                    ^^^
+8 |
+9 | import pytest
+  |
+help: Remove unused import: `typing.Any`
+
+F401 [*] `time` imported but unused
+ --> tests/ops_e2e/test_regression_e2e.py:5:8
+  |
+3 | from __future__ import annotations
+4 |
+5 | import time
+  |        ^^^^
+6 | from typing import Any
+  |
+help: Remove unused import: `time`
+
+F401 [*] `typing.Any` imported but unused
+ --> tests/ops_e2e/test_regression_e2e.py:6:20
+  |
+5 | import time
+6 | from typing import Any
+  |                    ^^^
+7 |
+8 | import pytest
+  |
+help: Remove unused import: `typing.Any`
+
+F401 [*] `pytest` imported but unused
+  --> tests/ops_e2e/test_regression_e2e.py:8:8
+   |
+ 6 | from typing import Any
+ 7 |
+ 8 | import pytest
+   |        ^^^^^^
+ 9 |
+10 | from tests.ops_e2e.conftest import E2EArtifactCollector
+   |
+help: Remove unused import: `pytest`
+
+F401 [*] `tests.ops_e2e.conftest.E2EArtifactCollector` imported but unused
+  --> tests/ops_e2e/test_regression_e2e.py:10:36
+   |
+ 8 | import pytest
+ 9 |
+10 | from tests.ops_e2e.conftest import E2EArtifactCollector
+   |                                    ^^^^^^^^^^^^^^^^^^^^
+   |
+help: Remove unused import: `tests.ops_e2e.conftest.E2EArtifactCollector`
+
+F401 [*] `time` imported but unused
+ --> tests/ops_e2e/test_stage_executor.py:5:8
+  |
+3 | from __future__ import annotations
+4 |
+5 | import time
+  |        ^^^^
+6 | from typing import Any
+  |
+help: Remove unused import: `time`
+
+F401 [*] `typing.Any` imported but unused
+ --> tests/ops_e2e/test_stage_executor.py:6:20
+  |
+5 | import time
+6 | from typing import Any
+  |                    ^^^
+7 |
+8 | import pytest
+  |
+help: Remove unused import: `typing.Any`
+
+F401 [*] `pytest` imported but unused
+  --> tests/ops_e2e/test_stage_executor.py:8:8
+   |
+ 6 | from typing import Any
+ 7 |
+ 8 | import pytest
+   |        ^^^^^^
+ 9 |
+10 | from tests.ops_e2e.conftest import E2EArtifactCollector
+   |
+help: Remove unused import: `pytest`
+
+F401 [*] `tests.ops_e2e.conftest.E2EArtifactCollector` imported but unused
+  --> tests/ops_e2e/test_stage_executor.py:10:36
+   |
+ 8 | import pytest
+ 9 |
+10 | from tests.ops_e2e.conftest import E2EArtifactCollector
+   |                                    ^^^^^^^^^^^^^^^^^^^^
+   |
+help: Remove unused import: `tests.ops_e2e.conftest.E2EArtifactCollector`
+
+F401 [*] `json` imported but unused
+  --> tests/test_asset_importers.py:11:8
+   |
+ 9 | """
+10 |
+11 | import json
+   |        ^^^^
+12 | import sys
+13 | import tempfile
+   |
+help: Remove unused import: `json`
+
+F401 [*] `tempfile` imported but unused
+  --> tests/test_asset_importers.py:13:8
+   |
+11 | import json
+12 | import sys
+13 | import tempfile
+   |        ^^^^^^^^
+14 | from pathlib import Path
+15 | from typing import Any
+   |
+help: Remove unused import: `tempfile`
+
+F401 [*] `typing.Any` imported but unused
+  --> tests/test_asset_importers.py:15:20
+   |
+13 | import tempfile
+14 | from pathlib import Path
+15 | from typing import Any
+   |                    ^^^
+16 | from unittest.mock import MagicMock, Mock, patch
+   |
+help: Remove unused import: `typing.Any`
+
+F401 [*] `unittest.mock.Mock` imported but unused
+  --> tests/test_asset_importers.py:16:38
+   |
+14 | from pathlib import Path
+15 | from typing import Any
+16 | from unittest.mock import MagicMock, Mock, patch
+   |                                      ^^^^
+17 |
+18 | import pytest
+   |
+help: Remove unused import: `unittest.mock.Mock`
+
+Found 176 errors.
+[*] 48 fixable with the `--fix` option (61 hidden fixes can be enabled with the `--unsafe-fixes` option).

@@ -5,9 +5,8 @@ Revises: 0029_add_screen_asset_fields
 Create Date: 2026-01-18 14:00:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+from alembic import op
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.

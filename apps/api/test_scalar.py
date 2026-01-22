@@ -1,7 +1,8 @@
-from sqlmodel import Session, create_engine, select, func
-from app.modules.inspector.models import TbExecutionTrace
 import os
+
+from app.modules.inspector.models import TbExecutionTrace
 from dotenv import load_dotenv
+from sqlmodel import Session, create_engine, func, select
 
 load_dotenv()
 dsn = f"postgresql+psycopg://{os.getenv('PG_USER')}:{os.getenv('PG_PASSWORD')}@{os.getenv('PG_HOST')}:{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}"

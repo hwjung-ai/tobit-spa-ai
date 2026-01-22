@@ -5,8 +5,8 @@ Uses LLM ONLY for text summarization/explanation, NOT for hypothesis generation.
 All hypotheses and evidence are generated deterministically.
 """
 
-from typing import List, Dict, Any, Optional
 import logging
+from typing import Any, Dict, List
 
 from app.llm.client import get_llm_client
 

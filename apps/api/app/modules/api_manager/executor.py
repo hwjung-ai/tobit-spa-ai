@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import re
 from time import perf_counter
 from typing import Any
-import re
-import httpx
-import json
 
+import httpx
 from fastapi import HTTPException
 from sqlalchemy import text as sa_text
 from sqlmodel import Session

@@ -13,13 +13,13 @@ from app.modules.ops.services.ci.tools.base import (
     ToolType,
     register_tool,
 )
+from app.modules.ops.services.ci.tools.cep import CEPTool
 
 # Import tool classes to trigger their instantiation and registration
 from app.modules.ops.services.ci.tools.ci import CITool
 from app.modules.ops.services.ci.tools.graph import GraphTool
-from app.modules.ops.services.ci.tools.metric import MetricTool
 from app.modules.ops.services.ci.tools.history import HistoryTool
-from app.modules.ops.services.ci.tools.cep import CEPTool
+from app.modules.ops.services.ci.tools.metric import MetricTool
 
 
 def initialize_tools() -> None:

@@ -5,9 +5,8 @@ from enum import Enum
 from typing import Optional
 from uuid import uuid4
 
+from core.encryption import get_encryption_manager
 from sqlmodel import Field, SQLModel
-
-from apps.api.core.encryption import get_encryption_manager
 
 
 class ApiKeyScope(str, Enum):

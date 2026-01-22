@@ -2,18 +2,17 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
-
-from scripts.seed.utils import get_postgres_conn
 from app.modules.ops.services.resolvers.ci_resolver import resolve_ci
 from app.modules.ops.services.resolvers.metric_resolver import resolve_metric
 from app.modules.ops.services.resolvers.time_range_resolver import resolve_time_range
+from scripts.seed.utils import get_postgres_conn
 
 ASIA_SEOUL = ZoneInfo("Asia/Seoul")
 
 
 def _has_postgres() -> bool:
     try:
-        with get_postgres_conn() as conn:
+        with get_postgres_conn():
             pass
         return True
     except Exception:

@@ -8,16 +8,16 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-from fastapi import HTTPException
+from core.config import get_settings
+from core.db import engine, get_session_context
 from croniter import CroniterBadCronError, croniter
+from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
-from core.db import engine, get_session_context
-from core.config import get_settings
+from . import notification_engine
 from .crud import insert_metric_poll_snapshot, list_rules
 from .executor import manual_trigger
-from . import notification_engine
 from .models import TbCepRule
 
 logger = logging.getLogger(__name__)

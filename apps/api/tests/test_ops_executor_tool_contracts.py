@@ -1,11 +1,9 @@
 """Test OPS Executors Tool Contract implementation."""
 
-from unittest.mock import MagicMock
 
 import pytest
-
+from schemas import MarkdownBlock, ReferenceItem, ReferencesBlock, TableBlock
 from schemas.tool_contracts import ExecutorResult, ToolCall
-from schemas import MarkdownBlock, ReferencesBlock, ReferenceItem, TableBlock
 
 
 class TestExecutorResultStructure:

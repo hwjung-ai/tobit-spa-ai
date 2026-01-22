@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
-from openai import AsyncOpenAI, OpenAI
-
 from core.config import get_settings
+from openai import AsyncOpenAI, OpenAI
 
 
 class LlmClient:

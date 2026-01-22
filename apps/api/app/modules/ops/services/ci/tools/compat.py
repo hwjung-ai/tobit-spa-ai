@@ -11,6 +11,7 @@ without changing existing code.
 from __future__ import annotations
 
 from typing import Any, Dict
+
 from app.modules.ops.services.ci.tools.base import ToolResult
 
 

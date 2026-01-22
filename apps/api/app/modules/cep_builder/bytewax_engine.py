@@ -1,10 +1,9 @@
 """Bytewax-based Complex Event Processing engine for Rule composition and pattern matching"""
 
-import json
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional, Callable, Any
 from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +231,7 @@ class EnrichmentProcessor(EventProcessor):
             elif enrichment_type == "calculate":
                 # Calculate derived field
                 field_name = enrichment_spec.get("name")
-                formula = enrichment_spec.get("formula")
+                enrichment_spec.get("formula")
                 # Simple field mapping for now
                 enriched[field_name] = "calculated_value"
 

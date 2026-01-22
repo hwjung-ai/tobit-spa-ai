@@ -3,15 +3,21 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List
 
+from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
+from schemas import ResponseEnvelope
 from sqlmodel import Session, select
 
 from app.modules.audit_log.crud import get_audit_logs_by_trace
 from app.modules.audit_log.models import TbAuditLog
 from app.modules.inspector import crud
-from app.modules.inspector.schemas import ExecutionTraceRead, TraceSummary, UIRenderPayload
-from core.db import get_session
-from schemas import ResponseEnvelope
+from app.modules.inspector.regression import service
+from app.modules.inspector.regression.schemas import RegressionAnalysisRequest
+from app.modules.inspector.schemas import (
+    ExecutionTraceRead,
+    TraceSummary,
+    UIRenderPayload,
+)
 
 router = APIRouter(prefix="/inspector", tags=["inspector"])
 
@@ -33,6 +39,8 @@ def list_traces(
     offset: int = Query(0, ge=0),
     asset_id: str | None = Query(None),
     parent_trace_id: str | None = Query(None),
+    route: str | None = Query(None, description="Filter by route: direct, orch, reject"),
+    replan_count: int | None = Query(None, description="Filter by number of replans"),
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
     traces, total = crud.list_execution_traces(
@@ -44,6 +52,8 @@ def list_traces(
         to_ts=to_ts,
         asset_id=asset_id,
         parent_trace_id=parent_trace_id,
+        route=route,
+        replan_count=replan_count,
         limit=limit,
         offset=offset,
     )
@@ -125,3 +135,44 @@ def post_ui_render(
     session.commit()
     session.refresh(trace)
     return ResponseEnvelope.success(data={"trace_id": trace.trace_id})
+
+
+@router.post("/regression/analyze", response_model=ResponseEnvelope)
+async def analyze_regression(
+    request: RegressionAnalysisRequest,
+) -> ResponseEnvelope:
+    """Perform regression analysis between two traces."""
+    try:
+        result = await service.regression_service.analyze_stage_regression(request)
+        return ResponseEnvelope.success(data=result.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/regression/{analysis_id}", response_model=ResponseEnvelope)
+def get_regression_analysis(
+    analysis_id: str,
+) -> ResponseEnvelope:
+    """Get regression analysis by ID."""
+    analysis = service.regression_service.analysis_registry.get(analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail=f"Analysis {analysis_id} not found")
+    return ResponseEnvelope.success(data=analysis.model_dump())
+
+
+@router.post("/regression/stage-compare", response_model=ResponseEnvelope)
+async def compare_stages(
+    baseline_trace_id: str,
+    comparison_trace_id: str,
+    stages: list[str] | None = None,
+) -> ResponseEnvelope:
+    """Compare stages between two traces directly."""
+    try:
+        result = await service.regression_service.compare_stages_direct(
+            baseline_trace_id,
+            comparison_trace_id,
+            stages
+        )
+        return ResponseEnvelope.success(data=result.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

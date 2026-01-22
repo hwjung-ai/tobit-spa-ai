@@ -1,0 +1,29 @@
+/home/spa/tobit-spa-ai/apps/api/.venv/lib/python3.12/site-packages/sqlmodel/main.py:534: UserWarning: Field name "metadata" in "AliasMapping" shadows an attribute in parent "SQLModel"
+  new_cls = super().__new__(cls, name, bases, dict_used, **config_kwargs)
+/home/spa/tobit-spa-ai/apps/api/.venv/lib/python3.12/site-packages/sqlmodel/main.py:534: UserWarning: Field name "metadata" in "PatternRule" shadows an attribute in parent "SQLModel"
+  new_cls = super().__new__(cls, name, bases, dict_used, **config_kwargs)
+/home/spa/tobit-spa-ai/apps/api/.venv/lib/python3.12/site-packages/sqlmodel/main.py:534: UserWarning: Field name "metadata" in "TransformationRule" shadows an attribute in parent "SQLModel"
+  new_cls = super().__new__(cls, name, bases, dict_used, **config_kwargs)
+/home/spa/tobit-spa-ai/apps/api/.venv/lib/python3.12/site-packages/sqlmodel/main.py:534: UserWarning: Field name "metadata" in "ResolverRule" shadows an attribute in parent "SQLModel"
+  new_cls = super().__new__(cls, name, bases, dict_used, **config_kwargs)
+/home/spa/tobit-spa-ai/apps/api/.venv/lib/python3.12/site-packages/sqlmodel/main.py:534: UserWarning: Field name "metadata" in "ResolverSimulationResult" shadows an attribute in parent "SQLModel"
+  new_cls = super().__new__(cls, name, bases, dict_used, **config_kwargs)
+Tool type ci already registered; skipping re-registration
+Tool type graph already registered; skipping re-registration
+Tool type metric already registered; skipping re-registration
+Tool type history already registered; skipping re-registration
+Tool type cep already registered; skipping re-registration
+/home/spa/tobit-spa-ai/apps/api/main.py:78: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/home/spa/tobit-spa-ai/apps/api/main.py:114: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")

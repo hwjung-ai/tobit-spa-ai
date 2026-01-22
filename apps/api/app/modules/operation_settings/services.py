@@ -2,14 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.config import AppSettings
 from sqlmodel import Session
 
-from core.config import AppSettings
 from app.modules.operation_settings.crud import (
-    get_all_settings,
-    get_setting_by_key,
-    get_setting_effective_value,
     create_or_update_setting,
+    get_setting_effective_value,
 )
 
 

@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 import re
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Tuple
 
-from scripts.seed.utils import get_postgres_conn
 from schemas.tool_contracts import MetricAggregateResult, MetricSeriesResult
-from app.shared.config_loader import load_text
+from scripts.seed.utils import get_postgres_conn
+
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
     ToolContext,
     ToolResult,
     ToolType,
 )
+from app.shared.config_loader import load_text
 
 TIME_RANGES = {
     "last_1h": timedelta(hours=1),

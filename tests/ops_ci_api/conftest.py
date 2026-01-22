@@ -1,21 +1,21 @@
 from __future__ import annotations
 
+import json  # noqa: E402
+import os  # noqa: E402
+import random  # noqa: E402
 import sys
+from dataclasses import dataclass  # noqa: E402
 from pathlib import Path
+from typing import Any, Dict  # noqa: E402
+
+import httpx  # noqa: E402
+import pytest  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-import json
-import os
-import random
-from dataclasses import dataclass
-from typing import Any, Dict
 
-import pytest
-import httpx
-
-from apps.api.scripts.seed import seed_ci
+from apps.api.scripts.seed import seed_ci  # noqa: E402
 
 
 class ArtifactCollector:
@@ -45,7 +45,7 @@ class SeedCodeSampler:
             self.rnd.choice(seed_ci.ZONE_OPTIONS)  # system location allocation
             server_count = self.rnd.randint(4, 6)
             for server_idx in range(1, server_count + 1):
-                zone = self.rnd.choice(seed_ci.ZONE_OPTIONS)
+                self.rnd.choice(seed_ci.ZONE_OPTIONS)
                 self.rnd.choice(["active", "monitoring"])
                 server_code = f"srv-{system['code']}-{server_idx:02d}"
                 servers.append(server_code)

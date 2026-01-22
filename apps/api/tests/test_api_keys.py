@@ -4,11 +4,7 @@ import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlmodel import Session, create_engine, select
-from sqlmodel.pool import StaticPool
-
-from apps.api.app.modules.api_keys.crud import (
+from app.modules.api_keys.crud import (
     create_api_key,
     generate_api_key,
     get_api_key,
@@ -18,11 +14,13 @@ from apps.api.app.modules.api_keys.crud import (
     revoke_api_key,
     validate_api_key,
 )
-from apps.api.app.modules.api_keys.models import TbApiKey
-from apps.api.app.modules.auth.models import TbUser, UserRole
-from apps.api.core.db import get_session
-from apps.api.core.security import get_password_hash
-from apps.api.main import app
+from app.modules.auth.models import TbUser, UserRole
+from core.db import get_session
+from core.security import get_password_hash
+from fastapi.testclient import TestClient
+from main import app
+from sqlmodel import Session, create_engine
+from sqlmodel.pool import StaticPool
 
 
 @pytest.fixture
@@ -35,8 +33,8 @@ def session():
     )
 
     # Create all tables
-    from apps.api.app.modules.auth.models import TbUser, TbRefreshToken
     from apps.api.app.modules.api_keys.models import TbApiKey
+    from apps.api.app.modules.auth.models import TbRefreshToken, TbUser
 
     TbUser.metadata.create_all(engine)
     TbRefreshToken.metadata.create_all(engine)

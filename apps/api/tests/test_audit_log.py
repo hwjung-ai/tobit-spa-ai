@@ -3,10 +3,9 @@
 import uuid
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.modules.audit_log.crud import create_audit_log
 from core.db import get_session_context
+from fastapi.testclient import TestClient
 from main import app
 
 

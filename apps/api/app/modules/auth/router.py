@@ -4,14 +4,13 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from apps.api.app.modules.auth.models import (
     TbRefreshToken,
     TbUser,
     TbUserRead,
-    UserRole,
 )
 from apps.api.core.auth import get_current_user
 from apps.api.core.config import get_settings
@@ -20,7 +19,6 @@ from apps.api.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
-    get_password_hash,
     verify_password,
 )
 from apps.api.schemas.common import ResponseEnvelope

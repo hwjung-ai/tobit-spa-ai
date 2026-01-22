@@ -2,16 +2,17 @@
 
 import logging
 from datetime import datetime
-from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
-from sqlmodel import Session, select
+from typing import Optional
 
 from core.auth import get_current_user
 from core.db import get_session
-from models.api_definition import ApiDefinition, ApiScope, ApiMode
-from .services.sql_validator import SQLValidator
+from fastapi import APIRouter, Depends, HTTPException, Query
+from models.api_definition import ApiDefinition, ApiMode, ApiScope
+from pydantic import BaseModel
+from sqlmodel import Session, select
+
 from .services.api_service import ApiManagerService
+from .services.sql_validator import SQLValidator
 from .services.test_runner import ApiTestRunner
 
 logger = logging.getLogger(__name__)
@@ -266,7 +267,7 @@ async def update_api(
             raise HTTPException(status_code=404, detail="API not found")
 
         # Map frontend field names to backend field names
-        api_scope = ApiScope(request.api_type) if request.api_type in ["system", "custom"] else ApiScope.custom
+        ApiScope(request.api_type) if request.api_type in ["system", "custom"] else ApiScope.custom
         api_mode = ApiMode(request.logic_type) if request.logic_type in ["sql", "python", "workflow"] else ApiMode.sql
 
         # Update fields

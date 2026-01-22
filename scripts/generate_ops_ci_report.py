@@ -150,9 +150,9 @@ def generate_test_section(
     sections.append("")
 
     # 응답 상태
-    data = response.get("data") or {}
+    response.get("data") or {}
     sections.append("**응답 상태:**")
-    sections.append(f"- HTTP Status: 200 OK")
+    sections.append("- HTTP Status: 200 OK")
     sections.append(f"- API Code: {response.get('code', 'N/A')}")
     sections.append(f"- Message: {response.get('message', 'N/A')}")
     sections.append("")
@@ -201,7 +201,7 @@ def generate_test_section(
 
     # 원본 응답 경로
     raw_path = f"artifacts/ops_ci_api_raw/{test_name}.json"
-    sections.append(f"**원본 응답:**")
+    sections.append("**원본 응답:**")
     sections.append(f"- [`{raw_path}`]({raw_path})")
     sections.append("")
 

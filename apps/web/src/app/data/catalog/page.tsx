@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -50,9 +50,7 @@ export default function CatalogPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
-  const [schemas, setSchemas] = useState<SchemaAssetResponse[]>([]);
   const [selectedSchema, setSelectedSchema] = useState<SchemaAssetResponse | null>(null);
-  const [catalogs, setCatalogs] = useState<Record<string, SchemaCatalog>>({});
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
   const [scanOptions, setScanOptions] = useState({
     include_tables: [] as string[],
@@ -115,29 +113,23 @@ export default function CatalogPage() {
     },
   });
 
-  useEffect(() => {
-    if (schemasQuery.data) {
-      setSchemas(schemasQuery.data);
-    }
-  }, [schemasQuery.data, setSchemas]);
-
-  useEffect(() => {
-    if (catalogsQuery.data) {
-      const catalogMap: Record<string, SchemaCatalog> = {};
-      catalogsQuery.data.forEach((catalog) => {
-        catalogMap[catalog.asset_id] = {
-          name: catalog.name,
-          description: catalog.description,
-          source_ref: catalog.catalog.source_ref,
-          tables: catalog.catalog.tables,
-          last_scanned_at: catalog.catalog.last_scanned_at,
-          scan_status: catalog.catalog.scan_status,
-          scan_metadata: catalog.catalog.scan_metadata,
-        };
-      });
-      setCatalogs(catalogMap);
-    }
-  }, [catalogsQuery.data, setCatalogs]);
+  // Compute catalog map from query data directly
+  const catalogMap = useMemo(() => {
+    if (!catalogsQuery.data) return {};
+    const map: Record<string, SchemaCatalog> = {};
+    catalogsQuery.data.forEach((catalog) => {
+      map[catalog.asset_id] = {
+        name: catalog.name,
+        description: catalog.description,
+        source_ref: catalog.catalog.source_ref,
+        tables: catalog.catalog.tables,
+        last_scanned_at: catalog.catalog.last_scanned_at,
+        scan_status: catalog.catalog.scan_status,
+        scan_metadata: catalog.catalog.scan_metadata,
+      };
+    });
+    return map;
+  }, [catalogsQuery.data]);
 
   const handleScan = (sourceRef: string) => {
     const options = {
@@ -156,7 +148,7 @@ export default function CatalogPage() {
   };
 
   const renderScanDialog = (sourceRef: string) => {
-    const sourceName = schemas.find(s => s.asset_id === sourceRef)?.name || sourceRef;
+    const sourceName = schemasQuery.data?.find(s => s.asset_id === sourceRef)?.name || sourceRef;
 
     return (
       <Dialog open={isScanDialogOpen} onOpenChange={setIsScanDialogOpen}>
@@ -278,7 +270,7 @@ export default function CatalogPage() {
             leftPane={
               <div className="space-y-3">
                 <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                  Schemas ({schemas.length})
+                  Schemas ({schemasQuery.data?.length ?? 0})
                 </div>
                 <div className="custom-scrollbar max-h-[calc(100vh-300px)] space-y-2 overflow-auto pr-1">
                   {schemasQuery.isError && (
@@ -286,7 +278,7 @@ export default function CatalogPage() {
                       {formatError(schemasQuery.error)}
                     </div>
                   )}
-                  {schemas.map((schema) => (
+                  {schemasQuery.data?.map((schema) => (
                     <div
                       key={schema.asset_id}
                       className={`rounded-xl border px-3 py-2 cursor-pointer ${
@@ -318,8 +310,8 @@ export default function CatalogPage() {
                         )}
                       </div>
                     </div>
-                  ))}
-                  {schemas.length === 0 && (
+                  )) ?? []}
+                  {!schemasQuery.data || schemasQuery.data.length === 0 && (
                     <div className="text-center py-8 text-sm text-slate-400">
                       No schemas found
                     </div>
@@ -387,13 +379,13 @@ export default function CatalogPage() {
                     </Button>
                   </div>
 
-                  {catalogs[selectedSchema.asset_id] && (
+                  {catalogMap[selectedSchema.asset_id] && (
                     <div className="space-y-3">
                       <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
                         Tables
                       </div>
                       <div className="custom-scrollbar max-h-[400px] space-y-2 overflow-auto pr-1">
-                        {catalogs[selectedSchema.asset_id].tables.map((table) => (
+                        {catalogMap[selectedSchema.asset_id]?.tables.map((table) => (
                           <Card key={table.name} className="border-slate-800">
                             <CardHeader className="pb-2">
                               <CardTitle className="text-xs">
@@ -442,7 +434,7 @@ export default function CatalogPage() {
                     variant="outline"
                     className="w-full justify-start"
                     onClick={() => {
-                      if (schemas.length > 0) {
+                      if ((schemasQuery.data?.length ?? 0) > 0) {
                         setIsScanDialogOpen(true);
                       }
                     }}
@@ -485,7 +477,7 @@ export default function CatalogPage() {
                   All Tables
                 </div>
                 <div className="custom-scrollbar max-h-[calc(100vh-300px)] space-y-2 overflow-auto pr-1">
-                  {Object.entries(catalogs).flatMap(([schemaId, catalog]) =>
+                  {Object.entries(catalogMap).flatMap(([schemaId, catalog]) =>
                     catalog.tables.map((table) => ({
                       schemaId,
                       tableName: table.name,
@@ -502,8 +494,8 @@ export default function CatalogPage() {
                         {table.columns.length} columns
                       </div>
                     </div>
-                  ))}
-                  {Object.keys(catalogs).length === 0 && (
+                  )) ?? []}
+                  {Object.keys(catalogMap).length === 0 && (
                     <div className="text-center py-8 text-sm text-slate-400">
                       No tables found. Run a scan first.
                     </div>

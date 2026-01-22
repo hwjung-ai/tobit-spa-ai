@@ -120,7 +120,7 @@ export default function AssetImpactAnalyzer({
 }: AssetImpactAnalyzerProps) {
   const [selectedVersion, setSelectedVersion] = useState(currentVersion);
   const [impactData, setImpactData] = useState<ImpactAnalysis | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [compareMode, setCompareMode] = useState(false);
   const [compareVersions, setCompareVersions] = useState<string[]>([]);
 
@@ -185,7 +185,6 @@ export default function AssetImpactAnalyzer({
 
   useEffect(() => {
     // Simulate loading impact data
-    setLoading(true);
     const timer = setTimeout(() => {
       const mockImpact: ImpactAnalysis = {
         asset_id: assetId,
@@ -250,10 +249,9 @@ export default function AssetImpactAnalyzer({
     );
   };
 
-  // Memoize the VersionComparisonTable component to avoid recreating during render
-  const VersionComparisonTable = useMemo(() => {
-    const Component = () => {
-      if (!impactData || compareVersions.length < 2) return null;
+  // Render the VersionComparisonTable conditionally
+  const renderVersionComparison = () => {
+    if (!impactData || compareVersions.length < 2) return null;
 
     const [version1, version2] = compareVersions;
     const metrics1 = impactData.versions[version1];
@@ -335,9 +333,7 @@ export default function AssetImpactAnalyzer({
         </div>
       </div>
     );
-    };
-    return Object.assign(Component, { displayName: "VersionComparisonTable" });
-  }, [impactData, compareVersions]);
+  };
 
   if (loading) {
     return (
@@ -525,7 +521,7 @@ export default function AssetImpactAnalyzer({
         </div>
 
         {/* Version Comparison */}
-        <VersionComparisonTable />
+        {renderVersionComparison()}
 
         {/* Related Assets */}
         <div>

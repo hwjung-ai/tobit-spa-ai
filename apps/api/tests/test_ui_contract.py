@@ -9,15 +9,13 @@ Verifies:
 5. Trace recording with screen assets
 """
 
-import json
-import pytest
-from uuid import uuid4
 from datetime import datetime
-from sqlalchemy.orm import Session
+from uuid import uuid4
 
-from schemas.answer_blocks import UIScreenBlock, AnswerBlock
-from app.modules.asset_registry.schemas import AssetCreate, AssetRead, AssetStatus
+import pytest
+from app.modules.asset_registry.schemas import AssetCreate, AssetRead
 from app.modules.ops.services.binding_engine import BindingEngine, BindingError
+from schemas.answer_blocks import UIScreenBlock
 
 
 class TestUIScreenBlock:
@@ -366,7 +364,7 @@ class TestActionRegistry:
         ]
 
         for handler_id in handlers:
-            handler = registry.get(handler_id)
+            registry.get(handler_id)
             # Some may exist, that's ok for MVP
 
 
@@ -376,25 +374,6 @@ class TestIntegration:
     def test_screen_asset_and_ui_screen_block_integration(self):
         """Verify screen asset works with ui_screen block"""
         # Create screen asset
-        screen_asset_data = {
-            "asset_type": "screen",
-            "screen_id": "integration_test_screen",
-            "name": "Integration Test Screen",
-            "schema_json": {
-                "version": "1.0",
-                "layout": {"type": "grid"},
-                "components": [
-                    {
-                        "id": "title",
-                        "type": "text",
-                        "bind": "state.title",
-                        "label": "Title",
-                    }
-                ],
-                "state_schema": {"title": {"type": "string"}},
-            },
-            "created_by": "test@example.com",
-        }
 
         # Create block that references screen
         block = UIScreenBlock(

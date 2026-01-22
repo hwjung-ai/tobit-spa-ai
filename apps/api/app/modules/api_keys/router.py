@@ -1,7 +1,5 @@
 """API Keys management router."""
 
-from datetime import datetime
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
@@ -13,9 +11,7 @@ from apps.api.app.modules.api_keys.crud import (
     revoke_api_key,
 )
 from apps.api.app.modules.api_keys.models import (
-    TbApiKey,
     TbApiKeyCreate,
-    TbApiKeyRead,
 )
 from apps.api.app.modules.auth.models import TbUser
 from apps.api.core.auth import get_current_user

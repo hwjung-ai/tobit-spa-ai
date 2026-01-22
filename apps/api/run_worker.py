@@ -1,12 +1,14 @@
 import os
 import sys
+
 # apps/api 경로를 path에 추가하여 모듈 import 가능하게 함
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from pathlib import Path
+
 from dotenv import load_dotenv
 from redis import Redis
-from rq import Worker, Queue
+from rq import Queue, Worker
 
 # .env 파일 로드
 env_path = Path(__file__).parent / ".env"
@@ -22,7 +24,7 @@ if not REDIS_URL:
     sys.exit(1)
 
 def run():
-    print(f"[*] Starting RQ Worker for queues: documents")
+    print("[*] Starting RQ Worker for queues: documents")
     print(f"[*] Redis URL: {REDIS_URL}")
     
     try:

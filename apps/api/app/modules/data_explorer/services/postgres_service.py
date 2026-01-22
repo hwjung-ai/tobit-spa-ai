@@ -5,8 +5,8 @@ import re
 from typing import Any
 
 from core.config import AppSettings
-from app.modules.data_explorer.repositories import postgres_repo
 
+from app.modules.data_explorer.repositories import postgres_repo
 
 _FORBIDDEN_SQL = (
     "insert",

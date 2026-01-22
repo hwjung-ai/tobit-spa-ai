@@ -1,0 +1,2833 @@
+
+> web@0.1.0 test:e2e
+> playwright test
+
+
+Running 98 tests using 2 workers
+
+[1A[2K[1/98] [chromium] › tests-e2e/explore-ui.spec.ts:3:5 › Explore UI structure
+[1A[2K[2/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:20:7 › Inspector E2E Tests › Case1: /ops/query -> Open in Inspector navigation
+[1A[2K  1) [chromium] › tests-e2e/inspector_e2e.spec.ts:20:7 › Inspector E2E Tests › Case1: /ops/query -> Open in Inspector navigation 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="inspector-drawer"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="inspector-drawer"]')[22m
+
+
+      37 |       // Verify inspector drawer is loaded
+      38 |       const drawer = page.locator('[data-testid="inspector-drawer"]');
+    > 39 |       await expect(drawer).toBeVisible({ timeout: 5000 });
+         |                            ^
+      40 |     } else {
+      41 |       // If button not visible, at least verify /ops/query loads
+      42 |       await expect(page).toHaveURL(/.*\/ops\/query.*/);
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/inspector_e2e.spec.ts:39:28
+
+    Error Context: test-results/inspector_e2e-Inspector-E2-4126b-pen-in-Inspector-navigation-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/explore-ui.spec.ts:3:5 › Explore UI structure
+=== BUTTONS ===
+
+[1A[2K[0] Ddebug@devADMIN | testId: null | disabled: false
+
+[1A[2K
+=== INPUTS ===
+
+[1A[2K
+=== SCREEN STRUCTURE ===
+
+[1A[2K<div hidden=""><!--$--><!--/$--></div><div class="min-h-screen bg-slate-950 text-slate-100"><header class="flex items-center justify-between border-b border-slate-800 px-6 py-4"><div><p class="text-xs uppercase tracking-[0.3em] text-slate-500">Tobit SPA AI</p><h1 class="text-2xl font-semibold text-white">Intelligent Ops Studio</h1></div><nav class="flex items-center gap-6"><a class="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-950/70 text-slate-200 transition hover:border-slate-600" title="CEP Event Browser" href="/cep-events"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4"><path d="M12 2a7 7 0 0 0-7 7v3.2l-1.2 2.4A1 1 0 0 0 4.7 16h14.6a1 1 0 0 0 .9-1.4L19 12.2V9a7 7 0 0 0-7-7zm0 20a2.5 2.5 0 0 0 2.4-2H9.6A2.5 2.5 0 0 0 12 22z"></path></svg></a><nav class="flex gap-4 text-sm uppercase tracking-[0.3em]"><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/">Chat</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/documents">Docs</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/ops">Ops</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/api-manager">API</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/ui/screens">Screens</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/cep-builder">CEP</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/data">Data</a><a class="transition border-b-2 pb-1 border-transparent text-slate-400 hover:border-slate-600 hover:text-white" href="/admin/assets">Adm
+
+[1A[2K[3/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:47:7 › Inspector E2E Tests › Case2: Inspector Drawer - Flow section with empty-state handling
+[1A[2K[4/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:80:7 › Inspector E2E Tests › Case3: Drawer header "Run RCA" triggers POST /ops/rca (single mode) and navigates
+[1A[2K  2) [chromium] › tests-e2e/inspector_e2e.spec.ts:80:7 › Inspector E2E Tests › Case3: Drawer header "Run RCA" triggers POST /ops/rca (single mode) and navigates 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="inspector-drawer"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="inspector-drawer"]')[22m
+
+
+      109 |     // Verify drawer is visible
+      110 |     const drawer = page.locator('[data-testid="inspector-drawer"]');
+    > 111 |     await expect(drawer).toBeVisible();
+          |                          ^
+      112 |
+      113 |     // Click Run RCA button
+      114 |     const runRcaBtn = page.locator('[data-testid="drawer-run-rca"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/inspector_e2e.spec.ts:111:26
+
+    Error Context: test-results/inspector_e2e-Inspector-E2-00d63-a-single-mode-and-navigates-chromium/error-context.md
+
+
+[1A[2K  3) [chromium] › tests-e2e/inspector_e2e.spec.ts:47:7 › Inspector E2E Tests › Case2: Inspector Drawer - Flow section with empty-state handling 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="inspector-drawer"]')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('[data-testid="inspector-drawer"]')[22m
+
+
+      55 |     // Verify drawer is visible
+      56 |     const drawer = page.locator('[data-testid="inspector-drawer"]');
+    > 57 |     await expect(drawer).toBeVisible({ timeout: 5000 });
+         |                          ^
+      58 |
+      59 |     // Verify Flow section exists
+      60 |     const flowSection = page.locator('[data-testid="flow-section"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/inspector_e2e.spec.ts:57:26
+
+    Error Context: test-results/inspector_e2e-Inspector-E2-33434-n-with-empty-state-handling-chromium/error-context.md
+
+
+[1A[2K[5/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:140:7 › Inspector E2E Tests › Case3B: Run RCA error handling - alert on failure
+[1A[2K[6/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:180:7 › Inspector E2E Tests › Case4: Compare flow - Diff overlay with RCA in diff mode
+[1A[2K[7/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:257:7 › Inspector E2E Tests › Case5: /admin/regression page loads and renders panel
+[1A[2K[8/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:281:7 › Inspector E2E Tests › Additional: Inspector trace row navigation
+[1A[2K[9/98] [chromium] › tests-e2e/inspector_e2e.spec.ts:304:7 › RCA API Contract Tests › RCA single mode request body validation
+[1A[2K[10/98] [chromium] › tests-e2e/integration_test.spec.ts:3:5 › integration test: homepage loads and has navigation
+[1A[2K  4) [chromium] › tests-e2e/integration_test.spec.ts:3:5 › integration test: homepage loads and has navigation 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('nav')
+    Expected: visible
+    Error: strict mode violation: locator('nav') resolved to 2 elements:
+        1) <nav class="flex items-center gap-6">…</nav> aka getByRole('navigation').first()
+        2) <nav class="flex gap-4 text-sm uppercase tracking-[0.3em]">…</nav> aka getByText('ChatDocsOpsAPIScreensCEPDataAdmin')
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('nav')[22m
+
+
+       7 |   // Check if navigation elements are present
+       8 |   const nav = page.locator('nav');
+    >  9 |   await expect(nav).toBeVisible();
+         |                     ^
+      10 |
+      11 |   // Test a simple interaction if possible
+      12 |   const header = page.getByRole('heading', { name: 'Intelligent Ops Studio' });
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/integration_test.spec.ts:9:21
+
+    Error Context: test-results/integration_test-integrati-6654f-ge-loads-and-has-navigation-chromium/error-context.md
+
+
+[1A[2K[11/98] [chromium] › tests-e2e/ops_e2e.spec.ts:15:7 › Ops Query and Inspector Integration › Case1: /ops/query -> Open in Inspector - Complete Flow
+[1A[2K[chromium] › tests-e2e/ops_e2e.spec.ts:15:7 › Ops Query and Inspector Integration › Case1: /ops/query -> Open in Inspector - Complete Flow
+Navigated to /ops/query
+
+[1A[2KOpen in Inspector button found
+
+[1A[2KNavigated to inspector with trace_id
+
+[1A[2K  5) [chromium] › tests-e2e/inspector_e2e.spec.ts:257:7 › Inspector E2E Tests › Case5: /admin/regression page loads and renders panel 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="regression-panel"]')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('[data-testid="regression-panel"]')[22m
+
+
+      265 |     // Verify regression panel is rendered
+      266 |     const regressionPanel = page.locator('[data-testid="regression-panel"]');
+    > 267 |     await expect(regressionPanel).toBeVisible({ timeout: 10000 });
+          |                                   ^
+      268 |
+      269 |     // Verify essential controls exist
+      270 |     // These could be buttons, inputs, or other form elements for regression testing
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/inspector_e2e.spec.ts:267:35
+
+    Error Context: test-results/inspector_e2e-Inspector-E2-474d5-age-loads-and-renders-panel-chromium/error-context.md
+
+
+[1A[2K[12/98] [chromium] › tests-e2e/ops_e2e.spec.ts:56:7 › Ops Query and Inspector Integration › Case2: Inspector Drawer - Flow section is visible with proper empty-state handling
+[1A[2K[chromium] › tests-e2e/ops_e2e.spec.ts:56:7 › Ops Query and Inspector Integration › Case2: Inspector Drawer - Flow section is visible with proper empty-state handling
+Navigated to inspector with trace_id=test-trace-empty-flow
+
+[1A[2K  6) [chromium] › tests-e2e/ops_e2e.spec.ts:15:7 › Ops Query and Inspector Integration › Case1: /ops/query -> Open in Inspector - Complete Flow 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="inspector-drawer"]')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('[data-testid="inspector-drawer"]')[22m
+
+
+      38 |       // 6. Verify inspector drawer loaded
+      39 |       const drawer = page.locator('[data-testid="inspector-drawer"]');
+    > 40 |       await expect(drawer).toBeVisible({ timeout: 10000 });
+         |                            ^
+      41 |       console.log('Inspector drawer is visible');
+      42 |
+      43 |       // 7. Extract and log trace_id from URL
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/ops_e2e.spec.ts:40:28
+
+    Error Context: test-results/ops_e2e-Ops-Query-and-Insp-5bbfe-n-Inspector---Complete-Flow-chromium/error-context.md
+
+
+[1A[2K[13/98] [chromium] › tests-e2e/ops_e2e.spec.ts:100:7 › Ops Query and Inspector Integration › Case3: Drawer header "Run RCA" triggers POST /ops/rca (single) and redirects
+[1A[2K  7) [chromium] › tests-e2e/ops_e2e.spec.ts:56:7 › Ops Query and Inspector Integration › Case2: Inspector Drawer - Flow section is visible with proper empty-state handling 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="inspector-drawer"]')
+    Expected: visible
+    Timeout: 15000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 15000ms[22m
+    [2m  - waiting for locator('[data-testid="inspector-drawer"]')[22m
+
+
+      64 |     // 2. Verify inspector drawer is visible
+      65 |     const drawer = page.locator('[data-testid="inspector-drawer"]');
+    > 66 |     await expect(drawer).toBeVisible({ timeout: 15000 });
+         |                          ^
+      67 |     console.log('Inspector drawer is visible');
+      68 |
+      69 |     // 3. Verify Flow section exists
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/ops_e2e.spec.ts:66:26
+
+    Error Context: test-results/ops_e2e-Ops-Query-and-Insp-a6379-proper-empty-state-handling-chromium/error-context.md
+
+
+[1A[2K[14/98] [chromium] › tests-e2e/ops_e2e.spec.ts:178:7 › Ops Query and Inspector Integration › Case4: Compare -> Diff overlay -> Run RCA (diff mode) with API validation
+[1A[2K  8) [chromium] › tests-e2e/ops_e2e.spec.ts:100:7 › Ops Query and Inspector Integration › Case3: Drawer header "Run RCA" triggers POST /ops/rca (single) and redirects 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="inspector-drawer"]')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('[data-testid="inspector-drawer"]')[22m
+
+
+      140 |     // 6. Verify drawer loaded
+      141 |     const drawer = page.locator('[data-testid="inspector-drawer"]');
+    > 142 |     await expect(drawer).toBeVisible({ timeout: 10000 });
+          |                          ^
+      143 |     console.log('Inspector drawer loaded');
+      144 |
+      145 |     // 7. Click Run RCA button
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/ops_e2e.spec.ts:142:26
+
+    Error Context: test-results/ops_e2e-Ops-Query-and-Insp-c8065-ps-rca-single-and-redirects-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/ops_e2e.spec.ts:178:7 › Ops Query and Inspector Integration › Case4: Compare -> Diff overlay -> Run RCA (diff mode) with API validation
+Opened baseline trace: trace-baseline-diff-001
+
+[1A[2KCompare button not visible
+
+[1A[2K[15/98] [chromium] › tests-e2e/ops_e2e.spec.ts:337:7 › Network Request Validation › Validate RCA API request/response contract
+[1A[2K[16/98] [chromium] › tests-e2e/ops_e2e.spec.ts:292:7 › Ops Query and Inspector Integration › Case5: /admin/regression page loads and renders regression panel
+[1A[2K[chromium] › tests-e2e/ops_e2e.spec.ts:292:7 › Ops Query and Inspector Integration › Case5: /admin/regression page loads and renders regression panel
+Navigated to /admin/regression
+
+[1A[2K[17/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:10:7 › RCA Comprehensive Test Suite › Setup: Create test trace with data
+[1A[2KRegression panel not visible - checking page structure
+
+[1A[2KPage title: Intelligent Ops Studio
+
+[1A[2K[18/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:36:7 › RCA Comprehensive Test Suite › Test 1: First RCA execution - should create new trace
+[1A[2K[chromium] › tests-e2e/rca_comprehensive_test.spec.ts:36:7 › RCA Comprehensive Test Suite › Test 1: First RCA execution - should create new trace
+
+📋 Test 1: First RCA execution
+
+[1A[2KInput trace_id: [90mundefined[39m
+
+[1A[2K  9) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:10:7 › RCA Comprehensive Test Suite › Setup: Create test trace with data 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/inspector/traces[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 310[22m
+
+
+      10 |   test('Setup: Create test trace with data', async ({ page }) => {
+      11 |     // Create a sample trace to work with
+    > 12 |     const traceResponse = await page.request.post(`${API_BASE_URL}/inspector/traces`, {
+         |                                              ^
+      13 |       data: {
+      14 |         trace_id: 'test-rca-trace-' + Date.now(),
+      15 |         feature: 'test',
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:12:46
+
+
+[1A[2K  10) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:36:7 › RCA Comprehensive Test Suite › Test 1: First RCA execution - should create new trace 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 88[22m
+
+
+      38 |     console.log('Input trace_id:', testTraceId);
+      39 |
+    > 40 |     const response = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+         |                                         ^
+      41 |       data: {
+      42 |         mode: 'single',
+      43 |         trace_id: testTraceId,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:40:41
+
+
+[1A[2K[19/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:67:7 › RCA Comprehensive Test Suite › Test 2: Verify first RCA trace is in database
+[1A[2K[20/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:87:7 › RCA Comprehensive Test Suite › Test 3: Second RCA execution on same source - should work
+[1A[2K[chromium] › tests-e2e/rca_comprehensive_test.spec.ts:67:7 › RCA Comprehensive Test Suite › Test 2: Verify first RCA trace is in database
+
+📋 Test 2: Verify RCA trace in database
+
+[1A[2KLooking for trace: [90mundefined[39m
+
+[1A[2K[chromium] › tests-e2e/rca_comprehensive_test.spec.ts:87:7 › RCA Comprehensive Test Suite › Test 3: Second RCA execution on same source - should work
+
+📋 Test 3: Second RCA execution on same source
+
+[1A[2KSource trace_id: [90mundefined[39m
+
+[1A[2K  11) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:87:7 › RCA Comprehensive Test Suite › Test 3: Second RCA execution on same source - should work 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 88[22m
+
+
+      89 |     console.log('Source trace_id:', testTraceId);
+      90 |
+    > 91 |     const response = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+         |                                         ^
+      92 |       data: {
+      93 |         mode: 'single',
+      94 |         trace_id: testTraceId,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:91:41
+
+
+[1A[2K  12) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:67:7 › RCA Comprehensive Test Suite › Test 2: Verify first RCA trace is in database 
+
+    Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → GET http://localhost:8000/inspector/traces/undefined[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      72 |     await page.waitForTimeout(500);
+      73 |
+    > 74 |     const response = await page.request.get(`${API_BASE_URL}/inspector/traces/${firstRcaTraceId}`);
+         |                                         ^
+      75 |
+      76 |     console.log('Response status:', response.status());
+      77 |     const body = await response.json();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:74:41
+
+
+[1A[2K[21/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:119:7 › RCA Comprehensive Test Suite › Test 4: RCA on previous RCA trace - should work
+[1A[2K[chromium] › tests-e2e/rca_comprehensive_test.spec.ts:119:7 › RCA Comprehensive Test Suite › Test 4: RCA on previous RCA trace - should work
+
+📋 Test 4: RCA on previous RCA trace
+
+[1A[2KRCA trace_id: [90mundefined[39m
+
+[1A[2K  13) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:119:7 › RCA Comprehensive Test Suite › Test 4: RCA on previous RCA trace - should work 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 88[22m
+
+
+      121 |     console.log('RCA trace_id:', firstRcaTraceId);
+      122 |
+    > 123 |     const response = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+          |                                         ^
+      124 |       data: {
+      125 |         mode: 'single',
+      126 |         trace_id: firstRcaTraceId,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:123:41
+
+
+[1A[2K[22/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:150:7 › RCA Comprehensive Test Suite › Test 5: RCA diff mode - compare two traces
+[1A[2K[chromium] › tests-e2e/rca_comprehensive_test.spec.ts:150:7 › RCA Comprehensive Test Suite › Test 5: RCA diff mode - compare two traces
+
+📋 Test 5: RCA diff mode
+
+[1A[2K  14) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:150:7 › RCA Comprehensive Test Suite › Test 5: RCA diff mode - compare two traces 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 86[22m
+
+
+      151 |     console.log('\n📋 Test 5: RCA diff mode');
+      152 |
+    > 153 |     const response = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+          |                                         ^
+      154 |       data: {
+      155 |         mode: 'diff',
+      156 |         baseline_trace_id: testTraceId,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:153:41
+
+
+[1A[2K[23/98] [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:184:7 › RCA Comprehensive Test Suite › Test 6: Regression page API check
+[1A[2K[chromium] › tests-e2e/rca_comprehensive_test.spec.ts:184:7 › RCA Comprehensive Test Suite › Test 6: Regression page API check
+
+📋 Test 6: Regression page - golden queries
+
+[1A[2K  15) [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:184:7 › RCA Comprehensive Test Suite › Test 6: Regression page API check 
+
+    Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → GET http://localhost:8000/ops/golden-queries[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+      185 |     console.log('\n📋 Test 6: Regression page - golden queries');
+      186 |
+    > 187 |     const response = await page.request.get(`${API_BASE_URL}/ops/golden-queries`);
+          |                                         ^
+      188 |
+      189 |     console.log('Response status:', response.status());
+      190 |     if (response.ok()) {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_comprehensive_test.spec.ts:187:41
+
+
+[1A[2K[24/98] [chromium] › tests-e2e/rca_real_trace_test.spec.ts:9:7 › RCA Real Trace Test › Get existing trace
+[1A[2K[chromium] › tests-e2e/rca_real_trace_test.spec.ts:9:7 › RCA Real Trace Test › Get existing trace
+
+🔍 Checking if trace exists
+
+[1A[2K  16) [chromium] › tests-e2e/rca_real_trace_test.spec.ts:9:7 › RCA Real Trace Test › Get existing trace 
+
+    Error: apiRequestContext.get: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → GET http://localhost:8000/inspector/traces/6c9dcb5d-8e01-4b7f-b4f1-11b2b6bca1cd[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+
+
+       9 |   test('Get existing trace', async ({ page }) => {
+      10 |     console.log('\n🔍 Checking if trace exists');
+    > 11 |     const response = await page.request.get(`${API_BASE_URL}/inspector/traces/${REAL_TRACE_ID}`);
+         |                                         ^
+      12 |
+      13 |     console.log('Status:', response.status());
+      14 |     if (response.ok()) {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_real_trace_test.spec.ts:11:41
+
+
+[1A[2K[25/98] [chromium] › tests-e2e/rca_real_trace_test.spec.ts:24:7 › RCA Real Trace Test › First RCA execution
+[1A[2K[chromium] › tests-e2e/rca_real_trace_test.spec.ts:24:7 › RCA Real Trace Test › First RCA execution
+
+🚀 First RCA execution
+
+[1A[2KSource trace: 6c9dcb5d-8e01-4b7f-b4f1-11b2b6bca1cd
+
+[1A[2K  17) [chromium] › tests-e2e/rca_real_trace_test.spec.ts:24:7 › RCA Real Trace Test › First RCA execution 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 138[22m
+
+
+      26 |     console.log('Source trace:', REAL_TRACE_ID);
+      27 |
+    > 28 |     const response = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+         |                                         ^
+      29 |       data: {
+      30 |         mode: 'single',
+      31 |         trace_id: REAL_TRACE_ID,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_real_trace_test.spec.ts:28:41
+
+
+[1A[2K[26/98] [chromium] › tests-e2e/rca_real_trace_test.spec.ts:62:7 › RCA Real Trace Test › Second RCA on same source
+[1A[2K[chromium] › tests-e2e/rca_real_trace_test.spec.ts:62:7 › RCA Real Trace Test › Second RCA on same source
+
+🚀 Second RCA execution on same source
+
+[1A[2K  18) [chromium] › tests-e2e/rca_real_trace_test.spec.ts:62:7 › RCA Real Trace Test › Second RCA on same source 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 138[22m
+
+
+      63 |     console.log('\n🚀 Second RCA execution on same source');
+      64 |
+    > 65 |     const response = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+         |                                         ^
+      66 |       data: {
+      67 |         mode: 'single',
+      68 |         trace_id: REAL_TRACE_ID,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_real_trace_test.spec.ts:65:41
+
+
+[1A[2K[27/98] [chromium] › tests-e2e/rca_real_trace_test.spec.ts:94:7 › RCA Real Trace Test › RCA Diff mode
+[1A[2K[chromium] › tests-e2e/rca_real_trace_test.spec.ts:94:7 › RCA Real Trace Test › RCA Diff mode
+
+🚀 RCA Diff mode test
+
+[1A[2K  19) [chromium] › tests-e2e/rca_real_trace_test.spec.ts:94:7 › RCA Real Trace Test › RCA Diff mode 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 138[22m
+
+
+       96 |
+       97 |     // First create two RCA traces
+    >  98 |     const rca1 = await page.request.post(`${API_BASE_URL}/ops/rca`, {
+          |                                     ^
+       99 |       data: {
+      100 |         mode: 'single',
+      101 |         trace_id: REAL_TRACE_ID,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_real_trace_test.spec.ts:98:37
+
+
+[1A[2K[28/98] [chromium] › tests-e2e/rca_simple_test.spec.ts:6:7 › RCA Simple Test › RCA API should return valid trace_id
+[1A[2K  20) [chromium] › tests-e2e/rca_simple_test.spec.ts:6:7 › RCA Simple Test › RCA API should return valid trace_id 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 138[22m
+
+
+       8 |     const traceId = '6c9dcb5d-8e01-4b7f-b4f1-11b2b6bca1cd'; // Real trace from logs
+       9 |
+    > 10 |     const response = await page.request.post(`http://localhost:8000/ops/rca`, {
+         |                                         ^
+      11 |       data: {
+      12 |         mode: 'single',
+      13 |         trace_id: traceId,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_simple_test.spec.ts:10:41
+
+
+[1A[2K[29/98] [chromium] › tests-e2e/rca_simple_test.spec.ts:36:7 › RCA Simple Test › RCA trace should be retrievable
+[1A[2K  21) [chromium] › tests-e2e/rca_simple_test.spec.ts:36:7 › RCA Simple Test › RCA trace should be retrievable 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/rca[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 138[22m
+
+
+      38 |
+      39 |     // Run RCA
+    > 40 |     const rca_response = await page.request.post(`http://localhost:8000/ops/rca`, {
+         |                                             ^
+      41 |       data: {
+      42 |         mode: 'single',
+      43 |         trace_id: traceId,
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/rca_simple_test.spec.ts:40:45
+
+
+[1A[2K[30/98] [chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft
+[1A[2K[chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft
+
+========== STEP 1: LOGIN ==========
+
+[1A[2K[31/98] [chromium] › tests-e2e/save-draft-complete.spec.ts:43:7 › Save Draft - Complete Flow › Edit screen component and save draft
+[1A[2K[chromium] › tests-e2e/save-draft-complete.spec.ts:43:7 › Save Draft - Complete Flow › Edit screen component and save draft
+[TEST] Navigating to login
+
+[1A[2K[TEST] Logging in
+
+[1A[2K[TEST] Token after login: false
+
+[1A[2K  22) [chromium] › tests-e2e/save-draft-complete.spec.ts:43:7 › Save Draft - Complete Flow › Edit screen component and save draft 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mnull[39m
+
+      34 |     const token = await page.evaluate(() => localStorage.getItem('access_token'));
+      35 |     console.log(`[TEST] Token after login: ${!!token}`);
+    > 36 |     expect(token).toBeTruthy();
+         |                   ^
+      37 |   });
+      38 |
+      39 |   test.afterEach(async () => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-complete.spec.ts:36:19
+
+    Error Context: test-results/save-draft-complete-Save-D-cced2-en-component-and-save-draft-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft
+✅ Login successful: false
+
+[1A[2K
+========== STEP 2: NAVIGATE TO SCREENS ==========
+
+[1A[2K[32/98] [chromium] › tests-e2e/save-draft-debug.spec.ts:54:7 › Save Draft - Debug › Navigate to screen and attempt save draft
+[1A[2K[chromium] › tests-e2e/save-draft-debug.spec.ts:54:7 › Save Draft - Debug › Navigate to screen and attempt save draft
+[TEST] Navigating to login
+
+[1A[2K[TEST] Logging in
+
+[1A[2K[chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft
+✅ Found 0 screens
+
+[1A[2K
+========== STEP 3: CLICK FIRST SCREEN ==========
+
+[1A[2K[chromium] › tests-e2e/save-draft-debug.spec.ts:54:7 › Save Draft - Debug › Navigate to screen and attempt save draft
+[TEST] Token after login: false
+
+[1A[2K  23) [chromium] › tests-e2e/save-draft-debug.spec.ts:54:7 › Save Draft - Debug › Navigate to screen and attempt save draft 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mnull[39m
+
+      45 |     const token = await page.evaluate(() => localStorage.getItem('access_token'));
+      46 |     console.log(`[TEST] Token after login: ${!!token}`);
+    > 47 |     expect(token).toBeTruthy();
+         |                   ^
+      48 |   });
+      49 |
+      50 |   test.afterEach(async () => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-debug.spec.ts:47:19
+
+    Error Context: test-results/save-draft-debug-Save-Draf-f7755-reen-and-attempt-save-draft-chromium/error-context.md
+
+
+[1A[2K[33/98] [chromium] › tests-e2e/save-draft-detailed.spec.ts:49:7 › Save Draft - Detailed Testing › Save Draft - Full Flow with Network Monitoring
+[1A[2K[chromium] › tests-e2e/save-draft-detailed.spec.ts:49:7 › Save Draft - Detailed Testing › Save Draft - Full Flow with Network Monitoring
+[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2K[LOG] [HMR] connected
+
+[1A[2K[TEST] Navigated to login page
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[TEST] Submitted login form
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:3000/_next/static/chunks/src_d999a000._.js:162:188)
+    at Home.useEffect (http://localhost:3000/_next/static/chunks/src_d999a000._.js:210:13)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14876:22)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at commitHookEffectListMount (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7266:167)
+    at commitHookPassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7301:60)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8696:33)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:3000/_next/static/chunks/src_d999a000._.js:162:188)
+    at Home.useEffect (http://localhost:3000/_next/static/chunks/src_d999a000._.js:210:13)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14876:22)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at commitHookEffectListMount (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7266:167)
+    at commitHookPassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7301:60)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8786:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at doubleInvokeEffectsOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10092:133)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:79)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[TEST] URL change timeout, checking token
+
+[1A[2K[TEST] Token exists: false
+
+[1A[2K  24) [chromium] › tests-e2e/save-draft-detailed.spec.ts:49:7 › Save Draft - Detailed Testing › Save Draft - Full Flow with Network Monitoring 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mnull[39m
+
+      40 |     const token = await page.evaluate(() => localStorage.getItem('access_token'));
+      41 |     console.log(`[TEST] Token exists: ${!!token}`);
+    > 42 |     expect(token).toBeTruthy();
+         |                   ^
+      43 |   });
+      44 |
+      45 |   test.afterEach(async () => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-detailed.spec.ts:42:19
+
+    Error Context: test-results/save-draft-detailed-Save-D-ed489-low-with-Network-Monitoring-chromium/error-context.md
+
+
+[1A[2K[34/98] [chromium] › tests-e2e/save-draft-detailed.spec.ts:188:7 › Save Draft - Detailed Testing › Save Draft - Verify Endpoint Path
+[1A[2K[chromium] › tests-e2e/save-draft-detailed.spec.ts:188:7 › Save Draft - Detailed Testing › Save Draft - Verify Endpoint Path
+[INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2K[LOG] [HMR] connected
+
+[1A[2K[TEST] Navigated to login page
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[TEST] Submitted login form
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:3000/_next/static/chunks/src_d999a000._.js:162:188)
+    at Home.useEffect (http://localhost:3000/_next/static/chunks/src_d999a000._.js:210:13)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14876:22)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at commitHookEffectListMount (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7266:167)
+    at commitHookPassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7301:60)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8696:33)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:3000/_next/static/chunks/src_d999a000._.js:162:188)
+    at Home.useEffect (http://localhost:3000/_next/static/chunks/src_d999a000._.js:210:13)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14876:22)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at commitHookEffectListMount (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7266:167)
+    at commitHookPassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7301:60)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8786:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at doubleInvokeEffectsOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10092:133)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:79)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft
+
+❌ TEST FAILED
+
+[1A[2KError: Error: locator.getAttribute: Test ended.
+Call log:
+[2m  - waiting for locator('a[href*="/admin/screens/"]').first()[22m
+
+
+[1A[2K
+=== ALL CONSOLE LOGS ===
+
+[1A[2K[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2K[log] [HMR] connected
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:3000/_next/static/chunks/src_d999a000._.js:162:188)
+    at Home.useEffect (http://localhost:3000/_next/static/chunks/src_d999a000._.js:210:13)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14876:22)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at commitHookEffectListMount (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7266:167)
+    at commitHookPassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7301:60)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8696:33)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8700:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8695:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+    at recursivelyTraversePassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8683:316)
+    at commitPassiveMountOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8757:17)
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:3000/_next/static/chunks/src_d999a000._.js:162:188)
+    at Home.useEffect (http://localhost:3000/_next/static/chunks/src_d999a000._.js:210:13)
+    at Object.react_stack_bottom_frame (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14876:22)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at commitHookEffectListMount (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7266:167)
+    at commitHookPassiveMountEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:7301:60)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8786:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8800:17)
+    at recursivelyTraverseReconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8773:13)
+    at reconnectPassiveEffects (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:8785:17)
+    at doubleInvokeEffectsOnFiber (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10092:133)
+    at runWithFiberInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:965:74)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:79)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+    at recursivelyTraverseAndDoubleInvokeEffectsInDEV (http://localhost:3000/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:10085:147)
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2K[log] [HMR] connected
+
+[1A[2K[log] [API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.
+
+[1A[2K[log] [API] Fetching: /asset-registry/assets?asset_type=screen with method: GET
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[log] [API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.
+
+[1A[2K[log] [API] Fetching: /asset-registry/assets?asset_type=screen with method: GET
+
+[1A[2K[log] [API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.
+
+[1A[2K[log] [API] Fetching: /asset-registry/assets?asset_type=screen with method: GET
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K  25) [chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.getAttribute: Test ended.
+    Call log:
+    [2m  - waiting for locator('a[href*="/admin/screens/"]').first()[22m
+
+
+      51 |     console.log('\n========== STEP 3: CLICK FIRST SCREEN ==========');
+      52 |     const firstScreen = page.locator('a[href*="/admin/screens/"]').first();
+    > 53 |     const screenHref = await firstScreen.getAttribute('href');
+         |                                          ^
+      54 |     console.log(`📍 First screen: ${screenHref}`);
+      55 |
+      56 |     await firstScreen.click();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/reproduce-exact-error.spec.ts:53:42
+
+    Error Context: test-results/reproduce-exact-error-Exac-c1db3-ate-→-Add-Text-→-Save-Draft-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/save-draft-detailed.spec.ts:188:7 › Save Draft - Detailed Testing › Save Draft - Verify Endpoint Path
+[ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[35/98] [chromium] › tests-e2e/save-draft-exact.spec.ts:3:5 › Exact User Flow: List > First Screen > Add Text > Save Draft
+[1A[2K[TEST] URL change timeout, checking token
+
+[1A[2K[TEST] Token exists: false
+
+[1A[2K[chromium] › tests-e2e/save-draft-exact.spec.ts:3:5 › Exact User Flow: List > First Screen > Add Text > Save Draft
+
+=== EXACT USER FLOW REPRODUCTION ===
+
+
+[1A[2K[TEST] Step 1: LOGIN
+
+[1A[2K  26) [chromium] › tests-e2e/save-draft-detailed.spec.ts:188:7 › Save Draft - Detailed Testing › Save Draft - Verify Endpoint Path 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mnull[39m
+
+      40 |     const token = await page.evaluate(() => localStorage.getItem('access_token'));
+      41 |     console.log(`[TEST] Token exists: ${!!token}`);
+    > 42 |     expect(token).toBeTruthy();
+         |                   ^
+      43 |   });
+      44 |
+      45 |   test.afterEach(async () => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-detailed.spec.ts:42:19
+
+    Error Context: test-results/save-draft-detailed-Save-D-084b7-raft---Verify-Endpoint-Path-chromium/error-context.md
+
+
+[1A[2K[36/98] [chromium] › tests-e2e/save-draft-final.spec.ts:3:5 › Save Draft - Full Detailed Test
+[1A[2K[chromium] › tests-e2e/save-draft-final.spec.ts:3:5 › Save Draft - Full Detailed Test
+[TEST] === LOGIN ===
+
+[1A[2K[chromium] › tests-e2e/save-draft-exact.spec.ts:3:5 › Exact User Flow: List > First Screen > Add Text > Save Draft
+[TEST] Logged in: false
+
+[1A[2K[TEST] Step 2: GO TO SCREENS LIST
+
+[1A[2K[CONSOLE] [API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.
+
+[1A[2K[CONSOLE] [API] Fetching: /asset-registry/assets?asset_type=screen with method: GET
+
+[1A[2K[CONSOLE] [API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.
+
+[1A[2K[CONSOLE] [API] Fetching: /asset-registry/assets?asset_type=screen with method: GET
+
+[1A[2K[CONSOLE] [API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.
+
+[1A[2K[CONSOLE] [API] Fetching: /asset-registry/assets?asset_type=screen with method: GET
+
+[1A[2K[chromium] › tests-e2e/save-draft-final.spec.ts:3:5 › Save Draft - Full Detailed Test
+[TEST] Logged in: false
+
+[1A[2K[TEST] === OPEN SCREEN ===
+
+[1A[2K[chromium] › tests-e2e/save-draft-exact.spec.ts:3:5 › Exact User Flow: List > First Screen > Add Text > Save Draft
+[TEST] Found 0 screens in list
+
+[1A[2K[TEST] Step 3: CLICK FIRST SCREEN IN LIST
+
+[1A[2K[chromium] › tests-e2e/save-draft-final.spec.ts:3:5 › Save Draft - Full Detailed Test
+[TEST] === CHECK INITIAL STATE ===
+
+[1A[2K[TEST] Initial state:  {
+  saveDraftDisabled: [33mfalse[39m,
+  saveDraftText: [32m''[39m,
+  hasUnsavedIndicator: [33mfalse[39m
+}
+
+[1A[2K[TEST] === ADD TEXT COMPONENT ===
+
+[1A[2K[TEST] Clicking "Text" button from palette
+
+[1A[2K  27) [chromium] › tests-e2e/save-draft-exact.spec.ts:3:5 › Exact User Flow: List > First Screen > Add Text > Save Draft 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.getAttribute: Test ended.
+    Call log:
+    [2m  - waiting for locator('a[href*="/admin/screens/"]').first()[22m
+
+
+      38 |   console.log('[TEST] Step 3: CLICK FIRST SCREEN IN LIST');
+      39 |   const firstScreen = page.locator('a[href*="/admin/screens/"]').first();
+    > 40 |   const screenHref = await firstScreen.getAttribute('href');
+         |                                        ^
+      41 |   const screenIdMatch = screenHref?.match(/screens\/([\w-]+)/);
+      42 |   const screenId = screenIdMatch?.[1];
+      43 |   console.log(`[TEST] First screen ID: ${screenId}`);
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-exact.spec.ts:40:40
+
+    Error Context: test-results/save-draft-exact-Exact-Use-01620--Screen-Add-Text-Save-Draft-chromium/error-context.md
+
+
+[1A[2K[37/98] [chromium] › tests-e2e/save-draft-live.spec.ts:47:7 › Save Draft - Live Issue Reproduction › Reproduce exact user flow and capture error
+[1A[2K[chromium] › tests-e2e/save-draft-live.spec.ts:47:7 › Save Draft - Live Issue Reproduction › Reproduce exact user flow and capture error
+[TEST] === LOGIN ===
+
+[1A[2K  28) [chromium] › tests-e2e/save-draft-final.spec.ts:3:5 › Save Draft - Full Detailed Test ────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test ended.
+    Call log:
+    [2m  - waiting for locator('[data-testid="palette-component-text"]')[22m
+
+
+      50 |   const textComponentButton = page.locator('[data-testid="palette-component-text"]');
+      51 |   console.log('[TEST] Clicking "Text" button from palette');
+    > 52 |   await textComponentButton.click();
+         |                             ^
+      53 |   await new Promise(r => setTimeout(r, 1000));
+      54 |
+      55 |   // Check state after adding component
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-final.spec.ts:52:29
+
+    Error Context: test-results/save-draft-final-Save-Draft---Full-Detailed-Test-chromium/error-context.md
+
+
+[1A[2K[CONSOLE:info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+
+[1A[2K[CONSOLE:log] [HMR] connected
+
+[1A[2K[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[CONSOLE:error] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:
+
+[1A[2K[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[CONSOLE:error] Failed to load threads TypeError: Failed to fetch
+    at authenticatedFetch (http://localhost:3000/_next/static/chunks/src_d999a000._.js:18:28)
+    at Home.useCallback[fetchThreads] (http://localhost:
+
+[1A[2K[38/98] [chromium] › tests-e2e/screen-editor.spec.ts:46:7 › Screen Editor › should load screen list
+[1A[2K[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:46:7 › Screen Editor › should load screen list
+Token not found after login, checking page
+
+[1A[2K  29) [chromium] › tests-e2e/screen-editor.spec.ts:46:7 › Screen Editor › should load screen list ──
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Editor-should-load-screen-list-chromium/error-context.md
+
+
+[1A[2K[39/98] [chromium] › tests-e2e/screen-editor.spec.ts:58:7 › Screen Editor › should open visual editor for a screen
+[1A[2K[chromium] › tests-e2e/save-draft-live.spec.ts:47:7 › Save Draft - Live Issue Reproduction › Reproduce exact user flow and capture error
+[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[CONSOLE:error] Failed to load resource: net::ERR_CONNECTION_REFUSED
+
+[1A[2K[TEST] Token: false
+
+[1A[2K  30) [chromium] › tests-e2e/save-draft-live.spec.ts:47:7 › Save Draft - Live Issue Reproduction › Reproduce exact user flow and capture error 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mnull[39m
+
+      38 |     const token = await page.evaluate(() => localStorage.getItem('access_token'));
+      39 |     console.log(`[TEST] Token: ${!!token}`);
+    > 40 |     expect(token).toBeTruthy();
+         |                   ^
+      41 |   });
+      42 |
+      43 |   test.afterEach(async () => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/save-draft-live.spec.ts:40:19
+
+    Error Context: test-results/save-draft-live-Save-Draft-88b73-user-flow-and-capture-error-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:58:7 › Screen Editor › should open visual editor for a screen
+Token not found after login, checking page
+
+[1A[2K  31) [chromium] › tests-e2e/screen-editor.spec.ts:58:7 › Screen Editor › should open visual editor for a screen 
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Edito-f946f--visual-editor-for-a-screen-chromium/error-context.md
+
+
+[1A[2K[40/98] [chromium] › tests-e2e/screen-editor.spec.ts:82:7 › Screen Editor › should log authentication status in console
+[1A[2K[41/98] [chromium] › tests-e2e/screen-editor.spec.ts:107:7 › Screen Editor › should save draft successfully
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:82:7 › Screen Editor › should log authentication status in console
+Token not found after login, checking page
+
+[1A[2K  32) [chromium] › tests-e2e/screen-editor.spec.ts:82:7 › Screen Editor › should log authentication status in console 
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Edito-765db-ntication-status-in-console-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:107:7 › Screen Editor › should save draft successfully
+Token not found after login, checking page
+
+[1A[2K  33) [chromium] › tests-e2e/screen-editor.spec.ts:107:7 › Screen Editor › should save draft successfully 
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Editor-should-save-draft-successfully-chromium/error-context.md
+
+
+[1A[2K[42/98] [chromium] › tests-e2e/screen-editor.spec.ts:138:7 › Screen Editor › should show error if user is not authenticated
+[1A[2K[43/98] [chromium] › tests-e2e/screen-editor.spec.ts:154:7 › Screen Editor › should handle missing token gracefully
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:138:7 › Screen Editor › should show error if user is not authenticated
+Token not found after login, checking page
+
+[1A[2K  34) [chromium] › tests-e2e/screen-editor.spec.ts:138:7 › Screen Editor › should show error if user is not authenticated 
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Edito-41f9d-f-user-is-not-authenticated-chromium/error-context.md
+
+
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:154:7 › Screen Editor › should handle missing token gracefully
+Token not found after login, checking page
+
+[1A[2K  35) [chromium] › tests-e2e/screen-editor.spec.ts:154:7 › Screen Editor › should handle missing token gracefully 
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Edito-045fb-le-missing-token-gracefully-chromium/error-context.md
+
+
+[1A[2K[44/98] [chromium] › tests-e2e/screen-editor.spec.ts:193:7 › Screen Editor › should display API request logs in console
+[1A[2K[45/98] [chromium] › tests-e2e/smoke.spec.ts:3:5 › homepage has correct title
+[1A[2K[chromium] › tests-e2e/screen-editor.spec.ts:193:7 › Screen Editor › should display API request logs in console
+Token not found after login, checking page
+
+[1A[2K[46/98] [chromium] › tests-e2e/smoke.spec.ts:8:5 › homepage has correct header
+[1A[2K  36) [chromium] › tests-e2e/screen-editor.spec.ts:193:7 › Screen Editor › should display API request logs in console 
+
+    Error: Login failed
+
+      34 |       const loginError = await page.locator('text=/error|invalid|failed/i').isVisible().catch(() => false);
+      35 |       if (loginError) {
+    > 36 |         throw new Error('Login failed');
+         |               ^
+      37 |       }
+      38 |     }
+      39 |     expect(token).toBeTruthy();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/screen-editor.spec.ts:36:15
+
+    Error Context: test-results/screen-editor-Screen-Edito-af0c9-API-request-logs-in-console-chromium/error-context.md
+
+
+[1A[2K[47/98] [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:38:7 › U3-2-1: Screen Diff / Compare UI › should show Diff with modified components
+[1A[2K[48/98] [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:11:7 › U3-2-1: Screen Diff / Compare UI › should show Diff tab with added components
+[1A[2K  37) [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:38:7 › U3-2-1: Screen Diff / Compare UI › should show Diff with modified components 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should show Diff tab with added components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_diff_compare.spec.ts:8:16
+
+    Error Context: test-results/u3_2_diff_compare-U3-2-1-S-f1db5-ff-with-modified-components-chromium/error-context.md
+
+
+[1A[2K  38) [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:11:7 › U3-2-1: Screen Diff / Compare UI › should show Diff tab with added components 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should show Diff tab with added components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_diff_compare.spec.ts:8:16
+
+    Error Context: test-results/u3_2_diff_compare-U3-2-1-S-93397-f-tab-with-added-components-chromium/error-context.md
+
+
+[1A[2K[49/98] [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:68:7 › U3-2-1: Screen Diff / Compare UI › should show accurate diff summary counts
+[1A[2K[50/98] [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:11:7 › U3-2-2: Safe Publish Gate › should allow publish when all validation checks pass
+[1A[2K  39) [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:68:7 › U3-2-1: Screen Diff / Compare UI › should show accurate diff summary counts 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should show Diff tab with added components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_diff_compare.spec.ts:8:16
+
+    Error Context: test-results/u3_2_diff_compare-U3-2-1-S-62b51-ccurate-diff-summary-counts-chromium/error-context.md
+
+
+[1A[2K[51/98] [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:45:7 › U3-2-2: Safe Publish Gate › should block publish when binding validation fails
+[1A[2K  40) [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:11:7 › U3-2-2: Safe Publish Gate › should allow publish when all validation checks pass 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should allow publish when all validation checks pass", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_publish_gate.spec.ts:8:16
+
+    Error Context: test-results/u3_2_publish_gate-U3-2-2-S-ee2b3--all-validation-checks-pass-chromium/error-context.md
+
+
+[1A[2K[52/98] [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:85:7 › U3-2-2: Safe Publish Gate › should block publish when action validation fails
+[1A[2K  41) [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:45:7 › U3-2-2: Safe Publish Gate › should block publish when binding validation fails 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should allow publish when all validation checks pass", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_publish_gate.spec.ts:8:16
+
+    Error Context: test-results/u3_2_publish_gate-U3-2-2-S-668ad-en-binding-validation-fails-chromium/error-context.md
+
+
+[1A[2K  42) [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:85:7 › U3-2-2: Safe Publish Gate › should block publish when action validation fails 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should allow publish when all validation checks pass", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_publish_gate.spec.ts:8:16
+
+    Error Context: test-results/u3_2_publish_gate-U3-2-2-S-6108e-hen-action-validation-fails-chromium/error-context.md
+
+
+[1A[2K[53/98] [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:121:7 › U3-2-2: Safe Publish Gate › should allow publish with warnings from dry-run
+[1A[2K[54/98] [chromium] › tests-e2e/u3_2_template_creation.spec.ts:11:7 › U3-2-4: Template-based Screen Creation › should create blank screen when no template is selected
+[1A[2K  43) [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:121:7 › U3-2-2: Safe Publish Gate › should allow publish with warnings from dry-run 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="editor-tabs"]') to be visible[22m
+
+
+       6 |     await page.goto("/admin/ui-creator/screen-editor");
+       7 |     // Wait for editor to load
+    >  8 |     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
+         |                ^
+       9 |   });
+      10 |
+      11 |   test("should allow publish when all validation checks pass", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_publish_gate.spec.ts:8:16
+
+    Error Context: test-results/u3_2_publish_gate-U3-2-2-S-19d1b--with-warnings-from-dry-run-chromium/error-context.md
+
+
+[1A[2K[55/98] [chromium] › tests-e2e/u3_2_template_creation.spec.ts:36:7 › U3-2-4: Template-based Screen Creation › should create screen from Read-only Detail template
+[1A[2K  44) [chromium] › tests-e2e/u3_2_template_creation.spec.ts:11:7 › U3-2-4: Template-based Screen Creation › should create blank screen when no template is selected 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Screen created successfully') to be visible[22m
+
+
+      28 |
+      29 |     // Verify success toast
+    > 30 |     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
+         |                ^
+      31 |
+      32 |     // Verify screen appears in list
+      33 |     await expect(page.locator('text=Test Blank Screen')).toBeVisible();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_template_creation.spec.ts:30:16
+
+    Error Context: test-results/u3_2_template_creation-U3--80333-hen-no-template-is-selected-chromium/error-context.md
+
+
+[1A[2K[56/98] [chromium] › tests-e2e/u3_2_template_creation.spec.ts:74:7 › U3-2-4: Template-based Screen Creation › should create screen from List + Filter template
+[1A[2K  45) [chromium] › tests-e2e/u3_2_template_creation.spec.ts:36:7 › U3-2-4: Template-based Screen Creation › should create screen from Read-only Detail template 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Screen created successfully') to be visible[22m
+
+
+      56 |
+      57 |     // Verify success
+    > 58 |     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
+         |                ^
+      59 |
+      60 |     // Open the created screen in editor
+      61 |     await page.click('text=Device Details');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_template_creation.spec.ts:58:16
+
+    Error Context: test-results/u3_2_template_creation-U3--37d1e-m-Read-only-Detail-template-chromium/error-context.md
+
+
+[1A[2K[57/98] [chromium] › tests-e2e/u3_2_template_creation.spec.ts:112:7 › U3-2-4: Template-based Screen Creation › should create screen from List + Modal CRUD template
+[1A[2K  46) [chromium] › tests-e2e/u3_2_template_creation.spec.ts:74:7 › U3-2-4: Template-based Screen Creation › should create screen from List + Filter template 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Screen created successfully') to be visible[22m
+
+
+      94 |
+      95 |     // Verify success
+    > 96 |     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
+         |                ^
+      97 |
+      98 |     // Open the created screen
+      99 |     await page.click('text=Device List');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_template_creation.spec.ts:96:16
+
+    Error Context: test-results/u3_2_template_creation-U3--58228-n-from-List-Filter-template-chromium/error-context.md
+
+
+[1A[2K[58/98] [chromium] › tests-e2e/u3_2_template_creation.spec.ts:151:7 › U3-2-4: Template-based Screen Creation › should switch between templates in create modal
+[1A[2K[59/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:10:7 › U3 Visual Editor - Publish & Preview › should show save draft button for draft state
+[1A[2K  47) [chromium] › tests-e2e/u3_2_template_creation.spec.ts:112:7 › U3-2-4: Template-based Screen Creation › should create screen from List + Modal CRUD template 
+
+    TimeoutError: page.waitForSelector: Timeout 10000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('text=Screen created successfully') to be visible[22m
+
+
+      132 |
+      133 |     // Verify success
+    > 134 |     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
+          |                ^
+      135 |
+      136 |     // Open the created screen
+      137 |     await page.click('text=Device Management');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_2_template_creation.spec.ts:134:16
+
+    Error Context: test-results/u3_2_template_creation-U3--ebd35-om-List-Modal-CRUD-template-chromium/error-context.md
+
+
+[1A[2K[60/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:21:7 › U3 Visual Editor - Publish & Preview › should save draft and show success message
+[1A[2K  48) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:10:7 › U3 Visual Editor - Publish & Preview › should show save draft button for draft state 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--d064c-raft-button-for-draft-state-chromium/error-context.md
+
+
+[1A[2K[61/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:32:7 › U3 Visual Editor - Publish & Preview › should prevent publish with validation errors
+[1A[2K  49) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:21:7 › U3 Visual Editor - Publish & Preview › should save draft and show success message 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--de46b-ft-and-show-success-message-chromium/error-context.md
+
+
+[1A[2K[62/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:47:7 › U3 Visual Editor - Publish & Preview › should display screen in preview tab
+[1A[2K  50) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:32:7 › U3 Visual Editor - Publish & Preview › should prevent publish with validation errors 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--10fc6-lish-with-validation-errors-chromium/error-context.md
+
+
+[1A[2K[63/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:60:7 › U3 Visual Editor - Publish & Preview › should track unsaved changes indicator
+[1A[2K  51) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:47:7 › U3 Visual Editor - Publish & Preview › should display screen in preview tab 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--bf392-splay-screen-in-preview-tab-chromium/error-context.md
+
+
+[1A[2K[64/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:72:7 › U3 Visual Editor - Publish & Preview › should show publish button after save draft
+[1A[2K  52) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:60:7 › U3 Visual Editor - Publish & Preview › should track unsaved changes indicator 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--3c45e-k-unsaved-changes-indicator-chromium/error-context.md
+
+
+[1A[2K[65/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:84:7 › U3 Visual Editor - Publish & Preview › should show rollback option for published screens
+[1A[2K  53) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:72:7 › U3 Visual Editor - Publish & Preview › should show publish button after save draft 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--46eb7-ish-button-after-save-draft-chromium/error-context.md
+
+
+[1A[2K[66/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:96:7 › U3 Visual Editor - Publish & Preview › should handle component property changes in preview
+[1A[2K  54) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:84:7 › U3 Visual Editor - Publish & Preview › should show rollback option for published screens 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--10a39-ption-for-published-screens-chromium/error-context.md
+
+
+[1A[2K[67/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:110:7 › U3 Visual Editor - Publish & Preview › should show validation errors in preview
+[1A[2K  55) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:96:7 › U3 Visual Editor - Publish & Preview › should handle component property changes in preview 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--59f22-property-changes-in-preview-chromium/error-context.md
+
+
+[1A[2K[68/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:134:7 › U3 Visual Editor - Publish & Preview › should maintain editor state through tab switches
+[1A[2K  56) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:110:7 › U3 Visual Editor - Publish & Preview › should show validation errors in preview 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--11c65-alidation-errors-in-preview-chromium/error-context.md
+
+
+[1A[2K[69/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:158:7 › U3 Visual Editor - Publish & Preview › should handle error on failed publish
+[1A[2K  57) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:134:7 › U3 Visual Editor - Publish & Preview › should maintain editor state through tab switches 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--a507f--state-through-tab-switches-chromium/error-context.md
+
+
+[1A[2K[70/98] [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:175:7 › U3 Visual Editor - Publish & Preview › should reorder components and reflect in preview
+[1A[2K  58) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:158:7 › U3 Visual Editor - Publish & Preview › should handle error on failed publish 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--c5088-dle-error-on-failed-publish-chromium/error-context.md
+
+
+[1A[2K[71/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:10:7 › U3 Visual Editor - JSON Roundtrip › should create and persist a screen with components
+[1A[2K  59) [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:175:7 › U3 Visual Editor - Publish & Preview › should reorder components and reflect in preview 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - Publish & Preview", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should show save draft button for draft state", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_publish_preview.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_publish_preview--24cc3-ents-and-reflect-in-preview-chromium/error-context.md
+
+
+[1A[2K[72/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:21:7 › U3 Visual Editor - JSON Roundtrip › should add components through visual editor
+[1A[2K  60) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:10:7 › U3 Visual Editor - JSON Roundtrip › should create and persist a screen with components 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-be1e5-st-a-screen-with-components-chromium/error-context.md
+
+
+[1A[2K[73/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:32:7 › U3 Visual Editor - JSON Roundtrip › should sync visual editor changes to JSON
+[1A[2K  61) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:21:7 › U3 Visual Editor - JSON Roundtrip › should add components through visual editor 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-3fab4-nents-through-visual-editor-chromium/error-context.md
+
+
+[1A[2K[74/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:47:7 › U3 Visual Editor - JSON Roundtrip › should sync JSON changes back to visual editor
+[1A[2K  62) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:32:7 › U3 Visual Editor - JSON Roundtrip › should sync visual editor changes to JSON 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-c4bf0-sual-editor-changes-to-JSON-chromium/error-context.md
+
+
+[1A[2K[75/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:81:7 › U3 Visual Editor - JSON Roundtrip › should validate JSON and show errors for invalid structure
+[1A[2K  63) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:47:7 › U3 Visual Editor - JSON Roundtrip › should sync JSON changes back to visual editor 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-eb36e-anges-back-to-visual-editor-chromium/error-context.md
+
+
+[1A[2K[76/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:98:7 › U3 Visual Editor - JSON Roundtrip › should handle JSON format button
+[1A[2K  64) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:81:7 › U3 Visual Editor - JSON Roundtrip › should validate JSON and show errors for invalid structure 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-16caf-rrors-for-invalid-structure-chromium/error-context.md
+
+
+[1A[2K[77/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:116:7 › U3 Visual Editor - JSON Roundtrip › should preserve component order when adding components
+[1A[2K  65) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:98:7 › U3 Visual Editor - JSON Roundtrip › should handle JSON format button 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-9eede-d-handle-JSON-format-button-chromium/error-context.md
+
+
+[1A[2K[78/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:137:7 › U3 Visual Editor - JSON Roundtrip › should display component types in preview
+[1A[2K  66) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:116:7 › U3 Visual Editor - JSON Roundtrip › should preserve component order when adding components 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-d509a-rder-when-adding-components-chromium/error-context.md
+
+
+[1A[2K[79/98] [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:152:7 › U3 Visual Editor - JSON Roundtrip › should handle component deletion and sync to JSON
+[1A[2K  67) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:137:7 › U3 Visual Editor - JSON Roundtrip › should display component types in preview 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-7fb66--component-types-in-preview-chromium/error-context.md
+
+
+[1A[2K[80/98] [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:4:7 › U3-Entry: Layout Rendering E2E › should render grid layout correctly
+[1A[2K  68) [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:152:7 › U3 Visual Editor - JSON Roundtrip › should handle component deletion and sync to JSON 
+
+    [31mTest timeout of 30000ms exceeded while running "beforeEach" hook.[39m
+
+      2 |
+      3 | test.describe("U3 Visual Editor - JSON Roundtrip", () => {
+    > 4 |   test.beforeEach(async ({ page }) => {
+        |        ^
+      5 |     // Navigate to editor with a test screen ID
+      6 |     await page.goto("/admin/screens/test-screen-1");
+      7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:4:8
+
+    Error: page.waitForSelector: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="screen-editor"]') to be visible[22m
+
+
+       5 |     // Navigate to editor with a test screen ID
+       6 |     await page.goto("/admin/screens/test-screen-1");
+    >  7 |     await page.waitForSelector('[data-testid="screen-editor"]');
+         |                ^
+       8 |   });
+       9 |
+      10 |   test("should create and persist a screen with components", async ({ page }) => {
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:7:16
+
+    Error Context: test-results/u3_editor_visual_json_roun-8c39b-t-deletion-and-sync-to-JSON-chromium/error-context.md
+
+
+[1A[2K[81/98] [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:59:7 › U3-Entry: Layout Rendering E2E › should render vertical stack layout correctly
+[1A[2K  69) [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:4:7 › U3-Entry: Layout Rendering E2E › should render grid layout correctly 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      16 |
+      17 |     // Edit the screen to add grid layout
+    > 18 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+         |                                                              ^
+      19 |     await page.waitForLoadState('networkidle');
+      20 |
+      21 |     // Update schema with grid layout
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_layout_rendering.spec.ts:18:62
+
+    Error Context: test-results/u3_entry_layout_rendering--c48fc-ender-grid-layout-correctly-chromium/error-context.md
+
+
+[1A[2K[82/98] [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:100:7 › U3-Entry: Layout Rendering E2E › should render horizontal stack layout correctly
+[1A[2K  70) [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:59:7 › U3-Entry: Layout Rendering E2E › should render vertical stack layout correctly 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      67 |
+      68 |     await page.waitForTimeout(1000);
+    > 69 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+         |                                                              ^
+      70 |     await page.waitForLoadState('networkidle');
+      71 |
+      72 |     // Update with vertical stack layout
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_layout_rendering.spec.ts:69:62
+
+    Error Context: test-results/u3_entry_layout_rendering--304e5-ical-stack-layout-correctly-chromium/error-context.md
+
+
+[1A[2K[83/98] [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:140:7 › U3-Entry: Layout Rendering E2E › should validate layout type in schema
+[1A[2K  71) [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:100:7 › U3-Entry: Layout Rendering E2E › should render horizontal stack layout correctly 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      108 |
+      109 |     await page.waitForTimeout(1000);
+    > 110 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      111 |     await page.waitForLoadState('networkidle');
+      112 |
+      113 |     // Update with horizontal stack layout
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_layout_rendering.spec.ts:110:62
+
+    Error Context: test-results/u3_entry_layout_rendering--ba6b5-ntal-stack-layout-correctly-chromium/error-context.md
+
+
+[1A[2K[84/98] [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:173:7 › U3-Entry: Layout Rendering E2E › should handle list layout with dividers
+[1A[2K  72) [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:140:7 › U3-Entry: Layout Rendering E2E › should validate layout type in schema 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      147 |
+      148 |     await page.waitForTimeout(1000);
+    > 149 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      150 |     await page.waitForLoadState('networkidle');
+      151 |
+      152 |     // Update with invalid layout type
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_layout_rendering.spec.ts:149:62
+
+    Error Context: test-results/u3_entry_layout_rendering--9c9a5-idate-layout-type-in-schema-chromium/error-context.md
+
+
+[1A[2K[85/98] [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:215:7 › U3-Entry: Layout Rendering E2E › should preserve layout when updating screen
+[1A[2K  73) [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:173:7 › U3-Entry: Layout Rendering E2E › should handle list layout with dividers 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      180 |
+      181 |     await page.waitForTimeout(1000);
+    > 182 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      183 |     await page.waitForLoadState('networkidle');
+      184 |
+      185 |     // Update with list layout
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_layout_rendering.spec.ts:182:62
+
+    Error Context: test-results/u3_entry_layout_rendering--34368-e-list-layout-with-dividers-chromium/error-context.md
+
+
+[1A[2K[86/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:13:7 › U3-Entry: Screen Asset Lifecycle E2E › should display screen asset list
+[1A[2K[87/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:21:7 › U3-Entry: Screen Asset Lifecycle E2E › should create a new screen draft
+[1A[2K  74) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:21:7 › U3-Entry: Screen Asset Lifecycle E2E › should create a new screen draft 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=Screen created successfully')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for locator('text=Screen created successfully')[22m
+
+
+      36 |
+      37 |     // Wait for success message
+    > 38 |     await expect(page.locator('text=Screen created successfully')).toBeVisible();
+         |                                                                    ^
+      39 |
+      40 |     // Extract asset ID from the rendered screen card
+      41 |     const screenCard = page.locator(`[data-testid="screen-asset-"]`).first();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:38:68
+
+    Error Context: test-results/u3_entry_screen_lifecycle--ffbc6-d-create-a-new-screen-draft-chromium/error-context.md
+
+
+[1A[2K[88/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:45:7 › U3-Entry: Screen Asset Lifecycle E2E › should edit screen draft
+[1A[2K  75) [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:215:7 › U3-Entry: Layout Rendering E2E › should preserve layout when updating screen 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      223 |
+      224 |     await page.waitForTimeout(1000);
+    > 225 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      226 |     await page.waitForLoadState('networkidle');
+      227 |
+      228 |     // Set grid layout
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_layout_rendering.spec.ts:225:62
+
+    Error Context: test-results/u3_entry_layout_rendering--bd59f-layout-when-updating-screen-chromium/error-context.md
+
+
+[1A[2K[89/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:80:7 › U3-Entry: Screen Asset Lifecycle E2E › should validate schema on save
+[1A[2K  76) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:45:7 › U3-Entry: Screen Asset Lifecycle E2E › should edit screen draft 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      55 |     // Click edit button on the newly created screen
+      56 |     const editBtn = page.locator('[data-testid^="btn-edit-"]').first();
+    > 57 |     await editBtn.click();
+         |                   ^
+      58 |
+      59 |     // Verify editor page
+      60 |     await page.waitForLoadState('networkidle');
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:57:19
+
+    Error Context: test-results/u3_entry_screen_lifecycle--38c51-2E-should-edit-screen-draft-chromium/error-context.md
+
+
+[1A[2K[90/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:103:7 › U3-Entry: Screen Asset Lifecycle E2E › should publish screen
+[1A[2K  77) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:80:7 › U3-Entry: Screen Asset Lifecycle E2E › should validate schema on save 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      86 |
+      87 |     await page.waitForTimeout(1000);
+    > 88 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+         |                                                              ^
+      89 |     await page.waitForLoadState('networkidle');
+      90 |
+      91 |     // Break the schema JSON
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:88:62
+
+    Error Context: test-results/u3_entry_screen_lifecycle--73e69-uld-validate-schema-on-save-chromium/error-context.md
+
+
+[1A[2K[91/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:131:7 › U3-Entry: Screen Asset Lifecycle E2E › should not allow editing published screen
+[1A[2K  78) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:103:7 › U3-Entry: Screen Asset Lifecycle E2E › should publish screen 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      111 |
+      112 |     // Navigate to edit
+    > 113 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      114 |     await page.waitForLoadState('networkidle');
+      115 |
+      116 |     // Publish the screen
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:113:62
+
+    Error Context: test-results/u3_entry_screen_lifecycle--d4e7d-e-E2E-should-publish-screen-chromium/error-context.md
+
+
+[1A[2K[92/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:155:7 › U3-Entry: Screen Asset Lifecycle E2E › should rollback published screen to draft
+[1A[2K  79) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:131:7 › U3-Entry: Screen Asset Lifecycle E2E › should not allow editing published screen 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      137 |
+      138 |     await page.waitForTimeout(1000);
+    > 139 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      140 |     await page.waitForLoadState('networkidle');
+      141 |     await page.locator('[data-testid="btn-publish-screen"]').click();
+      142 |
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:139:62
+
+    Error Context: test-results/u3_entry_screen_lifecycle--e1818-ow-editing-published-screen-chromium/error-context.md
+
+
+[1A[2K[93/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:187:7 › U3-Entry: Screen Asset Lifecycle E2E › should search screens by ID
+[1A[2K  80) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:155:7 › U3-Entry: Screen Asset Lifecycle E2E › should rollback published screen to draft 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid^="btn-edit-"]').first()[22m
+
+
+      161 |
+      162 |     await page.waitForTimeout(1000);
+    > 163 |     await page.locator('[data-testid^="btn-edit-"]').first().click();
+          |                                                              ^
+      164 |     await page.waitForLoadState('networkidle');
+      165 |     await page.locator('[data-testid="btn-publish-screen"]').click();
+      166 |
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:163:62
+
+    Error Context: test-results/u3_entry_screen_lifecycle--3c479-k-published-screen-to-draft-chromium/error-context.md
+
+
+[1A[2K[94/98] [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:208:7 › U3-Entry: Screen Asset Lifecycle E2E › should filter screens by status
+[1A[2K[95/98] [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:17:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Demo A: UI Screen render trace with applied_assets.screens recorded
+[1A[2K[chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:17:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Demo A: UI Screen render trace with applied_assets.screens recorded
+
+========== DEMO A: Read-only Screen Render ==========
+
+[1A[2K✓ Navigated to /admin
+
+[1A[2K✓ UI Screen found and rendered
+
+[1A[2K✓ Found action button
+
+[1A[2K[96/98] [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:89:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Demo B: Create maintenance ticket with parent_trace + state_patch + UI update
+[1A[2K[chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:89:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Demo B: Create maintenance ticket with parent_trace + state_patch + UI update
+
+========== DEMO B: CRUD Action with Traces ==========
+
+[1A[2K  Generated parent trace_id: screen-render-1769070499738
+
+[1A[2K
+[Phase 1] Rendering maintenance_crud_v1 screen...
+
+[1A[2K  81) [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:89:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Demo B: Create maintenance ticket with parent_trace + state_patch + UI update 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/ui-actions[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 173[22m
+
+
+      101 |     console.log('\n[Phase 1] Rendering maintenance_crud_v1 screen...');
+      102 |
+    > 103 |     const screenResponse = await apiRequest.post(`${API_BASE}/ops/ui-actions`, {
+          |                                             ^
+      104 |       data: {
+      105 |         trace_id: parentTraceId,
+      106 |         action_id: 'list_maintenance_filtered',
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/ui_screen_with_actions_e2e.spec.ts:103:45
+
+
+[1A[2K[97/98] [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:212:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Verify state_patch binding on frontend UI
+[1A[2K[chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:212:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Verify state_patch binding on frontend UI
+
+========== Additional: Frontend state_patch binding ==========
+
+[1A[2K✓ State binding verification complete
+
+[1A[2K[98/98] [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:244:7 › Trace Collection for Regression › Collect and validate trace_ids for regression baseline
+[1A[2K[chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:244:7 › Trace Collection for Regression › Collect and validate trace_ids for regression baseline
+
+========== Collecting traces for regression baseline ==========
+
+[1A[2K  82) [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:244:7 › Trace Collection for Regression › Collect and validate trace_ids for regression baseline 
+
+    Error: apiRequestContext.post: connect ECONNREFUSED 127.0.0.1:8000
+    Call log:
+    [2m  - → POST http://localhost:8000/ops/ui-actions[22m
+    [2m    - user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.7499.4 Safari/537.36[22m
+    [2m    - accept: */*[22m
+    [2m    - accept-encoding: gzip,deflate,br[22m
+    [2m    - content-type: application/json[22m
+    [2m    - content-length: 132[22m
+
+
+      249 |
+      250 |     // 1. Collect screen render trace
+    > 251 |     const screenResponse = await apiRequest.post(`${API_BASE}/ops/ui-actions`, {
+          |                                             ^
+      252 |       data: {
+      253 |         action_id: 'list_maintenance_filtered',
+      254 |         inputs: { device_id: '', offset: 0, limit: 20 },
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/ui_screen_with_actions_e2e.spec.ts:251:45
+
+
+[1A[2K  83) [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:187:7 › U3-Entry: Screen Asset Lifecycle E2E › should search screens by ID 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-testid="btn-create-screen"]')[22m
+    [2m    - locator resolved to <button data-testid="btn-create-screen" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors text-sm font-medium">+ Create Screen</button>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is visible, enabled and stable[22m
+    [2m      - scrolling into view if needed[22m
+    [2m      - done scrolling[22m
+    [2m      - <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">…</div> intercepts pointer events[22m
+    [2m    - retrying click action[22m
+    [2m      - waiting 100ms[22m
+    [2m    54 × waiting for element to be visible, enabled and stable[22m
+    [2m       - element is visible, enabled and stable[22m
+    [2m       - scrolling into view if needed[22m
+    [2m       - done scrolling[22m
+    [2m       - <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">…</div> intercepts pointer events[22m
+    [2m     - retrying click action[22m
+    [2m       - waiting 500ms[22m
+
+
+      188 |     // Create a few test screens
+      189 |     for (let i = 0; i < 2; i++) {
+    > 190 |       await page.locator('[data-testid="btn-create-screen"]').click();
+          |                                                               ^
+      191 |       await page.locator('[data-testid="input-screen-id"]').fill(`search_test_${i}_${Date.now()}`);
+      192 |       await page.locator('[data-testid="input-screen-name"]').fill(`Search Test ${i}`);
+      193 |       await page.locator('[data-testid="btn-confirm-create"]').click();
+        at /home/spa/tobit-spa-ai/apps/web/tests-e2e/u3_entry_screen_lifecycle.spec.ts:190:63
+
+    Error Context: test-results/u3_entry_screen_lifecycle--cc9c0-should-search-screens-by-ID-chromium/error-context.md
+
+
+[1A[2K  83 failed
+    [chromium] › tests-e2e/inspector_e2e.spec.ts:20:7 › Inspector E2E Tests › Case1: /ops/query -> Open in Inspector navigation 
+    [chromium] › tests-e2e/inspector_e2e.spec.ts:47:7 › Inspector E2E Tests › Case2: Inspector Drawer - Flow section with empty-state handling 
+    [chromium] › tests-e2e/inspector_e2e.spec.ts:80:7 › Inspector E2E Tests › Case3: Drawer header "Run RCA" triggers POST /ops/rca (single mode) and navigates 
+    [chromium] › tests-e2e/inspector_e2e.spec.ts:257:7 › Inspector E2E Tests › Case5: /admin/regression page loads and renders panel 
+    [chromium] › tests-e2e/integration_test.spec.ts:3:5 › integration test: homepage loads and has navigation 
+    [chromium] › tests-e2e/ops_e2e.spec.ts:15:7 › Ops Query and Inspector Integration › Case1: /ops/query -> Open in Inspector - Complete Flow 
+    [chromium] › tests-e2e/ops_e2e.spec.ts:56:7 › Ops Query and Inspector Integration › Case2: Inspector Drawer - Flow section is visible with proper empty-state handling 
+    [chromium] › tests-e2e/ops_e2e.spec.ts:100:7 › Ops Query and Inspector Integration › Case3: Drawer header "Run RCA" triggers POST /ops/rca (single) and redirects 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:10:7 › RCA Comprehensive Test Suite › Setup: Create test trace with data 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:36:7 › RCA Comprehensive Test Suite › Test 1: First RCA execution - should create new trace 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:67:7 › RCA Comprehensive Test Suite › Test 2: Verify first RCA trace is in database 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:87:7 › RCA Comprehensive Test Suite › Test 3: Second RCA execution on same source - should work 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:119:7 › RCA Comprehensive Test Suite › Test 4: RCA on previous RCA trace - should work 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:150:7 › RCA Comprehensive Test Suite › Test 5: RCA diff mode - compare two traces 
+    [chromium] › tests-e2e/rca_comprehensive_test.spec.ts:184:7 › RCA Comprehensive Test Suite › Test 6: Regression page API check 
+    [chromium] › tests-e2e/rca_real_trace_test.spec.ts:9:7 › RCA Real Trace Test › Get existing trace 
+    [chromium] › tests-e2e/rca_real_trace_test.spec.ts:24:7 › RCA Real Trace Test › First RCA execution 
+    [chromium] › tests-e2e/rca_real_trace_test.spec.ts:62:7 › RCA Real Trace Test › Second RCA on same source 
+    [chromium] › tests-e2e/rca_real_trace_test.spec.ts:94:7 › RCA Real Trace Test › RCA Diff mode ──
+    [chromium] › tests-e2e/rca_simple_test.spec.ts:6:7 › RCA Simple Test › RCA API should return valid trace_id 
+    [chromium] › tests-e2e/rca_simple_test.spec.ts:36:7 › RCA Simple Test › RCA trace should be retrievable 
+    [chromium] › tests-e2e/reproduce-exact-error.spec.ts:8:5 › Exact Error Reproduction: Login → Navigate → Add Text → Save Draft 
+    [chromium] › tests-e2e/save-draft-complete.spec.ts:43:7 › Save Draft - Complete Flow › Edit screen component and save draft 
+    [chromium] › tests-e2e/save-draft-debug.spec.ts:54:7 › Save Draft - Debug › Navigate to screen and attempt save draft 
+    [chromium] › tests-e2e/save-draft-detailed.spec.ts:49:7 › Save Draft - Detailed Testing › Save Draft - Full Flow with Network Monitoring 
+    [chromium] › tests-e2e/save-draft-detailed.spec.ts:188:7 › Save Draft - Detailed Testing › Save Draft - Verify Endpoint Path 
+    [chromium] › tests-e2e/save-draft-exact.spec.ts:3:5 › Exact User Flow: List > First Screen > Add Text > Save Draft 
+    [chromium] › tests-e2e/save-draft-final.spec.ts:3:5 › Save Draft - Full Detailed Test ──────────
+    [chromium] › tests-e2e/save-draft-live.spec.ts:47:7 › Save Draft - Live Issue Reproduction › Reproduce exact user flow and capture error 
+    [chromium] › tests-e2e/screen-editor.spec.ts:46:7 › Screen Editor › should load screen list ────
+    [chromium] › tests-e2e/screen-editor.spec.ts:58:7 › Screen Editor › should open visual editor for a screen 
+    [chromium] › tests-e2e/screen-editor.spec.ts:82:7 › Screen Editor › should log authentication status in console 
+    [chromium] › tests-e2e/screen-editor.spec.ts:107:7 › Screen Editor › should save draft successfully 
+    [chromium] › tests-e2e/screen-editor.spec.ts:138:7 › Screen Editor › should show error if user is not authenticated 
+    [chromium] › tests-e2e/screen-editor.spec.ts:154:7 › Screen Editor › should handle missing token gracefully 
+    [chromium] › tests-e2e/screen-editor.spec.ts:193:7 › Screen Editor › should display API request logs in console 
+    [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:11:7 › U3-2-1: Screen Diff / Compare UI › should show Diff tab with added components 
+    [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:38:7 › U3-2-1: Screen Diff / Compare UI › should show Diff with modified components 
+    [chromium] › tests-e2e/u3_2_diff_compare.spec.ts:68:7 › U3-2-1: Screen Diff / Compare UI › should show accurate diff summary counts 
+    [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:11:7 › U3-2-2: Safe Publish Gate › should allow publish when all validation checks pass 
+    [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:45:7 › U3-2-2: Safe Publish Gate › should block publish when binding validation fails 
+    [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:85:7 › U3-2-2: Safe Publish Gate › should block publish when action validation fails 
+    [chromium] › tests-e2e/u3_2_publish_gate.spec.ts:121:7 › U3-2-2: Safe Publish Gate › should allow publish with warnings from dry-run 
+    [chromium] › tests-e2e/u3_2_template_creation.spec.ts:11:7 › U3-2-4: Template-based Screen Creation › should create blank screen when no template is selected 
+    [chromium] › tests-e2e/u3_2_template_creation.spec.ts:36:7 › U3-2-4: Template-based Screen Creation › should create screen from Read-only Detail template 
+    [chromium] › tests-e2e/u3_2_template_creation.spec.ts:74:7 › U3-2-4: Template-based Screen Creation › should create screen from List + Filter template 
+    [chromium] › tests-e2e/u3_2_template_creation.spec.ts:112:7 › U3-2-4: Template-based Screen Creation › should create screen from List + Modal CRUD template 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:10:7 › U3 Visual Editor - Publish & Preview › should show save draft button for draft state 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:21:7 › U3 Visual Editor - Publish & Preview › should save draft and show success message 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:32:7 › U3 Visual Editor - Publish & Preview › should prevent publish with validation errors 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:47:7 › U3 Visual Editor - Publish & Preview › should display screen in preview tab 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:60:7 › U3 Visual Editor - Publish & Preview › should track unsaved changes indicator 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:72:7 › U3 Visual Editor - Publish & Preview › should show publish button after save draft 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:84:7 › U3 Visual Editor - Publish & Preview › should show rollback option for published screens 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:96:7 › U3 Visual Editor - Publish & Preview › should handle component property changes in preview 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:110:7 › U3 Visual Editor - Publish & Preview › should show validation errors in preview 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:134:7 › U3 Visual Editor - Publish & Preview › should maintain editor state through tab switches 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:158:7 › U3 Visual Editor - Publish & Preview › should handle error on failed publish 
+    [chromium] › tests-e2e/u3_editor_publish_preview.spec.ts:175:7 › U3 Visual Editor - Publish & Preview › should reorder components and reflect in preview 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:10:7 › U3 Visual Editor - JSON Roundtrip › should create and persist a screen with components 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:21:7 › U3 Visual Editor - JSON Roundtrip › should add components through visual editor 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:32:7 › U3 Visual Editor - JSON Roundtrip › should sync visual editor changes to JSON 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:47:7 › U3 Visual Editor - JSON Roundtrip › should sync JSON changes back to visual editor 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:81:7 › U3 Visual Editor - JSON Roundtrip › should validate JSON and show errors for invalid structure 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:98:7 › U3 Visual Editor - JSON Roundtrip › should handle JSON format button 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:116:7 › U3 Visual Editor - JSON Roundtrip › should preserve component order when adding components 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:137:7 › U3 Visual Editor - JSON Roundtrip › should display component types in preview 
+    [chromium] › tests-e2e/u3_editor_visual_json_roundtrip.spec.ts:152:7 › U3 Visual Editor - JSON Roundtrip › should handle component deletion and sync to JSON 
+    [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:4:7 › U3-Entry: Layout Rendering E2E › should render grid layout correctly 
+    [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:59:7 › U3-Entry: Layout Rendering E2E › should render vertical stack layout correctly 
+    [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:100:7 › U3-Entry: Layout Rendering E2E › should render horizontal stack layout correctly 
+    [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:140:7 › U3-Entry: Layout Rendering E2E › should validate layout type in schema 
+    [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:173:7 › U3-Entry: Layout Rendering E2E › should handle list layout with dividers 
+    [chromium] › tests-e2e/u3_entry_layout_rendering.spec.ts:215:7 › U3-Entry: Layout Rendering E2E › should preserve layout when updating screen 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:21:7 › U3-Entry: Screen Asset Lifecycle E2E › should create a new screen draft 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:45:7 › U3-Entry: Screen Asset Lifecycle E2E › should edit screen draft 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:80:7 › U3-Entry: Screen Asset Lifecycle E2E › should validate schema on save 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:103:7 › U3-Entry: Screen Asset Lifecycle E2E › should publish screen 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:131:7 › U3-Entry: Screen Asset Lifecycle E2E › should not allow editing published screen 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:155:7 › U3-Entry: Screen Asset Lifecycle E2E › should rollback published screen to draft 
+    [chromium] › tests-e2e/u3_entry_screen_lifecycle.spec.ts:187:7 › U3-Entry: Screen Asset Lifecycle E2E › should search screens by ID 
+    [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:89:7 › UI Screen + UI Actions + Inspector Traces (PR-C) › Demo B: Create maintenance ticket with parent_trace + state_patch + UI update 
+    [chromium] › tests-e2e/ui_screen_with_actions_e2e.spec.ts:244:7 › Trace Collection for Regression › Collect and validate trace_ids for regression baseline 
+  15 passed (12.1m)

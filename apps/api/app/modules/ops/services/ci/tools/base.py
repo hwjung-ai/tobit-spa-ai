@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Type
 from enum import Enum
+from typing import Any, Dict, Optional, Type
 
 from core.logging import get_logger
 

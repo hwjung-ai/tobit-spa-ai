@@ -5,9 +5,8 @@ Generates hypotheses for failure/regression analysis based on fixed rules.
 LLM is used only for text summarization, not for hypothesis generation.
 """
 
-from typing import Any, Dict, List, Literal
 from dataclasses import dataclass, field
-import json
+from typing import Any, Dict, List, Literal
 
 
 @dataclass
@@ -231,7 +230,7 @@ class RCAEngine:
                     checks=[
                         f"Check timeout policy for {tool_name} in published policy asset",
                         "Verify network/service response time in staging",
-                        f"Increase timeout threshold and re-run"
+                        "Increase timeout threshold and re-run"
                     ],
                     recommended_actions=[
                         f"Adjust policy timeout for {tool_name}",
@@ -320,7 +319,7 @@ class RCAEngine:
         """Rule 2: Detect fallback asset usage"""
         fallback_list = [k for k, v in fallbacks.items() if v]
         for asset_key in fallback_list:
-            asset_info = applied_assets.get(asset_key, {})
+            applied_assets.get(asset_key, {})
             self.hypotheses.append(RCAHypothesis(
                 rank=2,
                 title=f"Fallback asset used: {asset_key}",
@@ -435,7 +434,7 @@ class RCAEngine:
     def _check_ui_mapping_failures(self, ui_render: Dict):
         """Rule 6: Detect UI component mapping issues"""
         error_count = ui_render.get("error_count", 0)
-        total_components = ui_render.get("rendered_count", 0)
+        ui_render.get("rendered_count", 0)
         error_details = ui_render.get("errors", [])
 
         error_msg = str(error_details[0]) if error_details else "UI mapping failed"
@@ -528,7 +527,7 @@ class RCAEngine:
             confidence="low",
             evidence=[
                 EvidencePath(
-                    path=f"references[*].row_count",
+                    path="references[*].row_count",
                     snippet="0",
                     display="Query returned no rows"
                 )
@@ -557,7 +556,7 @@ class RCAEngine:
                         confidence="high",
                         evidence=[
                             EvidencePath(
-                                path=f"references[*].name",
+                                path="references[*].name",
                                 snippet=reference.get("name", ""),
                                 display="HTTP endpoint with auth failure"
                             )
@@ -659,7 +658,7 @@ class RCAEngine:
                 ],
                 recommended_actions=[
                     f"Review why {tool} was added",
-                    f"Optimize or remove if unnecessary",
+                    "Optimize or remove if unnecessary",
                     f"Document {tool} usage"
                 ]
             ))
@@ -678,8 +677,8 @@ class RCAEngine:
                 ],
                 checks=[
                     f"Verify {tool} removal doesn't affect result",
-                    f"Check if result quality degraded",
-                    f"Confirm intent still satisfied"
+                    "Check if result quality degraded",
+                    "Confirm intent still satisfied"
                 ],
                 recommended_actions=[
                     f"Restore {tool} if needed",
@@ -784,7 +783,7 @@ class RCAEngine:
                 EvidencePath(
                     path="ui_render.error_count",
                     snippet=f"{candidate_errors}",
-                    display=f"More errors in rendering"
+                    display="More errors in rendering"
                 )
             ],
             checks=[

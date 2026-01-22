@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ops-config
+  namespace: ops-orchestration
+data:
+  LOG_LEVEL: "info"
+  TEST_MODE: "false"
+  API_BASE_URL: "http://api-service.ops-orchestration.svc.cluster.local:8000"
+  CORS_ORIGINS: "https://ops-web.ops-orchestration.svc.cluster.local,https://*.yourdomain.com"
+  MAX_REQUEST_SIZE: "10MB"
+  TIMEOUT: "30"
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"

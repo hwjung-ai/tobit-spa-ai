@@ -2,10 +2,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from time import perf_counter
-from typing import Iterable, Tuple
+from typing import Iterable
 
-from app.shared.config_loader import load_text
-from app.modules.asset_registry.loader import load_query_asset
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -17,6 +15,9 @@ from schemas import (
     TimeSeriesSeries,
 )
 from schemas.tool_contracts import ExecutorResult, ToolCall
+
+from app.modules.asset_registry.loader import load_query_asset
+from app.shared.config_loader import load_text
 
 from ..resolvers import resolve_ci, resolve_metric, resolve_time_range
 from ..resolvers.types import CIHit, MetricHit, TimeRange
@@ -128,7 +129,7 @@ def run_metric(question: str, tenant_id: str = "t1") -> ExecutorResult:
     # Convert blocks to dicts
     blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
 
-    elapsed_ms = int((perf_counter() - start_time) * 1000)
+    int((perf_counter() - start_time) * 1000)
     return ExecutorResult(
         blocks=blocks_dict,
         used_tools=used_tools,

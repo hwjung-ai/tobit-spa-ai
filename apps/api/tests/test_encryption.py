@@ -1,6 +1,7 @@
 """Tests for data encryption functionality."""
 
 import pytest
+
 from apps.api.core.encryption import EncryptionManager
 
 
@@ -265,8 +266,9 @@ class TestApiKeyEncryption:
         original_key = os.environ.get("ENCRYPTION_KEY")
         os.environ["ENCRYPTION_KEY"] = encryption_key
 
-        from apps.api.app.modules.api_keys.models import TbApiKey
         import json
+
+        from apps.api.app.modules.api_keys.models import TbApiKey
 
         api_key = TbApiKey(
             id="key-001",

@@ -1,8 +1,8 @@
 """Add document access control and search logging tables"""
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
+from alembic import op
+from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "0037_add_document_access_and_search_tables"
 down_revision = "0036_enhance_document_tables"

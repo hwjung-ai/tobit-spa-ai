@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Sequence
 
+from core.db import get_session
+from core.logging import get_logger
 from fastapi import APIRouter, Depends, HTTPException, Query
+from schemas import ResponseEnvelope
 from sqlalchemy import select
 from sqlalchemy.engine.row import Row
 from sqlmodel import Session
@@ -12,9 +15,6 @@ from app.modules.audit_log.crud import (
     get_audit_logs_by_trace,
 )
 from app.modules.audit_log.models import TbAuditLog
-from core.db import get_session
-from core.logging import get_logger
-from schemas import ResponseEnvelope
 
 router = APIRouter(prefix="/audit-log", tags=["audit_log"])
 logger = get_logger(__name__)

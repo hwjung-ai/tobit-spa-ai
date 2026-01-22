@@ -9,6 +9,6 @@ __all__ = [
     "load_policy_asset",
 ]
 
+from .loader import load_mapping_asset, load_policy_asset, load_prompt_asset
 from .models import TbAssetRegistry, TbAssetVersionHistory
-from .loader import load_prompt_asset, load_mapping_asset, load_policy_asset
 from .router import router

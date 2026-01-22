@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Final
 
 from dotenv import load_dotenv
-from neo4j import GraphDatabase, Driver
+from neo4j import Driver, GraphDatabase
 from psycopg import Connection, connect
 
 _ENV_PATH: Final[Path] = Path(__file__).resolve().parents[2] / ".env"

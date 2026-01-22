@@ -1,8 +1,6 @@
 """Test CI Runner Tool Contract implementation."""
 
-from typing import Dict, Any
 
-import pytest
 
 from schemas.tool_contracts import ToolCall
 

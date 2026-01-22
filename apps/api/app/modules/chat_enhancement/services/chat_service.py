@@ -2,8 +2,8 @@
 
 import logging
 import time
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -158,7 +158,7 @@ Respond with only the title, no other text."""
             elif search_type == "semantic":
                 # Vector similarity search
                 if self.embedding_service:
-                    query_embedding = await self.embedding_service.embed(query)
+                    await self.embedding_service.embed(query)
                     pass
 
             else:  # hybrid

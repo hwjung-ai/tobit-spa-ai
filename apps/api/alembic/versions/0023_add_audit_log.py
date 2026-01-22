@@ -6,8 +6,8 @@ Revises: 0022_add_asset_registry
 Create Date: 2026-01-16 12:00:00.000000
 """
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 revision = "0023_add_audit_log"

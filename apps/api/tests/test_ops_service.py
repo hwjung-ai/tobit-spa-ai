@@ -1,12 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-
+from app.modules.ops.services import handle_ops_query
+from app.modules.ops.services.resolvers.types import CIHit, TimeRange
 from core.config import AppSettings
 from core.db_neo4j import get_neo4j_driver
 from schemas import MarkdownBlock, ReferenceItem, ReferencesBlock
-from app.modules.ops.services import handle_ops_query
-from app.modules.ops.services.resolvers.types import CIHit, TimeRange
 
 
 @pytest.fixture(autouse=True)

@@ -120,7 +120,6 @@ export default function ResolversPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
-  const [resolvers, setResolvers] = useState<ResolverAssetResponse[]>([]);
   const [selectedResolver, setSelectedResolver] = useState<ResolverAssetResponse | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false);
@@ -161,11 +160,6 @@ export default function ResolversPage() {
     },
   });
 
-  useEffect(() => {
-    if (resolversQuery.data) {
-      setResolvers(resolversQuery.data);
-    }
-  }, [resolversQuery.data, setResolvers]);
 
   const handleCreateRule = (resolver: ResolverAssetResponse) => {
     setEditingRule({
@@ -484,7 +478,7 @@ export default function ResolversPage() {
         leftPane={
           <div className="space-y-3">
             <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
-              Resolvers ({resolvers.length})
+              Resolvers ({resolversQuery.data?.length ?? 0})
             </div>
             <div className="custom-scrollbar max-h-[calc(100vh-300px)] space-y-2 overflow-auto pr-1">
               {resolversQuery.isError && (
@@ -492,7 +486,7 @@ export default function ResolversPage() {
                   {formatError(resolversQuery.error)}
                 </div>
               )}
-              {resolvers.map((resolver) => (
+              {resolversQuery.data?.map((resolver) => (
                 <div
                   key={resolver.asset_id}
                   className={`rounded-xl border px-3 py-2 cursor-pointer ${
@@ -515,8 +509,8 @@ export default function ResolversPage() {
                     </div>
                   </div>
                 </div>
-              ))}
-              {resolvers.length === 0 && (
+              )) ?? []}
+              {!resolversQuery.data || resolversQuery.data.length === 0 && (
                 <div className="text-center py-8 text-sm text-slate-400">
                   No resolvers found
                 </div>

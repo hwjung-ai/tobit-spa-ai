@@ -7,14 +7,11 @@ from __future__ import annotations
 
 import json
 import os
-import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
 import pytest
-
 
 BASE_URL = os.environ.get("OPS_BASE_URL", "http://localhost:8000")
 CI_ENDPOINT = "/ops/ci/ask"
@@ -109,7 +106,7 @@ class TestCiAsk:
         question = f"{server_code}의 현재 상태와 기본 정보를 알려줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_a_lookup_server_status", response.json())
+        _save_raw_response(artifacts_dir, "test_a_lookup_server_status", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -135,7 +132,7 @@ class TestCiAsk:
         question = f"{server_code} 서버의 {TIME_RANGE_FROM}부터 {TIME_RANGE_TO}까지 CPU 사용률 평균값과 최종 값을 보여줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_b_metric_cpu_usage", response.json())
+        _save_raw_response(artifacts_dir, "test_b_metric_cpu_usage", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -164,7 +161,7 @@ class TestCiAsk:
         question = f"{server_code}의 {TIME_RANGE_FROM}~{TIME_RANGE_TO} severity 2 이상 이벤트를 요약해줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_c_history_events", response.json())
+        _save_raw_response(artifacts_dir, "test_c_history_events", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -192,7 +189,7 @@ class TestCiAsk:
         question = "location=zone-a status=active 서버 목록을 보여줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_d_list_servers", response.json())
+        _save_raw_response(artifacts_dir, "test_d_list_servers", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -218,7 +215,7 @@ class TestCiAsk:
         question = f"{app_code}의 {TIME_RANGE_FROM}~{TIME_RANGE_TO} 작업/배포 이력과 구동 호스트를 함께 보여줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_e_multi_step_app_history", response.json())
+        _save_raw_response(artifacts_dir, "test_e_multi_step_app_history", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -241,7 +238,7 @@ class TestCiAsk:
         question = "srv-erp-99의 상태를 알려줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_f_no_data_guidance", response.json())
+        _save_raw_response(artifacts_dir, "test_f_no_data_guidance", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -263,7 +260,7 @@ class TestCiAsk:
         question = "integration 앱의 최근 배포 상태를 알려줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_g_ambiguous_integration", response.json())
+        _save_raw_response(artifacts_dir, "test_g_ambiguous_integration", response.json())
 
         assert response.status_code == 200
         data = response.json()
@@ -286,7 +283,7 @@ class TestCiAsk:
         question = f"{app_code} 영향 그래프를 depth 10으로 확장해줘."
 
         response = http_client.post(CI_ENDPOINT, json={"question": question})
-        raw_path = _save_raw_response(artifacts_dir, "test_h_policy_depth_clamp", response.json())
+        _save_raw_response(artifacts_dir, "test_h_policy_depth_clamp", response.json())
 
         assert response.status_code == 200
         data = response.json()

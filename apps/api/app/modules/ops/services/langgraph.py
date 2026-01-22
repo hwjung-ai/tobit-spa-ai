@@ -3,15 +3,16 @@ from __future__ import annotations
 import json
 import logging
 
-from pydantic import BaseModel, ValidationError
-
 from core.config import AppSettings
+from pydantic import BaseModel, ValidationError
 from schemas import AnswerBlock, MarkdownBlock
+
+from app.llm.client import get_llm_client
+from app.shared import config_loader
+
 from .executors.graph_executor import run_graph
 from .executors.hist_executor import run_hist
 from .executors.metric_executor import run_metric
-from app.llm.client import get_llm_client
-from app.shared import config_loader
 
 
 class LangGraphPlan(BaseModel):
@@ -132,7 +133,7 @@ class LangGraphAllRunner:
             content = content.strip()
             if not content:
                 raise RuntimeError("LangGraph summary returned empty content")
-        except Exception as exc:
+        except Exception:
             logging.exception("LangGraph summary call failed")
             content = (
                 f"LangGraph summary unavailable; executed {', '.join([name for name in self.EXECUTOR_ORDER if getattr(plan, f'run_{name}')])}."

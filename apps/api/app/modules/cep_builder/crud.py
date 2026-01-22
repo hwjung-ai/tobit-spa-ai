@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import desc, select, func
+from sqlalchemy import desc, func, select
 from sqlmodel import Session
 
 from .models import (

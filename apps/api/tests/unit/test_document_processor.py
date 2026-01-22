@@ -2,10 +2,10 @@
 
 import pytest
 from app.modules.document_processor import (
-    DocumentProcessor,
-    DocumentProcessingError,
     ChunkingStrategy,
     DocumentExportService,
+    DocumentProcessingError,
+    DocumentProcessor,
     ExportFormat,
 )
 

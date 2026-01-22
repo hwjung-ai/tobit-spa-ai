@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-
 from schemas.common import ResponseEnvelope
 
 router = APIRouter()

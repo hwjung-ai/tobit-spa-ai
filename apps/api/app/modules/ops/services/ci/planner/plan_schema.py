@@ -1,9 +1,31 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
+
+
+class PlanOutputKind(str, Enum):
+    DIRECT = "direct"
+    PLAN = "plan"
+    REJECT = "reject"
+
+
+class DirectAnswerPayload(BaseModel):
+    """Payload for direct answer response"""
+    answer: str
+    confidence: float = 1.0
+    reasoning: Optional[str] = None
+    references: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class RejectPayload(BaseModel):
+    """Payload for reject response"""
+    reason: str
+    policy: Optional[str] = None
+    confidence: float = 1.0
+    reasoning: Optional[str] = None
 
 
 class Intent(str, Enum):
@@ -221,3 +243,18 @@ class Plan(BaseModel):
             except ValueError:
                 pass
         return PlanMode.CI
+
+
+class PlanOutput(BaseModel):
+    """Unified output for planner with three possible kinds"""
+    kind: PlanOutputKind
+    # kind=direct일 때
+    direct_answer: Optional[DirectAnswerPayload] = None
+    # kind=plan일 때
+    plan: Optional[Plan] = None
+    # kind=reject일 때
+    reject_payload: Optional[RejectPayload] = None
+    # 공통
+    confidence: float = 1.0
+    reasoning: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)

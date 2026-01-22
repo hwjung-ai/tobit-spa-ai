@@ -3,30 +3,15 @@ Comprehensive tests for CI Management module.
 Tests cover change tracking, integrity validation, and duplicate detection.
 """
 
-import pytest
 from datetime import datetime, timedelta
-from uuid import uuid4
-from sqlmodel import Session, select
 
-from core.config import AppSettings
-from app.modules.ci_management.models import (
-    ChangeType,
-    ChangeStatus,
-    IntegrityStatus,
-    TbCIChange,
-    TbCIIntegrityIssue,
-    TbCIDuplicate,
-    CIChangeRead,
-    CIChangeCreate,
-    CIChangeApprove,
-    CIIntegrityIssueRead,
-    CIDuplicateRead,
-    CIDuplicateConfirm,
-    CIChangeHistory,
-    CIIntegritySummary,
-    CIChangeStats,
-)
+import pytest
 from app.modules.ci_management import crud
+from app.modules.ci_management.models import (
+    ChangeStatus,
+    ChangeType,
+)
+from sqlmodel import Session
 
 
 class TestCIChangeCreation:
@@ -148,7 +133,7 @@ class TestCIChangeCreation:
             tenant_id="t1",
         )
 
-        change2 = crud.create_change(
+        crud.create_change(
             session=session,
             ci_id="ci-002",
             change_type=ChangeType.UPDATE,
@@ -335,7 +320,7 @@ class TestCIChangeHistory:
             tenant_id="t1",
         )
 
-        change2 = crud.create_change(
+        crud.create_change(
             session=session,
             ci_id=ci_id,
             change_type=ChangeType.UPDATE,
@@ -399,7 +384,7 @@ class TestCIIntegrityValidation:
             tenant_id="t1",
         )
 
-        issue2 = crud.create_integrity_issue(
+        crud.create_integrity_issue(
             session=session,
             ci_id=ci_id,
             issue_type="issue_2",
@@ -688,7 +673,7 @@ class TestCIIntegrationWorkflow:
             ci_id="ci-duplicate",
             change_type=ChangeType.MERGE,
             changed_by_user_id="user-001",
-            change_reason=f"Merged into ci-master",
+            change_reason="Merged into ci-master",
             tenant_id="t1",
         )
 

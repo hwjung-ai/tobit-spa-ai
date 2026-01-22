@@ -2,8 +2,8 @@
 
 import logging
 import time
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class ApiManagerService:
 
             # In real implementation: db.insert(api_def)
             # Create version record
-            version_rec = {
+            {
                 "version_id": str(uuid4()),
                 "api_id": api_id,
                 "version_number": 1,
@@ -113,7 +113,7 @@ class ApiManagerService:
                         raise ValueError(f"SQL validation failed: {validation.errors}")
 
             # Track changes
-            old_data = api.copy()
+            api.copy()
 
             # Update fields
             for key in ["name", "logic", "input_schema", "output_schema"]:
@@ -127,7 +127,7 @@ class ApiManagerService:
             # In real implementation: db.update(api)
 
             # Create version record
-            version_rec = {
+            {
                 "version_id": str(uuid4()),
                 "api_id": api_id,
                 "version_number": api["version"],
@@ -177,7 +177,7 @@ class ApiManagerService:
             api["updated_at"] = datetime.utcnow().isoformat()
 
             # Create rollback version record
-            version_rec = {
+            {
                 "version_id": str(uuid4()),
                 "api_id": api_id,
                 "version_number": api["version"],
@@ -218,7 +218,6 @@ class ApiManagerService:
 
         try:
             # In real implementation: db.get(ApiDefinition, api_id)
-            api = {"id": api_id, "mode": "sql", "logic": "SELECT 1"}
 
             # In real implementation:
             # - Validate input against input_schema

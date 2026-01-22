@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 from functools import lru_cache
 
-from sqlmodel import Session, select
-
+from app.llm.client import get_llm_client
 from core.config import AppSettings, get_settings
 from models import ChatMessage, ChatThread
-from app.llm.client import get_llm_client
+from sqlmodel import Session, select
 
 
 class ConversationSummaryService:

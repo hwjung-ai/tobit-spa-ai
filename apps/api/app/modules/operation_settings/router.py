@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlmodel import Session
-
-from app.modules.operation_settings.services import OperationSettingsService
 from core.config import get_settings
 from core.db import get_session
 from core.logging import get_logger
+from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas import ResponseEnvelope
+from sqlmodel import Session
+
+from app.modules.operation_settings.services import OperationSettingsService
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 logger = get_logger(__name__)

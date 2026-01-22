@@ -8,10 +8,10 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+from core.config import get_settings
 from fastapi import HTTPException
 from sqlmodel import Session
 
-from core.config import get_settings
 from .crud import record_exec_log
 from .schemas import ApiScriptExecuteResult
 

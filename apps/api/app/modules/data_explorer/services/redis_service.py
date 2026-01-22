@@ -4,8 +4,8 @@ import shlex
 from typing import Any
 
 from core.config import AppSettings
-from app.modules.data_explorer.repositories import redis_repo
 
+from app.modules.data_explorer.repositories import redis_repo
 
 _ALLOWED_COMMANDS = {
     "get",

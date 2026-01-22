@@ -3,21 +3,21 @@ Tests for advanced LangGraph implementation with StateGraph, query decomposition
 conditional routing, and tool composition.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
 
-from core.config import AppSettings
+import pytest
 from app.modules.ops.services.langgraph_advanced import (
-    ExecutionState,
-    QueryType,
+    ConditionalRouter,
     ExecutionMode,
+    ExecutionState,
+    LangGraphAdvancedRunner,
     QueryAnalysis,
     QueryAnalyzer,
-    ConditionalRouter,
+    QueryType,
     ToolComposer,
-    LangGraphAdvancedRunner,
 )
+from core.config import AppSettings
 
 
 class TestQueryAnalyzer:

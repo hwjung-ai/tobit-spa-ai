@@ -1,43 +1,48 @@
 from __future__ import annotations
 
-from time import perf_counter
-from datetime import datetime, timedelta, timezone
-from typing import Any
-
 import asyncio
 import json
 import uuid
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from sse_starlette.sse import EventSourceResponse
-from sqlalchemy import desc, select
-from sqlmodel import Session
+from datetime import datetime, timedelta, timezone
+from time import perf_counter
+from typing import Any
 
 from core.db import get_session
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from schemas.common import ResponseEnvelope
+from sqlalchemy import desc, select
+from sqlmodel import Session
+from sse_starlette.sse import EventSourceResponse
+
 from .crud import (
     acknowledge_event,
-    create_rule,
     create_notification,
+    create_rule,
+    find_exec_log_by_simulation,
     get_event,
     get_exec_log,
     get_latest_exec_log_for_rule,
     get_notification,
     get_rule,
-    find_exec_log_by_simulation,
     list_events,
     list_exec_logs,
     list_metric_poll_snapshots,
-    list_notifications,
     list_notification_logs,
+    list_notifications,
     list_rules,
     record_exec_log,
     summarize_events,
     update_notification,
     update_rule,
 )
-from .executor import evaluate_trigger, manual_trigger
 from .event_broadcaster import event_broadcaster
-from .models import TbCepExecLog, TbCepMetricPollSnapshot, TbCepNotificationLog, TbCepSchedulerState
+from .executor import evaluate_trigger, manual_trigger
+from .models import (
+    TbCepExecLog,
+    TbCepMetricPollSnapshot,
+    TbCepNotificationLog,
+    TbCepSchedulerState,
+)
 from .scheduler import (
     get_metric_poll_stats,
     get_metric_polling_telemetry,
@@ -45,14 +50,14 @@ from .scheduler import (
     is_scheduler_leader,
 )
 from .schemas import (
+    CepEventDetail,
+    CepEventRead,
+    CepEventSummary,
     CepExecLogRead,
     CepNotificationCreate,
     CepNotificationLogRead,
     CepNotificationRead,
     CepNotificationUpdate,
-    CepEventDetail,
-    CepEventRead,
-    CepEventSummary,
     CepRuleCreate,
     CepRuleRead,
     CepRuleUpdate,

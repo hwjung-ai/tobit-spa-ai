@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from core.config import get_settings
 from redis import Redis
 from rq import Queue
 
-from core.config import get_settings
 from .jobs import parse_and_index_document
 
 

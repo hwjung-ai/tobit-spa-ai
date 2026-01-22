@@ -3,17 +3,16 @@ import os
 import tempfile
 from pathlib import Path
 
+import core.db as core_db
 import pytest
-from httpx import AsyncClient, ASGITransport
+import workers.queue
+from core.config import AppSettings
+from httpx import ASGITransport, AsyncClient
+from models import Document, DocumentChunk, DocumentStatus
 from sqlalchemy import JSON, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import Session, SQLModel, create_engine
-
-import core.db as core_db
-from core.config import AppSettings
-from models import Document, DocumentChunk, DocumentStatus
-import workers.queue
 
 # Ensure uploads go to a temp storage before FastAPI loads settings
 storage_root = Path(tempfile.mkdtemp(prefix="codex-docs-"))

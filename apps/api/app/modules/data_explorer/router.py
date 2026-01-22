@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.config import AppSettings, get_settings
 from fastapi import APIRouter, Depends, HTTPException, Query
+from schemas.common import ResponseEnvelope
 
 from app.modules.data_explorer.schemas import (
     Neo4jQueryRequest,
@@ -14,8 +16,6 @@ from app.modules.data_explorer.services import (
     postgres_service,
     redis_service,
 )
-from core.config import AppSettings, get_settings
-from schemas.common import ResponseEnvelope
 
 router = APIRouter(prefix="/data", tags=["data"])
 

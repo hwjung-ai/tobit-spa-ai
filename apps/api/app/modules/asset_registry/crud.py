@@ -506,7 +506,7 @@ def update_source_asset(
         update_dict["tags"] = updates.tags
 
     # Update the asset
-    updated_asset = update_asset(
+    update_asset(
         session=session,
         asset=asset,
         updates=update_dict,
@@ -548,7 +548,7 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
             )
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
-            result = cursor.fetchone()
+            cursor.fetchone()
             cursor.close()
             conn.close()
 
@@ -707,7 +707,7 @@ def update_schema_asset(
         update_dict["tags"] = updates.tags
 
     # Update the asset
-    updated_asset = update_asset(
+    update_asset(
         session=session,
         asset=asset,
         updates=update_dict,
@@ -930,7 +930,7 @@ def update_resolver_asset(
         update_dict["tags"] = updates.tags
 
     # Update the asset
-    updated_asset = update_asset(
+    update_asset(
         session=session,
         asset=asset,
         updates=update_dict,

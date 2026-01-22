@@ -1,4 +1,8 @@
-from .document import DocumentIndexService, DocumentProcessingError, DocumentSearchService
+from .document import (
+    DocumentIndexService,
+    DocumentProcessingError,
+    DocumentSearchService,
+)
 from .orchestrator import BaseOrchestrator, FakeOrchestrator, get_orchestrator
 from .summary import ConversationSummaryService, get_summary_service
 

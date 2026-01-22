@@ -1,7 +1,7 @@
 """create chat threads/messages tables"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0001_create_threads"
 down_revision = None

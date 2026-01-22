@@ -8,7 +8,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from neo4j import Driver
-
 from scripts.seed.utils import get_neo4j_driver
 
 from app.shared.config_loader import load_text

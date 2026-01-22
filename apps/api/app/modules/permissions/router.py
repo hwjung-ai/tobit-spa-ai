@@ -48,6 +48,7 @@ def check_permission_endpoint(
     """
     # Get user from database to check their role
     from sqlmodel import select
+
     from apps.api.app.modules.auth.models import TbUser as UserModel
 
     stmt = select(UserModel).where(UserModel.id == user_id)
@@ -126,6 +127,7 @@ def get_user_permissions(
     """
     # Get target user
     from sqlmodel import select
+
     from apps.api.app.modules.auth.models import TbUser as UserModel
 
     stmt = select(UserModel).where(UserModel.id == user_id)

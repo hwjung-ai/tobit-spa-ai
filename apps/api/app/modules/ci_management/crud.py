@@ -6,23 +6,22 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List, Dict, Any, Tuple
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
-from sqlmodel import Session, select, func
+from sqlmodel import Session, func, select
 
 from .models import (
-    TbCIChange,
-    TbCIIntegrityIssue,
-    TbCIDuplicate,
-    ChangeType,
     ChangeStatus,
-    IntegrityStatus,
+    ChangeType,
     CIChangeHistory,
-    CIIntegritySummary,
     CIChangeStats,
+    CIIntegritySummary,
+    IntegrityStatus,
+    TbCIChange,
+    TbCIDuplicate,
+    TbCIIntegrityIssue,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -366,7 +365,7 @@ def get_duplicate_statistics(session: Session) -> Dict[str, Any]:
 
 def get_change_statistics(session: Session, days: int = 30) -> CIChangeStats:
     """Get change statistics for the last N days."""
-    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+    datetime.now(timezone.utc) - timedelta(days=days)
     cutoff_date_today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     cutoff_date_week = cutoff_date_today - timedelta(days=7)
 

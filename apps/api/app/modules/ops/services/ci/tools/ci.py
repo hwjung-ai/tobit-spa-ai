@@ -3,16 +3,21 @@ from __future__ import annotations
 from typing import Any, Dict, Iterable, List, Literal
 
 from psycopg import Connection
-
+from schemas.tool_contracts import (
+    CIAggregateResult,
+    CIListResult,
+    CIRecord,
+    CISearchResult,
+)
 from scripts.seed.utils import get_postgres_conn
-from schemas.tool_contracts import CIRecord, CISearchResult, CIAggregateResult, CIListResult
-from app.shared.config_loader import load_text
+
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
     ToolContext,
     ToolResult,
     ToolType,
 )
+from app.shared.config_loader import load_text
 
 SEARCH_COLUMNS = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category"]
 FILTER_FIELDS = {"ci_type", "ci_subtype", "ci_category", "status", "location", "owner"}
@@ -326,7 +331,7 @@ def ci_aggregate(
     with get_postgres_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(count_query, count_params)
-            total_count = cur.fetchone()[0]
+            cur.fetchone()[0]
             cur.execute(query, query_params)
             columns = [field for field in group_list] + metric_list
             rows: List[List[str]] = []

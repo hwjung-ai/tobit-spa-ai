@@ -4,14 +4,13 @@ CI (Configuration Item) Management Models for change tracking and integrity vali
 
 from __future__ import annotations
 
-from enum import Enum
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any, List
+from enum import Enum
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
-from sqlmodel import SQLModel, Field, Relationship
 from pydantic import BaseModel
-
+from sqlmodel import Field, SQLModel
 
 # ============================================================================
 # Enumerations

@@ -5,21 +5,17 @@ conditional branching, and dynamic tool composition.
 
 from __future__ import annotations
 
-import json
 import logging
-from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from dataclasses import dataclass, field
 from datetime import datetime
-
-from pydantic import BaseModel, Field, ValidationError
-from typing_extensions import TypedDict
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.config import AppSettings
 from schemas import AnswerBlock, MarkdownBlock
-from app.llm.client import get_llm_client
-from app.shared import config_loader
+from typing_extensions import TypedDict
 
+from app.llm.client import get_llm_client
 
 # ============================================================================
 # State Management
@@ -465,7 +461,6 @@ class LangGraphAdvancedRunner:
     ) -> Tuple[List[AnswerBlock], List[str]]:
         """Execute a simple query."""
         blocks = []
-        tools = []
 
         state["execution_path"].append(f"simple_{analysis.query_type.value}")
 

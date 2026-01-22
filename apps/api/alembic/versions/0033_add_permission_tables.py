@@ -1,7 +1,7 @@
 """add permission management tables"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = "0033_add_permission_tables"
 down_revision = "0032_add_api_keys_table"

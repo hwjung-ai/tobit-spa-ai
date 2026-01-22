@@ -6,10 +6,8 @@ import platform
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable
 
 from psycopg import Connection
-
 from scripts.seed.utils import get_postgres_conn
 
 from app.shared.config_loader import load_text

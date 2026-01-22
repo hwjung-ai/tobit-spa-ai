@@ -6,11 +6,11 @@ from time import perf_counter
 from typing import Any, Dict, List, Tuple
 from uuid import uuid4
 
+from core.db import get_session_context
 from fastapi import HTTPException
 
 from app.modules.cep_builder.crud import get_rule, record_exec_log
 from app.modules.cep_builder.executor import evaluate_trigger
-from core.db import get_session_context
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
     ToolContext,

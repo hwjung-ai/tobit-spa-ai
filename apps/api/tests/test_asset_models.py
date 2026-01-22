@@ -515,7 +515,7 @@ class TestAssetIntegration:
             host="prod.example.com",
             username="prod_user",
         )
-        source = SourceAsset(
+        SourceAsset(
             name="Production DB",
             version=1,
             status="published",

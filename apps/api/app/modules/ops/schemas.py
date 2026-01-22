@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
+
 from pydantic import BaseModel
-from schemas import AnswerEnvelope, ResponseEnvelope
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
 from app.modules.ops.services.ci.planner.plan_schema import Plan, View
+
 
 class OpsQueryRequest(BaseModel):
     mode: OpsMode
@@ -163,3 +164,130 @@ class RegressionRunResult(BaseModel):
     triggered_by: str
     execution_duration_ms: int | None
     created_at: str
+
+
+# Stage schemas for orchestration
+class StageInput(BaseModel):
+    """Input for a stage in the orchestration pipeline"""
+    stage: str  # "route_plan" | "validate" | "execute" | "compose" | "present"
+    applied_assets: Dict[str, str]  # asset_type -> asset_id:version
+    params: Dict[str, Any]
+    prev_output: Optional[Dict[str, Any]] = None
+    trace_id: Optional[str] = None
+
+
+class StageDiagnostics(BaseModel):
+    """Diagnostics information for stage execution"""
+    status: str  # "ok" | "warning" | "error"
+    warnings: List[str] = []
+    errors: List[str] = []
+    empty_flags: Dict[str, bool] = {}  # e.g., {"result_empty": True}
+    counts: Dict[str, int] = {}  # e.g., {"rows": 0, "references": 5}
+
+
+class StageOutput(BaseModel):
+    """Output from a stage in the orchestration pipeline"""
+    stage: str
+    result: Dict[str, Any]
+    diagnostics: StageDiagnostics
+    references: List[Dict[str, Any]]
+    duration_ms: int
+
+
+# ReplanEvent schemas for orchestration
+class ReplanPatchDiff(BaseModel):
+    """Patch diff for replan events (P0-2)"""
+    before: Dict[str, Any]
+    after: Dict[str, Any]
+
+
+class ReplanTrigger(BaseModel):
+    """Replan trigger information with safe parsing (P0-1)"""
+    trigger_type: str  # e.g., "manual", "error", "timeout", "policy_violation"
+    stage_name: str   # e.g., "validate", "execute", "compose"
+    severity: str = "low"  # "low", "medium", "high", "critical"
+    reason: str
+    timestamp: str
+    metadata: Dict[str, Any] | None = None
+
+
+def safe_parse_trigger(trigger_str: str) -> ReplanTrigger:
+    """Safely parse trigger string to ReplanTrigger (P0-1)"""
+    if not trigger_str:
+        raise ValueError("Trigger string cannot be empty")
+
+    # Try to parse as JSON first
+    try:
+        import json
+        data = json.loads(trigger_str)
+        return ReplanTrigger(**data)
+    except (json.JSONDecodeError, TypeError):
+        # If not JSON, parse as simple string format
+        parts = trigger_str.split(maxsplit=2)
+        if len(parts) >= 2:
+            return ReplanTrigger(
+                trigger_type=parts[0],
+                stage_name=parts[1],
+                reason=parts[2] if len(parts) > 2 else "Unknown",
+                timestamp="now"
+            )
+        else:
+            raise ValueError(f"Invalid trigger format: {trigger_str}")
+
+
+class ReplanEvent(BaseModel):
+    """Replan event for orchestration control loop (P0-2)"""
+    event_type: str  # "replan_request", "replan_decision", "replan_execution"
+    stage_name: str   # Internal/API/Trace: snake_case (P0-3)
+    trigger: ReplanTrigger  # P0-1: Use safe_parse_trigger
+    patch: ReplanPatchDiff   # P0-2: before/after structure
+    timestamp: str
+    decision_metadata: Dict[str, Any] | None = None
+    execution_metadata: Dict[str, Any] | None = None
+
+
+class ExecutionContext(BaseModel):
+    """Execution context for orchestration pipeline with asset override support"""
+    # Required fields
+    tenant_id: str
+    question: str
+    trace_id: str
+
+    # Optional user information
+    user_id: Optional[str] = None
+
+    # Test and rerun context
+    rerun_context: Optional[Dict[str, Any]] = None
+    test_mode: bool = False
+    asset_overrides: Dict[str, str] = {}  # asset_type:asset_id mapping for overrides
+
+    # Baseline comparison for testing
+    baseline_trace_id: Optional[str] = None
+
+    # Cumulative data across stages
+    final_attributions: List[Dict[str, Any]] = []
+    action_cards: List[Dict[str, Any]] = []
+
+    # Cache information
+    cache_hit: bool = False
+    cache_key: Optional[str] = None
+
+
+# Isolated Stage Test schemas
+class IsolatedStageTestRequest(BaseModel):
+    """Request for isolated stage testing"""
+    stage: str  # "route_plan", "validate", "execute", "compose", "present"
+    question: str
+    tenant_id: str
+    asset_overrides: Dict[str, str] = {}  # asset_type:asset_id mapping
+    baseline_trace_id: Optional[str] = None
+    test_plan: Optional[Dict[str, Any]] = None  # Pre-defined plan for testing
+
+class StageTestResponse(BaseModel):
+    """Response from isolated stage test"""
+    stage: str
+    result: Dict[str, Any]
+    duration_ms: int
+    references: List[Dict[str, Any]]
+    asset_overrides_used: Dict[str, str]
+    baseline_trace_id: Optional[str] = None

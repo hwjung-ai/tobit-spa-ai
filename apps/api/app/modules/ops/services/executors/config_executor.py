@@ -4,9 +4,6 @@ import json
 from typing import Any
 
 import psycopg
-
-from app.shared.config_loader import load_text
-from app.modules.asset_registry.loader import load_query_asset
 from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
@@ -15,6 +12,9 @@ from schemas import (
     ReferencesBlock,
     TableBlock,
 )
+
+from app.modules.asset_registry.loader import load_query_asset
+from app.shared.config_loader import load_text
 
 from ..resolvers import resolve_ci
 from ..resolvers.types import CIHit
