@@ -125,8 +125,8 @@ def test_ops_all_langgraph_with_executor_result(monkeypatch):
     monkeypatch.setenv("OPS_ENABLE_LANGGRAPH", "true")
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
-    from schemas.tool_contracts import ExecutorResult, ToolCall
     from app.modules.ops.services.langgraph import LangGraphAllRunner
+    from schemas.tool_contracts import ExecutorResult, ToolCall
 
     # Mock executors to return ExecutorResult
     def mock_hist_executor(_question: str):

@@ -1,7 +1,9 @@
 "use client";
 
+import React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Toast from "../../../components/admin/Toast";
 import ReactFlow, {
   Node,
   Edge,
@@ -70,7 +72,11 @@ interface ExecutionStep {
   duration_ms: number;
   request: Record<string, unknown> | null;
   response: Record<string, unknown> | null;
-  error: Record<string, unknown> | null;
+  error: {
+    message?: string;
+    stack?: string;
+    [key: string]: unknown;
+  } | null;
   references?: ReferenceEntry[];
 }
 
@@ -183,6 +189,7 @@ function InspectorContent() {
   const [planView, setPlanView] = useState<"raw" | "validated">("validated");
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [linkCopyStatus, setLinkCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [selectedSpan, setSelectedSpan] = useState<FlowSpan | null>(null);
   const [flowViewMode, setFlowViewMode] = useState<"timeline" | "graph">("timeline");
   const [hideToolSpans, setHideToolSpans] = useState(false);
@@ -463,7 +470,7 @@ function InspectorContent() {
     );
   };
 
-  const renderJsonDetails = (label: string, payload: unknown) => {
+  const renderJsonDetails = (label: string, payload: unknown): React.ReactNode | null => {
     if (!payload) {
       return null;
     }
@@ -1416,6 +1423,12 @@ function InspectorContent() {
           }}
         />
       )}
+
+      <Toast
+        message={statusMessage}
+        type="info"
+        onDismiss={() => setStatusMessage(null)}
+      />
     </div>
   );
 }

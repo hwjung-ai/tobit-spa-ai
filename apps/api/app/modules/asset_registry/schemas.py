@@ -44,12 +44,12 @@ class ScreenAssetRead(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     asset_id: str
     asset_type: str
-    screen_id: str
+    screen_id: str | None = None
     name: str
     description: str | None = None
     version: int
     status: str
-    screen_schema: dict[str, Any] = Field(alias="schema_json")
+    screen_schema: dict[str, Any] | None = Field(default=None, alias="schema_json")
     tags: dict[str, Any] | None = None
     created_by: str | None = None
     published_by: str | None = None

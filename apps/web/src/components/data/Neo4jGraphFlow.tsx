@@ -12,9 +12,9 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 
 export type Neo4jFlowNode = Node<{ label: string; properties?: Record<string, unknown> }>;
-export interface Neo4jFlowEdge extends Edge {
+export type Neo4jFlowEdge = Edge & {
   label?: string;
-}
+};
 
 export interface Neo4jGraphFlowProps {
   nodes: Neo4jFlowNode[];

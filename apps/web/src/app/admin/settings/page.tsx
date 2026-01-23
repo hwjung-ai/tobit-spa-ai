@@ -14,11 +14,11 @@ export default function SettingsPage() {
     const { data: settings = [], isLoading, error, refetch } = useQuery({
         queryKey: ["settings"],
         queryFn: async () => {
-            const response = await fetchApi<{ settings: Record<string, unknown> }>("/settings/operations");
+            const response = await fetchApi<{ settings: Record<string, Omit<OperationSetting, "key">> }>("/settings/operations");
             const settingsData = response.data.settings;
-            return Object.entries(settingsData).map(([key, value]) => ({
+            return Object.entries(settingsData).map(([key, setting]) => ({
                 key,
-                ...value
+                ...setting,
             })) as OperationSetting[];
         }
     });

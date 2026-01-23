@@ -100,7 +100,6 @@ def test_engine():
 def session(test_engine):
     """Create a test database session."""
     from sqlmodel import Session
-    import core.db
 
     with Session(test_engine) as session:
         # Initialize operation settings for tests

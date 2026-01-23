@@ -11,6 +11,7 @@ import { type NextAction } from "./nextActions";
 import { authenticatedFetch } from "@/lib/apiClient";
 import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
 import { type OpsHistoryEntry } from "@/components/ops/types/opsTypes";
+import Toast from "@/components/admin/Toast";
 
 type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 type UiMode = "ci" | "metric" | "history" | "relation" | "all";
@@ -420,7 +421,7 @@ export default function OpsPage() {
         setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
       }
     }
-  }, [currentTraceId, router, selectedEntry, history]);
+  }, [currentTraceId, router, history]);
 
   const traceCopyLabel =
     traceCopyStatus === "copied" ? "Copied!" : traceCopyStatus === "failed" ? "Retry" : "Copy";
@@ -787,7 +788,7 @@ export default function OpsPage() {
               >
                 {isRunning ? <span className="animate-pulse">Running…</span> : "메시지 전송"}
               </button>
-              {statusMessage ? <p className="text-[11px] text-rose-300">{statusMessage}</p> : null}
+              {statusMessage ? null : null}
             </div>
           </div>
         </div>
@@ -929,7 +930,16 @@ export default function OpsPage() {
             )}
           </div>
         </section>
-      </div>
-    </div>
-  );
-}
+             </div>
+           </div>
+         </section>
+       </div>
+     </div>
+
+     <Toast
+       message={statusMessage}
+       type="info"
+       onDismiss={() => setStatusMessage(null)}
+     />
+   );
+ }

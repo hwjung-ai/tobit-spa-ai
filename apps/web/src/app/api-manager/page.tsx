@@ -197,8 +197,8 @@ const safeParseJson = (value: string, fallback: Record<string, unknown> = {}) =>
   }
 };
 
-const applyPatchToDraft = (base: ApiDraft, patchOps: { op: string; path: string; value: unknown }[]) => {
-  const draftClone = JSON.parse(JSON.stringify(base)) as ApiDraft;
+const applyPatchToDraft = (base: ApiDraft, patchOps: { op: string; path: string; value: unknown }[]): ApiDraft => {
+  const draftClone = JSON.parse(JSON.stringify(base)) as Record<string, unknown>;
   for (const op of patchOps ?? []) {
     if (op.op !== "replace") {
       continue;
@@ -218,13 +218,13 @@ const applyPatchToDraft = (base: ApiDraft, patchOps: { op: string; path: string;
         if (!cursor[numericIndex]) {
           cursor[numericIndex] = {};
         }
-        cursor = cursor[numericIndex];
+        cursor = cursor[numericIndex] as Record<string, unknown> | unknown[];
         continue;
       }
-      if (typeof cursor[segment] === "undefined" || cursor[segment] === null) {
-        cursor[segment] = {};
+      if (typeof (cursor as Record<string, unknown>)[segment] === "undefined" || (cursor as Record<string, unknown>)[segment] === null) {
+        (cursor as Record<string, unknown>)[segment] = {};
       }
-      cursor = cursor[segment];
+      cursor = (cursor as Record<string, unknown>)[segment] as Record<string, unknown> | unknown[];
     }
     const lastSegment = segments[segments.length - 1];
     const numericLast = Number.parseInt(lastSegment, 10);
@@ -234,10 +234,10 @@ const applyPatchToDraft = (base: ApiDraft, patchOps: { op: string; path: string;
       }
       cursor[numericLast] = op.value;
     } else {
-      cursor[lastSegment] = op.value;
+      (cursor as Record<string, unknown>)[lastSegment] = op.value;
     }
   }
-  return draftClone;
+  return draftClone as ApiDraft;
 };
 
 const validateDraftShape = (draft: ApiDraft) => {
@@ -310,8 +310,15 @@ const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {
       return { ok: false, error: "patch 배열이 필요합니다." };
     }
     const patched = applyPatchToDraft(baseDraft, obj.patch as { op: string; path: string; value: unknown }[]);
-    if (patched?.logic?.type === "http" && 'request' in patched.logic && patched.logic.request && !patched.logic.spec) {
-      patched.logic.spec = patched.logic.request as Record<string, unknown>;
+    if (patched?.logic?.type === "http" && 'request' in patched.logic && !('spec' in patched.logic)) {
+      const logicWithRequest = patched.logic as HttpLogic & Record<string, unknown>;
+      const legacyRequest = logicWithRequest.request;
+      if (legacyRequest) {
+        (patched as ApiDraft).logic = {
+          ...logicWithRequest,
+          spec: legacyRequest as Record<string, unknown>,
+        } as HttpLogic;
+      }
     }
     const draft = normalizeApiDraft(patched);
     const shapeError = validateDraftShape(draft);
@@ -445,32 +452,34 @@ const parseApiDraft = (text: string, baseDraft: ApiDraft) => {
 
 const normalizeApiDraft = (input: Record<string, unknown>): ApiDraft => {
   const draft: ApiDraft = {
-    api_name: (input.api_name || "").trim(),
-    method: (input.method || "GET").toUpperCase() as ApiDraft["method"],
-    endpoint: (input.endpoint || "").trim(),
-    description: (input.description || "").trim(),
+    api_name: String(input.api_name || "").trim(),
+    method: (String(input.method || "GET").toUpperCase()) as "GET" | "POST" | "PUT" | "DELETE",
+    endpoint: String(input.endpoint || "").trim(),
+    description: String(input.description || "").trim(),
     tags: Array.isArray(input.tags) ? input.tags : [],
-    params_schema: input.params_schema || {},
-    runtime_policy: input.runtime_policy || {},
+    params_schema: (input.params_schema as Record<string, unknown>) || {},
+    runtime_policy: (input.runtime_policy as Record<string, unknown>) || {},
     is_active: typeof input.is_active === "boolean" ? input.is_active : true,
-    logic: { type: "sql", query: "" }, // Default
+    logic: { type: "sql", query: "" },
   };
 
-  if (input.logic?.type === "http") {
+  const logicInput = input.logic as Record<string, unknown> | undefined;
+  if (logicInput?.type === "http") {
+    const httpSpec = (logicInput.spec || logicInput.request) as Record<string, unknown> | undefined;
     draft.logic = {
       type: "http",
       spec: {
-        method: input.logic.spec?.method || "GET",
-        url: input.logic.spec?.url || "",
-        headers: input.logic.spec?.headers || {},
-        params: input.logic.spec?.params || {},
-        body: input.logic.spec?.body || {},
+        method: String(httpSpec?.method || "GET"),
+        url: String(httpSpec?.url || ""),
+        headers: (httpSpec?.headers as Record<string, string>) || {},
+        params: (httpSpec?.params as Record<string, unknown>) || {},
+        body: httpSpec?.body,
       },
     };
   } else {
     draft.logic = {
       type: "sql",
-      query: input.logic?.query || "",
+      query: String(logicInput?.query || ""),
     };
   }
   return draft;
@@ -604,7 +613,7 @@ const computeDraftDiff = (draft: ApiDraft, baseline: ApiDraft) => {
   return differences;
 };
 
-interface ApiDraft {
+type ApiDraftBase = {
   api_name: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
   endpoint: string;
@@ -613,24 +622,30 @@ interface ApiDraft {
   params_schema: Record<string, unknown>;
   runtime_policy: Record<string, unknown>;
   is_active: boolean;
-  logic:
-  | {
-    type: "sql";
-    query: string;
-    timeout_ms?: number;
-  }
-  | {
-    type: "http";
-    spec: {
-      method: string;
-      url: string;
-      headers?: Record<string, string>;
-      params?: Record<string, unknown>;
-      body?: unknown;
-    };
-    timeout_ms?: number;
+};
+
+type SqlLogic = {
+  type: "sql";
+  query: string;
+  timeout_ms?: number;
+};
+
+type HttpLogic = {
+  type: "http";
+  spec: {
+    method: string;
+    url: string;
+    headers?: Record<string, string>;
+    params?: Record<string, unknown>;
+    body?: unknown;
   };
-}
+  timeout_ms?: number;
+};
+
+type ApiDraft = ApiDraftBase & {
+  logic: SqlLogic | HttpLogic;
+  [key: string]: unknown;
+};
 
 type DraftStatus =
   | "idle"
@@ -982,23 +997,23 @@ export default function ApiManagerPage() {
             api_name: item.name as string,
             api_type: item.scope as ScopeType,
             method: item.method as "GET" | "POST" | "PUT" | "DELETE",
-            endpoint: item.path,
-            logic_type: item.mode || "sql",
-            logic_body: item.logic || "",
-            description: item.description,
-            tags: item.tags || [],
-            is_active: item.is_enabled,
+            endpoint: item.path as string,
+            logic_type: (item.mode || "sql") as LogicType,
+            logic_body: item.logic as string,
+            description: item.description as string | null,
+            tags: item.tags as string[],
+            is_active: item.is_enabled as boolean,
             created_by: null,
-            created_at: item.created_at || new Date().toISOString(),
-            updated_at: item.updated_at || new Date().toISOString(),
+            created_at: (item.created_at as string) || new Date().toISOString(),
+            updated_at: (item.updated_at as string) || new Date().toISOString(),
             param_schema: {},
             runtime_policy: {},
             logic_spec: {},
             source: "server" as const,
           }));
-          setSystemApis(normalized);
+          setSystemApis(normalized as SystemApiItem[]);
           setSystemFetchStatus("ok");
-          setSelectedId((prev) => {
+          setSelectedId((prev): string | null => {
             if (preferredId) {
               return preferredId;
             }
@@ -1014,7 +1029,7 @@ export default function ApiManagerPage() {
           setSystemFetchStatus("error");
           const localItems = getLocalSystemApis();
           setSystemApis(localItems);
-          setSelectedId((prev) => {
+          setSelectedId((prev): string | null => {
             if (preferredId) {
               return preferredId;
             }
@@ -1037,38 +1052,39 @@ export default function ApiManagerPage() {
         }
         const payload = await response.json();
         const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
-        const normalized: ApiDefinitionItem[] = items.map((item) => ({
+        const normalized: SystemApiItem[] = items.map((item) => ({
           api_id: item.id as string,
           api_name: item.name as string,
           api_type: item.scope as ScopeType,
           method: item.method as "GET" | "POST" | "PUT" | "DELETE",
-          endpoint: item.path,
-          logic_type: item.mode || "sql",
-          logic_body: item.logic || "",
-          description: item.description,
-          tags: item.tags || [],
-          is_active: item.is_enabled,
+          endpoint: item.path as string,
+          logic_type: (item.mode || "sql") as LogicType,
+          logic_body: item.logic as string,
+          description: item.description as string | null,
+          tags: item.tags as string[],
+          is_active: item.is_enabled as boolean,
           created_by: null,
-          created_at: item.created_at || new Date().toISOString(),
-          updated_at: item.updated_at || new Date().toISOString(),
+          created_at: (item.created_at as string) || new Date().toISOString(),
+          updated_at: (item.updated_at as string) || new Date().toISOString(),
           param_schema: {},
           runtime_policy: {},
           logic_spec: {},
+          source: "server" as const,
         }));
         setApis(normalized);
         if (skipAutoSelectRef.current) {
           skipAutoSelectRef.current = false;
           return;
         }
-        setSelectedId((prev) => {
-          if (preferredId) {
-            return preferredId;
-          }
-          if (prev && items.some((item) => item.api_id === prev)) {
-            return prev;
-          }
-          return items[0]?.api_id ?? null;
-        });
+          setSelectedId((prev): string | null => {
+            if (preferredId) {
+              return preferredId;
+            }
+            if (prev && items.some((item) => item.api_id === prev)) {
+              return prev;
+            }
+            return (items[0]?.api_id as string | undefined) || null;
+          });
       } catch (error) {
         console.error("Unable to fetch APIs", error);
         setApis([]);

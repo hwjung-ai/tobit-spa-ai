@@ -144,8 +144,8 @@ export default function CepEventBrowserPage() {
         headerName: "Severity",
         field: "severity",
         minWidth: 110,
-        cellRenderer: (params: unknown) => {
-          const val = params.value?.toUpperCase() || "";
+        cellRenderer: (params: { value?: unknown }) => {
+          const val = params.value ? String(params.value).toUpperCase() : "";
           let color = "text-slate-400";
           if (val === "HIGH" || val === "CRITICAL") color = "text-rose-400 font-bold";
           else if (val === "MEDIUM" || val === "WARN") color = "text-amber-400 font-bold";
@@ -168,7 +168,7 @@ export default function CepEventBrowserPage() {
         headerName: "ACK",
         field: "ack",
         minWidth: 90,
-        cellRenderer: (params: unknown) => {
+        cellRenderer: (params: { value?: unknown }) => {
           const isAck = params.value === true;
           return (
             <span className={isAck ? "text-emerald-400/80" : "text-rose-400 font-semibold"}>
@@ -495,15 +495,15 @@ export default function CepEventBrowserPage() {
                     </thead>
                     <tbody>
                       <tr className="bg-slate-900/40">
-                        <td className="px-2 py-1">{runDetail.evidence?.runtime_endpoint ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.method ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.value_path ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.op ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.threshold ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.extracted_value ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.runtime_endpoint as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.method as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.value_path as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.op as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.threshold as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.extracted_value as ReactNode ?? "—"}</td>
                         <td className="px-2 py-1">{String(runDetail.evidence?.condition_evaluated ?? "—")}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.fetch_status ?? "—"}</td>
-                        <td className="px-2 py-1">{runDetail.evidence?.fetch_error ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.fetch_status as ReactNode ?? "—"}</td>
+                        <td className="px-2 py-1">{runDetail.evidence?.fetch_error as ReactNode ?? "—"}</td>
                       </tr>
                     </tbody>
                   </table>

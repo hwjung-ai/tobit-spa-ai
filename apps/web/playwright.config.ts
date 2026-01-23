@@ -29,10 +29,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      // Set timeout for webServer
-      timeout: 120000, // 2 minutes
-      // Set timeout for each test
-      testTimeout: 120000, // 2 minutes
     },
   ],
 
@@ -47,6 +43,5 @@ export default defineConfig({
     timeout: 30000, // 30 seconds
     stdout: 'pipe',
     stderr: 'pipe',
-    reuseExistingServerProcess: true,
   },
 });
