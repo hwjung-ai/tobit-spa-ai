@@ -667,6 +667,7 @@ export default function OpsPage() {
   const shouldShowSidebar = !isFullScreen;
 
   return (
+    <>
     <div className="py-6">
       {/* OPS Summary Strip */}
       <div className="mb-6">
@@ -919,10 +920,10 @@ export default function OpsPage() {
             {selectedEntry && Array.isArray(selectedEntry.response?.blocks) ? (
               <BlockRenderer
                 blocks={selectedEntry.response.blocks}
-              nextActions={selectedEntry.nextActions}
-              onAction={handleNextAction}
-              traceId={selectedEntry.response.meta?.trace_id ?? undefined}
-            />
+                nextActions={selectedEntry.nextActions}
+                onAction={handleNextAction}
+                traceId={selectedEntry.response.meta?.trace_id ?? undefined}
+              />
             ) : (
               <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
                 <p className="text-sm text-slate-500">Run a query to visualize OPS data.</p>
@@ -930,16 +931,14 @@ export default function OpsPage() {
             )}
           </div>
         </section>
-             </div>
-           </div>
-         </section>
-       </div>
-     </div>
+      </div>
+    </div>
 
-     <Toast
-       message={statusMessage}
-       type="info"
-       onDismiss={() => setStatusMessage(null)}
-     />
-   );
+    <Toast
+      message={statusMessage}
+      type="info"
+      onDismiss={() => setStatusMessage(null)}
+    />
+    </>
+  );
  }
