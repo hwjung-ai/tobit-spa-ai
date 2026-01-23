@@ -10,7 +10,16 @@ _ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar("inspector_asset_
 
 
 def _initial_context() -> Dict[str, Any]:
-    return {"prompt": None, "policy": None, "mapping": None, "queries": [], "screens": []}
+    return {
+        "prompt": None,
+        "policy": None,
+        "mapping": None,
+        "source": None,
+        "schema": None,
+        "resolver": None,
+        "queries": [],
+        "screens": [],
+    }
 
 
 def _ensure_context() -> Dict[str, Any]:
@@ -33,6 +42,9 @@ def get_tracked_assets() -> Dict[str, Any]:
         "prompt": context.get("prompt"),
         "policy": context.get("policy"),
         "mapping": context.get("mapping"),
+        "source": context.get("source"),
+        "schema": context.get("schema"),
+        "resolver": context.get("resolver"),
         "queries": list(context.get("queries", [])),
         "screens": list(context.get("screens", [])),
     }
@@ -53,6 +65,24 @@ def track_policy_asset(info: AssetInfo) -> None:
 def track_mapping_asset(info: AssetInfo) -> None:
     context = _ensure_context()
     context["mapping"] = info
+    _ASSET_CONTEXT.set(context)
+
+
+def track_source_asset(info: AssetInfo) -> None:
+    context = _ensure_context()
+    context["source"] = info
+    _ASSET_CONTEXT.set(context)
+
+
+def track_schema_asset(info: AssetInfo) -> None:
+    context = _ensure_context()
+    context["schema"] = info
+    _ASSET_CONTEXT.set(context)
+
+
+def track_resolver_asset(info: AssetInfo) -> None:
+    context = _ensure_context()
+    context["resolver"] = info
     _ASSET_CONTEXT.set(context)
 
 

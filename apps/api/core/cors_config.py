@@ -18,6 +18,11 @@ class CORSConfig:
     @property
     def allowed_origins(self) -> List[str]:
         """Get list of allowed origins."""
+        if (
+            not self.settings.cors_allowed_origins
+            or self.settings.cors_allowed_origins == ["*"]
+        ):
+            return ["*"]
         return self.settings.cors_allowed_origins
 
     @property

@@ -14,8 +14,9 @@ from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
 from core.logging import get_logger, get_request_context
 from schemas.tool_contracts import ToolCall
 
+from app.modules.inspector.asset_context import get_tracked_assets
 from app.modules.inspector.span_tracker import end_span, start_span
-from app.modules.ops.schemas import StageInput
+from app.modules.ops.schemas import ExecutionContext, StageDiagnostics, StageInput, StageOutput
 from app.modules.ops.services.ci import policy, response_builder
 from app.modules.ops.services.ci.actions import NextAction, RerunPayload
 from app.modules.ops.services.ci.blocks import (
@@ -137,6 +138,7 @@ class CIOrchestratorRunner:
         question: str,
         policy_trace: Dict[str, Any],
         rerun_context: RerunContext | None = None,
+        asset_overrides: Dict[str, str] | None = None,
     ):
         self.plan = plan
         self.plan_raw = plan_raw
@@ -144,6 +146,7 @@ class CIOrchestratorRunner:
         self.question = question
         self.plan_trace = policy_trace
         self.rerun_context = rerun_context or RerunContext()
+        self.asset_overrides = asset_overrides or {}
         self.logger = get_logger(__name__)
         self.logger.info("ci.runner.instance_start", extra=_runner_context())
         self.tool_calls: List[ToolCall] = []
@@ -171,8 +174,27 @@ class CIOrchestratorRunner:
         self._tool_selector = SmartToolSelector()
         self._tracer = ExecutionTracer()
         # Stage execution infrastructure
-        self._stage_executor = StageExecutor(self._tool_executor)
+        self._execution_context = self._build_execution_context()
+        self._stage_executor = StageExecutor(self._execution_context, tool_executor=self._tool_executor)
         self._composition_pipeline = COMPOSITION_SEARCH_WITH_CONTEXT
+
+    def _build_execution_context(self) -> ExecutionContext:
+        context = get_request_context()
+        trace_id = context.get("trace_id") or context.get("request_id") or str(uuid.uuid4())
+        rerun_payload = None
+        if self.rerun_context.selected_ci_id or self.rerun_context.selected_secondary_ci_id:
+            rerun_payload = {
+                "selected_ci_id": self.rerun_context.selected_ci_id,
+                "selected_secondary_ci_id": self.rerun_context.selected_secondary_ci_id,
+            }
+        return ExecutionContext(
+            tenant_id=self.tenant_id,
+            question=self.question,
+            trace_id=trace_id,
+            rerun_context=rerun_payload,
+            test_mode=bool(self.asset_overrides),
+            asset_overrides=self.asset_overrides,
+        )
 
     @contextmanager
     def _tool_context(self, tool: str, input_params: Dict[str, Any] | None = None, **meta):
@@ -244,6 +266,148 @@ class CIOrchestratorRunner:
                         item_dict = item.dict() if hasattr(item, "dict") else dict(item)
                         if "kind" in item_dict and "payload" in item_dict:
                             self.references.append(item_dict)
+
+    def _ensure_reference_fallback(self) -> None:
+        if self.references:
+            return
+        for call in self.tool_calls:
+            reference = self._reference_from_tool_call(call)
+            if reference:
+                self.references.append(reference)
+        if not self.references and self.tool_calls:
+            payload = {
+                "tool_calls": [call.model_dump() for call in self.tool_calls],
+            }
+            self.references.append({"kind": "row", "title": "tool.calls", "payload": payload})
+
+    def _reference_from_tool_call(self, call: ToolCall) -> Dict[str, Any] | None:
+        tool_name = call.tool or "unknown"
+        input_params = call.input_params or {}
+        output_summary = call.output_summary or {}
+        payload: Dict[str, Any] = {
+            "tool": tool_name,
+            "input": input_params,
+            "summary": output_summary,
+        }
+        if call.query_asset:
+            payload["query_asset"] = call.query_asset
+        statement_fingerprint = output_summary.get("statement_fingerprint")
+        if statement_fingerprint:
+            payload["statement_fingerprint"] = statement_fingerprint
+        if tool_name == "metric.aggregate":
+            payload.update(
+                {
+                    "metric_name": input_params.get("metric_name"),
+                    "agg": input_params.get("agg"),
+                    "time_range": input_params.get("time_range"),
+                    "ci_ids_count": input_params.get("ci_ids_count"),
+                }
+            )
+            title = "metric.aggregate"
+        elif tool_name == "metric.series":
+            payload.update(
+                {
+                    "metric_name": input_params.get("metric_name"),
+                    "time_range": input_params.get("time_range"),
+                    "limit": input_params.get("limit"),
+                }
+            )
+            title = "metric.series"
+        elif tool_name == "history.recent":
+            payload.update(
+                {
+                    "time_range": input_params.get("time_range"),
+                    "scope": input_params.get("scope"),
+                    "limit": input_params.get("limit"),
+                    "ci_ids_count": input_params.get("ci_ids_count"),
+                }
+            )
+            title = "history.recent"
+        elif tool_name == "graph.expand":
+            payload.update(
+                {
+                    "view": input_params.get("view"),
+                    "depth": input_params.get("depth"),
+                }
+            )
+            title = "graph.expand"
+        elif tool_name == "graph.path":
+            payload.update(
+                {
+                    "hop_count": input_params.get("hops"),
+                }
+            )
+            title = "graph.path"
+        elif tool_name == "ci.search":
+            payload.update(
+                {
+                    "keywords": input_params.get("keywords"),
+                    "filter_count": input_params.get("filter_count"),
+                    "limit": input_params.get("limit"),
+                }
+            )
+            title = "ci.search"
+        elif tool_name == "ci.list":
+            payload.update(
+                {
+                    "limit": input_params.get("limit"),
+                    "offset": input_params.get("offset"),
+                    "filter_count": input_params.get("filter_count"),
+                }
+            )
+            title = "ci.list"
+        else:
+            title = tool_name
+        return {"kind": "row", "title": title, "payload": payload}
+
+    def _resolve_applied_assets(self) -> Dict[str, str]:
+        assets = get_tracked_assets()
+        applied: Dict[str, str] = {}
+
+        def normalize_ref(info: Dict[str, Any]) -> str:
+            asset_id = info.get("asset_id")
+            version = info.get("version")
+            name = info.get("name") or info.get("screen_id") or "unknown"
+            if asset_id and version is not None:
+                return f"{asset_id}:v{version}"
+            if asset_id:
+                return str(asset_id)
+            source = info.get("source") or "unknown"
+            return f"{name}@{source}"
+
+        for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
+            info = assets.get(key)
+            if not info:
+                continue
+            applied[key] = normalize_ref(info)
+            override_key = f"{key}:{info.get('name')}"
+            override = self.asset_overrides.get(override_key)
+            if override:
+                applied[key] = override
+
+        for entry in assets.get("queries", []) or []:
+            if not entry:
+                continue
+            name = entry.get("name") or entry.get("asset_id") or "query"
+            override_key = f"query:{name}"
+            applied_key = f"query:{name}"
+            applied[applied_key] = normalize_ref(entry)
+            override = self.asset_overrides.get(override_key)
+            if override:
+                applied[applied_key] = override
+
+        for entry in assets.get("screens", []) or []:
+            if not entry:
+                continue
+            screen_id = entry.get("screen_id") or entry.get("asset_id") or "screen"
+            override_key = f"screen:{screen_id}"
+            applied_key = f"screen:{screen_id}"
+            applied[applied_key] = normalize_ref(entry)
+            override = self.asset_overrides.get(override_key)
+            if override:
+                applied[applied_key] = override
+
+        return applied
 
     def _log_metric_blocks_return(self, blocks: List[Block]) -> None:
         types = [block.get("type") if isinstance(block, dict) else getattr(block, "type", None) for block in blocks]
@@ -876,8 +1040,10 @@ class CIOrchestratorRunner:
                 meta["fallback"] = True
         return result
 
-    def run(self) -> Dict[str, Any]:
-        return asyncio.run(self._run_async())
+    def run(self, plan_output: PlanOutput | None = None) -> Dict[str, Any]:
+        if plan_output is None:
+            plan_output = PlanOutput(kind=PlanOutputKind.PLAN, plan=self.plan)
+        return asyncio.run(self._run_async_with_stages(plan_output))
 
     async def _run_async(self) -> Dict[str, Any]:
         blocks: List[Block] = []
@@ -951,6 +1117,7 @@ class CIOrchestratorRunner:
             raise
 
         self._extract_references_from_blocks(blocks)
+        self._ensure_reference_fallback()
 
         context = get_request_context()
         trace_id = context.get("trace_id")
@@ -4115,79 +4282,209 @@ class CIOrchestratorRunner:
         """
         Run orchestration with explicit stages.
 
-        This method demonstrates the new stage-based execution pipeline.
+        Uses existing runner execution while capturing stage inputs/outputs.
         """
         blocks: List[Block] = []
         answer = "CI insight ready"
         start = perf_counter()
+        stage_inputs: List[Dict[str, Any]] = []
+        stage_outputs: List[Dict[str, Any]] = []
+        stages: List[Dict[str, Any]] = []
 
-        self.logger.info("ci.runner.stages.start", extra={
-            "plan_kind": plan_output.kind.value,
-            "stages": ["route_plan", "validate", "execute", "compose", "present"]
-        })
+        self.logger.info(
+            "ci.runner.stages.start",
+            extra={
+                "plan_kind": plan_output.kind.value,
+                "stages": ["route_plan", "validate", "execute", "compose", "present"],
+            },
+        )
 
-        stage_inputs = []
-        stage_outputs = []
+        def record_stage(stage_name: str, stage_input: StageInput, stage_output: StageOutput) -> None:
+            stage_input_payload = stage_input.model_dump()
+            stage_output_payload = stage_output.model_dump()
+            stage_inputs.append(stage_input_payload)
+            stage_outputs.append(stage_output_payload)
+            stages.append(
+                {
+                    "name": stage_name,
+                    "input": stage_input_payload,
+                    "output": stage_output_payload.get("result"),
+                    "elapsed_ms": stage_output_payload.get("duration_ms", 0),
+                    "status": stage_output_payload.get("diagnostics", {}).get("status", "ok"),
+                }
+            )
 
         try:
-            # Stage 1: ROUTE+PLAN (already completed by planner)
-            if plan_output.kind == PlanOutputKind.DIRECT:
-                # Direct answer - skip to present
-                stage_input = self._build_stage_input("route_plan", plan_output)
-                stage_outputs.append({"stage": "route_plan", "result": {"route": "direct"}})
+            route_start = perf_counter()
+            route_input = self._build_stage_input("route_plan", plan_output)
+            route_result = {"route": plan_output.kind.value, "plan_output": plan_output.model_dump()}
+            route_output = StageOutput(
+                stage="route_plan",
+                result=route_result,
+                diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
+                references=[],
+                duration_ms=int((perf_counter() - route_start) * 1000),
+            )
+            record_stage("route_plan", route_input, route_output)
 
-                # Skip to present for direct answer
-                final_result = await self._present_stage_async(plan_output)
-                blocks = final_result.get("blocks", [])
-                answer = final_result.get("summary", "Direct answer")
+            if plan_output.kind == PlanOutputKind.DIRECT:
+                validate_input = self._build_stage_input("validate", plan_output, route_output.model_dump())
+                validate_output = StageOutput(
+                    stage="validate",
+                    result={"skipped": True, "reason": "direct_answer"},
+                    diagnostics=StageDiagnostics(status="warning", warnings=["skipped"], errors=[]),
+                    references=[],
+                    duration_ms=0,
+                )
+                record_stage("validate", validate_input, validate_output)
+
+                execute_input = self._build_stage_input("execute", plan_output, validate_output.model_dump())
+                execute_output = StageOutput(
+                    stage="execute",
+                    result={"skipped": True, "reason": "direct_answer"},
+                    diagnostics=StageDiagnostics(status="warning", warnings=["skipped"], errors=[]),
+                    references=[],
+                    duration_ms=0,
+                )
+                record_stage("execute", execute_input, execute_output)
+
+                compose_input = self._build_stage_input("compose", plan_output, execute_output.model_dump())
+                compose_output = StageOutput(
+                    stage="compose",
+                    result={"skipped": True, "reason": "direct_answer"},
+                    diagnostics=StageDiagnostics(status="warning", warnings=["skipped"], errors=[]),
+                    references=[],
+                    duration_ms=0,
+                )
+                record_stage("compose", compose_input, compose_output)
+
+                present_start = perf_counter()
+                present_input = self._build_stage_input("present", plan_output, compose_output.model_dump())
+                present_result = await self._present_stage_async(plan_output)
+                blocks = present_result.get("blocks", [])
+                answer = present_result.get("summary", "Direct answer")
+                if present_result.get("references"):
+                    self.references.extend(present_result.get("references") or [])
+                present_output = StageOutput(
+                    stage="present",
+                    result={"summary": answer, "blocks": blocks},
+                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
+                    references=present_result.get("references", []),
+                    duration_ms=int((perf_counter() - present_start) * 1000),
+                )
+                record_stage("present", present_input, present_output)
 
             elif plan_output.kind == PlanOutputKind.REJECT:
-                # Reject case
-                stage_input = self._build_stage_input("route_plan", plan_output)
-                stage_outputs.append({"stage": "route_plan", "result": {"route": "reject"}})
+                validate_input = self._build_stage_input("validate", plan_output, route_output.model_dump())
+                validate_output = StageOutput(
+                    stage="validate",
+                    result={"skipped": True, "reason": "rejected"},
+                    diagnostics=StageDiagnostics(status="warning", warnings=["skipped"], errors=[]),
+                    references=[],
+                    duration_ms=0,
+                )
+                record_stage("validate", validate_input, validate_output)
 
-                # Return reject response
-                blocks = [text_block(f"Query rejected: {plan_output.reject_payload.reason}")]
-                answer = f"Query rejected: {plan_output.reject_payload.reason}"
+                execute_input = self._build_stage_input("execute", plan_output, validate_output.model_dump())
+                execute_output = StageOutput(
+                    stage="execute",
+                    result={"skipped": True, "reason": "rejected"},
+                    diagnostics=StageDiagnostics(status="warning", warnings=["skipped"], errors=[]),
+                    references=[],
+                    duration_ms=0,
+                )
+                record_stage("execute", execute_input, execute_output)
+
+                compose_input = self._build_stage_input("compose", plan_output, execute_output.model_dump())
+                compose_output = StageOutput(
+                    stage="compose",
+                    result={"skipped": True, "reason": "rejected"},
+                    diagnostics=StageDiagnostics(status="warning", warnings=["skipped"], errors=[]),
+                    references=[],
+                    duration_ms=0,
+                )
+                record_stage("compose", compose_input, compose_output)
+
+                present_start = perf_counter()
+                present_input = self._build_stage_input("present", plan_output, compose_output.model_dump())
+                reject_reason = plan_output.reject_payload.reason if plan_output.reject_payload else "Query rejected"
+                blocks = [text_block(f"Query rejected: {reject_reason}")]
+                answer = f"Query rejected: {reject_reason}"
+                present_output = StageOutput(
+                    stage="present",
+                    result={"summary": answer, "blocks": blocks},
+                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
+                    references=[],
+                    duration_ms=int((perf_counter() - present_start) * 1000),
+                )
+                record_stage("present", present_input, present_output)
 
             else:
-                # Normal orchestration plan
-                stage_input = self._build_stage_input("route_plan", plan_output)
-                route_output = await self._stage_executor.execute_stage(stage_input)
-                stage_inputs.append(stage_input.dict())
-                stage_outputs.append(route_output.dict())
+                validate_start = perf_counter()
+                validate_input = self._build_stage_input("validate", plan_output, route_output.model_dump())
+                validate_result = {
+                    "plan_validated": self.plan.model_dump(),
+                    "policy_decisions": self.plan_trace.get("policy_decisions"),
+                    "is_valid": True,
+                }
+                validate_output = StageOutput(
+                    stage="validate",
+                    result=validate_result,
+                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
+                    references=[],
+                    duration_ms=int((perf_counter() - validate_start) * 1000),
+                )
+                record_stage("validate", validate_input, validate_output)
 
-                # Stage 2: VALIDATE
-                validate_input = self._build_stage_input("validate", plan_output, route_output.dict())
-                validate_output = await self._stage_executor.execute_stage(validate_input)
-                stage_inputs.append(validate_input.dict())
-                stage_outputs.append(validate_output.dict())
+                execute_start = perf_counter()
+                base_result = await self._run_async()
+                blocks = base_result.get("blocks", [])
+                answer = base_result.get("answer", answer)
+                execute_output = StageOutput(
+                    stage="execute",
+                    result={
+                        "used_tools": base_result.get("meta", {}).get("used_tools", []),
+                        "blocks_count": len(blocks),
+                        "errors": self.errors,
+                    },
+                    diagnostics=StageDiagnostics(
+                        status="error" if self.errors else "ok",
+                        warnings=[],
+                        errors=self.errors,
+                    ),
+                    references=self.references,
+                    duration_ms=int((perf_counter() - execute_start) * 1000),
+                )
+                execute_input = self._build_stage_input(
+                    "execute",
+                    plan_output,
+                    validate_output.model_dump(),
+                )
+                record_stage("execute", execute_input, execute_output)
 
-                # Check if validation passed
-                if not validate_output.result.get("is_valid", True):
-                    answer = "Validation failed"
-                    blocks = [text_block(f"Validation failed: {', '.join(validate_output.result.get('validation_errors', []))}")]
-                else:
-                    # Stage 3: EXECUTE
-                    execute_input = self._build_stage_input("execute", plan_output, validate_output.dict())
-                    execute_output = await self._stage_executor.execute_stage(execute_input)
-                    stage_inputs.append(execute_input.dict())
-                    stage_outputs.append(execute_output.dict())
+                compose_input = self._build_stage_input("compose", plan_output, execute_output.model_dump())
+                compose_output = StageOutput(
+                    stage="compose",
+                    result={
+                        "summary": answer,
+                        "blocks_count": len(blocks),
+                        "next_actions_count": len(base_result.get("next_actions", [])),
+                    },
+                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
+                    references=self.references,
+                    duration_ms=0,
+                )
+                record_stage("compose", compose_input, compose_output)
 
-                    # Stage 4: COMPOSE
-                    compose_input = self._build_stage_input("compose", plan_output, execute_output.dict())
-                    compose_output = await self._stage_executor.execute_stage(compose_input)
-                    stage_inputs.append(compose_input.dict())
-                    stage_outputs.append(compose_output.dict())
-
-                    # Stage 5: PRESENT
-                    present_input = self._build_stage_input("present", plan_output, compose_output.dict())
-                    present_output = await self._stage_executor.execute_stage(present_input)
-                    stage_inputs.append(present_input.dict())
-                    stage_outputs.append(present_output.dict())
-
-                    blocks = present_output.result.get("blocks", [])
-                    answer = present_output.result.get("summary", "Execution completed")
+                present_input = self._build_stage_input("present", plan_output, compose_output.model_dump())
+                present_output = StageOutput(
+                    stage="present",
+                    result={"summary": answer, "blocks": blocks},
+                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
+                    references=self.references,
+                    duration_ms=0,
+                )
+                record_stage("present", present_input, present_output)
 
         except Exception as exc:
             self.errors.append(str(exc))
@@ -4195,7 +4492,6 @@ class CIOrchestratorRunner:
             blocks = [text_block(f"Error during execution: {str(exc)}")]
             answer = f"Error during execution: {str(exc)}"
 
-        # Build trace with stage information
         context = get_request_context()
         trace_id = context.get("trace_id")
         if not trace_id or trace_id == "-":
@@ -4204,14 +4500,16 @@ class CIOrchestratorRunner:
         if parent_trace_id == "-":
             parent_trace_id = None
 
+        route_kind = "orch" if plan_output.kind == PlanOutputKind.PLAN else plan_output.kind.value
         trace = {
-            "route": "orch" if plan_output.kind == PlanOutputKind.PLAN else "direct",
-            "plan_raw": plan_output.plan.dict() if plan_output.plan else None,
-            "plan_validated": plan_output.plan.dict() if plan_output.plan else None,
+            "route": route_kind,
+            "plan_raw": plan_output.plan.model_dump() if plan_output.plan else None,
+            "plan_validated": self.plan.model_dump() if plan_output.kind == PlanOutputKind.PLAN else None,
             "policy_decisions": self.plan_trace.get("policy_decisions"),
             "stage_inputs": stage_inputs,
             "stage_outputs": stage_outputs,
-            "replan_events": [],  # Will be populated in future iterations
+            "stages": stages,
+            "replan_events": [],
             "tool_calls": [call.model_dump() for call in self.tool_calls],
             "references": self.references,
             "errors": self.errors,
@@ -4220,11 +4518,10 @@ class CIOrchestratorRunner:
             "parent_trace_id": parent_trace_id,
         }
 
-        # Calculate timing
         elapsed_ms = int((perf_counter() - start) * 1000)
 
         meta = {
-            "route": "orch" if plan_output.kind == PlanOutputKind.PLAN else "direct",
+            "route": route_kind,
             "route_reason": "Stage-based execution",
             "timing_ms": elapsed_ms,
             "summary": answer,
@@ -4241,18 +4538,24 @@ class CIOrchestratorRunner:
             "blocks": blocks,
             "trace": trace,
             "next_actions": self.next_actions,
-            "meta": meta
+            "meta": meta,
         }
 
-    def _build_stage_input(self, stage: str, plan_output: PlanOutput, prev_output: Optional[Dict[str, Any]] = None) -> StageInput:
+    def _build_stage_input(
+        self,
+        stage: str,
+        plan_output: PlanOutput,
+        prev_output: Optional[Dict[str, Any]] = None,
+    ) -> StageInput:
         """Build StageInput from plan output and previous output."""
-        from app.modules.ops.schemas import StageInput
-
+        context = get_request_context()
+        trace_id = context.get("trace_id") or context.get("request_id")
         return StageInput(
             stage=stage,
-            applied_assets=getattr(self, 'applied_assets', {}),
-            params={"plan_output": plan_output.dict()},
-            prev_output=prev_output
+            applied_assets=self._resolve_applied_assets(),
+            params={"plan_output": plan_output.model_dump()},
+            prev_output=prev_output,
+            trace_id=trace_id,
         )
 
     async def _present_stage_async(self, plan_output: PlanOutput) -> Dict[str, Any]:

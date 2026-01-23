@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import importlib
+import re
 import time
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from core.config import get_settings
@@ -26,6 +28,7 @@ from .schemas import (
     CiAskResponse,
     IsolatedStageTestRequest,
     OpsQueryRequest,
+    ReplanPatchDiff,
     ReplanTrigger,
     RerunContext,
     RerunPatch,
@@ -33,9 +36,22 @@ from .schemas import (
     UIActionRequest,
 )
 from .services import handle_ops_query
+from .services.ci.blocks import text_block
 from .services.ci.orchestrator.runner import CIOrchestratorRunner
 from .services.ci.planner import planner_llm, validator
-from .services.ci.planner.plan_schema import Plan
+from .services.ci.planner.plan_schema import (
+    Intent,
+    Plan,
+    PlanOutput,
+    PlanOutputKind,
+    View,
+)
+from .services.control_loop import evaluate_replan
+from app.modules.asset_registry.loader import (
+    load_resolver_asset,
+    load_schema_asset,
+    load_source_asset,
+)
 from .services.observability_service import collect_observability_metrics
 
 router = APIRouter(prefix="/ops", tags=["ops"])
@@ -297,8 +313,82 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
     # Initialize span tracking for this trace
     clear_spans()
 
+    def _apply_resolver_rules(question: str, resolver_payload: Dict[str, Any] | None) -> tuple[str, list[str]]:
+        if not resolver_payload:
+            return question, []
+        rules = resolver_payload.get("rules", [])
+        applied: list[str] = []
+        normalized = question
+        for rule in rules:
+            rule_type = rule.get("rule_type")
+            rule_data = rule.get("rule_data", {})
+            name = rule.get("name") or rule_data.get("name") or rule_type or "rule"
+            if rule_type == "alias_mapping":
+                source_entity = rule_data.get("source_entity")
+                target_entity = rule_data.get("target_entity")
+                if source_entity and target_entity and source_entity.lower() in normalized.lower():
+                    normalized = normalized.replace(source_entity, target_entity)
+                    applied.append(name)
+            elif rule_type == "pattern_rule":
+                pattern = rule_data.get("pattern")
+                replacement = rule_data.get("replacement")
+                if pattern and replacement is not None:
+                    try:
+                        normalized = re.sub(pattern, replacement, normalized)
+                        applied.append(name)
+                    except re.error:
+                        logger.warning("resolver.rule.invalid_pattern", extra={"name": name})
+            elif rule_type == "transformation":
+                transform = rule_data.get("transformation_type")
+                if transform == "lowercase":
+                    normalized = normalized.lower()
+                    applied.append(name)
+                elif transform == "uppercase":
+                    normalized = normalized.upper()
+                    applied.append(name)
+                elif transform == "strip":
+                    normalized = normalized.strip()
+                    applied.append(name)
+        return normalized, applied
+
     try:
+        def build_fallback_plan(source: Plan) -> Plan:
+            history = source.history.model_copy(update={"enabled": False})
+            graph = source.graph.model_copy(update={"depth": 0, "view": None})
+            list_spec = source.list.model_copy(update={"enabled": False})
+            output = source.output.model_copy(update={"blocks": ["text", "table"], "primary": "table"})
+            return source.model_copy(
+                update={
+                    "intent": Intent.LOOKUP,
+                    "view": View.SUMMARY,
+                    "metric": None,
+                    "history": history,
+                    "graph": graph,
+                    "list": list_spec,
+                    "output": output,
+                }
+            )
+
+        resolver_payload = load_resolver_asset(payload.resolver_asset) if payload.resolver_asset else None
+        schema_payload = load_schema_asset(payload.schema_asset) if payload.schema_asset else None
+        source_payload = load_source_asset(payload.source_asset) if payload.source_asset else None
+
+        normalized_question, resolver_rules_applied = _apply_resolver_rules(payload.question, resolver_payload)
+
         rerun_ctx: RerunContext | None = None
+        plan_output: PlanOutput | None = None
+        plan_raw: Plan | None = None
+        plan_validated: Plan | None = None
+        plan_trace: Dict[str, Any] = {
+            "asset_context": {
+                "source_asset": payload.source_asset,
+                "schema_asset": payload.schema_asset,
+                "resolver_asset": payload.resolver_asset,
+            },
+            "resolver_rules_applied": resolver_rules_applied,
+        }
+        replan_events: list[Dict[str, Any]] = []
+
         if payload.rerun:
             logger.info("ci.runner.planner.skipped", extra={"reason": "rerun"})
             validator_span = start_span("validator", "stage")
@@ -312,16 +402,52 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
                 raise
             plan_raw = payload.rerun.base_plan
+            plan_output = PlanOutput(
+                kind=PlanOutputKind.PLAN,
+                plan=plan_validated,
+                confidence=1.0,
+                reasoning="Rerun execution",
+                metadata={"route": "orch"},
+            )
             rerun_ctx = RerunContext(
                 selected_ci_id=payload.rerun.selected_ci_id,
                 selected_secondary_ci_id=payload.rerun.selected_secondary_ci_id,
+            )
+            timestamp = datetime.now(timezone.utc).isoformat()
+            replan_events.append(
+                {
+                    "event_type": "replan_execution",
+                    "stage_name": "route_plan",
+                    "trigger": {
+                        "trigger_type": "manual",
+                        "stage_name": "route_plan",
+                        "severity": "low",
+                        "reason": "rerun requested",
+                        "timestamp": timestamp,
+                        "metadata": {
+                            "patch_keys": patch_keys,
+                        },
+                    },
+                    "patch": {
+                        "before": plan_raw.model_dump(),
+                        "after": patched_plan.model_dump(),
+                    },
+                    "timestamp": timestamp,
+                    "decision_metadata": {
+                        "selected_ci_id": payload.rerun.selected_ci_id,
+                        "selected_secondary_ci_id": payload.rerun.selected_secondary_ci_id,
+                    },
+                    "execution_metadata": {
+                        "patch_keys": patch_keys,
+                    },
+                }
             )
         else:
             planner_span = start_span("planner", "stage")
             try:
                 planner_start = time.perf_counter()
                 logger.info("ci.runner.planner.start", extra={"llm_called": False})
-                plan_raw = planner_llm.create_plan(payload.question)
+                plan_output = planner_llm.create_plan_output(normalized_question)
                 elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
                 logger.info("ci.runner.planner.done", extra={"llm_called": False, "elapsed_ms": elapsed_ms})
                 end_span(planner_span, links={"plan_path": "plan.raw"})
@@ -329,43 +455,22 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 end_span(planner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
                 raise
 
-            validator_span = start_span("validator", "stage")
-            try:
-                logger.info("ci.runner.validator.start", extra={"phase": "initial"})
-                plan_validated, plan_trace = validator.validate_plan(plan_raw)
-                logger.info("ci.runner.validator.done", extra={"phase": "initial"})
-                end_span(validator_span, links={"plan_path": "plan.validated"})
-            except Exception as e:
-                end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
-                raise
+            if plan_output.kind == PlanOutputKind.PLAN and plan_output.plan:
+                plan_raw = plan_output.plan
+                validator_span = start_span("validator", "stage")
+                try:
+                    logger.info("ci.runner.validator.start", extra={"phase": "initial"})
+                    plan_validated, plan_trace = validator.validate_plan(plan_raw)
+                    logger.info("ci.runner.validator.done", extra={"phase": "initial"})
+                    end_span(validator_span, links={"plan_path": "plan.validated"})
+                except Exception as e:
+                    end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                    raise
+                plan_output = plan_output.model_copy(update={"plan": plan_validated})
 
-        runner_span = start_span("runner", "stage")
-        try:
-            runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
-            logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
-            runner = CIOrchestratorRunner(
-                plan_validated,
-                plan_raw,
-                tenant_id,
-                payload.question,
-                plan_trace,
-                rerun_context=rerun_ctx,
-            )
-            runner._flow_spans_enabled = True
-            runner._runner_span_id = runner_span
-            result = runner.run()
-            next_actions = result.get("next_actions") or []
-            next_actions_count = len(next_actions)
-            envelope_blocks = result.get("blocks") or []
-            trace_payload = result.get("trace") or {}
-            meta = result.get("meta")
-            trace_status = "error" if trace_payload.get("errors") else "success"
-            end_span(runner_span)
-        except Exception as e:
-            end_span(runner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
-            raise
-        finally:
-            duration_ms = int((time.perf_counter() - start) * 1000)
+        if plan_output is None:
+            raise ValueError("Planner output missing")
+
         context = get_request_context()
         active_trace_id = context.get("trace_id")
         request_id = context.get("request_id")
@@ -376,6 +481,297 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         parent_trace_id = context.get("parent_trace_id")
         if parent_trace_id == "-":
             parent_trace_id = None
+
+        if plan_output.kind in (PlanOutputKind.DIRECT, PlanOutputKind.REJECT):
+            stage_inputs: list[dict[str, Any]] = []
+            stage_outputs: list[dict[str, Any]] = []
+            stages: list[dict[str, Any]] = []
+
+            def build_stage_output(stage: str, result: Dict[str, Any], status_label: str, duration: int = 0) -> Dict[str, Any]:
+                payload = {
+                    "stage": stage,
+                    "result": result,
+                    "diagnostics": {
+                        "status": status_label,
+                        "warnings": ["skipped"] if status_label == "warning" else [],
+                        "errors": [],
+                    },
+                    "references": result.get("references", []),
+                    "duration_ms": duration,
+                }
+                return payload
+
+            route_input = StageInput(
+                stage="route_plan",
+                applied_assets={},
+                params={"plan_output": plan_output.model_dump()},
+                prev_output=None,
+                trace_id=active_trace_id,
+            )
+            route_output = build_stage_output(
+                "route_plan",
+                {"route": plan_output.kind.value},
+                "ok",
+            )
+            stage_inputs.append(route_input.model_dump())
+            stage_outputs.append(route_output)
+            stages.append(
+                {
+                    "name": "route_plan",
+                    "input": route_input.model_dump(),
+                    "output": route_output.get("result"),
+                    "elapsed_ms": route_output.get("duration_ms", 0),
+                    "status": route_output.get("diagnostics", {}).get("status", "ok"),
+                }
+            )
+
+            skipped_reason = "direct_answer" if plan_output.kind == PlanOutputKind.DIRECT else "rejected"
+            for stage_name in ("validate", "execute", "compose"):
+                stage_input = StageInput(
+                    stage=stage_name,
+                    applied_assets={},
+                    params={"plan_output": plan_output.model_dump()},
+                    prev_output=route_output,
+                    trace_id=active_trace_id,
+                )
+                stage_output = build_stage_output(stage_name, {"skipped": True, "reason": skipped_reason}, "warning")
+                stage_inputs.append(stage_input.model_dump())
+                stage_outputs.append(stage_output)
+                stages.append(
+                    {
+                        "name": stage_name,
+                        "input": stage_input.model_dump(),
+                        "output": stage_output.get("result"),
+                        "elapsed_ms": stage_output.get("duration_ms", 0),
+                        "status": stage_output.get("diagnostics", {}).get("status", "ok"),
+                    }
+                )
+
+            if plan_output.kind == PlanOutputKind.DIRECT and plan_output.direct_answer:
+                answer = plan_output.direct_answer.answer
+                blocks = [text_block(answer)]
+                references = plan_output.direct_answer.references
+                route_reason = plan_output.direct_answer.reasoning or plan_output.reasoning or "Direct answer route selected"
+                route_output_payload = {"route": "direct", "direct_answer": plan_output.direct_answer.model_dump()}
+            else:
+                reject_reason = (
+                    plan_output.reject_payload.reason
+                    if plan_output.reject_payload
+                    else "This query is not supported"
+                )
+                answer = f"Query rejected: {reject_reason}"
+                blocks = [text_block(answer)]
+                references = []
+                route_reason = plan_output.reject_payload.reasoning if plan_output.reject_payload else plan_output.reasoning
+                route_reason = route_reason or "Reject route selected"
+                route_output_payload = {"route": "reject", "reject_reason": reject_reason}
+
+            present_input = StageInput(
+                stage="present",
+                applied_assets={},
+                params={"plan_output": plan_output.model_dump()},
+                prev_output=route_output,
+                trace_id=active_trace_id,
+            )
+            present_output = build_stage_output(
+                "present",
+                {"summary": answer, "blocks": blocks, "references": references},
+                "ok",
+            )
+            stage_inputs.append(present_input.model_dump())
+            stage_outputs.append(present_output)
+            stages.append(
+                {
+                    "name": "present",
+                    "input": present_input.model_dump(),
+                    "output": present_output.get("result"),
+                    "elapsed_ms": present_output.get("duration_ms", 0),
+                    "status": present_output.get("diagnostics", {}).get("status", "ok"),
+                }
+            )
+
+            duration_ms = int((time.perf_counter() - start) * 1000)
+            trace_payload = {
+                "route": plan_output.kind.value,
+                "route_output": route_output_payload,
+                "route_decision": {
+                    "route": plan_output.kind.value,
+                    "reason": route_reason,
+                    "confidence": plan_output.confidence,
+                    "metadata": plan_output.metadata,
+                },
+                "plan_raw": None,
+                "plan_validated": None,
+                "policy_decisions": plan_trace.get("policy_decisions"),
+                "stage_inputs": stage_inputs,
+                "stage_outputs": stage_outputs,
+                "stages": stages,
+                "replan_events": replan_events,
+                "tool_calls": [],
+                "references": references,
+                "errors": [],
+                "tenant_id": tenant_id,
+                "trace_id": active_trace_id,
+                "parent_trace_id": parent_trace_id,
+            }
+            meta = {
+                "route": plan_output.kind.value,
+                "route_reason": route_reason,
+                "timing_ms": duration_ms,
+                "summary": answer,
+                "used_tools": [],
+                "fallback": False,
+                "trace_id": active_trace_id,
+                "parent_trace_id": parent_trace_id,
+            }
+            result = {
+                "answer": answer,
+                "blocks": blocks,
+                "trace": trace_payload,
+                "next_actions": [],
+                "meta": meta,
+            }
+            envelope_blocks = blocks
+            next_actions_count = 0
+            trace_status = "success"
+        else:
+            runner_span = start_span("runner", "stage")
+            try:
+                runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
+                logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
+                runner = CIOrchestratorRunner(
+                    plan_validated,
+                    plan_raw,
+                    tenant_id,
+                    normalized_question,
+                    plan_trace,
+                    rerun_context=rerun_ctx,
+                    asset_overrides=payload.asset_overrides,
+                )
+                runner._flow_spans_enabled = True
+                runner._runner_span_id = runner_span
+                result = runner.run(plan_output)
+                next_actions = result.get("next_actions") or []
+                next_actions_count = len(next_actions)
+                envelope_blocks = result.get("blocks") or []
+                trace_payload = result.get("trace") or {}
+                meta = result.get("meta") or {}
+                if replan_events:
+                    trace_payload["replan_events"] = replan_events
+                route_output_payload = {
+                    "route": "orch",
+                    "plan_raw": plan_raw.model_dump() if plan_raw else None,
+                }
+                trace_payload.setdefault("route", "orch")
+                trace_payload["route_output"] = route_output_payload
+                trace_payload.setdefault(
+                    "route_decision",
+                    {
+                        "route": "orch",
+                        "reason": plan_output.reasoning or "Orchestration plan created",
+                        "confidence": plan_output.confidence,
+                        "metadata": plan_output.metadata,
+                    },
+                )
+                meta["route"] = "orch"
+                meta.setdefault("route_reason", "Stage-based execution")
+                trace_status = "error" if trace_payload.get("errors") else "success"
+
+                if trace_status == "error" and not payload.rerun:
+                    trigger = ReplanTrigger(
+                        trigger_type="error",
+                        stage_name="execute",
+                        severity="high",
+                        reason="runner execution error",
+                        timestamp=datetime.now(timezone.utc).isoformat(),
+                    )
+                    fallback_plan = build_fallback_plan(plan_validated)
+                    patch_diff = ReplanPatchDiff(
+                        before=plan_validated.model_dump(),
+                        after=fallback_plan.model_dump(),
+                    )
+                    should_replan = evaluate_replan(trigger, patch_diff)
+                    decision_event = {
+                        "event_type": "replan_decision",
+                        "stage_name": "execute",
+                        "trigger": trigger.model_dump(),
+                        "patch": patch_diff.model_dump(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "decision_metadata": {
+                            "should_replan": should_replan,
+                        },
+                    }
+                    replan_events.append(decision_event)
+
+                    if should_replan:
+                        validator_span = start_span("validator", "stage")
+                        try:
+                            fallback_validated, fallback_trace = validator.validate_plan(fallback_plan)
+                            end_span(validator_span, links={"plan_path": "plan.validated"})
+                        except Exception as e:
+                            end_span(
+                                validator_span,
+                                status="error",
+                                summary={"error_type": type(e).__name__, "error_message": str(e)},
+                            )
+                            raise
+                        fallback_output = PlanOutput(
+                            kind=PlanOutputKind.PLAN,
+                            plan=fallback_validated,
+                            confidence=plan_output.confidence,
+                            reasoning="Auto replan fallback",
+                            metadata={"route": "orch"},
+                        )
+                        runner = CIOrchestratorRunner(
+                            fallback_validated,
+                            fallback_plan,
+                            tenant_id,
+                            normalized_question,
+                            fallback_trace,
+                            rerun_context=rerun_ctx,
+                            asset_overrides=payload.asset_overrides,
+                        )
+                        runner._flow_spans_enabled = True
+                        runner._runner_span_id = runner_span
+                        result = runner.run(fallback_output)
+                        next_actions = result.get("next_actions") or []
+                        next_actions_count = len(next_actions)
+                        envelope_blocks = result.get("blocks") or []
+                        trace_payload = result.get("trace") or {}
+                        meta = result.get("meta") or {}
+                        trace_payload["route"] = "orch"
+                        trace_payload["route_output"] = {
+                            "route": "orch",
+                            "plan_raw": fallback_plan.model_dump(),
+                        }
+                        trace_payload["route_decision"] = {
+                            "route": "orch",
+                            "reason": fallback_output.reasoning or "Auto replan fallback",
+                            "confidence": fallback_output.confidence,
+                            "metadata": fallback_output.metadata,
+                        }
+                        execution_event = {
+                            "event_type": "replan_execution",
+                            "stage_name": "execute",
+                            "trigger": trigger.model_dump(),
+                            "patch": patch_diff.model_dump(),
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "execution_metadata": {
+                                "fallback_plan": True,
+                            },
+                        }
+                        replan_events.append(execution_event)
+                        trace_payload["replan_events"] = replan_events
+                        trace_status = "error" if trace_payload.get("errors") else "success"
+                        meta["route"] = "orch"
+                        meta.setdefault("route_reason", "Stage-based execution")
+
+                end_span(runner_span)
+            except Exception as e:
+                end_span(runner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                raise
+            finally:
+                duration_ms = int((time.perf_counter() - start) * 1000)
         request_payload = {
             "question": payload.question,
             "rerun": payload.rerun.dict(exclude_none=True) if payload.rerun else None,

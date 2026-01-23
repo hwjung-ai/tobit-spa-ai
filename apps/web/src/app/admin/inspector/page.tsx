@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Toast from "../../../components/admin/Toast";
 import ReactFlow, {
@@ -14,12 +14,15 @@ import ReactFlow, {
   ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { AuditLog, fetchApi, formatRelativeTime, formatTimestamp } from "../../../lib/adminUtils";
+import { Asset, AuditLog, fetchApi, formatRelativeTime, formatTimestamp } from "../../../lib/adminUtils";
 import AuditLogTable, { AuditLogDetailsModal } from "../../../components/admin/AuditLogTable";
 import ValidationAlert from "../../../components/admin/ValidationAlert";
 import SpanNode from "../../../components/admin/SpanNode";
 import TraceDiffView from "../../../components/admin/TraceDiffView";
 import StageDiffView from "../../../components/admin/StageDiffView";
+import InspectorStagePipeline from "../../../components/ops/InspectorStagePipeline";
+import ReplanTimeline from "../../../components/ops/ReplanTimeline";
+import AssetOverrideModal from "../../../components/ops/AssetOverrideModal";
 import { generateNodes, generateEdges, filterToolSpans } from "../../../lib/flowGraphUtils";
 
 const PER_PAGE = 20;
@@ -65,6 +68,27 @@ interface AssetSummary {
   status?: string | null;
 }
 
+interface AssetVersion {
+  id: string;
+  asset_id: string;
+  asset_type: string;
+  version: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  status: "published" | "draft" | "archived";
+  author: string;
+  size: number;
+  metadata?: Record<string, unknown>;
+}
+
+interface AssetOverride {
+  asset_type: string;
+  asset_name: string;
+  version: string;
+  reason: string;
+}
+
 interface ExecutionStep {
   step_id: string | null;
   tool_name: string | null;
@@ -99,6 +123,44 @@ interface FlowSpan {
     tool_call_id?: string;
     block_id?: string;
   };
+}
+
+interface StageInput {
+  stage: string;
+  applied_assets?: Record<string, unknown> | null;
+  params?: Record<string, unknown> | null;
+  prev_output?: Record<string, unknown> | null;
+  trace_id?: string | null;
+}
+
+interface StageOutput {
+  stage: string;
+  result?: Record<string, unknown> | null;
+  diagnostics?: {
+    status?: string;
+    warnings?: string[];
+    errors?: string[];
+  } | null;
+  references?: ReferenceEntry[] | null;
+  duration_ms?: number;
+}
+
+interface ReplanEvent {
+  event_type: string;
+  stage_name: string;
+  trigger: {
+    trigger_type: string;
+    reason: string;
+    severity: string;
+    stage_name: string;
+  };
+  patch: {
+    before: unknown;
+    after: unknown;
+  };
+  timestamp: string;
+  decision_metadata?: Record<string, unknown> | null;
+  execution_metadata?: Record<string, unknown> | null;
 }
 
 interface ReferenceEntry {
@@ -139,6 +201,7 @@ interface ExecutionTraceDetail {
   status: string;
   duration_ms: number;
   request_payload: Record<string, unknown> | null;
+  route?: string | null;
   applied_assets: {
     prompt?: AssetSummary | null;
     policy?: AssetSummary | null;
@@ -156,6 +219,9 @@ interface ExecutionTraceDetail {
   ui_render: { rendered_blocks: UIRenderedBlock[]; warnings: string[] } | null;
   audit_links: Record<string, unknown> | null;
   flow_spans: FlowSpan[] | null;
+  stage_inputs?: StageInput[] | null;
+  stage_outputs?: StageOutput[] | null;
+  replan_events?: ReplanEvent[] | null;
 }
 
 interface TraceDetailResponse {
@@ -204,6 +270,10 @@ function InspectorContent() {
   const [showDiffView, setShowDiffView] = useState(false);
   const [showStageDiffView, setShowStageDiffView] = useState(false);
   const [baselineStageTraceId, setBaselineStageTraceId] = useState("");
+  const [showAssetOverrideModal, setShowAssetOverrideModal] = useState(false);
+  const [availableAssets, setAvailableAssets] = useState<Record<string, AssetVersion[]>>({});
+  const [assetOverrideLoading, setAssetOverrideLoading] = useState(false);
+  const [assetOverrideError, setAssetOverrideError] = useState<string | null>(null);
   const [singleRcaLoading, setSingleRcaLoading] = useState(false);
   const [singleRcaError, setSingleRcaError] = useState<string | null>(null);
   const router = useRouter();
@@ -506,6 +576,131 @@ function InspectorContent() {
       return String(candidate);
     }
   };
+
+  const STAGE_ORDER = ["route_plan", "validate", "execute", "compose", "present"];
+  const STAGE_LABELS: Record<string, string> = {
+    route_plan: "ROUTE+PLAN",
+    validate: "VALIDATE",
+    execute: "EXECUTE",
+    compose: "COMPOSE",
+    present: "PRESENT",
+  };
+
+  const normalizeStageStatus = (stageOutput?: StageOutput | null) => {
+    if (!stageOutput) return "pending";
+    if ((stageOutput.result as Record<string, unknown> | null)?.skipped) return "skipped";
+    const status = stageOutput.diagnostics?.status;
+    if (status === "warning" || status === "error" || status === "ok") return status;
+    return "ok";
+  };
+
+  const stageSnapshots = useMemo(() => {
+    const inputs = traceDetail?.stage_inputs ?? [];
+    const outputs = traceDetail?.stage_outputs ?? [];
+    return STAGE_ORDER.map((stage) => {
+      const stageInput = inputs.find((entry) => entry.stage === stage);
+      const stageOutput = outputs.find((entry) => entry.stage === stage);
+      return {
+        name: stage,
+        label: STAGE_LABELS[stage] ?? stage.toUpperCase(),
+        status: normalizeStageStatus(stageOutput),
+        duration_ms: stageOutput?.duration_ms,
+        input: stageInput ?? null,
+        output: stageOutput ?? null,
+        diagnostics: stageOutput?.diagnostics ?? null,
+      };
+    });
+  }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
+
+  const loadOverrideAssets = useCallback(async () => {
+    setAssetOverrideLoading(true);
+    setAssetOverrideError(null);
+    try {
+      const response = await fetchApi<{ assets: Asset[] }>("/asset-registry/assets");
+      const grouped: Record<string, AssetVersion[]> = {};
+      response.data.assets.forEach((asset) => {
+        if (!asset.asset_type) return;
+        const status = asset.status === "published" ? "published" : "draft";
+        const assetVersion: AssetVersion = {
+          id: asset.asset_id,
+          asset_id: asset.asset_id,
+          asset_type: asset.asset_type,
+          version: String(asset.version ?? "1"),
+          name: asset.name,
+          description: asset.description ?? undefined,
+          created_at: asset.updated_at ?? asset.published_at ?? new Date().toISOString(),
+          status,
+          author: "system",
+          size: 0,
+          metadata: {},
+        };
+        if (!grouped[asset.asset_type]) {
+          grouped[asset.asset_type] = [];
+        }
+        grouped[asset.asset_type].push(assetVersion);
+      });
+      setAvailableAssets(grouped);
+    } catch (err: unknown) {
+      const message = (err as Error).message || "자산 목록을 불러오지 못했습니다.";
+      setAssetOverrideError(message);
+      setStatusMessage(message);
+    } finally {
+      setAssetOverrideLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showAssetOverrideModal) {
+      loadOverrideAssets();
+    }
+  }, [showAssetOverrideModal, loadOverrideAssets]);
+
+  const handleAssetOverrideRun = useCallback(
+    async (overrides: AssetOverride[]) => {
+      if (!traceDetail) {
+        setStatusMessage("Trace가 선택되지 않았습니다.");
+        return;
+      }
+      const overrideMap: Record<string, string> = {};
+      overrides.forEach((override) => {
+        overrideMap[override.asset_type] = override.asset_name;
+      });
+      const baselineTraceId = traceDetail.trace_id;
+      setStatusMessage("Asset override 실행 중...");
+      try {
+        const response = await fetchApi<{
+          answer: string;
+          trace: Record<string, unknown>;
+          meta?: Record<string, unknown>;
+        }>("/ops/ci/ask", {
+          method: "POST",
+          body: JSON.stringify({
+            question: traceDetail.question,
+            asset_overrides: overrideMap,
+            source_asset: overrideMap.source,
+            schema_asset: overrideMap.schema,
+            resolver_asset: overrideMap.resolver,
+          }),
+        });
+        const newTraceId =
+          (response.data.meta?.trace_id as string | undefined) ||
+          (response.data.trace?.trace_id as string | undefined);
+        if (newTraceId) {
+          await fetchTraceDetail(newTraceId);
+          setBaselineStageTraceId(baselineTraceId);
+          setShowStageDiffView(true);
+          setStatusMessage(`Override 실행 완료: ${newTraceId}`);
+        } else {
+          setStatusMessage("Override 실행 완료: 새 trace_id를 찾지 못했습니다.");
+        }
+      } catch (err: unknown) {
+        setStatusMessage((err as Error).message || "Override 실행 실패");
+      } finally {
+        setShowAssetOverrideModal(false);
+      }
+    },
+    [traceDetail, fetchTraceDetail]
+  );
 
   return (
     <div className="space-y-6">
@@ -835,6 +1030,7 @@ function InspectorContent() {
                       <span className="px-2 py-1 rounded-full bg-slate-800">Mode: {traceDetail.ops_mode}</span>
                       <span className="px-2 py-1 rounded-full bg-slate-800">Endpoint: {traceDetail.endpoint}</span>
                       <span className="px-2 py-1 rounded-full bg-slate-800">Method: {traceDetail.method}</span>
+                      <span className="px-2 py-1 rounded-full bg-slate-800">Route: {traceDetail.route ?? "orch"}</span>
                     </div>
                     <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
                       <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
@@ -964,6 +1160,99 @@ function InspectorContent() {
                   </section>
 
                   <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-3">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Stage Pipeline</p>
+                        <span className="text-[10px] text-slate-400">
+                          Route: {traceDetail.route ?? "orch"}
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {traceDetail.stage_outputs?.length ?? 0} stages
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowAssetOverrideModal(true)}
+                        className="px-3 py-2 rounded-xl border border-slate-700 text-xs uppercase tracking-[0.2em] text-slate-300 hover:border-slate-500"
+                      >
+                        Asset Override Test
+                      </button>
+                      {assetOverrideLoading && (
+                        <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em]">
+                          Loading assets...
+                        </span>
+                      )}
+                      {assetOverrideError && !assetOverrideLoading && (
+                        <span className="text-[10px] text-rose-300 uppercase tracking-[0.2em]">
+                          Asset load failed
+                        </span>
+                      )}
+                    </div>
+                    {traceDetail.stage_outputs?.length ? (
+                      <InspectorStagePipeline traceId={traceDetail.trace_id} stages={stageSnapshots} />
+                    ) : (
+                      <p className="text-xs text-slate-500">Stage trace가 아직 없습니다.</p>
+                    )}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {STAGE_ORDER.map((stage) => {
+                        const stageInput = traceDetail.stage_inputs?.find((entry) => entry.stage === stage);
+                        const stageOutput = traceDetail.stage_outputs?.find((entry) => entry.stage === stage);
+                        const status = normalizeStageStatus(stageOutput);
+                        const warnings = stageOutput?.diagnostics?.warnings ?? [];
+                        const errors = stageOutput?.diagnostics?.errors ?? [];
+                        return (
+                          <article
+                            key={stage}
+                            className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 space-y-3"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                                  {STAGE_LABELS[stage] ?? stage.toUpperCase()}
+                                </p>
+                                <p className="text-[11px] text-slate-400 font-mono">{stage}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                                  {stageOutput?.duration_ms ? `${stageOutput.duration_ms}ms` : "-"}
+                                </span>
+                                <span className="px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] bg-slate-900/60 text-slate-300">
+                                  {status}
+                                </span>
+                              </div>
+                            </div>
+                            {renderJsonDetails("Stage input", stageInput)}
+                            {renderJsonDetails("Stage output", stageOutput)}
+                            {(warnings.length > 0 || errors.length > 0) && (
+                              <div className="grid gap-3 md:grid-cols-2 text-xs">
+                                {warnings.length > 0 && (
+                                  <div className="bg-amber-500/5 border border-amber-400/30 rounded-xl p-3 text-amber-200">
+                                    <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300">Warnings</p>
+                                    <ul className="mt-2 space-y-1">
+                                      {warnings.map((warning, index) => (
+                                        <li key={`${stage}-warn-${index}`}>{warning}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                                {errors.length > 0 && (
+                                  <div className="bg-rose-500/5 border border-rose-400/30 rounded-xl p-3 text-rose-200">
+                                    <p className="text-[10px] uppercase tracking-[0.3em] text-rose-300">Errors</p>
+                                    <ul className="mt-2 space-y-1">
+                                      {errors.map((error, index) => (
+                                        <li key={`${stage}-err-${index}`}>{error}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Execution</p>
                       <span className="text-[10px] text-slate-400">{traceDetail.execution_steps?.length ?? 0} steps</span>
@@ -1014,6 +1303,18 @@ function InspectorContent() {
                       </div>
                     ) : (
                       <p className="text-xs text-slate-500">Tool execution trace가 없습니다.</p>
+                    )}
+                  </section>
+
+                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Control Loop</p>
+                      <span className="text-[10px] text-slate-400">{traceDetail.replan_events?.length ?? 0} events</span>
+                    </div>
+                    {traceDetail.replan_events && traceDetail.replan_events.length ? (
+                      <ReplanTimeline traceId={traceDetail.trace_id} events={traceDetail.replan_events} />
+                    ) : (
+                      <p className="text-xs text-slate-500">Replan 이벤트가 없습니다.</p>
                     )}
                   </section>
 
@@ -1421,6 +1722,17 @@ function InspectorContent() {
             setShowStageDiffView(false);
             setBaselineStageTraceId("");
           }}
+        />
+      )}
+
+      {showAssetOverrideModal && traceDetail && (
+        <AssetOverrideModal
+          isOpen={showAssetOverrideModal}
+          onClose={() => setShowAssetOverrideModal(false)}
+          traceId={traceDetail.trace_id}
+          baselineTraceId={traceDetail.trace_id}
+          availableAssets={availableAssets}
+          onTestRun={handleAssetOverrideRun}
         />
       )}
 

@@ -82,6 +82,42 @@ class AssetRead(ScreenAssetRead):
     """Backward-compatible alias for screen assets."""
 
 
+class PromptAssetUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str | None = None
+    description: str | None = None
+    template: str | None = None
+    input_schema: dict[str, Any] | None = None
+    output_contract: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None
+
+
+class MappingAssetUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str | None = None
+    description: str | None = None
+    content: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None
+
+
+class PolicyAssetUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str | None = None
+    description: str | None = None
+    limits: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None
+
+
+class QueryAssetUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str | None = None
+    description: str | None = None
+    query_sql: str | None = None
+    query_params: dict[str, Any] | None = None
+    query_metadata: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None
+
+
 class ScreenAssetUpdate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     name: str | None = None

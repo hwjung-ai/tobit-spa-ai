@@ -337,6 +337,25 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                         </div>
                     </div>
                 )}
+
+                {!["prompt", "mapping", "policy", "query"].includes(asset.asset_type) && (
+                    <div className="space-y-3 text-sm text-slate-400">
+                        <p>
+                            이 Asset 타입은 현재 Admin Assets 화면에서 편집을 지원하지 않습니다.
+                            전용 관리 UI 또는 API를 사용하세요.
+                        </p>
+                        {asset.content && (
+                            <details className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                                <summary className="text-xs font-semibold text-slate-200 cursor-pointer">
+                                    Raw Asset Content
+                                </summary>
+                                <pre className="mt-2 text-[11px] text-slate-200 overflow-x-auto max-h-64">
+                                    {JSON.stringify(asset.content, null, 2)}
+                                </pre>
+                            </details>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Actions */}
@@ -432,7 +451,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                 <Toast
                     message={toast.message}
                     type={toast.type}
-                    onClose={() => setToast(null)}
+                    onDismiss={() => setToast(null)}
                 />
             )}
         </div>

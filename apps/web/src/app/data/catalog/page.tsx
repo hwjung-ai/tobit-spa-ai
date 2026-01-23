@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -13,6 +13,7 @@ import { Textarea } from "../../../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { formatError } from "../../../lib/utils";
 import type { SchemaAssetResponse, ScanResult } from "../../../types/asset-registry";
+import { useSearchParams } from "next/navigation";
 
 interface SchemaTable {
   name: string;
@@ -47,6 +48,8 @@ interface SchemaCatalog {
 export default function CatalogPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
+  const searchParams = useSearchParams();
+  const selectedAssetId = searchParams.get("asset_id");
 
   const [selectedSchema, setSelectedSchema] = useState<SchemaAssetResponse | null>(null);
   const [isScanDialogOpen, setIsScanDialogOpen] = useState(false);
@@ -63,12 +66,12 @@ export default function CatalogPage() {
   const schemasQuery = useQuery({
     queryKey: ["asset-registry", "schemas"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/schemas`);
+      const response = await fetch(`${apiBaseUrl}/asset-registry/schemas`);
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body.message ?? "Failed to load schemas");
       }
-      return body.data as SchemaAssetResponse[];
+      return (body.data?.assets ?? []) as SchemaAssetResponse[];
     },
     enabled: enableAssetRegistry,
   });
@@ -76,19 +79,19 @@ export default function CatalogPage() {
   const catalogsQuery = useQuery({
     queryKey: ["asset-registry", "catalogs"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/catalogs`);
+      const response = await fetch(`${apiBaseUrl}/asset-registry/schemas`);
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body.message ?? "Failed to load catalogs");
       }
-      return body.data as SchemaAssetResponse[];
+      return (body.data?.assets ?? []) as SchemaAssetResponse[];
     },
     enabled: enableAssetRegistry,
   });
 
   const scanMutation = useMutation({
     mutationFn: async ({ source_ref, options }: { source_ref: string; options: unknown }) => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/schemas/scan`, {
+      const response = await fetch(`${apiBaseUrl}/asset-registry/schemas/${source_ref}/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source_ref, ...options }),
@@ -137,6 +140,16 @@ export default function CatalogPage() {
     };
     scanMutation.mutate({ source_ref: sourceRef, options });
   };
+
+  useEffect(() => {
+    if (!selectedAssetId || !schemasQuery.data?.length) {
+      return;
+    }
+    const match = schemasQuery.data.find((schema) => schema.asset_id === selectedAssetId);
+    if (match) {
+      setSelectedSchema(match);
+    }
+  }, [selectedAssetId, schemasQuery.data]);
 
   const renderScanDialog = (sourceRef: string) => {
     const sourceName = schemasQuery.data?.find(s => s.asset_id === sourceRef)?.name || sourceRef;
@@ -272,11 +285,10 @@ export default function CatalogPage() {
                   {schemasQuery.data?.map((schema) => (
                     <div
                       key={schema.asset_id}
-                      className={`rounded-xl border px-3 py-2 cursor-pointer ${
-                        selectedSchema?.asset_id === schema.asset_id
-                          ? "border-sky-500 bg-sky-500/10"
-                          : "border-slate-800 hover:border-slate-600"
-                      }`}
+                      className={`rounded-xl border px-3 py-2 cursor-pointer ${selectedSchema?.asset_id === schema.asset_id
+                        ? "border-sky-500 bg-sky-500/10"
+                        : "border-slate-800 hover:border-slate-600"
+                        }`}
                       onClick={() => setSelectedSchema(schema)}
                     >
                       <div className="font-medium text-sm mb-1">{schema.name}</div>
@@ -287,8 +299,8 @@ export default function CatalogPage() {
                         <Badge
                           variant={
                             schema.catalog.scan_status === "completed" ? "default" :
-                            schema.catalog.scan_status === "scanning" ? "secondary" :
-                            schema.catalog.scan_status === "failed" ? "destructive" : "outline"
+                              schema.catalog.scan_status === "scanning" ? "secondary" :
+                                schema.catalog.scan_status === "failed" ? "destructive" : "outline"
                           }
                           className="text-xs"
                         >

@@ -14,7 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface ReplanEvent {
-  id: string;
+  id?: string;
   event_type: string;
   stage_name: string;
   trigger: {
@@ -229,13 +229,18 @@ export default function ReplanTimeline({
                 const triggerConfig = TRIGGER_CONFIG[event.trigger.trigger_type] || TRIGGER_CONFIG.error;
                 const Icon = triggerConfig.icon;
                 const stageColor = StageColors[event.stage_name as keyof typeof StageColors] || StageColors.route_plan;
+                const eventId = event.id ?? `${event.stage_name}-${event.timestamp}-${index}`;
+                const isSelected =
+                  selectedEvent &&
+                  (selectedEvent.id ?? `${selectedEvent.stage_name}-${selectedEvent.timestamp}`) ===
+                    `${event.stage_name}-${event.timestamp}`;
 
                 return (
                   <div
-                    key={event.id}
+                    key={eventId}
                     className={cn(
                       "relative cursor-pointer transition-all hover:scale-[1.02]",
-                      selectedEvent?.id === event.id && "ring-2 ring-blue-400"
+                      isSelected && "ring-2 ring-blue-400"
                     )}
                     onClick={() => {
                       setSelectedEvent(event);

@@ -77,6 +77,10 @@ class RerunRequest(BaseModel):
 class CiAskRequest(BaseModel):
     question: str
     rerun: RerunRequest | None = None
+    asset_overrides: Dict[str, str] | None = None
+    source_asset: str | None = None
+    schema_asset: str | None = None
+    resolver_asset: str | None = None
 
 class CiAskResponse(BaseModel):
     answer: str

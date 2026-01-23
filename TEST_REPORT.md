@@ -202,6 +202,128 @@ trace["policy_decisions"] = {
 
 ---
 
+## 5. Wiring 검증 (미연결 → 연결) ✅
+
+### 5.1 Direct/Reject 연결 검증
+
+`/ops/ci/ask`가 DIRECT/REJECT로 분기될 때 runner를 통과하지 않고 즉시 응답되는 것을 확인.
+
+```json
+{
+  "meta": { "route": "direct", "route_reason": "Direct answer route selected" },
+  "trace": {
+    "route": "direct",
+    "route_output": { "route": "direct", "direct_answer": { "answer": "Hello there!" } }
+  }
+}
+```
+
+```json
+{
+  "meta": { "route": "reject", "route_reason": "Reject route selected" },
+  "trace": {
+    "route": "reject",
+    "route_output": { "route": "reject", "reject_reason": "Unsupported question" }
+  }
+}
+```
+
+### 5.2 Stage trace 채워짐 검증
+
+Inspector에 stage_inputs/outputs가 비어있지 않음을 확인 (JSON excerpt).
+
+```json
+{
+  "trace": {
+    "stage_inputs": [{ "stage": "route_plan" }],
+    "stage_outputs": [{ "stage": "route_plan", "result": { "route": "orch" } }],
+    "stages": [
+      {
+        "name": "route_plan",
+        "input": { "stage": "route_plan" },
+        "output": { "route": "orch" },
+        "elapsed_ms": 1,
+        "status": "ok"
+      }
+    ]
+  }
+}
+```
+
+### 5.3 References 생성 규칙 + 샘플
+
+references block이 없더라도 ToolCall 기반으로 최소 1개 이상 생성되도록 보완.
+
+- 규칙: tool_calls가 존재하고 references가 비어있으면 tool별 핵심 입력/요약을 `kind="row"` ReferenceItem으로 생성
+- 예시: `metric.aggregate` 호출 시 metric_name, agg, time_range를 payload에 포함
+
+```json
+{
+  "kind": "row",
+  "title": "metric.aggregate",
+  "payload": {
+    "tool": "metric.aggregate",
+    "metric_name": "cpu_usage",
+    "agg": "max",
+    "time_range": "last_7d"
+  }
+}
+```
+
+### 5.4 Automatic Replan 검증
+
+runner 오류 발생 시 Control Loop 평가를 거쳐 fallback plan으로 재실행되는 것을 확인.
+
+```json
+{
+  "trace": {
+    "replan_events": [
+      { "event_type": "replan_decision", "stage_name": "execute" },
+      { "event_type": "replan_execution", "stage_name": "execute" }
+    ]
+  }
+}
+```
+
+### 5.5 Stage Asset Binding 입력값 반영
+
+stage_inputs의 applied_assets에 실제 사용된 asset key가 들어가는 것을 확인.
+
+```json
+{
+  "trace": {
+    "stage_inputs": [
+      {
+        "stage": "validate",
+        "applied_assets": {
+          "prompt": "planner@asset_registry",
+          "policy": "timeout@asset_registry"
+        }
+      }
+    ]
+  }
+}
+```
+
+### 5.6 Asset Model 연결 (source/schema/resolver)
+
+source/schema/resolver asset을 로드하여 trace/applied_assets에 기록하고, resolver 규칙을 질문 정규화에 적용.
+
+```json
+{
+  "trace": {
+    "asset_context": {
+      "source_asset": "primary-postgres",
+      "schema_asset": "ci-catalog",
+      "resolver_asset": "ci-resolver"
+    },
+    "resolver_rules_applied": ["alias-ci"]
+  }
+}
+```
+
+---
+
 ### C. History - 이벤트 이력 ✅ PASS
 
 ```
@@ -505,4 +627,3 @@ effective_depth <= policy_max_depth      (항상 참)
 **정제 완료**: 2026-01-20 15:30:00 (UTC+9)
 
 **신뢰도 평가**: 완전 검증 (Perfect Validation) ⭐⭐⭐⭐⭐
-

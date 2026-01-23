@@ -12,13 +12,17 @@ import {
   Filter,
   Copy,
   Plus,
-  Eye
+  Eye,
+  Database,
+  Layers,
+  Sliders
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AssetVersion {
   id: string;
   asset_id: string;
+  asset_type: string;
   version: string;
   name: string;
   description?: string;
@@ -77,6 +81,21 @@ const ASSET_TYPES: Record<string, AssetTypeConfig> = {
     label: "Screen",
     icon: Eye,
     color: "bg-rose-500/10 border-rose-400/30 text-rose-400",
+  },
+  source: {
+    label: "Source",
+    icon: Database,
+    color: "bg-slate-500/10 border-slate-400/30 text-slate-300",
+  },
+  schema: {
+    label: "Schema",
+    icon: Layers,
+    color: "bg-fuchsia-500/10 border-fuchsia-400/30 text-fuchsia-300",
+  },
+  resolver: {
+    label: "Resolver",
+    icon: Sliders,
+    color: "bg-amber-500/10 border-amber-400/30 text-amber-300",
   },
 };
 
@@ -159,7 +178,7 @@ export default function AssetOverrideModal({
   };
 
   const AssetItem = ({ asset, isSelected }: { asset: AssetVersion; isSelected: boolean }) => {
-    const assetType = ASSET_TYPES[asset.asset_id.split(":")[0]] || ASSET_TYPES.prompt;
+    const assetType = ASSET_TYPES[asset.asset_type] || ASSET_TYPES.prompt;
     const Icon = assetType.icon;
 
     return (
@@ -171,7 +190,7 @@ export default function AssetOverrideModal({
             : "border-slate-700 hover:border-slate-600",
           assetType.color
         )}
-        onClick={() => handleAssetSelect(asset.asset_id.split(":")[0], asset)}
+        onClick={() => handleAssetSelect(asset.asset_type, asset)}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
@@ -202,7 +221,7 @@ export default function AssetOverrideModal({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                addOverride(asset.asset_id.split(":")[0], asset);
+                addOverride(asset.asset_type, asset);
               }}
               className="p-1 rounded hover:bg-slate-700 transition"
               title="Add to overrides"
@@ -324,7 +343,7 @@ export default function AssetOverrideModal({
                 <div className="space-y-2">
                   {filteredAssets.map((asset) => {
                     const isSelected = selectedAssets.has(
-                      `${asset.asset_id.split(":")[0]}:${asset.asset_id}`
+                      `${asset.asset_type}:${asset.asset_id}`
                     );
                     return (
                       <AssetItem key={asset.id} asset={asset} isSelected={isSelected} />

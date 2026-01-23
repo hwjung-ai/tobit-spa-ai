@@ -2,12 +2,12 @@
 
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import BuilderShell from "../../components/builder/BuilderShell";
 import Neo4jGraphFlow, {
   type Neo4jFlowEdge,
   type Neo4jFlowNode,
 } from "../../components/data/Neo4jGraphFlow";
-
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
@@ -82,10 +82,10 @@ const isNeo4jRelationship = (value: unknown): value is Neo4jSerializedRelationsh
 
 const getNodeDisplayName = (node: Neo4jSerializedNode): string =>
   String(node.properties?.ci_code ??
-  node.properties?.ci_name ??
-  node.properties?.name ??
-  node.labels[0] ??
-  `Node:${node.id}`);
+    node.properties?.ci_name ??
+    node.properties?.name ??
+    node.labels[0] ??
+    `Node:${node.id}`);
 
 const formatGridCellValue = (value: unknown): string | number | boolean => {
   if (value === null || value === undefined) {
@@ -767,10 +767,9 @@ export default function DataExplorerPage() {
           Admin only
         </div>
       </div>
-      <p className="mb-6 text-sm text-slate-400">
+      <p className="mb-4 text-sm text-slate-400">
         Read-only data access. Max {MAX_ROWS} rows.
       </p>
-
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
@@ -784,7 +783,7 @@ export default function DataExplorerPage() {
           <TabsButton active={sourceTab === "redis"} onClick={() => setSourceTab("redis")}>
             Redis
           </TabsButton>
-        </div>
+        </div >
         <div className="h-4 w-px bg-slate-800 mx-2" />
         <div className="flex items-center gap-2">
           <span className="text-[10px] items-center uppercase tracking-[0.2em] text-slate-500">Mode:</span>
@@ -795,7 +794,7 @@ export default function DataExplorerPage() {
             {sourceTab === "redis" ? "Command" : "Query"}
           </TabsButton>
         </div>
-      </div>
+      </div >
 
       <BuilderShell
         leftPane={renderExplorer()}
@@ -860,8 +859,8 @@ export default function DataExplorerPage() {
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "graph"
-                          ? "border-sky-400 text-white"
-                          : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
+                        ? "border-sky-400 text-white"
+                        : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
                         }`}
                       onClick={() => setNeo4jViewMode("graph")}
                       disabled={!graphAvailable}
@@ -871,8 +870,8 @@ export default function DataExplorerPage() {
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "table"
-                          ? "border-sky-400 text-white"
-                          : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
+                        ? "border-sky-400 text-white"
+                        : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
                         }`}
                       onClick={() => {
                         setNeo4jViewMode("table");
@@ -886,8 +885,8 @@ export default function DataExplorerPage() {
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "value"
-                          ? "border-sky-400 text-white"
-                          : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
+                        ? "border-sky-400 text-white"
+                        : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
                         }`}
                       onClick={() => setNeo4jViewMode("value")}
                       disabled={!valueAvailable}
@@ -946,6 +945,6 @@ export default function DataExplorerPage() {
           </div>
         }
       />
-    </div>
+    </div >
   );
 }

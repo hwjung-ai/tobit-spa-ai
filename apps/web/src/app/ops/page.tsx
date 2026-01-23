@@ -395,7 +395,6 @@ export default function OpsPage() {
   }, [currentTraceId]);
 
   const openInspectorTrace = useCallback(async () => {
-    // Use selectedEntry's trace_id if available, otherwise use the most recent entry
     const traceId = currentTraceId || history[0]?.response?.meta?.trace_id;
 
     if (!traceId) {
@@ -403,9 +402,7 @@ export default function OpsPage() {
       return;
     }
 
-    // Verify trace exists before navigating
     try {
-      setStatusMessage("Inspector에서 trace를 확인하는 중...");
       const response = await authenticatedFetch(`/inspector/traces/${encodeURIComponent(traceId)}`);
       if (!response?.data?.trace) {
         setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
@@ -936,8 +933,9 @@ export default function OpsPage() {
 
     <Toast
       message={statusMessage}
-      type="info"
+      type={statusMessage?.includes("trace_id가 없습니다") ? "warning" : statusMessage?.includes("찾을 수 없습니다") ? "error" : "info"}
       onDismiss={() => setStatusMessage(null)}
+      duration={3000}
     />
     </>
   );

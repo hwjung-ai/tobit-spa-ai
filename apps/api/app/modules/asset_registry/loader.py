@@ -11,6 +11,9 @@ from app.modules.inspector.asset_context import (
     track_policy_asset,
     track_prompt_asset,
     track_query_asset,
+    track_resolver_asset,
+    track_schema_asset,
+    track_source_asset,
 )
 from app.shared import config_loader
 
@@ -390,6 +393,15 @@ def load_source_asset(name: str) -> dict[str, Any] | None:
                 "scope": asset.scope,
                 "tags": asset.tags,
             }
+            track_source_asset(
+                {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "scope": asset.scope,
+                }
+            )
 
             return payload
 
@@ -403,6 +415,14 @@ def load_source_asset(name: str) -> dict[str, Any] | None:
         source_data["source"] = "file_fallback"
         source_data["asset_id"] = None
         source_data["version"] = None
+        track_source_asset(
+            {
+                "asset_id": None,
+                "name": name,
+                "version": None,
+                "source": "file_fallback",
+            }
+        )
         return source_data
 
     logger.warning(f"Source asset not found: {name}")
@@ -445,6 +465,15 @@ def load_schema_asset(name: str) -> dict[str, Any] | None:
                 "scope": asset.scope,
                 "tags": asset.tags,
             }
+            track_schema_asset(
+                {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "scope": asset.scope,
+                }
+            )
 
             return payload
 
@@ -458,6 +487,14 @@ def load_schema_asset(name: str) -> dict[str, Any] | None:
         schema_data["source"] = "file_fallback"
         schema_data["asset_id"] = None
         schema_data["version"] = None
+        track_schema_asset(
+            {
+                "asset_id": None,
+                "name": name,
+                "version": None,
+                "source": "file_fallback",
+            }
+        )
         return schema_data
 
     logger.warning(f"Schema asset not found: {name}")
@@ -500,6 +537,15 @@ def load_resolver_asset(name: str) -> dict[str, Any] | None:
                 "scope": asset.scope,
                 "tags": asset.tags,
             }
+            track_resolver_asset(
+                {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "scope": asset.scope,
+                }
+            )
 
             return payload
 
@@ -513,6 +559,14 @@ def load_resolver_asset(name: str) -> dict[str, Any] | None:
         resolver_data["source"] = "file_fallback"
         resolver_data["asset_id"] = None
         resolver_data["version"] = None
+        track_resolver_asset(
+            {
+                "asset_id": None,
+                "name": name,
+                "version": None,
+                "source": "file_fallback",
+            }
+        )
         return resolver_data
 
     logger.warning(f"Resolver asset not found: {name}")

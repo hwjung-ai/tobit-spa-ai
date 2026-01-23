@@ -30,7 +30,7 @@ export default function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-950 border border-slate-800 shadow-2xl rounded-2xl p-6 max-w-sm">
+      <DialogContent className="bg-slate-950 border border-slate-800 shadow-2xl rounded-2xl p-6 max-w-sm mx-auto">
         <DialogHeader className="space-y-2">
           <DialogTitle className="text-lg font-semibold text-slate-100">{title}</DialogTitle>
           {description ? (

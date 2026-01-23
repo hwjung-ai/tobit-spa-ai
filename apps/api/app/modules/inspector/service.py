@@ -31,6 +31,9 @@ def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
         "prompt": _summarize_asset(state.get("prompt")),
         "policy": _summarize_asset(state.get("policy")),
         "mapping": _summarize_asset(state.get("mapping")),
+        "source": _summarize_asset(state.get("source")),
+        "schema": _summarize_asset(state.get("schema")),
+        "resolver": _summarize_asset(state.get("resolver")),
         "queries": [
             _summarize_asset(entry) for entry in state.get("queries", []) if entry
         ],
@@ -42,7 +45,7 @@ def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
 
 def _compute_asset_versions(state: dict[str, Any]) -> List[str]:
     versions: List[str] = []
-    for key in ("prompt", "policy", "mapping"):
+    for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
         info = state.get(key)
         if info:
             asset_id = info.get("asset_id")
@@ -116,6 +119,9 @@ def _compute_fallbacks(state: dict[str, Any]) -> Dict[str, bool]:
         "prompt": _is_external(state.get("prompt")),
         "policy": _is_external(state.get("policy")),
         "mapping": _is_external(state.get("mapping")),
+        "source": _is_external(state.get("source")),
+        "schema": _is_external(state.get("schema")),
+        "resolver": _is_external(state.get("resolver")),
         "query": any(
             entry.get("source") != "asset_registry"
             for entry in state.get("queries", [])

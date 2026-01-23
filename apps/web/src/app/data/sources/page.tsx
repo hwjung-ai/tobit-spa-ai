@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -13,6 +13,7 @@ import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { formatError } from "../../../lib/utils";
+import { useSearchParams } from "next/navigation";
 // Note: These types will need to be imported from the API after generating TypeScript types
 // For now, we'll define them inline
 interface SourceAssetResponse {
@@ -76,9 +77,11 @@ const formatStatus = (status: string) => {
 export default function SourcesPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
+  const searchParams = useSearchParams();
+  const selectedAssetId = searchParams.get("asset_id");
 
   const [selectedSource, setSelectedSource] = useState<SourceAssetResponse | null>(null);
-  const [editingSource, setEditingSource] = useState<Partial<SourceAsset> | null>(null);
+  const [editingSource, setEditingSource] = useState<Partial<SourceAssetResponse> | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false);
@@ -88,19 +91,19 @@ export default function SourcesPage() {
   const sourcesQuery = useQuery({
     queryKey: ["asset-registry", "sources"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/sources`);
+      const response = await fetch(`${apiBaseUrl}/asset-registry/sources`);
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body.message ?? "Failed to load sources");
       }
-      return body.data as SourceAssetResponse[];
+      return (body.data?.assets ?? []) as SourceAssetResponse[];
     },
     enabled: enableAssetRegistry,
   });
 
   const createMutation = useMutation({
-    mutationFn: async (source: Partial<SourceAsset>) => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/sources`, {
+    mutationFn: async (source: Partial<SourceAssetResponse>) => {
+      const response = await fetch(`${apiBaseUrl}/asset-registry/sources`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(source),
@@ -119,9 +122,9 @@ export default function SourcesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, source }: { id: string; source: Partial<SourceAsset> }) => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/sources/${id}`, {
-        method: "PATCH",
+    mutationFn: async ({ id, source }: { id: string; source: Partial<SourceAssetResponse> }) => {
+      const response = await fetch(`${apiBaseUrl}/asset-registry/sources/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(source),
       });
@@ -141,7 +144,7 @@ export default function SourcesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/sources/${id}`, {
+      const response = await fetch(`${apiBaseUrl}/asset-registry/sources/${id}`, {
         method: "DELETE",
       });
       const body = await response.json();
@@ -157,7 +160,7 @@ export default function SourcesPage() {
 
   const testMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${apiBaseUrl}/asset_registry/sources/${id}/test`, {
+      const response = await fetch(`${apiBaseUrl}/asset-registry/sources/${id}/test`, {
         method: "POST",
       });
       const body = await response.json();
@@ -177,6 +180,16 @@ export default function SourcesPage() {
     source.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     source.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  useEffect(() => {
+    if (!selectedAssetId || !sourcesQuery.data?.length) {
+      return;
+    }
+    const match = sourcesQuery.data.find((source) => source.asset_id === selectedAssetId);
+    if (match) {
+      setSelectedSource(match);
+    }
+  }, [selectedAssetId, sourcesQuery.data]);
 
   const handleCreateSource = () => {
     setEditingSource({
@@ -234,147 +247,181 @@ export default function SourcesPage() {
     const sourceTypes = Object.keys(SOURCE_TYPE_LABELS) as SourceType[];
 
     return (
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            value={editingSource.name || ""}
-            onChange={(e) => setEditingSource({ ...editingSource, name: e.target.value })}
-            placeholder="Enter source name"
-          />
-        </div>
+      <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 py-1 custom-scrollbar">
+        {/* Basic Information Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-4 w-1 bg-sky-500 rounded-full" />
+            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Basic Information</h3>
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Textarea
-            id="description"
-            value={editingSource.description || ""}
-            onChange={(e) => setEditingSource({ ...editingSource, description: e.target.value })}
-            placeholder="Enter source description"
-            rows={2}
-          />
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={editingSource.name || ""}
+                onChange={(e) => setEditingSource({ ...editingSource, name: e.target.value })}
+                placeholder="Database Production"
+                className="bg-slate-900/50 border-slate-800 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="source_type">Source Type</Label>
-          <Select
-            value={editingSource.source_type}
-            onValueChange={(value) => setEditingSource({
-              ...editingSource,
-              source_type: value as SourceType
-            })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select source type" />
-            </SelectTrigger>
-            <SelectContent>
-              {sourceTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {SOURCE_TYPE_LABELS[type]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="host">Host</Label>
-            <Input
-              id="host"
-              value={editingSource.connection?.host || ""}
-              onChange={(e) => setEditingSource({
-                ...editingSource,
-                connection: {
-                  ...editingSource.connection,
-                  host: e.target.value
-                }
-              })}
-              placeholder="localhost"
-            />
+            <div className="space-y-2">
+              <Label htmlFor="source_type">Source Type</Label>
+              <Select
+                value={editingSource.source_type}
+                onValueChange={(value) => setEditingSource({
+                  ...editingSource,
+                  source_type: value as SourceType
+                })}
+              >
+                <SelectTrigger className="bg-slate-900/50 border-slate-800">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-800">
+                  {sourceTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {SOURCE_TYPE_LABELS[type]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="port">Port</Label>
-            <Input
-              id="port"
-              type="number"
-              value={editingSource.connection?.port || ""}
-              onChange={(e) => setEditingSource({
-                ...editingSource,
-                connection: {
-                  ...editingSource.connection,
-                  port: parseInt(e.target.value) || 5432
-                }
-              })}
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={editingSource.description || ""}
+              onChange={(e) => setEditingSource({ ...editingSource, description: e.target.value })}
+              placeholder="Primary analytical database for production metrics"
+              rows={2}
+              className="bg-slate-900/50 border-slate-800 focus:border-sky-500/50 transition-colors resize-none"
             />
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              value={editingSource.connection?.username || ""}
-              onChange={(e) => setEditingSource({
-                ...editingSource,
-                connection: {
-                  ...editingSource.connection,
-                  username: e.target.value
-                }
-              })}
-              placeholder="username"
-            />
+        {/* Connection Configuration Section */}
+        <section className="space-y-4 p-4 rounded-xl border border-slate-800 bg-slate-900/40 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sky-500"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="database">Database</Label>
-            <Input
-              id="database"
-              value={editingSource.connection?.database || ""}
-              onChange={(e) => setEditingSource({
-                ...editingSource,
-                connection: {
-                  ...editingSource.connection,
-                  database: e.target.value
-                }
-              })}
-              placeholder="database"
-            />
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-4 w-1 bg-sky-500 rounded-full" />
+            <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Connection Settings</h3>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="timeout">Timeout (seconds)</Label>
-          <Input
-            id="timeout"
-            type="number"
-            value={editingSource.connection?.timeout || 30}
-            onChange={(e) => setEditingSource({
-              ...editingSource,
-              connection: {
-                ...editingSource.connection,
-                timeout: parseInt(e.target.value) || 30
-              }
-            })}
-          />
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="host">Host</Label>
+              <Input
+                id="host"
+                value={editingSource.connection?.host || ""}
+                onChange={(e) => setEditingSource({
+                  ...editingSource,
+                  connection: {
+                    ...editingSource.connection,
+                    host: e.target.value
+                  }
+                })}
+                placeholder="db.example.com"
+                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="scope">Scope</Label>
-          <Input
-            id="scope"
-            value={editingSource.scope || ""}
-            onChange={(e) => setEditingSource({ ...editingSource, scope: e.target.value })}
-            placeholder="e.g., production, staging"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="port">Port</Label>
+              <Input
+                id="port"
+                type="number"
+                value={editingSource.connection?.port || ""}
+                onChange={(e) => setEditingSource({
+                  ...editingSource,
+                  connection: {
+                    ...editingSource.connection,
+                    port: parseInt(e.target.value) || 5432
+                  }
+                })}
+                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
+          </div>
 
-        <div className="flex justify-end gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                value={editingSource.connection?.username || ""}
+                onChange={(e) => setEditingSource({
+                  ...editingSource,
+                  connection: {
+                    ...editingSource.connection,
+                    username: e.target.value
+                  }
+                })}
+                placeholder="admin"
+                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="database">Database Name</Label>
+              <Input
+                id="database"
+                value={editingSource.connection?.database || ""}
+                onChange={(e) => setEditingSource({
+                  ...editingSource,
+                  connection: {
+                    ...editingSource.connection,
+                    database: e.target.value
+                  }
+                })}
+                placeholder="production_db"
+                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="timeout">Timeout (seconds)</Label>
+              <Input
+                id="timeout"
+                type="number"
+                value={editingSource.connection?.timeout || 30}
+                onChange={(e) => setEditingSource({
+                  ...editingSource,
+                  connection: {
+                    ...editingSource.connection,
+                    timeout: parseInt(e.target.value) || 30
+                  }
+                })}
+                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="scope">Environment / Scope</Label>
+              <Input
+                id="scope"
+                value={editingSource.scope || ""}
+                onChange={(e) => setEditingSource({ ...editingSource, scope: e.target.value })}
+                placeholder="e.g., production, staging"
+                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Footer Actions */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-800/50">
           <Button
-            variant="outline"
+            variant="ghost"
+            className="hover:bg-slate-800"
             onClick={() => {
               setIsCreateDialogOpen(false);
               setIsEditDialogOpen(false);
@@ -385,6 +432,7 @@ export default function SourcesPage() {
           </Button>
           <Button
             onClick={handleSaveSource}
+            className="bg-sky-600 hover:bg-sky-500 text-white font-semibold transition-all shadow-lg shadow-sky-900/20"
             disabled={
               !editingSource.name ||
               !editingSource.source_type ||
@@ -394,7 +442,7 @@ export default function SourcesPage() {
               updateMutation.isPending
             }
           >
-            {isCreateDialogOpen ? "Create" : "Save"}
+            {createMutation.isPending || updateMutation.isPending ? "Saving..." : isCreateDialogOpen ? "Create Source" : "Update Source"}
           </Button>
         </div>
       </div>
@@ -457,11 +505,10 @@ export default function SourcesPage() {
               {filteredSources.map((source) => (
                 <div
                   key={source.asset_id}
-                  className={`rounded-xl border px-3 py-2 cursor-pointer ${
-                    selectedSource?.asset_id === source.asset_id
-                      ? "border-sky-500 bg-sky-500/10"
-                      : "border-slate-800 hover:border-slate-600"
-                  }`}
+                  className={`rounded-xl border px-3 py-2 cursor-pointer ${selectedSource?.asset_id === source.asset_id
+                    ? "border-sky-500 bg-sky-500/10"
+                    : "border-slate-800 hover:border-slate-600"
+                    }`}
                   onClick={() => setSelectedSource(source)}
                 >
                   <div className="flex items-center justify-between mb-1">
@@ -658,14 +705,21 @@ export default function SourcesPage() {
           setEditingSource(null);
         }
       }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {isCreateDialogOpen ? "Create New Source" : "Edit Source"}
-            </DialogTitle>
-            <DialogDescription>
-              Configure a new data source connection
-            </DialogDescription>
+        <DialogContent className="max-w-3xl bg-slate-950 border-slate-800 text-slate-100 shadow-2xl">
+          <DialogHeader className="mb-4">
+            <div className="flex items-center gap-3 mb-1">
+              <div className="p-2 bg-sky-500/10 rounded-lg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sky-400"><path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8"></path><line x1="16" y1="5" x2="16" y2="19"></line><path d="M2 10h18"></path><circle cx="18.5" cy="19.5" r="2.5"></circle></svg>
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold tracking-tight">
+                  {isCreateDialogOpen ? "Create New Source" : "Edit Source"}
+                </DialogTitle>
+                <DialogDescription className="text-slate-400">
+                  {isCreateDialogOpen ? "Configure a new data source connection for your workspace" : "Update existing connection settings and metadata"}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           {renderConnectionForm()}
         </DialogContent>

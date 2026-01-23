@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
+import { cn } from "@/lib/utils";
 
 type DialogProps = {
   open: boolean;
@@ -33,16 +34,16 @@ export const Dialog = ({ open, onOpenChange, children, ...rest }: DialogProps) =
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm"
+        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={handleClose}
       />
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10"
+        className="relative z-10 w-full flex justify-center animate-in zoom-in-95 duration-200"
         {...rest}
       >
         {children}
@@ -51,22 +52,60 @@ export const Dialog = ({ open, onOpenChange, children, ...rest }: DialogProps) =
   );
 };
 
-export const DialogContent = ({ children, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
-  return <div {...rest}>{children}</div>;
+export const DialogContent = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      className={cn(
+        "bg-slate-950 border border-slate-800 p-6 shadow-2xl rounded-2xl",
+        className
+      )}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
 };
 
-export const DialogDescription = ({ children, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
-  return <div {...rest}>{children}</div>;
+export const DialogDescription = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      className={cn("text-sm text-slate-400", className)}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
 };
 
-export const DialogHeader = ({ children, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
-  return <div {...rest}>{children}</div>;
+export const DialogHeader = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
 };
 
-export const DialogTitle = ({ children, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
-  return <div {...rest}>{children}</div>;
+export const DialogTitle = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <h2
+      className={cn("text-lg font-semibold leading-none tracking-tight text-white", className)}
+      {...rest}
+    >
+      {children}
+    </h2>
+  );
 };
 
-export const DialogFooter = ({ children, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
-  return <div {...rest}>{children}</div>;
+export const DialogFooter = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
+  return (
+    <div
+      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4", className)}
+      {...rest}
+    >
+      {children}
+    </div>
+  );
 };

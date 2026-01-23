@@ -47,9 +47,14 @@ from app.modules.asset_registry.schema_models import (
 )
 from app.modules.asset_registry.schemas import (
     PromptAssetCreate,
+    PromptAssetRead,
+    PromptAssetUpdate,
     ScreenAssetCreate,
     ScreenAssetRead,
     ScreenAssetUpdate,
+    MappingAssetUpdate,
+    PolicyAssetUpdate,
+    QueryAssetUpdate,
 )
 from app.modules.asset_registry.source_models import (
     SourceAssetCreate,
@@ -60,7 +65,6 @@ from app.modules.asset_registry.source_models import (
 )
 from app.modules.auth.models import TbUser
 
-from .schemas import PromptAssetRead
 from .validators import validate_asset
 
 router = APIRouter(prefix="/asset-registry")
@@ -362,10 +366,10 @@ def get_asset(asset_id: str, stage: str | None = None, version: int | None = Non
         return ResponseEnvelope.success(data={"asset": _to_screen_asset(asset)})
 
 
-@router.put("/assets/{asset_id}", response_model=ScreenAssetRead)
+@router.put("/assets/{asset_id}")
 def update_asset(
     asset_id: str,
-    payload: ScreenAssetUpdate,
+    payload: Union[PromptAssetUpdate, ScreenAssetUpdate, MappingAssetUpdate, PolicyAssetUpdate, QueryAssetUpdate] = Body(...),
     current_user: TbUser = Depends(get_current_user),
 ):
     with get_session_context() as session:
@@ -377,20 +381,18 @@ def update_asset(
         except ValueError:
             pass
 
-        # If not found by UUID, try to find by screen_id (draft first, then published)
+        # If not found by UUID, try to find by asset_id or screen_id (draft first, then published)
         if not asset:
             asset = session.exec(
                 select(TbAssetRegistry)
-                .where(TbAssetRegistry.asset_type == "screen")
-                .where(TbAssetRegistry.screen_id == asset_id)
+                .where(TbAssetRegistry.asset_id == asset_id)
                 .where(TbAssetRegistry.status == "draft")
             ).first()
 
             if not asset:
                 asset = session.exec(
                     select(TbAssetRegistry)
-                    .where(TbAssetRegistry.asset_type == "screen")
-                    .where(TbAssetRegistry.screen_id == asset_id)
+                    .where(TbAssetRegistry.asset_id == asset_id)
                     .where(TbAssetRegistry.status == "published")
                 ).first()
 
@@ -402,40 +404,71 @@ def update_asset(
 
         if asset.status != "draft":
             raise HTTPException(status_code=400, detail="only draft assets can be updated")
+
         if payload.name is not None:
             asset.name = payload.name
         if payload.description is not None:
             asset.description = payload.description
-        # Support both schema_json and screen_schema fields for compatibility
-        # Note: Model field is screen_schema (DB column is schema_json)
-        if payload.screen_schema is not None:
-            asset.screen_schema = payload.screen_schema
         if payload.tags is not None:
             asset.tags = payload.tags
+
+        # Handle type-specific fields
+        if isinstance(payload, PromptAssetUpdate):
+            if payload.template is not None:
+                asset.template = payload.template
+            if payload.input_schema is not None:
+                asset.input_schema = payload.input_schema
+            if payload.output_contract is not None:
+                asset.output_contract = payload.output_contract
+        elif isinstance(payload, MappingAssetUpdate):
+            if payload.content is not None:
+                asset.content = payload.content
+        elif isinstance(payload, PolicyAssetUpdate):
+            if payload.limits is not None:
+                asset.limits = payload.limits
+        elif isinstance(payload, QueryAssetUpdate):
+            if payload.query_sql is not None:
+                asset.query_sql = payload.query_sql
+            if payload.query_params is not None:
+                asset.query_params = payload.query_params
+            if payload.query_metadata is not None:
+                asset.query_metadata = payload.query_metadata
+        elif isinstance(payload, ScreenAssetUpdate):
+            if payload.screen_schema is not None:
+                asset.screen_schema = payload.screen_schema
+
         asset.updated_at = datetime.now()
         session.add(asset)
         session.commit()
         session.refresh(asset)
-        return ResponseEnvelope.success(
-            data={
-                "asset": ScreenAssetRead(
-                    asset_id=str(asset.asset_id),
-                    asset_type=asset.asset_type,
-                    screen_id=asset.screen_id,
-                    name=asset.name,
-                    description=asset.description,
-                    version=asset.version,
-                    status=asset.status,
-                    screen_schema=asset.screen_schema,
-                    tags=asset.tags,
-                    created_by=asset.created_by,
-                    published_by=asset.published_by,
-                    published_at=asset.published_at,
-                    created_at=asset.created_at,
-                    updated_at=asset.updated_at,
-                )
-            }
-        )
+
+        # Return asset as dict to avoid response validation issues
+        asset_dict = {
+            "asset_id": str(asset.asset_id),
+            "asset_type": asset.asset_type,
+            "name": asset.name,
+            "description": asset.description,
+            "version": asset.version,
+            "status": asset.status,
+            "template": asset.template,
+            "input_schema": asset.input_schema,
+            "output_contract": asset.output_contract,
+            "content": asset.content,
+            "limits": asset.limits,
+            "query_sql": asset.query_sql,
+            "query_params": asset.query_params,
+            "query_metadata": asset.query_metadata,
+            "screen_id": asset.screen_id,
+            "screen_schema": asset.screen_schema,
+            "tags": asset.tags,
+            "created_by": asset.created_by,
+            "published_by": asset.published_by,
+            "published_at": asset.published_at,
+            "created_at": asset.created_at,
+            "updated_at": asset.updated_at,
+        }
+
+        return ResponseEnvelope.success(data={"asset": asset_dict})
 
 
 @router.post("/assets/{asset_id}/publish")

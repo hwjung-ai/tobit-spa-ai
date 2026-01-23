@@ -40,6 +40,7 @@
   - AUTO 모드(레시피/동적/PATH/인사이트)
   - CEP simulate 연계 + Event Browser 링크
   - CI 목록 미리보기
+  - 선택적 Asset 바인딩: `source_asset`, `schema_asset`, `resolver_asset`를 통해 질문 정규화/trace 적용
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
   - Settings: 운영 설정 편집 (restart_required 표시)

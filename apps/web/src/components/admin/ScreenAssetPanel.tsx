@@ -5,6 +5,7 @@ import { Asset, fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
 import Link from "next/link";
+import { useConfirm } from "@/hooks/use-confirm";
 import {
   SCREEN_TEMPLATES,
   createMinimalScreen,
@@ -32,6 +33,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   });
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [refreshTrigger] = useState(0);
+  const [confirm, ConfirmDialogComponent] = useConfirm();
 
   useEffect(() => {
     fetchScreens();
@@ -57,14 +59,14 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     setFilteredScreens(filtered);
   }, [screens, filterStatus, searchTerm]);
 
-  const fetchScreens = async () => {
-    setLoading(true);
+  const fetchScreens = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       // Fetch from asset-registry (source of truth for editor)
-      const response = await fetchApi("/asset-registry/assets?asset_type=screen");
+      const response = await fetchApi<{ assets: Asset[] }>("/asset-registry/assets?asset_type=screen");
       setScreens(response.data?.assets || []);
       setErrors([]);
-    } catch (error: unknown) {
+    } catch (error: any) {
       setErrors([error.message || "Failed to fetch screens from asset-registry"]);
       setScreens([]);
     } finally {
@@ -107,7 +109,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       if (newScreenData.tags.trim()) {
         try {
           parsedTags = JSON.parse(newScreenData.tags);
-        } catch (tagError: unknown) {
+        } catch (tagError: any) {
           setErrors([`Invalid tags JSON: ${tagError.message || "syntax error"}`]);
           return;
         }
@@ -131,13 +133,74 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setSelectedTemplate(null);
       await fetchScreens();
       onScreenUpdate?.();
-    } catch (error: unknown) {
+    } catch (error: any) {
       const message = error.message || "Failed to create screen";
       if (message.includes("403") || message.includes("Permission")) {
         setErrors(["You don't have permission to create screens"]);
       } else {
         setErrors([message]);
       }
+    }
+  };
+
+  const handleDeleteScreen = async (assetId: string) => {
+    const ok = await confirm({
+      title: "Delete Screen",
+      description: "Are you sure you want to delete this screen? This action cannot be undone.",
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
+
+    try {
+      setErrors([]);
+      await fetchApi(`/asset-registry/assets/${assetId}`, {
+        method: "DELETE",
+      });
+      setToast({ message: "Screen deleted successfully", type: "success" });
+
+      // Optimistically update local state to prevent UI jump
+      setScreens(prev => prev.filter(s => s.asset_id !== assetId));
+
+      // Silently sync with server
+      await fetchScreens(true);
+      onScreenUpdate?.();
+    } catch (error: any) {
+      const message = error instanceof Error ? error.message : "Failed to delete screen";
+      setErrors([message]);
+    }
+  };
+
+  const handlePublishScreen = async (assetId: string) => {
+    try {
+      setErrors([]);
+      await fetchApi(`/asset-registry/assets/${assetId}/publish`, {
+        method: "POST",
+        body: JSON.stringify({ published_by: "admin" }),
+      });
+      setToast({ message: "Screen published successfully", type: "success" });
+      await fetchScreens(true);
+      onScreenUpdate?.();
+    } catch (error: any) {
+      setErrors([error instanceof Error ? error.message : "Failed to publish screen"]);
+    }
+  };
+
+  const handleRollbackScreen = async (assetId: string) => {
+    const ok = await confirm({
+      title: "Rollback to Draft",
+      description: "Are you sure you want to rollback this screen to draft?",
+      confirmLabel: "Rollback",
+    });
+    if (!ok) return;
+
+    try {
+      setErrors([]);
+      await fetchApi(`/asset-registry/assets/${assetId}/unpublish`, { method: "POST" });
+      setToast({ message: "Screen rolled back to draft", type: "success" });
+      await fetchScreens(true);
+      onScreenUpdate?.();
+    } catch (error: any) {
+      setErrors([error instanceof Error ? error.message : "Failed to rollback screen"]);
     }
   };
 
@@ -157,7 +220,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
 
       {/* Errors */}
       {errors.length > 0 && (
-        <ValidationAlert errors={errors} onDismiss={() => setErrors([])} />
+        <ValidationAlert errors={errors} onClose={() => setErrors([])} />
       )}
 
       {/* Toast */}
@@ -189,11 +252,10 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   {/* Blank Option */}
                   <button
                     onClick={() => setSelectedTemplate(null)}
-                    className={`p-3 rounded border transition-all text-sm font-medium ${
-                      selectedTemplate === null
-                        ? "bg-sky-900/50 border-sky-500 text-sky-300"
-                        : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
-                    }`}
+                    className={`p-3 rounded border transition-all text-sm font-medium ${selectedTemplate === null
+                      ? "bg-sky-900/50 border-sky-500 text-sky-300"
+                      : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
+                      }`}
                     data-testid="template-blank"
                   >
                     <div className="font-semibold">Blank</div>
@@ -205,11 +267,10 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     <button
                       key={template.id}
                       onClick={() => setSelectedTemplate(template.id)}
-                      className={`p-3 rounded border transition-all text-sm font-medium ${
-                        selectedTemplate === template.id
-                          ? "bg-sky-900/50 border-sky-500 text-sky-300"
-                          : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
-                      }`}
+                      className={`p-3 rounded border transition-all text-sm font-medium ${selectedTemplate === template.id
+                        ? "bg-sky-900/50 border-sky-500 text-sky-300"
+                        : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
+                        }`}
                       data-testid={`template-${template.id}`}
                     >
                       <div className="font-semibold">{template.name}</div>
@@ -302,7 +363,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
 
         <select
           value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
+          onChange={e => setFilterStatus(e.target.value as "all" | "draft" | "published")}
           className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-sky-500"
           data-testid="select-filter-status"
         >
@@ -353,11 +414,10 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       {screen.name}
                     </Link>
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        screen.status === "published"
-                          ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
-                          : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
-                      }`}
+                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${screen.status === "published"
+                        ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
+                        : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
+                        }`}
                       data-testid={`status-badge-${screen.asset_id}`}
                     >
                       {screen.status}
@@ -368,80 +428,53 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     <p className="text-slate-400 text-xs">{screen.description}</p>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end">
                   <p className="text-slate-500 text-xs font-mono">v{screen.version}</p>
-                  <p className="text-slate-600 text-xs">
+                  <p className="text-slate-600 text-xs mb-3">
                     {new Date(screen.updated_at).toLocaleDateString()}
                   </p>
+                  <div className="flex gap-2 justify-end">
+                    {screen.status === "draft" && (
+                      <button
+                        onClick={() => {
+                          handleDeleteScreen(screen.asset_id);
+                        }}
+                        className="px-3 py-1.5 bg-rose-700 hover:bg-rose-600 text-white rounded text-xs font-medium transition-colors text-center"
+                        data-testid={`btn-delete-${screen.asset_id}`}
+                      >
+                        Delete
+                      </button>
+                    )}
+                    {screen.status === "draft" && (
+                      <button
+                        onClick={() => {
+                          handlePublishScreen(screen.asset_id);
+                        }}
+                        className="px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white rounded text-xs font-medium transition-colors text-center"
+                        data-testid={`btn-publish-${screen.asset_id}`}
+                      >
+                        Publish
+                      </button>
+                    )}
+                    {screen.status === "published" && (
+                      <button
+                        onClick={() => {
+                          handleRollbackScreen(screen.asset_id);
+                        }}
+                        className="px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors text-center"
+                        data-testid={`btn-rollback-${screen.asset_id}`}
+                      >
+                        Rollback
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <Link
-                  href={`/admin/screens/${screen.asset_id}`}
-                  className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded text-xs font-medium transition-colors text-center"
-                  data-testid={`btn-edit-${screen.asset_id}`}
-                >
-                  Edit
-                </Link>
-                {screen.status === "draft" && (
-                  <button
-                    onClick={() => {
-                      // Publish functionality
-                      handlePublishScreen(screen.asset_id);
-                    }}
-                    className="flex-1 px-3 py-1.5 bg-sky-700 hover:bg-sky-600 text-white rounded text-xs font-medium transition-colors"
-                    data-testid={`btn-publish-${screen.asset_id}`}
-                  >
-                    Publish
-                  </button>
-                )}
-                {screen.status === "published" && (
-                  <button
-                    onClick={() => {
-                      // Rollback functionality
-                      handleRollbackScreen(screen.asset_id);
-                    }}
-                    className="flex-1 px-3 py-1.5 bg-orange-700 hover:bg-orange-600 text-white rounded text-xs font-medium transition-colors"
-                    data-testid={`btn-rollback-${screen.asset_id}`}
-                  >
-                    Rollback
-                  </button>
-                )}
               </div>
             </div>
           ))}
         </div>
       )}
+      <ConfirmDialogComponent />
     </div>
   );
-
-  async function handlePublishScreen(assetId: string) {
-    try {
-      setErrors([]);
-      await fetchApi(`/asset-registry/assets/${assetId}/publish`, {
-        method: "POST",
-        body: JSON.stringify({ published_by: "admin" }),
-      });
-      setToast({ message: "Screen published successfully", type: "success" });
-      await fetchScreens();
-      onScreenUpdate?.();
-    } catch (error: unknown) {
-      setErrors([error.message || "Failed to publish screen"]);
-    }
-  }
-
-  async function handleRollbackScreen(assetId: string) {
-    if (!confirm("Are you sure you want to rollback this screen to draft?")) return;
-
-    try {
-      setErrors([]);
-      await fetchApi(`/asset-registry/assets/${assetId}/unpublish`, { method: "POST" });
-      setToast({ message: "Screen rolled back to draft", type: "success" });
-      await fetchScreens();
-      onScreenUpdate?.();
-    } catch (error: unknown) {
-      setErrors([error.message || "Failed to rollback screen"]);
-    }
-  }
 }

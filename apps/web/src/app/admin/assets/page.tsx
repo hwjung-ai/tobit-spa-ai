@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 // Define types for select options
-type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "screen";
+type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "screen" | "source" | "schema" | "resolver";
 type AssetStatus = "all" | "draft" | "published";
 
 export default function AssetsPage() {
@@ -43,7 +43,8 @@ export default function AssetsPage() {
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === "all" || value === "prompt" || value === "mapping" ||
-                                    value === "policy" || value === "query" || value === "screen") {
+                                    value === "policy" || value === "query" || value === "screen" ||
+                                    value === "source" || value === "schema" || value === "resolver") {
                                     setTypeFilter(value);
                                 }
                             }}
@@ -55,6 +56,9 @@ export default function AssetsPage() {
                             <option value="policy">Policies</option>
                             <option value="query">Queries</option>
                             <option value="screen">Screens</option>
+                            <option value="source">Sources</option>
+                            <option value="schema">Schemas</option>
+                            <option value="resolver">Resolvers</option>
                         </select>
                     </div>
 

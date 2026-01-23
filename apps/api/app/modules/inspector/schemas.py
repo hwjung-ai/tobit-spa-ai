@@ -54,6 +54,10 @@ class ExecutionTraceRead(BaseModel):
     ui_render: Dict[str, Any] | None
     audit_links: Dict[str, Any] | None
     flow_spans: List[FlowSpan] | None = None
+    route: str | None = None
+    stage_inputs: List[Dict[str, Any]] | None = None
+    stage_outputs: List[Dict[str, Any]] | None = None
+    replan_events: List[Dict[str, Any]] | None = None
 
 
 class TraceListRequest(BaseModel):

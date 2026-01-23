@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Asset, fetchApi } from "../../../../lib/adminUtils";
 import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";
+import { useConfirm } from "@/hooks/use-confirm";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -11,6 +12,7 @@ export default function AssetDetailPage() {
     const params = useParams();
     const router = useRouter();
     const assetId = params.assetId as string;
+    const [confirm, ConfirmDialogComponent] = useConfirm();
 
     const { data: asset, isLoading, error, refetch } = useQuery({
         queryKey: ["asset", assetId],
@@ -22,7 +24,12 @@ export default function AssetDetailPage() {
     });
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this draft asset? This action cannot be undone.")) return;
+        const ok = await confirm({
+            title: "Delete Asset",
+            description: "Are you sure you want to delete this draft asset? This action cannot be undone.",
+            confirmLabel: "Delete",
+        });
+        if (!ok) return;
 
         try {
             await fetchApi(`/asset-registry/assets/${assetId}`, { method: "DELETE" });
@@ -33,7 +40,12 @@ export default function AssetDetailPage() {
     };
 
     const handleUnpublish = async () => {
-        if (!confirm("Are you sure you want to rollback this asset to draft? It will no longer be active until re-published.")) return;
+        const ok = await confirm({
+            title: "Rollback to Draft",
+            description: "Are you sure you want to rollback this asset to draft? It will no longer be active until re-published.",
+            confirmLabel: "Rollback",
+        });
+        if (!ok) return;
 
         try {
             await fetchApi(`/asset-registry/assets/${assetId}/unpublish`, { method: "POST" });
@@ -108,6 +120,20 @@ export default function AssetDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {["source", "schema", "resolver"].includes(asset.asset_type) && (
+                        <Link
+                            href={
+                                asset.asset_type === "source"
+                                    ? `/data/sources?asset_id=${asset.asset_id}`
+                                    : asset.asset_type === "schema"
+                                        ? `/data/catalog?asset_id=${asset.asset_id}`
+                                        : `/data/resolvers?asset_id=${asset.asset_id}`
+                            }
+                            className="px-5 py-2.5 bg-slate-900/40 hover:bg-slate-800/60 text-slate-200 border border-slate-700 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest hover:border-slate-500"
+                        >
+                            Open in Data
+                        </Link>
+                    )}
                     {asset.status === "draft" && (
                         <button
                             onClick={handleDelete}
@@ -140,6 +166,7 @@ export default function AssetDetailPage() {
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <AssetForm asset={asset} onSave={() => refetch()} />
             </div>
+            <ConfirmDialogComponent />
         </div>
     );
 }

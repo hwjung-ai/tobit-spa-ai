@@ -9,11 +9,12 @@ export interface ResponseEnvelope<T = unknown> {
 
 export interface Asset {
   asset_id: string;
-  asset_type: "prompt" | "mapping" | "policy" | "query";
+  asset_type: "prompt" | "mapping" | "policy" | "query" | "screen" | "source" | "schema" | "resolver";
   name: string;
   description: string | null;
   version: number;
   status: "draft" | "published";
+  screen_id?: string | null;
 
   // Type-specific fields
   scope: string | null;
@@ -77,7 +78,6 @@ export async function fetchApi<T = unknown>(
 ): Promise<ResponseEnvelope<T>> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  // Get auth token from localStorage if available
   const token =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
@@ -86,42 +86,66 @@ export async function fetchApi<T = unknown>(
     ...options?.headers,
   };
 
-  // Add Authorization header if auth is enabled and token exists
   if (ENABLE_AUTH) {
     if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
+      (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
       console.log("[API] Adding Authorization header with token");
     } else {
-      console.warn("[API] ⚠️ No token found in localStorage for endpoint:", endpoint);
+      console.warn("[API] No token found in localStorage for endpoint:", endpoint);
       console.warn("[API] User may not be logged in. Visit /login to authenticate.");
     }
   } else {
     console.log("[API] Auth disabled (NEXT_PUBLIC_ENABLE_AUTH=false). Skipping token.");
   }
 
-  console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET");
+  console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET", "URL:", url);
 
   let response: Response;
+  let fetchSuccess = false;
+
   try {
     response = await fetch(url, {
       ...options,
       headers,
+      credentials: "same-origin",
     });
+    fetchSuccess = true;
+    console.log("[API] Fetch successful, status:", response.status);
   } catch (fetchError) {
-    const errorMsg = (fetchError as Error).message;
-    const errorName = (fetchError as Error).name;
+    const error = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+    const errorMsg = error.message;
+    const errorName = error.name;
+
     console.error("[API] Network error - fetch failed:", {
       endpoint,
       url,
       error: fetchError,
       errorMessage: errorMsg,
       errorName: errorName,
-      details: {
-        isTypeError: errorName === "TypeError",
-        isCORSError: errorMsg.includes("fetch") || errorMsg.includes("CORS"),
-      }
+      errorStack: error.stack,
     });
-    throw new Error(`Network error: ${errorMsg}. Check if backend is running at ${API_BASE_URL}`);
+
+    const isTypeError = errorName === "TypeError";
+    const isFetchError = errorMsg.includes("fetch") || errorMsg.includes("Failed to fetch");
+    const isCORSError = errorMsg.includes("CORS");
+
+    let userMessage = "Network error: Failed to fetch. Check if backend is running at http://localhost:8000";
+    if (isFetchError || isCORSError) {
+      userMessage = `Network error: Failed to connect to backend at ${API_BASE_URL}. Please check if backend is running.`;
+    } else if (isTypeError) {
+      userMessage = `Network error: ${errorMsg}`;
+    }
+
+    const finalError = new Error(userMessage);
+    (finalError as any).statusCode = isCORSError ? 0 : undefined;
+    (finalError as any).originalError = fetchError;
+
+    throw finalError;
+  }
+
+  if (!response) {
+    console.error("[API] Response is null/undefined after successful fetch");
+    throw new Error("No response received from server");
   }
 
   if (!response.ok) {
@@ -152,17 +176,14 @@ export async function fetchApi<T = unknown>(
       errorData = { message: String(parseError) };
     }
 
-    // Check if it's a 401 Unauthorized error (only if auth is enabled)
     if (response.status === 401 && ENABLE_AUTH) {
-      console.error("[API] ❌ Authentication failed (401 Unauthorized)");
+      console.error("[API] Authentication failed (401 Unauthorized)");
       console.error("[API] Possible causes:");
       console.error("[API]   1. User not logged in - visit /login");
       console.error("[API]   2. Token expired - log in again");
       console.error("[API]   3. Invalid token in localStorage");
-      // Try to clear potentially stale token
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      // Redirect to login page
       if (typeof window !== "undefined") {
         window.location.href = "/login";
       }
@@ -181,7 +202,6 @@ export async function fetchApi<T = unknown>(
 
     const errorMessage = (errorData as Record<string, unknown>)?.detail || (errorData as Record<string, unknown>)?.message || `HTTP ${response.status}: ${response.statusText}`;
     const error = new Error(String(errorMessage));
-    // Attach status code to error for easier checking in catch blocks
     (error as unknown as { statusCode: number }).statusCode = response.status;
     throw error;
   }
@@ -193,7 +213,7 @@ export function formatTimestamp(value: string | null): string {
   if (!value) return "";
   try {
     let dateStr = value;
-    if (value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(value)) {
+    if (value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:\d{2}$/.test(value)) {
       dateStr = `${value}Z`;
     }
     const date = new Date(dateStr);
@@ -216,26 +236,34 @@ export function formatTimestamp(value: string | null): string {
 export function formatRelativeTime(value: string | null): string {
   if (!value) return "";
   try {
-    let dateStr = value;
-    if (value.includes("T") && !value.endsWith("Z") && !/[+-]\d{2}:?\d{2}$/.test(value)) {
-      dateStr = `${value}Z`;
-    }
-    const date = new Date(dateStr);
+    const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return value;
     }
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return "방금 전";
-    if (diffMins < 60) return `${diffMins}분 전`;
-    if (diffHours < 24) return `${diffHours}시간 전`;
-    if (diffDays < 7) return `${diffDays}일 전`;
-
-    return formatTimestamp(value);
+    if (diffSecs < 60) {
+      return `${diffSecs}초 전`;
+    }
+    if (diffMins < 60) {
+      return `${diffMins}분 전`;
+    }
+    if (diffHours < 24) {
+      return `${diffHours}시간 전`;
+    }
+    if (diffDays < 7) {
+      return `${diffDays}일 전`;
+    }
+    return date.toLocaleString("ko-KR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   } catch {
     return value;
   }
