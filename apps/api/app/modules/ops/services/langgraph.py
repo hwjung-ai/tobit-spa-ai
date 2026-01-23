@@ -61,7 +61,18 @@ class LangGraphAllRunner:
                 continue
             executor = self.EXECUTOR_MAP[name]
             try:
-                blocks, tools = executor(question_with_hints)
+                result = executor(question_with_hints)
+                # Handle ExecutorResult or tuple returns
+                if hasattr(result, 'blocks') and hasattr(result, 'used_tools'):
+                    # ExecutorResult object
+                    blocks = result.blocks
+                    tools = result.used_tools
+                elif isinstance(result, tuple):
+                    # Legacy tuple return
+                    blocks, tools = result
+                else:
+                    raise ValueError(f"Executor {name} returned unexpected type: {type(result)}")
+
                 executor_blocks[name] = blocks
                 for tool in tools:
                     if tool not in used_tools:
@@ -145,8 +156,14 @@ class LangGraphAllRunner:
             return "None"
         lines = []
         for block in blocks:
-            title = getattr(block, "title", "") or block.type
-            lines.append(f"- {block.type}: {title}")
+            # Handle both dict and object blocks
+            if isinstance(block, dict):
+                block_type = block.get("type", "unknown")
+                title = block.get("title", "") or block_type
+            else:
+                block_type = getattr(block, "type", "unknown")
+                title = getattr(block, "title", "") or block_type
+            lines.append(f"- {block_type}: {title}")
         return "\n".join(lines)
 
     def _call_llm(self, prompt: str, system_prompt: str) -> str:
@@ -191,4 +208,5 @@ class LangGraphAllRunner:
 
     def _is_temperature_not_supported_error(self, exc: Exception) -> bool:
         message = str(exc)
-        return "Unsupported value" in message and "temperature" in message
+        # Handle both "Unsupported value" and "Unsupported parameter" error messages
+        return ("Unsupported value" in message or "Unsupported parameter" in message) and "temperature" in message

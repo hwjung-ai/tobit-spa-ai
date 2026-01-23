@@ -335,7 +335,13 @@ export default function OpsPage() {
   }, [uiMode]);
 
   const selectedEntry = useMemo(() => {
-    return history.find((entry) => entry.id === selectedId) ?? history[0] ?? null;
+    // If selectedId is set, find that specific entry
+    if (selectedId) {
+      const found = history.find((entry) => entry.id === selectedId);
+      if (found) return found;
+    }
+    // Otherwise, return the most recent entry (first in array)
+    return history[0] ?? null;
   }, [history, selectedId]);
   const meta = selectedEntry?.response?.meta;
   const traceData = selectedEntry?.trace as
@@ -387,12 +393,34 @@ export default function OpsPage() {
     }
   }, [currentTraceId]);
 
-  const openInspectorTrace = useCallback(() => {
-    if (!currentTraceId) {
+  const openInspectorTrace = useCallback(async () => {
+    // Use selectedEntry's trace_id if available, otherwise use the most recent entry
+    const traceId = currentTraceId || history[0]?.response?.meta?.trace_id;
+
+    if (!traceId) {
+      setStatusMessage("trace_id가 없습니다. 질의 응답에 trace_id가 포함되어 있는지 확인해주세요.");
       return;
     }
-    router.push(`/admin/inspector?trace_id=${encodeURIComponent(currentTraceId)}`);
-  }, [currentTraceId, router]);
+
+    // Verify trace exists before navigating
+    try {
+      setStatusMessage("Inspector에서 trace를 확인하는 중...");
+      const response = await authenticatedFetch(`/inspector/traces/${encodeURIComponent(traceId)}`);
+      if (!response?.data?.trace) {
+        setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
+        return;
+      }
+      setStatusMessage(null);
+      router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+      if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+        setStatusMessage(`Trace (${traceId.slice(0, 8)}...)가 서버에 저장되지 않았습니다. 질의를 다시 실행해주세요.`);
+      } else {
+        setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
+      }
+    }
+  }, [currentTraceId, router, selectedEntry, history]);
 
   const traceCopyLabel =
     traceCopyStatus === "copied" ? "Copied!" : traceCopyStatus === "failed" ? "Retry" : "Copy";
@@ -442,7 +470,6 @@ export default function OpsPage() {
           method: "POST",
           body: JSON.stringify({ question: question.trim() }),
         });
-        console.debug("CI response", { payload, response });
         const ciPayload = response.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
@@ -467,7 +494,6 @@ export default function OpsPage() {
           method: "POST",
           body: JSON.stringify(payload),
         });
-        console.debug("OPS response", { payload, data });
         const answer = data.data?.answer as AnswerEnvelope | undefined;
         if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
           throw new Error("Invalid OPS response format");
@@ -485,7 +511,6 @@ export default function OpsPage() {
             : JSON.stringify(normalized.details, null, 2);
       }
       setStatusMessage(`Error: ${normalized.message}`);
-      console.debug("OPS query error details", normalized.details ?? normalized);
     } finally {
       const entry: OpsHistoryEntry = {
         id: genId(),
@@ -583,7 +608,6 @@ export default function OpsPage() {
           method: "POST",
           body: JSON.stringify(rerunBody),
         });
-        console.debug("CI rerun", { action, rerunBody, data });
         const ciPayload = data.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
@@ -614,7 +638,6 @@ export default function OpsPage() {
               : JSON.stringify(normalized.details, null, 2);
         }
         setStatusMessage(`Error: ${normalized.message}`);
-        console.debug("CI rerun error details", normalized.details ?? normalized);
       } finally {
         const entry: OpsHistoryEntry = {
           id: genId(),
@@ -762,7 +785,7 @@ export default function OpsPage() {
                 className="rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
                 disabled={isRunning || !question.trim()}
               >
-                {isRunning ? "Running…" : "메시지 전송"}
+                {isRunning ? <span className="animate-pulse">Running…</span> : "메시지 전송"}
               </button>
               {statusMessage ? <p className="text-[11px] text-rose-300">{statusMessage}</p> : null}
             </div>

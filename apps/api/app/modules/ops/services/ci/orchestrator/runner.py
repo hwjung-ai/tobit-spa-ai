@@ -5,6 +5,7 @@ import os
 import re
 import threading
 import time
+import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from time import perf_counter
@@ -952,8 +953,12 @@ class CIOrchestratorRunner:
         self._extract_references_from_blocks(blocks)
 
         context = get_request_context()
-        trace_id = context.get("trace_id") or "-"
-        parent_trace_id = context.get("parent_trace_id") or "-"
+        trace_id = context.get("trace_id")
+        if not trace_id or trace_id == "-":
+            trace_id = context.get("request_id") or str(uuid.uuid4())
+        parent_trace_id = context.get("parent_trace_id")
+        if parent_trace_id == "-":
+            parent_trace_id = None
 
         trace = {
             "plan_raw": self.plan_raw.model_dump(),
@@ -963,8 +968,8 @@ class CIOrchestratorRunner:
             "references": self.references,
             "errors": self.errors,
             "tenant_id": self.tenant_id,
-            "trace_id": trace_id if trace_id != "-" else None,
-            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
+            "trace_id": trace_id,
+            "parent_trace_id": parent_trace_id,
         }
         if self.aggregation_summary:
             plan_trace = trace.setdefault("plan", {})
@@ -1005,8 +1010,8 @@ class CIOrchestratorRunner:
             },
             "plan_mode": self.plan.mode.value if self.plan and self.plan.mode else "ci",  # ci|auto
             "runner_context": runner_context_meta,
-            "trace_id": trace_id if trace_id != "-" else None,
-            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
+            "trace_id": trace_id,
+            "parent_trace_id": parent_trace_id,
         }
         block_types = []
         for block in blocks:
@@ -4192,8 +4197,12 @@ class CIOrchestratorRunner:
 
         # Build trace with stage information
         context = get_request_context()
-        trace_id = context.get("trace_id") or "-"
-        parent_trace_id = context.get("parent_trace_id") or "-"
+        trace_id = context.get("trace_id")
+        if not trace_id or trace_id == "-":
+            trace_id = context.get("request_id") or str(uuid.uuid4())
+        parent_trace_id = context.get("parent_trace_id")
+        if parent_trace_id == "-":
+            parent_trace_id = None
 
         trace = {
             "route": "orch" if plan_output.kind == PlanOutputKind.PLAN else "direct",
@@ -4207,8 +4216,8 @@ class CIOrchestratorRunner:
             "references": self.references,
             "errors": self.errors,
             "tenant_id": self.tenant_id,
-            "trace_id": trace_id if trace_id != "-" else None,
-            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
+            "trace_id": trace_id,
+            "parent_trace_id": parent_trace_id,
         }
 
         # Calculate timing
@@ -4223,8 +4232,8 @@ class CIOrchestratorRunner:
             "fallback": len(self.errors) > 0,
             "stages_executed": len(stage_outputs),
             "plan_kind": plan_output.kind.value,
-            "trace_id": trace_id if trace_id != "-" else None,
-            "parent_trace_id": parent_trace_id if parent_trace_id != "-" else None,
+            "trace_id": trace_id,
+            "parent_trace_id": parent_trace_id,
         }
 
         return {

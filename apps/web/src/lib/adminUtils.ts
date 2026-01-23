@@ -101,10 +101,22 @@ export async function fetchApi<T = unknown>(
 
   console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET");
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (fetchError) {
+    console.error("[API] Network error - fetch failed:", {
+      endpoint,
+      url,
+      error: fetchError,
+      errorMessage: (fetchError as Error).message,
+      errorName: (fetchError as Error).name,
+    });
+    throw new Error(`Network error: ${(fetchError as Error).message}. Check if backend is running at ${API_BASE_URL}`);
+  }
 
   if (!response.ok) {
     let errorData: unknown = {};

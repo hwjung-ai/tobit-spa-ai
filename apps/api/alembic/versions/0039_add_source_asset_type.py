@@ -7,8 +7,8 @@ Create Date: 2026-01-22 00:00:00.000000
 """
 
 # revision identifiers, used by Alembic.
-revision = '0039'
-down_revision = '0038'
+revision = '0039_add_source_asset_type'
+down_revision = '0038_add_orchestration_fields'
 branch_labels = None
 depends_on = None
 

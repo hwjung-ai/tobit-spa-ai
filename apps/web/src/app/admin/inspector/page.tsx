@@ -232,20 +232,28 @@ function InspectorContent() {
   );
 
   const fetchTraceDetail = useCallback(async (traceId: string) => {
+    console.log("[Inspector] fetchTraceDetail called with traceId:", traceId);
     setDetailLoading(true);
     setDetailError(null);
     try {
+      console.log("[Inspector] Calling fetchApi for trace:", traceId);
       const response = await fetchApi<TraceDetailResponse>(`/inspector/traces/${encodeURIComponent(traceId)}`);
+      console.log("[Inspector] fetchApi response received:", response);
       if (!response.data.trace) {
+        console.warn("[Inspector] No trace in response data");
         setDetailError("Trace not found or invalid response");
         setTraceDetail(null);
         setTraceAuditLogs([]);
         return;
       }
+      console.log("[Inspector] Setting trace detail:", response.data.trace.trace_id);
       setTraceDetail(response.data.trace);
       setTraceAuditLogs(response.data.audit_logs || []);
       setSelectedTraceId(response.data.trace.trace_id);
     } catch (err: unknown) {
+      console.error("[Inspector] Error fetching trace detail:", err);
+      console.error("[Inspector] Error message:", (err as Error).message);
+      console.error("[Inspector] Error stack:", (err as Error).stack);
       setDetailError((err as Error).message || "실행 증거를 불러오지 못했습니다.");
       setTraceDetail(null);
       setTraceAuditLogs([]);
@@ -255,13 +263,18 @@ function InspectorContent() {
   }, []);
 
   useEffect(() => {
-    handleSearch(0);
+    // Skip initial search if trace_id is in URL params
+    const traceIdParam = searchParams.get("trace_id");
+    if (!traceIdParam) {
+      handleSearch(0);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const traceIdParam = searchParams.get("trace_id");
     if (traceIdParam) {
+      setLookupTraceId(traceIdParam);
       fetchTraceDetail(traceIdParam);
     }
   }, [searchParams, fetchTraceDetail]);

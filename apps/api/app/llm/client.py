@@ -15,8 +15,10 @@ class LlmClient:
         if not self.api_key:
             logging.warning("OpenAI API key is missing. LLM calls will fail.")
 
-        self.client = OpenAI(api_key=self.api_key)
-        self.async_client = AsyncOpenAI(api_key=self.api_key)
+        # Set reasonable timeout to prevent hanging indefinitely
+        # timeout: 60 seconds for connection, 120 seconds for read
+        self.client = OpenAI(api_key=self.api_key, timeout=120.0)
+        self.async_client = AsyncOpenAI(api_key=self.api_key, timeout=120.0)
 
     def create_response(
         self,

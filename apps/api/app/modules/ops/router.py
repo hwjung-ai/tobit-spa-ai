@@ -368,8 +368,11 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             duration_ms = int((time.perf_counter() - start) * 1000)
         context = get_request_context()
         active_trace_id = context.get("trace_id")
+        request_id = context.get("request_id")
+        logger.info(f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}")
         if not active_trace_id or active_trace_id == "-":
-            active_trace_id = context.get("request_id") or str(uuid.uuid4())
+            active_trace_id = request_id or str(uuid.uuid4())
+            logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
         parent_trace_id = context.get("parent_trace_id")
         if parent_trace_id == "-":
             parent_trace_id = None
@@ -404,6 +407,16 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         except Exception as exc:
             logger.exception("ci.trace.persist_failed", exc_info=exc)
         status = "error" if trace_status == "error" else "ok"
+        # Inject trace_id into result meta before creating response
+        if result.get("meta") is None:
+            result["meta"] = {}
+        result["meta"]["trace_id"] = active_trace_id
+        result["meta"]["parent_trace_id"] = parent_trace_id
+        # Also inject into trace dict for consistency
+        if result.get("trace") is None:
+            result["trace"] = {}
+        result["trace"]["trace_id"] = active_trace_id
+        result["trace"]["parent_trace_id"] = parent_trace_id
         response: CiAskResponse = CiAskResponse(**result)
         response_payload = ResponseEnvelope.success(data=response.model_dump())
     except Exception as exc: 

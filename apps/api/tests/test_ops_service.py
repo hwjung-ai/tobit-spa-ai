@@ -119,6 +119,145 @@ def test_ops_all_langgraph_without_key_falls_back(monkeypatch):
     assert not envelope.meta.fallback
 
 
+def test_ops_all_langgraph_with_executor_result(monkeypatch):
+    """Test LangGraph handling ExecutorResult returns from executors"""
+    monkeypatch.setenv("OPS_MODE", "real")
+    monkeypatch.setenv("OPS_ENABLE_LANGGRAPH", "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    from schemas.tool_contracts import ExecutorResult, ToolCall
+    from app.modules.ops.services.langgraph import LangGraphAllRunner
+
+    # Mock executors to return ExecutorResult
+    def mock_hist_executor(_question: str):
+        return ExecutorResult(
+            blocks=[
+                {"type": "markdown", "title": "History", "content": "Test history"},
+                {"type": "table", "title": "Events", "columns": ["time", "event"], "rows": [["2024-01-01", "test"]]}
+            ],
+            used_tools=["postgres"],
+            tool_calls=[ToolCall(tool="postgres", query="SELECT * FROM events", params={})],
+            references=[{"kind": "sql", "title": "query", "payload": {"sql": "SELECT * FROM events"}}],
+            summary={"status": "success"}
+        )
+
+    def mock_metric_executor(_question: str):
+        return ExecutorResult(
+            blocks=[{"type": "markdown", "title": "Metrics", "content": "Test metrics"}],
+            used_tools=["timescale"],
+            tool_calls=[],
+            references=[],
+            summary={"status": "success"}
+        )
+
+    monkeypatch.setattr("app.modules.ops.services.langgraph.run_hist", mock_hist_executor)
+    monkeypatch.setattr("app.modules.ops.services.langgraph.run_metric", mock_metric_executor)
+
+    # Mock LLM calls
+    def mock_call_llm(self, prompt: str, system_prompt: str) -> str:
+        if "plan" in system_prompt.lower():
+            return '{"run_metric": true, "run_hist": true, "run_graph": false}'
+        else:
+            return "Test summary of results"
+
+    monkeypatch.setattr(LangGraphAllRunner, "_call_llm", mock_call_llm)
+
+    from core.config import AppSettings
+    settings = AppSettings(openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real")
+    runner = LangGraphAllRunner(settings)
+    blocks, tools, error = runner.run("MES_App_Report_02-2 최근 6개월 작업이력")
+
+    assert len(blocks) >= 3  # final summary + hist blocks + metric blocks
+    assert "postgres" in tools
+    assert "timescale" in tools
+    assert error is None
+
+
+def test_ops_all_langgraph_temperature_fallback(monkeypatch):
+    """Test LangGraph handles temperature parameter errors correctly"""
+    monkeypatch.setenv("OPS_MODE", "real")
+    monkeypatch.setenv("OPS_ENABLE_LANGGRAPH", "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    from app.modules.ops.services.langgraph import LangGraphAllRunner
+
+    call_count = {"count": 0}
+
+    def mock_create_response(self, input, model, **kwargs):
+        call_count["count"] += 1
+        if call_count["count"] == 1 and "temperature" in kwargs:
+            # First call with temperature - raise error with proper exception
+            raise Exception("Unsupported parameter: 'temperature' is not supported with this model.")
+        # Second call without temperature or different call - return success
+        class MockResponse:
+            output_text = '{"run_metric": true, "run_hist": false, "run_graph": false}'
+        return MockResponse()
+
+    def mock_metric_executor(_question: str):
+        from schemas.tool_contracts import ExecutorResult
+        return ExecutorResult(
+            blocks=[{"type": "markdown", "title": "Metrics", "content": "Test"}],
+            used_tools=["timescale"],
+            tool_calls=[],
+            references=[],
+            summary={"status": "success"}
+        )
+
+    monkeypatch.setattr("app.llm.client.LlmClient.create_response", mock_create_response)
+    monkeypatch.setattr("app.modules.ops.services.langgraph.run_metric", mock_metric_executor)
+
+    from core.config import AppSettings
+    settings = AppSettings(openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real")
+    runner = LangGraphAllRunner(settings)
+    blocks, tools, error = runner.run("Test query")
+
+    # Should succeed after retry without temperature
+    assert len(blocks) >= 2  # At least final summary + metric block
+    assert call_count["count"] == 3  # plan call (2 attempts) + summary call
+    assert error is None
+
+
+def test_ops_all_langgraph_dict_blocks(monkeypatch):
+    """Test LangGraph handles dict blocks correctly in _describe_blocks"""
+    monkeypatch.setenv("OPS_MODE", "real")
+    monkeypatch.setenv("OPS_ENABLE_LANGGRAPH", "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    from app.modules.ops.services.langgraph import LangGraphAllRunner
+    from schemas.tool_contracts import ExecutorResult
+
+    def mock_metric_executor(_question: str):
+        # Return dict blocks (not Pydantic models)
+        return ExecutorResult(
+            blocks=[
+                {"type": "markdown", "title": "Summary", "content": "Test"},
+                {"type": "table", "columns": ["a", "b"], "rows": [["1", "2"]]}  # No title
+            ],
+            used_tools=["test"],
+            tool_calls=[],
+            references=[],
+            summary={"status": "success"}
+        )
+
+    def mock_call_llm(self, prompt: str, system_prompt: str) -> str:
+        if "plan" in system_prompt.lower():
+            return '{"run_metric": true, "run_hist": false, "run_graph": false}'
+        else:
+            return "Summary text"
+
+    monkeypatch.setattr("app.modules.ops.services.langgraph.run_metric", mock_metric_executor)
+    monkeypatch.setattr(LangGraphAllRunner, "_call_llm", mock_call_llm)
+
+    from core.config import AppSettings
+    settings = AppSettings(openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real")
+    runner = LangGraphAllRunner(settings)
+
+    # Should not crash with dict blocks
+    blocks, tools, error = runner.run("Test query")
+    assert len(blocks) >= 2
+    assert error is None
+
+
 def test_ops_all_partial_failure(monkeypatch):
     monkeypatch.setenv("OPS_MODE", "mock")
 
