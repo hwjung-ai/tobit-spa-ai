@@ -108,14 +108,20 @@ export async function fetchApi<T = unknown>(
       headers,
     });
   } catch (fetchError) {
+    const errorMsg = (fetchError as Error).message;
+    const errorName = (fetchError as Error).name;
     console.error("[API] Network error - fetch failed:", {
       endpoint,
       url,
       error: fetchError,
-      errorMessage: (fetchError as Error).message,
-      errorName: (fetchError as Error).name,
+      errorMessage: errorMsg,
+      errorName: errorName,
+      details: {
+        isTypeError: errorName === "TypeError",
+        isCORSError: errorMsg.includes("fetch") || errorMsg.includes("CORS"),
+      }
     });
-    throw new Error(`Network error: ${(fetchError as Error).message}. Check if backend is running at ${API_BASE_URL}`);
+    throw new Error(`Network error: ${errorMsg}. Check if backend is running at ${API_BASE_URL}`);
   }
 
   if (!response.ok) {
