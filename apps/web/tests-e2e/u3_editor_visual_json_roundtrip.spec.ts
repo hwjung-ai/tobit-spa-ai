@@ -1,28 +1,51 @@
 import { test, expect } from "@playwright/test";
 
+let screenUrl: string | null = null;
+
+test.beforeAll(async ({ browser }) => {
+  const page = await browser.newPage();
+  await page.goto("/admin/screens");
+  await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 10000 });
+
+  const suffix = Date.now();
+  const screenId = `test_screen_${suffix}`;
+  const screenName = `Test Screen ${suffix}`;
+
+  await page.click('[data-testid="btn-create-screen"]');
+  await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 10000 });
+  await page.fill('[data-testid="input-screen-id"]', screenId);
+  await page.fill('[data-testid="input-screen-name"]', screenName);
+  await page.click('[data-testid="btn-confirm-create"]');
+  await page.waitForSelector("text=Screen created successfully", { timeout: 10000 });
+
+  const openLink = page.locator('[data-testid^="link-screen-"]', { hasText: screenName }).first();
+  await openLink.waitFor({ timeout: 10000 });
+  screenUrl = await openLink.getAttribute("href");
+  await page.close();
+});
+
 test.describe("U3 Visual Editor - JSON Roundtrip", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/admin/screens");
-    await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 10000 });
-
-    const screenName = "Test Screen 1";
-    const screenId = "test-screen-1";
-    const screenLink = page.locator('[data-testid^="link-screen-"]', { hasText: screenName }).first();
-    const hasScreen = await screenLink.isVisible({ timeout: 2000 }).catch(() => false);
-
-    if (!hasScreen) {
-      await page.click('[data-testid="btn-create-screen"]');
-      await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 10000 });
-      await page.fill('[data-testid="input-screen-id"]', screenId);
-      await page.fill('[data-testid="input-screen-name"]', screenName);
-      await page.click('[data-testid="btn-confirm-create"]');
-      await page.waitForSelector("text=Screen created successfully", { timeout: 10000 });
+    if (!screenUrl) {
+      throw new Error("screenUrl was not initialized");
     }
 
-    const openLink = page.locator('[data-testid^="link-screen-"]', { hasText: screenName }).first();
-    await openLink.waitFor({ timeout: 10000 });
-    await openLink.click();
+    await page.goto(screenUrl);
     await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
+
+    // Reset to a blank screen to avoid state bleed between tests.
+    await page.click('[data-testid="tab-json"]');
+    await page.waitForSelector('[data-testid="json-textarea"]', { timeout: 5000 });
+    const textarea = page.locator('[data-testid="json-textarea"]');
+    const currentJson = await textarea.inputValue();
+    const screenData = JSON.parse(currentJson);
+    screenData.components = [];
+    screenData.actions = [];
+    screenData.bindings = null;
+    await textarea.fill(JSON.stringify(screenData, null, 2));
+    await page.click('[data-testid="btn-apply-json"]');
+    await page.click('[data-testid="tab-visual"]');
+    await page.waitForSelector('[data-testid="canvas-list"]', { timeout: 5000 });
   });
 
   test("should create and persist a screen with components", async ({ page }) => {

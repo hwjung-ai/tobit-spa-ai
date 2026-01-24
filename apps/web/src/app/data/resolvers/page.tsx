@@ -13,6 +13,7 @@ import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { formatError } from "../../../lib/utils";
+import { fetchApi } from "../../../lib/adminUtils";
 import { useSearchParams } from "next/navigation";
 import type {
   ResolverAssetResponse,
@@ -63,8 +64,7 @@ const formatStatus = (status: string) => {
 };
 
 function ResolversContent() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
+  const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY !== "false";
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
@@ -85,28 +85,21 @@ function ResolversContent() {
   const resolversQuery = useQuery({
     queryKey: ["asset-registry", "resolvers"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/resolvers`);
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to load resolvers");
-      }
-      return (body.data?.assets ?? []) as ResolverAssetResponse[];
+      const response = await fetchApi<{ assets: ResolverAssetResponse[] }>(
+        "/asset-registry/resolvers"
+      );
+      return response.data.assets ?? [];
     },
     enabled: enableAssetRegistry,
   });
 
   const createMutation = useMutation({
     mutationFn: async (resolver: Partial<ResolverAsset>) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/resolvers`, {
+      const response = await fetchApi<ResolverAssetResponse>("/asset-registry/resolvers", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resolver),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to create resolver");
-      }
-      return body.data as ResolverAssetResponse;
+      return response.data;
     },
     onSuccess: () => {
       resolversQuery.refetch();
@@ -117,16 +110,11 @@ function ResolversContent() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, resolver }: { id: string; resolver: Partial<ResolverAsset> }) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/resolvers/${id}`, {
+      const response = await fetchApi<ResolverAssetResponse>(`/asset-registry/resolvers/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(resolver),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to update resolver");
-      }
-      return body.data as ResolverAssetResponse;
+      return response.data;
     },
     onSuccess: () => {
       resolversQuery.refetch();
@@ -138,13 +126,9 @@ function ResolversContent() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/resolvers/${id}`, {
+      await fetchApi(`/asset-registry/resolvers/${id}`, {
         method: "DELETE",
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to delete resolver");
-      }
     },
     onSuccess: () => {
       resolversQuery.refetch();
@@ -154,16 +138,14 @@ function ResolversContent() {
 
   const simulateMutation = useMutation({
     mutationFn: async (request: ResolverSimulationRequest) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/resolvers/simulate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to simulate resolver");
-      }
-      return body.data as ResolverSimulationResult[];
+      const response = await fetchApi<ResolverSimulationResult[]>(
+        "/asset-registry/resolvers/simulate",
+        {
+          method: "POST",
+          body: JSON.stringify(request),
+        }
+      );
+      return response.data;
     },
     onSuccess: (data) => {
       setSimulationResults(data);

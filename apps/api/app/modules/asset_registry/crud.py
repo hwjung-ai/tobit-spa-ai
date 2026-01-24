@@ -629,6 +629,31 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
 
 
 # Schema Asset CRUD operations
+def build_schema_catalog(asset: TbAssetRegistry) -> SchemaCatalog:
+    content = asset.content or {}
+    catalog_data = content.get("catalog") or {}
+
+    if isinstance(catalog_data, SchemaCatalog):
+        return catalog_data
+
+    catalog_name = catalog_data.get("name") or asset.name
+    source_ref = (
+        catalog_data.get("source_ref")
+        or content.get("source_ref")
+        or str(asset.asset_id)
+    )
+
+    return SchemaCatalog(
+        name=catalog_name,
+        description=catalog_data.get("description"),
+        source_ref=source_ref,
+        tables=catalog_data.get("tables", []),
+        last_scanned_at=catalog_data.get("last_scanned_at"),
+        scan_status=catalog_data.get("scan_status", "pending"),
+        scan_metadata=catalog_data.get("scan_metadata", {}),
+    )
+
+
 def create_schema_asset(
     session: Session,
     schema_data: SchemaAssetCreate,
@@ -694,7 +719,6 @@ def get_schema_asset(session: Session, asset_id: str) -> SchemaAsset | None:
         return None
 
     # Extract schema data from content
-    content = asset.content or {}
     return SchemaAsset(
         asset_id=asset.asset_id,
         asset_type=asset.asset_type,
@@ -702,7 +726,7 @@ def get_schema_asset(session: Session, asset_id: str) -> SchemaAsset | None:
         description=asset.description,
         version=asset.version,
         status=asset.status,
-        catalog=content.get("catalog", {}),
+        catalog=build_schema_catalog(asset),
         scope=asset.scope,
         tags=asset.tags,
         created_by=asset.created_by,
@@ -710,7 +734,7 @@ def get_schema_asset(session: Session, asset_id: str) -> SchemaAsset | None:
         published_at=asset.published_at,
         created_at=asset.created_at,
         updated_at=asset.updated_at,
-        spec_json=content.get("spec"),
+        spec_json=(asset.content or {}).get("spec"),
     )
 
 

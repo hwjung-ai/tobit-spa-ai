@@ -31,7 +31,10 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": false,
+    "noErrorTruncation": true
   },
   "include": [
     "next-env.d.ts",

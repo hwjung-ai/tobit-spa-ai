@@ -6,12 +6,10 @@ import {
   type AssetsDiff,
   type AssetInfo,
   type DiffItem,
-  type TraceDiff,
   type PlanDiff,
   type ToolCallsDiff,
   type ReferencesDiff,
   type AnswerBlocksDiff,
-  type UIRenderDiff,
 } from "../../lib/traceDiffUtils";
 
 interface TraceInfo {

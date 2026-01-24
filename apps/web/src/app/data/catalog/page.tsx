@@ -12,6 +12,7 @@ import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { formatError } from "../../../lib/utils";
+import { fetchApi } from "../../../lib/adminUtils";
 import type { SchemaAssetResponse } from "../../../types/asset-registry";
 import { useSearchParams } from "next/navigation";
 
@@ -56,8 +57,7 @@ interface SchemaCatalog {
 }
 
 function CatalogContent() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
+  const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY !== "false";
   const searchParams = useSearchParams();
   const selectedAssetId = searchParams.get("asset_id");
 
@@ -76,12 +76,10 @@ function CatalogContent() {
   const schemasQuery = useQuery({
     queryKey: ["asset-registry", "schemas"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/schemas`);
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to load schemas");
-      }
-      return (body.data?.assets ?? []) as SchemaAssetResponse[];
+      const response = await fetchApi<{ assets: SchemaAssetResponse[] }>(
+        "/asset-registry/schemas"
+      );
+      return response.data.assets ?? [];
     },
     enabled: enableAssetRegistry,
   });
@@ -89,28 +87,21 @@ function CatalogContent() {
   const catalogsQuery = useQuery({
     queryKey: ["asset-registry", "catalogs"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/schemas`);
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to load catalogs");
-      }
-      return (body.data?.assets ?? []) as SchemaAssetResponse[];
+      const response = await fetchApi<{ assets: SchemaAssetResponse[] }>(
+        "/asset-registry/schemas"
+      );
+      return response.data.assets ?? [];
     },
     enabled: enableAssetRegistry,
   });
 
   const scanMutation = useMutation({
     mutationFn: async ({ source_ref, options }: { source_ref: string; options: unknown }) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/schemas/${source_ref}/scan`, {
+      const response = await fetchApi<ScanResult>(`/asset-registry/schemas/${source_ref}/scan`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source_ref, ...(options as Record<string, unknown>) }),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Scan failed");
-      }
-      return body.data as ScanResult;
+      return response.data;
     },
     onSuccess: () => {
       catalogsQuery.refetch();

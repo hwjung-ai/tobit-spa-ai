@@ -13,6 +13,7 @@ import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { formatError } from "../../../lib/utils";
+import { fetchApi } from "../../../lib/adminUtils";
 import { useSearchParams } from "next/navigation";
 import type { ConnectionTestResult, SourceAssetResponse, SourceType } from "../../../types/asset-registry";
 
@@ -39,8 +40,7 @@ const formatStatus = (status: string) => {
 };
 
 function SourcesContent() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
+  const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY !== "false";
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
@@ -59,28 +59,21 @@ function SourcesContent() {
   const sourcesQuery = useQuery({
     queryKey: ["asset-registry", "sources"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/sources`);
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to load sources");
-      }
-      return (body.data?.assets ?? []) as SourceAssetResponse[];
+      const response = await fetchApi<{ assets: SourceAssetResponse[] }>(
+        "/asset-registry/sources"
+      );
+      return response.data.assets ?? [];
     },
     enabled: enableAssetRegistry,
   });
 
   const createMutation = useMutation({
     mutationFn: async (source: Partial<SourceAssetResponse>) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/sources`, {
+      const response = await fetchApi<SourceAssetResponse>("/asset-registry/sources", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(source),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to create source");
-      }
-      return body.data as SourceAssetResponse;
+      return response.data;
     },
     onSuccess: () => {
       sourcesQuery.refetch();
@@ -91,16 +84,11 @@ function SourcesContent() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, source }: { id: string; source: Partial<SourceAssetResponse> }) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/sources/${id}`, {
+      const response = await fetchApi<SourceAssetResponse>(`/asset-registry/sources/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(source),
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to update source");
-      }
-      return body.data as SourceAssetResponse;
+      return response.data;
     },
     onSuccess: () => {
       sourcesQuery.refetch();
@@ -112,13 +100,9 @@ function SourcesContent() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/sources/${id}`, {
+      await fetchApi(`/asset-registry/sources/${id}`, {
         method: "DELETE",
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to delete source");
-      }
     },
     onSuccess: () => {
       sourcesQuery.refetch();
@@ -128,14 +112,10 @@ function SourcesContent() {
 
   const testMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`${apiBaseUrl}/asset-registry/sources/${id}/test`, {
+      const response = await fetchApi<ConnectionTestResult>(`/asset-registry/sources/${id}/test`, {
         method: "POST",
       });
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to test connection");
-      }
-      return body.data as ConnectionTestResult;
+      return response.data;
     },
     onSuccess: (data) => {
       setTestResults(data);

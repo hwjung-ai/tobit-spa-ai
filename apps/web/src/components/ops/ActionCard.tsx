@@ -8,7 +8,7 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { formatError } from "../lib/utils";
+import { formatError } from "../../lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import type { ReplanTrigger } from "../../types/ops-schemas";
 
@@ -124,7 +124,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
               <Label>Re-plan Strategy</Label>
               <Select
                 value={actionParams.debug_level || "basic"}
-                onValueChange={(value) => setActionParams({ ...actionParams, debug_level: value as unknown })}
+                onValueChange={(value) => setActionParams({ ...actionParams, debug_level: value as "basic" | "detailed" | "full" })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -155,7 +155,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
               <Label>Debug Level</Label>
               <Select
                 value={actionParams.debug_level || "basic"}
-                onValueChange={(value) => setActionParams({ ...actionParams, debug_level: value as unknown })}
+                onValueChange={(value) => setActionParams({ ...actionParams, debug_level: value as "basic" | "detailed" | "full" })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -229,7 +229,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger>
         <Card className="cursor-pointer hover:border-sky-500 transition-colors">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">

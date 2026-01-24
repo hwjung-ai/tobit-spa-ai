@@ -23,7 +23,17 @@ class CORSConfig:
             or self.settings.cors_allowed_origins == ["*"]
         ):
             return ["*"]
-        return self.settings.cors_allowed_origins
+        origins = list(self.settings.cors_allowed_origins)
+        if self.settings.app_env != "prod":
+            origins.extend(
+                [
+                    "http://localhost:3000",
+                    "http://127.0.0.1:3000",
+                    "http://localhost:3001",
+                    "http://127.0.0.1:3001",
+                ]
+            )
+        return list(dict.fromkeys(origins))
 
     @property
     def allow_credentials(self) -> bool:

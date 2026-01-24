@@ -18,12 +18,14 @@ from app.modules.asset_registry.crud import (
     create_resolver_asset,
     create_schema_asset,
     create_source_asset,
+    build_schema_catalog,
     delete_resolver_asset,
     delete_schema_asset,
     delete_source_asset,
     get_resolver_asset,
     get_schema_asset,
     get_source_asset,
+    list_assets as list_registry_assets,
     scan_schema,
     simulate_resolver_configuration,
     test_source_connection,
@@ -777,7 +779,7 @@ def list_sources(
         if asset_type and asset_type != "source":
             raise HTTPException(status_code=400, detail="asset_type must be 'source'")
 
-        assets = list_assets(session, asset_type="source", status=status)
+        assets = list_registry_assets(session, asset_type="source", status=status)
 
         # Convert to response format
         source_assets = []
@@ -809,7 +811,7 @@ def list_sources(
                 total=len(source_assets),
                 page=page,
                 page_size=page_size,
-            )
+            ).model_dump()
         )
 
 
@@ -942,12 +944,11 @@ def list_schemas(
         if asset_type and asset_type != "schema":
             raise HTTPException(status_code=400, detail="asset_type must be 'schema'")
 
-        assets = list_assets(session, asset_type="schema", status=status)
+        assets = list_registry_assets(session, asset_type="schema", status=status)
 
         # Convert to response format
         schema_assets = []
         for asset in assets:
-            content = asset.content or {}
             schema_assets.append(
                 SchemaAssetResponse(
                     asset_id=str(asset.asset_id),
@@ -956,7 +957,7 @@ def list_schemas(
                     description=asset.description,
                     version=asset.version,
                     status=asset.status,
-                    catalog=content.get("catalog", {}),
+                    catalog=build_schema_catalog(asset),
                     scope=asset.scope,
                     tags=asset.tags,
                     created_by=asset.created_by,
@@ -973,7 +974,7 @@ def list_schemas(
                 total=len(schema_assets),
                 page=page,
                 page_size=page_size,
-            )
+            ).model_dump()
         )
 
 
@@ -1107,7 +1108,7 @@ def list_resolvers(
         if asset_type and asset_type != "resolver":
             raise HTTPException(status_code=400, detail="asset_type must be resolver")
 
-        assets = list_assets(session, asset_type="resolver", status=status)
+        assets = list_registry_assets(session, asset_type="resolver", status=status)
 
         # Convert to response format
         resolver_assets = []
