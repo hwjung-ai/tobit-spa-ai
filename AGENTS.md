@@ -25,14 +25,11 @@
 - **Data**: PostgreSQL, pgvector, TimescaleDB, Neo4j, Redis
 - **Observability**: LangSmith (선택 사항)
 - **Testing Stack**:
-  - **Backend Unit Testing**: pytest, pytest-asyncio (비동기 테스트), pytest-anyio (멀티플랫폼 async 지원)
-  - **Backend Security Testing**: 보안 헤더, CSRF, 암호화, RBAC, API 키 검증
-    - 테스트 위치: `apps/api/tests/test_security*.py`, `test_encryption.py`, `test_permissions.py`, `test_api_keys.py`
-  - **Backend Lint & Type Check**: Ruff (Python linter/formatter), mypy (타입 체커)
+  - **Backend Unit Testing**: pytest, pytest-asyncio (비동기 테스트)
+  - **Backend Lint**: Ruff (Python linter/formatter)
   - **Frontend E2E Testing**: Playwright (@playwright/test)
-  - **Frontend Type Check**: TypeScript strict mode + `npm run type-check` (tsc --noEmit)
-  - **Frontend Lint**: ESLint, Prettier
-  - **Test Coverage**:
+  - **Frontend Lint**: ESLint, Prettier, TypeScript strict mode
+  - **Test Coverage**: 
     - Backend 유닛 테스트: `apps/api/tests/`
     - Backend 통합/E2E 테스트: `tests/ops_ci_api/`, `tests/ops_e2e/`
     - Frontend E2E 테스트: `apps/web/tests-e2e/`
@@ -167,6 +164,7 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `docs/FEATURES.md`: 각 기능의 상세 명세, API 노트, 사용 예시를 담고 있습니다. (기능 변경 시 반드시 업데이트)
    - `docs/OPERATIONS.md`: 기능 검증을 위한 운영 체크리스트입니다. (운영 절차 변경 시 반드시 업데이트)
    - `docs/PRODUCTION_GAPS.md`: 프로덕션 전환을 위해 필요한 작업 목록(TODO)입니다.
+   - `docs/TESTIDS.md`: E2E 테스트 `data-testid` 속성 명명 규칙 표준입니다. (UI 컴포넌트 추가 시 반드시 준수)
 
 ### 1-1) UI Creator Contract 관련 문서
    - `CONTRACT_UI_CREATOR_V1.md`: UI Screen 기능의 3대 계약(C0-1, C0-2, C0-3) 명세서입니다.

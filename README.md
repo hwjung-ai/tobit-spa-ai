@@ -29,7 +29,7 @@
 
 - **[AGENTS.md](./AGENTS.md)**: AI 에이전트가 반드시 준수해야 할 프로젝트 규칙과 기술 스택을 정의합니다.
 - **[README.md](./README.md)**: 프로젝트 설치, 실행, 구조에 대한 **Source of Truth** 입니다.
-- **[DEV_ENV.md](./DEV_ENV.md)**: 로컬 개발 환경 구축 및 DB 접속 정보 설정 가이드입니다.
+- **[DEV_ENV.md](./docs/DEV_ENV.md)**: 로컬 개발 환경 구축 및 DB 접속 정보 설정 가이드입니다.
 - **[docs/INDEX.md](./docs/INDEX.md)**: 📚 **중앙 문서 인덱스** - 모든 문서를 한곳에서 찾을 수 있습니다 (⭐ 여기서 시작하세요).
 - **[docs/FEATURES.md](./docs/FEATURES.md)**: 각 기능의 상세 명세, API 노트, 사용 예시를 제공합니다.
 - **[docs/OPERATIONS.md](./docs/OPERATIONS.md)**: 기능 검증을 위한 운영 체크리스트 및 절차를 안내합니다 (U3-2 포함).
