@@ -48,6 +48,7 @@ export interface OperationSetting {
   allowed_values: unknown[] | null;
   published_by: string | null;
   published_at: string | null;
+  [key: string]: unknown;
 }
 
 export interface AuditLog {
@@ -101,7 +102,6 @@ export async function fetchApi<T = unknown>(
   console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET", "URL:", url);
 
   let response: Response;
-  let fetchSuccess = false;
 
   try {
     response = await fetch(url, {
@@ -109,7 +109,6 @@ export async function fetchApi<T = unknown>(
       headers,
       credentials: "same-origin",
     });
-    fetchSuccess = true;
     console.log("[API] Fetch successful, status:", response.status);
   } catch (fetchError) {
     const error = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
@@ -136,9 +135,9 @@ export async function fetchApi<T = unknown>(
       userMessage = `Network error: ${errorMsg}`;
     }
 
-    const finalError = new Error(userMessage);
-    (finalError as any).statusCode = isCORSError ? 0 : undefined;
-    (finalError as any).originalError = fetchError;
+    const finalError: Error & { statusCode?: number; originalError?: unknown } = new Error(userMessage);
+    finalError.statusCode = isCORSError ? 0 : undefined;
+    finalError.originalError = fetchError;
 
     throw finalError;
   }

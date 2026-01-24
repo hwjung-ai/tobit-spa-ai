@@ -75,10 +75,10 @@ export default function RegressionWatchPanel() {
   const loadQueries = async () => {
     setLoading(true);
     try {
-      const result = await fetchApi("/ops/golden-queries", {
+      const result = await fetchApi<{ queries: GoldenQuery[] }>("/ops/golden-queries", {
         method: "GET",
       });
-      setQueries(result.data.queries || []);
+      setQueries(result.data?.queries ?? []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load queries");
@@ -95,10 +95,10 @@ export default function RegressionWatchPanel() {
       if (queryId) params.append("golden_query_id", queryId);
       params.append("limit", "20");
 
-      const result = await fetchApi(`/ops/regression-runs?${params}`, {
+      const result = await fetchApi<{ runs: RegressionRun[] }>(`/ops/regression-runs?${params}`, {
         method: "GET",
       });
-      setRuns(result.data.runs || []);
+      setRuns(result.data?.runs ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load runs");
     } finally {
@@ -215,7 +215,7 @@ export default function RegressionWatchPanel() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="regression-panel">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

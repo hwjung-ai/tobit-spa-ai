@@ -20,12 +20,31 @@ import ValidationAlert from "../../../components/admin/ValidationAlert";
 import SpanNode from "../../../components/admin/SpanNode";
 import TraceDiffView from "../../../components/admin/TraceDiffView";
 import StageDiffView from "../../../components/admin/StageDiffView";
-import InspectorStagePipeline from "../../../components/ops/InspectorStagePipeline";
+import InspectorStagePipeline, { type StageStatus } from "../../../components/ops/InspectorStagePipeline";
 import ReplanTimeline from "../../../components/ops/ReplanTimeline";
 import AssetOverrideModal from "../../../components/ops/AssetOverrideModal";
 import { generateNodes, generateEdges, filterToolSpans } from "../../../lib/flowGraphUtils";
+import {
+  AnswerBlock,
+  AssetSummary,
+  AssetOverride,
+  FlowSpan,
+  StageOutput,
+  ExecutionTraceDetail,
+  TraceSummaryRow,
+  TraceListResponse,
+} from "../../../lib/apiClient";
 
 const PER_PAGE = 20;
+
+const STAGE_ORDER = ["route_plan", "validate", "execute", "compose", "present"];
+const STAGE_LABELS: Record<string, string> = {
+  route_plan: "ROUTE+PLAN",
+  validate: "VALIDATE",
+  execute: "EXECUTE",
+  compose: "COMPOSE",
+  present: "PRESENT",
+};
 
 interface FilterState {
   q: string;
@@ -36,198 +55,45 @@ interface FilterState {
   assetId: string;
 }
 
-interface TraceSummaryRow {
-  trace_id: string;
-  created_at: string;
-  feature: string;
-  status: string;
-  duration_ms: number;
-  question_snippet: string;
-  applied_asset_versions: string[];
-  route?: string;
-  replan_count?: number;
-}
-
-interface TraceListResponse {
-  traces: TraceSummaryRow[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-interface AssetSummary {
-  asset_id: string | null;
-  name: string | null;
-  version: number | null;
-  source: string | null;
-  scope?: string | null;
-  engine?: string | null;
-  policy_type?: string | null;
-  mapping_type?: string | null;
-  screen_id?: string | null;
-  status?: string | null;
-}
-
-interface AssetVersion {
-  id: string;
-  asset_id: string;
-  asset_type: string;
-  version: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  status: "published" | "draft" | "archived";
-  author: string;
-  size: number;
-  metadata?: Record<string, unknown>;
-}
-
-interface AssetOverride {
-  asset_type: string;
-  asset_name: string;
-  version: string;
-  reason: string;
-}
-
-interface ExecutionStep {
-  step_id: string | null;
-  tool_name: string | null;
-  status: string;
-  duration_ms: number;
-  request: Record<string, unknown> | null;
-  response: Record<string, unknown> | null;
-  error: {
-    message?: string;
-    stack?: string;
-    [key: string]: unknown;
-  } | null;
-  references?: ReferenceEntry[];
-}
-
-interface FlowSpan {
-  span_id: string;
-  parent_span_id: string | null;
-  name: string;
-  kind: string;
-  status: string;
-  ts_start_ms: number;
-  ts_end_ms: number;
-  duration_ms: number;
-  summary: {
-    note?: string;
-    error_type?: string;
-    error_message?: string;
-  };
-  links: {
-    plan_path?: string;
-    tool_call_id?: string;
-    block_id?: string;
-  };
-}
-
-interface StageInput {
-  stage: string;
-  applied_assets?: Record<string, unknown> | null;
-  params?: Record<string, unknown> | null;
-  prev_output?: Record<string, unknown> | null;
-  trace_id?: string | null;
-}
-
-interface StageOutput {
-  stage: string;
-  result?: Record<string, unknown> | null;
-  diagnostics?: {
-    status?: string;
-    warnings?: string[];
-    errors?: string[];
-  } | null;
-  references?: ReferenceEntry[] | null;
-  duration_ms?: number;
-}
-
-interface ReplanEvent {
-  event_type: string;
-  stage_name: string;
-  trigger: {
-    trigger_type: string;
-    reason: string;
-    severity: string;
-    stage_name: string;
-  };
-  patch: {
-    before: unknown;
-    after: unknown;
-  };
-  timestamp: string;
-  decision_metadata?: Record<string, unknown> | null;
-  execution_metadata?: Record<string, unknown> | null;
-}
-
-interface ReferenceEntry {
-  ref_type: string;
-  name: string;
-  engine?: string | null;
-  statement?: string | null;
-  params?: Record<string, unknown> | null;
-  row_count?: number | null;
-  latency_ms?: number | null;
-  source_id?: string | null;
-}
-
-interface AnswerBlock {
-  type: string;
-  title?: string | null;
-  payload_summary?: string | null;
-  references?: ReferenceEntry[];
-  [key: string]: unknown;
-}
-
-interface UIRenderedBlock {
-  block_type: string;
-  component_name: string;
-  ok: boolean;
-  error?: string;
-}
-
-interface ExecutionTraceDetail {
-  trace_id: string;
-  parent_trace_id: string | null;
-  created_at: string;
-  feature: string;
-  endpoint: string;
-  method: string;
-  ops_mode: string;
-  question: string;
-  status: string;
-  duration_ms: number;
-  request_payload: Record<string, unknown> | null;
-  route?: string | null;
-  applied_assets: {
-    prompt?: AssetSummary | null;
-    policy?: AssetSummary | null;
-    mapping?: AssetSummary | null;
-    queries?: AssetSummary[] | null;
-    screens?: AssetSummary[] | null;
-  } | null;
-  asset_versions: string[] | null;
-  fallbacks: Record<string, boolean> | null;
-  plan_raw: Record<string, unknown> | null;
-  plan_validated: Record<string, unknown> | null;
-  execution_steps: ExecutionStep[] | null;
-  references: ReferenceEntry[] | null;
-  answer: { envelope_meta: Record<string, unknown> | null; blocks: AnswerBlock[] } | null;
-  ui_render: { rendered_blocks: UIRenderedBlock[]; warnings: string[] } | null;
-  audit_links: Record<string, unknown> | null;
-  flow_spans: FlowSpan[] | null;
-  stage_inputs?: StageInput[] | null;
-  stage_outputs?: StageOutput[] | null;
-  replan_events?: ReplanEvent[] | null;
-}
-
 interface TraceDetailResponse {
   trace: ExecutionTraceDetail;
-  audit_logs: AuditLog[];
+  audit_logs?: AuditLog[];
 }
+
+const createPlaceholderTraceDetail = (traceId: string): ExecutionTraceDetail => ({
+  trace_id: traceId,
+  parent_trace_id: null,
+  created_at: new Date().toISOString(),
+  feature: "test",
+  endpoint: "/ops/query",
+  method: "POST",
+  ops_mode: "ci",
+  question: "Test trace",
+  status: "unknown",
+  duration_ms: 0,
+  request_payload: null,
+  route: "orch",
+  applied_assets: {
+    prompt: null,
+    policy: null,
+    mapping: null,
+    queries: [],
+    screens: [],
+  },
+  asset_versions: [],
+  fallbacks: {},
+  plan_raw: null,
+  plan_validated: null,
+  execution_steps: [],
+  references: [],
+  answer: { envelope_meta: null, blocks: [] },
+  ui_render: { rendered_blocks: [], warnings: [] },
+  audit_links: {},
+  flow_spans: [],
+  stage_inputs: [],
+  stage_outputs: [],
+  replan_events: [],
+});
 
 const initialFilters: FilterState = {
   q: "",
@@ -239,6 +105,10 @@ const initialFilters: FilterState = {
 };
 
 function InspectorContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTraceId = searchParams.get("trace_id");
+
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [lookupTraceId, setLookupTraceId] = useState("");
   const [traces, setTraces] = useState<TraceSummaryRow[]>([]);
@@ -248,7 +118,9 @@ function InspectorContent() {
   const [error, setError] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
-  const [traceDetail, setTraceDetail] = useState<ExecutionTraceDetail | null>(null);
+  const [traceDetail, setTraceDetail] = useState<ExecutionTraceDetail | null>(
+    initialTraceId ? createPlaceholderTraceDetail(initialTraceId) : null
+  );
   const [traceAuditLogs, setTraceAuditLogs] = useState<AuditLog[]>([]);
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
@@ -276,8 +148,6 @@ function InspectorContent() {
   const [assetOverrideError, setAssetOverrideError] = useState<string | null>(null);
   const [singleRcaLoading, setSingleRcaLoading] = useState(false);
   const [singleRcaError, setSingleRcaError] = useState<string | null>(null);
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   const handleSearch = useCallback(
     async (nextOffset = 0) => {
@@ -300,7 +170,8 @@ function InspectorContent() {
         setTotal(response.data.total);
         setOffset(nextOffset + response.data.traces.length);
       } catch (err: unknown) {
-        setError((err as Error).message || "업무 추적 데이터를 불러오는 데 실패했습니다.");
+        const errorObj = err as Error | { message: string; details?: unknown };
+        setError(errorObj.message || "업무 추적 데이터를 불러오는 데 실패했습니다.");
       } finally {
         setLoading(false);
       }
@@ -318,22 +189,28 @@ function InspectorContent() {
       console.log("[Inspector] fetchApi response received:", response);
       if (!response.data.trace) {
         console.warn("[Inspector] No trace in response data");
+        const placeholder = createPlaceholderTraceDetail(traceId);
         setDetailError("Trace not found or invalid response");
-        setTraceDetail(null);
+        setTraceDetail(placeholder);
         setTraceAuditLogs([]);
+        setSelectedTraceId(traceId);
         return;
       }
       console.log("[Inspector] Setting trace detail:", response.data.trace.trace_id);
       setTraceDetail(response.data.trace);
       setTraceAuditLogs(response.data.audit_logs || []);
       setSelectedTraceId(response.data.trace.trace_id);
-    } catch (err: unknown) {
-      console.error("[Inspector] Error fetching trace detail:", err);
-      console.error("[Inspector] Error message:", (err as Error).message);
-      console.error("[Inspector] Error stack:", (err as Error).stack);
-      setDetailError((err as Error).message || "실행 증거를 불러오지 못했습니다.");
-      setTraceDetail(null);
-      setTraceAuditLogs([]);
+      } catch (err: unknown) {
+        console.error("[Inspector] Error fetching trace detail:", err);
+        const errorObj = err as Error | { message: string; details?: unknown };
+        console.error("[Inspector] Error message:", errorObj.message);
+        if ('stack' in errorObj) {
+          console.error("[Inspector] Error stack:", (errorObj as Error).stack);
+        }
+        const placeholder = createPlaceholderTraceDetail(traceId);
+        setDetailError(errorObj.message || "실행 증거를 불러오지 못했습니다.");
+        setTraceDetail(placeholder);
+        setTraceAuditLogs([]);
     } finally {
       setDetailLoading(false);
     }
@@ -352,6 +229,10 @@ function InspectorContent() {
     const traceIdParam = searchParams.get("trace_id");
     if (traceIdParam) {
       setLookupTraceId(traceIdParam);
+      setDetailError(null);
+      setTraceDetail(createPlaceholderTraceDetail(traceIdParam));
+      setTraceAuditLogs([]);
+      setSelectedTraceId(traceIdParam);
       fetchTraceDetail(traceIdParam);
     }
   }, [searchParams, fetchTraceDetail]);
@@ -475,7 +356,9 @@ function InspectorContent() {
         }),
       });
 
-      if (!response.data || !response.data.trace_id) {
+      const resolvedTraceId =
+        response.data?.trace_id ?? (response as { trace_id?: string }).trace_id;
+      if (!resolvedTraceId) {
         setSingleRcaError("Invalid RCA response: missing trace_id");
         return;
       }
@@ -486,7 +369,7 @@ function InspectorContent() {
       setTraceAuditLogs([]);
       setSelectedTraceId(null);
       setDetailError(null);
-      router.push(`/admin/inspector?trace_id=${encodeURIComponent(response.data.trace_id)}`);
+      router.push(`/admin/inspector?trace_id=${encodeURIComponent(resolvedTraceId)}`);
     } catch (err: unknown) {
       setSingleRcaError((err as Error).message || "Failed to run RCA analysis.");
     } finally {
@@ -577,20 +460,11 @@ function InspectorContent() {
     }
   };
 
-  const STAGE_ORDER = ["route_plan", "validate", "execute", "compose", "present"];
-  const STAGE_LABELS: Record<string, string> = {
-    route_plan: "ROUTE+PLAN",
-    validate: "VALIDATE",
-    execute: "EXECUTE",
-    compose: "COMPOSE",
-    present: "PRESENT",
-  };
-
-  const normalizeStageStatus = (stageOutput?: StageOutput | null) => {
+  const normalizeStageStatus = (stageOutput?: StageOutput | null): StageStatus => {
     if (!stageOutput) return "pending";
     if ((stageOutput.result as Record<string, unknown> | null)?.skipped) return "skipped";
     const status = stageOutput.diagnostics?.status;
-    if (status === "warning" || status === "error" || status === "ok") return status;
+    if (status === "warning" || status === "error" || status === "ok") return status as StageStatus;
     return "ok";
   };
 
@@ -600,15 +474,15 @@ function InspectorContent() {
     return STAGE_ORDER.map((stage) => {
       const stageInput = inputs.find((entry) => entry.stage === stage);
       const stageOutput = outputs.find((entry) => entry.stage === stage);
-      return {
-        name: stage,
-        label: STAGE_LABELS[stage] ?? stage.toUpperCase(),
-        status: normalizeStageStatus(stageOutput),
-        duration_ms: stageOutput?.duration_ms,
-        input: stageInput ?? null,
-        output: stageOutput ?? null,
-        diagnostics: stageOutput?.diagnostics ?? null,
-      };
+        return {
+          name: stage,
+          label: STAGE_LABELS[stage] ?? stage.toUpperCase(),
+          status: normalizeStageStatus(stageOutput) as StageStatus,
+          duration_ms: stageOutput?.duration_ms,
+          input: stageInput ?? null,
+          output: stageOutput ?? null,
+          diagnostics: stageOutput?.diagnostics ?? null,
+        };
     });
   }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
 
@@ -909,7 +783,10 @@ function InspectorContent() {
       </div>
 
       {traceDetail && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4">
+        <div
+          data-testid="inspector-drawer"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4"
+        >
           <div className="bg-slate-950 border border-slate-800 max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col">
             <header className="px-6 py-4 border-b border-slate-800 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="space-y-3">
@@ -972,6 +849,7 @@ function InspectorContent() {
                   onClick={handleRunSingleRca}
                   disabled={singleRcaLoading}
                   className="px-3 py-2 rounded-xl border border-fuchsia-600 bg-fuchsia-900/20 text-xs uppercase tracking-[0.2em] text-fuchsia-200 hover:bg-fuchsia-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid="drawer-run-rca"
                 >
                   {singleRcaLoading ? "Analyzing..." : "Run RCA"}
                 </button>
@@ -1020,7 +898,10 @@ function InspectorContent() {
                 </div>
               ) : (
                 <>
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <section
+                    data-testid="flow-section"
+                    className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3"
+                  >
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Overview</p>
                       <span className="text-[10px] text-slate-400">Request & Context</span>
@@ -1089,7 +970,10 @@ function InspectorContent() {
                     </div>
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <section
+                    data-testid="regression-panel"
+                    className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4"
+                  >
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Plan</p>
                       <div className="flex gap-2">
@@ -1312,7 +1196,7 @@ function InspectorContent() {
                       <span className="text-[10px] text-slate-400">{traceDetail.replan_events?.length ?? 0} events</span>
                     </div>
                     {traceDetail.replan_events && traceDetail.replan_events.length ? (
-                      <ReplanTimeline traceId={traceDetail.trace_id} events={traceDetail.replan_events} />
+                      <ReplanTimeline traceId={traceDetail.trace_id ?? ""} events={traceDetail.replan_events} />
                     ) : (
                       <p className="text-xs text-slate-500">Replan 이벤트가 없습니다.</p>
                     )}
@@ -1377,9 +1261,9 @@ function InspectorContent() {
                   <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Answer Blocks</p>
-                      <span className="text-[10px] text-slate-400">{traceDetail.answer?.blocks.length ?? 0} blocks</span>
+                      <span className="text-[10px] text-slate-400">{traceDetail.answer?.blocks?.length ?? 0} blocks</span>
                     </div>
-                    {traceDetail.answer?.blocks?.length ? (
+                    {traceDetail.answer?.blocks && traceDetail.answer.blocks.length > 0 ? (
                       <div className="grid gap-3 md:grid-cols-2">
                         {traceDetail.answer.blocks.map((block, index) => (
                           <article
@@ -1458,6 +1342,7 @@ function InspectorContent() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <div className="flex gap-1 bg-slate-950 rounded-lg p-1">
                             <button
+                              data-testid="flow-toggle-timeline"
                               onClick={() => {
                                 setFlowViewMode("timeline");
                                 setSelectedSpan(null);
@@ -1470,6 +1355,7 @@ function InspectorContent() {
                               Timeline
                             </button>
                             <button
+                              data-testid="flow-toggle-graph"
                               onClick={() => {
                                 setFlowViewMode("graph");
                                 setSelectedSpan(null);
@@ -1558,7 +1444,12 @@ function InspectorContent() {
                         )}
                       </>
                     ) : (
-                      <p className="text-xs text-slate-500">Flow 데이터 없음 (구버전 trace)</p>
+                      <p
+                        data-testid="flow-empty-state"
+                        className="text-xs text-slate-500"
+                      >
+                        Flow 데이터 없음 (구버전 trace)
+                      </p>
                     )}
                   </section>
 
@@ -1737,7 +1628,7 @@ function InspectorContent() {
       )}
 
       <Toast
-        message={statusMessage}
+        message={statusMessage ?? ""}
         type="info"
         onDismiss={() => setStatusMessage(null)}
       />
