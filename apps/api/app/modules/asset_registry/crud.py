@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List
@@ -534,6 +535,14 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
     import time
     start_time = time.time()
 
+    def resolve_secret(secret_ref: str | None) -> str | None:
+        if not secret_ref:
+            return None
+        if secret_ref.startswith("env:"):
+            key = secret_ref.split(":", 1)[1]
+            return os.environ.get(key)
+        return None
+
     try:
         # Test connection based on source type
         if asset.source_type == SourceType.POSTGRESQL:
@@ -542,7 +551,9 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
                 host=asset.connection.host,
                 port=asset.connection.port,
                 user=asset.connection.username,
-                password=asset.connection.password_encrypted or "",
+                password=asset.connection.password_encrypted
+                or resolve_secret(asset.connection.secret_key_ref)
+                or "",
                 database=asset.connection.database,
                 connect_timeout=asset.connection.timeout,
             )
@@ -564,7 +575,8 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
             r = redis.Redis(
                 host=asset.connection.host,
                 port=asset.connection.port,
-                password=asset.connection.password_encrypted,
+                password=asset.connection.password_encrypted
+                or resolve_secret(asset.connection.secret_key_ref),
                 decode_responses=True,
             )
             r.ping()
@@ -599,6 +611,14 @@ def create_schema_asset(
     created_by: str | None = None,
 ) -> SchemaAsset:
     """Create a new schema asset"""
+    catalog = getattr(schema_data, "catalog", None)
+    if catalog is None:
+        catalog = SchemaCatalog(
+            name=schema_data.name,
+            source_ref=schema_data.source_ref,
+            tables=[],
+        )
+
     # Create TbAssetRegistry record
     asset = create_asset(
         session=session,
@@ -613,8 +633,8 @@ def create_schema_asset(
     # Store schema data in content field
     content = {
         "source_ref": schema_data.source_ref,
-        "catalog": schema_data.catalog.model_dump() if schema_data.catalog else {},
-        "spec": schema_data.catalog.spec if schema_data.catalog else None,
+        "catalog": catalog.model_dump(),
+        "spec": None,
     }
 
     update_asset(
@@ -631,11 +651,7 @@ def create_schema_asset(
         description=asset.description,
         version=asset.version,
         status=asset.status,
-        catalog=schema_data.catalog or SchemaCatalog(
-            name=schema_data.name,
-            source_ref=schema_data.source_ref,
-            tables=[]
-        ),
+        catalog=catalog,
         scope=asset.scope,
         tags=asset.tags,
         created_by=asset.created_by,
@@ -796,7 +812,7 @@ def create_resolver_asset(
     content = {
         "rules": [rule.model_dump() for rule in resolver_data.config.rules],
         "default_namespace": resolver_data.config.default_namespace,
-        "spec": resolver_data.config.spec,
+        "spec": None,
     }
 
     update_asset(
@@ -992,4 +1008,3 @@ def simulate_resolver_configuration(
             "rule_count": len(asset.config.rules)
         }
     }
-

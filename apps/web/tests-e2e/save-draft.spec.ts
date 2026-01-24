@@ -15,18 +15,30 @@ test.describe('Save Draft - Detailed Testing', () => {
 
     // Wait for screen list
     console.log('[TEST] Waiting for screen list to load');
-    await page.waitForSelector('table tbody tr', { timeout: 20000 }).catch(() => {
+    await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 }).catch(() => {
       console.log('[ERROR] Timeout waiting for screen list, trying alternative selectors');
-      // Try alternative table selectors
-      return page.waitForSelector('table', { timeout: 10000 });
+      return page.waitForSelector('[data-testid^="link-screen-"]', { timeout: 10000 });
     });
 
-    const rows = await page.locator('table tbody tr').count();
+    const rows = await page.locator('[data-testid^="screen-asset-"]').count();
     console.log(`[TEST] Found ${rows} screens in list`);
     expect(rows).toBeGreaterThan(0);
 
-    // Get first screen ID
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
+    // Ensure a draft screen exists
+    const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
+    if (!(await draftCard.isVisible())) {
+      console.log('[TEST] No draft screen found, creating one');
+      const draftId = `e2e_draft_${Date.now()}`;
+      await page.locator('[data-testid="btn-create-screen"]').click();
+      await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+      await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
+      await page.locator('[data-testid="btn-confirm-create"]').click();
+      await page.waitForTimeout(1000);
+    }
+
+    // Get first draft screen ID
+    const firstScreenLink = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first()
+      .locator('[data-testid^="link-screen-"]').first();
     const screenHref = await firstScreenLink.getAttribute('href');
     console.log(`[TEST] First screen href: ${screenHref}`);
 
@@ -113,7 +125,7 @@ test.describe('Save Draft - Detailed Testing', () => {
     console.log('[TEST] Waited 5 seconds for network requests');
 
     // Wait for any loading indicators to disappear
-    await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+    await page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {
       console.log('[WARN] Network idle timeout reached, continuing with test');
     });
 
@@ -180,12 +192,23 @@ test.describe('Save Draft - Detailed Testing', () => {
 
     // Navigate to screen editor
     await page.goto('/admin/screens');
-    await page.waitForSelector('table tbody tr', { timeout: 20000 }).catch(() => {
+    await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 }).catch(() => {
       console.log('[ERROR] Timeout waiting for screen list, trying alternative selectors');
-      return page.waitForSelector('table', { timeout: 10000 });
+      return page.waitForSelector('[data-testid^="link-screen-"]', { timeout: 10000 });
     });
 
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
+    const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
+    if (!(await draftCard.isVisible())) {
+      const draftId = `e2e_draft_${Date.now()}`;
+      await page.locator('[data-testid="btn-create-screen"]').click();
+      await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+      await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
+      await page.locator('[data-testid="btn-confirm-create"]').click();
+      await page.waitForTimeout(1000);
+    }
+
+    const firstScreenLink = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first()
+      .locator('[data-testid^="link-screen-"]').first();
     await firstScreenLink.click();
 
     // Wait for editor

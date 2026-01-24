@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { fetchApi } from "../../lib/adminUtils";
+import { fetchApi, ResponseEnvelope } from "../../lib/adminUtils";
 import { ChevronDown, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 interface StageDiffViewProps {
@@ -180,13 +180,13 @@ function StageDiffSection({
               <div>
                 <h5 className="text-xs text-slate-400 mb-1">Baseline</h5>
                 <pre className="text-xs bg-slate-900 p-2 rounded overflow-x-auto">
-                  {JSON.stringify(baseline_result, null, 2)}
+                  {JSON.stringify(comparison.baseline_result, null, 2)}
                 </pre>
               </div>
               <div>
                 <h5 className="text-xs text-slate-400 mb-1">Current</h5>
                 <pre className="text-xs bg-slate-900 p-2 rounded overflow-x-auto">
-                  {JSON.stringify(current_result, null, 2)}
+                  {JSON.stringify(comparison.current_result, null, 2)}
                 </pre>
               </div>
             </div>
@@ -205,7 +205,7 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
   const fetchComparison = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetchApi(`/ops/stage-compare`, {
+      const response = await fetchApi<ResponseEnvelope<ComparisonSummary>>(`/ops/stage-compare`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -218,12 +218,7 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch stage comparison");
-      }
-
-      const data = await response.json();
-      setComparison(data.data);
+      setComparison(response.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {

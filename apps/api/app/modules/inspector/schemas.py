@@ -31,6 +31,34 @@ class TraceSummary(BaseModel):
     applied_asset_versions: List[str] = Field(default_factory=list)
 
 
+class ExecutionTraceCreate(BaseModel):
+    trace_id: str
+    parent_trace_id: str | None = None
+    feature: str
+    endpoint: str
+    method: str
+    ops_mode: str
+    question: str
+    status: str
+    duration_ms: int
+    request_payload: Dict[str, Any] | None = None
+    applied_assets: Dict[str, Any] | None = None
+    asset_versions: List[str] | None = None
+    fallbacks: Dict[str, bool] | None = None
+    plan_raw: Dict[str, Any] | None = None
+    plan_validated: Dict[str, Any] | None = None
+    execution_steps: List[Dict[str, Any]] | None = None
+    references: List[Dict[str, Any]] | None = None
+    answer: Dict[str, Any] | None = None
+    ui_render: Dict[str, Any] | None = None
+    audit_links: Dict[str, Any] | None = None
+    flow_spans: List[FlowSpan] | None = None
+    route: str | None = None
+    stage_inputs: List[Dict[str, Any]] | None = None
+    stage_outputs: List[Dict[str, Any]] | None = None
+    replan_events: List[Dict[str, Any]] | None = None
+
+
 class ExecutionTraceRead(BaseModel):
     trace_id: str
     parent_trace_id: str | None

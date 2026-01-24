@@ -64,7 +64,8 @@ function parseTagsInput(value: string): Record<string, unknown> | null {
     }
     return parsed;
   } catch (error: unknown) {
-    throw new Error(error?.message || "Invalid JSON for tags");
+    const errMsg = error instanceof Error ? error.message : "Invalid JSON for tags";
+    throw new Error(errMsg);
   }
 }
 
@@ -128,7 +129,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       try {
         schema = JSON.parse(formData.schema_json);
       } catch (e: unknown) {
-        setSchemaErrors(["Invalid JSON in schema: " + e.message]);
+        const errMsg = e instanceof Error ? e.message : "Invalid JSON in schema";
+        setSchemaErrors(["Invalid JSON in schema: " + errMsg]);
         setSaving(false);
         return;
       }
@@ -146,7 +148,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       try {
         parsedTags = parseTagsInput(formData.tags);
       } catch (tagError: unknown) {
-        setErrors([tagError.message || "Invalid tags JSON"]);
+        const errMsg = tagError instanceof Error ? tagError.message : "Invalid tags JSON";
+        setErrors([errMsg]);
         setSaving(false);
         return;
       }
@@ -164,7 +167,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       setToast({ message: "Screen draft saved successfully", type: "success" });
       await fetchScreenAsset();
     } catch (error: unknown) {
-      setErrors([error.message || "Failed to save screen"]);
+      const errMsg = error instanceof Error ? error.message : "Failed to save screen";
+      setErrors([errMsg]);
     } finally {
       setSaving(false);
     }
@@ -182,7 +186,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
         return;
       }
     } catch (e: unknown) {
-      setSchemaErrors(["Invalid JSON in schema: " + e.message]);
+      const errMsg = e instanceof Error ? e.message : "Invalid JSON in schema";
+      setSchemaErrors(["Invalid JSON in schema: " + errMsg]);
       return;
     }
 
@@ -201,7 +206,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       try {
         parsedTags = parseTagsInput(formData.tags);
       } catch (tagError: unknown) {
-        setErrors([tagError.message || "Invalid tags JSON"]);
+        const errMsg = tagError instanceof Error ? tagError.message : "Invalid tags JSON";
+        setErrors([errMsg]);
         return;
       }
       await fetchApi(`/asset-registry/assets/${assetId}`, {
@@ -223,7 +229,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       setSchemaErrors([]);
       await fetchScreenAsset();
     } catch (error: unknown) {
-      setErrors([error.message || "Failed to publish screen"]);
+      const errMsg = error instanceof Error ? error.message : "Failed to publish screen";
+      setErrors([errMsg]);
     } finally {
       setPublishing(false);
     }
@@ -242,7 +249,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
       setToast({ message: "Screen rolled back to draft", type: "success" });
       await fetchScreenAsset();
     } catch (error: unknown) {
-      setErrors([error.message || "Failed to rollback screen"]);
+      const errMsg = error instanceof Error ? error.message : "Failed to rollback screen";
+      setErrors([errMsg]);
     }
   };
 
@@ -296,15 +304,14 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
       {/* Errors */}
       {errors.length > 0 && (
-        <ValidationAlert errors={errors} onDismiss={() => setErrors([])} />
+        <ValidationAlert errors={errors} onClose={() => setErrors([])} />
       )}
 
       {/* Schema Validation Errors */}
       {schemaErrors.length > 0 && (
         <ValidationAlert
           errors={schemaErrors}
-          onDismiss={() => setSchemaErrors([])}
-          isWarning={false}
+          onClose={() => setSchemaErrors([])}
         />
       )}
 

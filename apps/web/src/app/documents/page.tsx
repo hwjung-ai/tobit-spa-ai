@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { authenticatedFetch } from "@/lib/apiClient";
+import { authenticatedFetch } from "@/lib/apiClient/index";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -240,7 +240,7 @@ export default function DocumentsPage() {
       setDocHistory(hydrated);
     } catch (error: unknown) {
       console.error("Failed to load document history", error);
-      setDocHistoryError(error?.message || "Failed to load document history");
+      setDocHistoryError(error instanceof Error ? error.message : "Failed to load document history");
     } finally {
       setDocHistoryLoading(false);
     }
@@ -269,7 +269,7 @@ export default function DocumentsPage() {
         }
       }
     } catch (error: unknown) {
-      setDocumentsError(error?.message || "Failed to load documents");
+      setDocumentsError(error instanceof Error ? error.message : "Failed to load documents");
     } finally {
       setLoadingDocuments(false);
     }
@@ -492,11 +492,11 @@ export default function DocumentsPage() {
       }
       setStreamStatus("idle");
     } catch (error: unknown) {
-      if (error?.name === "AbortError") {
+      if (error instanceof Error && error.name === "AbortError") {
         return;
       }
       setStreamStatus("error");
-      setStreamError(error?.message || "Streaming failed");
+      setStreamError(error instanceof Error ? error.message : "Streaming failed");
       if (documentId) {
         const finalAnswer = accumulatedAnswer.trim();
         const historySummary = summarizeDocAnswer(finalAnswer, questionText);
@@ -509,7 +509,7 @@ export default function DocumentsPage() {
           documentTitle,
           references,
           topK,
-          errorDetails: error?.message,
+          errorDetails: error instanceof Error ? error.message : undefined,
         };
         const localEntry: DocsHistoryEntry = {
           id: generateLocalHistoryId(),
@@ -582,7 +582,7 @@ export default function DocumentsPage() {
       selectDocument(document.id);
       fileInputRef.current!.value = "";
     } catch (error: unknown) {
-      setUploadError(error?.message || "Upload failed");
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -599,7 +599,7 @@ export default function DocumentsPage() {
         clearStream();
       }
     } catch (error: unknown) {
-      setDocumentsError(error?.message || "Failed to delete document");
+      setDocumentsError(error instanceof Error ? error.message : "Failed to delete document");
     }
   };
 

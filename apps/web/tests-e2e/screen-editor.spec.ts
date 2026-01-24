@@ -1,4 +1,28 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function openDraftScreen(page: Page) {
+  await page.goto('/admin/screens', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 });
+
+  const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
+  if (!(await draftCard.isVisible())) {
+    const draftId = `e2e_draft_${Date.now()}`;
+    await page.locator('[data-testid="btn-create-screen"]').click();
+    await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+    await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
+    await page.locator('[data-testid="btn-confirm-create"]').click();
+    await page.waitForTimeout(1000);
+  }
+
+  const draftLink = page
+    .locator('[data-testid^="screen-asset-"]')
+    .filter({ hasText: 'draft' })
+    .first()
+    .locator('[data-testid^="link-screen-"]')
+    .first();
+  await draftLink.waitFor({ timeout: 15000 });
+  await draftLink.click();
+}
 
 /**
  * Screen Editor E2E Tests
@@ -8,26 +32,18 @@ import { test, expect } from '@playwright/test';
 test.describe('Screen Editor', () => {
   test('should load screen list', async ({ page }) => {
     // Navigate to screens page
-    await page.goto('/admin/screens', { waitUntil: 'networkidle' });
+    await page.goto('/admin/screens', { waitUntil: 'domcontentloaded' });
 
     // Wait for screen list to load
-    await page.waitForSelector('[role="table"]', { timeout: 20000 });
+    await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 });
 
     // Verify screens are displayed
-    const rows = await page.locator('table tbody tr').count();
+    const rows = await page.locator('[data-testid^="screen-asset-"]').count();
     expect(rows).toBeGreaterThan(0);
   }, { timeout: 30000 });
 
   test('should open visual editor for a screen', async ({ page }) => {
-    // Navigate to screens page
-    await page.goto('/admin/screens', { waitUntil: 'networkidle' });
-
-    // Wait for first screen to be clickable
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
-    await firstScreenLink.waitFor({ timeout: 15000 });
-
-    // Click first screen
-    await firstScreenLink.click();
+    await openDraftScreen(page);
 
     // Wait for editor to load
     await page.waitForSelector('[data-testid="screen-editor-header"]', {
@@ -43,10 +59,9 @@ test.describe('Screen Editor', () => {
   }, { timeout: 45000 });
 
   test('should log authentication status in console', async ({ page }) => {
-    // Navigate to editor
-    await page.goto('/admin/screens');
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
-    await firstScreenLink.click();
+    const authEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true';
+
+    await openDraftScreen(page);
 
     // Wait for editor to load
     await page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });
@@ -63,15 +78,17 @@ test.describe('Screen Editor', () => {
     await page.waitForTimeout(2000);
 
     // Verify authentication logs exist
-    const authLog = consoleLogs.find(log => log.includes('[API] Adding Authorization header'));
-    expect(authLog).toBeTruthy();
+    if (authEnabled) {
+      const authLog = consoleLogs.find(log => log.includes('[API] Adding Authorization header'));
+      expect(authLog).toBeTruthy();
+    } else {
+      const authLog = consoleLogs.find(log => log.includes('Auth disabled'));
+      expect(authLog).toBeTruthy();
+    }
   });
 
   test('should save draft successfully', async ({ page }) => {
-    // Navigate to editor
-    await page.goto('/admin/screens');
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
-    await firstScreenLink.click();
+    await openDraftScreen(page);
 
     // Wait for editor to load
     await page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });
@@ -99,6 +116,9 @@ test.describe('Screen Editor', () => {
   });
 
   test('should show error if user is not authenticated', async ({ page }) => {
+    const authEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true';
+    test.skip(!authEnabled, 'Auth disabled in this environment');
+
     // Create a page without logging in
     const unauthPage = await page.context().newPage();
 
@@ -115,10 +135,10 @@ test.describe('Screen Editor', () => {
   });
 
   test('should handle missing token gracefully', async ({ page }) => {
-    // Navigate to editor
-    await page.goto('/admin/screens');
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
-    await firstScreenLink.click();
+    const authEnabled = process.env.NEXT_PUBLIC_ENABLE_AUTH === 'true';
+    test.skip(!authEnabled, 'Auth disabled in this environment');
+
+    await openDraftScreen(page);
 
     // Wait for editor
     await page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });
@@ -154,10 +174,7 @@ test.describe('Screen Editor', () => {
   });
 
   test('should display API request logs in console', async ({ page }) => {
-    // Navigate to editor
-    await page.goto('/admin/screens');
-    const firstScreenLink = page.locator('table tbody tr:first-child a').first();
-    await firstScreenLink.click();
+    await openDraftScreen(page);
 
     // Wait for screen to load
     await page.waitForSelector('button:has-text("Save Draft")', { timeout: 10000 });

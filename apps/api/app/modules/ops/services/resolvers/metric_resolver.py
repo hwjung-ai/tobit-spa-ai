@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from scripts.seed.utils import get_postgres_conn
+from core.db_pg import get_pg_connection
 
 from app.modules.asset_registry.loader import load_query_asset
 from app.shared.config_loader import load_text
@@ -33,7 +33,7 @@ def _fetch_metric(metric_name: str) -> MetricHit | None:
     query = query or load_text("queries/postgres/metric/metric_resolver.sql")
     if not query:
         raise ValueError("Metric resolver query not found")
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, (metric_name,))
             row = cur.fetchone()

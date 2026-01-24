@@ -3,9 +3,11 @@ import { test, expect } from '@playwright/test';
 // BASE_URL not used in these tests
 const API_BASE_URL = 'http://localhost:8000';
 
-test.describe('RCA Comprehensive Test Suite', () => {
+test.describe.serial('RCA Comprehensive Test Suite', () => {
   let testTraceId: string;
   let firstRcaTraceId: string;
+  const getRcaData = (body: Record<string, unknown>) =>
+    (body?.data as Record<string, unknown> | undefined) ?? body;
 
   test('Setup: Create test trace with data', async ({ page }) => {
     // Create a sample trace to work with
@@ -51,17 +53,18 @@ test.describe('RCA Comprehensive Test Suite', () => {
 
     console.log('Response status:', response.status());
     const body = await response.json();
+    const data = getRcaData(body);
     console.log('Response code:', body.code);
 
     // Check response
     expect(response.ok()).toBeTruthy();
-    expect(body.data).toBeTruthy();
-    expect(body.data.trace_id).toBeTruthy();
+    expect(data).toBeTruthy();
+    expect(data.trace_id).toBeTruthy();
 
-    firstRcaTraceId = body.data.trace_id;
+    firstRcaTraceId = data.trace_id as string;
     console.log('✅ RCA trace created:', firstRcaTraceId);
-    console.log('   Status:', body.data.status);
-    console.log('   Hypotheses:', body.data.rca.total_hypotheses);
+    console.log('   Status:', data.status);
+    console.log('   Hypotheses:', (data.rca as { total_hypotheses?: number } | undefined)?.total_hypotheses);
   });
 
   test('Test 2: Verify first RCA trace is in database', async ({ page }) => {
@@ -75,6 +78,7 @@ test.describe('RCA Comprehensive Test Suite', () => {
 
     console.log('Response status:', response.status());
     const body = await response.json();
+    const data = getRcaData(body);
 
     expect(response.ok()).toBeTruthy();
     expect(body.data.trace.trace_id).toBe(firstRcaTraceId);
@@ -102,18 +106,19 @@ test.describe('RCA Comprehensive Test Suite', () => {
 
     console.log('Response status:', response.status());
     const body = await response.json();
+    const data = getRcaData(body);
 
     if (!response.ok()) {
       console.log('Error:', body.message);
     }
 
     expect(response.ok()).toBeTruthy();
-    expect(body.data.trace_id).toBeTruthy();
-    expect(body.data.trace_id).not.toBe(firstRcaTraceId); // Should be different
+    expect(data.trace_id).toBeTruthy();
+    expect(data.trace_id).not.toBe(firstRcaTraceId); // Should be different
 
     console.log('✅ Second RCA executed successfully');
-    console.log('   New trace_id:', body.data.trace_id);
-    console.log('   (Different from first:', body.data.trace_id !== firstRcaTraceId, ')');
+    console.log('   New trace_id:', data.trace_id);
+    console.log('   (Different from first:', data.trace_id !== firstRcaTraceId, ')');
   });
 
   test('Test 4: RCA on previous RCA trace - should work', async ({ page }) => {
@@ -134,6 +139,7 @@ test.describe('RCA Comprehensive Test Suite', () => {
 
     console.log('Response status:', response.status());
     const body = await response.json();
+    const data = getRcaData(body);
 
     if (!response.ok()) {
       console.log('Error:', body.message);
@@ -141,10 +147,10 @@ test.describe('RCA Comprehensive Test Suite', () => {
     }
 
     expect(response.ok()).toBeTruthy();
-    expect(body.data.trace_id).toBeTruthy();
+    expect(data.trace_id).toBeTruthy();
     console.log('✅ RCA on RCA trace executed successfully');
     console.log('   Source (RCA trace):', firstRcaTraceId);
-    console.log('   New trace_id:', body.data.trace_id);
+    console.log('   New trace_id:', data.trace_id);
   });
 
   test('Test 5: RCA diff mode - compare two traces', async ({ page }) => {
@@ -165,20 +171,21 @@ test.describe('RCA Comprehensive Test Suite', () => {
 
     console.log('Response status:', response.status());
     const body = await response.json();
+    const data = getRcaData(body);
 
     if (!response.ok()) {
       console.log('Error:', body.message);
     }
 
     expect(response.ok()).toBeTruthy();
-    expect(body.data.trace_id).toBeTruthy();
-    expect(body.data.rca.mode).toBe('diff');
-    expect(body.data.rca.source_traces.length).toBe(2);
+    expect(data.trace_id).toBeTruthy();
+    expect((data.rca as { mode?: string } | undefined)?.mode).toBe('diff');
+    expect(((data.rca as { source_traces?: unknown[] } | undefined)?.source_traces || []).length).toBe(2);
 
     console.log('✅ RCA diff mode executed successfully');
     console.log('   Baseline:', testTraceId);
     console.log('   Candidate:', firstRcaTraceId);
-    console.log('   Hypotheses found:', body.data.rca.total_hypotheses);
+    console.log('   Hypotheses found:', (data.rca as { total_hypotheses?: number } | undefined)?.total_hypotheses);
   });
 
   test('Test 6: Regression page API check', async ({ page }) => {

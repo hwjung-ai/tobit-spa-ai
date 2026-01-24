@@ -22,13 +22,13 @@ export interface EditorState {
   isSaving: boolean;
   isPublishing: boolean;
   isRollbacking: boolean;
-
+  
   // Computed
   selectedComponent: Component | null;
   isDirty: boolean;
   canPublish: boolean;
   canRollback: boolean;
-
+  
   // Actions
   loadScreen: (assetId: string) => Promise<void>;
   initializeScreen: (screen: ScreenSchemaV1, status: "draft" | "published") => void;
@@ -43,31 +43,40 @@ export interface EditorState {
   reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => void;
   updateLayout: (layout: unknown) => void;
   updateScreenFromJson: (json: string) => void;
-
+  
   // Action CRUD (screen-level)
   addAction: (action: ScreenAction) => void;
   updateAction: (actionId: string, updates: Partial<ScreenAction>) => void;
   deleteAction: (actionId: string) => void;
   getAction: (actionId: string) => ScreenAction | null;
-
+  
   // Component Action CRUD
   addComponentAction: (componentId: string, action: ComponentActionRef) => void;
   updateComponentAction: (componentId: string, actionId: string, updates: Partial<ComponentActionRef>) => void;
   deleteComponentAction: (componentId: string, actionId: string) => void;
   getComponentActions: (componentId: string) => ComponentActionRef[];
-
+  
   // Binding management
   updateBinding: (targetPath: string, sourcePath: string) => void;
   deleteBinding: (targetPath: string) => void;
   getAllBindings: () => Record<string, string>;
-
+  
   // Component visibility
   updateComponentVisibility: (componentId: string, visibleIf: string | null) => void;
-
+  
   // Action testing (Phase 4)
   testAction: (actionId: string, payload?: Record<string, unknown>) => Promise<unknown>;
   applyStatePatch: (patch: Record<string, unknown>) => void;
-
+  
+  // Preview/Patch management (Phase 4 - Copilot)
+  previewEnabled: boolean;
+  setProposedPatch: (patch: string | null) => void;
+  disablePreview: () => void;
+  previewPatch: () => void;
+  applyProposedPatch: () => void;
+  discardProposal: () => void;
+  previewError: string | null;
+  
   saveDraft: () => Promise<void>;
   publish: () => Promise<void>;
   rollback: () => Promise<void>;
@@ -309,6 +318,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
   isSaving: false,
   isPublishing: false,
   isRollbacking: false,
+  previewEnabled: false,
+  previewError: null,
 
   // Computed
   get selectedComponent() {

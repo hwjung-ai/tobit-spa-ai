@@ -21,7 +21,7 @@ interface RCAHypothesis {
 }
 
 interface RCAPanelProps {
-  traceId: string;
+  traceId?: string;
   baselineTraceId?: string;
   candidateTraceId?: string;
 }

@@ -29,7 +29,8 @@ export type AnswerBlock =
   | NetworkBlock
   | PathBlock
   | UIPanelBlock
-  | UIScreenBlock;
+  | UIScreenBlock
+  & { [key: string]: unknown };
 
 export interface AnswerEnvelope {
   meta: AnswerMeta;
@@ -41,6 +42,10 @@ export interface AnswerMeta {
   route_reason: string;
   timing_ms: number;
   summary?: string;
+  used_tools?: string[];
+  fallback?: boolean;
+  error?: string;
+  trace_id?: string;
 }
 
 type BlockId = string;
@@ -794,7 +799,9 @@ function prepareChartData(series: TimeSeriesSeries[]) {
     const left = new Date(a.timestamp).getTime();
     const right = new Date(b.timestamp).getTime();
     if (Number.isNaN(left) || Number.isNaN(right)) {
-      return a.timestamp.localeCompare(b.timestamp);
+      const leftStr = String(a.timestamp);
+      const rightStr = String(b.timestamp);
+      return leftStr.localeCompare(rightStr);
     }
     return left - right;
   });

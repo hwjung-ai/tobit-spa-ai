@@ -9,7 +9,7 @@ from schemas.tool_contracts import (
     CIRecord,
     CISearchResult,
 )
-from scripts.seed.utils import get_postgres_conn
+from core.db_pg import get_pg_connection
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
@@ -109,7 +109,7 @@ def ci_search(
     sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
 ) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         rows = _ci_search_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
         records = [CIRecord(**row) for row in rows]
         return CISearchResult(
@@ -128,7 +128,7 @@ def ci_search_broad_or(
     sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
 ) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         rows = _ci_search_broad_or_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
         records = [CIRecord(**row) for row in rows]
         return CISearchResult(
@@ -234,7 +234,7 @@ def _ci_search_inner(
 
 
 def ci_get(tenant_id: str, ci_id: str) -> CIRecord | None:
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             query = _load_query("ci_get.sql").format(field="ci_id")
             cur.execute(query, (ci_id, tenant_id))
@@ -257,7 +257,7 @@ def ci_get(tenant_id: str, ci_id: str) -> CIRecord | None:
 
 
 def ci_get_by_code(tenant_id: str, ci_code: str) -> CIRecord | None:
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             query = _load_query("ci_get.sql").format(field="ci_code")
             cur.execute(query, (ci_code, tenant_id))
@@ -328,7 +328,7 @@ def ci_aggregate(
     count_query = _load_query("ci_aggregate_count.sql").format(where_clause=where_clause)
     count_params = list(params)
     query_params = params + [sanitized_limit] if group_list else params
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(count_query, count_params)
             cur.fetchone()[0]
@@ -365,7 +365,7 @@ def ci_list_preview(
     query_template = _load_query("ci_list_preview.sql")
     query = query_template.format(where_clause=where_clause)
     params.extend([sanitized_limit, sanitized_offset])
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(total_query, total_params)
             total = cur.fetchone()[0]

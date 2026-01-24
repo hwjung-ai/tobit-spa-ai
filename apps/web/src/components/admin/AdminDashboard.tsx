@@ -20,11 +20,49 @@ interface DashboardTab {
   icon: React.ReactNode;
 }
 
+interface SystemHealth {
+  status: string;
+  resource?: {
+    cpu_percent: number;
+    memory_percent: number;
+  };
+}
+
+interface Metrics {
+  resources: Array<{
+    cpu_percent: number;
+    memory_percent: number;
+  }>;
+  api: Array<{
+    endpoint: string;
+    avg_latency: number;
+    request_count: number;
+  }>;
+}
+
+interface Alert {
+  id: string;
+  type: string;
+  severity: string;
+  message: string;
+  timestamp: string;
+}
+
+interface User {
+  user_id: string;
+  username: string;
+  email: string;
+  is_active: boolean;
+  last_login: string | null;
+  created_at: string;
+  login_count: number;
+}
+
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [systemHealth, setSystemHealth] = useState<unknown>(null);
-  const [metrics, setMetrics] = useState<unknown>(null);
-  const [alerts, setAlerts] = useState<unknown[]>([]);
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -103,8 +141,8 @@ const AdminDashboard: React.FC = () => {
         <div className="p-6 rounded-lg border bg-purple-50 text-purple-600">
           <div className="text-sm font-medium mb-2">Resources</div>
           <div className="text-sm space-y-1">
-            <div>CPU: {systemHealth?.resource?.cpu_percent.toFixed(1)}%</div>
-            <div>Mem: {systemHealth?.resource?.memory_percent.toFixed(1)}%</div>
+            <div>CPU: {systemHealth?.resource?.cpu_percent ? systemHealth.resource.cpu_percent.toFixed(1) : 'N/A'}%</div>
+            <div>Mem: {systemHealth?.resource?.memory_percent ? systemHealth.resource.memory_percent.toFixed(1) : 'N/A'}%</div>
           </div>
         </div>
 
@@ -239,7 +277,7 @@ export default AdminDashboard;
 
 // Sub-components
 const UserManagementPanel: React.FC = () => {
-  const [users, setUsers] = useState<unknown[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [, setLoading] = useState(false);
   const [page] = useState(1);
 
@@ -248,7 +286,7 @@ const UserManagementPanel: React.FC = () => {
     try {
       const response = await fetch(`/api/admin/users?page=${page}&per_page=20`);
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { users: User[] };
         setUsers(data.users || []);
       }
     } catch (error) {
@@ -308,7 +346,7 @@ const UserManagementPanel: React.FC = () => {
   );
 };
 
-const MonitoringPanel: React.FC<{ metrics: unknown; systemHealth: unknown }> = ({ systemHealth }) => (
+const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemHealth | null }> = ({ systemHealth }) => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Monitoring</h2>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -318,7 +356,7 @@ const MonitoringPanel: React.FC<{ metrics: unknown; systemHealth: unknown }> = (
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>CPU Usage</span>
-              <span className="font-semibold">{systemHealth?.resource?.cpu_percent.toFixed(1)}%</span>
+              <span className="font-semibold">{systemHealth?.resource?.cpu_percent ? systemHealth.resource.cpu_percent.toFixed(1) : 'N/A'}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -330,7 +368,7 @@ const MonitoringPanel: React.FC<{ metrics: unknown; systemHealth: unknown }> = (
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>Memory Usage</span>
-              <span className="font-semibold">{systemHealth?.resource?.memory_percent.toFixed(1)}%</span>
+              <span className="font-semibold">{systemHealth?.resource?.memory_percent ? systemHealth.resource.memory_percent.toFixed(1) : 'N/A'}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -339,43 +377,13 @@ const MonitoringPanel: React.FC<{ metrics: unknown; systemHealth: unknown }> = (
               />
             </div>
           </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>Disk Usage</span>
-              <span className="font-semibold">{systemHealth?.resource?.disk_percent.toFixed(1)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-red-600 h-2 rounded-full"
-                style={{ width: `${Math.min(systemHealth?.resource?.disk_percent || 0, 100)}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4">API Metrics</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span>Total Requests</span>
-            <span className="font-semibold">{systemHealth?.api?.total_requests || 0}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Error Rate</span>
-            <span className="font-semibold">{((systemHealth?.api?.error_rate || 0) * 100).toFixed(2)}%</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Avg Response Time</span>
-            <span className="font-semibold">{systemHealth?.api?.avg_response_time_ms.toFixed(0)}ms</span>
-          </div>
         </div>
       </div>
     </div>
   </div>
 );
 
-const AlertsPanel: React.FC<{ alerts: unknown[] }> = ({ alerts }) => (
+const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Alerts</h2>
     <div className="space-y-3">

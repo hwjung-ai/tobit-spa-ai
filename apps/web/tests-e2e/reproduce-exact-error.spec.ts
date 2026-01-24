@@ -44,16 +44,29 @@ test('Exact Error Reproduction: Login → Navigate → Add Text → Save Draft',
     await page.goto('http://localhost:3000/admin/screens', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
-    const screenCount = await page.locator('a[href*="/admin/screens/"]').count();
+    const screenCount = await page.locator('[data-testid^="screen-asset-"]').count();
     console.log(`✅ Found ${screenCount} screens`);
 
-    // STEP 3: CLICK FIRST (맨 위) SCREEN
+    // Ensure we have a draft screen to edit
+    const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
+    if (!(await draftCard.isVisible())) {
+      console.log('No draft screen found, creating one');
+      const draftId = `e2e_draft_${Date.now()}`;
+      await page.locator('[data-testid="btn-create-screen"]').click();
+      await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+      await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
+      await page.locator('[data-testid="btn-confirm-create"]').click();
+      await page.waitForTimeout(1000);
+    }
+
+    // STEP 3: CLICK FIRST DRAFT SCREEN
     console.log('\n========== STEP 3: CLICK FIRST SCREEN ==========');
-    const firstScreen = page.locator('a[href*="/admin/screens/"]').first();
-    const screenHref = await firstScreen.getAttribute('href');
+    const firstScreen = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
+    const firstScreenLink = firstScreen.locator('[data-testid^="link-screen-"]').first();
+    const screenHref = await firstScreenLink.getAttribute('href');
     console.log(`📍 First screen: ${screenHref}`);
 
-    await firstScreen.click();
+    await firstScreenLink.click();
     await page.waitForTimeout(3000);
     console.log('✅ Navigated to first screen');
 

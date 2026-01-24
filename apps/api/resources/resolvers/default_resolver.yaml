@@ -1,0 +1,7 @@
+name: default_resolver
+description: "Default resolver rules (env fallback)"
+default_namespace: default
+rules: []
+scope: default
+tags:
+  env_fallback: true

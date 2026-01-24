@@ -1,4 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function openJsonEditor(page: Page) {
+  await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
+  await page.click('[data-testid="tab-json"]');
+  await page.waitForSelector('[data-testid="json-textarea"]', { timeout: 10000 });
+}
 
 test.describe('U3-Entry: Layout Rendering E2E', () => {
   test('should render grid layout correctly', async ({ page }) => {
@@ -16,10 +22,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     // Edit the screen to add grid layout
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Update schema with grid layout
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     const gridSchema = {
       screen_id: 'grid_layout_test',
       layout: { type: 'grid', cols: 2, gap: 4 },
@@ -35,10 +41,11 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await schemaInput.clear();
     await schemaInput.fill(JSON.stringify(gridSchema, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Save draft
     await page.locator('[data-testid="btn-save-draft"]').click();
-    await expect(page.locator('text=Screen draft saved successfully')).toBeVisible();
+    await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Publish the screen
     await page.locator('[data-testid="btn-publish-screen"]').click();
@@ -48,10 +55,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
     // This would be done through the ops or inspector endpoint
     // For now, we verify the schema is correctly saved
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Verify schema shows grid layout
-    const savedSchema = await page.locator('[data-testid="textarea-schema-json"]').textContent();
+    const savedSchema = await page.locator('[data-testid="json-textarea"]').inputValue();
     expect(savedSchema).toContain('"type":"grid"');
     expect(savedSchema).toContain('"cols":2');
   });
@@ -67,10 +74,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Update with vertical stack layout
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     const vStackSchema = {
       screen_id: 'vstack_test',
       layout: { type: 'stack', direction: 'vertical', gap: 2 },
@@ -86,13 +93,14 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await schemaInput.clear();
     await schemaInput.fill(JSON.stringify(vStackSchema, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Save
     await page.locator('[data-testid="btn-save-draft"]').click();
-    await expect(page.locator('text=Screen draft saved successfully')).toBeVisible();
+    await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Verify layout properties
-    const savedSchema = await page.locator('[data-testid="textarea-schema-json"]').textContent();
+    const savedSchema = await page.locator('[data-testid="json-textarea"]').inputValue();
     expect(savedSchema).toContain('"direction":"vertical"');
     expect(savedSchema).toContain('"type":"stack"');
   });
@@ -108,10 +116,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Update with horizontal stack layout
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     const hStackSchema = {
       screen_id: 'hstack_test',
       layout: { type: 'stack', direction: 'horizontal', gap: 2 },
@@ -127,13 +135,14 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await schemaInput.clear();
     await schemaInput.fill(JSON.stringify(hStackSchema, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Save
     await page.locator('[data-testid="btn-save-draft"]').click();
-    await expect(page.locator('text=Screen draft saved successfully')).toBeVisible();
+    await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Verify horizontal layout
-    const savedSchema = await page.locator('[data-testid="textarea-schema-json"]').textContent();
+    const savedSchema = await page.locator('[data-testid="json-textarea"]').inputValue();
     expect(savedSchema).toContain('"direction":"horizontal"');
   });
 
@@ -147,10 +156,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Update with invalid layout type
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     const invalidSchema = {
       screen_id: 'invalid_layout',
       layout: { type: 'invalid_type' },
@@ -162,6 +171,7 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await schemaInput.clear();
     await schemaInput.fill(JSON.stringify(invalidSchema, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Try to publish
     await page.locator('[data-testid="btn-publish-screen"]').click();
@@ -180,10 +190,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Update with list layout
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     const listSchema = {
       screen_id: 'list_layout',
       layout: { type: 'list', gap: 2 },
@@ -201,13 +211,14 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await schemaInput.clear();
     await schemaInput.fill(JSON.stringify(listSchema, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Save
     await page.locator('[data-testid="btn-save-draft"]').click();
-    await expect(page.locator('text=Screen draft saved successfully')).toBeVisible();
+    await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Verify list layout type
-    const savedSchema = await page.locator('[data-testid="textarea-schema-json"]').textContent();
+    const savedSchema = await page.locator('[data-testid="json-textarea"]').inputValue();
     expect(savedSchema).toContain('"type":"list"');
     expect(savedSchema).toContain('"type":"divider"');
   });
@@ -223,10 +234,10 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Set grid layout
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     const gridSchema = {
       screen_id: 'preserve_layout',
       layout: { type: 'grid', cols: 3, gap: 2 },
@@ -240,19 +251,21 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
 
     await schemaInput.clear();
     await schemaInput.fill(JSON.stringify(gridSchema, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
     await page.locator('[data-testid="btn-save-draft"]').click();
 
-    // Update name
-    const nameInput = page.locator('[data-testid="input-screen-name"]');
-    await nameInput.clear();
-    await nameInput.fill('Updated Name');
+    // Update name in JSON
+    const updatedSchemaPayload = { ...gridSchema, name: 'Updated Name' };
+    await schemaInput.clear();
+    await schemaInput.fill(JSON.stringify(updatedSchemaPayload, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Save again
     await page.locator('[data-testid="btn-save-draft"]').click();
-    await expect(page.locator('text=Screen draft saved successfully')).toBeVisible();
+    await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Verify layout is still there
-    const updatedSchema = await page.locator('[data-testid="textarea-schema-json"]').textContent();
+    const updatedSchema = await page.locator('[data-testid="json-textarea"]').inputValue();
     expect(updatedSchema).toContain('"type":"grid"');
     expect(updatedSchema).toContain('"cols":3');
   });

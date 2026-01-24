@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface ReplanEvent {
+export interface ReplanEvent {
   id?: string;
   event_type: string;
   stage_name: string;
@@ -32,7 +32,7 @@ interface ReplanEvent {
     trace_id: string;
     should_replan: boolean;
     evaluation_time: number;
-  };
+  } | null;
 }
 
 interface ReplanTimelineProps {
@@ -94,7 +94,13 @@ const StageColors = {
 const PatchDiffViewer = ({ patch }: { patch: unknown }) => {
   const [expanded, setExpanded] = useState(false);
 
-  if (!patch || (!patch.before && !patch.after)) {
+  if (!patch || typeof patch !== 'object') {
+    return null;
+  }
+
+  const patchObj = patch as { before?: unknown; after?: unknown };
+
+  if (!patchObj.before && !patchObj.after) {
     return null;
   }
 
@@ -117,8 +123,8 @@ const PatchDiffViewer = ({ patch }: { patch: unknown }) => {
 
       {expanded && (
         <div className="mt-2 space-y-3">
-          {patch.before && renderJson(patch.before, "Before")}
-          {patch.after && renderJson(patch.after, "After")}
+          {patchObj.before && renderJson(patchObj.before, "Before")}
+          {patchObj.after && renderJson(patchObj.after, "After")}
         </div>
       )}
     </div>
@@ -226,7 +232,7 @@ export default function ReplanTimeline({
             {/* Events */}
             <div className="space-y-4">
               {filteredEvents.map((event, index) => {
-                const triggerConfig = TRIGGER_CONFIG[event.trigger.trigger_type] || TRIGGER_CONFIG.error;
+                const triggerConfig = TRIGGER_CONFIG[event.trigger.trigger_type as keyof typeof TRIGGER_CONFIG] || TRIGGER_CONFIG.error;
                 const Icon = triggerConfig.icon;
                 const stageColor = StageColors[event.stage_name as keyof typeof StageColors] || StageColors.route_plan;
                 const eventId = event.id ?? `${event.stage_name}-${event.timestamp}-${index}`;
@@ -252,7 +258,7 @@ export default function ReplanTimeline({
                       <div className={cn(
                         "w-3 h-3 rounded-full border-2",
                         triggerConfig.color,
-                        event.decision_metadata.should_replan ? "ring-2 ring-white" : "opacity-50"
+                        event.decision_metadata?.should_replan ? "ring-2 ring-white" : "opacity-50"
                       )}>
                         <Icon className="h-2 w-2 mx-auto" />
                       </div>
@@ -262,7 +268,7 @@ export default function ReplanTimeline({
                     <div className={cn(
                       "ml-8 p-3 rounded-lg border transition-all",
                       triggerConfig.color,
-                      event.decision_metadata.should_replan ? "border-slate-600" : "border-slate-700/50",
+                      event.decision_metadata?.should_replan ? "border-slate-600" : "border-slate-700/50",
                       selectedEvent?.id === event.id && "ring-1 ring-white/10"
                     )}>
                       <div className="flex items-start justify-between mb-2">
@@ -291,7 +297,7 @@ export default function ReplanTimeline({
                           </div>
                         </div>
 
-                        {event.decision_metadata.should_replan && (
+                        {event.decision_metadata?.should_replan && (
                           <div className="flex items-center gap-1 px-2 py-1 rounded bg-green-500/10 border border-green-400/30">
                             <RefreshCw className="h-3 w-3 text-emerald-400" />
                             <span className="text-xs text-emerald-400">Replanned</span>
@@ -308,8 +314,8 @@ export default function ReplanTimeline({
 
                       {/* Decision Metadata */}
                       <div className="mt-2 p-2 rounded bg-slate-900/50 text-xs">
-                        <p>Decision: {event.decision_metadata.should_replan ? "Approved" : "Denied"}</p>
-                        <p>Evaluation time: {(event.decision_metadata.evaluation_time * 1000).toFixed(2)}ms</p>
+                        <p>Decision: {event.decision_metadata?.should_replan ? "Approved" : "Denied"}</p>
+                        <p>Evaluation time: {((event.decision_metadata?.evaluation_time ?? 0) * 1000).toFixed(2)}ms</p>
                       </div>
 
                       {/* Patch Diff Toggle */}
@@ -367,9 +373,9 @@ export default function ReplanTimeline({
                 <p className="text-slate-400">Decision</p>
                 <p className={cn(
                   "font-medium",
-                  selectedEvent.decision_metadata.should_replan ? "text-emerald-400" : "text-rose-400"
+                  selectedEvent.decision_metadata?.should_replan ? "text-emerald-400" : "text-rose-400"
                 )}>
-                  {selectedEvent.decision_metadata.should_replan ? "Approved" : "Denied"}
+                  {selectedEvent.decision_metadata?.should_replan ? "Approved" : "Denied"}
                 </p>
               </div>
             </div>
@@ -377,7 +383,7 @@ export default function ReplanTimeline({
             <div>
               <p className="text-slate-400 mb-1">Trigger Reason</p>
               <p className="text-sm text-slate-300">
-                {selectedEvent.trigger.reason}
+                {selectedEvent.trigger?.reason ?? "N/A"}
               </p>
             </div>
 

@@ -21,7 +21,7 @@ export default function SettingsPage() {
             const response = await fetchApi<{ settings: OperationSetting[] }>("/settings/operations");
             setSettings(response.data.settings);
         } catch (err: unknown) {
-            setError(err.message || "Failed to load settings");
+            setError(err instanceof Error ? err.message : "Failed to load settings");
         } finally {
             setIsLoading(false);
         }
@@ -96,7 +96,7 @@ export default function SettingsPage() {
                 <Toast
                     message={toast.message}
                     type={toast.type}
-                    onClose={() => setToast(null)}
+                    onDismiss={() => setToast(null)}
                 />
             )}
         </div>

@@ -5,6 +5,8 @@ from pathlib import Path
 from threading import Lock
 from typing import Any, Callable, Dict
 
+import os
+import re
 import yaml
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -67,13 +69,24 @@ def _load_file(path: str, loader: Callable[[str], Any]) -> Any:
             return None
 
 
+_ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
+
+
+def _expand_env_vars(content: str) -> str:
+    def _replace(match: re.Match[str]) -> str:
+        key = match.group(1)
+        return os.environ.get(key, match.group(0))
+
+    return _ENV_PATTERN.sub(_replace, content)
+
+
 def load_yaml(path: str) -> Any:
     """
     Loads a YAML file from the resources directory under apps/api.
     The path should be relative to `resources/`.
     Example: `load_yaml("prompts/ci/planner.yaml")`
     """
-    return _load_file(path, lambda content: yaml.safe_load(content))
+    return _load_file(path, lambda content: yaml.safe_load(_expand_env_vars(content)))
 
 def load_text(path: str) -> str | None:
     """

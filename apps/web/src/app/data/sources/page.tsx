@@ -1,7 +1,9 @@
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -24,12 +26,12 @@ interface SourceAssetResponse {
   version: number;
   status: string;
   source_type: string;
-  connection: {
-    host: string;
-    port: number;
-    username: string;
+  connection?: {
+    host?: string;
+    port?: number;
+    username?: string;
     database?: string;
-    timeout: number;
+    timeout?: number;
     ssl_mode?: string;
     connection_params?: Record<string, unknown>;
   };
@@ -181,15 +183,20 @@ export default function SourcesPage() {
     source.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  useEffect(() => {
+  const selectedSourceFromParam = useMemo(() => {
     if (!selectedAssetId || !sourcesQuery.data?.length) {
-      return;
+      return null;
     }
-    const match = sourcesQuery.data.find((source) => source.asset_id === selectedAssetId);
-    if (match) {
-      setSelectedSource(match);
-    }
+    return sourcesQuery.data.find((source) => source.asset_id === selectedAssetId) ?? null;
   }, [selectedAssetId, sourcesQuery.data]);
+
+  const activeSource = useMemo(() => {
+    if (!selectedSource) {
+      return selectedSourceFromParam;
+    }
+    const stillExists = sourcesQuery.data?.some((source) => source.asset_id === selectedSource.asset_id);
+    return stillExists ? selectedSource : selectedSourceFromParam;
+  }, [selectedSource, selectedSourceFromParam, sourcesQuery.data]);
 
   const handleCreateSource = () => {
     setEditingSource({
@@ -505,7 +512,7 @@ export default function SourcesPage() {
               {filteredSources.map((source) => (
                 <div
                   key={source.asset_id}
-                  className={`rounded-xl border px-3 py-2 cursor-pointer ${selectedSource?.asset_id === source.asset_id
+                  className={`rounded-xl border px-3 py-2 cursor-pointer ${activeSource?.asset_id === source.asset_id
                     ? "border-sky-500 bg-sky-500/10"
                     : "border-slate-800 hover:border-slate-600"
                     }`}
@@ -574,12 +581,12 @@ export default function SourcesPage() {
           </div>
         }
         centerTop={
-          selectedSource ? (
+          activeSource ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{selectedSource.name}</h2>
-                <Badge variant={selectedSource.status === "active" ? "default" : "secondary"}>
-                  {formatStatus(selectedSource.status)}
+                <h2 className="text-lg font-semibold">{activeSource.name}</h2>
+                <Badge variant={activeSource.status === "active" ? "default" : "secondary"}>
+                  {formatStatus(activeSource.status)}
                 </Badge>
               </div>
 
@@ -589,12 +596,12 @@ export default function SourcesPage() {
                     <CardTitle className="text-xs">Connection Details</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <div>Type: {SOURCE_TYPE_LABELS[selectedSource.source_type as SourceType]}</div>
-                    <div>Host: {selectedSource.connection?.host}</div>
-                    <div>Port: {selectedSource.connection?.port}</div>
-                    <div>Database: {selectedSource.connection?.database}</div>
-                    <div>Username: {selectedSource.connection?.username}</div>
-                    <div>Timeout: {selectedSource.connection?.timeout}s</div>
+                    <div>Type: {SOURCE_TYPE_LABELS[activeSource.source_type as SourceType]}</div>
+                    <div>Host: {activeSource.connection?.host}</div>
+                    <div>Port: {activeSource.connection?.port}</div>
+                    <div>Database: {activeSource.connection?.database}</div>
+                    <div>Username: {activeSource.connection?.username}</div>
+                    <div>Timeout: {activeSource.connection?.timeout}s</div>
                   </CardContent>
                 </Card>
 
@@ -603,38 +610,38 @@ export default function SourcesPage() {
                     <CardTitle className="text-xs">Metadata</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <div>ID: {selectedSource.asset_id}</div>
-                    <div>Version: {selectedSource.version}</div>
-                    <div>Scope: {selectedSource.scope || "None"}</div>
-                    <div>Created: {new Date(selectedSource.created_at).toLocaleDateString()}</div>
-                    {selectedSource.published_at && (
-                      <div>Published: {new Date(selectedSource.published_at).toLocaleDateString()}</div>
+                    <div>ID: {activeSource.asset_id}</div>
+                    <div>Version: {activeSource.version}</div>
+                    <div>Scope: {activeSource.scope || "None"}</div>
+                    <div>Created: {new Date(activeSource.created_at).toLocaleDateString()}</div>
+                    {activeSource.published_at && (
+                      <div>Published: {new Date(activeSource.published_at).toLocaleDateString()}</div>
                     )}
                   </CardContent>
                 </Card>
               </div>
 
-              {selectedSource.description && (
+              {activeSource.description && (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs">Description</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-slate-300">
-                      {selectedSource.description}
+                      {activeSource.description}
                     </p>
                   </CardContent>
                 </Card>
               )}
 
-              {selectedSource.tags && Object.keys(selectedSource.tags).length > 0 && (
+              {activeSource.tags && Object.keys(activeSource.tags).length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs">Tags</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-1">
-                      {Object.entries(selectedSource.tags).map(([key, value]) => (
+                      {Object.entries(activeSource.tags).map(([key, value]) => (
                         <Badge key={key} variant="outline" className="text-xs">
                           {key}: {String(value)}
                         </Badge>
@@ -663,19 +670,19 @@ export default function SourcesPage() {
               >
                 Create New Source
               </Button>
-              {selectedSource && (
+              {activeSource && (
                 <>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => handleEditSource(selectedSource)}
+                    onClick={() => handleEditSource(activeSource)}
                   >
                     Edit Source
                   </Button>
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => handleTestConnection(selectedSource)}
+                    onClick={() => handleTestConnection(activeSource)}
                   >
                     Test Connection
                   </Button>
@@ -731,7 +738,7 @@ export default function SourcesPage() {
           <DialogHeader>
             <DialogTitle>Test Connection</DialogTitle>
             <DialogDescription>
-              Testing connection to {selectedSource?.name}
+              Testing connection to {activeSource?.name}
             </DialogDescription>
           </DialogHeader>
           {testResults && (

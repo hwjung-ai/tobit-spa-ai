@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchApi } from "@/lib/apiClient";
+import { fetchApi } from "@/lib/apiClient/index";
 import {
   Drawer,
   DrawerClose,
@@ -14,9 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+
 import { Trash2, Settings, Play, CheckCircle, AlertCircle } from "lucide-react";
-import { type AssetSummary } from "@/types/asset-registry";
+import { type AssetSummary } from "@/lib/apiClient/index";
 
 interface AssetOverride {
   assetType: string;
@@ -280,11 +280,19 @@ export default function AssetOverrideDrawer({
                 </div>
 
                 <div className="flex items-center space-x-2 pt-6">
-                  <Switch
+                  <button
                     id="test-mode"
-                    checked={testMode}
-                    onCheckedChange={setTestMode}
-                  />
+                    type="button"
+                    role="switch"
+                    aria-checked={testMode}
+                    onClick={() => setTestMode(!testMode)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${testMode ? 'bg-blue-600' : 'bg-slate-200'}`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${testMode ? 'translate-x-5' : 'translate-x-0'}`}
+                    />
+                  </button>
                   <Label htmlFor="test-mode">Test Mode</Label>
                 </div>
               </div>

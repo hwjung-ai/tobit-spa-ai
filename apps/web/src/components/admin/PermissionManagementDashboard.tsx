@@ -174,7 +174,7 @@ export function PermissionManagementDashboard() {
         </CardHeader>
         <CardContent>
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert className="mb-4 bg-rose-50 border-rose-200 text-rose-800">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
@@ -250,7 +250,7 @@ export function PermissionManagementDashboard() {
                   </div>
 
                   <Dialog open={isGrantDialogOpen} onOpenChange={setIsGrantDialogOpen}>
-                    <DialogTrigger asChild>
+                    <DialogTrigger onClick={() => setIsGrantDialogOpen(true)}>
                       <Button>
                         <Plus className="w-4 h-4 mr-2" />
                         Grant Permission

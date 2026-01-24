@@ -66,8 +66,9 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       const response = await fetchApi<{ assets: Asset[] }>("/asset-registry/assets?asset_type=screen");
       setScreens(response.data?.assets || []);
       setErrors([]);
-    } catch (error: any) {
-      setErrors([error.message || "Failed to fetch screens from asset-registry"]);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to fetch screens from asset-registry";
+      setErrors([message]);
       setScreens([]);
     } finally {
       setLoading(false);
@@ -109,8 +110,9 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       if (newScreenData.tags.trim()) {
         try {
           parsedTags = JSON.parse(newScreenData.tags);
-        } catch (tagError: any) {
-          setErrors([`Invalid tags JSON: ${tagError.message || "syntax error"}`]);
+        } catch (tagError: unknown) {
+          const message = tagError instanceof Error ? tagError.message : "syntax error";
+          setErrors([`Invalid tags JSON: ${message}`]);
           return;
         }
       }
@@ -133,8 +135,8 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setSelectedTemplate(null);
       await fetchScreens();
       onScreenUpdate?.();
-    } catch (error: any) {
-      const message = error.message || "Failed to create screen";
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to create screen";
       if (message.includes("403") || message.includes("Permission")) {
         setErrors(["You don't have permission to create screens"]);
       } else {
@@ -164,7 +166,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       // Silently sync with server
       await fetchScreens(true);
       onScreenUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to delete screen";
       setErrors([message]);
     }
@@ -180,7 +182,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setToast({ message: "Screen published successfully", type: "success" });
       await fetchScreens(true);
       onScreenUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error instanceof Error ? error.message : "Failed to publish screen"]);
     }
   };
@@ -199,7 +201,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
       setToast({ message: "Screen rolled back to draft", type: "success" });
       await fetchScreens(true);
       onScreenUpdate?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setErrors([error instanceof Error ? error.message : "Failed to rollback screen"]);
     }
   };
@@ -434,6 +436,13 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     {new Date(screen.updated_at).toLocaleDateString()}
                   </p>
                   <div className="flex gap-2 justify-end">
+                    <Link
+                      href={`/admin/screens/${screen.asset_id}`}
+                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium transition-colors text-center"
+                      data-testid={`btn-edit-${screen.asset_id}`}
+                    >
+                      Edit
+                    </Link>
                     {screen.status === "draft" && (
                       <button
                         onClick={() => {

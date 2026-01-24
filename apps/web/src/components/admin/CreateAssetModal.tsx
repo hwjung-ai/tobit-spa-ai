@@ -38,7 +38,7 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
       onSuccess(response.data.asset.asset_id);
       onClose();
     } catch (err: unknown) {
-      setErrors([err.message || "Failed to create asset"]);
+      setErrors([err instanceof Error ? err.message : "Failed to create asset"]);
     } finally {
       setIsCreating(false);
     }

@@ -9,7 +9,7 @@ test.describe("U3 Visual Editor - Publish & Preview", () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to editor
     await page.goto("/admin/screens");
-    await page.waitForLoadState("networkidle").catch(() => console.log("Network idle timeout"));
+    await page.waitForLoadState("domcontentloaded").catch(() => console.log("Network idle timeout"));
   });
 
   test("should show save draft button for draft state", async ({ page }) => {

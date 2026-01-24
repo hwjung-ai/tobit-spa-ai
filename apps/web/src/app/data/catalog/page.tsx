@@ -1,7 +1,9 @@
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -12,8 +14,18 @@ import { Label } from "../../../components/ui/label";
 import { Textarea } from "../../../components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { formatError } from "../../../lib/utils";
-import type { SchemaAssetResponse, ScanResult } from "../../../types/asset-registry";
+import type { SchemaAssetResponse } from "../../../types/asset-registry";
 import { useSearchParams } from "next/navigation";
+
+interface ScanResult {
+  success: boolean;
+  message: string;
+  tables?: Array<{
+    table_name: string;
+    row_count?: number;
+    columns?: string[];
+  }>;
+}
 
 interface SchemaTable {
   name: string;
@@ -94,7 +106,7 @@ export default function CatalogPage() {
       const response = await fetch(`${apiBaseUrl}/asset-registry/schemas/${source_ref}/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source_ref, ...options }),
+        body: JSON.stringify({ source_ref, ...(options as Record<string, unknown>) }),
       });
       const body = await response.json();
       if (!response.ok) {
@@ -141,15 +153,20 @@ export default function CatalogPage() {
     scanMutation.mutate({ source_ref: sourceRef, options });
   };
 
-  useEffect(() => {
+  const selectedSchemaFromParam = useMemo(() => {
     if (!selectedAssetId || !schemasQuery.data?.length) {
-      return;
+      return null;
     }
-    const match = schemasQuery.data.find((schema) => schema.asset_id === selectedAssetId);
-    if (match) {
-      setSelectedSchema(match);
-    }
+    return schemasQuery.data.find((schema) => schema.asset_id === selectedAssetId) ?? null;
   }, [selectedAssetId, schemasQuery.data]);
+
+  const activeSchema = useMemo(() => {
+    if (!selectedSchema) {
+      return selectedSchemaFromParam;
+    }
+    const stillExists = schemasQuery.data?.some((schema) => schema.asset_id === selectedSchema.asset_id);
+    return stillExists ? selectedSchema : selectedSchemaFromParam;
+  }, [selectedSchema, selectedSchemaFromParam, schemasQuery.data]);
 
   const renderScanDialog = (sourceRef: string) => {
     const sourceName = schemasQuery.data?.find(s => s.asset_id === sourceRef)?.name || sourceRef;
@@ -285,7 +302,7 @@ export default function CatalogPage() {
                   {schemasQuery.data?.map((schema) => (
                     <div
                       key={schema.asset_id}
-                      className={`rounded-xl border px-3 py-2 cursor-pointer ${selectedSchema?.asset_id === schema.asset_id
+                      className={`rounded-xl border px-3 py-2 cursor-pointer ${activeSchema?.asset_id === schema.asset_id
                         ? "border-sky-500 bg-sky-500/10"
                         : "border-slate-800 hover:border-slate-600"
                         }`}
@@ -323,12 +340,12 @@ export default function CatalogPage() {
               </div>
             }
             centerTop={
-              selectedSchema ? (
+              activeSchema ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">{selectedSchema.name}</h2>
+                    <h2 className="text-lg font-semibold">{activeSchema.name}</h2>
                     <Badge variant="outline">
-                      {selectedSchema.catalog.table_count} tables
+                      {activeSchema.catalog.table_count} tables
                     </Badge>
                   </div>
 
@@ -337,25 +354,25 @@ export default function CatalogPage() {
                       <CardTitle className="text-xs">Overview</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
-                      <div>Status: {selectedSchema.catalog.scan_status}</div>
-                      <div>Tables: {selectedSchema.catalog.table_count}</div>
-                      <div>Columns: {selectedSchema.catalog.column_count}</div>
-                      {selectedSchema.catalog.last_scanned_at && (
+                      <div>Status: {activeSchema.catalog.scan_status}</div>
+                      <div>Tables: {activeSchema.catalog.table_count}</div>
+                      <div>Columns: {activeSchema.catalog.column_count}</div>
+                      {activeSchema.catalog.last_scanned_at && (
                         <div>
-                          Last scanned: {new Date(selectedSchema.catalog.last_scanned_at).toLocaleString()}
+                          Last scanned: {new Date(activeSchema.catalog.last_scanned_at).toLocaleString()}
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
-                  {selectedSchema.description && (
+                  {activeSchema.description && (
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-xs">Description</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm text-slate-300">
-                          {selectedSchema.description}
+                          {activeSchema.description}
                         </p>
                       </CardContent>
                     </Card>
@@ -367,7 +384,7 @@ export default function CatalogPage() {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm text-slate-300">
-                        {selectedSchema.catalog.source_ref}
+                        {activeSchema.catalog.source_ref}
                       </p>
                     </CardContent>
                   </Card>
@@ -382,13 +399,13 @@ export default function CatalogPage() {
                     </Button>
                   </div>
 
-                  {catalogMap[selectedSchema.asset_id] && (
+                  {catalogMap[activeSchema.asset_id] && (
                     <div className="space-y-3">
                       <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
                         Tables
                       </div>
                       <div className="custom-scrollbar max-h-[400px] space-y-2 overflow-auto pr-1">
-                        {catalogMap[selectedSchema.asset_id]?.tables.map((table) => (
+                        {catalogMap[activeSchema.asset_id]?.tables.map((table) => (
                           <Card key={table.name} className="border-slate-800">
                             <CardHeader className="pb-2">
                               <CardTitle className="text-xs">
@@ -527,7 +544,7 @@ export default function CatalogPage() {
         </TabsContent>
       </Tabs>
 
-      {renderScanDialog(selectedSchema?.catalog.source_ref || "")}
+      {renderScanDialog(activeSchema?.catalog.source_ref || "")}
     </div>
   );
 }

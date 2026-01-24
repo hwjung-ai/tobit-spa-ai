@@ -16,7 +16,7 @@ import {
   CheckCircle,
   Clock,
   RefreshCw,
-  Compare,
+  GitMerge,
   Target,
   Layers,
   Activity,
@@ -230,7 +230,7 @@ export default function AssetImpactAnalyzer({
     return (
       <div className="mt-6">
         <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Compare className="h-5 w-5" />
+                  <GitMerge className="h-5 w-5" />
           Version Comparison: {version1} vs {version2}
         </h3>
         <div className="overflow-x-auto">
@@ -264,7 +264,7 @@ export default function AssetImpactAnalyzer({
                   "p-3 flex items-center gap-1",
                   metrics2.success_rate > metrics1.success_rate ? "text-emerald-400" : "text-red-400"
                 )}>
-                  {metrics2.success_rate > metrics1.success_rate ? TrendingUp : TrendingDown}
+                  {metrics2.success_rate > metrics1.success_rate ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   <span className="text-sm font-medium">
                     {Math.abs(metrics2.success_rate - metrics1.success_rate)}%
                   </span>
@@ -278,7 +278,7 @@ export default function AssetImpactAnalyzer({
                   "p-3 flex items-center gap-1",
                   metrics2.error_count < metrics1.error_count ? "text-emerald-400" : "text-red-400"
                 )}>
-                  {metrics2.error_count < metrics1.error_count ? TrendingDown : TrendingUp}
+                  {metrics2.error_count < metrics1.error_count ? <TrendingDown className="h-4 w-4" /> : <TrendingUp className="h-4 w-4" />}
                   <span className="text-sm font-medium">
                     {Math.abs(metrics2.error_count - metrics1.error_count)}
                   </span>
@@ -292,7 +292,7 @@ export default function AssetImpactAnalyzer({
                   "p-3 flex items-center gap-1",
                   metrics2.quality_score > metrics1.quality_score ? "text-emerald-400" : "text-red-400"
                 )}>
-                  {metrics2.quality_score > metrics1.quality_score ? TrendingUp : TrendingDown}
+                  {metrics2.quality_score > metrics1.quality_score ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                   <span className="text-sm font-medium">
                     {Math.abs(metrics2.quality_score - metrics1.quality_score)}%
                   </span>

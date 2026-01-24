@@ -67,7 +67,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
             onSuccess();
             onClose();
         } catch (err: unknown) {
-            setErrors([err.message || "Failed to update setting"]);
+            setErrors([err instanceof Error ? err.message : "Failed to update setting"]);
         } finally {
             setIsSaving(false);
         }

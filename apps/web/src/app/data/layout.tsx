@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { DataNavigation } from "@/components/data/DataNavigation";
 
 export default function DataLayout({
@@ -8,8 +7,6 @@ export default function DataLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const pathname = usePathname();
-
     return (
         <div className="py-6 tracking-tight builder-shell builder-text">
             <div className="flex items-center justify-between mb-2">

@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Literal, Tuple
 
 from schemas.tool_contracts import HistoryRecord, HistoryResult
-from scripts.seed.utils import get_postgres_conn
+from core.db_pg import get_pg_connection
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
@@ -44,7 +44,7 @@ def _prepare_ci_ids(ci_ids: List[str]) -> Tuple[List[str], bool, int]:
 
 def _load_event_log_metadata() -> dict[str, object]:
     warnings: List[str] = []
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             table_exists_query = _load_query("event_log_table_exists.sql")
             cur.execute(table_exists_query)
@@ -145,7 +145,7 @@ def event_log_recent(
     )
     params.append(sanitized_limit)
     rows: List[List[str]] = []
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, params)
             for row in cur.fetchall():
@@ -217,7 +217,7 @@ def detect_history_sections(question: str) -> set[str]:
 
 
 def _fetch_sql_rows(query: str, params: Iterable) -> list[tuple]:
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, tuple(params))
             return cur.fetchall()

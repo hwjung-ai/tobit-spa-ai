@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from psycopg import Connection
-from scripts.seed.utils import get_postgres_conn
+from core.db_pg import get_pg_connection
 
 from app.shared.config_loader import load_text
 
@@ -177,7 +177,7 @@ def _write_catalog(payload: dict[str, object]) -> None:
 
 def main() -> None:
     try:
-        with get_postgres_conn() as conn:
+        with get_pg_connection() as conn:
             catalog = _build_catalog(conn)
             _write_catalog(catalog)
             print(f"Wrote Postgres catalog to {OUTPUT_PATH}")

@@ -16,6 +16,9 @@ class AppSettings(BaseSettings):
     ops_enable_langgraph: bool = False
     enable_system_apis: bool = False
     enable_data_explorer: bool = False
+    ops_default_source_asset: str | None = None
+    ops_default_schema_asset: str | None = None
+    ops_default_resolver_asset: str | None = None
 
     cep_enable_metric_polling: bool = False
     cep_metric_poll_global_interval_seconds: int = 10

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Tuple
 
 from schemas.tool_contracts import MetricAggregateResult, MetricSeriesResult
-from scripts.seed.utils import get_postgres_conn
+from core.db_pg import get_pg_connection
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
@@ -65,7 +65,7 @@ def _prepare_ci_ids(ci_id: str | None, ci_ids: list[str] | None) -> tuple[list[s
 
 def metric_exists(tenant_id: str, metric_name: str) -> bool:
     query = _load_query("metric_exists.sql")
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, (metric_name,))
             return bool(cur.fetchone())
@@ -73,7 +73,7 @@ def metric_exists(tenant_id: str, metric_name: str) -> bool:
 
 def list_metric_names(tenant_id: str, limit: int = 200) -> List[str]:
     query = _load_query("metric_list.sql")
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, (limit,))
             return [row[0] for row in cur.fetchall()]
@@ -96,7 +96,7 @@ def metric_aggregate(
     query = query_template.format(function=function)
     params = [tenant_id, metric_name, ci_list, time_from, time_to]
     value = None
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, params)
             row = cur.fetchone()
@@ -127,7 +127,7 @@ def metric_series_table(
     query = _load_query("metric_series.sql")
     params = [tenant_id, metric_name, ci_id, time_from, time_to, sanitized_limit]
     rows: List[tuple[str, str]] = []
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(query, params)
             for time_val, value in cur.fetchall():

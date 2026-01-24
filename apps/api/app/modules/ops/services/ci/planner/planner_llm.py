@@ -130,7 +130,7 @@ def _load_planner_prompt_definition() -> dict[str, Any] | None:
     return prompt_data
 
 
-def _build_output_parser_messages(text: str) -> list[dict[str, str]] | None:
+def _build_output_parser_messages(text: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> list[dict[str, str]] | None:
     prompt_data = _load_planner_prompt_definition()
     if not prompt_data:
         return None
@@ -146,7 +146,25 @@ def _build_output_parser_messages(text: str) -> list[dict[str, str]] | None:
         )
         return None
 
+    # Build context information from schema and source assets
+    context_info = ""
+    if schema_context:
+        catalog = schema_context.get("catalog", {})
+        if isinstance(catalog, dict):
+            tables = list(catalog.keys())[:5]  # Top 5 tables
+            context_info += f"\nAvailable tables: {', '.join(tables)}"
+
+    if source_context:
+        source_type = source_context.get("source_type")
+        connection = source_context.get("connection", {})
+        if source_type and connection:
+            context_info += f"\nData source type: {source_type}"
+            if connection.get("host"):
+                context_info += f" (Host: {connection.get('host')})"
+
     user_prompt = user_prompt_template.replace("{question}", text)
+    if context_info:
+        user_prompt = f"{user_prompt}\n{context_info}"
 
     return [
         {"role": "system", "content": system_prompt},
@@ -162,9 +180,9 @@ def _extract_json_block(text: str) -> str | None:
     return match.group(0) if match else None
 
 
-def _call_output_parser_llm(text: str) -> dict | None:
+def _call_output_parser_llm(text: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> dict | None:
     try:
-        messages = _build_output_parser_messages(text)
+        messages = _build_output_parser_messages(text, schema_context=schema_context, source_context=source_context)
         if messages is None:
             raise ValueError("Failed to build LLM messages from prompt template.")
 
@@ -413,16 +431,16 @@ def _should_filter_server(text: str) -> bool:
     return any(keyword in normalized for keyword in SERVER_FILTER_KEYWORDS)
 
 
-def create_plan(question: str) -> Plan:
+def create_plan(question: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> Plan:
     normalized = question.strip()
     start = perf_counter()
-    logger.info("ci.planner.start", extra={"query_len": len(normalized)})
+    logger.info("ci.planner.start", extra={"query_len": len(normalized), "has_schema": bool(schema_context), "has_source": bool(source_context)})
     plan = Plan()
     plan.mode = _determine_mode(normalized)
     llm_payload = None
     graph_force = _is_graph_force_query(normalized)
     try:
-        llm_payload = _call_output_parser_llm(normalized)
+        llm_payload = _call_output_parser_llm(normalized, schema_context=schema_context, source_context=source_context)
     except Exception:  # pragma: no cover - placeholder
         llm_payload = None
     output_types: Set[str]
@@ -845,17 +863,23 @@ def _determine_mode(text: str):
     return PlanMode.CI
 
 
-def create_plan_output(question: str) -> PlanOutput:
-    """Create a plan output with route determination (direct, plan, or reject)"""
+def create_plan_output(question: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> PlanOutput:
+    """Create a plan output with route determination (direct, plan, or reject)
+
+    Args:
+        question: User's question
+        schema_context: Schema asset for catalog/field context
+        source_context: Source asset for data source context
+    """
     normalized = question.strip()
     start = perf_counter()
-    logger.info("ci.planner.start", extra={"query_len": len(normalized)})
+    logger.info("ci.planner.start", extra={"query_len": len(normalized), "has_schema": bool(schema_context), "has_source": bool(source_context)})
 
     # Try to get route from LLM first
     route = "orch"  # default
     llm_payload = None
     try:
-        llm_payload = _call_output_parser_llm(normalized)
+        llm_payload = _call_output_parser_llm(normalized, schema_context=schema_context, source_context=source_context)
         if llm_payload and llm_payload.get("route"):
             route = llm_payload["route"]
     except Exception:
@@ -898,7 +922,7 @@ def create_plan_output(question: str) -> PlanOutput:
         )
 
     # Otherwise, create a normal plan
-    plan = create_plan(normalized)
+    plan = create_plan(normalized, schema_context=schema_context, source_context=source_context)
     end = perf_counter()
     elapsed_ms = int((end - start) * 1000)
     logger.info("ci.planner.plan_created", extra={"elapsed_ms": elapsed_ms})

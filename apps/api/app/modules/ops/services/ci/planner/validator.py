@@ -344,7 +344,7 @@ def _is_absolute_date(value: str) -> bool:
     return bool(DATE_PATTERN.match(value))
 
 
-def validate_plan(plan: Plan) -> Tuple[Plan, Dict[str, Any]]:
+def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) -> Tuple[Plan, Dict[str, Any]]:
     normalized = plan.copy()
     mode = normalized.mode
     logger.info(
@@ -353,6 +353,7 @@ def validate_plan(plan: Plan) -> Tuple[Plan, Dict[str, Any]]:
             "mode": mode.value if mode else None,
             "intent": normalized.intent.value if normalized.intent else None,
             "multistep_enabled": normalized.enable_multistep,
+            "has_resolver": bool(resolver_payload),
         },
     )
     # Validate multi-step structure first if enabled

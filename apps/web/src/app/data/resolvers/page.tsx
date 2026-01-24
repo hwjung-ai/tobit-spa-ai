@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -135,13 +135,6 @@ const RULE_TYPE_LABELS: Record<string, string> = {
   transformation: "Transformation",
 };
 
-const AMBIGUITY_POLICY_LABELS: Record<string, string> = {
-  ask_user: "Ask User",
-  use_first: "Use First",
-  use_most_recent: "Use Most Recent",
-  fail: "Fail",
-};
-
 const formatStatus = (status: string) => {
   return STATUS_LABELS[status] || status;
 };
@@ -150,7 +143,12 @@ export default function ResolversPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
   const searchParams = useSearchParams();
-  const selectedAssetId = searchParams.get("asset_id");
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+
+  // Use effect to get searchParams on client side
+  useEffect(() => {
+    setSelectedAssetId(searchParams.get("asset_id"));
+  }, [searchParams]);
 
   const [selectedResolver, setSelectedResolver] = useState<ResolverAssetResponse | null>(null);
   const [editingResolver, setEditingResolver] = useState<Partial<ResolverAsset> | null>(null);
@@ -255,15 +253,20 @@ export default function ResolversPage() {
     resolver.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  useEffect(() => {
+  const selectedResolverFromParam = useMemo(() => {
     if (!selectedAssetId || !resolversQuery.data?.length) {
-      return;
+      return null;
     }
-    const match = resolversQuery.data.find((resolver) => resolver.asset_id === selectedAssetId);
-    if (match) {
-      setSelectedResolver(match);
-    }
+    return resolversQuery.data.find((resolver) => resolver.asset_id === selectedAssetId) ?? null;
   }, [selectedAssetId, resolversQuery.data]);
+
+  const activeResolver = useMemo(() => {
+    if (!selectedResolver) {
+      return selectedResolverFromParam;
+    }
+    const stillExists = resolversQuery.data?.some((resolver) => resolver.asset_id === selectedResolver.asset_id);
+    return stillExists ? selectedResolver : selectedResolverFromParam;
+  }, [selectedResolver, selectedResolverFromParam, resolversQuery.data]);
 
   const handleCreateResolver = () => {
     setEditingResolver({
@@ -604,7 +607,7 @@ export default function ResolversPage() {
               {filteredResolvers.map((resolver) => (
                 <div
                   key={resolver.asset_id}
-                  className={`rounded-xl border px-3 py-2 cursor-pointer ${selectedResolver?.asset_id === resolver.asset_id
+                  className={`rounded-xl border px-3 py-2 cursor-pointer ${activeResolver?.asset_id === resolver.asset_id
                     ? "border-sky-500 bg-sky-500/10"
                     : "border-slate-800 hover:border-slate-600"
                     }`}
@@ -668,12 +671,12 @@ export default function ResolversPage() {
           </div>
         }
         centerTop={
-          selectedResolver ? (
+          activeResolver ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{selectedResolver.name}</h2>
-                <Badge variant={selectedResolver.status === "active" ? "default" : "secondary"}>
-                  {formatStatus(selectedResolver.status)}
+                <h2 className="text-lg font-semibold">{activeResolver.name}</h2>
+                <Badge variant={activeResolver.status === "active" ? "default" : "secondary"}>
+                  {formatStatus(activeResolver.status)}
                 </Badge>
               </div>
 
@@ -683,9 +686,9 @@ export default function ResolversPage() {
                     <CardTitle className="text-xs">Configuration</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <div>Rules: {selectedResolver.config.rules.length}</div>
-                    <div>Default Namespace: {selectedResolver.config.default_namespace || "None"}</div>
-                    <div>Version: {selectedResolver.config.version}</div>
+                    <div>Rules: {activeResolver.config.rules.length}</div>
+                    <div>Default Namespace: {activeResolver.config.default_namespace || "None"}</div>
+                    <div>Version: {activeResolver.config.version}</div>
                   </CardContent>
                 </Card>
 
@@ -694,36 +697,36 @@ export default function ResolversPage() {
                     <CardTitle className="text-xs">Metadata</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 text-sm">
-                    <div>ID: {selectedResolver.asset_id}</div>
-                    <div>Status: {selectedResolver.status}</div>
-                    <div>Created: {new Date(selectedResolver.created_at).toLocaleDateString()}</div>
-                    {selectedResolver.published_at && (
-                      <div>Published: {new Date(selectedResolver.published_at).toLocaleDateString()}</div>
+                    <div>ID: {activeResolver.asset_id}</div>
+                    <div>Status: {activeResolver.status}</div>
+                    <div>Created: {new Date(activeResolver.created_at).toLocaleDateString()}</div>
+                    {activeResolver.published_at && (
+                      <div>Published: {new Date(activeResolver.published_at).toLocaleDateString()}</div>
                     )}
                   </CardContent>
                 </Card>
               </div>
 
-              {selectedResolver.description && (
+              {activeResolver.description && (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs">Description</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-slate-300">
-                      {selectedResolver.description}
+                      {activeResolver.description}
                     </p>
                   </CardContent>
                 </Card>
               )}
 
-              {selectedResolver.config.rules.length > 0 && (
+              {activeResolver.config.rules.length > 0 && (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-xs">Rules</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {selectedResolver.config.rules.map((rule, index) => (
+                    {activeResolver.config.rules.map((rule, index) => (
                       <div key={index} className="flex items-center justify-between rounded border border-slate-700 p-2 text-xs">
                         <div className="flex items-center gap-2">
                           <span className="font-medium">{rule.name}</span>
@@ -761,7 +764,7 @@ export default function ResolversPage() {
                     />
                   </div>
                   <Button
-                    onClick={() => handleSimulateResolver(selectedResolver)}
+                    onClick={() => handleSimulateResolver(activeResolver)}
                     disabled={!testEntityInput.trim()}
                   >
                     Simulate Resolution
@@ -787,17 +790,17 @@ export default function ResolversPage() {
               >
                 Create New Resolver
               </Button>
-              {selectedResolver && (
+              {activeResolver && (
                 <>
                   <Button
                     className="w-full justify-start"
-                    onClick={() => handleEditResolver(selectedResolver)}
+                    onClick={() => handleEditResolver(activeResolver)}
                   >
                     Edit Resolver
                   </Button>
                   <Button
                     className="w-full justify-start"
-                    onClick={() => setSelectedResolver(selectedResolver)}
+                    onClick={() => setSelectedResolver(activeResolver)}
                   >
                     Test Resolver
                   </Button>
@@ -961,7 +964,7 @@ export default function ResolversPage() {
           <DialogHeader>
             <DialogTitle>Resolver Simulation Results</DialogTitle>
             <DialogDescription>
-              Testing {selectedResolver?.name}
+              Testing {activeResolver?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-[60vh] overflow-y-auto">

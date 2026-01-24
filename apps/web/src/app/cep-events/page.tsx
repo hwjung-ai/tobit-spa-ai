@@ -1,6 +1,9 @@
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";

@@ -214,10 +214,10 @@ export default function RegressionWatchPanel() {
     }
   };
 
-  return (
+   return (
     <div className="space-y-6" data-testid="regression-panel">
       {error && (
-        <Alert variant="destructive">
+        <Alert className="bg-rose-50 border-rose-200 text-rose-800">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}

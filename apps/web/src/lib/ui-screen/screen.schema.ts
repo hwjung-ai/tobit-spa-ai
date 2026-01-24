@@ -44,6 +44,8 @@ export interface Layout {
   direction?: LayoutDirection; // default: vertical
   spacing?: number; // pixels
   max_width?: string; // css width
+  cols?: number | string[];
+  gap?: string | number;
   children?: LayoutChild[];
 }
 
@@ -124,6 +126,7 @@ export interface StateSchema {
 }
 
 export interface ScreenSchemaV1 {
+  id?: string;
   // REQUIRED: stable id of the screen (contract requested)
   screen_id: string;
 

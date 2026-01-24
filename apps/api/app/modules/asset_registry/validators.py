@@ -17,6 +17,12 @@ def validate_asset(asset: TbAssetRegistry) -> None:
         validate_query_asset(asset)
     elif asset.asset_type == "screen":
         validate_screen_asset(asset)
+    elif asset.asset_type == "source":
+        validate_source_asset(asset)
+    elif asset.asset_type == "schema":
+        validate_schema_asset(asset)
+    elif asset.asset_type == "resolver":
+        validate_resolver_asset(asset)
     else:
         raise ValueError(f"Unknown asset_type: {asset.asset_type}")
 
@@ -220,6 +226,47 @@ def validate_query_asset(asset: TbAssetRegistry) -> None:
     # query_params should exist but can be empty
     if asset.query_params is None:
         asset.query_params = {}
+
+
+def validate_source_asset(asset: TbAssetRegistry) -> None:
+    """Validate source asset fields"""
+    content = asset.content or {}
+    source_type = content.get("source_type")
+    connection = content.get("connection") or {}
+
+    if not source_type:
+        raise ValueError("Source asset must include source_type in content")
+    if not isinstance(connection, dict):
+        raise ValueError("Source asset connection must be a dictionary")
+
+    if not connection.get("host"):
+        raise ValueError("Source asset connection must include host")
+    if not connection.get("username"):
+        raise ValueError("Source asset connection must include username")
+
+
+def validate_schema_asset(asset: TbAssetRegistry) -> None:
+    """Validate schema asset fields"""
+    content = asset.content or {}
+    source_ref = content.get("source_ref")
+    catalog = content.get("catalog", {})
+
+    if not source_ref:
+        raise ValueError("Schema asset must include source_ref in content")
+    if catalog is not None and not isinstance(catalog, dict):
+        raise ValueError("Schema asset catalog must be a dictionary")
+
+
+def validate_resolver_asset(asset: TbAssetRegistry) -> None:
+    """Validate resolver asset fields"""
+    content = asset.content or {}
+    rules = content.get("rules", [])
+    default_namespace = content.get("default_namespace")
+
+    if not isinstance(rules, list):
+        raise ValueError("Resolver asset rules must be a list")
+    if default_namespace is not None and not isinstance(default_namespace, str):
+        raise ValueError("Resolver asset default_namespace must be a string")
 
 
 def _validate_layout_width(width: dict[str, Any]) -> None:

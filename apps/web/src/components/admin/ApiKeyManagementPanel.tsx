@@ -223,7 +223,7 @@ export function ApiKeyManagementPanel() {
             <CardDescription>Create and manage API keys for programmatic access</CardDescription>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
+            <DialogTrigger onClick={() => setIsCreateDialogOpen(true)}>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 Create API Key
@@ -303,7 +303,7 @@ export function ApiKeyManagementPanel() {
 
         <CardContent>
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert className="mb-4 bg-rose-50 border-rose-200 text-rose-800">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}

@@ -57,6 +57,34 @@ from .services.observability_service import collect_observability_metrics
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
 
+
+def _generate_references_from_tool_calls(tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Generate references from tool calls for trace documentation.
+
+    Each tool call represents a data access or operation that should be documented
+    as a reference in the execution trace.
+    """
+    references = []
+    for i, tool_call in enumerate(tool_calls or []):
+        if not isinstance(tool_call, dict):
+            continue
+
+        tool_name = tool_call.get("tool") or tool_call.get("name") or f"tool_{i}"
+        params = tool_call.get("params") or tool_call.get("arguments") or {}
+        result = tool_call.get("result") or tool_call.get("output")
+
+        ref = {
+            "type": "tool_call",
+            "tool_name": tool_name,
+            "params": params if isinstance(params, dict) else {},
+            "result_summary": str(result)[:200] if result else None,
+            "index": i,
+        }
+        references.append(ref)
+
+    return references
+
+
 # --- Standard OPS Query ---
 
 @router.post("/query", response_model=ResponseEnvelope)
@@ -369,9 +397,14 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 }
             )
 
-        resolver_payload = load_resolver_asset(payload.resolver_asset) if payload.resolver_asset else None
-        schema_payload = load_schema_asset(payload.schema_asset) if payload.schema_asset else None
-        source_payload = load_source_asset(payload.source_asset) if payload.source_asset else None
+        settings = get_settings()
+        resolver_asset_name = payload.resolver_asset or settings.ops_default_resolver_asset
+        schema_asset_name = payload.schema_asset or settings.ops_default_schema_asset
+        source_asset_name = payload.source_asset or settings.ops_default_source_asset
+
+        resolver_payload = load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
+        schema_payload = load_schema_asset(schema_asset_name) if schema_asset_name else None
+        source_payload = load_source_asset(source_asset_name) if source_asset_name else None
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(payload.question, resolver_payload)
 
@@ -381,9 +414,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         plan_validated: Plan | None = None
         plan_trace: Dict[str, Any] = {
             "asset_context": {
-                "source_asset": payload.source_asset,
-                "schema_asset": payload.schema_asset,
-                "resolver_asset": payload.resolver_asset,
+                "source_asset": source_asset_name,
+                "schema_asset": schema_asset_name,
+                "resolver_asset": resolver_asset_name,
             },
             "resolver_rules_applied": resolver_rules_applied,
         }
@@ -395,7 +428,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             try:
                 patched_plan = _apply_patch(payload.rerun.base_plan, payload.rerun.patch)
                 logger.info("ci.runner.validator.start", extra={"phase": "rerun"})
-                plan_validated, plan_trace = validator.validate_plan(patched_plan)
+                plan_validated, plan_trace = validator.validate_plan(patched_plan, resolver_payload=resolver_payload)
                 logger.info("ci.runner.validator.done", extra={"phase": "rerun"})
                 end_span(validator_span, links={"plan_path": "plan.validated"})
             except Exception as e:
@@ -446,8 +479,8 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             planner_span = start_span("planner", "stage")
             try:
                 planner_start = time.perf_counter()
-                logger.info("ci.runner.planner.start", extra={"llm_called": False})
-                plan_output = planner_llm.create_plan_output(normalized_question)
+                logger.info("ci.runner.planner.start", extra={"llm_called": False, "has_schema": bool(schema_payload), "has_source": bool(source_payload)})
+                plan_output = planner_llm.create_plan_output(normalized_question, schema_context=schema_payload, source_context=source_payload)
                 elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
                 logger.info("ci.runner.planner.done", extra={"llm_called": False, "elapsed_ms": elapsed_ms})
                 end_span(planner_span, links={"plan_path": "plan.raw"})
@@ -460,7 +493,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 validator_span = start_span("validator", "stage")
                 try:
                     logger.info("ci.runner.validator.start", extra={"phase": "initial"})
-                    plan_validated, plan_trace = validator.validate_plan(plan_raw)
+                    plan_validated, plan_trace = validator.validate_plan(plan_raw, resolver_payload=resolver_payload)
                     logger.info("ci.runner.validator.done", extra={"phase": "initial"})
                     end_span(validator_span, links={"plan_path": "plan.validated"})
                 except Exception as e:
@@ -656,6 +689,14 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 envelope_blocks = result.get("blocks") or []
                 trace_payload = result.get("trace") or {}
                 meta = result.get("meta") or {}
+
+                # Generate references from tool calls if not already present
+                tool_calls = trace_payload.get("tool_calls") or result.get("tool_calls") or []
+                if tool_calls and not trace_payload.get("references"):
+                    trace_payload["references"] = _generate_references_from_tool_calls(tool_calls)
+                else:
+                    trace_payload.setdefault("references", [])
+
                 if replan_events:
                     trace_payload["replan_events"] = replan_events
                 route_output_payload = {
@@ -706,7 +747,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                     if should_replan:
                         validator_span = start_span("validator", "stage")
                         try:
-                            fallback_validated, fallback_trace = validator.validate_plan(fallback_plan)
+                            fallback_validated, fallback_trace = validator.validate_plan(fallback_plan, resolver_payload=resolver_payload)
                             end_span(validator_span, links={"plan_path": "plan.validated"})
                         except Exception as e:
                             end_span(

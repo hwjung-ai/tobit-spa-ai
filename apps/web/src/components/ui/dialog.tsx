@@ -109,3 +109,14 @@ export const DialogFooter = ({ children, className, ...rest }: { children?: Reac
     </div>
   );
 };
+
+export const DialogTrigger = ({ children, onClick, ...rest }: { children?: React.ReactNode; onClick?: () => void } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+  return (
+    <button
+      onClick={onClick}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+};

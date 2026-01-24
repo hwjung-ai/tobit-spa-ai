@@ -41,12 +41,17 @@ def load_prompt_asset(scope: str, engine: str, name: str) -> dict[str, Any] | No
 
         if asset:
             logger.info(f"Loaded prompt from asset registry: {name} (v{asset.version})")
+            templates = {"system": asset.template} if asset.template else {}
+            params = list((asset.input_schema or {}).get("properties", {}).keys())
+            if asset.output_contract:
+                templates = asset.output_contract.get("templates") or templates
+                params = asset.output_contract.get("params") or params
             payload = {
                 "asset_id": str(asset.asset_id),
                 "version": asset.version,
                 "name": asset.name,
-                "templates": {"system": asset.template},
-                "params": list(asset.input_schema.get("properties", {}).keys()),
+                "templates": templates,
+                "params": params,
                 "source": "asset_registry",
             }
             track_prompt_asset(
@@ -570,4 +575,66 @@ def load_resolver_asset(name: str) -> dict[str, Any] | None:
         return resolver_data
 
     logger.warning(f"Resolver asset not found: {name}")
+    return None
+
+
+def load_screen_asset(name: str) -> dict[str, Any] | None:
+    """Load screen asset with fallback priority.
+
+    Priority:
+    1. DB (published screen asset)
+    2. File (resources/screens/{name}.json)
+    3. None (not found)
+    """
+    try:
+        from app.modules.asset_registry.models import TbAssetRegistry
+        from core.db import get_session
+        from sqlmodel import select
+
+        with get_session() as session:
+            asset = session.exec(
+                select(TbAssetRegistry)
+                .where(TbAssetRegistry.asset_type == "screen")
+                .where(TbAssetRegistry.name == name)
+                .where(TbAssetRegistry.status == "published")
+            ).first()
+
+            if asset:
+                logger.info(f"Screen asset loaded from DB: {name} (v{asset.version})")
+                return {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "screen_id": asset.screen_id,
+                    "description": asset.description,
+                    "screen_schema": asset.screen_schema,
+                    "tags": asset.tags,
+                    "version": asset.version,
+                    "source": "db",
+                }
+    except Exception as e:
+        logger.debug(f"Failed to load screen asset from DB: {e}")
+
+    # Fallback to file
+    try:
+        import json
+        from pathlib import Path
+
+        resource_dir = Path(__file__).resolve().parents[2] / "resources" / "screens"
+        screen_file = resource_dir / f"{name}.json"
+
+        if screen_file.exists():
+            with open(screen_file, "r") as f:
+                data = json.load(f)
+            logger.info(f"Screen asset loaded from file: {name}")
+            return {
+                "asset_id": None,
+                "name": name,
+                "screen_schema": data,
+                "version": None,
+                "source": "file",
+            }
+    except Exception as e:
+        logger.debug(f"Failed to load screen asset from file: {e}")
+
+    logger.warning(f"Screen asset not found: {name}")
     return None

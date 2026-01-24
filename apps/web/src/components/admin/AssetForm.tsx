@@ -39,7 +39,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             await fetchApi(`/asset-registry/assets/${asset.asset_id}`, { method: "DELETE" });
             window.location.href = "/admin/assets";
         } catch (err: unknown) {
-            setErrors([err.message || "Failed to delete asset"]);
+            setErrors([err instanceof Error ? err.message : "Failed to delete asset"]);
         } finally {
             setIsSaving(false);
         }
@@ -53,7 +53,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             setToast({ message: "Asset returned to draft status", type: "success" });
             onSave();
         } catch (err: unknown) {
-            setErrors([err.message || "Failed to rollback to draft"]);
+            setErrors([err instanceof Error ? err.message : "Failed to rollback to draft"]);
         } finally {
             setIsRollingBack(false);
         }
@@ -71,7 +71,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
         setIsSaving(true);
 
         try {
-            const payload: unknown = {
+            const payload: Record<string, unknown> = {
                 name: formData.name,
                 description: formData.description || null,
             };
@@ -111,7 +111,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             setToast({ message: "Draft saved successfully", type: "success" });
             onSave();
         } catch (err: unknown) {
-            setErrors([err.message || "Failed to save draft"]);
+            setErrors([err instanceof Error ? err.message : "Failed to save draft"]);
         } finally {
             setIsSaving(false);
         }
@@ -135,7 +135,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             setToast({ message: "Asset published successfully", type: "success" });
             onSave();
         } catch (err: unknown) {
-            setErrors([err.message || "Failed to publish asset"]);
+            setErrors([err instanceof Error ? err.message : "Failed to publish asset"]);
         } finally {
             setIsPublishing(false);
         }
@@ -167,7 +167,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             setRollbackVersion("");
             onSave();
         } catch (err: unknown) {
-            setErrors([err.message || "Failed to rollback asset"]);
+            setErrors([err instanceof Error ? err.message : "Failed to rollback asset"]);
         } finally {
             setIsRollingBack(false);
         }

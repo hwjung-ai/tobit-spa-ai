@@ -32,7 +32,7 @@ export interface OpsHistoryEntry {
     }>;
   };
   status: "ok" | "error";
-  summary: string;
+  summary: string | undefined;
   errorDetails?: string;
   trace?: unknown;
   nextActions?: Array<{

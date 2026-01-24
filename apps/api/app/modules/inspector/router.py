@@ -14,10 +14,12 @@ from app.modules.inspector import crud
 from app.modules.inspector.regression import service
 from app.modules.inspector.regression.schemas import RegressionAnalysisRequest
 from app.modules.inspector.schemas import (
+    ExecutionTraceCreate,
     ExecutionTraceRead,
     TraceSummary,
     UIRenderPayload,
 )
+from app.modules.inspector.models import TbExecutionTrace
 
 router = APIRouter(prefix="/inspector", tags=["inspector"])
 
@@ -78,6 +80,42 @@ def list_traces(
             "offset": offset,
         }
     )
+
+
+@router.post("/traces", response_model=ResponseEnvelope)
+def create_trace(payload: ExecutionTraceCreate, session: Session = Depends(get_session)) -> ResponseEnvelope:
+    if crud.get_execution_trace(session, payload.trace_id):
+        raise HTTPException(status_code=409, detail=f"Trace {payload.trace_id} already exists")
+
+    trace = TbExecutionTrace(
+        trace_id=payload.trace_id,
+        parent_trace_id=payload.parent_trace_id,
+        feature=payload.feature,
+        endpoint=payload.endpoint,
+        method=payload.method,
+        ops_mode=payload.ops_mode,
+        question=payload.question,
+        status=payload.status,
+        duration_ms=payload.duration_ms,
+        request_payload=payload.request_payload,
+        applied_assets=payload.applied_assets,
+        asset_versions=payload.asset_versions,
+        fallbacks=payload.fallbacks,
+        plan_raw=payload.plan_raw,
+        plan_validated=payload.plan_validated,
+        execution_steps=payload.execution_steps,
+        references=payload.references,
+        answer=payload.answer,
+        ui_render=payload.ui_render,
+        audit_links=payload.audit_links,
+        flow_spans=[span.model_dump() for span in (payload.flow_spans or [])],
+        route=payload.route,
+        stage_inputs=payload.stage_inputs or [],
+        stage_outputs=payload.stage_outputs or [],
+        replan_events=payload.replan_events or [],
+    )
+    created = crud.create_execution_trace(session, trace)
+    return ResponseEnvelope.success(data={"trace_id": created.trace_id})
 
 
 @router.get("/traces/{trace_id}", response_model=ResponseEnvelope)

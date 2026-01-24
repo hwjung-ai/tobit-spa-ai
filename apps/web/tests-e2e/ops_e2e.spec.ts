@@ -15,7 +15,7 @@ test.describe('Ops Query and Inspector Integration', () => {
   test('Case1: /ops/query -> Open in Inspector - Complete Flow', async ({ page }) => {
     // 1. Navigate to /ops/query page
     await page.goto(`${BASE_URL}/ops/query`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     console.log('Navigated to /ops/query');
 
@@ -57,7 +57,7 @@ test.describe('Ops Query and Inspector Integration', () => {
     // 1. Navigate to inspector directly with a test trace
     const testTraceId = 'test-trace-empty-flow';
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     console.log(`Navigated to inspector with trace_id=${testTraceId}`);
 
@@ -135,7 +135,7 @@ test.describe('Ops Query and Inspector Integration', () => {
 
     // 5. Navigate to inspector
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // 6. Verify drawer loaded
     const drawer = page.locator('[data-testid="inspector-drawer"]');
@@ -213,7 +213,7 @@ test.describe('Ops Query and Inspector Integration', () => {
 
     // 4. Navigate to baseline trace
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=${baselineTraceId}`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     console.log(`Opened baseline trace: ${baselineTraceId}`);
 
     // 5. Click Compare button
@@ -292,7 +292,7 @@ test.describe('Ops Query and Inspector Integration', () => {
   test('Case5: /admin/regression page loads and renders regression panel', async ({ page }) => {
     // 1. Navigate to regression page
     await page.goto(`${BASE_URL}/admin/regression`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     console.log('Navigated to /admin/regression');
 
     // 2. Verify page URL
@@ -354,7 +354,7 @@ test.describe('Network Request Validation', () => {
     });
 
     await page.goto(`${BASE_URL}/admin/inspector?trace_id=contract-test-001`);
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     const runRcaBtn = page.locator('[data-testid="drawer-run-rca"]');
     if (await runRcaBtn.isVisible()) {

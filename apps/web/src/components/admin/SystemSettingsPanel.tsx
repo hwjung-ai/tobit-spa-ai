@@ -143,7 +143,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           <input
             type={showPassword ? 'text' : 'password'}
             value={displayValue}
-            onChange={(e) => handleSettingChange(key, e.target.value)}
+            onChange={(e) => handleSettingChange(key, e.target.value as string)}
             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
@@ -161,7 +161,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
       <input
         type="text"
         value={displayValue}
-        onChange={(e) => handleSettingChange(key, e.target.value)}
+        onChange={(e) => handleSettingChange(key, e.target.value as string)}
         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     );
@@ -241,7 +241,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
             ) : (
               currentSettings.map((setting) => {
                 const settingKey = setting.key || Object.keys(setting)[0];
-                const settingValue = setting.value || setting[settingKey];
+                const settingValue = setting.value || (setting as Record<string, unknown>)[settingKey];
                 const currentValue = changes[settingKey] !== undefined ? changes[settingKey] : settingValue;
                 const hasChanged = changes[settingKey] !== undefined;
 

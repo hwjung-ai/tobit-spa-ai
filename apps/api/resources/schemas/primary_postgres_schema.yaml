@@ -1,0 +1,13 @@
+name: primary_postgres_schema
+description: "Schema catalog placeholder for primary_postgres (env fallback)"
+source_ref: primary_postgres
+catalog:
+  name: primary_postgres_schema
+  description: "Placeholder catalog; run scan to populate"
+  source_ref: primary_postgres
+  tables: []
+  scan_status: pending
+  scan_metadata: {}
+scope: default
+tags:
+  env_fallback: true

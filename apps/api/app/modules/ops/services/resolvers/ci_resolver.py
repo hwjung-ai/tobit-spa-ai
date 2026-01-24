@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from scripts.seed.utils import get_postgres_conn
+from core.db_pg import get_pg_connection
 
 from app.shared.config_loader import load_text
 
@@ -40,7 +40,7 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
     hits: list[CIHit] = []
     seen_codes: set[str] = set()
 
-    with get_postgres_conn() as conn:
+    with get_pg_connection() as conn:
         with conn.cursor() as cur:
             if codes:
                 # 단계 1: 명시 CI코드의 정확 매칭만 수행

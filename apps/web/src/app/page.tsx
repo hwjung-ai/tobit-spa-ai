@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { authenticatedFetch } from "@/lib/apiClient";
+import { authenticatedFetch } from "@/lib/apiClient/index";
 
 type ChunkType = "answer" | "summary" | "detail" | "done" | "error";
 
@@ -70,7 +70,7 @@ const formatTimestamp = (value: string) => {
 export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [chunks, setChunks] = useState<StreamChunk[]>([]);
-  const eventSourceRef = useRef<EventSource>();
+  const eventSourceRef = useRef<EventSource | null>(null);
   const [threads, setThreads] = useState<ThreadRead[]>([]);
   const [activeThread, setActiveThread] = useState<ThreadDetail | null>(null);
   const [loadingThreads, setLoadingThreads] = useState(false);
@@ -86,10 +86,10 @@ export default function Home() {
     setThreadsError(null);
     try {
       const payload = await authenticatedFetch<ThreadRead[]>(`/threads`);
-      setThreads(payload);
+      setThreads(payload.data ?? []);
     } catch (error: unknown) {
       console.error("Failed to load threads", error);
-      setThreadsError(error?.message || "Failed to load threads");
+      setThreadsError(error instanceof Error ? error.message : "Failed to load threads");
     } finally {
       setLoadingThreads(false);
     }
@@ -104,7 +104,8 @@ export default function Home() {
 
   const fetchThreadDetail = useCallback(
     async (threadId: string) => {
-      const detail = await authenticatedFetch<ThreadDetail>(`/threads/${threadId}`);
+      const payload = await authenticatedFetch<ThreadDetail>(`/threads/${threadId}`);
+      const detail = payload.data;
       setActiveThread(detail);
       setThreads((prev) => {
         const existing = prev.find((thread) => thread.id === detail.id);
@@ -162,10 +163,11 @@ export default function Home() {
   };
 
   const createThreadResource = useCallback(async (): Promise<ThreadDetail> => {
-    const thread = await authenticatedFetch<ThreadDetail>(`/threads`, {
+    const payload = await authenticatedFetch<ThreadDetail>(`/threads`, {
       method: "POST",
       body: JSON.stringify({ title: "New conversation" }),
     });
+    const thread = payload.data;
     setThreads((prev) => [thread, ...prev.filter((item) => item.id !== thread.id)]);
     setActiveThread(thread);
     setChunks([]);
@@ -189,13 +191,8 @@ export default function Home() {
     }
     const threadParam = `&thread_id=${thread.id}`;
     const token = localStorage.getItem("access_token");
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
     const source = new EventSource(
-      `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}`,
-      { withCredentials: true, headers }
+      `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`
     );
     eventSourceRef.current = source;
 

@@ -2,7 +2,6 @@
 
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import BuilderShell from "../../components/builder/BuilderShell";
 import Neo4jGraphFlow, {
   type Neo4jFlowEdge,

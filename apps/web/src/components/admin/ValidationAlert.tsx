@@ -3,6 +3,7 @@
 interface ValidationAlertProps {
     errors: string[];
     onClose?: () => void;
+    isWarning?: boolean;
 }
 
 export default function ValidationAlert({ errors, onClose }: ValidationAlertProps) {

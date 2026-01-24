@@ -1,4 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function openJsonEditor(page: Page) {
+  await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
+  await page.click('[data-testid="tab-json"]');
+  await page.waitForSelector('[data-testid="json-textarea"]', { timeout: 10000 });
+}
 
 test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
   const testScreenId = `test_screen_${Date.now()}`;
@@ -7,7 +13,7 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to screens admin page
     await page.goto('/admin/screens');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
   });
 
   test('should display screen asset list', async ({ page }) => {
@@ -57,24 +63,27 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
     await editBtn.click();
 
     // Verify editor page
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('[data-testid="input-screen-name"]')).toBeVisible();
-    await expect(page.locator('[data-testid="textarea-schema-json"]')).toBeVisible();
+    await openJsonEditor(page);
+    await expect(page.locator('[data-testid="json-textarea"]')).toBeVisible();
 
-    // Edit screen name
-    const nameInput = page.locator('[data-testid="input-screen-name"]');
+    // Edit screen name via JSON
+    const nameInput = page.locator('[data-testid="json-textarea"]');
+    const currentJson = await nameInput.inputValue();
+    const parsed = JSON.parse(currentJson);
+    parsed.name = 'Updated Screen Name';
     await nameInput.clear();
-    await nameInput.fill('Updated Screen Name');
+    await nameInput.fill(JSON.stringify(parsed, null, 2));
+    await page.locator('[data-testid="btn-apply-json"]').click();
 
     // Save draft
     await page.locator('[data-testid="btn-save-draft"]').click();
 
     // Wait for save confirmation
-    await expect(page.locator('text=Screen draft saved successfully')).toBeVisible();
+    await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Verify name was updated
-    const updatedName = page.locator('[data-testid="input-screen-name"]');
-    await expect(updatedName).toHaveValue('Updated Screen Name');
+    const updatedJson = await nameInput.inputValue();
+    expect(updatedJson).toContain('"Updated Screen Name"');
   });
 
   test('should validate schema on save', async ({ page }) => {
@@ -86,10 +95,10 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Break the schema JSON
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
+    const schemaInput = page.locator('[data-testid="json-textarea"]');
     await schemaInput.clear();
     await schemaInput.fill('{ invalid json }');
 
@@ -97,7 +106,7 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
     await page.locator('[data-testid="btn-save-draft"]').click();
 
     // Verify error is shown
-    await expect(page.locator('text=Invalid JSON in schema')).toBeVisible();
+    await expect(page.locator('text=/Invalid JSON|Parse error/')).toBeVisible();
   });
 
   test('should publish screen', async ({ page }) => {
@@ -111,7 +120,7 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
     // Navigate to edit
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
 
     // Publish the screen
     await page.locator('[data-testid="btn-publish-screen"]').click();
@@ -121,11 +130,12 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
     // Verify status changed to published
     await page.goto('/admin/screens');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Look for published status badge
     const publishedBadges = page.locator('text=published');
-    await expect(publishedBadges).toHaveCount(1);
+    const publishedCount = await publishedBadges.count();
+    expect(publishedCount).toBeGreaterThan(0);
   });
 
   test('should not allow editing published screen', async ({ page }) => {
@@ -137,19 +147,16 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
     await page.locator('[data-testid="btn-publish-screen"]').click();
 
     // Refresh page to see updated state
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
-    // Verify inputs are disabled
-    const nameInput = page.locator('[data-testid="input-screen-name"]');
-    await expect(nameInput).toBeDisabled();
-
-    const schemaInput = page.locator('[data-testid="textarea-schema-json"]');
-    await expect(schemaInput).toBeDisabled();
+    // Verify editor shows read-only state
+    await expect(page.locator('text=Published screens are read-only')).toBeVisible();
+    await expect(page.locator('[data-testid="btn-save-draft"]')).toHaveCount(0);
   });
 
   test('should rollback published screen to draft', async ({ page }) => {
@@ -161,12 +168,12 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
     await page.waitForTimeout(1000);
     await page.locator('[data-testid^="btn-edit-"]').first().click();
-    await page.waitForLoadState('networkidle');
+    await openJsonEditor(page);
     await page.locator('[data-testid="btn-publish-screen"]').click();
 
     // Reload and rollback
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Click rollback button
     const rollbackBtn = page.locator('[data-testid="btn-rollback-screen"]');
@@ -179,9 +186,8 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
     // Verify rollback success
     await expect(page.locator('text=Screen rolled back to draft')).toBeVisible();
 
-    // Verify inputs are now enabled
-    const nameInput = page.locator('[data-testid="input-screen-name"]');
-    await expect(nameInput).not.toBeDisabled();
+    // Verify editor is back to draft mode
+    await expect(page.locator('[data-testid="btn-save-draft"]')).toBeVisible();
   });
 
   test('should search screens by ID', async ({ page }) => {

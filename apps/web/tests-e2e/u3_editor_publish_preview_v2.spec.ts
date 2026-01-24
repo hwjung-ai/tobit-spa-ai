@@ -11,10 +11,10 @@ test.describe("U3 Visual Editor - Publish & Preview", () => {
     await page.click('button[type="submit"]');
 
     // Wait for navigation to complete
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Navigate to editor
-    await page.goto("/admin/screens/test-screen-1", { waitUntil: 'networkidle' });
+    await page.goto("/admin/screens/test-screen-1", { waitUntil: 'domcontentloaded' });
 
     // Wait for editor to load with multiple fallbacks
     try {

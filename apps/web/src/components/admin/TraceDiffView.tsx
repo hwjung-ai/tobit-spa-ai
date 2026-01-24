@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "../../lib/adminUtils";
 import {
   computeTraceDiff,
+  type AssetsDiff,
 } from "../../lib/traceDiffUtils";
 
 interface TraceDiffViewProps {
@@ -116,7 +117,7 @@ function AssetsDiffSection({ diff, showOnlyChanges }: { diff: AssetsDiff; showOn
 /**
  * Asset comparison row (prompt/policy/mapping)
  */
-function AssetComparisonRow({ label, asset }: { label: string; asset: unknown }) {
+function AssetComparisonRow({ label, asset }: { label: string; asset: { changeType: string; before?: { name?: string; version?: string; source?: string }; after?: { name?: string; version?: string; source?: string }; changes?: Record<string, { before: unknown; after: unknown }> } }) {
   if (asset.changeType === "unchanged") {
     return null;
   }
@@ -181,7 +182,7 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: unknown })
         <div className="bg-slate-900/60 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-amber-600 mb-2">Changes</p>
           <div className="text-[11px] text-slate-400 space-y-1">
-            {Object.entries(asset.changes).map(([key, change]: [string, unknown]) => (
+            {Object.entries(asset.changes).map(([key, change]) => (
               <div key={key}>
                 <span className="text-slate-500">{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before)}</span>
@@ -199,7 +200,7 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: unknown })
 /**
  * Section: Plan Diff
  */
-function PlanDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
+function PlanDiffSection({ diff, showOnlyChanges }: { diff: { changeType: string; validated?: { changeType: string; changes?: Record<string, { before: unknown; after: unknown }> }; raw?: { changeType: string; changes?: Record<string, { before: unknown; after: unknown }> } }; showOnlyChanges: boolean }) {
   if (showOnlyChanges && diff.changeType === "same") {
     return null;
   }
@@ -216,7 +217,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyCha
         <div className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-slate-500 mb-2">Validated Plan Changes</p>
           <div className="text-[11px] text-slate-400 space-y-1 max-h-40 overflow-y-auto">
-            {Object.entries(diff.validated.changes || {}).map(([key, change]: [string, unknown]) => (
+            {Object.entries(diff.validated.changes || {}).map(([key, change]: [string, { before: unknown; after: unknown }]) => (
               <div key={key} className="font-mono text-[10px]">
                 <span className="text-slate-500">{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before).substring(0, 30)}...</span>
@@ -233,7 +234,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyCha
         <div className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-slate-500 mb-2">Raw Plan Changes</p>
           <div className="text-[11px] text-slate-400 space-y-1 max-h-40 overflow-y-auto">
-            {Object.entries(diff.raw.changes || {}).map(([key, change]: [string, unknown]) => (
+            {Object.entries(diff.raw.changes || {}).map(([key, change]: [string, { before: unknown; after: unknown }]) => (
               <div key={key} className="font-mono text-[10px]">
                 <span className="text-slate-500">{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before).substring(0, 30)}...</span>
@@ -255,7 +256,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyCha
 /**
  * Section: Tool Calls Diff
  */
-function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
+function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: { added: Array<{ tool_name: string; summary: string }>; removed: Array<{ tool_name: string; summary: string }>; modified: Array<{ tool_name: string; changes: Record<string, { before: unknown; after: unknown }> }>; unchanged: number }; showOnlyChanges: boolean }) {
   const hasChanges = diff.added.length > 0 || diff.removed.length > 0 || diff.modified.length > 0;
 
   if (showOnlyChanges && !hasChanges) {
@@ -276,7 +277,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOn
         <div className="bg-blue-900/20 border border-blue-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-blue-400 mb-2">Added ({diff.added.length})</p>
           <div className="text-[11px] text-blue-300 space-y-1">
-            {diff.added.map((tool: unknown, idx: number) => (
+            {diff.added.map((tool, idx) => (
               <div key={idx}>
                 <span className="font-mono">{tool.tool_name}</span>
               </div>
@@ -290,7 +291,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOn
         <div className="bg-rose-900/20 border border-rose-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-rose-400 mb-2">Removed ({diff.removed.length})</p>
           <div className="text-[11px] text-rose-300 space-y-1">
-            {diff.removed.map((tool: unknown, idx: number) => (
+            {diff.removed.map((tool, idx) => (
               <div key={idx}>
                 <span className="font-mono">{tool.tool_name}</span>
               </div>
@@ -304,7 +305,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOn
         <div className="bg-amber-900/20 border border-amber-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-amber-400 mb-2">Modified ({diff.modified.length})</p>
           <div className="text-[11px] text-amber-300 space-y-1">
-            {diff.modified.map((tool: unknown, idx: number) => (
+            {diff.modified.map((tool, idx) => (
               <div key={idx} className="font-mono">
                 {tool.tool_name}
                 {tool.changes && Object.keys(tool.changes).length > 0 && (
@@ -322,8 +323,8 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOn
 /**
  * Section: References Diff
  */
-function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
-  const hasChanges = Object.values(diff.byType).some((rt: unknown) => rt.added.length > 0 || rt.removed.length > 0);
+function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: { total_before: number; total_after: number; byType: Record<string, { before: string[]; after: string[]; added: string[]; removed: string[] }> }; showOnlyChanges: boolean }) {
+  const hasChanges = Object.values(diff.byType).some((rt) => rt.added.length > 0 || rt.removed.length > 0);
 
   if (showOnlyChanges && !hasChanges) {
     return null;
@@ -338,7 +339,7 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: unknown; showO
         </span>
       </div>
 
-      {Object.entries(diff.byType).map(([type, refs]: [string, unknown]) => (
+      {Object.entries(diff.byType).map(([type, refs]) => (
         <div key={type} className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <p className="text-[10px] uppercase text-slate-500 mb-2">
             {type} ({refs.before.length} → {refs.after.length})
@@ -488,7 +489,13 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
           candidate_trace_id: traceB.trace_id,
         }),
       });
-      router.push(`/admin/inspector?trace_id=${encodeURIComponent(response.data.trace_id)}`);
+      const resolvedTraceId =
+        response.data?.trace_id ?? (response as { trace_id?: string }).trace_id;
+      if (!resolvedTraceId) {
+        setRcaError("Invalid RCA response: missing trace_id.");
+        return;
+      }
+      router.push(`/admin/inspector?trace_id=${encodeURIComponent(resolvedTraceId)}`);
       onClose(); // Close the diff view after kicking off RCA
     } catch (err: unknown) {
       setRcaError(err.message || "Failed to run RCA analysis.");
