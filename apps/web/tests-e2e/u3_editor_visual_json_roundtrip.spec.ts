@@ -1,37 +1,41 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 
-let screenUrl: string | null = null;
+const openDraftScreen = async (page: Page) => {
+  await page.goto("/admin/screens", { waitUntil: "domcontentloaded" });
+  await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 });
 
-test.beforeAll(async ({ browser }) => {
-  const page = await browser.newPage();
-  await page.goto("/admin/screens");
-  await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 10000 });
+  const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({
+    has: page.locator('[data-testid^="status-badge-"]', { hasText: "draft" }),
+  }).first();
+  if (!(await draftCard.isVisible())) {
+    const draftId = `e2e_draft_${Date.now()}`;
+    await page.locator('[data-testid="btn-create-screen"]').click();
+    await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+    await page.locator('[data-testid="input-screen-name"]').fill("E2E Draft Screen");
+    await page.locator('[data-testid="btn-confirm-create"]').click();
+    await page.waitForTimeout(1000);
+  }
 
-  const suffix = Date.now();
-  const screenId = `test_screen_${suffix}`;
-  const screenName = `Test Screen ${suffix}`;
-
-  await page.click('[data-testid="btn-create-screen"]');
-  await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 10000 });
-  await page.fill('[data-testid="input-screen-id"]', screenId);
-  await page.fill('[data-testid="input-screen-name"]', screenName);
-  await page.click('[data-testid="btn-confirm-create"]');
-  await page.waitForSelector("text=Screen created successfully", { timeout: 10000 });
-
-  const openLink = page.locator('[data-testid^="link-screen-"]', { hasText: screenName }).first();
-  await openLink.waitFor({ timeout: 10000 });
-  screenUrl = await openLink.getAttribute("href");
-  await page.close();
-});
+  const draftLink = page
+    .locator('[data-testid^="screen-asset-"]')
+    .filter({
+      has: page.locator('[data-testid^="status-badge-"]', { hasText: "draft" }),
+    })
+    .first()
+    .locator('[data-testid^="link-screen-"]')
+    .first();
+  await draftLink.waitFor({ timeout: 15000 });
+  await draftLink.click();
+};
 
 test.describe("U3 Visual Editor - JSON Roundtrip", () => {
   test.beforeEach(async ({ page }) => {
-    if (!screenUrl) {
-      throw new Error("screenUrl was not initialized");
-    }
-
-    await page.goto(screenUrl);
-    await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
+    page.setDefaultTimeout(15000);
+    page.setDefaultNavigationTimeout(30000);
+    await openDraftScreen(page);
+    await page.waitForSelector('[data-testid="screen-editor-header"]', { timeout: 40000 }).catch(() => {
+      return page.waitForSelector('button:has-text("Save Draft")', { timeout: 40000 });
+    });
 
     // Reset to a blank screen to avoid state bleed between tests.
     await page.click('[data-testid="tab-json"]');
@@ -50,7 +54,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
 
   test("should create and persist a screen with components", async ({ page }) => {
     // Navigate to JSON tab
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     await page.waitForSelector('[data-testid="json-editor"]');
 
     // Verify empty initial state
@@ -76,7 +80,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     await page.waitForSelector('[data-testid^="canvas-component-"]');
 
     // Switch to JSON tab
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     await page.waitForSelector('[data-testid="json-editor"]');
 
     // Verify JSON contains the button component
@@ -87,7 +91,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
 
   test("should sync JSON changes back to visual editor", async ({ page }) => {
     // Navigate to JSON tab
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     await page.waitForSelector('[data-testid="json-editor"]');
 
     // Get current JSON
@@ -112,7 +116,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     await page.click('[data-testid="btn-apply-json"]');
 
     // Switch to Visual tab
-    await page.click('text="Visual"');
+    await page.click('[data-testid="tab-visual"]');
     await page.waitForSelector('[data-testid="canvas-list"]');
 
     // Verify the text component appears in canvas
@@ -121,7 +125,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
 
   test("should validate JSON and show errors for invalid structure", async ({ page }) => {
     // Navigate to JSON tab
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     await page.waitForSelector('[data-testid="json-editor"]');
 
     // Clear and enter invalid JSON
@@ -138,7 +142,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
 
   test("should handle JSON format button", async ({ page }) => {
     // Navigate to JSON tab
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     await page.waitForSelector('[data-testid="json-editor"]');
 
     // Enter minified JSON
@@ -166,7 +170,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     await expect(page.locator('[data-testid^="canvas-component-"]')).toHaveCount(2);
 
     // Switch to JSON
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     const textarea = page.locator('[data-testid="json-textarea"]');
     const json = JSON.parse(await textarea.inputValue());
 
@@ -182,7 +186,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     await page.click('[data-testid="palette-component-input"]');
 
     // Switch to Preview tab
-    await page.click('text="Preview"');
+    await page.click('[data-testid="tab-preview"]');
     await page.waitForSelector('[data-testid="preview-renderer"]');
 
     // Verify components are rendered
@@ -193,22 +197,24 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
   test("should handle component deletion and sync to JSON", async ({ page }) => {
     // Add a component
     await page.click('[data-testid="palette-component-button"]');
+    await page.waitForSelector('[data-testid^="canvas-component-"]', { timeout: 5000 });
     const componentId = await page.locator('[data-testid^="canvas-component-"]').first().getAttribute('data-testid');
+    expect(componentId).toBeTruthy();
+    const componentTestId = componentId ?? "";
 
     // Select it
-    await page.click(`[${componentId}]`);
+    await page.click(`[data-testid="${componentTestId}"]`);
 
     // Delete it using the delete button
-    await page.click(`[data-testid="btn-delete-${componentId?.replace('canvas-component-', '')}"]`);
-
-    // Confirm deletion
-    await page.on('dialog', dialog => dialog.accept());
+    const deleteButtonId = componentTestId.replace("canvas-component-", "");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.click(`[data-testid="btn-delete-${deleteButtonId}"]`);
 
     // Verify it's gone from visual
     await expect(page.locator('[data-testid^="canvas-component-"]')).toHaveCount(0);
 
     // Verify it's gone from JSON
-    await page.click('text="JSON"');
+    await page.click('[data-testid="tab-json"]');
     const textarea = page.locator('[data-testid="json-textarea"]');
     const json = JSON.parse(await textarea.inputValue());
     expect(json.components.length).toBe(0);

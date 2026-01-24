@@ -31,6 +31,10 @@ export interface Asset {
   query_params: Record<string, unknown> | null;
   query_metadata: Record<string, unknown> | null;
 
+  // Screen-specific fields
+  schema_json?: Record<string, unknown> | null;
+  screen_schema?: Record<string, unknown> | null;
+
   // Metadata
   created_by: string | null;
   published_by: string | null;

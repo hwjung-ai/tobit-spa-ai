@@ -94,7 +94,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
     setLoading(true);
     try {
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
-      const assetData = response.asset || response;
+      const assetData = response.data as Asset;
       setAsset(assetData);
       setFormData({
         name: assetData.name || "",
