@@ -181,7 +181,6 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             status={status}
             isDirty={isDirty}
             canPublish={canPublish}
-            canRollback={canRollback}
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublishClick}
             onRollback={handleRollback}
@@ -200,7 +199,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
           {/* Tabs */}
           <div className="flex-1 overflow-hidden">
-            <ScreenEditorTabs assetId={assetId} />
+            <ScreenEditorTabs />
           </div>
         </div>
 
@@ -217,7 +216,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast(null)}
+          onDismiss={() => setToast(null)}
         />
       )}
 

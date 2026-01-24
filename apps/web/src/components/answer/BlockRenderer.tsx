@@ -725,7 +725,8 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
           }
 
           default:
-            throw new Error(`Unsupported block type: ${block.type}`);
+            const _exhaustiveCheck: never = block as never;
+            return _exhaustiveCheck;
           }
         };
         let blockElement: ReactNode;

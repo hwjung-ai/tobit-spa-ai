@@ -16,10 +16,13 @@ import { formatError } from "../../../lib/utils";
 import { fetchApi } from "../../../lib/adminUtils";
 import { useSearchParams } from "next/navigation";
 import type {
+  AliasMapping,
+  PatternRule,
   ResolverAssetResponse,
   ResolverRule,
   ResolverSimulationRequest,
   ResolverSimulationResult,
+  TransformationRule,
 } from "../../../types/asset-registry";
 
 interface ResolverAsset {
@@ -193,7 +196,13 @@ function ResolversContent() {
   };
 
   const handleEditResolver = (resolver: ResolverAssetResponse) => {
-    setEditingResolver(resolver);
+    setEditingResolver({
+      ...resolver,
+      config: {
+        ...resolver.config,
+        version: resolver.config.version ?? 1,
+      },
+    });
     setIsEditDialogOpen(true);
   };
 
@@ -230,9 +239,11 @@ function ResolversContent() {
   const addRule = (ruleType: "alias_mapping" | "pattern_rule" | "transformation") => {
     if (!editingResolver?.config) return;
 
+    const ruleName = `New ${ruleType}`;
+
     const newRule: ResolverRule = {
       rule_type: ruleType,
-      name: `New ${ruleType}`,
+      name: ruleName,
       description: "",
       is_active: true,
       priority: 0,
@@ -245,12 +256,14 @@ function ResolversContent() {
         is_active: true,
         priority: 0,
       } : ruleType === "pattern_rule" ? {
+        name: ruleName,
         pattern: "",
         replacement: "",
         description: "",
         is_active: true,
         priority: 0,
       } : {
+        name: ruleName,
         transformation_type: "",
         field_name: "",
         description: "",

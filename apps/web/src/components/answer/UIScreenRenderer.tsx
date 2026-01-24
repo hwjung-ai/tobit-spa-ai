@@ -91,7 +91,7 @@ export default function UIScreenRenderer({
 
         if (!schema) {
           const assetResp = await fetchApi(`/asset-registry/assets/${screenId}?stage=published`);
-          const assetData = assetResp.data?.asset || assetResp.data || assetResp;
+          const assetData = (assetResp.data as Record<string, unknown> | undefined)?.asset || assetResp.data || assetResp;
           const asset = (assetData as Record<string, unknown>) || {};
           schema = (asset?.schema_json || asset?.screen_schema) as ScreenSchemaV1;
           if (!schema) {
@@ -110,14 +110,14 @@ export default function UIScreenRenderer({
 
         applyBindings(baseState, schema.bindings || null, {
           state: baseState,
-          inputs: baseState.inputs,
+          inputs: baseState.inputs as Record<string, unknown> | undefined,
           context: {},
           trace_id: traceId || null,
         });
 
         applyBindings(baseState, block.bindings || null, {
           state: baseState,
-          inputs: baseState.inputs,
+          inputs: baseState.inputs as Record<string, unknown> | undefined,
           context: {},
           trace_id: traceId || null,
         });
@@ -138,14 +138,14 @@ export default function UIScreenRenderer({
   const context = useMemo(
     () => ({
       state,
-      inputs: state.inputs || {},
+      inputs: (state.inputs as Record<string, unknown>) || {},
       context: {},
       trace_id: traceId || null,
     }),
     [state, traceId]
   );
 
-  const handleAction = async (action: unknown) => {
+  const handleAction = async (action: { handler: string; payload_template?: Record<string, unknown> }) => {
     setState((prev) => {
       const next = { ...prev };
       setLoading(next, action.handler, true);
@@ -157,7 +157,7 @@ export default function UIScreenRenderer({
       const payload = {
         trace_id: traceId || null,
         action_id: action.handler,
-        inputs: renderTemplate(action.payload_template || {}, context),
+        inputs: renderTemplate(action.payload_template || {}, context) as Record<string, unknown>,
         context: {},
         screen_id: screenId,
       };
@@ -187,7 +187,7 @@ export default function UIScreenRenderer({
       setState((prev) => {
         const next = { ...prev };
         setLoading(next, action.handler, false);
-        setError(next, action.handler, err?.message || String(err));
+        setError(next, action.handler, err instanceof Error ? err.message : String(err));
         return next;
       });
     }
@@ -199,8 +199,8 @@ export default function UIScreenRenderer({
       const path = component.bind || `state.${component.id}`;
       set(next, path.replace(/^state\./, ""), value);
 
-      const inputs = { ...(next.inputs || {}) };
-      const inputKey = component.props?.name || component.id;
+      const inputs = { ...(next.inputs as Record<string, unknown>) || {} };
+      const inputKey = (component.props?.name as string) || component.id;
       inputs[inputKey] = value;
       next.inputs = inputs;
       return next;
@@ -228,7 +228,7 @@ export default function UIScreenRenderer({
   const renderComponent = (comp: Component) => {
     const desc = getComponentDescriptor(comp.type);
     const boundValue = comp.bind ? get(state, comp.bind.replace(/^state\./, "")) : undefined;
-    const props = renderTemplate(comp.props || {}, context);
+    const props = renderTemplate(comp.props || {}, context) as Record<string, unknown>;
 
     if (!desc) {
       return (
@@ -239,7 +239,7 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "text") {
-      const content = props.content || boundValue || comp.label || "";
+      const content = (props.content as string) || String(boundValue || comp.label || "");
       return (
         <div key={comp.id} className="text-sm text-slate-100" data-testid={`component-text-${comp.id}`}>
           {content}
@@ -248,7 +248,7 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "markdown") {
-      const content = props.content || boundValue || comp.label || "";
+      const content = (props.content as string) || String(boundValue || comp.label || "");
       return (
         <div key={comp.id} className="prose prose-invert max-w-none text-sm" data-testid={`component-markdown-${comp.id}`}>
           <ReactMarkdown>{content}</ReactMarkdown>
@@ -257,20 +257,21 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "button") {
-      const label = comp.label || props.label || "Button";
+      const label = comp.label || (props.label as string) || "Button";
       const disabled = !!props.disabled;
       const actionId = comp.actions?.[0]?.handler;
-      const isLoading = actionId ? state.__loading?.[actionId] : false;
+      const isLoadingAction = actionId ? !!(state.__loading as Record<string, boolean>)?.[actionId] : false;
+      const action = comp.actions?.[0];
       return (
         <button
           key={comp.id}
           type="button"
           className="rounded-full border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-100 hover:border-slate-500"
-          disabled={disabled || isLoading}
-          onClick={() => comp.actions?.[0] && handleAction(comp.actions[0])}
+          disabled={disabled || isLoadingAction}
+          onClick={() => action && handleAction(action)}
           data-testid={`component-button-${comp.id}`}
         >
-          {isLoading ? "Loading..." : label}
+          {isLoadingAction ? "Loading..." : label}
         </button>
       );
     }
@@ -281,9 +282,9 @@ export default function UIScreenRenderer({
         <input
           key={comp.id}
           className="w-full rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-slate-100"
-          placeholder={props.placeholder}
-          type={props.inputType || "text"}
-          value={value}
+          placeholder={props.placeholder as string}
+          type={(props.inputType as string) || "text"}
+          value={String(value)}
           onChange={(e) => handleInputChange(comp, e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && comp.actions?.[0]) {
@@ -296,13 +297,13 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "table") {
-      const rows = props.rows || boundValue || [];
-      const columns = props.columns || (rows[0] ? Object.keys(rows[0]) : []);
+      const rows = (props.rows as unknown[]) || (boundValue as unknown[]) || [];
+      const columns = (props.columns as string[]) || (Array.isArray(rows[0]) ? Object.keys(rows[0]) : []);
       return (
         <table key={comp.id} className="min-w-full border border-slate-800 text-xs" data-testid={`component-table-${comp.id}`}>
           <thead className="bg-slate-900/80 text-slate-300">
             <tr>
-              {columns.map((col: unknown) => (
+              {columns.map((col) => (
                 <th key={col} className="border border-slate-800 px-2 py-1 text-left">
                   {col}
                 </th>
@@ -312,9 +313,9 @@ export default function UIScreenRenderer({
           <tbody>
             {rows.map((row: unknown, index: number) => (
               <tr key={`${comp.id}-row-${index}`} className="border border-slate-800">
-                {columns.map((col: unknown) => (
+                {columns.map((col) => (
                   <td key={`${comp.id}-${col}-${index}`} className="border border-slate-800 px-2 py-1">
-                    {row[col] ?? ""}
+                    {String((row as Record<string, unknown>)?.[col] ?? "")}
                   </td>
                 ))}
               </tr>
@@ -325,12 +326,13 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "chart") {
-      const series = props.series || [];
-      const data = series[0]?.data || [];
+      const series = (props.series as unknown[]) || [];
+      const firstSeries = series[0] as Record<string, unknown> | undefined;
+      const data = (firstSeries?.data as unknown[]) || [];
       return (
         <div key={comp.id} className="h-52 w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-3" data-testid={`component-chart-${comp.id}`}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+            <LineChart data={data as Record<string, unknown>[]}>
               <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
               <XAxis dataKey="x" stroke="#94a3b8" />
               <YAxis stroke="#94a3b8" />
@@ -343,7 +345,7 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "badge") {
-      const label = props.label || boundValue || comp.label || "Badge";
+      const label = (props.label as string) || String(boundValue || comp.label || "Badge");
       return (
         <span key={comp.id} className="inline-flex rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200" data-testid={`component-badge-${comp.id}`}>
           {label}
@@ -352,50 +354,54 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "tabs") {
-      const tabs = props.tabs || [];
-      const activeIndex = activeTabs[comp.id] ?? props.activeIndex ?? 0;
-      const activeTab = tabs[activeIndex];
+      const tabs = (props.tabs as unknown[]) || [];
+      const activeIndex = activeTabs[comp.id] ?? (props.activeIndex as number) ?? 0;
+      const activeTab = tabs[activeIndex] as Record<string, unknown> | undefined;
       return (
         <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4" data-testid={`component-tabs-${comp.id}`}>
           <div className="flex gap-2">
-            {tabs.map((tab: unknown, index: number) => (
-              <button
-                key={`${comp.id}-tab-${index}`}
-                type="button"
-                className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${
-                  index === activeIndex ? "bg-slate-200 text-slate-900" : "border border-slate-700 text-slate-200"
-                }`}
-                onClick={() => setActiveTabs((prev) => ({ ...prev, [comp.id]: index }))}
-              >
-                {tab.label || `Tab ${index + 1}`}
-              </button>
-            ))}
+            {tabs.map((tab: unknown, index: number) => {
+              const tabItem = tab as Record<string, unknown>;
+              return (
+                <button
+                  key={`${comp.id}-tab-${index}`}
+                  type="button"
+                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${
+                    index === activeIndex ? "bg-slate-200 text-slate-900" : "border border-slate-700 text-slate-200"
+                  }`}
+                  onClick={() => setActiveTabs((prev) => ({ ...prev, [comp.id]: index }))}
+                >
+                  {(tabItem.label as string) || `Tab ${index + 1}`}
+                </button>
+              );
+            })}
           </div>
           <div className="mt-4 space-y-3">
-            {activeTab?.components?.map((child: Component) => renderComponent(child))}
+            {activeTab?.components ? (activeTab.components as Component[]).map((child: Component) => renderComponent(child)) : null}
           </div>
         </div>
       );
     }
 
     if (comp.type === "modal") {
-      const isOpen = props.open ?? false;
+      const isOpen = props.open as boolean | undefined;
       if (!isOpen) return null;
+      const action = comp.actions?.[0];
       return (
         <div key={comp.id} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70" data-testid={`component-modal-${comp.id}`}>
           <div className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-100">{props.title || comp.label}</h3>
+              <h3 className="text-sm font-semibold text-slate-100">{(props.title as string) || comp.label}</h3>
               <button
                 type="button"
                 className="text-xs uppercase tracking-[0.2em] text-slate-400"
-                onClick={() => comp.actions?.[0] && handleAction(comp.actions[0])}
+                onClick={() => action && handleAction(action)}
               >
                 Close
               </button>
             </div>
             <div className="mt-4 space-y-3">
-              {props.components?.map((child: Component) => renderComponent(child))}
+              {props.components ? (props.components as Component[]).map((child: Component) => renderComponent(child)) : null}
             </div>
           </div>
         </div>
@@ -403,48 +409,51 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "keyvalue") {
-      const items = props.items || boundValue || [];
+      const items = (props.items as unknown[]) || (boundValue as unknown[]) || [];
       return (
         <div key={comp.id} className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-xs" data-testid={`component-keyvalue-${comp.id}`}>
-          {items.map((item: unknown, index: number) => (
-            <div key={`${comp.id}-kv-${index}`} className="flex items-center justify-between border-b border-slate-800 py-1 last:border-b-0">
-              <span className="text-slate-400">{item.key}</span>
-              <span className="text-slate-100">{item.value}</span>
-            </div>
-          ))}
+          {items.map((item: unknown, index: number) => {
+            const kvItem = item as Record<string, unknown>;
+            return (
+              <div key={`${comp.id}-kv-${index}`} className="flex items-center justify-between border-b border-slate-800 py-1 last:border-b-0">
+                <span className="text-slate-400">{kvItem.key as string}</span>
+                <span className="text-slate-100">{kvItem.value as string}</span>
+              </div>
+            );
+          })}
         </div>
       );
     }
 
     if (comp.type === "divider") {
-      const orientation = props.orientation || "horizontal";
+      const orientation = (props.orientation as string) || "horizontal";
       return (
         <div key={comp.id} className={orientation === "vertical" ? "h-full w-px bg-slate-700" : "h-px w-full bg-slate-700"} data-testid={`component-divider-${comp.id}`} />
       );
     }
 
     if (comp.type === "row") {
-      const gap = props.gap ?? 4;
-      const align = props.align || "stretch";
-      const justify = props.justify || "start";
+      const gap = (props.gap as number) ?? 4;
+      const align = (props.align as string) || "stretch";
+      const justify = (props.justify as string) || "start";
       const children = (props.components as Component[]) || [];
-      const alignClass = {
+      const alignClass: Record<string, string> = {
         start: "items-start",
         center: "items-center",
         end: "items-end",
         stretch: "items-stretch",
-      }[align] || "items-stretch";
-      const justifyClass = {
+      };
+      const justifyClass: Record<string, string> = {
         start: "justify-start",
         center: "justify-center",
         end: "justify-end",
         between: "justify-between",
         around: "justify-around",
-      }[justify] || "justify-start";
+      };
       return (
         <div
           key={comp.id}
-          className={`flex flex-row ${alignClass} ${justifyClass}`}
+          className={`flex flex-row ${alignClass[align] || "items-stretch"} ${justifyClass[justify] || "justify-start"}`}
           style={{ gap: `${gap * 4}px` }}
           data-testid={`component-row-${comp.id}`}
         >
@@ -458,19 +467,19 @@ export default function UIScreenRenderer({
     }
 
     if (comp.type === "column") {
-      const gap = props.gap ?? 4;
-      const align = props.align || "stretch";
+      const gap = (props.gap as number) ?? 4;
+      const align = (props.align as string) || "stretch";
       const children = (props.components as Component[]) || [];
-      const alignClass = {
+      const alignClass: Record<string, string> = {
         start: "items-start",
         center: "items-center",
         end: "items-end",
         stretch: "items-stretch",
-      }[align] || "items-stretch";
+      };
       return (
         <div
           key={comp.id}
-          className={`flex flex-col ${alignClass}`}
+          className={`flex flex-col ${alignClass[align] || "items-stretch"}`}
           style={{ gap: `${gap * 4}px` }}
           data-testid={`component-column-${comp.id}`}
         >
@@ -495,11 +504,10 @@ export default function UIScreenRenderer({
 
     // Handle grid layout
     if (layoutType === "grid") {
-      const cols = layout?.cols || 2;
-      const gap = layout?.gap || 4;
-      const gridClass = `grid grid-cols-${cols} gap-${gap}`;
+      const cols = (layout?.cols as number) || 2;
+      const gap = (layout?.gap as number) || 4;
       return (
-        <div className={gridClass} data-testid="layout-grid">
+        <div className={`grid grid-cols-${cols} gap-${gap}`} data-testid="layout-grid">
           {components.map((comp) => (
             <div key={comp.id} data-testid={`grid-item-${comp.id}`}>
               {renderComponent(comp)}
@@ -511,8 +519,8 @@ export default function UIScreenRenderer({
 
     // Handle stack (vertical/horizontal) layout
     if (layoutType === "stack" || layoutType === "form" || layoutType === "dashboard") {
-      const direction = layout?.direction || "vertical";
-      const gap = layout?.gap || 4;
+      const direction = (layout?.direction as string) || "vertical";
+      const gap = (layout?.gap as number) || 4;
       const isVertical = direction === "vertical";
       const containerClass = isVertical
         ? `space-y-${gap}`
@@ -529,7 +537,7 @@ export default function UIScreenRenderer({
 
     // Handle list layout
     if (layoutType === "list") {
-      const gap = layout?.gap || 2;
+      const gap = (layout?.gap as number) || 2;
       return (
         <div className={`space-y-${gap}`} data-testid="layout-list">
           {components.map((comp) => (

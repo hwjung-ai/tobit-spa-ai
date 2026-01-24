@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { ReactElement } from "react";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type StageStatus, type StageSnapshot } from "@/lib/apiClientTypes";

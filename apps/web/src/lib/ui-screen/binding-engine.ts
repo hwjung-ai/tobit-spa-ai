@@ -62,10 +62,13 @@ export function applyActionResultToState(state: BindingState, actionId: string, 
   const results = state.results || {};
   results[actionId] = result;
   state.results = results;
-  if (result && typeof result === "object" && result.state_patch) {
-    Object.keys(result.state_patch).forEach((key) => {
-      set(state, key, result.state_patch[key]);
-    });
+  if (result && typeof result === "object") {
+    const resultObj = result as { state_patch?: Record<string, unknown> };
+    if (resultObj.state_patch) {
+      Object.keys(resultObj.state_patch).forEach((key) => {
+        set(state, key, resultObj.state_patch![key]);
+      });
+    }
   }
 }
 

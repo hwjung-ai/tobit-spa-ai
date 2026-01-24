@@ -15,6 +15,7 @@ export interface Asset {
   version: number;
   status: "draft" | "published";
   screen_id?: string | null;
+  tags?: Record<string, unknown> | null;
 
   // Type-specific fields
   scope: string | null;

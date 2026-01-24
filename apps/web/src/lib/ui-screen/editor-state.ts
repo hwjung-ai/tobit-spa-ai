@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ScreenSchemaV1, Component, ScreenAction, ComponentActionRef } from "./screen.schema";
+import { ScreenSchemaV1, Component, ComponentType, ScreenAction, ComponentActionRef } from "./screen.schema";
 import { getComponentDescriptor } from "./component-registry";
 import { validateScreenSchema } from "./validation-utils";
 import { fetchApi } from "../adminUtils";
@@ -22,18 +22,21 @@ export interface EditorState {
   isSaving: boolean;
   isPublishing: boolean;
   isRollbacking: boolean;
-  
+  previewEnabled: boolean;
+  previewError: string | null;
+
   // Computed
   selectedComponent: Component | null;
   isDirty: boolean;
   canPublish: boolean;
   canRollback: boolean;
-  
+
   // Actions
+  setAssetId: (assetId: string) => void;
   loadScreen: (assetId: string) => Promise<void>;
   initializeScreen: (screen: ScreenSchemaV1, status: "draft" | "published") => void;
-  addComponent: (type: string, index?: number) => void;
-  addComponentToParent: (type: string, parentId: string) => void;
+  addComponent: (type: ComponentType, index?: number) => void;
+  addComponentToParent: (type: ComponentType, parentId: string) => void;
   deleteComponent: (id: string) => void;
   selectComponent: (id: string | null) => void;
   updateComponentProps: (id: string, props: Record<string, unknown>) => void;
@@ -43,51 +46,53 @@ export interface EditorState {
   reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => void;
   updateLayout: (layout: unknown) => void;
   updateScreenFromJson: (json: string) => void;
-  
+
   // Action CRUD (screen-level)
   addAction: (action: ScreenAction) => void;
   updateAction: (actionId: string, updates: Partial<ScreenAction>) => void;
   deleteAction: (actionId: string) => void;
   getAction: (actionId: string) => ScreenAction | null;
-  
+
   // Component Action CRUD
   addComponentAction: (componentId: string, action: ComponentActionRef) => void;
   updateComponentAction: (componentId: string, actionId: string, updates: Partial<ComponentActionRef>) => void;
   deleteComponentAction: (componentId: string, actionId: string) => void;
   getComponentActions: (componentId: string) => ComponentActionRef[];
-  
+
   // Binding management
   updateBinding: (targetPath: string, sourcePath: string) => void;
   deleteBinding: (targetPath: string) => void;
   getAllBindings: () => Record<string, string>;
-  
+
   // Component visibility
   updateComponentVisibility: (componentId: string, visibleIf: string | null) => void;
-  
+
   // Action testing (Phase 4)
   testAction: (actionId: string, payload?: Record<string, unknown>) => Promise<unknown>;
   applyStatePatch: (patch: Record<string, unknown>) => void;
-  
+
   // Preview/Patch management (Phase 4 - Copilot)
-  previewEnabled: boolean;
   setProposedPatch: (patch: string | null) => void;
   disablePreview: () => void;
   previewPatch: () => void;
   applyProposedPatch: () => void;
   discardProposal: () => void;
-  previewError: string | null;
-  
+
+  // Draft/Publish/Rollback
   saveDraft: () => Promise<void>;
   publish: () => Promise<void>;
   rollback: () => Promise<void>;
+
+  // Validation
   validateScreen: () => ValidationError[];
+
+  // Reset
   reset: () => void;
-  setAssetId: (assetId: string) => void;
 }
 
 
 // Helper to create default component
-function createDefaultComponent(type: string, id: string): Component {
+function createDefaultComponent(type: ComponentType, id: string): Component {
   const descriptor = getComponentDescriptor(type);
   const component: Component = {
     id,
@@ -346,6 +351,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
   setAssetId: (assetId: string) => {
     currentAssetId = assetId;
   },
+  previewPatch: () => {
+    set((state) => ({
+      previewEnabled: !state.previewEnabled,
+      previewError: null,
+    }));
+  },
 
   loadScreen: async (assetId: string) => {
     try {
@@ -392,7 +403,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
-  addComponent: (type: string, index?: number) => {
+  addComponent: (type: ComponentType, index?: number) => {
     console.log("[EDITOR] Adding component:", type);
     set((state) => {
       if (!state.screen) {
@@ -428,7 +439,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
-  addComponentToParent: (type: string, parentId: string) => {
+  addComponentToParent: (type: ComponentType, parentId: string) => {
     console.log("[EDITOR] Adding component to parent:", type, parentId);
     set((state) => {
       if (!state.screen) {

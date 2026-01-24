@@ -9,7 +9,6 @@ import DiffViewer from "./DiffViewer";
 
 export default function DiffTab() {
   const editorState = useEditorState();
-  const [compareMode, setCompareMode] = useState<"draft-published">("draft-published");
 
   const diff = useMemo(() => {
     const effective = editorState.screen;
@@ -29,7 +28,7 @@ export default function DiffTab() {
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <DiffControls mode={compareMode} onModeChange={setCompareMode} />
+      <DiffControls />
       <DiffSummary diff={diff} />
       <DiffViewer diff={diff} />
     </div>

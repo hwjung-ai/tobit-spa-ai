@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense } from "react";
+import React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Toast from "../../../components/admin/Toast";
@@ -1645,9 +1645,7 @@ function InspectorContent() {
 export default function InspectorPage() {
   return (
     <ReactFlowProvider>
-      <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
-        <InspectorContent />
-      </Suspense>
+      <InspectorContent />
     </ReactFlowProvider>
   );
 }

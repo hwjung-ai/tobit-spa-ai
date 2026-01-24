@@ -73,7 +73,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
   const previewBlock = useMemo(() => {
     if (!asset) return null;
     return {
-      type: "ui_screen",
+      type: "ui_screen" as const,
       screen_id: asset.screen_id,
       params: {},
     };

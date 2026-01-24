@@ -11,6 +11,15 @@ interface UserPermission {
   granted_at?: string;
 }
 
+interface User {
+  username: string;
+  email: string;
+  is_active: boolean;
+  login_count: number;
+  last_login: string | null;
+  created_at: string;
+}
+
 interface AuditLog {
   user_id: string;
   admin_id: string;
@@ -25,7 +34,7 @@ interface UserPermissionsPanelProps {
 }
 
 const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) => {
-  const [user, setUser] = useState<unknown>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [newPermission, setNewPermission] = useState('');

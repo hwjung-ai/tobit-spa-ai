@@ -46,13 +46,13 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
         body: JSON.stringify(payload),
       });
 
-      return response.data;
+      return response.data as { trace_id?: string; blocks?: unknown[] };
     },
     onSuccess: (data) => {
-      setActionTraceId(data.trace_id);
-      setResultBlocks(data.blocks || []);
+      setActionTraceId(data.trace_id || null);
+      setResultBlocks((data.blocks || []) as unknown[]);
       if (onResult) {
-        onResult(data.blocks || []);
+        onResult((data.blocks || []) as unknown[]);
       }
     },
   });
@@ -115,11 +115,9 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
 
       {/* Error */}
       {executeMutation.isError && (
-        <Alert variant="destructive">
-          <AlertDescription>
-            {executeMutation.error instanceof Error ? executeMutation.error.message : "Execution failed"}
-          </AlertDescription>
-        </Alert>
+        <div className="mt-3 px-4 py-3 border border-red-900/50 rounded bg-red-950/50 text-red-200">
+          {executeMutation.error instanceof Error ? executeMutation.error.message : "Execution failed"}
+        </div>
       )}
 
       {/* Result */}
@@ -141,9 +139,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
 
           {/* Render result blocks inline */}
           <div className="space-y-3">
-            {resultBlocks.map((resultBlock, idx) => (
-              <BlockRenderer key={idx} block={resultBlock} index={idx} traceId={actionTraceId || ""} />
-            ))}
+            <BlockRenderer blocks={resultBlocks} traceId={actionTraceId || ""} />
           </div>
         </div>
       )}

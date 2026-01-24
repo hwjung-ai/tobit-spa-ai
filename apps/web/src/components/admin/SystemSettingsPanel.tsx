@@ -160,8 +160,8 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
     return (
       <input
         type="text"
-        value={displayValue}
-        onChange={(e) => handleSettingChange(key, e.target.value as string)}
+        value={String(displayValue)}
+        onChange={(e) => handleSettingChange(key, e.target.value)}
         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     );
@@ -240,8 +240,8 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
               <p className="text-gray-500 text-center py-8">No settings in this category</p>
             ) : (
               currentSettings.map((setting) => {
-                const settingKey = setting.key || Object.keys(setting)[0];
-                const settingValue = setting.value || (setting as Record<string, unknown>)[settingKey];
+                const settingKey = setting.key;
+                const settingValue = setting.value;
                 const currentValue = changes[settingKey] !== undefined ? changes[settingKey] : settingValue;
                 const hasChanged = changes[settingKey] !== undefined;
 

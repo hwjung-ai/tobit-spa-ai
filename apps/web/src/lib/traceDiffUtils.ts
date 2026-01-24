@@ -339,21 +339,21 @@ export function diffToolCalls(traceA: unknown, traceB: unknown): ToolCallsDiff {
 
   const added: Array<{ tool_name: string; summary: string }> = [];
   const removed: Array<{ tool_name: string; summary: string }> = [];
-  const modified: Array<{ tool_name: string; changes: { [key: string]: { before: unknown; after: unknown } } }> = [];
+  const modified: Array<{ tool_name: string; changes: Record<string, { before: unknown; after: unknown }> }> = [];
   let unchanged = 0;
 
   // Process matched steps
   const matchedAfterIndices = new Set(matches.values());
   for (const [beforeIdx, afterIdx] of matches.entries()) {
-    const stepBefore = stepsA[beforeIdx];
-    const stepAfter = stepsB[afterIdx];
+    const stepBefore = stepsA[beforeIdx] as Record<string, unknown>;
+    const stepAfter = stepsB[afterIdx] as Record<string, unknown>;
 
     const changes = deepCompareObjects(stepBefore, stepAfter);
     if (Object.keys(changes).length === 0) {
       unchanged++;
     } else {
       modified.push({
-        tool_name: stepBefore.tool_name || stepBefore.step_id || "?",
+        tool_name: String(stepBefore.tool_name || stepBefore.step_id || "?"),
         changes,
       });
     }
@@ -363,7 +363,7 @@ export function diffToolCalls(traceA: unknown, traceB: unknown): ToolCallsDiff {
   for (let i = 0; i < stepsA.length; i++) {
     if (!matches.has(i)) {
       removed.push({
-        tool_name: stepsA[i].tool_name || stepsA[i].step_id || "?",
+        tool_name: String(stepsA[i].tool_name || stepsA[i].step_id || "?"),
         summary: summarizeToolCall(stepsA[i]),
       });
     }
@@ -373,7 +373,7 @@ export function diffToolCalls(traceA: unknown, traceB: unknown): ToolCallsDiff {
   for (let j = 0; j < stepsB.length; j++) {
     if (!matchedAfterIndices.has(j)) {
       added.push({
-        tool_name: stepsB[j].tool_name || stepsB[j].step_id || "?",
+        tool_name: String(stepsB[j].tool_name || stepsB[j].step_id || "?"),
         summary: summarizeToolCall(stepsB[j]),
       });
     }
@@ -399,18 +399,19 @@ export function diffReferences(traceA: unknown, traceB: unknown): ReferencesDiff
   const byType: Record<string, { before: string[]; after: string[]; added: string[]; removed: string[] }> = {};
 
   // Group references by type
-  const typesBefore = new Set(refsA.map((r: Record<string, unknown>) => r.ref_type));
-  const typesAfter = new Set(refsB.map((r: Record<string, unknown>) => r.ref_type));
+  const typesBefore = new Set(refsA.map((r: Record<string, unknown>) => r.ref_type as string));
+  const typesAfter = new Set(refsB.map((r: Record<string, unknown>) => r.ref_type as string));
   const allTypes = new Set([...typesBefore, ...typesAfter]);
 
   for (const type of allTypes) {
-    const refsBefore = refsA.filter((r: Record<string, unknown>) => r.ref_type === type).map((r: Record<string, unknown>) => (r.name || r.statement) as string || "?");
-    const refsAfter = refsB.filter((r: Record<string, unknown>) => r.ref_type === type).map((r: Record<string, unknown>) => (r.name || r.statement) as string || "?");
+    const typeStr = type as string;
+    const refsBefore = refsA.filter((r: Record<string, unknown>) => r.ref_type === typeStr).map((r: Record<string, unknown>) => (r.name || r.statement) as string || "?");
+    const refsAfter = refsB.filter((r: Record<string, unknown>) => r.ref_type === typeStr).map((r: Record<string, unknown>) => (r.name || r.statement) as string || "?");
 
     const added = refsAfter.filter((r) => !refsBefore.includes(r));
     const removed = refsBefore.filter((r) => !refsAfter.includes(r));
 
-    byType[type] = {
+    byType[typeStr] = {
       before: refsBefore,
       after: refsAfter,
       added,

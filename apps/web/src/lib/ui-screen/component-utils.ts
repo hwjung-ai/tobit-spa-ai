@@ -1,10 +1,10 @@
-import { ScreenSchemaV1, Component } from "./screen.schema";
+import { ScreenSchemaV1, Component, ComponentType } from "./screen.schema";
 import { getComponentDescriptor } from "./component-registry";
 
 /**
  * Generate a unique component ID based on type
  */
-export function generateComponentId(type: string, existingComponents: Component[]): string {
+export function generateComponentId(type: ComponentType, existingComponents: Component[]): string {
   let counter = 1;
   let id = `${type}_${counter}`;
   while (existingComponents.some(c => c.id === id)) {
@@ -14,10 +14,7 @@ export function generateComponentId(type: string, existingComponents: Component[
   return id;
 }
 
-/**
- * Create a default component with minimal props
- */
-export function createDefaultComponent(type: string, id: string): Component {
+export function createDefaultComponent(type: ComponentType, id: string): Component {
   const descriptor = getComponentDescriptor(type);
   return {
     id,
@@ -143,7 +140,7 @@ export function duplicateComponentInSchema(
   const component = findComponentById(schema, componentId);
   if (!component) return schema;
 
-  const newId = generateComponentId(component.type, schema.components);
+  const newId = generateComponentId(component.type as ComponentType, schema.components);
   const newComponent: Component = {
     ...JSON.parse(JSON.stringify(component)),
     id: newId,
@@ -176,12 +173,12 @@ export function findComponentIndex(
  * Validate component structure
  */
 export function isValidComponent(component: unknown): boolean {
+  if (!component || typeof component !== "object") return false;
+  const c = component as Record<string, unknown>;
   return (
-    component &&
-    typeof component === "object" &&
-    typeof component.id === "string" &&
-    typeof component.type === "string" &&
-    ["text", "markdown", "button", "input", "table", "chart", "badge", "tabs", "modal", "keyvalue", "divider"].includes(component.type)
+    typeof c.id === "string" &&
+    typeof c.type === "string" &&
+    ["text", "markdown", "button", "input", "table", "chart", "badge", "tabs", "modal", "keyvalue", "divider"].includes(c.type)
   );
 }
 
@@ -189,16 +186,16 @@ export function isValidComponent(component: unknown): boolean {
  * Validate schema structure
  */
 export function isValidSchema(schema: unknown): boolean {
+  if (!schema || typeof schema !== "object") return false;
+  const s = schema as Record<string, unknown>;
   return (
-    schema &&
-    typeof schema === "object" &&
-    typeof schema.screen_id === "string" &&
-    schema.layout &&
-    typeof schema.layout === "object" &&
-    Array.isArray(schema.components) &&
-    schema.components.every((c: unknown) => isValidComponent(c)) &&
-    schema.state &&
-    typeof schema.state === "object" &&
-    typeof schema.bindings === "object"
+    typeof s.screen_id === "string" &&
+    s.layout &&
+    typeof s.layout === "object" &&
+    Array.isArray(s.components) &&
+    s.components.every(isValidComponent) &&
+    s.state &&
+    typeof s.state === "object" &&
+    typeof s.bindings === "object"
   );
 }
