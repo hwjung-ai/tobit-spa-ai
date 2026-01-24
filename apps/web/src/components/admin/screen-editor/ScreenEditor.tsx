@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ScreenEditorCopilotPanel from "./CopilotPanel";
@@ -40,7 +40,6 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const isDirty = draftModified;
   const canPublish = status === "draft" &&
     validationErrors.filter(e => e.severity === "error").length === 0;
-  const canRollback = status === "published";
 
   // Check authentication on mount
   useEffect(() => {

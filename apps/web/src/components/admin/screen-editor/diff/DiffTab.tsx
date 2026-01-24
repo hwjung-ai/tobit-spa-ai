@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { compareScreens } from "@/lib/ui-screen/screen-diff-utils";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import DiffControls from "./DiffControls";

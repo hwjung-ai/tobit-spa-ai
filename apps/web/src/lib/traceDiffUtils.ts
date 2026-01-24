@@ -379,12 +379,14 @@ export function diffToolCalls(traceA: unknown, traceB: unknown): ToolCallsDiff {
     }
   }
 
-  return {
+  const diffResult: ToolCallsDiff = {
     added,
     removed,
     modified,
     unchanged,
   };
+
+  return diffResult;
 }
 
 /**
