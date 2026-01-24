@@ -16,6 +16,15 @@ api-format:
 api-test:
 	cd apps/api && .venv/bin/pytest
 
+api-test-unit:
+	cd apps/api && .venv/bin/pytest tests/unit/
+
+api-test-integration:
+	cd apps/api && .venv/bin/pytest tests/integration/
+
+api-test-security:
+	cd apps/api && .venv/bin/pytest tests/test_security*.py tests/test_encryption.py tests/test_permissions.py tests/test_api_keys.py
+
 api-migrate:
 	cd apps/api && .venv/bin/alembic upgrade head
 
@@ -36,6 +45,18 @@ web-format:
 
 web-test:
 	cd apps/web && npm run test
+
+web-test-e2e:
+	cd apps/web && npm run test:e2e
+
+web-test-e2e-ui:
+	cd apps/web && npx playwright test --ui
+
+web-test-e2e-headed:
+	cd apps/web && npx playwright test --headed
+
+e2e-test:
+	pytest tests/ops_e2e/
 
 dev:
 	npx concurrently --kill-others-on-fail --names "API,WORKER,WEB" --prefix-colors "blue,magenta,green" "cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000" "cd apps/api && .venv/bin/python run_worker.py" "cd apps/web && npm run dev:log"

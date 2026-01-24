@@ -35,6 +35,7 @@
 - **[docs/OPERATIONS.md](./docs/OPERATIONS.md)**: 기능 검증을 위한 운영 체크리스트 및 절차를 안내합니다 (U3-2 포함).
 - **[docs/IMPLEMENTATION_ROADMAP.md](./docs/IMPLEMENTATION_ROADMAP.md)**: Phase별 구체적 구현 계획, 의존성, 타임라인을 정의합니다.
 - **[docs/TESTIDS.md](./docs/TESTIDS.md)**: E2E 테스트 data-testid 표준 명세입니다.
+- **[docs/TESTING_STRUCTURE.md](./docs/TESTING_STRUCTURE.md)**: 전체 테스트 구조, 실행 방법, 결과 저장 위치 등 테스트 표준 가이드입니다.
 
 ---
 

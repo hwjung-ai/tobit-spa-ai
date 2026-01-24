@@ -199,6 +199,8 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
      ```bash
      # apps/api 디렉토리에서 실행
      pytest tests/                           # 전체 테스트 실행
+     pytest tests/unit/                      # 단위 테스트만 실행
+     pytest tests/integration/               # 통합 테스트만 실행
      pytest tests/test_specific.py          # 특정 파일 테스트
      pytest tests/test_specific.py::test_func  # 특정 함수 테스트
      pytest -v                               # Verbose 모드 (상세 출력)
@@ -207,6 +209,9 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 
      # 또는 프로젝트 루트에서
      make api-test                           # 전체 백엔드 테스트 실행
+     make api-test-unit                      # 단위 테스트만 실행
+     make api-test-integration               # 통합 테스트만 실행
+     make api-test-security                  # 보안 테스트만 실행
      ```
 
      **테스트 작성 규칙**:
@@ -231,9 +236,13 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
      npx playwright test ui-screen.spec.ts
 
      # UI 모드로 실행 (디버깅용)
+     make web-test-e2e-ui
+     # 또는
      npx playwright test --ui
 
      # 헤드풀 모드 (브라우저 표시)
+     make web-test-e2e-headed
+     # 또는
      npx playwright test --headed
      ```
      UI 컴포넌트, 사용자 흐름, 대화 상자, 버튼 동작 등 변경 시 필수 실행
