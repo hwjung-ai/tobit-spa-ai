@@ -24,3 +24,7 @@ Thumbs.db
 # Logs
 apps/api/logs/
 apps/web/logs/
+
+# Test results
+test-results/
+playwright-report/
