@@ -1,6 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+import { Suspense } from "react";
+
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
@@ -28,7 +29,7 @@ interface DocumentMeta {
   updated_at: string;
 }
 
-export default function DocumentViewerPage() {
+function DocumentViewerContent() {
   const apiBaseUrl = sanitizeUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const params = useParams();
   const documentId = params?.documentId;
@@ -299,5 +300,13 @@ export default function DocumentViewerPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function DocumentViewerPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+      <DocumentViewerContent />
+    </Suspense>
   );
 }

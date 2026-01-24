@@ -30,7 +30,8 @@ export type AnswerBlock =
   | PathBlock
   | UIPanelBlock
   | UIScreenBlock
-  & { [key: string]: unknown };
+  & { [key: string]: unknown }
+  & { references?: ReferenceEntry[]; payload_summary?: string | null };
 
 export interface AnswerEnvelope {
   meta: AnswerMeta;
@@ -185,8 +186,21 @@ export interface ReferenceLink {
 export interface ReferencesBlock {
   type: "references";
   title?: string;
-  items: ReferenceLink[];
+  payload_summary?: string | null;
+  references?: ReferenceEntry[];
+  items?: ReferenceLink[];
   id?: BlockId;
+}
+
+export interface ReferenceEntry {
+  ref_type: string;
+  name: string;
+  engine?: string | null;
+  statement?: string | null;
+  params?: Record<string, unknown> | null;
+  row_count?: number | null;
+  latency_ms?: number | null;
+  source_id?: string | null;
 }
 
 export interface UIScreenBlock {

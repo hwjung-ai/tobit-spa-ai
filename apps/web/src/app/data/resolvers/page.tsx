@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -14,89 +14,12 @@ import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { formatError } from "../../../lib/utils";
 import { useSearchParams } from "next/navigation";
-
-// Resolver types based on backend API
-interface ResolverAssetResponse {
-  asset_id: string;
-  asset_type: string;
-  name: string;
-  description?: string;
-  version: number;
-  status: string;
-  config: {
-    name: string;
-    description?: string;
-    rules: ResolverRule[];
-    default_namespace?: string;
-    tags?: Record<string, unknown>;
-    version: number;
-  };
-  scope?: string;
-  tags?: Record<string, unknown>;
-  created_by?: string;
-  published_by?: string;
-  published_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ResolverRule {
-  rule_type: "alias_mapping" | "pattern_rule" | "transformation";
-  name: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-  extra_metadata?: Record<string, unknown>;
-  rule_data: AliasMapping | PatternRule | TransformationRule;
-}
-
-interface AliasMapping {
-  source_entity: string;
-  target_entity: string;
-  namespace?: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-}
-
-interface PatternRule {
-  pattern: string;
-  replacement: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-}
-
-interface TransformationRule {
-  transformation_type: string;
-  field_name: string;
-  description?: string;
-  is_active: boolean;
-  priority: number;
-  parameters?: Record<string, unknown>;
-}
-
-interface ResolverSimulationRequest {
-  config: {
-    name: string;
-    description?: string;
-    rules: ResolverRule[];
-    default_namespace?: string;
-    tags?: Record<string, unknown>;
-    version: number;
-  };
-  test_entities: string[];
-  simulation_options?: Record<string, unknown>;
-}
-
-interface ResolverSimulationResult {
-  original_entity: string;
-  resolved_entity: string;
-  transformations_applied: string[];
-  confidence_score: number;
-  matched_rules: string[];
-  extra_metadata?: Record<string, unknown>;
-}
+import type {
+  ResolverAssetResponse,
+  ResolverRule,
+  ResolverSimulationRequest,
+  ResolverSimulationResult,
+} from "../../../types/asset-registry";
 
 interface ResolverAsset {
   asset_id?: string;
@@ -139,16 +62,16 @@ const formatStatus = (status: string) => {
   return STATUS_LABELS[status] || status;
 };
 
-export default function ResolversPage() {
+function ResolversContent() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   // Use effect to get searchParams on client side
   useEffect(() => {
-    const searchParams = useSearchParams();
     setSelectedAssetId(searchParams.get("asset_id"));
-  }, []);
+  }, [searchParams]);
 
   const [selectedResolver, setSelectedResolver] = useState<ResolverAssetResponse | null>(null);
   const [editingResolver, setEditingResolver] = useState<Partial<ResolverAsset> | null>(null);
@@ -1008,5 +931,13 @@ export default function ResolversPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function ResolversPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+      <ResolversContent />
+    </Suspense>
   );
 }

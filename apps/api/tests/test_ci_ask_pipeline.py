@@ -31,7 +31,7 @@ def test_ci_ask_direct_route(monkeypatch, client):
 
     ops_router = importlib.import_module("app.modules.ops.router")
 
-    def fake_plan_output(_: str) -> PlanOutput:
+    def fake_plan_output(_: str, **_kwargs: Any) -> PlanOutput:
         return PlanOutput(
             kind=PlanOutputKind.DIRECT,
             direct_answer=DirectAnswerPayload(answer="Hello there!", confidence=0.9),
@@ -59,7 +59,7 @@ def test_ci_ask_reject_route(monkeypatch, client):
 
     ops_router = importlib.import_module("app.modules.ops.router")
 
-    def fake_plan_output(_: str) -> PlanOutput:
+    def fake_plan_output(_: str, **_kwargs: Any) -> PlanOutput:
         return PlanOutput(
             kind=PlanOutputKind.REJECT,
             reject_payload=RejectPayload(reason="Unsupported question", confidence=1.0),
@@ -90,10 +90,10 @@ def test_ci_ask_orchestration_stages(monkeypatch, client):
 
     plan = Plan()
 
-    def fake_plan_output(_: str) -> PlanOutput:
+    def fake_plan_output(_: str, **_kwargs: Any) -> PlanOutput:
         return PlanOutput(kind=PlanOutputKind.PLAN, plan=plan, confidence=1.0, reasoning="orch")
 
-    def fake_validate_plan(_: Plan):
+    def fake_validate_plan(_: Plan, **_kwargs: Any):
         return plan, {"policy_decisions": {"dummy": True}}
 
     async def fake_run_with_stages(self, plan_output: PlanOutput):
@@ -152,7 +152,7 @@ def test_ci_ask_rerun_replan_events(monkeypatch, client):
 
     plan = Plan()
 
-    def fake_validate_plan(_: Plan):
+    def fake_validate_plan(_: Plan, **_kwargs: Any):
         return plan, {"policy_decisions": {"dummy": True}}
 
     def fake_run(self, plan_output: PlanOutput):
@@ -194,10 +194,10 @@ def test_ci_ask_auto_replan_on_error(monkeypatch, client):
 
     plan = Plan()
 
-    def fake_plan_output(_: str) -> PlanOutput:
+    def fake_plan_output(_: str, **_kwargs: Any) -> PlanOutput:
         return PlanOutput(kind=PlanOutputKind.PLAN, plan=plan, confidence=1.0, reasoning="orch")
 
-    def fake_validate_plan(_: Plan):
+    def fake_validate_plan(_: Plan, **_kwargs: Any):
         return plan, {"policy_decisions": {"dummy": True}}
 
     call_count = {"count": 0}
@@ -243,7 +243,7 @@ def test_ci_ask_resolver_asset_applies_rules(monkeypatch, client):
 
     captured = {"question": None}
 
-    def fake_plan_output(question: str) -> PlanOutput:
+    def fake_plan_output(question: str, **_kwargs: Any) -> PlanOutput:
         captured["question"] = question
         return PlanOutput(
             kind=PlanOutputKind.DIRECT,

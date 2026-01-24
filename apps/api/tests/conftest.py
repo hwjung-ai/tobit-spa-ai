@@ -50,6 +50,7 @@ def test_engine():
 
     # Import all models
     import app.modules.api_keys.models as apikeys_models  # noqa: F401
+    import app.modules.asset_registry.models as asset_models  # noqa: F401
     import app.modules.audit_log.models as audit_models  # noqa: F401
     import app.modules.auth.models as auth_models  # noqa: F401
     import app.modules.ci_management.models as ci_models  # noqa: F401
@@ -60,6 +61,7 @@ def test_engine():
     importlib.reload(auth_models)
     importlib.reload(perm_models)
     importlib.reload(apikeys_models)
+    importlib.reload(asset_models)
     importlib.reload(ci_models)
     importlib.reload(audit_models)
     importlib.reload(settings_models)

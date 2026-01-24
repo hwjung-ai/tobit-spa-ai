@@ -10,7 +10,7 @@ from core.auth import get_current_user
 # from app.modules.permissions.models import ResourcePermission
 # from app.modules.permissions.crud import check_permission
 from core.db import get_session, get_session_context
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
 
@@ -64,6 +64,8 @@ from app.modules.asset_registry.source_models import (
     SourceType,
 )
 from app.modules.auth.models import TbUser
+from app.modules.inspector import crud as inspector_crud
+from app.modules.inspector.schemas import TraceSummary
 
 from .validators import validate_asset
 
@@ -289,6 +291,57 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "created_at": asset.created_at,
         "updated_at": asset.updated_at,
     }
+
+
+def _truncate_question(question: str | None, length: int = 120) -> str:
+    if not question:
+        return ""
+    return question[:length] + "…" if len(question) > length else question
+
+
+@router.get("/assets/{asset_id}/traces", response_model=ResponseEnvelope)
+def list_asset_traces(
+    asset_id: str,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    try:
+        asset_uuid = uuid.UUID(asset_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="asset not found") from exc
+
+    asset = session.get(TbAssetRegistry, asset_uuid)
+    if not asset:
+        raise HTTPException(status_code=404, detail="asset not found")
+
+    traces, total = inspector_crud.list_execution_traces(
+        session=session,
+        asset_id=str(asset.asset_id),
+        limit=limit,
+        offset=offset,
+    )
+    summaries: list[TraceSummary] = []
+    for trace in traces:
+        summaries.append(
+            TraceSummary(
+                trace_id=trace.trace_id,
+                created_at=trace.created_at,
+                feature=trace.feature,
+                status=trace.status,
+                duration_ms=trace.duration_ms,
+                question_snippet=_truncate_question(trace.question),
+                applied_asset_versions=trace.asset_versions or [],
+            )
+        )
+    return ResponseEnvelope.success(
+        data={
+            "traces": [summary.model_dump() for summary in summaries],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    )
 
 
 def _to_screen_asset(asset: TbAssetRegistry, schema: dict[str, Any] | None = None) -> dict[str, Any]:

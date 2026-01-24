@@ -5,6 +5,7 @@ import { Asset, fetchApi } from "../../../../lib/adminUtils";
 import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
+import { type TraceSummaryRow } from "@/lib/apiClientTypes";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -21,6 +22,25 @@ export default function AssetDetailPage() {
             return response.data.asset;
         },
         enabled: !!assetId
+    });
+
+    const shouldLoadTraces = ["source", "schema", "resolver"].includes(asset?.asset_type ?? "");
+    const {
+        data: traceData,
+        isLoading: tracesLoading,
+        error: tracesError,
+    } = useQuery({
+        queryKey: ["asset-traces", assetId],
+        queryFn: async () => {
+            const response = await fetchApi<{
+                traces: TraceSummaryRow[];
+                total: number;
+                limit: number;
+                offset: number;
+            }>(`/asset-registry/assets/${assetId}/traces?limit=20`);
+            return response.data;
+        },
+        enabled: !!assetId && shouldLoadTraces,
     });
 
     const handleDelete = async () => {
@@ -166,6 +186,56 @@ export default function AssetDetailPage() {
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <AssetForm asset={asset} onSave={() => refetch()} />
             </div>
+
+            {shouldLoadTraces ? (
+                <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-6 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 className="text-lg font-semibold text-white">Applied Traces</h2>
+                            <p className="text-xs text-slate-400">이 asset이 사용된 trace 목록</p>
+                        </div>
+                        <Link
+                            href={`/admin/inspector?asset_id=${asset.asset_id}`}
+                            className="text-[10px] uppercase tracking-[0.2em] text-slate-300 border border-slate-700 rounded-full px-3 py-1 hover:border-slate-500 transition"
+                        >
+                            Open in Inspector
+                        </Link>
+                    </div>
+                    {tracesLoading ? (
+                        <p className="text-sm text-slate-500">Loading traces...</p>
+                    ) : tracesError ? (
+                        <p className="text-sm text-rose-400">
+                            {(tracesError as Error)?.message || "Failed to load traces"}
+                        </p>
+                    ) : traceData?.traces?.length ? (
+                        <div className="divide-y divide-slate-800">
+                            {traceData.traces.map((trace) => (
+                                <Link
+                                    key={trace.trace_id}
+                                    href={`/admin/inspector?trace_id=${trace.trace_id}`}
+                                    className="block py-3 hover:bg-slate-900/60 rounded-xl transition"
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="text-sm text-slate-200 font-medium">{trace.question_snippet}</div>
+                                        <div className="text-[11px] text-slate-500 font-mono">
+                                            {new Date(trace.created_at).toLocaleString("ko-KR")}
+                                        </div>
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-3 text-[11px] text-slate-500">
+                                        <span className="uppercase tracking-[0.2em]">{trace.feature}</span>
+                                        <span className={trace.status === "error" ? "text-rose-400" : "text-emerald-400"}>
+                                            {trace.status}
+                                        </span>
+                                        <span>{trace.duration_ms} ms</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-slate-500">No traces found for this asset yet.</p>
+                    )}
+                </div>
+            ) : null}
             <ConfirmDialogComponent />
         </div>
     );

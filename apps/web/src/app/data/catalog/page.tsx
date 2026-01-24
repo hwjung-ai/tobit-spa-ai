@@ -1,9 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import type React from "react";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -57,7 +55,7 @@ interface SchemaCatalog {
   scan_metadata?: Record<string, unknown>;
 }
 
-export default function CatalogPage() {
+function CatalogContent() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
   const searchParams = useSearchParams();
@@ -546,5 +544,13 @@ export default function CatalogPage() {
 
       {renderScanDialog(activeSchema?.catalog.source_ref || "")}
     </div>
+  );
+}
+
+export default function CatalogPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+      <CatalogContent />
+    </Suspense>
   );
 }

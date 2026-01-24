@@ -61,7 +61,12 @@ def list_execution_traces(
             )
         )
     if asset_id:
-        filters.append(TbExecutionTrace.asset_versions.contains([asset_id]))
+        dialect = session.get_bind().dialect.name
+        if dialect == "sqlite":
+            # SQLite JSON fallback for tests/local usage
+            filters.append(TbExecutionTrace.asset_versions.like(f"%{asset_id}%"))
+        else:
+            filters.append(TbExecutionTrace.asset_versions.contains([asset_id]))
     if route:
         filters.append(TbExecutionTrace.route == route)
     if replan_count is not None:

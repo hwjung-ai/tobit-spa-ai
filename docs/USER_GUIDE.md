@@ -129,6 +129,7 @@ Navigate to `Admin > Assets` to view all available assets:
 - **Queries**: Data queries and aggregations
 - **Mappings**: Data transformation rules
 - **Screens**: UI components and layouts
+- **Sources / Schemas / Resolvers**: 데이터 연결 설정은 `Data` 메뉴에서 관리 (Admin에서는 읽기 전용 요약)
 
 #### Asset Versions
 Each asset supports versioning:

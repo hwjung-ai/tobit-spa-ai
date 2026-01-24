@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
@@ -112,7 +112,7 @@ const normalizeError = (error: unknown) => {
   }
 };
 
-export default function CepEventBrowserPage() {
+function CepEventBrowserContent() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const [selectedEvent, setSelectedEvent] = useState<CepEventDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -678,5 +678,13 @@ export default function CepEventBrowserPage() {
         </aside>
       </div>
     </div>
+  );
+}
+
+export default function CepEventBrowserPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+      <CepEventBrowserContent />
+    </Suspense>
   );
 }

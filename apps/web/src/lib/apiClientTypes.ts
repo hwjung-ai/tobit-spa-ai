@@ -4,12 +4,12 @@
  */
 
 /**
- * Re-plan event type
- * Re-exported from components/ops/ReplanTimeline for consistency
- * Must be imported at top level to avoid circular dependency issues
+ * Re-plan event and action types
  */
-export type { ReplanEvent } from "../components/ops/ReplanTimeline";
-export type { NextAction } from "../app/ops/nextActions";
+import type { ReplanEvent } from "../components/ops/ReplanTimeline";
+import type { NextAction } from "../app/ops/nextActions";
+
+export type { ReplanEvent, NextAction };
 
 export type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 export type UiMode = "ci" | "metric" | "history" | "relation" | "all";
@@ -194,16 +194,8 @@ export interface AnswerBlock {
   type: string;
   title?: string | null;
   payload_summary?: string | null;
-  references?: Array<{
-    ref_type: string;
-    name: string;
-    engine?: string | null;
-    statement?: string | null;
-    params?: Record<string, unknown> | null;
-    row_count?: number | null;
-    latency_ms?: number | null;
-    source_id?: string | null;
-  }>;
+  references?: ReferenceEntry[];
+  items?: unknown[];
   [key: string]: unknown;
 }
 

@@ -44,6 +44,9 @@
   1. `python scripts/query_asset_importer.py --scope ci --apply --publish --cleanup-drafts`을 실행하여 Query asset이 Draft → Published 상태로 올라가고 `/admin/assets?asset_type=query` 기준으로 SQL 전문이 readonly 뷰에 노출되는지 확인합니다.
   2. Inspector에서 Query asset trace를 조회해 `trace["references"]` 또는 Inspector UI에 Query asset id/version이 기록돼 있고, Audit Log(`tb_audit_log`)에도 `asset_type=query` 동작이 남았는지 확인합니다.
   3. Query Asset이 없을 때는 `resources/queries/` 파일이 fallback으로 사용되며 SELECT-only 제약이 관찰되는지 로그/trace에서 검증합니다.
+- **Source/Schema/Resolver 시드/동기화**:
+  - `python apps/api/scripts/seed/seed_assets.py --import-resources` 실행 시 `resources/sources|schemas|resolvers`가 Published asset으로 등록됩니다.
+  - `python apps/api/scripts/seed/seed_assets.py --export-resources` 실행 시 Published asset이 YAML fallback으로 출력됩니다.
 
 ## 3. Builder 공통
 

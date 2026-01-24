@@ -3,25 +3,28 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BlockRenderer, {
-  type AnswerBlock,
+  type AnswerBlock as RendererAnswerBlock,
   type AnswerMeta,
 } from "../../components/answer/BlockRenderer";
 import { type NextAction } from "./nextActions";
-import { authenticatedFetch, getApiResponseData } from "@/lib/apiClient/index";
+import { authenticatedFetch } from "@/lib/apiClient/index";
 import {
   type ServerHistoryEntry,
   type CiAnswerPayload,
-  type ApiServerHistoryEntry,
   type LocalOpsHistoryEntry,
   type AnswerEnvelope,
+  type AnswerBlock as ApiAnswerBlock,
+  type ResponseEnvelope,
   type StageInput,
   type StageOutput,
+  type StageSnapshot,
+  type StageStatus,
 } from "@/lib/apiClientTypes";
 import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
 import Toast from "@/components/admin/Toast";
 import InspectorStagePipeline from "@/components/ops/InspectorStagePipeline";
 import ReplanTimeline, { type ReplanEvent } from "@/components/ops/ReplanTimeline";
-import { type StageSnapshot } from "@/lib/apiClientTypes";
+import { type OpsHistoryEntry } from "@/components/ops/types/opsTypes";
 
 type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 type UiMode = "ci" | "metric" | "history" | "relation" | "all";
@@ -74,26 +77,48 @@ const safeStringify = (value: unknown) => {
   }
 };
 
-const previewFromBlock = (block: AnswerBlock) => {
-  switch (block.type) {
+const normalizeAnswerMeta = (meta: unknown, fallbackSummary: string): AnswerMeta => {
+  const candidate = (meta ?? {}) as Partial<AnswerMeta>;
+  return {
+    route: candidate.route ?? "ci",
+    route_reason: candidate.route_reason ?? "CI tab",
+    timing_ms: candidate.timing_ms ?? 0,
+    summary: candidate.summary ?? fallbackSummary,
+    used_tools: candidate.used_tools ?? [],
+    fallback: candidate.fallback,
+    error: candidate.error,
+    trace_id: candidate.trace_id,
+  };
+};
+
+const normalizeStageStatus = (status?: string | null): StageStatus => {
+  if (status === "ok" || status === "warning" || status === "error" || status === "skipped") {
+    return status;
+  }
+  return "pending";
+};
+
+const previewFromBlock = (block: ApiAnswerBlock) => {
+  const previewBlock = block as Record<string, unknown>;
+  switch (previewBlock.type) {
     case "markdown":
-      return block.content;
+      return previewBlock.content as string;
     case "table":
-      return block.rows?.[0]?.join(" ");
+      return (previewBlock.rows as string[][] | undefined)?.[0]?.join(" ");
     case "timeseries":
-      return block.series?.[0]?.name ?? "";
+      return ((previewBlock.series as Array<{ name?: string }> | undefined)?.[0]?.name) ?? "";
     case "graph":
-      return block.nodes?.[0]?.data?.label ?? "";
+      return ((previewBlock.nodes as Array<{ data?: { label?: string } }> | undefined)?.[0]?.data?.label) ?? "";
     case "references":
-      return block.items?.[0]?.title ?? "";
+      return ((previewBlock.items as Array<{ title?: string }> | undefined)?.[0]?.title) ?? "";
     case "text":
-      return block.text;
+      return previewBlock.text as string;
     case "number":
-      return `${block.label}: ${block.value}`;
+      return `${previewBlock.label}: ${previewBlock.value}`;
     case "network":
-      return `${block.nodes.length} nodes`;
+      return `${(previewBlock.nodes as unknown[] | undefined)?.length ?? 0} nodes`;
     case "path":
-      return `Hops: ${block.hop_count}`;
+      return `Hops: ${previewBlock.hop_count}`;
     default:
       return "";
   }
@@ -115,13 +140,13 @@ const buildStageSnapshots = (
   };
 
   return stageInputs.map((input: StageInput, index: number) => {
-    const output = stageOutputs.find(o => o?.stage === input.stage);
+    const output = stageOutputs.find((entry) => entry?.stage === input.stage);
     const stageName = input.stage || `stage_${index}`;
 
     return {
       name: stageName,
       label: stageLabels[stageName] || stageName,
-      status: output?.diagnostics?.status || "pending",
+      status: normalizeStageStatus(output?.diagnostics?.status),
       duration_ms: output?.duration_ms || 0,
       input: input,
       output: output || null,
@@ -365,7 +390,7 @@ export default function OpsPage() {
     // Otherwise, return the most recent entry (first in array)
     return history[0] ?? null;
   }, [history, selectedId]);
-  const meta = selectedEntry?.response?.meta;
+  const meta = (selectedEntry?.response?.meta ?? null) as unknown as AnswerMeta | null;
   const traceData = selectedEntry?.trace as
     | {
       plan_validated?: unknown;
@@ -374,7 +399,10 @@ export default function OpsPage() {
     }
     | undefined;
   const traceContents = useMemo(() => (traceData ? JSON.stringify(traceData, null, 2) : ""), [traceData]);
-  const currentTraceId = selectedEntry?.response?.meta?.trace_id;
+  const currentTraceId =
+    typeof selectedEntry?.response?.meta?.trace_id === "string"
+      ? selectedEntry.response.meta.trace_id
+      : undefined;
 
   // Build stage snapshots from trace data
   const stageSnapshots = useMemo(() => {
@@ -428,32 +456,37 @@ export default function OpsPage() {
     }
   }, [currentTraceId]);
 
-   const openInspectorTrace = useCallback(async () => {
-     const traceId = currentTraceId || history[0]?.response?.meta?.trace_id as string;
+  const openInspectorTrace = useCallback(async () => {
+    const fallbackTraceId =
+      typeof history[0]?.response?.meta?.trace_id === "string"
+        ? history[0].response.meta.trace_id
+        : undefined;
+    const traceId = currentTraceId ?? fallbackTraceId;
 
-     if (!traceId) {
-       setStatusMessage("trace_id가 없습니다. 질의 응답에 trace_id가 포함되어 있는지 확인해주세요.");
-       return;
-     }
+    if (!traceId) {
+      setStatusMessage("trace_id가 없습니다. 질의 응답에 trace_id가 포함되어 있는지 확인해주세요.");
+      return;
+    }
 
-     try {
-       const response = await authenticatedFetch(`/inspector/traces/${encodeURIComponent(traceId)}`);
-       const responseWithData = getApiResponseData<{ trace?: unknown }>(response);
-       if (!responseWithData?.trace) {
-         setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
-         return;
-       }
-       setStatusMessage(null);
-       router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
-     } catch (error) {
-       const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
-       if (errorMessage.includes("404") || errorMessage.includes("not found")) {
-         setStatusMessage(`Trace (${traceId.slice(0, 8)}...)가 서버에 저장되지 않았습니다. 질의를 다시 실행해주세요.`);
-       } else {
-         setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
-       }
-     }
-   }, [currentTraceId, router, history]);
+    try {
+      const response = await authenticatedFetch<ResponseEnvelope<{ trace?: unknown }>>(
+        `/inspector/traces/${encodeURIComponent(traceId)}`
+      );
+      if (!response?.data?.trace) {
+        setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
+        return;
+      }
+      setStatusMessage(null);
+      router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+      if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+        setStatusMessage(`Trace (${traceId.slice(0, 8)}...)가 서버에 저장되지 않았습니다. 질의를 다시 실행해주세요.`);
+      } else {
+        setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
+      }
+    }
+  }, [currentTraceId, router, history]);
 
   const traceCopyLabel =
     traceCopyStatus === "copied" ? "Copied!" : traceCopyStatus === "failed" ? "Retry" : "Copy";
@@ -498,41 +531,33 @@ export default function OpsPage() {
     let trace: unknown;
     let nextActions: NextAction[] | undefined;
     try {
-       if (requestedMode.id === "ci") {
-         const response = await authenticatedFetch<CiAnswerPayload>(`/ops/ci/ask`, {
-           method: "POST",
-           body: JSON.stringify({ question: question.trim() }),
-         });
-         const ciPayload = response as { data?: CiAnswerPayload };
-         if (!ciPayload.data || !Array.isArray(ciPayload.data.blocks)) {
-           throw new Error("Invalid CI response format");
-         }
-         const meta =
-           ciPayload.data.meta ??
-           ({
-             route: "ci",
-             route_reason: "CI tab",
-             timing_ms: 0,
-             summary: ciPayload.data.answer,
-             used_tools: [],
-           } as AnswerMeta);
-         envelope = {
-           meta,
-           blocks: ciPayload.data.blocks,
-         };
-         trace = ciPayload.data.trace;
-         nextActions = ciPayload.data.next_actions;
-       } else {
-         const data = await authenticatedFetch<{ answer?: AnswerEnvelope }>(`/ops/query`, {
-           method: "POST",
-           body: JSON.stringify(payload),
-         });
-         const answer = data?.data as AnswerEnvelope | undefined;
-         if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
-           throw new Error("Invalid OPS response format");
-         }
-         envelope = answer;
-       }
+      if (requestedMode.id === "ci") {
+        const response = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ci/ask`, {
+          method: "POST",
+          body: JSON.stringify({ question: question.trim() }),
+        });
+        const ciPayload = response?.data;
+        if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
+          throw new Error("Invalid CI response format");
+        }
+        const meta = normalizeAnswerMeta(ciPayload.meta, ciPayload.answer);
+        envelope = {
+          meta: meta as unknown as AnswerEnvelope["meta"],
+          blocks: ciPayload.blocks,
+        };
+        trace = ciPayload.trace;
+        nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
+      } else {
+        const data = await authenticatedFetch<ResponseEnvelope<{ answer?: AnswerEnvelope }>>(`/ops/query`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        const answer = data?.data?.answer;
+        if (!answer || !Array.isArray(answer.blocks)) {
+          throw new Error("Invalid OPS response format");
+        }
+        envelope = answer;
+      }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
       envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
@@ -638,7 +663,7 @@ export default function OpsPage() {
         if (action.payload?.patch) {
           rerunBody.rerun.patch = action.payload.patch;
         }
-        const data = await authenticatedFetch<CiAnswerPayload>(`/ops/ci/ask`, {
+        const data = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ci/ask`, {
           method: "POST",
           body: JSON.stringify(rerunBody),
         });
@@ -646,21 +671,13 @@ export default function OpsPage() {
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
         }
-        const meta =
-          ciPayload.meta ??
-          ({
-            route: "ci",
-            route_reason: "CI tab",
-            timing_ms: 0,
-            summary: ciPayload.answer,
-            used_tools: [],
-          } as AnswerMeta);
+        const meta = normalizeAnswerMeta(ciPayload.meta, ciPayload.answer);
         envelope = {
-          meta,
+          meta: meta as unknown as AnswerEnvelope["meta"],
           blocks: ciPayload.blocks,
         };
         trace = ciPayload.trace;
-        nextActions = ciPayload.next_actions;
+        nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
       } catch (rawError) {
         const normalized = await normalizeError(rawError);
         envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
@@ -706,7 +723,7 @@ export default function OpsPage() {
       {/* OPS Summary Strip */}
       <div className="mb-6">
         <OpsSummaryStrip
-          selectedEntry={selectedEntry}
+          selectedEntry={selectedEntry as OpsHistoryEntry | null}
           onUpdateData={() => {
             // Handle summary data updates if needed
           }}
@@ -971,10 +988,10 @@ export default function OpsPage() {
           <div className="flex-1 overflow-y-auto">
             {selectedEntry && Array.isArray(selectedEntry.response?.blocks) ? (
               <BlockRenderer
-                blocks={selectedEntry.response.blocks}
+                blocks={selectedEntry.response.blocks as RendererAnswerBlock[]}
                 nextActions={selectedEntry.nextActions}
                 onAction={handleNextAction}
-                traceId={selectedEntry.response.meta?.trace_id ?? undefined}
+                traceId={currentTraceId}
               />
             ) : (
               <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">

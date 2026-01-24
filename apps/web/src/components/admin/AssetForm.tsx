@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Asset, fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
@@ -11,6 +12,16 @@ interface AssetFormProps {
 }
 
 export default function AssetForm({ asset, onSave }: AssetFormProps) {
+    const readOnlyPayload = useMemo(() => {
+        if (!asset.content) {
+            return "";
+        }
+        try {
+            return JSON.stringify(asset.content, null, 2);
+        } catch {
+            return String(asset.content);
+        }
+    }, [asset.content]);
     const [formData, setFormData] = useState({
         name: asset.name,
         description: asset.description || "",
@@ -227,6 +238,37 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
             {/* Type-specific Content */}
             <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
                 <h2 className="text-lg font-semibold text-white mb-4">Content</h2>
+
+                {["source", "schema", "resolver"].includes(asset.asset_type) && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm text-slate-400">
+                                이 타입은 Data 메뉴에서 편집하세요. (여기는 읽기 전용입니다.)
+                            </p>
+                            <Link
+                                href={
+                                    asset.asset_type === "source"
+                                        ? `/data/sources?asset_id=${asset.asset_id}`
+                                        : asset.asset_type === "schema"
+                                            ? `/data/catalog?asset_id=${asset.asset_id}`
+                                            : `/data/resolvers?asset_id=${asset.asset_id}`
+                                }
+                                className="text-xs text-sky-400 hover:text-sky-300"
+                            >
+                                Data 화면으로 이동 →
+                            </Link>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Payload</label>
+                            <textarea
+                                value={readOnlyPayload}
+                                disabled
+                                rows={12}
+                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-70 disabled:cursor-not-allowed font-mono text-xs"
+                            />
+                        </div>
+                    </div>
+                )}
 
                 {asset.asset_type === "prompt" && (
                     <div className="space-y-4">

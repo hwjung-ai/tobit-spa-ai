@@ -1,9 +1,7 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import type React from "react";
-import { useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -16,43 +14,7 @@ import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { formatError } from "../../../lib/utils";
 import { useSearchParams } from "next/navigation";
-// Note: These types will need to be imported from the API after generating TypeScript types
-// For now, we'll define them inline
-interface SourceAssetResponse {
-  asset_id: string;
-  asset_type: string;
-  name: string;
-  description?: string;
-  version: number;
-  status: string;
-  source_type: string;
-  connection?: {
-    host?: string;
-    port?: number;
-    username?: string;
-    database?: string;
-    timeout?: number;
-    ssl_mode?: string;
-    connection_params?: Record<string, unknown>;
-  };
-  scope?: string;
-  tags?: Record<string, unknown>;
-  created_by?: string;
-  published_by?: string;
-  published_at?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ConnectionTestResult {
-  success: boolean;
-  message: string;
-  error_details?: string;
-  execution_time_ms?: number;
-  test_result?: Record<string, unknown>;
-}
-
-type SourceType = "postgresql" | "mysql" | "redis" | "mongodb" | "kafka" | "s3" | "bigquery" | "snowflake";
+import type { ConnectionTestResult, SourceAssetResponse, SourceType } from "../../../types/asset-registry";
 
 const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
   postgresql: "PostgreSQL",
@@ -76,15 +38,15 @@ const formatStatus = (status: string) => {
   return STATUS_LABELS[status] || status;
 };
 
-export default function SourcesPage() {
+function SourcesContent() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    const searchParams = useSearchParams();
     setSelectedAssetId(searchParams.get("asset_id"));
-  }, []);
+  }, [searchParams]);
 
   const [selectedSource, setSelectedSource] = useState<SourceAssetResponse | null>(null);
   const [editingSource, setEditingSource] = useState<Partial<SourceAssetResponse> | null>(null);
@@ -790,5 +752,13 @@ export default function SourcesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function SourcesPage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+      <SourcesContent />
+    </Suspense>
   );
 }
