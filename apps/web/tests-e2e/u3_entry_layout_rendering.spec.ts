@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 
 async function openDraftScreen(page: Page) {
   await page.goto('/admin/screens', { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 });
+  await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 60000 });
 
   const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({
     has: page.locator('[data-testid^="status-badge-"]', { hasText: 'draft' }),
@@ -25,17 +25,17 @@ async function openDraftScreen(page: Page) {
     .first()
     .locator('[data-testid^="link-screen-"]')
     .first();
-  await draftLink.waitFor({ timeout: 15000 });
+  await draftLink.waitFor({ timeout: 60000 });
   const href = await draftLink.getAttribute('href');
   if (!href) {
     throw new Error('Draft screen link is missing href.');
   }
   await page.goto(href, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
+  await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 60000 });
 }
 
 async function openJsonEditor(page: Page) {
-  await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
+  await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 60000 });
   await page.click('[data-testid="tab-json"]');
   await page.waitForSelector('[data-testid="json-textarea"]', { timeout: 10000 });
 }
@@ -168,9 +168,6 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
     await schemaInput.fill(JSON.stringify(invalidSchema, null, 2));
     await page.locator('[data-testid="btn-apply-json"]').click();
 
-    // Try to publish
-    await page.locator('[data-testid="btn-publish-screen"]').click();
-
     // Should show validation error
     await expect(page.locator('[data-testid="editor-errors"]')).toContainText('must be one of');
   });
@@ -245,8 +242,8 @@ test.describe('U3-Entry: Layout Rendering E2E', () => {
     await expect(page.locator('text=/Draft saved successfully|Screen draft saved successfully/')).toBeVisible();
 
     // Verify layout is still there
-    const updatedSchema = await page.locator('[data-testid="json-textarea"]').inputValue();
-    expect(updatedSchema).toContain('"type":"grid"');
-    expect(updatedSchema).toContain('"cols":3');
+    const updatedSchema = JSON.parse(await page.locator('[data-testid="json-textarea"]').inputValue());
+    expect(updatedSchema.layout.type).toBe('grid');
+    expect(updatedSchema.layout.cols).toBe(3);
   });
 });

@@ -371,8 +371,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
         description: rawSchema?.description,
         version: rawSchema?.version,
         layout: rawSchema?.layout || { type: "form", direction: "vertical" },
-        components: (rawSchema?.components as any) || [],
-        actions: (rawSchema?.actions as any) || null,
+        components: (rawSchema?.components as Record<string, unknown>[]) || [],
+        actions: (rawSchema?.actions as Record<string, unknown>) || null,
         state: rawSchema?.state || null,
         bindings: rawSchema?.bindings || null,
         metadata: rawSchema?.metadata,
@@ -1186,7 +1186,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   applyProposedPatch: () => {
-    set((state) => ({
+    set(() => ({
       previewEnabled: false,
       previewError: null,
       // Apply patch to screen (implementation would go here)

@@ -85,8 +85,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
       stateTree = [],
       contextTree = [],
       inputsTree = [],
-    },
-    ref
+    }
   ) => {
     const [formData, setFormData] = useState<ScreenAction | ComponentActionRef>(() => {
       if (action) {

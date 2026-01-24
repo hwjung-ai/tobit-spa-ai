@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { fetchApi, ResponseEnvelope } from "../../lib/adminUtils";
+import { fetchApi } from "../../lib/adminUtils";
 import { ChevronDown, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
 interface StageDiffViewProps {

@@ -345,6 +345,18 @@ export function validateScreenSchema(
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
+  if (!screen.layout) {
+    errors.push({ path: "layout", message: "layout is required", severity: "error" });
+  } else if (!screen.layout.type) {
+    errors.push({ path: "layout.type", message: "layout.type is required", severity: "error" });
+  } else if (!["grid", "form", "modal", "list", "dashboard", "stack"].includes(screen.layout.type)) {
+    errors.push({
+      path: "layout.type",
+      message: "layout.type must be one of: grid, form, modal, list, dashboard, stack",
+      severity: "error",
+    });
+  }
+
   // Validate screen-level actions
   if (screen.actions && Array.isArray(screen.actions)) {
     screen.actions.forEach((action, idx) => {

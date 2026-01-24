@@ -85,48 +85,6 @@ export default function AssetOverrideDrawer({
     }
   };
 
-  // Test an override - temporary, for UI testing only
-  const testOverride = async (assetOverride: AssetOverride) => {
-    try {
-      const response = await fetchApi<{ data: { ok: boolean; json: Record<string, unknown> } }>(`/api/test/override`, {
-        method: "POST",
-        body: JSON.stringify(assetOverride),
-      });
-
-      if (response.ok) {
-        const data = response.data;
-        if (data.ok) {
-          alert("Override successful!");
-          console.log("Test response:", data.json);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to test override:", error);
-      alert("Failed to test override: " + (error instanceof Error ? error.message : "Unknown error"));
-    }
-  };
-
-  // Test an override - temporary, for UI testing only
-  const testOverride = async (assetOverride: AssetOverride) => {
-    try {
-      const response = await fetchApi<{ data: { ok: boolean; json: Record<string, unknown> } }>(`/api/test/override`, {
-        method: "POST",
-        body: JSON.stringify(assetOverride),
-      });
-
-      if (response.ok) {
-        const data = response.data;
-        if (data.ok) {
-          alert("Override successful!");
-          console.log("Test response:", data.json);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to test override:", error);
-      alert("Failed to test override: " + (error instanceof Error ? error.message : "Unknown error"));
-    }
-  };
-
   const handleOverrideChange = (assetType: string, assetId: string) => {
     setOverrides((prev) => {
       const newOverrides = prev.filter((o) => o.assetType !== assetType);

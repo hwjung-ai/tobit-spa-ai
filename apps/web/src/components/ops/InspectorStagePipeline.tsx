@@ -37,7 +37,7 @@ const prettyJson = (value: unknown) => JSON.stringify(value, null, 2);
   onStageSelect,
 }: StagePipelineProps) {
   const [selectedStage, setSelectedStage] = useState<StageSnapshotType | null>(null);
-  const orderedStages = useMemo(() => stages as StageSnapshotType[] ?? [], [stages as StageSnapshotType[]]);
+  const orderedStages = useMemo(() => (stages as StageSnapshotType[]) ?? [], [stages]);
 
   const handleStageClick = (stage: StageSnapshotType) => {
     setSelectedStage(stage);
