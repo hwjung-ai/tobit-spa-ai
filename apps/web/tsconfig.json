@@ -15,6 +15,7 @@
     "strictPropertyInitialization": false,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false,
+    "useUnknownInCatchVariables": false,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
