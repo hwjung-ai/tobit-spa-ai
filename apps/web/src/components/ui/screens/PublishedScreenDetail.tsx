@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchApi, formatTimestamp } from "@/lib/adminUtils";
 import UIScreenRenderer from "@/components/answer/UIScreenRenderer";
+import { ScreenSchemaV1 } from "@/lib/ui-screen/screen.schema";
 
 type ScreenAssetResponse = {
   asset: {
@@ -49,13 +50,14 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
       } catch (err: unknown) {
         if (!cancelled) {
           console.error("[PublishedScreenDetail] Error loading screen:", err);
-          const status = err?.statusCode;
+          const status = (err as { statusCode?: number })?.statusCode;
+          const message = (err as { message?: string })?.message;
           if (status === 404) {
             setError("Screen not found or not published");
           } else if (status === 403) {
             setError("Access denied to this screen");
           } else {
-            setError(err?.message || "Unable to load screen");
+            setError(message || "Unable to load screen");
           }
         }
       } finally {
@@ -122,7 +124,12 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
         )}
       </div>
       <div className="flex-1 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
-        <UIScreenRenderer block={previewBlock!} schemaOverride={asset.schema_json} />
+        <UIScreenRenderer
+          block={previewBlock!}
+          schemaOverride={(typeof asset.schema_json === "object" && asset.schema_json !== null && "screen_id" in asset.schema_json)
+            ? asset.schema_json as unknown as ScreenSchemaV1
+            : undefined}
+        />
       </div>
     </div>
   );

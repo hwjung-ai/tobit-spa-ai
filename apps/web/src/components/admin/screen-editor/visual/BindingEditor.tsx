@@ -22,29 +22,6 @@ interface BindingEditorProps {
   className?: string;
   showModeToggle?: boolean;
 }
-
-/**
- * BindingEditor Component
- *
- * Provides UI for editing both binding expressions and static values.
- * Supports toggling between:
- * - Binding mode: Path picker for {{state.x}}, {{context.y}}, etc.
- * - Static mode: Direct value input for static text/numbers
- *
- * Used by: PropertiesPanel (for component props)
- *
- * @param value - Current value (binding or static)
- * @param onChange - Callback when value changes
- * @param mode - Current mode ("binding" or "static")
- * @param onModeChange - Callback when mode changes
- * @param stateTree - Hierarchical state paths
- * @param contextTree - Hierarchical context paths
- * @param inputsTree - Hierarchical inputs paths
- * @param supportedSources - Which sources are supported (default: all)
- * @param placeholder - Placeholder text
- * @param className - Additional CSS classes
- * @param showModeToggle - Show Binding/Static toggle (default: true)
- */
 export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps>(
   (
     {
@@ -63,6 +40,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
     ref
   ) => {
     const [localMode, setLocalMode] = useState<"binding" | "static">(mode);
+    const safeValue = typeof value === "string" ? value : "";
 
     // Initialize static value when switching to static mode
     const handleModeChange = (newMode: "binding" | "static") => {
@@ -71,22 +49,21 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
         onModeChange(newMode);
       }
 
-      // When switching to static mode, extract value if it's currently a binding
-      if (newMode === "static" && value.startsWith("{{")) {
-        const parsed = parseBindingExpression(value);
+      // When switching to static mode, clear binding expressions
+      if (newMode === "static" && safeValue.startsWith("{{")) {
+        const parsed = parseBindingExpression(safeValue);
         if (parsed) {
           onChange("");
-          return;
         }
       }
     };
 
     // Validate binding path
     const validationError = useMemo(() => {
-      if (localMode !== "binding" || !value) return "";
-      const errors = validateBindingPath(value);
+      if (localMode !== "binding" || !safeValue) return "";
+      const errors = validateBindingPath(safeValue);
       return errors.length > 0 ? errors[0].message : "";
-    }, [value, localMode]);
+    }, [safeValue, localMode]);
 
     // Determine which trees to show based on supportedSources
     const filteredStatePaths = supportedSources?.includes("state") !== false ? stateTree : [];
@@ -104,7 +81,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
 
             <TabsContent value="binding" className="space-y-2">
               <PathPicker
-                value={value}
+                value={safeValue}
                 onChange={onChange}
                 stateTree={filteredStatePaths}
                 contextTree={filteredContextPaths}
@@ -119,7 +96,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
 
             <TabsContent value="static" className="space-y-2">
               <Input
-                value={localMode === "static" ? (typeof value === "string" ? value : "") : ""}
+                value={localMode === "static" ? safeValue : ""}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Enter a static value..."}
               />
@@ -132,7 +109,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
 
         {!showModeToggle && localMode === "binding" && (
           <PathPicker
-            value={value}
+            value={safeValue}
             onChange={onChange}
             stateTree={filteredStatePaths}
             contextTree={filteredContextPaths}
@@ -144,7 +121,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
 
         {!showModeToggle && localMode === "static" && (
           <Input
-            value={typeof value === "string" ? value : ""}
+            value={safeValue}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder || "Enter a static value..."}
           />

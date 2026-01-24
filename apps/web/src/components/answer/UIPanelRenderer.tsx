@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { UIPanelBlock, UIInput, UIAction } from "@/types/uiActions";
+import type { AnswerBlock } from "@/lib/apiClientTypes";
 import { substituteTemplate } from "@/lib/templateUtils";
 import { fetchApi } from "@/lib/adminUtils";
 import BlockRenderer from "./BlockRenderer";
@@ -15,7 +16,7 @@ import BlockRenderer from "./BlockRenderer";
 interface UIPanelRendererProps {
   block: UIPanelBlock;
   traceId: string;
-  onResult?: (blocks: unknown[]) => void;
+  onResult?: (blocks: AnswerBlock[]) => void;
 }
 
 export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRendererProps) {

@@ -142,7 +142,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
-            value={displayValue}
+            value={String(displayValue || '')}
             onChange={(e) => handleSettingChange(key, e.target.value as string)}
             className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

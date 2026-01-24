@@ -5,6 +5,7 @@ import { useEditorState } from "@/lib/ui-screen/editor-state";
 import CanvasComponent from "./CanvasComponent";
 import { Button } from "@/components/ui/button";
 import { PALETTE_DRAG_TYPE } from "./ComponentPalette";
+import { ComponentType } from "@/lib/ui-screen/screen.schema";
 
 export default function Canvas() {
   const editorState = useEditorState();
@@ -30,10 +31,11 @@ export default function Canvas() {
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    const componentType = e.dataTransfer.getData(PALETTE_DRAG_TYPE);
+    const typeData = e.dataTransfer.getData(PALETTE_DRAG_TYPE);
+    const componentType = typeData ? (typeData as ComponentType) : null;
     if (componentType) {
       editorState.addComponent(componentType);
     }

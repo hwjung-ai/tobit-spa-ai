@@ -23,12 +23,21 @@ interface StageInOutData {
   timestamp?: string;
   diagnostics?: {
     status: string;
-    warnings: string[];
-    errors: string[];
+    warnings?: string[];
+    errors?: string[];
     empty_flags: Record<string, boolean>;
     counts: Record<string, number>;
   };
-  references?: unknown[];
+  references?: Array<{
+    ref_type: string;
+    name: string;
+    engine?: string | null;
+    statement?: string | null;
+    params?: Record<string, unknown> | null;
+    row_count?: number | null;
+    latency_ms?: number | null;
+    source_id?: string | null;
+  }> | null;
 }
 
 interface StageInOutPanelProps {
@@ -330,7 +339,7 @@ export default function StageInOutPanel({
                               key={idx}
                               className="p-2 rounded bg-slate-800/50 border border-slate-700 text-xs font-mono text-slate-300"
                             >
-                              {ref.asset_id || ref.type || "Reference"}
+                              {ref.ref_type || "Reference"}
                             </div>
                           ))}
                           {stage.references.length > 5 && (

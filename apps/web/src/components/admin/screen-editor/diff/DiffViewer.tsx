@@ -55,26 +55,26 @@ function DiffItemRenderer({ item }: { item: DiffItem }) {
 
           {before && !after && (
             <div className="mt-2 text-xs font-mono bg-red-100 text-red-800 p-2 rounded overflow-auto">
-              {JSON.stringify(before, null, 2)}
+              {JSON.stringify((before as Record<string, unknown>), null, 2)}
             </div>
           )}
 
           {after && !before && (
             <div className="mt-2 text-xs font-mono bg-green-100 text-green-800 p-2 rounded overflow-auto">
-              {JSON.stringify(after, null, 2)}
+              {JSON.stringify((after as Record<string, unknown>), null, 2)}
             </div>
           )}
 
           {changes && (
             <div className="mt-2 space-y-1">
-              {Object.entries(changes).map(([key, change]: [string, unknown]) => (
+              {Object.entries(changes).map(([key, change]: [string, {before: unknown, after: unknown}]) => (
                 <div key={key} className="text-xs">
                   <span className="font-mono text-slate-700">{key}:</span>
                   <span className="ml-2 line-through text-red-700">
-                    {JSON.stringify(change.before)}
+                    {JSON.stringify(change.before, null, 2)}
                   </span>
                   <span className="ml-2 text-green-700">
-                    → {JSON.stringify(change.after)}
+                    → {JSON.stringify(change.after, null, 2)}
                   </span>
                 </div>
               ))}

@@ -205,7 +205,7 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
   const fetchComparison = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetchApi<ResponseEnvelope<ComparisonSummary>>(`/ops/stage-compare`, {
+      const response = await fetchApi<ComparisonSummary>(`/ops/stage-compare`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

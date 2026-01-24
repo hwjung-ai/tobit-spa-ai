@@ -74,7 +74,7 @@ export default function ScreenEditorCopilotPanel({
       return;
     }
     setLocalError(null);
-    editorState.setProposedPatch(parseResult.patch);
+    editorState.setProposedPatch(JSON.stringify(parseResult.patch));
     if (previewEnabled) {
       editorState.disablePreview();
     } else {
@@ -88,7 +88,7 @@ export default function ScreenEditorCopilotPanel({
       return;
     }
     setLocalError(null);
-    editorState.setProposedPatch(parseResult.patch);
+    editorState.setProposedPatch(JSON.stringify(parseResult.patch));
     try {
       editorState.applyProposedPatch();
     } catch (error) {

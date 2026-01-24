@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import UIScreenRenderer from "@/components/answer/UIScreenRenderer";
+import type { UIScreenBlock } from "@/components/answer/BlockRenderer";
 
 export default function PreviewTab() {
   const editorState = useEditorState();
@@ -16,11 +17,12 @@ export default function PreviewTab() {
 
   const previewBlock = useMemo(() => {
     if (!screen) return null;
-    return {
+    const block: UIScreenBlock = {
       type: "ui_screen",
       screen_id: screen.screen_id,
       params: {},
     };
+    return block;
   }, [screen]);
 
   if (!screen) {

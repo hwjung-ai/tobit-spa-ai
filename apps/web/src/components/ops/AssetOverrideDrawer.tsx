@@ -70,26 +70,60 @@ export default function AssetOverrideDrawer({
       const assetsByType: Record<string, AssetSummary[]> = {};
 
       for (const assetType of ASSET_TYPES.map((a) => a.value)) {
-        const response = await fetchApi(`/api/assets/registry?type=${assetType}`);
+        const response = await fetchApi<{ data: { [assetType: string]: AssetSummary[] } }>(`/api/assets/registry?type=${assetType}`);
         if (response.ok) {
-          const data = await response.json();
+          const data = response.data;
           assetsByType[assetType] = data.data || [];
         }
       }
 
       setAvailableAssets(assetsByType);
-
-      // Initialize with default overrides
-      const initialOverrides = ASSET_TYPES.map((type) => ({
-        assetType: type.value,
-        assetId: DEFAULT_ASSETS[type.value as keyof typeof DEFAULT_ASSETS],
-        name: `${type.label}: ${DEFAULT_ASSETS[type.value as keyof typeof DEFAULT_ASSETS]}`,
-      }));
-      setOverrides(initialOverrides);
     } catch (error) {
       console.error("Failed to load assets:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Test an override - temporary, for UI testing only
+  const testOverride = async (assetOverride: AssetOverride) => {
+    try {
+      const response = await fetchApi<{ data: { ok: boolean; json: Record<string, unknown> } }>(`/api/test/override`, {
+        method: "POST",
+        body: JSON.stringify(assetOverride),
+      });
+
+      if (response.ok) {
+        const data = response.data;
+        if (data.ok) {
+          alert("Override successful!");
+          console.log("Test response:", data.json);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to test override:", error);
+      alert("Failed to test override: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
+  };
+
+  // Test an override - temporary, for UI testing only
+  const testOverride = async (assetOverride: AssetOverride) => {
+    try {
+      const response = await fetchApi<{ data: { ok: boolean; json: Record<string, unknown> } }>(`/api/test/override`, {
+        method: "POST",
+        body: JSON.stringify(assetOverride),
+      });
+
+      if (response.ok) {
+        const data = response.data;
+        if (data.ok) {
+          alert("Override successful!");
+          console.log("Test response:", data.json);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to test override:", error);
+      alert("Failed to test override: " + (error instanceof Error ? error.message : "Unknown error"));
     }
   };
 

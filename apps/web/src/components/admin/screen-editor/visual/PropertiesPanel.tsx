@@ -189,16 +189,16 @@ export default function PropertiesPanel() {
                     <label className="block text-xs font-medium text-slate-300 mb-2">
                       {field.label || field.name}
                     </label>
-                    <BindingEditor
-                      value={formData[field.name] || ""}
-                      onChange={(value) => handlePropChange(field.name, value)}
-                      stateTree={pathTrees.stateTree}
-                      contextTree={pathTrees.contextTree}
-                      inputsTree={pathTrees.inputsTree}
-                      placeholder={`Bind ${field.name}...`}
-                      className="text-xs"
-                      showModeToggle={true}
-                    />
+                     <BindingEditor
+                       value={(formData[field.name] as string | undefined) ?? ""}
+                       onChange={(value) => handlePropChange(field.name, value)}
+                       stateTree={pathTrees.stateTree}
+                       contextTree={pathTrees.contextTree}
+                       inputsTree={pathTrees.inputsTree}
+                       placeholder={`Bind ${field.name}...`}
+                       className="text-xs"
+                       showModeToggle={true}
+                     />
                   </div>
                 ))
               )}
@@ -372,7 +372,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
         <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
           <input
             type="checkbox"
-            checked={value || false}
+            checked={(value as boolean) || false}
             onChange={e => onChange(e.target.checked)}
             className="rounded"
             data-testid={`prop-${field.name}`}
@@ -389,7 +389,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
         <label className="block text-xs font-medium text-slate-300 mb-1">
           {field.label || field.name}
         </label>
-        <Select value={value || ""} onValueChange={onChange}>
+        <Select value={typeof value === "string" ? value : ""} onValueChange={(val) => onChange(val)}>
           <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700" data-testid={`prop-${field.name}`}>
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
@@ -412,7 +412,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
           {field.label || field.name}
         </label>
         <Textarea
-          value={value || ""}
+          value={(value as string) || ""}
           onChange={e => onChange(e.target.value)}
           placeholder={field.placeholder || ""}
           className="min-h-16 text-xs bg-slate-800 border-slate-700 resize-none"
@@ -430,7 +430,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
         </label>
         <Input
           type="number"
-          value={value || ""}
+          value={(value as string | number) || ""}
           onChange={e => onChange(e.target.value ? Number(e.target.value) : "")}
           placeholder={field.placeholder || ""}
           className="h-8 text-xs bg-slate-800 border-slate-700"
@@ -449,7 +449,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
         {field.label || field.name}
       </label>
       <Input
-        value={value || ""}
+        value={(value as string) || ""}
         onChange={e => onChange(e.target.value)}
         placeholder={field.placeholder || ""}
         className="h-8 text-xs bg-slate-800 border-slate-700"
@@ -587,7 +587,7 @@ function FieldBindingControl({
   screenSchema: ScreenSchemaV1 | null;
   renderStaticInput: (value: string, onChange: (val: string) => void) => React.ReactNode;
 }) {
-  const normalizedValue = typeof value === "string" ? value : "";
+  const normalizedValue = typeof value === "string" ? value : String(value || "");
   const [mode, setMode] = useState<"binding" | "static">(isBindingExpression(normalizedValue) ? "binding" : "static");
   const [staticValue, setStaticValue] = useState<string>(isBindingExpression(normalizedValue) ? "" : normalizedValue);
   const [bindingValue, setBindingValue] = useState<string>(normalizedValue);

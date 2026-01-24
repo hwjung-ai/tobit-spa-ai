@@ -6,6 +6,19 @@ async function openJsonEditor(page: Page) {
   await page.waitForSelector('[data-testid="json-textarea"]', { timeout: 10000 });
 }
 
+async function createScreen(page: Page, screenId: string, name: string, description?: string) {
+  await page.locator('[data-testid="btn-create-screen"]').click();
+  const modal = page.locator('[data-testid="modal-create-screen"]');
+  await expect(modal).toBeVisible({ timeout: 10000 });
+  await modal.locator('[data-testid="input-screen-id"]').fill(screenId);
+  await modal.locator('[data-testid="input-screen-name"]').fill(name);
+  if (description) {
+    await modal.locator('[data-testid="input-screen-description"]').fill(description);
+  }
+  await modal.locator('[data-testid="btn-confirm-create"]').click();
+  await expect(modal).toBeHidden({ timeout: 10000 });
+}
+
 test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
   const testScreenId = `test_screen_${Date.now()}`;
   // createdAssetId tracking - to be implemented in future tests
@@ -26,41 +39,28 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
   test('should create a new screen draft', async ({ page }) => {
     // Click create button
-    await page.locator('[data-testid="btn-create-screen"]').click();
-
-    // Verify modal is shown
-    const modal = page.locator('[data-testid="modal-create-screen"]');
-    await expect(modal).toBeVisible();
-
-    // Fill in create form
-    await page.locator('[data-testid="input-screen-id"]').fill(testScreenId);
-    await page.locator('[data-testid="input-screen-name"]').fill('Test Screen');
-    await page.locator('[data-testid="input-screen-description"]').fill('This is a test screen');
-
-    // Confirm creation
-    await page.locator('[data-testid="btn-confirm-create"]').click();
+    await createScreen(page, testScreenId, 'Test Screen', 'This is a test screen');
 
     // Wait for success message
     await expect(page.locator('text=Screen created successfully')).toBeVisible();
 
     // Extract asset ID from the rendered screen card
-    const screenCard = page.locator(`[data-testid="screen-asset-"]`).first();
+    const screenCard = page.locator('[data-testid^="screen-asset-"]').first();
     await expect(screenCard).toBeVisible();
   });
 
   test('should edit screen draft', async ({ page }) => {
     // Create a screen first
-    await page.locator('[data-testid="btn-create-screen"]').click();
-    await page.locator('[data-testid="input-screen-id"]').fill(`${testScreenId}_edit`);
-    await page.locator('[data-testid="input-screen-name"]').fill('Edit Test Screen');
-    await page.locator('[data-testid="btn-confirm-create"]').click();
+    const screenId = `${testScreenId}_edit`;
+    await createScreen(page, screenId, 'Edit Test Screen');
 
     // Wait for screen to be created
     await page.waitForTimeout(1000);
 
     // Click edit button on the newly created screen
-    const editBtn = page.locator('[data-testid^="btn-edit-"]').first();
-    await editBtn.click();
+    const screenCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: screenId }).first();
+    await expect(screenCard).toBeVisible({ timeout: 10000 });
+    await screenCard.locator('[data-testid^="btn-edit-"]').click();
 
     // Verify editor page
     await openJsonEditor(page);
@@ -88,13 +88,13 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
   test('should validate schema on save', async ({ page }) => {
     // Create and navigate to edit
-    await page.locator('[data-testid="btn-create-screen"]').click();
-    await page.locator('[data-testid="input-screen-id"]').fill(`${testScreenId}_validate`);
-    await page.locator('[data-testid="input-screen-name"]').fill('Validation Test');
-    await page.locator('[data-testid="btn-confirm-create"]').click();
+    const screenId = `${testScreenId}_validate`;
+    await createScreen(page, screenId, 'Validation Test');
 
     await page.waitForTimeout(1000);
-    await page.locator('[data-testid^="btn-edit-"]').first().click();
+    const screenCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: screenId }).first();
+    await expect(screenCard).toBeVisible({ timeout: 10000 });
+    await screenCard.locator('[data-testid^="btn-edit-"]').click();
     await openJsonEditor(page);
 
     // Break the schema JSON
@@ -111,19 +111,24 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
   test('should publish screen', async ({ page }) => {
     // Create a screen
-    await page.locator('[data-testid="btn-create-screen"]').click();
-    await page.locator('[data-testid="input-screen-id"]').fill(`${testScreenId}_publish`);
-    await page.locator('[data-testid="input-screen-name"]').fill('Publish Test');
-    await page.locator('[data-testid="btn-confirm-create"]').click();
+    const screenId = `${testScreenId}_publish`;
+    await createScreen(page, screenId, 'Publish Test');
 
     await page.waitForTimeout(1000);
 
     // Navigate to edit
-    await page.locator('[data-testid^="btn-edit-"]').first().click();
+    const screenCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: screenId }).first();
+    await expect(screenCard).toBeVisible({ timeout: 10000 });
+    await screenCard.locator('[data-testid^="btn-edit-"]').click();
     await openJsonEditor(page);
 
     // Publish the screen
     await page.locator('[data-testid="btn-publish-screen"]').click();
+    const publishGate = page.getByRole('dialog');
+    await expect(publishGate).toBeVisible({ timeout: 10000 });
+    const publishButton = publishGate.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeEnabled({ timeout: 20000 });
+    await publishButton.click();
 
     // Verify success message
     await expect(page.locator('text=Screen published successfully')).toBeVisible();
@@ -140,15 +145,20 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
   test('should not allow editing published screen', async ({ page }) => {
     // Create and publish a screen
-    await page.locator('[data-testid="btn-create-screen"]').click();
-    await page.locator('[data-testid="input-screen-id"]').fill(`${testScreenId}_readonly`);
-    await page.locator('[data-testid="input-screen-name"]').fill('Read Only Test');
-    await page.locator('[data-testid="btn-confirm-create"]').click();
+    const screenId = `${testScreenId}_readonly`;
+    await createScreen(page, screenId, 'Read Only Test');
 
     await page.waitForTimeout(1000);
-    await page.locator('[data-testid^="btn-edit-"]').first().click();
+    const screenCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: screenId }).first();
+    await expect(screenCard).toBeVisible({ timeout: 10000 });
+    await screenCard.locator('[data-testid^="btn-edit-"]').click();
     await openJsonEditor(page);
     await page.locator('[data-testid="btn-publish-screen"]').click();
+    const publishGate = page.getByRole('dialog');
+    await expect(publishGate).toBeVisible({ timeout: 10000 });
+    const publishButton = publishGate.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeEnabled({ timeout: 20000 });
+    await publishButton.click();
 
     // Refresh page to see updated state
     await page.reload();
@@ -161,15 +171,20 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
 
   test('should rollback published screen to draft', async ({ page }) => {
     // Create and publish a screen
-    await page.locator('[data-testid="btn-create-screen"]').click();
-    await page.locator('[data-testid="input-screen-id"]').fill(`${testScreenId}_rollback`);
-    await page.locator('[data-testid="input-screen-name"]').fill('Rollback Test');
-    await page.locator('[data-testid="btn-confirm-create"]').click();
+    const screenId = `${testScreenId}_rollback`;
+    await createScreen(page, screenId, 'Rollback Test');
 
     await page.waitForTimeout(1000);
-    await page.locator('[data-testid^="btn-edit-"]').first().click();
+    const screenCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: screenId }).first();
+    await expect(screenCard).toBeVisible({ timeout: 10000 });
+    await screenCard.locator('[data-testid^="btn-edit-"]').click();
     await openJsonEditor(page);
     await page.locator('[data-testid="btn-publish-screen"]').click();
+    const publishGate = page.getByRole('dialog');
+    await expect(publishGate).toBeVisible({ timeout: 10000 });
+    const publishButton = publishGate.getByRole('button', { name: 'Publish' });
+    await expect(publishButton).toBeEnabled({ timeout: 20000 });
+    await publishButton.click();
 
     // Reload and rollback
     await page.reload();
@@ -193,10 +208,7 @@ test.describe('U3-Entry: Screen Asset Lifecycle E2E', () => {
   test('should search screens by ID', async ({ page }) => {
     // Create a few test screens
     for (let i = 0; i < 2; i++) {
-      await page.locator('[data-testid="btn-create-screen"]').click();
-      await page.locator('[data-testid="input-screen-id"]').fill(`search_test_${i}_${Date.now()}`);
-      await page.locator('[data-testid="input-screen-name"]').fill(`Search Test ${i}`);
-      await page.locator('[data-testid="btn-confirm-create"]').click();
+      await createScreen(page, `search_test_${i}_${Date.now()}`, `Search Test ${i}`);
       await page.waitForTimeout(500);
     }
 

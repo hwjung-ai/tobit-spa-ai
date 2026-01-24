@@ -25,6 +25,12 @@ import { PathTreeNode } from "@/components/admin/screen-editor/visual/BindingEdi
 
 export type ActionType = "screen" | "component";
 
+interface ActionTestResult {
+  trace_id?: string;
+  state_patch?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
 interface ActionEditorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -105,7 +111,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
     });
 
     const [isTestingAction, setIsTestingAction] = useState(false);
-    const [testResult, setTestResult] = useState<unknown>(null);
+    const [testResult, setTestResult] = useState<ActionTestResult | null>(null);
     const [testError, setTestError] = useState<string | null>(null);
 
     // Generate action ID if new
@@ -170,10 +176,10 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
       }
     };
 
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl" ref={ref}>
-          <DialogHeader>
+     return (
+       <Dialog open={open} onOpenChange={onOpenChange}>
+         <DialogContent className="max-w-2xl">
+           <DialogHeader>
             <DialogTitle>
               {action ? "Edit Action" : "Create Action"}
             </DialogTitle>

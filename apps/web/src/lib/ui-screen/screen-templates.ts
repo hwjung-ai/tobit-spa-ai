@@ -402,11 +402,13 @@ export function getTemplateById(id: string): ScreenTemplate | undefined {
  * Helper: Create a minimal blank screen
  */
 export function createMinimalScreen(
-  screen_id: string
+  screen_id: string,
+  name?: string
 ): ScreenSchemaV1 {
   return {
     id: screen_id,
     screen_id,
+    name: name || screen_id,
     version: "1.0",
     components: [],
     state: {

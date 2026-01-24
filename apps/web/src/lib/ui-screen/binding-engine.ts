@@ -21,7 +21,7 @@ export function renderTemplate(template: unknown, ctx: BindingContext) {
     if (exactMatch) {
       return resolvePath(exactMatch[1].trim(), ctx);
     }
-    return template.replace(/{{\s*([^}]+)\s*}}/g, (_, expr) => {
+    return template.replace(/{{\s*([^}]+)\s*}}/g, (_match: string, expr: string): string => {
       const parts = expr.split(".");
       const root = parts[0];
       const path = parts.slice(1).join(".");

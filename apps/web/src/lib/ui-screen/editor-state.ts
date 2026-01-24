@@ -24,6 +24,7 @@ export interface EditorState {
   isRollbacking: boolean;
   previewEnabled: boolean;
   previewError: string | null;
+  proposedPatch: string | null;
 
   // Computed
   selectedComponent: Component | null;
@@ -325,6 +326,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
   isRollbacking: false,
   previewEnabled: false,
   previewError: null,
+  proposedPatch: null,
 
   // Computed
   get selectedComponent() {
@@ -351,13 +353,6 @@ export const useEditorState = create<EditorState>((set, get) => ({
   setAssetId: (assetId: string) => {
     currentAssetId = assetId;
   },
-  previewPatch: () => {
-    set((state) => ({
-      previewEnabled: !state.previewEnabled,
-      previewError: null,
-    }));
-  },
-
   loadScreen: async (assetId: string) => {
     try {
       currentAssetId = assetId;
@@ -365,13 +360,32 @@ export const useEditorState = create<EditorState>((set, get) => ({
       // Load from asset-registry endpoint (source of truth)
       console.log("[EDITOR] Attempting to load screen from /asset-registry:", assetId);
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
-      const data = response.data || response;
-      const asset = data.asset || data;
-      const schema = asset.schema_json || asset.screen_schema;
-      const status = asset.status || "draft";
+      const responseData = response.data as unknown;
+      const asset = (responseData as { asset?: { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } } | null)?.asset as { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } | null;
+      const rawSchema = (asset?.schema_json || asset?.screen_schema) as Record<string, unknown>;
+      const status = (asset?.status || "draft") as "draft" | "published";
 
-      // IMPORTANT: Update currentAssetId to the canonical UUID from the backend
-      // This ensures subsequent PUT requests use the UUID, not a slug/screen_id
+      const baseSchema: ScreenSchemaV1 = {
+        screen_id: rawSchema?.screen_id || asset?.screen_id || asset?.asset_id || assetId,
+        name: rawSchema?.name,
+        description: rawSchema?.description,
+        version: rawSchema?.version,
+        layout: rawSchema?.layout || { type: "form", direction: "vertical" },
+        components: (rawSchema?.components as any) || [],
+        actions: (rawSchema?.actions as any) || null,
+        state: rawSchema?.state || null,
+        bindings: rawSchema?.bindings || null,
+        metadata: rawSchema?.metadata,
+        ...rawSchema,
+      };
+
+      const schema: ScreenSchemaV1 = {
+        ...baseSchema,
+        screen_id: baseSchema.screen_id || rawSchema?.screen_id || asset?.screen_id || asset?.asset_id || assetId,
+      };
+
+      // IMPORTANT: Update currentAssetId to be canonical UUID from backend
+      // This ensures subsequent PUT requests use UUID, not a slug/screen_id
       if (asset.asset_id) {
         console.log("[EDITOR] Updating currentAssetId to canonical UUID:", asset.asset_id);
         currentAssetId = asset.asset_id;
@@ -651,8 +665,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
       const newScreen = {
         ...state.screen,
-        layout: { ...state.screen.layout, ...layout },
-      };
+        layout: { ...state.screen.layout, ...(layout as Record<string, unknown>) },
+      } as ScreenSchemaV1;
 
       return {
         screen: newScreen,
@@ -664,7 +678,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   updateScreenFromJson: (jsonString: string) => {
     try {
-      const parsed = JSON.parse(jsonString);
+      const parsed = JSON.parse(jsonString) as ScreenSchemaV1;
       set(() => {
         return {
           screen: parsed,
@@ -686,11 +700,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
   // Screen-level action CRUD
   addAction: (action: ScreenAction) => {
     set(() => {
-      if (!get().screen) return {};
+      const currentScreen = get().screen;
+      if (!currentScreen) return {};
 
-      const newActions = [...(get().screen!.actions || []), action];
-      const newScreen = {
-        ...get().screen!,
+      const newActions = [...(currentScreen.actions || []), action];
+      const newScreen: ScreenSchemaV1 = {
+        ...currentScreen,
         actions: newActions,
       };
 
@@ -704,14 +719,15 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   updateAction: (actionId: string, updates: Partial<ScreenAction>) => {
     set(() => {
-      if (!get().screen || !get().screen!.actions) return {};
+      const currentScreen = get().screen;
+      if (!currentScreen || !currentScreen.actions) return {};
 
-      const newActions = get().screen!.actions!.map(a =>
+      const newActions = currentScreen.actions.map(a =>
         a.id === actionId ? { ...a, ...updates } : a
       );
 
-      const newScreen = {
-        ...get().screen!,
+      const newScreen: ScreenSchemaV1 = {
+        ...currentScreen,
         actions: newActions,
       };
 
@@ -725,11 +741,12 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   deleteAction: (actionId: string) => {
     set(() => {
-      if (!get().screen || !get().screen!.actions) return {};
+      const currentScreen = get().screen;
+      if (!currentScreen || !currentScreen.actions) return {};
 
-      const newActions = get().screen!.actions!.filter(a => a.id !== actionId);
-      const newScreen = {
-        ...get().screen!,
+      const newActions = currentScreen.actions.filter(a => a.id !== actionId);
+      const newScreen: ScreenSchemaV1 = {
+        ...currentScreen,
         actions: newActions.length > 0 ? newActions : null,
       };
 
@@ -1008,7 +1025,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
       try {
         // Try PUT (update existing)
         const putPayload = {
-          schema_json: state.screen,
+          schema_json: state.screen as unknown as Record<string, unknown>,
         };
         console.log("[EDITOR] Attempting PUT to /asset-registry/assets");
         console.log("[EDITOR] PUT payload:", putPayload);
@@ -1155,6 +1172,31 @@ export const useEditorState = create<EditorState>((set, get) => ({
     return validateScreen(state.screen);
   },
 
+  // Preview/Patch management (Phase 4 - Copilot)
+  setProposedPatch: (patch: string | null) => {
+    set({ proposedPatch: patch as string | null });
+  },
+
+  disablePreview: () => {
+    set({ previewEnabled: false, previewError: null });
+  },
+
+  previewPatch: () => {
+    set({ previewEnabled: true, previewError: null });
+  },
+
+  applyProposedPatch: () => {
+    set((state) => ({
+      previewEnabled: false,
+      previewError: null,
+      // Apply patch to screen (implementation would go here)
+    }));
+  },
+
+  discardProposal: () => {
+    set({ previewEnabled: false, previewError: null });
+  },
+
   reset: () => {
     set({
       screen: null,
@@ -1167,6 +1209,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
       isSaving: false,
       isPublishing: false,
       isRollbacking: false,
+      previewEnabled: false,
+      previewError: null,
     });
   },
 }));

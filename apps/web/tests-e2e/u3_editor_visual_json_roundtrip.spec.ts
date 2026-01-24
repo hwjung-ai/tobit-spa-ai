@@ -203,7 +203,9 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     const componentTestId = componentId ?? "";
 
     // Select it
-    await page.click(`[data-testid="${componentTestId}"]`);
+    const componentNode = page.locator(`[data-testid="${componentTestId}"]`);
+    await componentNode.scrollIntoViewIfNeeded();
+    await componentNode.click({ force: true });
 
     // Delete it using the delete button
     const deleteButtonId = componentTestId.replace("canvas-component-", "");

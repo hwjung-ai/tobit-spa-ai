@@ -39,8 +39,9 @@ export default function PublishedScreensList() {
         }
       } catch (err: unknown) {
         console.error("[PublishedScreensList] Error loading:", err);
+        const errorMessage = err instanceof Error ? err.message : "Unable to load published screens";
         if (!cancelled) {
-          setError(err.message || "Unable to load published screens");
+          setError(errorMessage);
         }
       } finally {
         if (!cancelled) {

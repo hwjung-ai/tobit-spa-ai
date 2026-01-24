@@ -65,7 +65,7 @@ function applySingleOp(doc: unknown, op: JsonPatchOperation) {
   const segments = parsePointer(op.path);
   if (segments.length === 0) {
     if (op.op === "remove") {
-      throw new Error("Removing the entire document is not supported");
+      throw new Error("Removing of entire document is not supported");
     }
     if (op.op === "replace" || op.op === "add") {
       return cloneDeep(op.value);
@@ -85,8 +85,9 @@ function applySingleOp(doc: unknown, op: JsonPatchOperation) {
       }
       parent.splice(index, 1);
       return;
+    } else {
+      delete parent[key];
     }
-    delete parent[key];
     return;
   }
 
@@ -102,7 +103,85 @@ function applySingleOp(doc: unknown, op: JsonPatchOperation) {
     }
     if (op.op === "replace") {
       if (index >= parent.length) {
-        throw new Error(`Array index "${index}" out of bounds for replace`);
+        throw new Error(`Array index "${key}" out of bounds for replace`);
+      }
+      parent[index] = op.value;
+      return;
+    }
+    parent.splice(index, 0, op.value);
+    return;
+  }
+
+  if (op.op === "add" || op.op === "replace") {
+    parent[key] = op.value;
+    return;
+  }
+
+  throw new Error(`Unsupported operation "${op.op}"`);
+}
+    if (op.op === "replace" || op.op === "add") {
+      return cloneDeep(op.value);
+    }
+  }
+
+  const { parent, key } = getParent(doc, segments);
+  if (parent === null || key === null) {
+    throw new Error("Invalid JSON Patch target");
+  }
+
+  if (op.op === "remove") {
+    if (Array.isArray(parent)) {
+      const index = key === "-" ? parent.length - 1 : parseInt(String(key), 10);
+      if (isNaN(index) || index < 0 || index >= parent.length) {
+        throw new Error(`Invalid array index "${key}" for remove`);
+      }
+      parent.splice(index, 1);
+    } else {
+      delete parent[key];
+    }
+    return;
+  }
+
+    if (Array.isArray(parent)) {
+      const indexStr = String(key);
+      if (indexStr === "-") {
+        parent.push(op.value);
+        return;
+      }
+      const index = parseInt(indexStr, 10);
+      if (isNaN(index) || index < 0 || index > parent.length) {
+        throw new Error(`Invalid array index "${indexStr}" for ${op.op}`);
+      }
+      if (op.op === "replace") {
+        if (index >= parent.length) {
+          throw new Error(`Array index "${key}" out of bounds for replace`);
+        }
+        parent[index] = op.value;
+        return;
+      }
+      parent.splice(index, 0, op.value);
+      return;
+    }
+
+    if (op.op === "add" || op.op === "replace") {
+      parent[key] = op.value;
+      return;
+    }
+  
+  if (op.op === "add" || op.op === "replace") {
+    parent[key] = op.value;
+    return;
+  }
+
+  throw new Error(`Unsupported operation "${op}"`);
+}
+    const index = parseInt(indexStr, 10);
+    if (isNaN(index) || index < 0 || index > parent.length) {
+      throw new Error(`Invalid array index "${indexStr}" for ${op.op}`);
+    }
+    if (op.op === "replace") {
+      if (index >= parent.length) {
+        throw new Error(`Array index "${key}" out of bounds for replace`);
       }
       parent[index] = op.value;
       return;

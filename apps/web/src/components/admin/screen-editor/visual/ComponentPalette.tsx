@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import { COMPONENT_REGISTRY } from "@/lib/ui-screen/component-registry";
 import { Input } from "@/components/ui/input";
-import { Component } from "@/lib/ui-screen/screen.schema";
+import { Component, ComponentType } from "@/lib/ui-screen/screen.schema";
 import { GripVertical } from "lucide-react";
 
 // Container types that can have children
@@ -47,7 +47,7 @@ export default function ComponentPalette() {
     return null;
   }, [editorState.screen, editorState.selectedComponentId]);
 
-  const handleAddComponent = (type: string) => {
+  const handleAddComponent = (type: ComponentType) => {
     if (selectedContainer) {
       // Add to selected container
       editorState.addComponentToParent(type, selectedContainer.id);
@@ -57,7 +57,7 @@ export default function ComponentPalette() {
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, type: string) => {
+  const handleDragStart = (e: React.DragEvent, type: ComponentType) => {
     e.dataTransfer.setData(PALETTE_DRAG_TYPE, type);
     e.dataTransfer.effectAllowed = "copy";
     setDraggingType(type);
@@ -101,9 +101,9 @@ export default function ComponentPalette() {
             <div
               key={desc.type}
               draggable
-              onDragStart={(e) => handleDragStart(e, desc.type)}
+              onDragStart={(e) => handleDragStart(e, desc.type as ComponentType)}
               onDragEnd={handleDragEnd}
-              onClick={() => handleAddComponent(desc.type)}
+              onClick={() => handleAddComponent(desc.type as ComponentType)}
               className={`w-full text-left px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors text-xs font-medium text-slate-200 border border-slate-700 hover:border-slate-600 cursor-grab active:cursor-grabbing flex items-center gap-2 ${
                 draggingType === desc.type ? "opacity-50 border-sky-500" : ""
               }`}

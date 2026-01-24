@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Component } from "@/lib/ui-screen/screen.schema";
+import { Component, ComponentType } from "@/lib/ui-screen/screen.schema";
 import { Button } from "@/components/ui/button";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -109,7 +109,7 @@ export default function CanvasComponent({
 
     // Handle palette drag (new component)
     if (e.dataTransfer.types.includes(PALETTE_DRAG_TYPE)) {
-      const componentType = e.dataTransfer.getData(PALETTE_DRAG_TYPE);
+      const componentType = e.dataTransfer.getData(PALETTE_DRAG_TYPE) as ComponentType;
       if (componentType && isContainer) {
         editorState.addComponentToParent(componentType, component.id);
       }

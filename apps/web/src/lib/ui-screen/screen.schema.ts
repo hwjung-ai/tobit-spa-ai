@@ -130,6 +130,9 @@ export interface ScreenSchemaV1 {
   // REQUIRED: stable id of the screen (contract requested)
   screen_id: string;
 
+  // Display name
+  name?: string;
+
   // Schema version
   version?: string; // default: "1.0"
 

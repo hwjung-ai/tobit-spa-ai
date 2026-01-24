@@ -1,20 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type StageStatus, type StageSnapshot } from "@/lib/apiClientTypes";
-
-export type { StageStatus, StageSnapshot };
+import type { StageStatus as StageStatusType, StageSnapshot as StageSnapshotType } from "@/lib/apiClientTypes";
 
 interface StagePipelineProps {
   className?: string;
   traceId?: string;
-  stages: StageSnapshot[];
-  onStageSelect?: (stage: StageSnapshot) => void;
+  stages: StageSnapshotType[];
+  onStageSelect?: (stage: StageSnapshotType) => void;
 }
 
-const STATUS_STYLES: Record<StageStatus, { badge: string; icon: JSX.Element }> = {
+const STATUS_STYLES: Record<StageStatusType, { badge: string; icon: React.ReactElement }> = {
   pending: { badge: "bg-slate-800 text-slate-400", icon: <Clock className="h-3 w-3" /> },
   ok: { badge: "bg-emerald-500/10 text-emerald-400", icon: <CheckCircle className="h-3 w-3" /> },
   warning: { badge: "bg-amber-500/10 text-amber-400", icon: <AlertTriangle className="h-3 w-3" /> },
@@ -32,17 +30,16 @@ const STAGE_STYLES: Record<string, string> = {
 
 const prettyJson = (value: unknown) => JSON.stringify(value, null, 2);
 
-export default function InspectorStagePipeline({
+  export default function InspectorStagePipeline({
   className,
   traceId,
   stages,
   onStageSelect,
 }: StagePipelineProps) {
-  const [selectedStage, setSelectedStage] = useState<StageSnapshot | null>(null);
+  const [selectedStage, setSelectedStage] = useState<StageSnapshotType | null>(null);
+  const orderedStages = useMemo(() => stages as StageSnapshotType[] ?? [], [stages as StageSnapshotType[]]);
 
-  const orderedStages = useMemo(() => stages ?? [], [stages]);
-
-  const handleStageClick = (stage: StageSnapshot) => {
+  const handleStageClick = (stage: StageSnapshotType) => {
     setSelectedStage(stage);
     onStageSelect?.(stage);
   };
