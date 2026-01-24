@@ -1,4 +1,25 @@
-import { SourceAssetResponse, SchemaAssetResponse, ResolverAssetResponse, ConnectionTestResult } from "../../types";
+import {
+  SourceAsset,
+  SourceAssetCreate,
+  SourceAssetUpdate,
+  SourceAssetResponse,
+  SchemaAsset,
+  SchemaAssetCreate,
+  SchemaAssetUpdate,
+  SchemaAssetResponse,
+  ResolverAsset,
+  ResolverAssetCreate,
+  ResolverAssetUpdate,
+  ResolverAssetResponse,
+  ResolverConfig,
+  ResolverRule,
+  AliasMapping,
+  PatternRule,
+  TransformationRule,
+  ResolverSimulationRequest,
+  ResolverSimulationResult,
+  ConnectionTestResult,
+} from "../lib/apiClientTypes";
 
 export type {
   SourceAsset,

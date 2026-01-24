@@ -1,8 +1,6 @@
-export const dynamic = "force-dynamic";
-
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Toast from "../../../components/admin/Toast";
@@ -34,6 +32,7 @@ import {
   FlowSpan,
   StageInput,
   StageOutput,
+  StageSnapshot,
   ExecutionTraceDetail,
   TraceSummaryRow,
   TraceListResponse,
@@ -964,7 +963,7 @@ function InspectorContent() {
                         <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Screens</p>
                         {traceDetail.applied_assets?.screens?.length ? (
                           <ul className="space-y-2">
-                            {traceDetail.applied_assets.screens.map((screen: {asset_id: string | null; screen_id: string | null; status: string | null; version: number | string | null}) => (
+                            {traceDetail.applied_assets.screens.map((screen) => (
                               <li key={screen.asset_id || `${screen.screen_id}-${screen.status}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-300">
                                 {screen.screen_id || "screen"} · {screen.status ?? "unknown"} · {screen.version ?? "?"}
                               </li>
@@ -1646,7 +1645,9 @@ function InspectorContent() {
 export default function InspectorPage() {
   return (
     <ReactFlowProvider>
-      <InspectorContent />
+      <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+        <InspectorContent />
+      </Suspense>
     </ReactFlowProvider>
   );
 }

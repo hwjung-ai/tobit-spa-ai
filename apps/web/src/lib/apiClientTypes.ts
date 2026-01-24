@@ -4,6 +4,17 @@
  */
 
 /**
+ * Re-plan event type
+ * Re-exported from components/ops/ReplanTimeline for consistency
+ * Must be imported at top level to avoid circular dependency issues
+ */
+export type { ReplanEvent } from "../components/ops/ReplanTimeline";
+export type { NextAction } from "../app/ops/nextActions";
+
+export type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
+export type UiMode = "ci" | "metric" | "history" | "relation" | "all";
+
+/**
  * Standard API response wrapper
  * All endpoints should return data in this format
  */
@@ -401,12 +412,6 @@ export interface ExecutionTraceDetail {
 }
 
 /**
- * Replan event type
- * Re-exported from components/ops/ReplanTimeline for consistency
- */
-export type { ReplanEvent } from "../components/ops/ReplanTimeline";
-
-/**
  * ReplanTimelineEvent - alias for ReplanEvent for compatibility
  */
 export type ReplanTimelineEvent = ReplanEvent;
@@ -467,7 +472,7 @@ export interface StageSnapshot {
   name: string;
   label: string;
   status: StageStatus;
-  duration_ms?: number | undefined;
+  duration_ms?: number;
   input: StageInput | null;
   output: StageOutput | null;
   diagnostics: {
@@ -483,15 +488,14 @@ export interface StageSnapshot {
 export interface CiAnswerPayload {
   answer: string;
   blocks: AnswerBlock[];
+  data?: { answer?: AnswerEnvelope };
   trace?: {
     plan_validated?: unknown;
     policy_decisions?: unknown;
     [key: string]: unknown;
   };
-  next_actions?: Array<{
-    action: string;
-    description?: string;
-  }>;
+  next_actions?: NextAction[];
+  nextActions?: NextAction[];
   meta?: {
     model?: string;
     tokens?: {
@@ -524,8 +528,8 @@ export interface ApiServerHistoryEntry {
 export interface LocalOpsHistoryEntry {
   id: string;
   createdAt: string;
-  uiMode: string;
-  backendMode: string;
+  uiMode: UiMode;
+  backendMode: BackendMode;
   question: string;
   response: AnswerEnvelope | CiAnswerPayload;
   status: "ok" | "error";
@@ -538,6 +542,9 @@ export interface LocalOpsHistoryEntry {
     fallback?: boolean;
     error?: string;
     trace_id?: string;
+    nextActions?: NextAction[];
+    next_actions?: NextAction[];
+    errorDetails?: string;
   };
   summary?: string;
   errorDetails?: string;
@@ -546,10 +553,8 @@ export interface LocalOpsHistoryEntry {
     policy_decisions?: unknown;
     [key: string]: unknown;
   };
-  next_actions?: Array<{
-    action: string;
-    description?: string;
-  }>;
+  nextActions?: NextAction[];
+  next_actions?: NextAction[];
 }
 
 /**
@@ -580,6 +585,31 @@ export interface ServerHistoryEntry {
   question: string;
   status: "ok" | "error";
   summary?: string | null;
+  metadata?: {
+    backendMode?: BackendMode | string;
+    backend_mode?: BackendMode | string;
+    uiMode?: UiMode | string;
+    ui_mode?: UiMode | string;
+    route?: string;
+    route_reason?: string;
+    timing_ms?: number;
+    summary?: string;
+    used_tools?: string[];
+    fallback?: boolean;
+    error?: string;
+    errorDetails?: string;
+    error_details?: string;
+    trace_id?: string;
+    trace?: {
+      plan_validated?: unknown;
+      policy_decisions?: unknown;
+      [key: string]: unknown;
+    };
+    nextActions?: NextAction[];
+    next_actions?: NextAction[];
+  } | null;
+  response?: AnswerEnvelope | CiAnswerPayload | null;
+  feature?: string;
   [key: string]: unknown;
 }
 

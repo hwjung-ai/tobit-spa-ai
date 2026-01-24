@@ -14,9 +14,14 @@ import {
   type ApiServerHistoryEntry,
   type LocalOpsHistoryEntry,
   type AnswerEnvelope,
+  type StageInput,
+  type StageOutput,
 } from "@/lib/apiClientTypes";
 import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
 import Toast from "@/components/admin/Toast";
+import InspectorStagePipeline from "@/components/ops/InspectorStagePipeline";
+import ReplanTimeline, { type ReplanEvent } from "@/components/ops/ReplanTimeline";
+import { type StageSnapshot } from "@/lib/apiClientTypes";
 
 type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
 type UiMode = "ci" | "metric" | "history" | "relation" | "all";
@@ -94,6 +99,59 @@ const previewFromBlock = (block: AnswerBlock) => {
   }
 };
 
+const buildStageSnapshots = (
+  stageInputs?: StageInput[],
+  stageOutputs?: StageOutput[]
+): StageSnapshot[] => {
+  if (!stageInputs || !stageOutputs) return [];
+
+  // Map stage names to display labels
+  const stageLabels: Record<string, string> = {
+    route_plan: "Route Plan",
+    validate: "Validate",
+    execute: "Execute",
+    compose: "Compose",
+    present: "Present",
+  };
+
+  return stageInputs.map((input: StageInput, index: number) => {
+    const output = stageOutputs.find(o => o?.stage === input.stage);
+    const stageName = input.stage || `stage_${index}`;
+
+    return {
+      name: stageName,
+      label: stageLabels[stageName] || stageName,
+      status: output?.diagnostics?.status || "pending",
+      duration_ms: output?.duration_ms || 0,
+      input: input,
+      output: output || null,
+      diagnostics: output?.diagnostics || null,
+    };
+  });
+};
+
+const parseReplanEvents = (events?: unknown[]): ReplanEvent[] => {
+  if (!events || !Array.isArray(events)) return [];
+
+  return events.map((event: any) => ({
+    id: event.id,
+    event_type: event.event_type || "replan_event",
+    stage_name: event.stage_name || "unknown",
+    trigger: event.trigger || {
+      trigger_type: "unknown",
+      reason: "Unknown trigger",
+      severity: "medium",
+      stage_name: event.stage_name || "unknown",
+    },
+    patch: event.patch || {
+      before: {},
+      after: {},
+    },
+    timestamp: event.timestamp || new Date().toISOString(),
+    decision_metadata: event.decision_metadata || null,
+  }));
+};
+
   const extractSummary = (envelope: AnswerEnvelope | null, question: string): string => {
     if (!envelope) {
       return question || "(no summary)";
@@ -159,36 +217,32 @@ const genId = () => {
 };
 
 const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | null => {
-  const metadata = entry.metadata ?? {};
-  const backendMode =
-    (metadata?.backendMode ||
-      metadata?.backend_mode ||
-      entry.feature ||
-      "config") as BackendMode;
+  const metadata = entry.metadata;
+  const backendMode = metadata?.backendMode ?? metadata?.backend_mode ?? entry.feature ?? "config";
   const response = entry.response;
-  const envelope =
-    response && Array.isArray(response.blocks)
-      ? response
-      : buildErrorEnvelope(backendMode, "Missing response data from history");
-  if (!envelope.blocks || !Array.isArray(envelope.blocks)) {
+  const envelope: AnswerEnvelope | CiAnswerPayload =
+    response && (Array.isArray((response as AnswerEnvelope).blocks) || Array.isArray((response as CiAnswerPayload).blocks))
+      ? response as AnswerEnvelope | CiAnswerPayload
+      : buildErrorEnvelope(backendMode as BackendMode, "Missing response data from history");
+  const blocks = (envelope as AnswerEnvelope).blocks ?? (envelope as CiAnswerPayload).blocks;
+  if (!blocks || !Array.isArray(blocks)) {
     return null;
   }
-  const uiMode =
-    (metadata?.uiMode ?? metadata?.ui_mode ?? "ci") as UiMode;
+  const uiMode = (metadata?.uiMode ?? metadata?.ui_mode ?? "ci") as UiMode;
   const status = entry.status === "error" ? "error" : "ok";
   return {
     id: entry.id,
     createdAt: entry.created_at,
     uiMode,
-    backendMode,
+    backendMode: backendMode as BackendMode,
     question: entry.question,
     response: envelope,
     status,
-    summary: (entry.summary ?? extractSummary(envelope, entry.question)) ?? "",
-    errorDetails: (metadata?.errorDetails ?? metadata?.error_details) as string | undefined,
-    trace: metadata?.trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined,
-    nextActions: metadata?.nextActions as NextAction[] | undefined,
-    next_actions: metadata?.nextActions as NextAction[] | undefined,
+    summary: (entry.summary ?? extractSummary(envelope as AnswerEnvelope, entry.question)) ?? "",
+    errorDetails: metadata?.errorDetails ?? metadata?.error_details,
+    trace: metadata?.trace,
+    nextActions: metadata?.nextActions ?? metadata?.next_actions,
+    next_actions: metadata?.nextActions ?? metadata?.next_actions,
   };
 };
 
@@ -222,30 +276,30 @@ export default function OpsPage() {
   );
 
    const fetchHistory = useCallback(async () => {
-    setHistoryLoading(true);
-    setHistoryError(null);
-    try {
-      const payload = await authenticatedFetch<{ history: ApiServerHistoryEntry[] }>(`/history?feature=ops&limit=${HISTORY_LIMIT}`);
-      const rawHistory = payload?.data?.history ?? [];
-      const hydrated = rawHistory
-        .map((entry: ApiServerHistoryEntry): LocalOpsHistoryEntry | null => hydrateServerEntry(entry))
-        .filter((entry): entry is LocalOpsHistoryEntry => Boolean(entry));
-      if (hydrated.length === 0) {
-        setHistory([]);
-        setSelectedId(null);
-      } else {
-        setHistory(hydrated);
-        setSelectedId((prev) =>
-          prev && hydrated.some((item: LocalOpsHistoryEntry) => item.id === prev) ? prev : hydrated[0].id
-        );
-      }
-    } catch (error: unknown) {
-      console.error("Failed to load OPS history", error);
-      setHistoryError(error instanceof Error ? error.message : "Failed to load history");
-    } finally {
-      setHistoryLoading(false);
-    }
-  }, []);
+     setHistoryLoading(true);
+     setHistoryError(null);
+     try {
+       const payload = await authenticatedFetch<{ history: ServerHistoryEntry[] }>(`/history?feature=ops&limit=${HISTORY_LIMIT}`);
+       const rawHistory = (payload as { data?: { history: ServerHistoryEntry[] } })?.data?.history ?? [];
+       const hydrated = rawHistory
+         .map((entry: ServerHistoryEntry): LocalOpsHistoryEntry | null => hydrateServerEntry(entry))
+         .filter((entry): entry is LocalOpsHistoryEntry => Boolean(entry));
+       if (hydrated.length === 0) {
+         setHistory([]);
+         setSelectedId(null);
+       } else {
+         setHistory(hydrated);
+         setSelectedId((prev) =>
+           prev && hydrated.some((item: LocalOpsHistoryEntry) => item.id === prev) ? prev : hydrated[0].id
+         );
+       }
+     } catch (error: unknown) {
+       console.error("Failed to load OPS history", error);
+       setHistoryError(error instanceof Error ? error.message : "Failed to load history");
+     } finally {
+       setHistoryLoading(false);
+     }
+   }, []);
 
   const persistHistoryEntry = useCallback(
     async (entry: LocalOpsHistoryEntry) => {
@@ -322,6 +376,19 @@ export default function OpsPage() {
   const traceContents = useMemo(() => (traceData ? JSON.stringify(traceData, null, 2) : ""), [traceData]);
   const currentTraceId = selectedEntry?.response?.meta?.trace_id;
 
+  // Build stage snapshots from trace data
+  const stageSnapshots = useMemo(() => {
+    const stageInputs = (traceData as any)?.stage_inputs;
+    const stageOutputs = (traceData as any)?.stage_outputs;
+    return buildStageSnapshots(stageInputs, stageOutputs);
+  }, [traceData]);
+
+  // Build replan events from trace data
+  const replanEvents = useMemo(() => {
+    const events = (traceData as any)?.replan_events;
+    return parseReplanEvents(events);
+  }, [traceData]);
+
   useEffect(() => {
     setTraceOpen(false);
   }, [selectedEntry?.id]);
@@ -361,32 +428,32 @@ export default function OpsPage() {
     }
   }, [currentTraceId]);
 
-  const openInspectorTrace = useCallback(async () => {
-    const traceId = currentTraceId || history[0]?.response?.meta?.trace_id;
+   const openInspectorTrace = useCallback(async () => {
+     const traceId = currentTraceId || history[0]?.response?.meta?.trace_id as string;
 
-    if (!traceId) {
-      setStatusMessage("trace_id가 없습니다. 질의 응답에 trace_id가 포함되어 있는지 확인해주세요.");
-      return;
-    }
+     if (!traceId) {
+       setStatusMessage("trace_id가 없습니다. 질의 응답에 trace_id가 포함되어 있는지 확인해주세요.");
+       return;
+     }
 
-    try {
-      const response = await authenticatedFetch(`/inspector/traces/${encodeURIComponent(traceId)}`);
-      const responseWithData = getApiResponseData<{ trace?: unknown }>(response);
-      if (!responseWithData?.trace) {
-        setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
-        return;
-      }
-      setStatusMessage(null);
-      router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
-      if (errorMessage.includes("404") || errorMessage.includes("not found")) {
-        setStatusMessage(`Trace (${traceId.slice(0, 8)}...)가 서버에 저장되지 않았습니다. 질의를 다시 실행해주세요.`);
-      } else {
-        setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
-      }
-    }
-  }, [currentTraceId, router, history]);
+     try {
+       const response = await authenticatedFetch(`/inspector/traces/${encodeURIComponent(traceId)}`);
+       const responseWithData = getApiResponseData<{ trace?: unknown }>(response);
+       if (!responseWithData?.trace) {
+         setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
+         return;
+       }
+       setStatusMessage(null);
+       router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
+     } catch (error) {
+       const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
+       if (errorMessage.includes("404") || errorMessage.includes("not found")) {
+         setStatusMessage(`Trace (${traceId.slice(0, 8)}...)가 서버에 저장되지 않았습니다. 질의를 다시 실행해주세요.`);
+       } else {
+         setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
+       }
+     }
+   }, [currentTraceId, router, history]);
 
   const traceCopyLabel =
     traceCopyStatus === "copied" ? "Copied!" : traceCopyStatus === "failed" ? "Retry" : "Copy";
@@ -431,41 +498,41 @@ export default function OpsPage() {
     let trace: unknown;
     let nextActions: NextAction[] | undefined;
     try {
-      if (requestedMode.id === "ci") {
-        const response = await authenticatedFetch<CiAnswerPayload>(`/ops/ci/ask`, {
-          method: "POST",
-          body: JSON.stringify({ question: question.trim() }),
-        });
-        const ciPayload = response?.data;
-        if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
-          throw new Error("Invalid CI response format");
-        }
-        const meta =
-          ciPayload.meta ??
-          ({
-            route: "ci",
-            route_reason: "CI tab",
-            timing_ms: 0,
-            summary: ciPayload.answer,
-            used_tools: [],
-          } as AnswerMeta);
-        envelope = {
-          meta,
-          blocks: ciPayload.blocks,
-        };
-        trace = ciPayload.trace;
-        nextActions = ciPayload.next_actions;
-      } else {
-        const data = await authenticatedFetch<{ answer?: AnswerEnvelope }>(`/ops/query`, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        const answer = data?.data as AnswerEnvelope | undefined;
-        if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
-          throw new Error("Invalid OPS response format");
-        }
-        envelope = answer;
-      }
+       if (requestedMode.id === "ci") {
+         const response = await authenticatedFetch<CiAnswerPayload>(`/ops/ci/ask`, {
+           method: "POST",
+           body: JSON.stringify({ question: question.trim() }),
+         });
+         const ciPayload = response as { data?: CiAnswerPayload };
+         if (!ciPayload.data || !Array.isArray(ciPayload.data.blocks)) {
+           throw new Error("Invalid CI response format");
+         }
+         const meta =
+           ciPayload.data.meta ??
+           ({
+             route: "ci",
+             route_reason: "CI tab",
+             timing_ms: 0,
+             summary: ciPayload.data.answer,
+             used_tools: [],
+           } as AnswerMeta);
+         envelope = {
+           meta,
+           blocks: ciPayload.data.blocks,
+         };
+         trace = ciPayload.data.trace;
+         nextActions = ciPayload.data.next_actions;
+       } else {
+         const data = await authenticatedFetch<{ answer?: AnswerEnvelope }>(`/ops/query`, {
+           method: "POST",
+           body: JSON.stringify(payload),
+         });
+         const answer = data?.data as AnswerEnvelope | undefined;
+         if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
+           throw new Error("Invalid OPS response format");
+         }
+         envelope = answer;
+       }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
       envelope = buildErrorEnvelope(currentModeDefinition.backend, normalized.message);
@@ -834,6 +901,24 @@ export default function OpsPage() {
               <p className="mt-2 text-[11px] text-slate-400">No meta available.</p>
             )}
           </details>
+          {/* Stage Pipeline Inspector */}
+          {stageSnapshots.length > 0 && (
+            <InspectorStagePipeline
+              stages={stageSnapshots}
+              traceId={currentTraceId}
+              className="rounded-2xl"
+            />
+          )}
+
+          {/* Replan Timeline */}
+          {replanEvents.length > 0 && (
+            <ReplanTimeline
+              events={replanEvents}
+              traceId={currentTraceId}
+              className="rounded-2xl max-h-96"
+            />
+          )}
+
           <details
             open={traceOpen}
             onToggle={(event) => setTraceOpen(event.currentTarget.open)}

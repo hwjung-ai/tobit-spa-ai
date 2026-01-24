@@ -44,7 +44,6 @@ interface RegressionRunDetail extends RegressionRun {
 }
 
 export default function RegressionWatchPanel() {
-  const searchParams = useSearchParams();
   const [queries, setQueries] = useState<GoldenQuery[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +52,13 @@ export default function RegressionWatchPanel() {
   const [contextScreenId, setContextScreenId] = useState<string | null>(null);
   const [contextAssetId, setContextAssetId] = useState<string | null>(null);
   const [contextVersion, setContextVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    const searchParams = useSearchParams();
+    setContextScreenId(searchParams.get("screen_id"));
+    setContextAssetId(searchParams.get("asset_id"));
+    setContextVersion(searchParams.get("version"));
+  }, []);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showBaselineDialog, setShowBaselineDialog] = useState(false);
@@ -110,12 +116,6 @@ export default function RegressionWatchPanel() {
     loadQueries();
     loadRuns();
   }, []);
-
-  useEffect(() => {
-    setContextScreenId(searchParams.get("screen_id"));
-    setContextAssetId(searchParams.get("asset_id"));
-    setContextVersion(searchParams.get("version"));
-  }, [searchParams]);
 
   const handleCreateQuery = async () => {
     try {

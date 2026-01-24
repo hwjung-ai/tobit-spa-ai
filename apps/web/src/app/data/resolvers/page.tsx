@@ -142,13 +142,13 @@ const formatStatus = (status: string) => {
 export default function ResolversPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
-  const searchParams = useSearchParams();
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
 
   // Use effect to get searchParams on client side
   useEffect(() => {
+    const searchParams = useSearchParams();
     setSelectedAssetId(searchParams.get("asset_id"));
-  }, [searchParams]);
+  }, []);
 
   const [selectedResolver, setSelectedResolver] = useState<ResolverAssetResponse | null>(null);
   const [editingResolver, setEditingResolver] = useState<Partial<ResolverAsset> | null>(null);

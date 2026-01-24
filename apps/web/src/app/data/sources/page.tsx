@@ -1,9 +1,9 @@
-export const dynamic = "force-dynamic";
-
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import BuilderShell from "../../../components/builder/BuilderShell";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
@@ -79,8 +79,12 @@ const formatStatus = (status: string) => {
 export default function SourcesPage() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const enableAssetRegistry = process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
-  const searchParams = useSearchParams();
-  const selectedAssetId = searchParams.get("asset_id");
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const searchParams = useSearchParams();
+    setSelectedAssetId(searchParams.get("asset_id"));
+  }, []);
 
   const [selectedSource, setSelectedSource] = useState<SourceAssetResponse | null>(null);
   const [editingSource, setEditingSource] = useState<Partial<SourceAssetResponse> | null>(null);
