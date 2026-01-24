@@ -26,10 +26,16 @@
 - **Observability**: LangSmith (선택 사항)
 - **Testing Stack**:
   - **Backend Unit Testing**: pytest, pytest-asyncio (비동기 테스트), pytest-anyio (멀티플랫폼 async 지원)
-  - **Backend Lint**: Ruff (Python linter/formatter), mypy (타입 체커)
+  - **Backend Security Testing**: 보안 헤더, CSRF, 암호화, RBAC, API 키 검증
+    - 테스트 위치: `apps/api/tests/test_security*.py`, `test_encryption.py`, `test_permissions.py`, `test_api_keys.py`
+  - **Backend Lint & Type Check**: Ruff (Python linter/formatter), mypy (타입 체커)
   - **Frontend E2E Testing**: Playwright (@playwright/test)
-  - **Frontend Lint**: ESLint, Prettier, TypeScript strict mode
-  - **Test Coverage**: 유닛 테스트는 `apps/api/tests/`, E2E 테스트는 `apps/web/tests-e2e/`
+  - **Frontend Type Check**: TypeScript strict mode + `npm run type-check` (tsc --noEmit)
+  - **Frontend Lint**: ESLint, Prettier
+  - **Test Coverage**:
+    - Backend 유닛 테스트: `apps/api/tests/`
+    - Backend 통합/E2E 테스트: `tests/ops_ci_api/`, `tests/ops_e2e/`
+    - Frontend E2E 테스트: `apps/web/tests-e2e/`
 
 ---
 
@@ -135,6 +141,20 @@
   - 조회 전용(Read-only)으로만 동작해야 합니다.
   - SQL, Cypher, Redis에서 데이터 변경을 유발하는 위험한 명령어 사용을 금지하고, 허용된 명령어 목록(allowlist)을 강제해야 합니다.
 
+### 보안 테스트 (Security Testing)
+- **Backend Security Test**:
+  - 모든 보안 관련 변경은 반드시 보안 테스트를 포함해야 합니다.
+  - 테스트 위치: `apps/api/tests/test_security*.py`, `test_encryption.py`, `test_permissions.py`, `test_api_keys.py`
+  - **테스트 범위**:
+    - **보안 헤더**: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+    - **HTTPS/CORS**: HTTPS 리다이렉트, CORS 설정, 신뢰할 수 있는 오리진 검증
+    - **CSRF 보호**: CSRF 토큰 생성, 검증, 미스매치 거부
+    - **암호화**: 민감정보 암호화/복호화 (이메일, 비밀번호 등)
+    - **접근 제어 (RBAC)**: 역할 기반 권한 확인, 사용자 권한 조회
+    - **API 키**: 키 생성, 검증, 스코프 관리, 폐기
+    - **인증**: JWT 토큰 생성/검증, 사용자 인증
+  - 실행: `pytest tests/test_security*.py -v`
+
 ---
 
 ## 9. 개발 워크플로우 (필독)
@@ -219,8 +239,8 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
      npx playwright test --headed
      ```
      UI 컴포넌트, 사용자 흐름, 대화 상자, 버튼 동작 등 변경 시 필수 실행
-     - **테스트 파일 위치**: `apps/web/tests-e2e/*.spec.ts`
-     - **주요 테스트**: Inspector 흐름, RCA 실행, Regression Watch 기능, UI Screen 렌더링
+     - **테스트 파일 위치**: `apps/web/tests-e2e/*.spec.ts` (22개 테스트 파일)
+     - **주요 테스트**: Inspector 흐름, RCA 실행, Regression Watch 기능, UI Screen 렌더링, Screen Editor, Diff Compare, Publish Gate
 
    - **Backend API 수동 테스트**:
      ```bash
@@ -240,15 +260,21 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 
    - **코드 품질 검사** (pre-commit 훅과 동일):
      ```bash
+     # Backend: Linting & Formatting
      make api-lint              # Backend: Ruff (linter + formatter)
-     make web-lint              # Frontend: ESLint, Prettier
-
-     # Ruff 자동 수정
-     ruff check . --fix         # apps/api 디렉토리에서 실행
+     ruff check . --fix         # apps/api 디렉토리에서 실행 (자동 수정)
      ruff format .              # 코드 포맷팅
 
-     # TypeScript 타입 체크
-     npm run type-check         # apps/web 디렉토리에서 실행
+     # Backend: Type Checking
+     mypy .                     # apps/api 디렉토리에서 실행 (타입 검사)
+
+     # Frontend: Linting & Formatting
+     make web-lint              # Frontend: ESLint, Prettier
+     npm run lint -- --fix      # 자동 수정 (apps/web 디렉토리)
+     npm run format             # Prettier 포맷팅 (apps/web 디렉토리)
+
+     # Frontend: Type Checking
+     npm run type-check         # TypeScript strict mode 검사 (apps/web 디렉토리)
      ```
 
 ### 4) 품질 관리
@@ -263,11 +289,13 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
      - 모든 테스트는 `pytest -v` 실행 시 100% 통과해야 함
    - **Tool Contract 변경 시**: `ToolCall`, `ReferenceItem` 등의 스키마 수정 후에는 반드시 관련 executor/runner 테스트를 실행합니다.
    - **Database 드라이버 변경 시**: psycopg 버전 업그레이드 시 모든 DB 호출 코드를 검증하고, SQLAlchemy/SQLModel 마이그레이션이 필요한지 확인합니다.
-   - **Lint 오류 대응**:
-     - Backend: `ruff check . --fix`로 자동 수정 가능한 문제는 즉시 수정
-     - Frontend: `npm run lint -- --fix`로 자동 수정 가능한 문제는 즉시 수정
-     - E402 (import not at top), F841 (unused variable) 등은 개발 중 경고로 허용
-     - E741 (ambiguous variable name `l`), F821 (undefined name) 등은 반드시 수정
+   - **Lint 및 Type Check 오류 대응**:
+     - Backend Lint: `ruff check . --fix`로 자동 수정 가능한 문제는 즉시 수정
+     - Backend Type Check: `mypy .` 실행 후 타입 오류 반드시 수정
+     - Frontend Lint: `npm run lint -- --fix`로 자동 수정 가능한 문제는 즉시 수정
+     - Frontend Type Check: `npm run type-check` 실행 후 TypeScript 오류 반드시 수정
+     - Ruff 경고: E402 (import not at top), F841 (unused variable) 등은 개발 중 허용 가능
+     - Ruff 오류: E741 (ambiguous variable name `l`), F821 (undefined name) 등은 반드시 수정
 
 ---
 
@@ -279,8 +307,11 @@ AI 에이전트는 모든 작업을 종료하기 전, 다음 네 가지 기준�
     - 단순 코드 생성을 넘어, 실제 동작을 확인했습니까? (`curl` 테스트, `pytest` 실행 결과, UI 동작 스크린샷, Playwright E2E 테스트 등)
     - 백엔드 로직 수정 시, `tests/`에 관련 테스트 케이스를 추가하거나 `curl` 스크립트 실행 결과를 제시했습니까?
     - Frontend UI 변경 시, Playwright E2E 테스트(`npm run test:e2e` 또는 `make web-test-e2e`)를 실행하여 사용자 흐름을 검증했습니까?
+    - Backend 코드 변경 시: `mypy .` (타입 검사) 실행 후 모든 타입 오류가 해결되었습니까?
+    - Frontend 코드 변경 시: `npm run type-check` (TypeScript 검사) 실행 후 모든 타입 오류가 해결되었습니까?
     - Tool Contract/Reference 관련 변경: 해당 스키마를 사용하는 모든 서비스(executor, runner 등)에서 정상 작동 확인했습니까?
     - DB 드라이버/마이그레이션: `make api-migrate` 실행 후 DB 스키마가 정상 생성되었는지 확인했습니까?
+    - 보안 관련 변경 (인증, 암호화, 권한, API 키): `apps/api/tests/test_security*.py` 테스트 실행 후 100% 통과했습니까?
 
 2.  **문서 최신화 (Documentation)**
     - 변경된 기능, API, 환경변수가 `README.md`, `docs/FEATURES.md`, `docs/OPERATIONS.md` 등 관련 문서에 모두 반영되었습니까?

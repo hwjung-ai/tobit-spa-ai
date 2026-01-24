@@ -13,9 +13,11 @@ sse-starlette
 openai>=1.0.0
 pytest
 pytest-asyncio
+pytest-anyio
 httpx
 python-dotenv>=1.2.0
 ruff
+mypy
 langchain
 langchain-community
 langchain-openai>=0.1.0
