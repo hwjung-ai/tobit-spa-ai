@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import sys
 from pathlib import Path
@@ -45,8 +45,12 @@ def main() -> None:
 
     driver = get_neo4j_driver()
     with driver.session() as session:
-        node_count = session.execute_read(lambda tx: tx.run("MATCH (n:CI) RETURN count(n) AS count").single())["count"]
-        rel_count = session.execute_read(lambda tx: tx.run("MATCH ()-[r]->() RETURN count(r) AS count").single())["count"]
+        node_count = session.execute_read(
+            lambda tx: tx.run("MATCH (n:CI) RETURN count(n) AS count").single()
+        )["count"]
+        rel_count = session.execute_read(
+            lambda tx: tx.run("MATCH ()-[r]->() RETURN count(r) AS count").single()
+        )["count"]
     driver.close()
 
     print("\nCI counts (type/subtype):")
@@ -54,13 +58,21 @@ def main() -> None:
         print(f"- {ci_type}/{ci_subtype}: {count}")
     print(f"Metric rows: {metric_count}")
     print(f"Event rows: {event_count}")
-    print(f"History rows: {maint_count + work_count} (maintenance {maint_count}, work {work_count})")
+    print(
+        f"History rows: {maint_count + work_count} (maintenance {maint_count}, work {work_count})"
+    )
     print(f"Neo4j nodes: {node_count}, relationships: {rel_count}")
 
     print("\nSample SQL/Cypher queries:")
-    print("1. SQL: SELECT ci_type, ci_subtype, COUNT(*) FROM ci WHERE status = 'active' GROUP BY ci_type, ci_subtype;")
-    print("2. SQL: SELECT m.metric_name, COUNT(*) FROM metric_value mv JOIN metric_def m USING(metric_id) WHERE mv.time >= '2025-12-15' GROUP BY m.metric_name;")
-    print("3. Cypher: MATCH (s:CI {ci_type:'SYSTEM'})-[:COMPOSED_OF]->(c) RETURN s.ci_code, collect(c.ci_code) LIMIT 5;")
+    print(
+        "1. SQL: SELECT ci_type, ci_subtype, COUNT(*) FROM ci WHERE status = 'active' GROUP BY ci_type, ci_subtype;"
+    )
+    print(
+        "2. SQL: SELECT m.metric_name, COUNT(*) FROM metric_value mv JOIN metric_def m USING(metric_id) WHERE mv.time >= '2025-12-15' GROUP BY m.metric_name;"
+    )
+    print(
+        "3. Cypher: MATCH (s:CI {ci_type:'SYSTEM'})-[:COMPOSED_OF]->(c) RETURN s.ci_code, collect(c.ci_code) LIMIT 5;"
+    )
 
 
 if __name__ == "__main__":

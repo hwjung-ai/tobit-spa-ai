@@ -101,7 +101,8 @@ class AdminUserService:
         if search:
             search_lower = search.lower()
             users = [
-                u for u in users
+                u
+                for u in users
                 if search_lower in u.username.lower() or search_lower in u.email.lower()
             ]
 
@@ -120,7 +121,9 @@ class AdminUserService:
             "users": [u.to_dict() for u in paginated_users],
         }
 
-    def update_user_status(self, user_id: str, is_active: bool) -> Optional[UserActivity]:
+    def update_user_status(
+        self, user_id: str, is_active: bool
+    ) -> Optional[UserActivity]:
         """Update user active status"""
         user = self.users.get(user_id)
         if user:
@@ -232,14 +235,10 @@ class AdminUserService:
         last_30d = now - timedelta(days=30)
 
         last_24h_logins = sum(
-            1
-            for u in self.users.values()
-            if u.last_login and u.last_login > last_24h
+            1 for u in self.users.values() if u.last_login and u.last_login > last_24h
         )
         last_30d_logins = sum(
-            1
-            for u in self.users.values()
-            if u.last_login and u.last_login > last_30d
+            1 for u in self.users.values() if u.last_login and u.last_login > last_30d
         )
 
         return {

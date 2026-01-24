@@ -2,7 +2,6 @@
 Tests for security headers and HTTPS protection.
 """
 
-
 import pytest
 from core.config import AppSettings
 from core.cors_config import CORSConfig
@@ -397,6 +396,7 @@ class TestIntegration:
         add_security_middleware(app, settings)
 
         from fastapi.middleware.cors import CORSMiddleware
+
         cors_config = CORSConfig(settings)
         app.add_middleware(CORSMiddleware, **cors_config.get_cors_config_dict())
 

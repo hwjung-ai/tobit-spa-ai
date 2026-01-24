@@ -24,7 +24,9 @@ def _serialize_audit_log(entry: TbAuditLog) -> dict[str, Any]:
     return entry.model_dump()
 
 
-def _normalize_rows(rows: Sequence[Row | TbAuditLog | tuple[object, ...]]) -> list[TbAuditLog]:
+def _normalize_rows(
+    rows: Sequence[Row | TbAuditLog | tuple[object, ...]],
+) -> list[TbAuditLog]:
     def _extract(row: Row | TbAuditLog | tuple[object, ...]) -> TbAuditLog:
         if isinstance(row, TbAuditLog):
             return row
@@ -39,8 +41,12 @@ def _normalize_rows(rows: Sequence[Row | TbAuditLog | tuple[object, ...]]) -> li
 
 @router.get("")
 def list_audit_logs(
-    resource_type: str | None = Query(None, description="Filter by the audited resource type"),
-    resource_id: str | None = Query(None, description="Filter by the audited resource identifier"),
+    resource_type: str | None = Query(
+        None, description="Filter by the audited resource type"
+    ),
+    resource_id: str | None = Query(
+        None, description="Filter by the audited resource identifier"
+    ),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     session: Session = Depends(get_session),
@@ -52,9 +58,7 @@ def list_audit_logs(
         statement = statement.where(TbAuditLog.resource_id == resource_id)
 
     statement = (
-        statement.order_by(TbAuditLog.created_at.desc())
-        .limit(limit)
-        .offset(offset)
+        statement.order_by(TbAuditLog.created_at.desc()).limit(limit).offset(offset)
     )
 
     audit_logs = _normalize_rows(session.exec(statement).all())
@@ -84,7 +88,9 @@ def get_audit_logs_by_trace_endpoint(
 ) -> ResponseEnvelope:
     logs = get_audit_logs_by_trace(session, trace_id)
     if not logs:
-        raise HTTPException(status_code=404, detail=f"No audit logs found for trace_id {trace_id}")
+        raise HTTPException(
+            status_code=404, detail=f"No audit logs found for trace_id {trace_id}"
+        )
 
     return ResponseEnvelope.success(
         data={

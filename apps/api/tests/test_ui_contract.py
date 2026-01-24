@@ -306,15 +306,11 @@ class TestBindingEngine:
     def test_binding_validate_template(self):
         """Verify template validation"""
         # Valid template
-        errors = BindingEngine.validate_template(
-            {"device_id": "{{inputs.device_id}}"}
-        )
+        errors = BindingEngine.validate_template({"device_id": "{{inputs.device_id}}"})
         assert len(errors) == 0
 
         # Invalid template (unknown root)
-        errors = BindingEngine.validate_template(
-            {"device_id": "{{unknown.device_id}}"}
-        )
+        errors = BindingEngine.validate_template({"device_id": "{{unknown.device_id}}"})
         assert len(errors) > 0
         assert "Unknown binding root" in errors[0]
 

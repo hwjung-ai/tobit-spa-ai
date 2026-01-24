@@ -393,9 +393,7 @@ class TestCIIntegrityValidation:
             tenant_id="t1",
         )
 
-        crud.resolve_integrity_issue(
-            session, issue1.id, "resolver-001", "Fixed"
-        )
+        crud.resolve_integrity_issue(session, issue1.id, "resolver-001", "Fixed")
 
         unresolved = crud.get_integrity_issues(
             session, ci_id=ci_id, resolved=False, tenant_id="t1"

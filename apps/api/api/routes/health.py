@@ -13,7 +13,10 @@ def health():
             "status": "up",
             "env": settings.app_env,
             "postgres": bool(
-                settings.pg_host and settings.pg_db and settings.pg_user and settings.pg_password
+                settings.pg_host
+                and settings.pg_db
+                and settings.pg_user
+                and settings.pg_password
             ),
         },
         message="Healthy",

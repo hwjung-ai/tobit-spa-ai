@@ -33,7 +33,9 @@ def upgrade() -> None:
         sa.Column("name", sa.Text(), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("version", sa.Integer(), nullable=False, server_default=sa.text("1")),
-        sa.Column("status", sa.Text(), nullable=False, server_default=sa.text("'draft'")),
+        sa.Column(
+            "status", sa.Text(), nullable=False, server_default=sa.text("'draft'")
+        ),
         # Prompt fields
         sa.Column("scope", sa.Text(), nullable=True),
         sa.Column("engine", sa.Text(), nullable=True),
@@ -136,7 +138,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("idx_asset_history_asset_version", table_name="tb_asset_version_history")
+    op.drop_index(
+        "idx_asset_history_asset_version", table_name="tb_asset_version_history"
+    )
     op.drop_table("tb_asset_version_history")
 
     op.drop_index("idx_asset_registry_published_at", table_name="tb_asset_registry")

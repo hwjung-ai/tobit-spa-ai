@@ -27,8 +27,7 @@ class DocumentExportService:
 
     @staticmethod
     def export_chunks_to_json(
-        chunks: List[dict],
-        document_metadata: Optional[dict] = None
+        chunks: List[dict], document_metadata: Optional[dict] = None
     ) -> str:
         """
         Export document chunks to JSON format
@@ -45,15 +44,14 @@ class DocumentExportService:
             "document": document_metadata or {},
             "chunks": chunks,
             "exported_at": datetime.now(timezone.utc).isoformat(),
-            "chunk_count": len(chunks)
+            "chunk_count": len(chunks),
         }
 
         return json.dumps(data, indent=2, default=str)
 
     @staticmethod
     def export_chunks_to_csv(
-        chunks: List[dict],
-        document_name: Optional[str] = None
+        chunks: List[dict], document_name: Optional[str] = None
     ) -> str:
         """
         Export document chunks to CSV format
@@ -70,27 +68,33 @@ class DocumentExportService:
         writer = csv.writer(output)
 
         # Write header
-        headers = ["chunk_id", "chunk_index", "page_number", "chunk_type", "text", "created_at"]
+        headers = [
+            "chunk_id",
+            "chunk_index",
+            "page_number",
+            "chunk_type",
+            "text",
+            "created_at",
+        ]
         writer.writerow(headers)
 
         # Write chunks
         for chunk in chunks:
-            writer.writerow([
-                chunk.get("id", ""),
-                chunk.get("chunk_index", ""),
-                chunk.get("page_number", ""),
-                chunk.get("chunk_type", "text"),
-                chunk.get("text", "")[:500],  # Limit text for CSV
-                chunk.get("created_at", "")
-            ])
+            writer.writerow(
+                [
+                    chunk.get("id", ""),
+                    chunk.get("chunk_index", ""),
+                    chunk.get("page_number", ""),
+                    chunk.get("chunk_type", "text"),
+                    chunk.get("text", "")[:500],  # Limit text for CSV
+                    chunk.get("created_at", ""),
+                ]
+            )
 
         return output.getvalue()
 
     @staticmethod
-    def export_chunks_to_markdown(
-        chunks: List[dict],
-        document_name: str
-    ) -> str:
+    def export_chunks_to_markdown(chunks: List[dict], document_name: str) -> str:
         """
         Export document chunks to Markdown format
 
@@ -108,7 +112,7 @@ class DocumentExportService:
             f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             f"Total chunks: {len(chunks)}",
-            ""
+            "",
         ]
 
         for i, chunk in enumerate(chunks, 1):
@@ -130,10 +134,7 @@ class DocumentExportService:
         return "\n".join(lines)
 
     @staticmethod
-    def export_chunks_to_text(
-        chunks: List[dict],
-        document_name: str
-    ) -> str:
+    def export_chunks_to_text(chunks: List[dict], document_name: str) -> str:
         """
         Export document chunks to plain text format
 
@@ -150,7 +151,7 @@ class DocumentExportService:
             f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             "=" * 80,
-            ""
+            "",
         ]
 
         for chunk in chunks:
@@ -166,9 +167,7 @@ class DocumentExportService:
 
     @staticmethod
     def export_chunks(
-        chunks: List[dict],
-        format: ExportFormat,
-        document_name: str = "export"
+        chunks: List[dict], format: ExportFormat, document_name: str = "export"
     ) -> Union[str, bytes]:
         """
         Export chunks in specified format
@@ -184,15 +183,16 @@ class DocumentExportService:
 
         if format == ExportFormat.JSON:
             return DocumentExportService.export_chunks_to_json(
-                chunks,
-                {"name": document_name}
+                chunks, {"name": document_name}
             )
 
         elif format == ExportFormat.CSV:
             return DocumentExportService.export_chunks_to_csv(chunks, document_name)
 
         elif format == ExportFormat.MARKDOWN:
-            return DocumentExportService.export_chunks_to_markdown(chunks, document_name)
+            return DocumentExportService.export_chunks_to_markdown(
+                chunks, document_name
+            )
 
         elif format == ExportFormat.TEXT:
             return DocumentExportService.export_chunks_to_text(chunks, document_name)
@@ -212,9 +212,7 @@ class ChatExportService:
 
     @staticmethod
     def export_conversation_to_json(
-        thread_id: str,
-        messages: List[dict],
-        metadata: Optional[dict] = None
+        thread_id: str, messages: List[dict], metadata: Optional[dict] = None
     ) -> str:
         """Export conversation to JSON"""
 
@@ -223,15 +221,14 @@ class ChatExportService:
             "metadata": metadata or {},
             "messages": messages,
             "exported_at": datetime.now(timezone.utc).isoformat(),
-            "message_count": len(messages)
+            "message_count": len(messages),
         }
 
         return json.dumps(data, indent=2, default=str)
 
     @staticmethod
     def export_conversation_to_markdown(
-        messages: List[dict],
-        title: str = "Conversation"
+        messages: List[dict], title: str = "Conversation"
     ) -> str:
         """Export conversation to Markdown"""
 
@@ -239,12 +236,14 @@ class ChatExportService:
             f"# {title}",
             "",
             f"Exported: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
-            ""
+            "",
         ]
 
         for msg in messages:
             role = msg.get("role", "unknown")
-            role_emoji = "👤" if role == "user" else "🤖" if role == "assistant" else "⚙️"
+            role_emoji = (
+                "👤" if role == "user" else "🤖" if role == "assistant" else "⚙️"
+            )
 
             lines.append(f"## {role_emoji} {role.capitalize()}")
             lines.append("")
@@ -255,17 +254,13 @@ class ChatExportService:
 
     @staticmethod
     def export_conversation(
-        messages: List[dict],
-        format: ExportFormat,
-        title: str = "Conversation"
+        messages: List[dict], format: ExportFormat, title: str = "Conversation"
     ) -> Union[str, bytes]:
         """Export conversation in specified format"""
 
         if format == ExportFormat.JSON:
             return ChatExportService.export_conversation_to_json(
-                thread_id="",
-                messages=messages,
-                metadata={"title": title}
+                thread_id="", messages=messages, metadata={"title": title}
             )
 
         elif format == ExportFormat.MARKDOWN:

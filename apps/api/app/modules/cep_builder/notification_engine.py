@@ -87,7 +87,11 @@ def _value_satisfies(value: Any, op: str, threshold: float) -> bool:
             return False
 
 
-def _build_payload(notification: TbCepNotification, trigger: Dict[str, Any], snapshots: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _build_payload(
+    notification: TbCepNotification,
+    trigger: Dict[str, Any],
+    snapshots: List[Dict[str, Any]],
+) -> Dict[str, Any]:
     latest = snapshots[0]
     summary = {
         "window_minutes": trigger.get("window_minutes"),
@@ -133,14 +137,18 @@ def run_once() -> None:
             _evaluate_notification(session, notification, now)
 
 
-def _evaluate_notification(session, notification: TbCepNotification, now: datetime) -> None:
+def _evaluate_notification(
+    session, notification: TbCepNotification, now: datetime
+) -> None:
     if notification.channel != "webhook":
         return
     trigger = notification.trigger or {}
     if trigger.get("type") != "snapshot_threshold":
         return
     window_minutes = int(trigger.get("window_minutes") or 5)
-    snapshot_models = list_metric_poll_snapshots(session, limit=MAX_SNAPSHOTS, since_minutes=window_minutes)
+    snapshot_models = list_metric_poll_snapshots(
+        session, limit=MAX_SNAPSHOTS, since_minutes=window_minutes
+    )
     if not snapshot_models:
         return
     snapshots = [snapshot.model_dump() for snapshot in snapshot_models]
@@ -153,7 +161,9 @@ def _evaluate_notification(session, notification: TbCepNotification, now: dateti
         threshold = float(threshold_raw)
     except (TypeError, ValueError):
         return
-    if not any(_value_satisfies(snapshot.get(field), op, threshold) for snapshot in snapshots):
+    if not any(
+        _value_satisfies(snapshot.get(field), op, threshold) for snapshot in snapshots
+    ):
         return
     dedup_key = ":".join(
         [
@@ -168,13 +178,19 @@ def _evaluate_notification(session, notification: TbCepNotification, now: dateti
     cooldown = int(policy.get("cooldown_seconds") or 300)
     max_per_hour = int(policy.get("max_per_hour") or 20)
     reason = None
-    if _is_within_cooldown(session, notification.notification_id, dedup_key, now, cooldown):
+    if _is_within_cooldown(
+        session, notification.notification_id, dedup_key, now, cooldown
+    ):
         reason = f"cooldown {cooldown}s"
-        _log_notification(session, notification, "skipped", reason, dedup_key, trigger, snapshots)
+        _log_notification(
+            session, notification, "skipped", reason, dedup_key, trigger, snapshots
+        )
         return
     if _exceeds_rate_limit(session, notification.notification_id, now, max_per_hour):
         reason = f"rate limit ({max_per_hour}/h)"
-        _log_notification(session, notification, "skipped", reason, dedup_key, trigger, snapshots)
+        _log_notification(
+            session, notification, "skipped", reason, dedup_key, trigger, snapshots
+        )
         return
     payload = _build_payload(notification, trigger, _serialize_snapshots(snapshots))
     headers = notification.headers or {}
@@ -226,7 +242,9 @@ def _is_within_cooldown(
     return recent is not None
 
 
-def _exceeds_rate_limit(session, notification_id: uuid.UUID, now: datetime, max_per_hour: int) -> bool:
+def _exceeds_rate_limit(
+    session, notification_id: uuid.UUID, now: datetime, max_per_hour: int
+) -> bool:
     if max_per_hour <= 0:
         return False
     cutoff = now - timedelta(hours=1)
@@ -240,7 +258,9 @@ def _exceeds_rate_limit(session, notification_id: uuid.UUID, now: datetime, max_
     return count >= max_per_hour
 
 
-def _send_webhook(url: str, headers: dict[str, Any], payload: dict[str, Any]) -> httpx.Response:
+def _send_webhook(
+    url: str, headers: dict[str, Any], payload: dict[str, Any]
+) -> httpx.Response:
     headers_clean = {str(key): str(value) for key, value in (headers or {}).items()}
     with httpx.Client(timeout=HTTP_TIMEOUT) as client:
         response = client.post(url, headers=headers_clean, json=payload)
@@ -278,7 +298,9 @@ def _log_notification(
     }
     saved = insert_notification_log(session, log_payload)
     summary = summarize_events(session)
-    rule = get_rule(session, str(notification.rule_id)) if notification.rule_id else None
+    rule = (
+        get_rule(session, str(notification.rule_id)) if notification.rule_id else None
+    )
     event_broadcaster.publish(
         "new_event",
         {

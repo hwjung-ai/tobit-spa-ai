@@ -32,14 +32,22 @@ class DocumentBase(SQLModel):
 class Document(DocumentBase, table=True):
     __tablename__ = "documents"
     __table_args__ = ({"extend_existing": True},)
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True, max_length=36)
+    id: str = Field(
+        default_factory=lambda: str(uuid4()), primary_key=True, max_length=36
+    )
 
     # Task 5: Document Search Enhancement fields
-    format: str | None = Field(default='pdf', max_length=20)  # pdf, docx, xlsx, pptx, image
+    format: str | None = Field(
+        default="pdf", max_length=20
+    )  # pdf, docx, xlsx, pptx, image
     processing_progress: int | None = Field(default=0)  # 0-100
     total_chunks: int | None = Field(default=0)
-    error_details: dict | None = Field(default=None, sa_column=Column(JSON))  # JSON error information
-    doc_metadata: dict | None = Field(default=None, sa_column=Column(JSON))  # JSON metadata (pages, word_count, extraction_method, language)
+    error_details: dict | None = Field(
+        default=None, sa_column=Column(JSON)
+    )  # JSON error information
+    doc_metadata: dict | None = Field(
+        default=None, sa_column=Column(JSON)
+    )  # JSON metadata (pages, word_count, extraction_method, language)
     created_by: str | None = None  # User ID who created the document
 
 
@@ -54,15 +62,19 @@ class DocumentChunkBase(SQLModel):
 class DocumentChunk(DocumentChunkBase, table=True):
     __tablename__ = "document_chunks"
     __table_args__ = ({"extend_existing": True},)
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True, max_length=36)
+    id: str = Field(
+        default_factory=lambda: str(uuid4()), primary_key=True, max_length=36
+    )
     embedding: list[float] = Field(sa_column=Column(Vector(1536), nullable=False))
 
     # Task 5: Document Search Enhancement fields
     chunk_version: int = Field(default=1)  # For incremental updates
-    chunk_type: str = Field(default='text', max_length=50)  # text, table, image, mixed
+    chunk_type: str = Field(default="text", max_length=50)  # text, table, image, mixed
     position_in_doc: int | None = None  # Chunk order in document
     page_number: int | None = None  # For PDF/PPTX
     slide_number: int | None = None  # For PPTX
-    table_data: dict | None = Field(default=None, sa_column=Column(JSON))  # Structured table data
+    table_data: dict | None = Field(
+        default=None, sa_column=Column(JSON)
+    )  # Structured table data
     source_hash: str | None = None  # For change detection
     relevance_score: float | None = None  # For search results

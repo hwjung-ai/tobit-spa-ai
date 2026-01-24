@@ -10,6 +10,7 @@ from sqlmodel import Field, SQLModel
 
 class ResourcePermission(str, Enum):
     """Fine-grained resource permission enumeration."""
+
     # API Management
     API_READ = "api:read"
     API_CREATE = "api:create"
@@ -80,6 +81,7 @@ class ResourcePermission(str, Enum):
 
 class RolePermissionDefault(str, Enum):
     """Predefined role-based permission sets."""
+
     ADMIN = "admin"
     MANAGER = "manager"
     DEVELOPER = "developer"
@@ -88,6 +90,7 @@ class RolePermissionDefault(str, Enum):
 
 class TbRolePermissionBase(SQLModel):
     """Base role permission mapping."""
+
     role: RolePermissionDefault
     permission: ResourcePermission
     is_granted: bool = Field(default=True)
@@ -95,64 +98,56 @@ class TbRolePermissionBase(SQLModel):
 
 class TbRolePermission(TbRolePermissionBase, table=True):
     """Role-to-permission mapping table."""
+
     __tablename__ = "tb_role_permission"
 
     __table_args__ = ({"extend_existing": True},)
     id: str = Field(
-        primary_key=True,
-        max_length=36,
-        default_factory=lambda: str(uuid4())
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
     )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class TbResourcePermissionBase(SQLModel):
     """Base resource-specific permission."""
+
     user_id: str = Field(foreign_key="tb_user.id", index=True, max_length=36)
     resource_type: str = Field(
-        max_length=50,
-        description="Type of resource (api, ci, metric, etc.)"
+        max_length=50, description="Type of resource (api, ci, metric, etc.)"
     )
     resource_id: Optional[str] = Field(
         default=None,
         max_length=100,
         index=True,
-        description="Specific resource ID (None = all resources of type)"
+        description="Specific resource ID (None = all resources of type)",
     )
     permission: ResourcePermission
     is_granted: bool = Field(default=True)
     expires_at: Optional[datetime] = Field(
-        default=None,
-        description="Optional expiration for temporary permissions"
+        default=None, description="Optional expiration for temporary permissions"
     )
 
 
 class TbResourcePermission(TbResourcePermissionBase, table=True):
     """Resource-specific permission overrides table."""
+
     __tablename__ = "tb_resource_permission"
 
     __table_args__ = ({"extend_existing": True},)
     id: str = Field(
-        primary_key=True,
-        max_length=36,
-        default_factory=lambda: str(uuid4())
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
     )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_by_user_id: str = Field(
+        max_length=36, description="Who created this permission"
     )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    created_by_user_id: str = Field(max_length=36, description="Who created this permission")
 
 
 class PermissionCheck(SQLModel):
     """Result of a permission check."""
+
     granted: bool
     reason: Optional[str] = None
     expires_at: Optional[datetime] = None

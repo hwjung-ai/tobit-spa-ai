@@ -51,7 +51,9 @@ class AppSettings(BaseSettings):
     chat_model: str = "gpt-4o-mini"
     openai_api_key: Optional[str] = None
     embedding_dimension: int = 1536
-    document_storage_root: Optional[Path] = Field(default=None, env="DOCUMENT_STORAGE_ROOT")
+    document_storage_root: Optional[Path] = Field(
+        default=None, env="DOCUMENT_STORAGE_ROOT"
+    )
 
     langsmith_api_key: Optional[str] = None
     langsmith_project: Optional[str] = None
@@ -85,11 +87,17 @@ class AppSettings(BaseSettings):
 
     @property
     def cors_allowed_origins(self) -> List[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
     @property
     def csrf_trusted_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.csrf_trusted_origins.split(",") if origin.strip()]
+        return [
+            origin.strip()
+            for origin in self.csrf_trusted_origins.split(",")
+            if origin.strip()
+        ]
 
     @property
     def postgres_dsn(self) -> str:

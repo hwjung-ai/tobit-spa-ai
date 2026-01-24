@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import ScreenEditorCopilotPanel from "./CopilotPanel";
@@ -17,6 +17,18 @@ interface ScreenEditorProps {
 export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const router = useRouter();
   const editorState = useEditorState();
+  const screen = useEditorState((state) => state.screen);
+  const draftModified = useEditorState((state) => state.draftModified);
+  const status = useEditorState((state) => state.status);
+  const validationErrors = useEditorState((state) => state.validationErrors);
+  const setAssetId = useEditorState((state) => state.setAssetId);
+  const loadScreenFromStore = useEditorState((state) => state.loadScreen);
+  const saveDraft = useEditorState((state) => state.saveDraft);
+  const publish = useEditorState((state) => state.publish);
+  const rollback = useEditorState((state) => state.rollback);
+  const isSaving = useEditorState((state) => state.isSaving);
+  const isPublishing = useEditorState((state) => state.isPublishing);
+  const selectedComponentId = useEditorState((state) => state.selectedComponentId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -25,10 +37,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const [authCheckDone, setAuthCheckDone] = useState(false);
 
   // Subscribe to specific state fields for re-renders
-  const isDirty = editorState.draftModified;
-  const canPublish = editorState.status === "draft" &&
-    editorState.validationErrors.filter(e => e.severity === "error").length === 0;
-  const canRollback = editorState.status === "published";
+  const isDirty = draftModified;
+  const canPublish = status === "draft" &&
+    validationErrors.filter(e => e.severity === "error").length === 0;
+  const canRollback = status === "published";
 
   // Check authentication on mount
   useEffect(() => {
@@ -64,28 +76,30 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     return err instanceof Error ? err.message : "Failed to load screen asset.";
   };
 
-  const loadScreen = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      editorState.setAssetId(assetId);
-      await editorState.loadScreen(assetId);
-    } catch (err) {
-      setError(resolveLoadErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  }, [assetId, editorState]);
-
   useEffect(() => {
-    if (authCheckDone) {
-      loadScreen();
+    if (!authCheckDone) {
+      return;
     }
-  }, [authCheckDone, loadScreen]);
+
+    const run = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        setAssetId(assetId);
+        await loadScreenFromStore(assetId);
+      } catch (err) {
+        setError(resolveLoadErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    run();
+  }, [authCheckDone, assetId, loadScreenFromStore, setAssetId]);
 
   const handleSaveDraft = async () => {
     try {
-      await editorState.saveDraft();
+      await saveDraft();
       setToast({ message: "Draft saved successfully", type: "success" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to save draft";
@@ -99,7 +113,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
 
   const handlePublishConfirm = async () => {
     try {
-      await editorState.publish();
+      await publish();
       setJustPublished(true);
       setToast({ message: "Screen published successfully", type: "success" });
     } catch (err) {
@@ -112,7 +126,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     if (!confirm("Are you sure you want to rollback to draft?")) return;
 
     try {
-      await editorState.rollback();
+      await rollback();
       setToast({ message: "Screen rolled back to draft", type: "success" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to rollback";
@@ -121,14 +135,15 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   };
 
   const schemaSummary = useMemo(() => {
-    const screen = editorState.screen;
-    if (!screen) {
+    const activeScreen = editorState.screen ?? screen;
+    if (!activeScreen) {
       return "No screen loaded";
     }
-    const layoutType = screen.layout?.type || "unknown";
-    const componentCount = Array.isArray(screen.components) ? screen.components.length : 0;
+    const layoutType = activeScreen.layout?.type || "unknown";
+    const componentCount = Array.isArray(activeScreen.components) ? activeScreen.components.length : 0;
     return `${layoutType} · ${componentCount} component${componentCount === 1 ? "" : "s"}`;
-  }, [editorState.screen]);
+     
+  }, [editorState.screen, screen]);
 
   if (!authCheckDone || loading) {
     return (
@@ -149,7 +164,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     );
   }
 
-  if (!editorState.screen) {
+  if (!screen) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-slate-400">No screen data</div>
@@ -163,24 +178,24 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Header */}
           <ScreenEditorHeader
-            status={editorState.status}
+            status={status}
             isDirty={isDirty}
             canPublish={canPublish}
             canRollback={canRollback}
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublishClick}
             onRollback={handleRollback}
-            isSaving={editorState.isSaving}
-            isPublishing={editorState.isPublishing}
+            isSaving={isSaving}
+            isPublishing={isPublishing}
             justPublished={justPublished}
-            screenId={editorState.screen?.id}
+            screenId={screen?.id}
             assetId={assetId}
-            screenVersion={editorState.screen?.version ?? null}
+            screenVersion={screen?.version ?? null}
           />
 
           {/* Errors */}
-          {editorState.validationErrors.length > 0 && (
-            <ScreenEditorErrors errors={editorState.validationErrors} />
+          {validationErrors.length > 0 && (
+            <ScreenEditorErrors errors={validationErrors} />
           )}
 
           {/* Tabs */}
@@ -190,10 +205,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         </div>
 
         <ScreenEditorCopilotPanel
-          screenId={editorState.screen?.screen_id ?? assetId}
-          stage={editorState.status}
+          screenId={screen?.screen_id ?? assetId}
+          stage={status}
           schemaSummary={schemaSummary}
-          selectedComponentId={editorState.selectedComponentId}
+          selectedComponentId={selectedComponentId}
         />
       </div>
 

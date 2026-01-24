@@ -85,7 +85,9 @@ def get_audit_logs_by_parent_trace(
     return _unwrap_result(session.exec(statement).all())
 
 
-def _unwrap_result(rows: Sequence[Row | TbAuditLog | tuple[object, ...]]) -> list[TbAuditLog]:
+def _unwrap_result(
+    rows: Sequence[Row | TbAuditLog | tuple[object, ...]],
+) -> list[TbAuditLog]:
     def _normalize(row: Row | TbAuditLog | tuple[object, ...]) -> TbAuditLog:
         if isinstance(row, TbAuditLog):
             return row

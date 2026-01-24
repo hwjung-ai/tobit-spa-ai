@@ -9,6 +9,7 @@ from sqlmodel import Field, SQLModel
 
 class ResolverType(str, enum.Enum):
     """Types of resolver configurations"""
+
     ALIAS_MAPPING = "alias_mapping"
     PATTERN_RULE = "pattern_rule"
     TRANSFORMATION = "transformation"
@@ -16,6 +17,7 @@ class ResolverType(str, enum.Enum):
 
 class AliasMapping(SQLModel):
     """Represents an alias mapping for entity resolution"""
+
     source_entity: str = Field(min_length=1)  # Source entity name
     target_entity: str = Field(min_length=1)  # Target entity name
     namespace: Optional[str] = None  # Optional namespace
@@ -27,6 +29,7 @@ class AliasMapping(SQLModel):
 
 class PatternRule(SQLModel):
     """Represents a pattern matching rule"""
+
     name: str = Field(min_length=1)
     pattern: str = Field(min_length=1)  # Regex pattern
     replacement: str = Field(min_length=1)  # Replacement pattern
@@ -38,8 +41,11 @@ class PatternRule(SQLModel):
 
 class TransformationRule(SQLModel):
     """Represents a transformation rule"""
+
     name: str = Field(min_length=1)
-    transformation_type: str = Field(min_length=1)  # e.g., "uppercase", "lowercase", "format"
+    transformation_type: str = Field(
+        min_length=1
+    )  # e.g., "uppercase", "lowercase", "format"
     field_name: str = Field(min_length=1)
     description: Optional[str] = None
     is_active: bool = Field(default=True)
@@ -50,6 +56,7 @@ class TransformationRule(SQLModel):
 
 class ResolverRule(SQLModel):
     """Base class for resolver rules"""
+
     rule_type: ResolverType
     name: str = Field(min_length=1)
     description: Optional[str] = None
@@ -63,6 +70,7 @@ class ResolverRule(SQLModel):
 
 class ResolverConfig(SQLModel):
     """Configuration for entity resolution"""
+
     name: str = Field(min_length=1)
     description: Optional[str] = None
     rules: List[ResolverRule] = Field(default_factory=list)
@@ -97,6 +105,7 @@ class ResolverConfig(SQLModel):
 
 class ResolverAsset(SQLModel):
     """Asset for storing resolver configuration"""
+
     # Asset metadata
     asset_type: str = Field(default="resolver")
     name: str = Field(min_length=1)
@@ -120,8 +129,7 @@ class ResolverAsset(SQLModel):
 
     # For spec_json pattern consistency (P0-7)
     spec_json: Dict[str, Any] | None = Field(
-        default=None,
-        description="JSON spec for the resolver configuration"
+        default=None, description="JSON spec for the resolver configuration"
     )
 
     @property
@@ -141,7 +149,9 @@ class ResolverAsset(SQLModel):
         # Add rule type counts
         rule_type_counts = {}
         for rule in self.config.rules:
-            rule_type_counts[rule.rule_type.value] = rule_type_counts.get(rule.rule_type.value, 0) + 1
+            rule_type_counts[rule.rule_type.value] = (
+                rule_type_counts.get(rule.rule_type.value, 0) + 1
+            )
         if rule_type_counts:
             spec["rule_types"] = rule_type_counts
 
@@ -198,6 +208,7 @@ class ResolverListResponse(SQLModel):
 
 class ResolverSimulationRequest(SQLModel):
     """Request to simulate resolver configuration"""
+
     config: ResolverConfig
     test_entities: List[str] = Field(default_factory=list)
     simulation_options: Dict[str, Any] | None = Field(default_factory=dict)
@@ -205,6 +216,7 @@ class ResolverSimulationRequest(SQLModel):
 
 class ResolverSimulationResult(SQLModel):
     """Result of resolver simulation"""
+
     original_entity: str
     resolved_entity: str
     transformations_applied: List[str] = Field(default_factory=list)

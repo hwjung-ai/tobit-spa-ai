@@ -8,7 +8,9 @@ from main import app
 @pytest.mark.asyncio
 async def test_chat_stream_returns_answer_chunk():
     async with AsyncClient(app=app, base_url="http://testserver", timeout=10) as client:
-        async with client.stream("GET", "/chat/stream", params={"message": "test"}) as response:
+        async with client.stream(
+            "GET", "/chat/stream", params={"message": "test"}
+        ) as response:
             assert response.status_code == 200
             found_answer = False
             async for line in response.aiter_lines():

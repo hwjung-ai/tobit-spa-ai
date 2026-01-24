@@ -5,6 +5,7 @@ from enum import Enum
 
 class ExportFormat(Enum):
     """Supported export formats"""
+
     JSON = "json"
     CSV = "csv"
     MARKDOWN = "markdown"

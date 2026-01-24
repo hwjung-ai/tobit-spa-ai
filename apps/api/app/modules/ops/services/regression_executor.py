@@ -56,12 +56,8 @@ def compute_regression_diff(
     baseline_plan = baseline_trace.get("plan_validated") or {}
     candidate_plan = candidate_trace.get("plan_validated") or {}
 
-    plan_intent_changed = (
-        baseline_plan.get("intent") != candidate_plan.get("intent")
-    )
-    plan_output_changed = (
-        baseline_plan.get("output") != candidate_plan.get("output")
-    )
+    plan_intent_changed = baseline_plan.get("intent") != candidate_plan.get("intent")
+    plan_output_changed = baseline_plan.get("output") != candidate_plan.get("output")
 
     # 3. Tool call changes - match by signature
     baseline_steps = baseline_trace.get("execution_steps") or []
@@ -97,8 +93,7 @@ def compute_regression_diff(
     ref_variance = (
         0.0
         if baseline_ref_count == 0
-        else abs(candidate_ref_count - baseline_ref_count)
-        / baseline_ref_count
+        else abs(candidate_ref_count - baseline_ref_count) / baseline_ref_count
     )
 
     # 6. Status changes
@@ -111,8 +106,12 @@ def compute_regression_diff(
     baseline_ui = baseline_trace.get("ui_render") or {}
     candidate_ui = candidate_trace.get("ui_render") or {}
 
-    baseline_ui_errors = baseline_ui.get("error_count", 0) if isinstance(baseline_ui, dict) else 0
-    candidate_ui_errors = candidate_ui.get("error_count", 0) if isinstance(candidate_ui, dict) else 0
+    baseline_ui_errors = (
+        baseline_ui.get("error_count", 0) if isinstance(baseline_ui, dict) else 0
+    )
+    candidate_ui_errors = (
+        candidate_ui.get("error_count", 0) if isinstance(candidate_ui, dict) else 0
+    )
     ui_errors_increase = candidate_ui_errors > baseline_ui_errors
 
     return RegressionDiffSummary(
@@ -229,12 +228,8 @@ def _analyze_tool_calls(
     """
 
     # Simple signature matching: (tool_name, request_keys)
-    baseline_sigs = {
-        _step_signature(step): step for step in baseline_steps
-    }
-    candidate_sigs = {
-        _step_signature(step): step for step in candidate_steps
-    }
+    baseline_sigs = {_step_signature(step): step for step in baseline_steps}
+    candidate_sigs = {_step_signature(step): step for step in candidate_steps}
 
     added = len(set(candidate_sigs.keys()) - set(baseline_sigs.keys()))
     removed = len(set(baseline_sigs.keys()) - set(candidate_sigs.keys()))

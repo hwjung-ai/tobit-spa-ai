@@ -55,7 +55,7 @@ class DocumentSearchService:
         query: str,
         filters: SearchFilters,
         top_k: int = 10,
-        search_type: str = "hybrid"
+        search_type: str = "hybrid",
     ) -> List[SearchResult]:
         """
         Perform hybrid search (vector + BM25 + ranking)
@@ -99,10 +99,7 @@ class DocumentSearchService:
             raise
 
     async def _text_search(
-        self,
-        query: str,
-        filters: SearchFilters,
-        top_k: int
+        self, query: str, filters: SearchFilters, top_k: int
     ) -> List[SearchResult]:
         """
         Full-text search using BM25
@@ -143,10 +140,7 @@ class DocumentSearchService:
         return results
 
     async def _vector_search(
-        self,
-        query: str,
-        filters: SearchFilters,
-        top_k: int
+        self, query: str, filters: SearchFilters, top_k: int
     ) -> List[SearchResult]:
         """
         Vector similarity search using pgvector
@@ -177,7 +171,9 @@ class DocumentSearchService:
             # LIMIT $4
             # """
 
-            self.logger.debug(f"Performing vector search with {len(query_embedding)} dimensions")
+            self.logger.debug(
+                f"Performing vector search with {len(query_embedding)} dimensions"
+            )
 
             # Mock results for now
             pass
@@ -189,9 +185,7 @@ class DocumentSearchService:
 
     @staticmethod
     def _combine_results(
-        text_results: List[SearchResult],
-        vector_results: List[SearchResult],
-        top_k: int
+        text_results: List[SearchResult], vector_results: List[SearchResult], top_k: int
     ) -> List[SearchResult]:
         """
         Combine text and vector results using Reciprocal Rank Fusion (RRF)
@@ -218,7 +212,9 @@ class DocumentSearchService:
                 result_map[result.chunk_id] = result
 
         # Sort by combined score
-        sorted_ids = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)[:top_k]
+        sorted_ids = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)[
+            :top_k
+        ]
 
         combined = []
         for chunk_id in sorted_ids:
@@ -233,7 +229,7 @@ class DocumentSearchService:
         query: str,
         filters: SearchFilters,
         results_count: int,
-        execution_time_ms: int
+        execution_time_ms: int,
     ) -> None:
         """Log search query for analytics"""
 

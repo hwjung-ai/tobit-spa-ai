@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
+import re
 from pathlib import Path
 from threading import Lock
 from typing import Any, Callable, Dict
 
-import os
-import re
 import yaml
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
@@ -34,7 +34,9 @@ class _ResourceChangeHandler(FileSystemEventHandler):
             return
         with _lock:
             if relative_path in _cache:
-                logger.info("Resource file changed: %s. Invalidating cache.", relative_path)
+                logger.info(
+                    "Resource file changed: %s. Invalidating cache.", relative_path
+                )
                 _cache.pop(relative_path, None)
                 _mtime.pop(relative_path, None)
 
@@ -88,6 +90,7 @@ def load_yaml(path: str) -> Any:
     """
     return _load_file(path, lambda content: yaml.safe_load(_expand_env_vars(content)))
 
+
 def load_text(path: str) -> str | None:
     """
     Loads a text file (e.g., .sql, .cypher) from the resources directory under apps/api.
@@ -95,6 +98,7 @@ def load_text(path: str) -> str | None:
     Example: `load_text("queries/postgres/ci/resolve_ci.sql")`
     """
     return _load_file(path, lambda content: content)
+
 
 def start_watching(enable_watcher: bool = True):
     """
@@ -116,6 +120,7 @@ def start_watching(enable_watcher: bool = True):
     _observer.schedule(event_handler, str(RESOURCES_DIR), recursive=True)
     _observer.start()
     logger.info("Started watching for changes in %s", RESOURCES_DIR)
+
 
 def stop_watching():
     """

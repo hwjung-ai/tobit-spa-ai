@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import math
@@ -118,9 +118,13 @@ def main() -> None:
                             variation = math.sin(2 * math.pi * minute_fraction / 24)
                             peak = 5 if current.hour in PEAK_WINDOWS else 0
                             noise = random.uniform(-0.5, 0.5)
-                            value = max(0.0, base + amp * (variation + peak / 10) + noise)
+                            value = max(
+                                0.0, base + amp * (variation + peak / 10) + noise
+                            )
                             quality = "good" if noise > -0.4 else "noisy"
-                            tags = json.dumps({"system": system_code, "source": "ops_sim"})
+                            tags = json.dumps(
+                                {"system": system_code, "source": "ops_sim"}
+                            )
                             copier.write_row(
                                 (
                                     current,

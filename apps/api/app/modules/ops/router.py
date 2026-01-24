@@ -15,6 +15,11 @@ from fastapi.responses import JSONResponse
 from schemas import ResponseEnvelope
 from sqlmodel import Session
 
+from app.modules.asset_registry.loader import (
+    load_resolver_asset,
+    load_schema_asset,
+    load_source_asset,
+)
 from app.modules.inspector.service import persist_execution_trace
 from app.modules.inspector.span_tracker import (
     clear_spans,
@@ -47,18 +52,15 @@ from .services.ci.planner.plan_schema import (
     View,
 )
 from .services.control_loop import evaluate_replan
-from app.modules.asset_registry.loader import (
-    load_resolver_asset,
-    load_schema_asset,
-    load_source_asset,
-)
 from .services.observability_service import collect_observability_metrics
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
 
 
-def _generate_references_from_tool_calls(tool_calls: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _generate_references_from_tool_calls(
+    tool_calls: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
     """Generate references from tool calls for trace documentation.
 
     Each tool call represents a data access or operation that should be documented
@@ -87,6 +89,7 @@ def _generate_references_from_tool_calls(tool_calls: List[Dict[str, Any]]) -> Li
 
 # --- Standard OPS Query ---
 
+
 @router.post("/query", response_model=ResponseEnvelope)
 def query_ops(payload: OpsQueryRequest) -> ResponseEnvelope:
     envelope = handle_ops_query(payload.mode, payload.question)
@@ -103,10 +106,13 @@ def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvel
         return ResponseEnvelope.success(data={"kpis": payload})
     except Exception as e:
         logger.error(f"Observability metrics error: {e}", exc_info=True)
-        return ResponseEnvelope.error(code=500, message=f"Observability service error: {str(e)}")
+        return ResponseEnvelope.error(
+            code=500, message=f"Observability service error: {str(e)}"
+        )
 
 
 # --- RCA (Root Cause Analysis) ---
+
 
 @router.post("/rca/analyze-trace", response_model=ResponseEnvelope)
 def rca_analyze_trace(
@@ -162,7 +168,9 @@ def rca_analyze_trace(
         return ResponseEnvelope.success(data=result)
     except Exception as e:
         logger.error(f"RCA analysis failed for trace {trace_id}: {e}")
-        return ResponseEnvelope.error(code=500, message=f"RCA analysis failed: {str(e)}")
+        return ResponseEnvelope.error(
+            code=500, message=f"RCA analysis failed: {str(e)}"
+        )
 
 
 @router.post("/rca/analyze-regression", response_model=ResponseEnvelope)
@@ -183,9 +191,13 @@ def rca_analyze_regression(
     candidate_trace = get_execution_trace(session, candidate_trace_id)
 
     if not baseline_trace:
-        return ResponseEnvelope.error(code=404, message=f"Baseline trace {baseline_trace_id} not found")
+        return ResponseEnvelope.error(
+            code=404, message=f"Baseline trace {baseline_trace_id} not found"
+        )
     if not candidate_trace:
-        return ResponseEnvelope.error(code=404, message=f"Candidate trace {candidate_trace_id} not found")
+        return ResponseEnvelope.error(
+            code=404, message=f"Candidate trace {candidate_trace_id} not found"
+        )
 
     try:
         engine = RCAEngine()
@@ -223,10 +235,13 @@ def rca_analyze_regression(
         return ResponseEnvelope.success(data=result)
     except Exception as e:
         logger.error(f"RCA regression analysis failed: {e}")
-        return ResponseEnvelope.error(code=500, message=f"RCA analysis failed: {str(e)}")
+        return ResponseEnvelope.error(
+            code=500, message=f"RCA analysis failed: {str(e)}"
+        )
 
 
 # --- CI OPS (Ask CI) ---
+
 
 def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
     return x_tenant_id or "t1"
@@ -302,9 +317,13 @@ def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
             if patch.auto.graph_scope.include_metric is not None:
                 graph_updates["include_metric"] = patch.auto.graph_scope.include_metric
             if patch.auto.graph_scope.include_history is not None:
-                graph_updates["include_history"] = patch.auto.graph_scope.include_history
+                graph_updates["include_history"] = (
+                    patch.auto.graph_scope.include_history
+                )
             if graph_updates:
-                auto_updates["graph_scope"] = plan.auto.graph_scope.copy(update=graph_updates)
+                auto_updates["graph_scope"] = plan.auto.graph_scope.copy(
+                    update=graph_updates
+                )
         if auto_updates:
             updates["auto"] = plan.auto.copy(update=auto_updates)
     return plan.copy(update=updates) if updates else plan
@@ -341,7 +360,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
     # Initialize span tracking for this trace
     clear_spans()
 
-    def _apply_resolver_rules(question: str, resolver_payload: Dict[str, Any] | None) -> tuple[str, list[str]]:
+    def _apply_resolver_rules(
+        question: str, resolver_payload: Dict[str, Any] | None
+    ) -> tuple[str, list[str]]:
         if not resolver_payload:
             return question, []
         rules = resolver_payload.get("rules", [])
@@ -354,7 +375,11 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             if rule_type == "alias_mapping":
                 source_entity = rule_data.get("source_entity")
                 target_entity = rule_data.get("target_entity")
-                if source_entity and target_entity and source_entity.lower() in normalized.lower():
+                if (
+                    source_entity
+                    and target_entity
+                    and source_entity.lower() in normalized.lower()
+                ):
                     normalized = normalized.replace(source_entity, target_entity)
                     applied.append(name)
             elif rule_type == "pattern_rule":
@@ -365,7 +390,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                         normalized = re.sub(pattern, replacement, normalized)
                         applied.append(name)
                     except re.error:
-                        logger.warning("resolver.rule.invalid_pattern", extra={"name": name})
+                        logger.warning(
+                            "resolver.rule.invalid_pattern", extra={"name": name}
+                        )
             elif rule_type == "transformation":
                 transform = rule_data.get("transformation_type")
                 if transform == "lowercase":
@@ -380,11 +407,14 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         return normalized, applied
 
     try:
+
         def build_fallback_plan(source: Plan) -> Plan:
             history = source.history.model_copy(update={"enabled": False})
             graph = source.graph.model_copy(update={"depth": 0, "view": None})
             list_spec = source.list.model_copy(update={"enabled": False})
-            output = source.output.model_copy(update={"blocks": ["text", "table"], "primary": "table"})
+            output = source.output.model_copy(
+                update={"blocks": ["text", "table"], "primary": "table"}
+            )
             return source.model_copy(
                 update={
                     "intent": Intent.LOOKUP,
@@ -398,15 +428,25 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             )
 
         settings = get_settings()
-        resolver_asset_name = payload.resolver_asset or settings.ops_default_resolver_asset
+        resolver_asset_name = (
+            payload.resolver_asset or settings.ops_default_resolver_asset
+        )
         schema_asset_name = payload.schema_asset or settings.ops_default_schema_asset
         source_asset_name = payload.source_asset or settings.ops_default_source_asset
 
-        resolver_payload = load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
-        schema_payload = load_schema_asset(schema_asset_name) if schema_asset_name else None
-        source_payload = load_source_asset(source_asset_name) if source_asset_name else None
+        resolver_payload = (
+            load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
+        )
+        schema_payload = (
+            load_schema_asset(schema_asset_name) if schema_asset_name else None
+        )
+        source_payload = (
+            load_source_asset(source_asset_name) if source_asset_name else None
+        )
 
-        normalized_question, resolver_rules_applied = _apply_resolver_rules(payload.question, resolver_payload)
+        normalized_question, resolver_rules_applied = _apply_resolver_rules(
+            payload.question, resolver_payload
+        )
 
         rerun_ctx: RerunContext | None = None
         plan_output: PlanOutput | None = None
@@ -426,13 +466,21 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             logger.info("ci.runner.planner.skipped", extra={"reason": "rerun"})
             validator_span = start_span("validator", "stage")
             try:
-                patched_plan = _apply_patch(payload.rerun.base_plan, payload.rerun.patch)
+                patched_plan = _apply_patch(
+                    payload.rerun.base_plan, payload.rerun.patch
+                )
                 logger.info("ci.runner.validator.start", extra={"phase": "rerun"})
-                plan_validated, plan_trace = validator.validate_plan(patched_plan, resolver_payload=resolver_payload)
+                plan_validated, plan_trace = validator.validate_plan(
+                    patched_plan, resolver_payload=resolver_payload
+                )
                 logger.info("ci.runner.validator.done", extra={"phase": "rerun"})
                 end_span(validator_span, links={"plan_path": "plan.validated"})
             except Exception as e:
-                end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                end_span(
+                    validator_span,
+                    status="error",
+                    summary={"error_type": type(e).__name__, "error_message": str(e)},
+                )
                 raise
             plan_raw = payload.rerun.base_plan
             plan_output = PlanOutput(
@@ -479,13 +527,31 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             planner_span = start_span("planner", "stage")
             try:
                 planner_start = time.perf_counter()
-                logger.info("ci.runner.planner.start", extra={"llm_called": False, "has_schema": bool(schema_payload), "has_source": bool(source_payload)})
-                plan_output = planner_llm.create_plan_output(normalized_question, schema_context=schema_payload, source_context=source_payload)
+                logger.info(
+                    "ci.runner.planner.start",
+                    extra={
+                        "llm_called": False,
+                        "has_schema": bool(schema_payload),
+                        "has_source": bool(source_payload),
+                    },
+                )
+                plan_output = planner_llm.create_plan_output(
+                    normalized_question,
+                    schema_context=schema_payload,
+                    source_context=source_payload,
+                )
                 elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
-                logger.info("ci.runner.planner.done", extra={"llm_called": False, "elapsed_ms": elapsed_ms})
+                logger.info(
+                    "ci.runner.planner.done",
+                    extra={"llm_called": False, "elapsed_ms": elapsed_ms},
+                )
                 end_span(planner_span, links={"plan_path": "plan.raw"})
             except Exception as e:
-                end_span(planner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                end_span(
+                    planner_span,
+                    status="error",
+                    summary={"error_type": type(e).__name__, "error_message": str(e)},
+                )
                 raise
 
             if plan_output.kind == PlanOutputKind.PLAN and plan_output.plan:
@@ -493,11 +559,20 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 validator_span = start_span("validator", "stage")
                 try:
                     logger.info("ci.runner.validator.start", extra={"phase": "initial"})
-                    plan_validated, plan_trace = validator.validate_plan(plan_raw, resolver_payload=resolver_payload)
+                    plan_validated, plan_trace = validator.validate_plan(
+                        plan_raw, resolver_payload=resolver_payload
+                    )
                     logger.info("ci.runner.validator.done", extra={"phase": "initial"})
                     end_span(validator_span, links={"plan_path": "plan.validated"})
                 except Exception as e:
-                    end_span(validator_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                    end_span(
+                        validator_span,
+                        status="error",
+                        summary={
+                            "error_type": type(e).__name__,
+                            "error_message": str(e),
+                        },
+                    )
                     raise
                 plan_output = plan_output.model_copy(update={"plan": plan_validated})
 
@@ -507,7 +582,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         context = get_request_context()
         active_trace_id = context.get("trace_id")
         request_id = context.get("request_id")
-        logger.info(f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}")
+        logger.info(
+            f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}"
+        )
         if not active_trace_id or active_trace_id == "-":
             active_trace_id = request_id or str(uuid.uuid4())
             logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
@@ -520,7 +597,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             stage_outputs: list[dict[str, Any]] = []
             stages: list[dict[str, Any]] = []
 
-            def build_stage_output(stage: str, result: Dict[str, Any], status_label: str, duration: int = 0) -> Dict[str, Any]:
+            def build_stage_output(
+                stage: str, result: Dict[str, Any], status_label: str, duration: int = 0
+            ) -> Dict[str, Any]:
                 payload = {
                     "stage": stage,
                     "result": result,
@@ -558,7 +637,11 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 }
             )
 
-            skipped_reason = "direct_answer" if plan_output.kind == PlanOutputKind.DIRECT else "rejected"
+            skipped_reason = (
+                "direct_answer"
+                if plan_output.kind == PlanOutputKind.DIRECT
+                else "rejected"
+            )
             for stage_name in ("validate", "execute", "compose"):
                 stage_input = StageInput(
                     stage=stage_name,
@@ -567,7 +650,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                     prev_output=route_output,
                     trace_id=active_trace_id,
                 )
-                stage_output = build_stage_output(stage_name, {"skipped": True, "reason": skipped_reason}, "warning")
+                stage_output = build_stage_output(
+                    stage_name, {"skipped": True, "reason": skipped_reason}, "warning"
+                )
                 stage_inputs.append(stage_input.model_dump())
                 stage_outputs.append(stage_output)
                 stages.append(
@@ -576,7 +661,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                         "input": stage_input.model_dump(),
                         "output": stage_output.get("result"),
                         "elapsed_ms": stage_output.get("duration_ms", 0),
-                        "status": stage_output.get("diagnostics", {}).get("status", "ok"),
+                        "status": stage_output.get("diagnostics", {}).get(
+                            "status", "ok"
+                        ),
                     }
                 )
 
@@ -584,8 +671,15 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 answer = plan_output.direct_answer.answer
                 blocks = [text_block(answer)]
                 references = plan_output.direct_answer.references
-                route_reason = plan_output.direct_answer.reasoning or plan_output.reasoning or "Direct answer route selected"
-                route_output_payload = {"route": "direct", "direct_answer": plan_output.direct_answer.model_dump()}
+                route_reason = (
+                    plan_output.direct_answer.reasoning
+                    or plan_output.reasoning
+                    or "Direct answer route selected"
+                )
+                route_output_payload = {
+                    "route": "direct",
+                    "direct_answer": plan_output.direct_answer.model_dump(),
+                }
             else:
                 reject_reason = (
                     plan_output.reject_payload.reason
@@ -595,9 +689,16 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 answer = f"Query rejected: {reject_reason}"
                 blocks = [text_block(answer)]
                 references = []
-                route_reason = plan_output.reject_payload.reasoning if plan_output.reject_payload else plan_output.reasoning
+                route_reason = (
+                    plan_output.reject_payload.reasoning
+                    if plan_output.reject_payload
+                    else plan_output.reasoning
+                )
                 route_reason = route_reason or "Reject route selected"
-                route_output_payload = {"route": "reject", "reject_reason": reject_reason}
+                route_output_payload = {
+                    "route": "reject",
+                    "reject_reason": reject_reason,
+                }
 
             present_input = StageInput(
                 stage="present",
@@ -671,7 +772,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             runner_span = start_span("runner", "stage")
             try:
                 runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
-                logger.info("ci.endpoint.entry", extra={"runner_file": runner_module.__file__})
+                logger.info(
+                    "ci.endpoint.entry", extra={"runner_file": runner_module.__file__}
+                )
                 runner = CIOrchestratorRunner(
                     plan_validated,
                     plan_raw,
@@ -691,9 +794,13 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 meta = result.get("meta") or {}
 
                 # Generate references from tool calls if not already present
-                tool_calls = trace_payload.get("tool_calls") or result.get("tool_calls") or []
+                tool_calls = (
+                    trace_payload.get("tool_calls") or result.get("tool_calls") or []
+                )
                 if tool_calls and not trace_payload.get("references"):
-                    trace_payload["references"] = _generate_references_from_tool_calls(tool_calls)
+                    trace_payload["references"] = _generate_references_from_tool_calls(
+                        tool_calls
+                    )
                 else:
                     trace_payload.setdefault("references", [])
 
@@ -747,13 +854,22 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                     if should_replan:
                         validator_span = start_span("validator", "stage")
                         try:
-                            fallback_validated, fallback_trace = validator.validate_plan(fallback_plan, resolver_payload=resolver_payload)
-                            end_span(validator_span, links={"plan_path": "plan.validated"})
+                            fallback_validated, fallback_trace = (
+                                validator.validate_plan(
+                                    fallback_plan, resolver_payload=resolver_payload
+                                )
+                            )
+                            end_span(
+                                validator_span, links={"plan_path": "plan.validated"}
+                            )
                         except Exception as e:
                             end_span(
                                 validator_span,
                                 status="error",
-                                summary={"error_type": type(e).__name__, "error_message": str(e)},
+                                summary={
+                                    "error_type": type(e).__name__,
+                                    "error_message": str(e),
+                                },
                             )
                             raise
                         fallback_output = PlanOutput(
@@ -787,7 +903,8 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                         }
                         trace_payload["route_decision"] = {
                             "route": "orch",
-                            "reason": fallback_output.reasoning or "Auto replan fallback",
+                            "reason": fallback_output.reasoning
+                            or "Auto replan fallback",
                             "confidence": fallback_output.confidence,
                             "metadata": fallback_output.metadata,
                         }
@@ -803,13 +920,19 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                         }
                         replan_events.append(execution_event)
                         trace_payload["replan_events"] = replan_events
-                        trace_status = "error" if trace_payload.get("errors") else "success"
+                        trace_status = (
+                            "error" if trace_payload.get("errors") else "success"
+                        )
                         meta["route"] = "orch"
                         meta.setdefault("route_reason", "Stage-based execution")
 
                 end_span(runner_span)
             except Exception as e:
-                end_span(runner_span, status="error", summary={"error_type": type(e).__name__, "error_message": str(e)})
+                end_span(
+                    runner_span,
+                    status="error",
+                    summary={"error_type": type(e).__name__, "error_message": str(e)},
+                )
                 raise
             finally:
                 duration_ms = int((time.perf_counter() - start) * 1000)
@@ -856,13 +979,17 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         result["trace"]["parent_trace_id"] = parent_trace_id
         response: CiAskResponse = CiAskResponse(**result)
         response_payload = ResponseEnvelope.success(data=response.model_dump())
-    except Exception as exc: 
+    except Exception as exc:
         status = "error"
         logger.exception("ci.ask.error", exc_info=exc)
         error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
         error_response = JSONResponse(status_code=500, content=error_body)
     finally:
-        elapsed_ms = duration_ms if duration_ms is not None else int((time.perf_counter() - start) * 1000)
+        elapsed_ms = (
+            duration_ms
+            if duration_ms is not None
+            else int((time.perf_counter() - start) * 1000)
+        )
         block_types: list[str] = []
         if envelope_blocks:
             for block in envelope_blocks:
@@ -889,6 +1016,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
 
 
 # --- UI Actions (Deterministic Interactive UI) ---
+
 
 @router.post("/ui-actions", response_model=ResponseEnvelope)
 async def execute_ui_action(
@@ -1000,7 +1128,11 @@ async def execute_ui_action(
 
     except Exception as exc:
         # Error handling
-        end_span(action_span, status="error", summary={"error_type": type(exc).__name__, "error_message": str(exc)})
+        end_span(
+            action_span,
+            status="error",
+            summary={"error_type": type(exc).__name__, "error_message": str(exc)},
+        )
 
         duration_ms = int((time.time() - ts_start) * 1000)
         all_spans = get_all_spans()
@@ -1259,7 +1391,9 @@ def run_regression(
         # Get baseline
         baseline = get_latest_regression_baseline(session, query_id)
         if not baseline:
-            return ResponseEnvelope.error(message="No baseline set for this golden query")
+            return ResponseEnvelope.error(
+                message="No baseline set for this golden query"
+            )
 
         # Get baseline trace for comparison
         baseline_trace = get_execution_trace(session, baseline.baseline_trace_id)
@@ -1283,10 +1417,14 @@ def run_regression(
             candidate_trace = {
                 "status": "success",
                 "asset_versions": [],  # Will be populated by OPS execution
-                "plan_validated": answer_envelope.meta.__dict__ if answer_envelope.meta else None,
+                "plan_validated": answer_envelope.meta.__dict__
+                if answer_envelope.meta
+                else None,
                 "execution_steps": [],
                 "answer": answer_envelope.model_dump() if answer_envelope else {},
-                "references": answer_envelope.blocks if answer_envelope and answer_envelope.blocks else [],
+                "references": answer_envelope.blocks
+                if answer_envelope and answer_envelope.blocks
+                else [],
                 "ui_render": {"error_count": 0},
             }
 
@@ -1359,7 +1497,9 @@ def list_regression_runs(
     from app.modules.inspector.crud import list_regression_runs
 
     try:
-        runs = list_regression_runs(session, golden_query_id=golden_query_id, limit=limit)
+        runs = list_regression_runs(
+            session, golden_query_id=golden_query_id, limit=limit
+        )
         return ResponseEnvelope.success(
             data={
                 "runs": [
@@ -1464,7 +1604,9 @@ def run_rca(
         if mode == "single":
             trace_id = payload.get("trace_id")
             if not trace_id:
-                return ResponseEnvelope.error(message="trace_id required for single mode")
+                return ResponseEnvelope.error(
+                    message="trace_id required for single mode"
+                )
 
             # Fetch trace
             trace = get_execution_trace(session, trace_id)
@@ -1495,9 +1637,13 @@ def run_rca(
             candidate = get_execution_trace(session, candidate_trace_id)
 
             if not baseline:
-                return ResponseEnvelope.error(message=f"Baseline trace {baseline_trace_id} not found")
+                return ResponseEnvelope.error(
+                    message=f"Baseline trace {baseline_trace_id} not found"
+                )
             if not candidate:
-                return ResponseEnvelope.error(message=f"Candidate trace {candidate_trace_id} not found")
+                return ResponseEnvelope.error(
+                    message=f"Candidate trace {candidate_trace_id} not found"
+                )
 
             # Generate hypotheses
             try:
@@ -1528,7 +1674,9 @@ def run_rca(
                     use_llm=True,
                     language="korean",
                 )
-                logger.info(f"RCA summarization completed for {len(hypotheses)} hypotheses")
+                logger.info(
+                    f"RCA summarization completed for {len(hypotheses)} hypotheses"
+                )
             except Exception as e:
                 logger.warning(f"RCA summarization failed (using fallback): {e}")
                 for hyp in hypotheses:
@@ -1542,19 +1690,21 @@ def run_rca(
         rca_blocks = []
 
         # Block 1: Summary
-        rca_blocks.append({
-            "type": "markdown",
-            "title": "RCA Analysis Summary",
-            "content": f"**Mode:** {mode}\n**Traces Analyzed:** {', '.join(source_traces[:2])}\n**Hypotheses Found:** {len(hypotheses)}",
-        })
+        rca_blocks.append(
+            {
+                "type": "markdown",
+                "title": "RCA Analysis Summary",
+                "content": f"**Mode:** {mode}\n**Traces Analyzed:** {', '.join(source_traces[:2])}\n**Hypotheses Found:** {len(hypotheses)}",
+            }
+        )
 
         # Block 2: Hypotheses list (one hypothesis per block)
         for hyp in hypotheses:
-            hyp_content = f"""**Rank {hyp['rank']}: {hyp['title']}**
+            hyp_content = f"""**Rank {hyp["rank"]}: {hyp["title"]}**
 
-**Confidence:** {hyp['confidence'].upper()}
+**Confidence:** {hyp["confidence"].upper()}
 
-**Description:** {hyp.get('description', 'N/A')}
+**Description:** {hyp.get("description", "N/A")}
 
 **Evidence:**
 """
@@ -1569,11 +1719,13 @@ def run_rca(
             for action in hyp.get("recommended_actions", [])[:3]:
                 hyp_content += f"- {action}\n"
 
-            rca_blocks.append({
-                "type": "markdown",
-                "title": f"Hypothesis {hyp['rank']}",
-                "content": hyp_content,
-            })
+            rca_blocks.append(
+                {
+                    "type": "markdown",
+                    "title": f"Hypothesis {hyp['rank']}",
+                    "content": hyp_content,
+                }
+            )
 
         # Create execution trace for RCA run
         from app.modules.inspector.models import TbExecutionTrace
@@ -1616,7 +1768,9 @@ def run_rca(
             logger.info(f"RCA trace created successfully: {rca_trace_id}")
         except Exception as trace_err:
             logger.error(f"Failed to create RCA trace: {trace_err}", exc_info=True)
-            return ResponseEnvelope.error(message=f"Failed to persist RCA results: {str(trace_err)}")
+            return ResponseEnvelope.error(
+                message=f"Failed to persist RCA results: {str(trace_err)}"
+            )
 
         # ===== Return response =====
         logger.info(f"Returning RCA response with trace_id: {rca_trace_id}")
@@ -1641,6 +1795,7 @@ def run_rca(
 
 
 # --- OPS Actions ---
+
 
 @router.post("/actions")
 def execute_action(
@@ -1676,6 +1831,7 @@ def execute_action(
         if trigger:
             try:
                 from .schemas import safe_parse_trigger
+
                 trigger = safe_parse_trigger(trigger)
             except Exception:
                 return ResponseEnvelope.error(message="invalid trigger format")
@@ -1699,12 +1855,15 @@ def execute_action(
         elif action == "replan":
             # Trigger replanning
             control_loop = ControlLoop()
-            result = control_loop.trigger_replan(trigger or ReplanTrigger(
-                trigger_type="manual",
-                stage_name=stage or "unknown",
-                reason="Manual replan triggered",
-                timestamp="now"
-            ))
+            result = control_loop.trigger_replan(
+                trigger
+                or ReplanTrigger(
+                    trigger_type="manual",
+                    stage_name=stage or "unknown",
+                    reason="Manual replan triggered",
+                    timestamp="now",
+                )
+            )
 
         elif action == "debug":
             # Run diagnostics
@@ -1713,21 +1872,20 @@ def execute_action(
                 "debug_id": str(uuid.uuid4()),
                 "status": "debugging",
                 "logs": [],
-                "recommendations": []
+                "recommendations": [],
             }
 
         elif action == "skip":
             # Skip stage
             control_loop = ControlLoop()
-            result = control_loop.skip_stage(stage or "unknown", params.get("skip_reason", ""))
+            result = control_loop.skip_stage(
+                stage or "unknown", params.get("skip_reason", "")
+            )
 
         elif action == "rollback":
             # Rollback to previous version
             # TODO: Implement rollback service
-            result = {
-                "rollback_id": str(uuid.uuid4()),
-                "status": "rollback_initiated"
-            }
+            result = {"rollback_id": str(uuid.uuid4()), "status": "rollback_initiated"}
 
         else:
             return ResponseEnvelope.error(message=f"Unknown action: {action}")
@@ -1741,7 +1899,7 @@ def execute_action(
                 "action": action,
                 "stage": stage,
                 "result": result,
-                "message": message
+                "message": message,
             }
         )
 
@@ -1751,6 +1909,7 @@ def execute_action(
 
 
 # --- Isolated Stage Test ---
+
 
 @router.post("/stage-test", response_model=ResponseEnvelope)
 async def execute_isolated_stage_test(
@@ -1791,15 +1950,18 @@ async def execute_isolated_stage_test(
         trace_id=trace_id,
         test_mode=True,
         asset_overrides=payload.asset_overrides,
-        baseline_trace_id=payload.baseline_trace_id
+        baseline_trace_id=payload.baseline_trace_id,
     )
 
-    logger.info(f"Starting isolated stage test: {payload.stage}", extra={
-        "tenant_id": tenant_id,
-        "stage": payload.stage,
-        "test_mode": True,
-        "asset_overrides_count": len(payload.asset_overrides)
-    })
+    logger.info(
+        f"Starting isolated stage test: {payload.stage}",
+        extra={
+            "tenant_id": tenant_id,
+            "stage": payload.stage,
+            "test_mode": True,
+            "asset_overrides_count": len(payload.asset_overrides),
+        },
+    )
 
     try:
         # Create stage executor
@@ -1810,7 +1972,7 @@ async def execute_isolated_stage_test(
             stage=payload.stage,
             applied_assets=payload.asset_overrides,  # Use overrides for this test
             params=payload.test_plan or {},
-            prev_output=None
+            prev_output=None,
         )
 
         # Execute stage
@@ -1818,21 +1980,26 @@ async def execute_isolated_stage_test(
         stage_output = await stage_executor.execute_stage(stage_input)
         duration_ms = int((time.time() - start_time) * 1000)
 
-        logger.info(f"Stage test completed: {payload.stage}", extra={
-            "duration_ms": duration_ms,
-            "status": stage_output.diagnostics.status
-        })
+        logger.info(
+            f"Stage test completed: {payload.stage}",
+            extra={
+                "duration_ms": duration_ms,
+                "status": stage_output.diagnostics.status,
+            },
+        )
 
-        return ResponseEnvelope.success(data={
-            "stage": payload.stage,
-            "result": stage_output.result,
-            "duration_ms": duration_ms,
-            "diagnostics": stage_output.diagnostics.dict(),
-            "references": stage_output.references,
-            "asset_overrides_used": payload.asset_overrides,
-            "baseline_trace_id": payload.baseline_trace_id,
-            "trace_id": trace_id
-        })
+        return ResponseEnvelope.success(
+            data={
+                "stage": payload.stage,
+                "result": stage_output.result,
+                "duration_ms": duration_ms,
+                "diagnostics": stage_output.diagnostics.dict(),
+                "references": stage_output.references,
+                "asset_overrides_used": payload.asset_overrides,
+                "baseline_trace_id": payload.baseline_trace_id,
+                "trace_id": trace_id,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Stage test failed: {payload.stage} - {str(e)}", exc_info=True)
@@ -1840,6 +2007,7 @@ async def execute_isolated_stage_test(
 
 
 # --- Stage Comparison for Regression ---
+
 
 @router.post("/stage-compare", response_model=ResponseEnvelope)
 async def compare_stages(
@@ -1863,11 +2031,16 @@ async def compare_stages(
     try:
         baseline_id = payload.get("baseline_trace_id")
         current_id = payload.get("current_trace_id")
-        stages_to_compare = payload.get("stages_to_compare", ["route_plan", "validate", "execute", "compose", "present"])
+        stages_to_compare = payload.get(
+            "stages_to_compare",
+            ["route_plan", "validate", "execute", "compose", "present"],
+        )
         comparison_depth = payload.get("comparison_depth", "summary")
 
         if not baseline_id or not current_id:
-            return ResponseEnvelope.error(message="baseline_trace_id and current_trace_id are required")
+            return ResponseEnvelope.error(
+                message="baseline_trace_id and current_trace_id are required"
+            )
 
         # Fetch traces
         baseline_trace = get_execution_trace(session, baseline_id)
@@ -1901,51 +2074,80 @@ async def compare_stages(
                     "baseline": {
                         "duration_ms": baseline_stage.get("duration_ms"),
                         "status": baseline_stage.get("diagnostics", {}).get("status"),
-                        "counts": baseline_stage.get("diagnostics", {}).get("counts", {}),
-                        "has_references": len(baseline_stage.get("references", [])) > 0
+                        "counts": baseline_stage.get("diagnostics", {}).get(
+                            "counts", {}
+                        ),
+                        "has_references": len(baseline_stage.get("references", [])) > 0,
                     },
                     "current": {
                         "duration_ms": current_stage.get("duration_ms"),
                         "status": current_stage.get("diagnostics", {}).get("status"),
-                        "counts": current_stage.get("diagnostics", {}).get("counts", {}),
-                        "has_references": len(current_stage.get("references", [])) > 0
+                        "counts": current_stage.get("diagnostics", {}).get(
+                            "counts", {}
+                        ),
+                        "has_references": len(current_stage.get("references", [])) > 0,
                     },
-                    "changed": False
+                    "changed": False,
                 }
 
                 # Check for changes
-                if (comparison["baseline"]["duration_ms"] != comparison["current"]["duration_ms"] or
-                    comparison["baseline"]["status"] != comparison["current"]["status"] or
-                    comparison["baseline"]["has_references"] != comparison["current"]["has_references"]):
+                if (
+                    comparison["baseline"]["duration_ms"]
+                    != comparison["current"]["duration_ms"]
+                    or comparison["baseline"]["status"]
+                    != comparison["current"]["status"]
+                    or comparison["baseline"]["has_references"]
+                    != comparison["current"]["has_references"]
+                ):
                     comparison["changed"] = True
 
                 if comparison_depth == "detailed":
                     comparison["baseline_result"] = baseline_stage.get("result", {})
                     comparison["current_result"] = current_stage.get("result", {})
-                    comparison["baseline_references"] = baseline_stage.get("references", [])
-                    comparison["current_references"] = current_stage.get("references", [])
+                    comparison["baseline_references"] = baseline_stage.get(
+                        "references", []
+                    )
+                    comparison["current_references"] = current_stage.get(
+                        "references", []
+                    )
 
                 comparison_results.append(comparison)
 
         # Calculate summary metrics
         total_stages = len(comparison_results)
         changed_stages = len([r for r in comparison_results if r["changed"]])
-        regressed_stages = len([r for r in comparison_results
-                              if r["current"]["status"] == "error" and r["baseline"]["status"] != "error"])
+        regressed_stages = len(
+            [
+                r
+                for r in comparison_results
+                if r["current"]["status"] == "error"
+                and r["baseline"]["status"] != "error"
+            ]
+        )
 
-        return ResponseEnvelope.success(data={
-            "baseline_trace_id": baseline_id,
-            "current_trace_id": current_id,
-            "total_stages": total_stages,
-            "changed_stages": changed_stages,
-            "regressed_stages": regressed_stages,
-            "comparison_results": comparison_results,
-            "summary": {
-                "regression_detected": regressed_stages > 0,
-                "change_percentage": (changed_stages / total_stages * 100) if total_stages > 0 else 0,
-                "performance_change": sum(1 for r in comparison_results if r["changed"]) / total_stages * 100 if total_stages > 0 else 0
+        return ResponseEnvelope.success(
+            data={
+                "baseline_trace_id": baseline_id,
+                "current_trace_id": current_id,
+                "total_stages": total_stages,
+                "changed_stages": changed_stages,
+                "regressed_stages": regressed_stages,
+                "comparison_results": comparison_results,
+                "summary": {
+                    "regression_detected": regressed_stages > 0,
+                    "change_percentage": (changed_stages / total_stages * 100)
+                    if total_stages > 0
+                    else 0,
+                    "performance_change": sum(
+                        1 for r in comparison_results if r["changed"]
+                    )
+                    / total_stages
+                    * 100
+                    if total_stages > 0
+                    else 0,
+                },
             }
-        })
+        )
 
     except Exception as e:
         logger.error(f"Stage comparison failed: {str(e)}", exc_info=True)
@@ -1957,14 +2159,20 @@ def _calculate_performance_change(comparison_results: List[Dict]) -> Dict[str, f
     if not comparison_results:
         return {"avg_duration_change": 0, "total_duration_change": 0}
 
-    total_baseline_duration = sum(r["baseline"]["duration_ms"] for r in comparison_results)
-    total_current_duration = sum(r["current"]["duration_ms"] for r in comparison_results)
+    total_baseline_duration = sum(
+        r["baseline"]["duration_ms"] for r in comparison_results
+    )
+    total_current_duration = sum(
+        r["current"]["duration_ms"] for r in comparison_results
+    )
 
     if total_baseline_duration == 0:
         return {"avg_duration_change": 0, "total_duration_change": 0}
 
-    avg_change = ((total_current_duration - total_baseline_duration) / total_baseline_duration) * 100
+    avg_change = (
+        (total_current_duration - total_baseline_duration) / total_baseline_duration
+    ) * 100
     return {
         "avg_duration_change": avg_change,
-        "total_duration_change": total_current_duration - total_baseline_duration
+        "total_duration_change": total_current_duration - total_baseline_duration,
     }

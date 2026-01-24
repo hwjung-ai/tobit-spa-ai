@@ -43,6 +43,7 @@ def test_user(session: Session) -> TbUser:
 @pytest.fixture
 def client(session: Session):
     """Create a test client."""
+
     def override_get_session():
         return session
 

@@ -57,15 +57,22 @@ class TbApiDef(SQLModel, table=True):
         default_factory=list,
         sa_column=Column(JSONB, nullable=False),
     )
-    is_active: bool = Field(default=True, sa_column=Column(Boolean, nullable=False, server_default=text("true")))
+    is_active: bool = Field(
+        default=True,
+        sa_column=Column(Boolean, nullable=False, server_default=text("true")),
+    )
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
 
 
@@ -80,17 +87,25 @@ class ApiExecLog(SQLModel, table=True):
     api_id: uuid.UUID = Field(sa_column=Column(UUID(as_uuid=True), nullable=False))
     executed_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
     executed_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     status: str = Field(sa_column=Column(Text, nullable=False))
-    duration_ms: int = Field(sa_column=Column(Integer, nullable=False, server_default=text("0")))
-    row_count: int = Field(sa_column=Column(Integer, nullable=False, server_default=text("0")))
+    duration_ms: int = Field(
+        sa_column=Column(Integer, nullable=False, server_default=text("0"))
+    )
+    row_count: int = Field(
+        sa_column=Column(Integer, nullable=False, server_default=text("0"))
+    )
     request_params: dict | None = Field(
         default=None,
         sa_column=Column(JSONB, nullable=True),
     )
-    error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    error_message: str | None = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
 
 
 class ApiExecStepLog(SQLModel, table=True):
@@ -105,9 +120,15 @@ class ApiExecStepLog(SQLModel, table=True):
     node_id: str = Field(sa_column=Column(Text, nullable=False))
     node_type: str = Field(sa_column=Column(Text, nullable=False))
     status: str = Field(sa_column=Column(Text, nullable=False))
-    duration_ms: int = Field(sa_column=Column(Integer, nullable=False, server_default=text("0")))
-    row_count: int = Field(sa_column=Column(Integer, nullable=False, server_default=text("0")))
-    error_message: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    duration_ms: int = Field(
+        sa_column=Column(Integer, nullable=False, server_default=text("0"))
+    )
+    row_count: int = Field(
+        sa_column=Column(Integer, nullable=False, server_default=text("0"))
+    )
+    error_message: str | None = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     references: dict[str, Any] | None = Field(
         default=None,
         sa_column=Column(JSONB, nullable=True),

@@ -46,15 +46,15 @@ from app.modules.asset_registry.schema_models import (
     SchemaListResponse,
 )
 from app.modules.asset_registry.schemas import (
+    MappingAssetUpdate,
+    PolicyAssetUpdate,
     PromptAssetCreate,
     PromptAssetRead,
     PromptAssetUpdate,
+    QueryAssetUpdate,
     ScreenAssetCreate,
     ScreenAssetRead,
     ScreenAssetUpdate,
-    MappingAssetUpdate,
-    PolicyAssetUpdate,
-    QueryAssetUpdate,
 )
 from app.modules.asset_registry.source_models import (
     SourceAssetCreate,
@@ -90,9 +90,7 @@ def create_asset(
 
 
 def create_screen_asset_impl(
-    payload: ScreenAssetCreate,
-    session: Session,
-    current_user: TbUser
+    payload: ScreenAssetCreate, session: Session, current_user: TbUser
 ):
     if payload.asset_type != "screen":
         raise HTTPException(status_code=400, detail="asset_type must be 'screen'")
@@ -167,9 +165,7 @@ def create_screen_asset_impl(
 
 
 def create_prompt_asset_impl(
-    payload: PromptAssetCreate,
-    session: Session,
-    current_user: TbUser
+    payload: PromptAssetCreate, session: Session, current_user: TbUser
 ):
     """Create a prompt asset"""
     if payload.asset_type != "prompt":
@@ -255,9 +251,10 @@ def list_assets(asset_type: str | None = None, status: str | None = None):
                         "status": a.status,
                         "published_at": a.published_at,
                         "updated_at": a.updated_at,
-                    } for a in assets
+                    }
+                    for a in assets
                 ],
-                "total": len(assets)
+                "total": len(assets),
             }
         )
 
@@ -344,7 +341,9 @@ def list_asset_traces(
     )
 
 
-def _to_screen_asset(asset: TbAssetRegistry, schema: dict[str, Any] | None = None) -> dict[str, Any]:
+def _to_screen_asset(
+    asset: TbAssetRegistry, schema: dict[str, Any] | None = None
+) -> dict[str, Any]:
     return {
         "asset_id": str(asset.asset_id),
         "asset_type": asset.asset_type,
@@ -369,7 +368,9 @@ def get_asset(asset_id: str, stage: str | None = None, version: int | None = Non
         if stage:
             stage = stage.lower()
             if stage not in {"draft", "published"}:
-                raise HTTPException(status_code=400, detail="stage must be 'draft' or 'published'")
+                raise HTTPException(
+                    status_code=400, detail="stage must be 'draft' or 'published'"
+                )
         asset = None
         try:
             asset_uuid = uuid.UUID(asset_id)
@@ -414,7 +415,9 @@ def get_asset(asset_id: str, stage: str | None = None, version: int | None = Non
             if not hist:
                 raise HTTPException(status_code=404, detail="version not found")
             snapshot = hist.snapshot
-            return ResponseEnvelope.success(data={"asset": _to_screen_asset(asset, snapshot.get("schema_json"))})
+            return ResponseEnvelope.success(
+                data={"asset": _to_screen_asset(asset, snapshot.get("schema_json"))}
+            )
 
         return ResponseEnvelope.success(data={"asset": _to_screen_asset(asset)})
 
@@ -422,7 +425,13 @@ def get_asset(asset_id: str, stage: str | None = None, version: int | None = Non
 @router.put("/assets/{asset_id}")
 def update_asset(
     asset_id: str,
-    payload: Union[PromptAssetUpdate, ScreenAssetUpdate, MappingAssetUpdate, PolicyAssetUpdate, QueryAssetUpdate] = Body(...),
+    payload: Union[
+        PromptAssetUpdate,
+        ScreenAssetUpdate,
+        MappingAssetUpdate,
+        PolicyAssetUpdate,
+        QueryAssetUpdate,
+    ] = Body(...),
     current_user: TbUser = Depends(get_current_user),
 ):
     with get_session_context() as session:
@@ -456,7 +465,9 @@ def update_asset(
         # Will be re-enabled once database migrations are complete
 
         if asset.status != "draft":
-            raise HTTPException(status_code=400, detail="only draft assets can be updated")
+            raise HTTPException(
+                status_code=400, detail="only draft assets can be updated"
+            )
 
         if payload.name is not None:
             asset.name = payload.name
@@ -744,7 +755,9 @@ def delete_asset(
         #     )
 
         if asset.status != "draft":
-            raise HTTPException(status_code=400, detail="only draft assets can be deleted")
+            raise HTTPException(
+                status_code=400, detail="only draft assets can be deleted"
+            )
         session.delete(asset)
         session.commit()
         return {"ok": True}
@@ -770,23 +783,25 @@ def list_sources(
         source_assets = []
         for asset in assets:
             content = asset.content or {}
-            source_assets.append(SourceAssetResponse(
-                asset_id=str(asset.asset_id),
-                asset_type=asset.asset_type,
-                name=asset.name,
-                description=asset.description,
-                version=asset.version,
-                status=asset.status,
-                source_type=SourceType(content.get("source_type", "postgresql")),
-                connection=content.get("connection", {}),
-                scope=asset.scope,
-                tags=asset.tags,
-                created_by=asset.created_by,
-                published_by=asset.published_by,
-                published_at=asset.published_at,
-                created_at=asset.created_at,
-                updated_at=asset.updated_at,
-            ))
+            source_assets.append(
+                SourceAssetResponse(
+                    asset_id=str(asset.asset_id),
+                    asset_type=asset.asset_type,
+                    name=asset.name,
+                    description=asset.description,
+                    version=asset.version,
+                    status=asset.status,
+                    source_type=SourceType(content.get("source_type", "postgresql")),
+                    connection=content.get("connection", {}),
+                    scope=asset.scope,
+                    tags=asset.tags,
+                    created_by=asset.created_by,
+                    published_by=asset.published_by,
+                    published_at=asset.published_at,
+                    created_at=asset.created_at,
+                    updated_at=asset.updated_at,
+                )
+            )
 
         return ResponseEnvelope.success(
             data=SourceListResponse(
@@ -867,7 +882,9 @@ def update_source(
 ):
     """Update a source asset"""
     with get_session_context() as session:
-        asset = update_source_asset(session, asset_id, payload, updated_by=current_user.id)
+        asset = update_source_asset(
+            session, asset_id, payload, updated_by=current_user.id
+        )
         return ResponseEnvelope.success(
             data=SourceAssetResponse(
                 asset_id=str(asset.asset_id),
@@ -931,22 +948,24 @@ def list_schemas(
         schema_assets = []
         for asset in assets:
             content = asset.content or {}
-            schema_assets.append(SchemaAssetResponse(
-                asset_id=str(asset.asset_id),
-                asset_type=asset.asset_type,
-                name=asset.name,
-                description=asset.description,
-                version=asset.version,
-                status=asset.status,
-                catalog=content.get("catalog", {}),
-                scope=asset.scope,
-                tags=asset.tags,
-                created_by=asset.created_by,
-                published_by=asset.published_by,
-                published_at=asset.published_at,
-                created_at=asset.created_at,
-                updated_at=asset.updated_at,
-            ))
+            schema_assets.append(
+                SchemaAssetResponse(
+                    asset_id=str(asset.asset_id),
+                    asset_type=asset.asset_type,
+                    name=asset.name,
+                    description=asset.description,
+                    version=asset.version,
+                    status=asset.status,
+                    catalog=content.get("catalog", {}),
+                    scope=asset.scope,
+                    tags=asset.tags,
+                    created_by=asset.created_by,
+                    published_by=asset.published_by,
+                    published_at=asset.published_at,
+                    created_at=asset.created_at,
+                    updated_at=asset.updated_at,
+                )
+            )
 
         return ResponseEnvelope.success(
             data=SchemaListResponse(
@@ -1025,7 +1044,9 @@ def update_schema(
 ):
     """Update a schema asset"""
     with get_session_context() as session:
-        asset = update_schema_asset(session, asset_id, payload, updated_by=current_user.id)
+        asset = update_schema_asset(
+            session, asset_id, payload, updated_by=current_user.id
+        )
         return ResponseEnvelope.success(
             data=SchemaAssetResponse(
                 asset_id=str(asset.asset_id),
@@ -1092,32 +1113,39 @@ def list_resolvers(
         resolver_assets = []
         for asset in assets:
             content = asset.content or {}
-            resolver_assets.append(ResolverAssetResponse(
-                asset_id=str(asset.asset_id),
-                asset_type=asset.asset_type,
-                name=asset.name,
-                description=asset.description,
-                version=asset.version,
-                status=asset.status,
-                config=ResolverConfig(
+            resolver_assets.append(
+                ResolverAssetResponse(
+                    asset_id=str(asset.asset_id),
+                    asset_type=asset.asset_type,
                     name=asset.name,
                     description=asset.description,
-                    rules=[],  # Simplified for now
-                    default_namespace=content.get("default_namespace"),
-                    tags=asset.tags,
                     version=asset.version,
-                ),
-                scope=asset.scope,
-                tags=asset.tags,
-                created_by=asset.created_by,
-                published_by=asset.published_by,
-                published_at=asset.published_at,
-                created_at=asset.created_at,
-                updated_at=asset.updated_at,
-            ))
+                    status=asset.status,
+                    config=ResolverConfig(
+                        name=asset.name,
+                        description=asset.description,
+                        rules=[],  # Simplified for now
+                        default_namespace=content.get("default_namespace"),
+                        tags=asset.tags,
+                        version=asset.version,
+                    ),
+                    scope=asset.scope,
+                    tags=asset.tags,
+                    created_by=asset.created_by,
+                    published_by=asset.published_by,
+                    published_at=asset.published_at,
+                    created_at=asset.created_at,
+                    updated_at=asset.updated_at,
+                )
+            )
 
         return ResponseEnvelope.success(
-            data={"assets": resolver_assets, "total": len(resolver_assets), "page": page, "page_size": page_size}
+            data={
+                "assets": resolver_assets,
+                "total": len(resolver_assets),
+                "page": page,
+                "page_size": page_size,
+            }
         )
 
 
@@ -1188,7 +1216,9 @@ def update_resolver(
 ):
     """Update a resolver asset"""
     with get_session_context() as session:
-        asset = update_resolver_asset(session, asset_id, payload, updated_by=current_user.id)
+        asset = update_resolver_asset(
+            session, asset_id, payload, updated_by=current_user.id
+        )
         return ResponseEnvelope.success(
             data=ResolverAssetResponse(
                 asset_id=str(asset.asset_id),

@@ -353,6 +353,7 @@ class TestControlLoopRuntime:
 
                 # Wait to satisfy min_interval
                 import time
+
                 time.sleep(0.1)  # Small delay for testing
 
         # After max replans, should return False

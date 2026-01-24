@@ -53,11 +53,19 @@ def get_operation_setting(
     """
     try:
         app_settings = get_settings()
-        setting = OperationSettingsService.get_setting(session, setting_key, app_settings)
-        logger.info("operation_settings.get", extra={"setting_key": setting_key, "source": setting["source"]})
+        setting = OperationSettingsService.get_setting(
+            session, setting_key, app_settings
+        )
+        logger.info(
+            "operation_settings.get",
+            extra={"setting_key": setting_key, "source": setting["source"]},
+        )
         return ResponseEnvelope.success(data=setting)
     except ValueError as exc:
-        logger.warning("operation_settings.get.invalid", extra={"setting_key": setting_key, "error": str(exc)})
+        logger.warning(
+            "operation_settings.get.invalid",
+            extra={"setting_key": setting_key, "error": str(exc)},
+        )
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
         logger.exception("operation_settings.get.error", exc_info=exc)

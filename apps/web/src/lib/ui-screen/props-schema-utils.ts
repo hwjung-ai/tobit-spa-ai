@@ -29,8 +29,8 @@ export function generatePropsFormFields(componentType: string): PropsFormField[]
     const field: PropsFormField = {
       name,
       type: mapJsonTypeToFormType(prop),
-      label: prop.title || name,
-      description: prop.description,
+      label: (prop.title as string) || name,
+      description: prop.description as string | undefined,
       required: required.includes(name),
       defaultValue: prop.default,
     };
@@ -38,13 +38,13 @@ export function generatePropsFormFields(componentType: string): PropsFormField[]
     // Handle enums
     if (prop.enum) {
       field.type = "select";
-      field.options = prop.enum.map((v: string) => ({ value: v, label: v }));
+      field.options = (prop.enum as string[]).map((v: string) => ({ value: v, label: v }));
     }
 
     // Handle number constraints
     if (prop.type === "number") {
-      field.min = prop.minimum;
-      field.max = prop.maximum;
+      field.min = prop.minimum as number | undefined;
+      field.max = prop.maximum as number | undefined;
     }
 
     // Handle string constraints

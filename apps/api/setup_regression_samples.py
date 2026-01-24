@@ -2,11 +2,12 @@
 """
 Setup sample Golden Queries for Regression Watch demonstration
 """
+
 import sys
 from uuid import uuid4
 
 # Add the project to path
-sys.path.insert(0, '/home/spa/tobit-spa-ai/apps/api')
+sys.path.insert(0, "/home/spa/tobit-spa-ai/apps/api")
 
 from app.modules.inspector.models import TbGoldenQuery, TbRegressionBaseline
 from core.db import get_session_context
@@ -17,24 +18,25 @@ SAMPLE_QUERIES = [
         "name": "RCA Analysis Quality Check",
         "query_text": "Run RCA on execution trace and verify hypothesis generation",
         "ops_type": "all",
-        "description": "Monitors RCA engine hypothesis quality"
+        "description": "Monitors RCA engine hypothesis quality",
     },
     {
         "name": "Inspector Trace Retrieval",
         "query_text": "Fetch execution trace details from inspector API",
         "ops_type": "all",
-        "description": "Verifies trace data retrieval performance"
+        "description": "Verifies trace data retrieval performance",
     },
     {
         "name": "Asset Registry Query",
         "query_text": "Query published assets from registry",
         "ops_type": "all",
-        "description": "Checks asset availability and performance"
+        "description": "Checks asset availability and performance",
     },
 ]
 
 # Use real trace IDs from database
 BASELINE_TRACE_ID = "6c9dcb5d-8e01-4b7f-b4f1-11b2b6bca1cd"  # Real trace
+
 
 def setup_samples():
     """Create sample Golden Queries and set baselines"""
@@ -56,8 +58,8 @@ def setup_samples():
                 options={
                     "description": query_config["description"],
                     "max_hypotheses": 5,
-                    "timeout_seconds": 30
-                }
+                    "timeout_seconds": 30,
+                },
             )
 
             session.add(golden_query)
@@ -125,10 +127,12 @@ def setup_samples():
         print("Scenario C - FAIL (심각한 오류):")
         print("  └─ RCA fails or returns no data → FAIL\n")
 
+
 if __name__ == "__main__":
     try:
         setup_samples()
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
+
         traceback.print_exc()

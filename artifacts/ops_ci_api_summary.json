@@ -37,7 +37,7 @@
       "meta_excerpt": {
         "used_tools": [],
         "summary": "CI srv-erp- not found",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LOOKUP",
@@ -77,7 +77,7 @@
       "meta_excerpt": {
         "used_tools": [],
         "summary": "CI srv-erp- not found",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "AGGREGATE",
@@ -117,7 +117,7 @@
       "meta_excerpt": {
         "used_tools": [],
         "summary": "CI srv-erp- not found",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LOOKUP",
@@ -166,7 +166,7 @@
           "ci.search_broad"
         ],
         "summary": "Multiple CI candidates",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LIST",
@@ -180,7 +180,8 @@
           "user_requested_depth": 1,
           "policy_max_depth": 1,
           "effective_depth": 1
-        }
+        },
+        "references_count": 3
       },
       "mock_terms": []
     },
@@ -206,7 +207,7 @@
       "meta_excerpt": {
         "used_tools": [],
         "summary": "CI app-erp-alert-01- not found",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LOOKUP",
@@ -246,7 +247,7 @@
       "meta_excerpt": {
         "used_tools": [],
         "summary": "CI srv-erp- not found",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LOOKUP",
@@ -294,7 +295,7 @@
           "ci.search_broad"
         ],
         "summary": "Multiple CI candidates",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LOOKUP",
@@ -308,7 +309,8 @@
           "user_requested_depth": 1,
           "policy_max_depth": 1,
           "effective_depth": 1
-        }
+        },
+        "references_count": 2
       },
       "mock_terms": []
     },
@@ -334,7 +336,7 @@
       "meta_excerpt": {
         "used_tools": [],
         "summary": "CI app-erp-alert-01-1 not found",
-        "route": "ci"
+        "route": "orch"
       },
       "trace_excerpt": {
         "intent": "LOOKUP",

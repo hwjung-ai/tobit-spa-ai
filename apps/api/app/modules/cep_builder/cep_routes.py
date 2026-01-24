@@ -23,6 +23,7 @@ performance_monitor = RulePerformanceMonitor()
 
 class CreateRuleRequest(BaseModel):
     """Request for creating a CEP rule"""
+
     name: str
     rule_type: str  # pattern, aggregation, windowing, enrichment
     description: Optional[str] = None
@@ -35,6 +36,7 @@ class CreateRuleRequest(BaseModel):
 
 class RuleResponse(BaseModel):
     """Response for CEP rule"""
+
     rule_id: str
     name: str
     rule_type: str
@@ -43,16 +45,19 @@ class RuleResponse(BaseModel):
 
 class ExecuteRuleRequest(BaseModel):
     """Request for executing a rule with event"""
+
     event: Dict[str, Any]
 
 
 class ProcessEventRequest(BaseModel):
     """Request for processing an event through a rule"""
+
     event: Dict[str, Any]
 
 
 class NotificationChannelRequest(BaseModel):
     """Request for registering a notification channel"""
+
     channel_id: str
     channel_type: str  # slack, email, sms, webhook
     config: Dict[str, Any]
@@ -60,6 +65,7 @@ class NotificationChannelRequest(BaseModel):
 
 class PerformanceStatsResponse(BaseModel):
     """Response for rule performance statistics"""
+
     rule_id: str
     total_executions: int
     avg_execution_time_ms: float
@@ -69,8 +75,7 @@ class PerformanceStatsResponse(BaseModel):
 
 @router.post("/rules", response_model=RuleResponse)
 async def create_rule(
-    request: CreateRuleRequest,
-    current_user: dict = Depends(get_current_user)
+    request: CreateRuleRequest, current_user: dict = Depends(get_current_user)
 ):
     """
     Create a new CEP rule
@@ -93,10 +98,14 @@ async def create_rule(
         if not request.name or len(request.name.strip()) < 2:
             raise HTTPException(400, "Rule name must be at least 2 characters")
 
-        if request.rule_type not in ["pattern", "aggregation", "windowing", "enrichment"]:
+        if request.rule_type not in [
+            "pattern",
+            "aggregation",
+            "windowing",
+            "enrichment",
+        ]:
             raise HTTPException(
-                400,
-                "Rule type must be: pattern, aggregation, windowing, or enrichment"
+                400, "Rule type must be: pattern, aggregation, windowing, or enrichment"
             )
 
         logger.info(
@@ -139,10 +148,7 @@ async def create_rule(
 
 
 @router.get("/rules/{rule_id}", response_model=RuleResponse)
-async def get_rule(
-    rule_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def get_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
     """Get CEP rule details"""
 
     try:
@@ -171,7 +177,7 @@ async def get_rule(
 async def execute_rule(
     rule_id: str,
     request: ExecuteRuleRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Execute a CEP rule with an event
@@ -200,7 +206,7 @@ async def execute_rule(
                 "rule_id": rule_id,
                 "matched": False,
                 "results": [],
-                "message": "Event did not match rule conditions"
+                "message": "Event did not match rule conditions",
             }
 
         # Execute actions for matched events
@@ -223,9 +229,7 @@ async def execute_rule(
 
 
 @router.get("/rules", response_model=dict)
-async def list_rules(
-    current_user: dict = Depends(get_current_user)
-):
+async def list_rules(current_user: dict = Depends(get_current_user)):
     """List all CEP rules"""
 
     try:
@@ -245,10 +249,7 @@ async def list_rules(
 
 
 @router.delete("/rules/{rule_id}", response_model=dict)
-async def delete_rule(
-    rule_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def delete_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
     """Delete a CEP rule"""
 
     try:
@@ -257,10 +258,7 @@ async def delete_rule(
         if not cep_engine.delete_rule(rule_id):
             raise HTTPException(404, f"Rule not found: {rule_id}")
 
-        return {
-            "status": "ok",
-            "message": f"Rule {rule_id} deleted"
-        }
+        return {"status": "ok", "message": f"Rule {rule_id} deleted"}
 
     except HTTPException:
         raise
@@ -270,10 +268,7 @@ async def delete_rule(
 
 
 @router.post("/rules/{rule_id}/disable", response_model=dict)
-async def disable_rule(
-    rule_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def disable_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
     """Disable a CEP rule"""
 
     try:
@@ -282,10 +277,7 @@ async def disable_rule(
         if not cep_engine.disable_rule(rule_id):
             raise HTTPException(404, f"Rule not found: {rule_id}")
 
-        return {
-            "status": "ok",
-            "message": f"Rule {rule_id} disabled"
-        }
+        return {"status": "ok", "message": f"Rule {rule_id} disabled"}
 
     except HTTPException:
         raise
@@ -295,10 +287,7 @@ async def disable_rule(
 
 
 @router.post("/rules/{rule_id}/enable", response_model=dict)
-async def enable_rule(
-    rule_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def enable_rule(rule_id: str, current_user: dict = Depends(get_current_user)):
     """Enable a CEP rule"""
 
     try:
@@ -307,10 +296,7 @@ async def enable_rule(
         if not cep_engine.enable_rule(rule_id):
             raise HTTPException(404, f"Rule not found: {rule_id}")
 
-        return {
-            "status": "ok",
-            "message": f"Rule {rule_id} enabled"
-        }
+        return {"status": "ok", "message": f"Rule {rule_id} enabled"}
 
     except HTTPException:
         raise
@@ -321,8 +307,7 @@ async def enable_rule(
 
 @router.post("/notifications/channels", response_model=dict)
 async def register_notification_channel(
-    request: NotificationChannelRequest,
-    current_user: dict = Depends(get_current_user)
+    request: NotificationChannelRequest, current_user: dict = Depends(get_current_user)
 ):
     """
     Register a notification channel
@@ -341,20 +326,18 @@ async def register_notification_channel(
         )
 
         if not notification_service.register_channel_from_config(
-            request.channel_id,
-            request.channel_type,
-            request.config
+            request.channel_id, request.channel_type, request.config
         ):
             raise HTTPException(
                 400,
-                f"Failed to register {request.channel_type} channel. Check configuration."
+                f"Failed to register {request.channel_type} channel. Check configuration.",
             )
 
         return {
             "status": "ok",
             "channel_id": request.channel_id,
             "channel_type": request.channel_type,
-            "message": "Notification channel registered"
+            "message": "Notification channel registered",
         }
 
     except HTTPException:
@@ -365,9 +348,7 @@ async def register_notification_channel(
 
 
 @router.get("/notifications/channels", response_model=dict)
-async def list_notification_channels(
-    current_user: dict = Depends(get_current_user)
-):
+async def list_notification_channels(current_user: dict = Depends(get_current_user)):
     """List registered notification channels"""
 
     try:
@@ -388,7 +369,7 @@ async def list_notification_channels(
 async def get_rule_performance(
     rule_id: str,
     time_range_minutes: int = Query(60, ge=1, le=1440),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get rule performance statistics
@@ -418,9 +399,7 @@ async def get_rule_performance(
 
 
 @router.get("/performance", response_model=dict)
-async def get_all_performance_stats(
-    current_user: dict = Depends(get_current_user)
-):
+async def get_all_performance_stats(current_user: dict = Depends(get_current_user)):
     """Get performance statistics for all rules"""
 
     try:
@@ -440,9 +419,7 @@ async def get_all_performance_stats(
 
 
 @router.get("/health", response_model=dict)
-async def get_system_health(
-    current_user: dict = Depends(get_current_user)
-):
+async def get_system_health(current_user: dict = Depends(get_current_user)):
     """Get overall CEP system health"""
 
     try:
@@ -464,7 +441,7 @@ async def get_system_health(
 async def get_rule_errors(
     rule_id: str,
     limit: int = Query(50, ge=1, le=500),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get recent errors for a rule"""
 

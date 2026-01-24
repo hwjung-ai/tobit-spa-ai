@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 class RegressionType(str, Enum):
     """Types of regression analysis."""
+
     STAGE = "stage"
     ASSET_VERSION = "asset_version"
     TIME_SERIES = "time_series"
@@ -16,16 +17,18 @@ class RegressionType(str, Enum):
 
 class StageComparisonInput(BaseModel):
     """Input for stage comparison analysis."""
+
     baseline_trace_id: str = Field(..., description="Baseline trace ID")
     comparison_trace_id: str = Field(..., description="Comparison trace ID")
     stages: List[str] = Field(
         default=["route_plan", "validate", "execute", "compose", "present"],
-        description="Stages to compare"
+        description="Stages to compare",
     )
 
 
 class StageMetrics(BaseModel):
     """Metrics for a single stage."""
+
     stage_name: str
     duration_ms: int
     status: str
@@ -38,6 +41,7 @@ class StageMetrics(BaseModel):
 
 class StageRegressionReport(BaseModel):
     """Regression report for stage comparison."""
+
     stage_name: str
     baseline_metrics: StageMetrics
     current_metrics: StageMetrics
@@ -49,6 +53,7 @@ class StageRegressionReport(BaseModel):
 
 class RegressionAnalysisRequest(BaseModel):
     """Request for regression analysis."""
+
     type: RegressionType
     baseline_trace_id: str
     comparison_trace_id: str
@@ -57,6 +62,7 @@ class RegressionAnalysisRequest(BaseModel):
 
 class RegressionAnalysisResult(BaseModel):
     """Result of regression analysis."""
+
     analysis_id: str
     type: RegressionType
     baseline_trace_id: str
@@ -80,6 +86,7 @@ class RegressionAnalysisResult(BaseModel):
 
 class StageCompareResponse(BaseModel):
     """Response for stage comparison API."""
+
     baseline_trace: Dict[str, Any]
     comparison_trace: Dict[str, Any]
     stage_differences: Dict[str, Dict[str, Any]]

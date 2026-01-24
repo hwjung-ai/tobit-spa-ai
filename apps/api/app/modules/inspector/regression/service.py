@@ -26,8 +26,7 @@ class RegressionService:
         self.analysis_registry: Dict[str, RegressionAnalysisResult] = {}
 
     async def analyze_stage_regression(
-        self,
-        request: RegressionAnalysisRequest
+        self, request: RegressionAnalysisRequest
     ) -> RegressionAnalysisResult:
         """
         Perform stage-level regression analysis between two traces.
@@ -42,7 +41,7 @@ class RegressionService:
             baseline_trace_id=request.baseline_trace_id,
             comparison_trace_id=request.comparison_trace_id,
             started_at=datetime.now(),
-            status="running"
+            status="running",
         )
 
         try:
@@ -64,13 +63,15 @@ class RegressionService:
                     report = await self._compare_stages(
                         stage_name,
                         baseline_stages[stage_name],
-                        comparison_stages[stage_name]
+                        comparison_stages[stage_name],
                     )
                     stage_reports.append(report)
 
             # Calculate overall metrics
             overall_score = self._calculate_overall_regression_score(stage_reports)
-            significant_changes = len([r for r in stage_reports if r.regression_score > 70])
+            significant_changes = len(
+                [r for r in stage_reports if r.regression_score > 70]
+            )
             critical_issues = self._identify_critical_issues(stage_reports)
 
             # Update result
@@ -101,7 +102,7 @@ class RegressionService:
         self,
         baseline_trace_id: str,
         comparison_trace_id: str,
-        stages: Optional[List[str]] = None
+        stages: Optional[List[str]] = None,
     ) -> StageCompareResponse:
         """
         Direct comparison of two traces' stages.
@@ -127,7 +128,9 @@ class RegressionService:
                 comparison = comparison_stages[stage_name]
 
                 # Calculate differences
-                duration_diff = comparison.get("duration_ms", 0) - baseline.get("duration_ms", 0)
+                duration_diff = comparison.get("duration_ms", 0) - baseline.get(
+                    "duration_ms", 0
+                )
                 status_changed = baseline.get("status") != comparison.get("status")
 
                 stage_differences[stage_name] = {
@@ -140,14 +143,17 @@ class RegressionService:
                         baseline.get("output"), comparison.get("output")
                     ),
                     "reference_count_difference": (
-                        comparison.get("reference_count", 0) - baseline.get("reference_count", 0)
+                        comparison.get("reference_count", 0)
+                        - baseline.get("reference_count", 0)
                     ),
                     "baseline_metrics": self._extract_stage_metrics(baseline),
-                    "comparison_metrics": self._extract_stage_metrics(comparison)
+                    "comparison_metrics": self._extract_stage_metrics(comparison),
                 }
 
                 # Calculate regression score for this stage
-                regression_scores[stage_name] = self._calculate_stage_regression_score(baseline, comparison)
+                regression_scores[stage_name] = self._calculate_stage_regression_score(
+                    baseline, comparison
+                )
 
         # Generate overall assessment
         overall_assessment = self._generate_overall_assessment(regression_scores)
@@ -157,7 +163,7 @@ class RegressionService:
             comparison_trace=comparison_trace.model_dump(),
             stage_differences=stage_differences,
             regression_scores=regression_scores,
-            overall_assessment=overall_assessment
+            overall_assessment=overall_assessment,
         )
 
     def _parse_stages_from_trace(self, trace: TbExecutionTrace) -> Dict[str, Any]:
@@ -170,7 +176,7 @@ class RegressionService:
                 stage_name = stage_input.get("stage", "unknown")
                 stages[stage_name] = {
                     "input": stage_input,
-                    "input_size": len(str(stage_input).encode())
+                    "input_size": len(str(stage_input).encode()),
                 }
 
         # Parse stage outputs
@@ -178,20 +184,26 @@ class RegressionService:
             for stage_output in trace.stage_outputs:
                 stage_name = stage_output.get("stage", "unknown")
                 if stage_name in stages:
-                    stages[stage_name].update({
-                        "output": stage_output,
-                        "output_size": len(str(stage_output).encode()),
-                        "duration_ms": stage_output.get("duration_ms", 0),
-                        "status": stage_output.get("diagnostics", {}).get("status", "unknown"),
-                        "reference_count": len(stage_output.get("references", []))
-                    })
+                    stages[stage_name].update(
+                        {
+                            "output": stage_output,
+                            "output_size": len(str(stage_output).encode()),
+                            "duration_ms": stage_output.get("duration_ms", 0),
+                            "status": stage_output.get("diagnostics", {}).get(
+                                "status", "unknown"
+                            ),
+                            "reference_count": len(stage_output.get("references", [])),
+                        }
+                    )
                 else:
                     stages[stage_name] = {
                         "output": stage_output,
                         "output_size": len(str(stage_output).encode()),
                         "duration_ms": stage_output.get("duration_ms", 0),
-                        "status": stage_output.get("diagnostics", {}).get("status", "unknown"),
-                        "reference_count": len(stage_output.get("references", []))
+                        "status": stage_output.get("diagnostics", {}).get(
+                            "status", "unknown"
+                        ),
+                        "reference_count": len(stage_output.get("references", [])),
                     }
 
         return stages
@@ -200,7 +212,7 @@ class RegressionService:
         self,
         stage_name: str,
         baseline_data: Dict[str, Any],
-        comparison_data: Dict[str, Any]
+        comparison_data: Dict[str, Any],
     ) -> StageRegressionReport:
         """Compare two stages and generate a regression report."""
         # Extract metrics
@@ -210,12 +222,15 @@ class RegressionService:
         # Calculate differences
         differences = {
             "duration_ms": current_metrics.duration_ms - baseline_metrics.duration_ms,
-            "reference_count": current_metrics.reference_count - baseline_metrics.reference_count,
-            "status_changed": baseline_metrics.status != current_metrics.status
+            "reference_count": current_metrics.reference_count
+            - baseline_metrics.reference_count,
+            "status_changed": baseline_metrics.status != current_metrics.status,
         }
 
         # Calculate regression score
-        regression_score = self._calculate_stage_regression_score(baseline_data, comparison_data)
+        regression_score = self._calculate_stage_regression_score(
+            baseline_data, comparison_data
+        )
 
         # Identify issues
         issues = []
@@ -235,7 +250,7 @@ class RegressionService:
             differences=differences,
             regression_score=regression_score,
             issues=issues,
-            recommendations=recommendations
+            recommendations=recommendations,
         )
 
     def _extract_stage_metrics(self, stage_data: Dict[str, Any]) -> StageMetrics:
@@ -247,21 +262,27 @@ class RegressionService:
             input_size=stage_data.get("input_size", 0),
             output_size=stage_data.get("output_size", 0),
             reference_count=stage_data.get("reference_count", 0),
-            error_count=len(stage_data.get("output", {}).get("diagnostics", {}).get("errors", [])),
-            warning_count=len(stage_data.get("output", {}).get("diagnostics", {}).get("warnings", []))
+            error_count=len(
+                stage_data.get("output", {}).get("diagnostics", {}).get("errors", [])
+            ),
+            warning_count=len(
+                stage_data.get("output", {}).get("diagnostics", {}).get("warnings", [])
+            ),
         )
 
     def _calculate_stage_regression_score(
-        self,
-        baseline_data: Dict[str, Any],
-        comparison_data: Dict[str, Any]
+        self, baseline_data: Dict[str, Any], comparison_data: Dict[str, Any]
     ) -> int:
         """Calculate regression score for a stage (0-100)."""
         score = 100
 
         # Check for errors
-        baseline_errors = len(baseline_data.get("output", {}).get("diagnostics", {}).get("errors", []))
-        comparison_errors = len(comparison_data.get("output", {}).get("diagnostics", {}).get("errors", []))
+        baseline_errors = len(
+            baseline_data.get("output", {}).get("diagnostics", {}).get("errors", [])
+        )
+        comparison_errors = len(
+            comparison_data.get("output", {}).get("diagnostics", {}).get("errors", [])
+        )
 
         if baseline_errors == 0 and comparison_errors > 0:
             score -= min(50, comparison_errors * 10)
@@ -281,13 +302,17 @@ class RegressionService:
         comparison_duration = comparison_data.get("duration_ms", 0)
 
         if baseline_duration > 0:
-            duration_change = abs(comparison_duration - baseline_duration) / baseline_duration
+            duration_change = (
+                abs(comparison_duration - baseline_duration) / baseline_duration
+            )
             if duration_change > 0.5:  # 50% change
                 score -= min(20, int(duration_change * 40))
 
         return max(0, score)
 
-    def _calculate_overall_regression_score(self, stage_reports: List[StageRegressionReport]) -> int:
+    def _calculate_overall_regression_score(
+        self, stage_reports: List[StageRegressionReport]
+    ) -> int:
         """Calculate overall regression score from stage reports."""
         if not stage_reports:
             return 100
@@ -295,7 +320,9 @@ class RegressionService:
         total_score = sum(report.regression_score for report in stage_reports)
         return int(total_score / len(stage_reports))
 
-    def _identify_critical_issues(self, stage_reports: List[StageRegressionReport]) -> List[str]:
+    def _identify_critical_issues(
+        self, stage_reports: List[StageRegressionReport]
+    ) -> List[str]:
         """Identify critical issues from stage reports."""
         issues = []
 
@@ -330,7 +357,9 @@ class RegressionService:
         else:
             return f"{significant_changes} stages showed significant changes out of {total_stages}"
 
-    def _generate_recommendations(self, stage_reports: List[StageRegressionReport]) -> List[str]:
+    def _generate_recommendations(
+        self, stage_reports: List[StageRegressionReport]
+    ) -> List[str]:
         """Generate recommendations based on analysis."""
         recommendations = []
 
@@ -339,7 +368,9 @@ class RegressionService:
 
         # Add general recommendations
         if stage_reports and any(r.regression_score < 70 for r in stage_reports):
-            recommendations.append("Consider investigating the root cause of performance degradation")
+            recommendations.append(
+                "Consider investigating the root cause of performance degradation"
+            )
 
         return list(set(recommendations))  # Remove duplicates
 
@@ -349,10 +380,14 @@ class RegressionService:
             return "No data available for comparison"
 
         avg_score = sum(regression_scores.values()) / len(regression_scores)
-        high_regression_count = sum(1 for score in regression_scores.values() if score > 70)
+        high_regression_count = sum(
+            1 for score in regression_scores.values() if score > 70
+        )
 
         if avg_score > 80:
-            return f"Significant regression detected across {high_regression_count} stages"
+            return (
+                f"Significant regression detected across {high_regression_count} stages"
+            )
         elif avg_score > 60:
             return f"Moderate regression detected in {high_regression_count} stages"
         else:

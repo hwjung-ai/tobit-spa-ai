@@ -36,12 +36,27 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("now()"),
         ),
-        sa.Column("tick_duration_ms", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("rule_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("evaluated_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("matched_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("skipped_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("fail_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "tick_duration_ms",
+            sa.Integer(),
+            nullable=False,
+            server_default=sa.text("0"),
+        ),
+        sa.Column(
+            "rule_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
+        sa.Column(
+            "evaluated_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
+        sa.Column(
+            "matched_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
+        sa.Column(
+            "skipped_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
+        sa.Column(
+            "fail_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("last_error", sa.Text(), nullable=True),
         sa.Column(
             "recent_matches",
@@ -80,7 +95,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_tb_cep_metric_poll_snapshot_is_leader", table_name="tb_cep_metric_poll_snapshot")
-    op.drop_index("ix_tb_cep_metric_poll_snapshot_instance_id", table_name="tb_cep_metric_poll_snapshot")
-    op.drop_index("ix_tb_cep_metric_poll_snapshot_tick_at", table_name="tb_cep_metric_poll_snapshot")
+    op.drop_index(
+        "ix_tb_cep_metric_poll_snapshot_is_leader",
+        table_name="tb_cep_metric_poll_snapshot",
+    )
+    op.drop_index(
+        "ix_tb_cep_metric_poll_snapshot_instance_id",
+        table_name="tb_cep_metric_poll_snapshot",
+    )
+    op.drop_index(
+        "ix_tb_cep_metric_poll_snapshot_tick_at",
+        table_name="tb_cep_metric_poll_snapshot",
+    )
     op.drop_table("tb_cep_metric_poll_snapshot")

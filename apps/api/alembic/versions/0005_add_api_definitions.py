@@ -20,15 +20,24 @@ def upgrade() -> None:
     op.create_table(
         "api_definitions",
         sa.Column("id", postgresql.UUID(as_uuid=False), primary_key=True),
-        sa.Column("scope", sa.Enum("system", "custom", name="apiscope"), nullable=False, server_default="custom"),
+        sa.Column(
+            "scope",
+            sa.Enum("system", "custom", name="apiscope"),
+            nullable=False,
+            server_default="custom",
+        ),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("method", sa.String(length=16), nullable=False),
         sa.Column("path", sa.String(length=512), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("tags", sa.JSON(), nullable=True),
-        sa.Column("mode", sa.Enum("sql", "python", "workflow", name="apimode"), nullable=True),
+        sa.Column(
+            "mode", sa.Enum("sql", "python", "workflow", name="apimode"), nullable=True
+        ),
         sa.Column("logic", sa.Text(), nullable=True),
-        sa.Column("is_enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "is_enabled", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("deleted_at", sa.DateTime(), nullable=True),

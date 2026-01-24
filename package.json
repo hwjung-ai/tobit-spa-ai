@@ -1,4 +1,28 @@
 {
+  "name": "tobit-spa-ai",
+  "version": "0.1.0",
+  "description": "Tobit SPA AI - Operations Orchestration Platform",
+  "private": true,
+  "scripts": {
+    "test": "cd apps/api && .venv/bin/pytest",
+    "test:unit": "cd apps/api && .venv/bin/pytest tests/unit/",
+    "test:integration": "cd apps/api && .venv/bin/pytest tests/integration/",
+    "test:security": "cd apps/api && .venv/bin/pytest tests/test_security*.py tests/test_encryption.py tests/test_permissions.py tests/test_api_keys.py",
+    "test:e2e": "cd apps/web && npm run test:e2e",
+    "test:e2e-ui": "cd apps/web && npx playwright test --ui",
+    "test:e2e-headed": "cd apps/web && npx playwright test --headed",
+    "api-lint": "cd apps/api && .venv/bin/ruff check .",
+    "web-lint": "cd apps/web && npm run lint",
+    "api-format": "cd apps/api && .venv/bin/ruff format .",
+    "web-format": "cd apps/web && npm run format",
+    "dev": "npx concurrently --kill-others-on-fail --names \"API,WORKER,WEB\" --prefix-colors \"blue,magenta,green\" \"cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000\" \"cd apps/api && .venv/bin/python run_worker.py\" \"cd apps/web && npm run dev:log\"",
+    "api-dev": "cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000",
+    "web-dev": "cd apps/web && npm run dev"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "concurrently": "^8.2.2"
+  },
   "dependencies": {
     "oh-my-opencode": "^2.14.0"
   }

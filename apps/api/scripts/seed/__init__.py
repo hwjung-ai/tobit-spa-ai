@@ -1,4 +1,4 @@
-﻿"""Seed helpers package."""
+"""Seed helpers package."""
 
 from . import (  # noqa: F401
     seed_all,

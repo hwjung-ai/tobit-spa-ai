@@ -274,7 +274,9 @@ class BytewaxCEPEngine:
             processors.append(EnrichmentProcessor(rule.enrichment))
 
         self.processors[rule.rule_id] = processors
-        logger.debug(f"Created processor chain for rule {rule.rule_id} with {len(processors)} stages")
+        logger.debug(
+            f"Created processor chain for rule {rule.rule_id} with {len(processors)} stages"
+        )
 
     def process_event(self, rule_id: str, event: dict) -> Optional[List[dict]]:
         """Process event through rule's processor chain"""
@@ -297,9 +299,7 @@ class BytewaxCEPEngine:
         return results if results else None
 
     def execute_actions(
-        self,
-        rule_id: str,
-        matched_events: List[dict]
+        self, rule_id: str, matched_events: List[dict]
     ) -> List[Dict[str, Any]]:
         """Execute actions for matched events"""
         rule = self.rules.get(rule_id)
@@ -313,28 +313,34 @@ class BytewaxCEPEngine:
 
             if action_type == "notify":
                 # Return notification payload (actual sending handled elsewhere)
-                action_results.append({
-                    "type": "notification",
-                    "channels": action.get("channels"),
-                    "message": action.get("message"),
-                    "events_count": len(matched_events),
-                })
+                action_results.append(
+                    {
+                        "type": "notification",
+                        "channels": action.get("channels"),
+                        "message": action.get("message"),
+                        "events_count": len(matched_events),
+                    }
+                )
 
             elif action_type == "store":
                 # Return storage payload
-                action_results.append({
-                    "type": "storage",
-                    "table": action.get("table"),
-                    "events": matched_events,
-                })
+                action_results.append(
+                    {
+                        "type": "storage",
+                        "table": action.get("table"),
+                        "events": matched_events,
+                    }
+                )
 
             elif action_type == "trigger":
                 # Return trigger payload
-                action_results.append({
-                    "type": "trigger",
-                    "target_rule_id": action.get("target_rule_id"),
-                    "events": matched_events,
-                })
+                action_results.append(
+                    {
+                        "type": "trigger",
+                        "target_rule_id": action.get("target_rule_id"),
+                        "events": matched_events,
+                    }
+                )
 
         return action_results
 

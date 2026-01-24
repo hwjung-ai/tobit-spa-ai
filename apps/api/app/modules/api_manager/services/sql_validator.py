@@ -225,9 +225,8 @@ class SQLValidator:
             warnings.append("Using SELECT * may be inefficient; specify columns")
 
         # Check for missing WHERE clause on large tables
-        if (
-            re.search(r"FROM\s+(\w+)", sql, re.IGNORECASE)
-            and not re.search(r"WHERE", sql, re.IGNORECASE)
+        if re.search(r"FROM\s+(\w+)", sql, re.IGNORECASE) and not re.search(
+            r"WHERE", sql, re.IGNORECASE
         ):
             warnings.append("Query without WHERE clause may be slow on large tables")
 

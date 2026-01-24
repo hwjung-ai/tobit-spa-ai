@@ -140,7 +140,9 @@ class SystemMonitor:
 
             # Keep only recent metrics
             if len(self.resource_metrics) > self.max_metrics_history:
-                self.resource_metrics = self.resource_metrics[-self.max_metrics_history :]
+                self.resource_metrics = self.resource_metrics[
+                    -self.max_metrics_history :
+                ]
 
             # Check for alerts
             self._check_resource_alerts(metric)
@@ -156,28 +158,34 @@ class SystemMonitor:
         alerts = []
 
         if metric.cpu_percent > 90:
-            alerts.append({
-                "type": "cpu_high",
-                "severity": "critical",
-                "message": f"CPU usage is high: {metric.cpu_percent}%",
-                "value": metric.cpu_percent,
-            })
+            alerts.append(
+                {
+                    "type": "cpu_high",
+                    "severity": "critical",
+                    "message": f"CPU usage is high: {metric.cpu_percent}%",
+                    "value": metric.cpu_percent,
+                }
+            )
 
         if metric.memory_percent > 85:
-            alerts.append({
-                "type": "memory_high",
-                "severity": "critical",
-                "message": f"Memory usage is high: {metric.memory_percent}%",
-                "value": metric.memory_percent,
-            })
+            alerts.append(
+                {
+                    "type": "memory_high",
+                    "severity": "critical",
+                    "message": f"Memory usage is high: {metric.memory_percent}%",
+                    "value": metric.memory_percent,
+                }
+            )
 
         if metric.disk_percent > 90:
-            alerts.append({
-                "type": "disk_high",
-                "severity": "warning",
-                "message": f"Disk usage is high: {metric.disk_percent}%",
-                "value": metric.disk_percent,
-            })
+            alerts.append(
+                {
+                    "type": "disk_high",
+                    "severity": "warning",
+                    "message": f"Disk usage is high: {metric.disk_percent}%",
+                    "value": metric.disk_percent,
+                }
+            )
 
         for alert in alerts:
             alert["timestamp"] = datetime.utcnow().isoformat()
@@ -213,22 +221,26 @@ class SystemMonitor:
 
         # Check for alerts
         if metric.error_rate > 0.05:  # More than 5% error rate
-            self.alerts.append({
-                "type": "api_error_rate_high",
-                "severity": "warning",
-                "message": f"API error rate is high: {metric.error_rate * 100:.2f}%",
-                "value": metric.error_rate,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            self.alerts.append(
+                {
+                    "type": "api_error_rate_high",
+                    "severity": "warning",
+                    "message": f"API error rate is high: {metric.error_rate * 100:.2f}%",
+                    "value": metric.error_rate,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         if metric.p99_response_time_ms > 5000:  # More than 5 seconds
-            self.alerts.append({
-                "type": "api_slow_response",
-                "severity": "warning",
-                "message": f"API p99 response time is slow: {metric.p99_response_time_ms}ms",
-                "value": metric.p99_response_time_ms,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            self.alerts.append(
+                {
+                    "type": "api_slow_response",
+                    "severity": "warning",
+                    "message": f"API p99 response time is slow: {metric.p99_response_time_ms}ms",
+                    "value": metric.p99_response_time_ms,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         return metric
 
@@ -257,22 +269,26 @@ class SystemMonitor:
 
         # Check for alerts
         if connection_count >= pool_size * 0.9:  # 90% of pool
-            self.alerts.append({
-                "type": "database_connection_pool_high",
-                "severity": "warning",
-                "message": f"Database connection pool is high: {connection_count}/{pool_size}",
-                "value": connection_count,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            self.alerts.append(
+                {
+                    "type": "database_connection_pool_high",
+                    "severity": "warning",
+                    "message": f"Database connection pool is high: {connection_count}/{pool_size}",
+                    "value": connection_count,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         if slow_queries > 10:
-            self.alerts.append({
-                "type": "database_slow_queries",
-                "severity": "warning",
-                "message": f"High number of slow queries: {slow_queries}",
-                "value": slow_queries,
-                "timestamp": datetime.utcnow().isoformat(),
-            })
+            self.alerts.append(
+                {
+                    "type": "database_slow_queries",
+                    "severity": "warning",
+                    "message": f"High number of slow queries: {slow_queries}",
+                    "value": slow_queries,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            )
 
         return metric
 
@@ -287,14 +303,17 @@ class SystemMonitor:
         if latest_resource:
             if latest_resource.cpu_percent > 90 or latest_resource.memory_percent > 85:
                 status = "critical"
-            elif latest_resource.cpu_percent > 75 or latest_resource.memory_percent > 75:
+            elif (
+                latest_resource.cpu_percent > 75 or latest_resource.memory_percent > 75
+            ):
                 status = "warning"
 
         if latest_api and latest_api.error_rate > 0.05:
             status = "warning" if status == "healthy" else status
 
         recent_critical_alerts = sum(
-            1 for a in self.alerts
+            1
+            for a in self.alerts
             if a.get("severity") == "critical"
             and datetime.fromisoformat(a.get("timestamp", "1970-01-01T00:00:00"))
             > datetime.utcnow() - __import__("datetime").timedelta(hours=1)
@@ -308,7 +327,16 @@ class SystemMonitor:
             "resource": latest_resource.to_dict() if latest_resource else None,
             "api": latest_api.to_dict() if latest_api else None,
             "database": latest_database.to_dict() if latest_database else None,
-            "recent_alerts_count": len([a for a in self.alerts if a.get("timestamp") > (datetime.utcnow() - __import__("datetime").timedelta(hours=1)).isoformat()]),
+            "recent_alerts_count": len(
+                [
+                    a
+                    for a in self.alerts
+                    if a.get("timestamp")
+                    > (
+                        datetime.utcnow() - __import__("datetime").timedelta(hours=1)
+                    ).isoformat()
+                ]
+            ),
         }
 
     def get_alerts(
@@ -324,7 +352,9 @@ class SystemMonitor:
 
         # Sort by timestamp (newest first)
         alerts.sort(
-            key=lambda a: datetime.fromisoformat(a.get("timestamp", "1970-01-01T00:00:00")),
+            key=lambda a: datetime.fromisoformat(
+                a.get("timestamp", "1970-01-01T00:00:00")
+            ),
             reverse=True,
         )
 

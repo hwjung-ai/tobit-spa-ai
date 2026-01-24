@@ -74,7 +74,9 @@ def record_exec_log(
     return log
 
 
-def list_exec_logs(session: Session, rule_id: str, limit: int = 50) -> list[TbCepExecLog]:
+def list_exec_logs(
+    session: Session, rule_id: str, limit: int = 50
+) -> list[TbCepExecLog]:
     query = (
         select(TbCepExecLog)
         .where(TbCepExecLog.rule_id == rule_id)
@@ -100,7 +102,9 @@ def list_metric_poll_snapshots(
     limit: int = 200,
     since_minutes: int | None = None,
 ) -> list[TbCepMetricPollSnapshot]:
-    query = select(TbCepMetricPollSnapshot).order_by(desc(TbCepMetricPollSnapshot.tick_at))
+    query = select(TbCepMetricPollSnapshot).order_by(
+        desc(TbCepMetricPollSnapshot.tick_at)
+    )
     if since_minutes:
         cutoff = datetime.utcnow() - timedelta(minutes=since_minutes)
         query = query.where(TbCepMetricPollSnapshot.tick_at >= cutoff)
@@ -108,14 +112,18 @@ def list_metric_poll_snapshots(
     return session.exec(query).scalars().all()
 
 
-def list_notifications(session: Session, active_only: bool = True) -> list[TbCepNotification]:
+def list_notifications(
+    session: Session, active_only: bool = True
+) -> list[TbCepNotification]:
     query = select(TbCepNotification).order_by(desc(TbCepNotification.created_at))
     if active_only:
         query = query.where(TbCepNotification.is_active.is_(True))
     return session.exec(query).scalars().all()
 
 
-def get_notification(session: Session, notification_id: str) -> TbCepNotification | None:
+def get_notification(
+    session: Session, notification_id: str
+) -> TbCepNotification | None:
     return session.get(TbCepNotification, notification_id)
 
 
@@ -127,7 +135,9 @@ def create_notification(session: Session, payload: dict[str, Any]) -> TbCepNotif
     return notification
 
 
-def update_notification(session: Session, notification: TbCepNotification, payload: dict[str, Any]) -> TbCepNotification:
+def update_notification(
+    session: Session, notification: TbCepNotification, payload: dict[str, Any]
+) -> TbCepNotification:
     for key, value in payload.items():
         setattr(notification, key, value)
     session.add(notification)
@@ -140,12 +150,18 @@ def get_exec_log(session: Session, exec_id: str) -> TbCepExecLog | None:
     return session.get(TbCepExecLog, exec_id)
 
 
-def find_exec_log_by_simulation(session: Session, simulation_id: str) -> TbCepExecLog | None:
-    query = select(TbCepExecLog).where(TbCepExecLog.references["simulation_id"].astext == simulation_id)
+def find_exec_log_by_simulation(
+    session: Session, simulation_id: str
+) -> TbCepExecLog | None:
+    query = select(TbCepExecLog).where(
+        TbCepExecLog.references["simulation_id"].astext == simulation_id
+    )
     return session.exec(query).scalars().first()
 
 
-def insert_notification_log(session: Session, payload: dict[str, Any]) -> TbCepNotificationLog:
+def insert_notification_log(
+    session: Session, payload: dict[str, Any]
+) -> TbCepNotificationLog:
     log = TbCepNotificationLog(**payload)
     session.add(log)
     session.commit()
@@ -153,7 +169,9 @@ def insert_notification_log(session: Session, payload: dict[str, Any]) -> TbCepN
     return log
 
 
-def list_notification_logs(session: Session, notification_id: str, limit: int = 200) -> list[TbCepNotificationLog]:
+def list_notification_logs(
+    session: Session, notification_id: str, limit: int = 200
+) -> list[TbCepNotificationLog]:
     query = (
         select(TbCepNotificationLog)
         .where(TbCepNotificationLog.notification_id == notification_id)
@@ -176,7 +194,10 @@ def list_events(
     query = (
         select(TbCepNotificationLog, TbCepNotification, TbCepRule)
         .select_from(TbCepNotificationLog)
-        .join(TbCepNotification, TbCepNotificationLog.notification_id == TbCepNotification.notification_id)
+        .join(
+            TbCepNotification,
+            TbCepNotificationLog.notification_id == TbCepNotification.notification_id,
+        )
         .outerjoin(TbCepRule, TbCepRule.rule_id == TbCepNotification.rule_id)
         .order_by(desc(TbCepNotificationLog.fired_at))
     )
@@ -199,7 +220,10 @@ def get_event(
     query = (
         select(TbCepNotificationLog, TbCepNotification, TbCepRule)
         .select_from(TbCepNotificationLog)
-        .join(TbCepNotification, TbCepNotificationLog.notification_id == TbCepNotification.notification_id)
+        .join(
+            TbCepNotification,
+            TbCepNotificationLog.notification_id == TbCepNotification.notification_id,
+        )
         .outerjoin(TbCepRule, TbCepRule.rule_id == TbCepNotification.rule_id)
         .where(TbCepNotificationLog.log_id == event_id)
     )
@@ -236,13 +260,18 @@ def get_latest_exec_log_for_rule(
 
 def summarize_events(session: Session) -> dict[str, Any]:
     unacked = session.exec(
-        select(func.count()).select_from(TbCepNotificationLog).where(TbCepNotificationLog.ack.is_(False))
+        select(func.count())
+        .select_from(TbCepNotificationLog)
+        .where(TbCepNotificationLog.ack.is_(False))
     ).one()[0]
     severity_expr = func.coalesce(TbCepNotification.trigger["severity"].astext, "info")
     rows = session.exec(
         select(severity_expr.label("severity"), func.count())
         .select_from(TbCepNotificationLog)
-        .join(TbCepNotification, TbCepNotificationLog.notification_id == TbCepNotification.notification_id)
+        .join(
+            TbCepNotification,
+            TbCepNotificationLog.notification_id == TbCepNotification.notification_id,
+        )
         .group_by(severity_expr)
     ).all()
     by_severity: dict[str, int] = {}

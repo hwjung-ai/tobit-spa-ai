@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import random
@@ -51,7 +51,9 @@ def main() -> None:
                     event_type = random.choice(EVENT_TYPES)
                     title = f"{event_type.replace('_', ' ').title()} detected"
                     message = f"{ci_code} reported {event_type} severity {severity}"
-                    attributes = json.dumps({"ci_code": ci_code, "system": ci_code.split("-")[1]})
+                    attributes = json.dumps(
+                        {"ci_code": ci_code, "system": ci_code.split("-")[1]}
+                    )
                     rows.append(
                         (
                             ts,

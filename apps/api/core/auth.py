@@ -142,6 +142,7 @@ def require_role(*required_roles: UserRole):
     Returns:
         Dependency function that checks user role
     """
+
     def role_checker(current_user: TbUser = Depends(get_current_user)) -> TbUser:
         """Check if user has one of the required roles."""
         # Role hierarchy: VIEWER (0) < DEVELOPER (1) < MANAGER (2) < ADMIN (3)

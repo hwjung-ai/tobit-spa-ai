@@ -13,9 +13,13 @@ from app.modules.audit_log.crud import create_audit_log
 from .models import TbOperationSettings
 
 
-def get_setting_by_key(session: Session, setting_key: str) -> TbOperationSettings | None:
+def get_setting_by_key(
+    session: Session, setting_key: str
+) -> TbOperationSettings | None:
     """Get a setting by key."""
-    statement = select(TbOperationSettings).where(TbOperationSettings.setting_key == setting_key)
+    statement = select(TbOperationSettings).where(
+        TbOperationSettings.setting_key == setting_key
+    )
     return session.exec(statement).first()
 
 
@@ -62,9 +66,11 @@ def create_or_update_setting(
             update_values["description"] = description
 
         # Execute update
-        statement = update(TbOperationSettings).where(
-            TbOperationSettings.setting_id == existing.setting_id
-        ).values(**update_values)
+        statement = (
+            update(TbOperationSettings)
+            .where(TbOperationSettings.setting_id == existing.setting_id)
+            .values(**update_values)
+        )
         session.execute(statement)
         session.commit()
 
@@ -82,7 +88,10 @@ def create_or_update_setting(
             actor=published_by or "system",
             changes={"setting_value": "updated", "restart_required": restart_required},
             old_values=old_values,
-            new_values={"setting_value": setting_value, "restart_required": restart_required},
+            new_values={
+                "setting_value": setting_value,
+                "restart_required": restart_required,
+            },
             metadata={"description": description, "published_by": published_by},
         )
 
@@ -114,7 +123,10 @@ def create_or_update_setting(
             actor=published_by or "system",
             changes={"setting_key": setting_key, "setting_value": "created"},
             old_values={},
-            new_values={"setting_value": setting_value, "restart_required": restart_required},
+            new_values={
+                "setting_value": setting_value,
+                "restart_required": restart_required,
+            },
             metadata={"description": description, "published_by": published_by},
         )
 
@@ -142,7 +154,11 @@ def get_setting_effective_value(
         # Priority: published > env > default
         # If setting exists in published, return that
         # Extract the actual value from the stored JSON object
-        actual_value = setting.setting_value.get("value", setting.setting_value) if isinstance(setting.setting_value, dict) else setting.setting_value
+        actual_value = (
+            setting.setting_value.get("value", setting.setting_value)
+            if isinstance(setting.setting_value, dict)
+            else setting.setting_value
+        )
         return {
             "value": actual_value,
             "source": "published",

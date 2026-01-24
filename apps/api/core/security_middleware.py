@@ -155,7 +155,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
             # Try to get from body if form data
             body_token = None
-            if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+            if request.headers.get("content-type", "").startswith(
+                "application/x-www-form-urlencoded"
+            ):
                 try:
                     body = await request.body()
                     if body:

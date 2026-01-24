@@ -7,7 +7,6 @@ Tests the new asset types introduced in Phase 2:
 - Resolver Config Asset (alias and transformation rules)
 """
 
-
 from app.modules.asset_registry.resolver_models import (
     AliasMapping,
     PatternRule,
@@ -373,7 +372,9 @@ class TestResolverAsset:
             ResolverRule(
                 name="rule2",
                 rule_type=ResolverType.PATTERN_RULE,
-                rule_data=PatternRule(name="pattern1", pattern=".*", replacement="prefix.*"),
+                rule_data=PatternRule(
+                    name="pattern1", pattern=".*", replacement="prefix.*"
+                ),
                 priority=2,
             ),
         ]
@@ -425,7 +426,9 @@ class TestResolverAsset:
             ResolverRule(
                 name="pattern1",
                 rule_type=ResolverType.PATTERN_RULE,
-                rule_data=PatternRule(name="pattern_data", pattern=".*", replacement=".*"),
+                rule_data=PatternRule(
+                    name="pattern_data", pattern=".*", replacement=".*"
+                ),
                 priority=3,
             ),
         ]
@@ -550,7 +553,9 @@ class TestAssetIntegration:
             ResolverRule(
                 name="pattern_rule",
                 rule_type=ResolverType.PATTERN_RULE,
-                rule_data=PatternRule(name="pattern_data", pattern="^test_", replacement="prod_"),
+                rule_data=PatternRule(
+                    name="pattern_data", pattern="^test_", replacement="prod_"
+                ),
                 priority=2,
             ),
             ResolverRule(

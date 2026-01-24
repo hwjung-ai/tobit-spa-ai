@@ -31,7 +31,7 @@ export interface BindingDiffItem extends DiffItem {
 
 export interface StateSchemaDiffItem extends DiffItem {
   fieldName?: string;
-  fieldType?: string;
+  fieldType?: unknown;
 }
 
 export interface ScreenDiff {

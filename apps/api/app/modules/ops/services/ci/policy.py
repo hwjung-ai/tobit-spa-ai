@@ -147,7 +147,9 @@ COMBINED_CATALOG = _ensure_combined_catalog()
 DISCOVERED_REL_TYPES = _load_discovered_rel_types()
 
 
-def get_allowed_rel_types(view: str, discovered: Iterable[str] | None = None) -> List[str]:
+def get_allowed_rel_types(
+    view: str, discovered: Iterable[str] | None = None
+) -> List[str]:
     view_key = view.upper()
     if view_key not in VIEW_REGISTRY:
         raise ValueError(f"Unknown view '{view}'")
@@ -179,7 +181,9 @@ def clamp_depth(view: str, requested: int | None = None) -> int:
 
 
 def build_policy_trace(
-    view: str, requested_depth: int | None = None, discovered: Iterable[str] | None = None
+    view: str,
+    requested_depth: int | None = None,
+    discovered: Iterable[str] | None = None,
 ) -> dict[str, object]:
     allowed = get_allowed_rel_types(view, discovered)
     trace = {
@@ -199,4 +203,6 @@ def refresh_combined_catalog() -> dict[str, object]:
 if __name__ == "__main__":
     combined = refresh_combined_catalog()
     rel_types = combined.get("meta", {}).get("discovered_rel_types", [])
-    print(f"Wrote combined catalog with {len(rel_types)} discovered rel_types to {COMBINED_CATALOG_PATH}")
+    print(
+        f"Wrote combined catalog with {len(rel_types)} discovered rel_types to {COMBINED_CATALOG_PATH}"
+    )

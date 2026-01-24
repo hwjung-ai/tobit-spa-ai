@@ -52,7 +52,9 @@ class RCASummarizer:
                 )
                 hyp["description"] = description
             except Exception as e:
-                logger.warning(f"Failed to generate description for {hyp['title']}: {e}")
+                logger.warning(
+                    f"Failed to generate description for {hyp['title']}: {e}"
+                )
                 # Fallback: use evidence snippets as description
                 hyp["description"] = self._fallback_description(hyp, language)
 
@@ -89,7 +91,7 @@ class RCASummarizer:
             response = self.llm.create_response(
                 input=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.2,  # Low temp for consistency
                 max_tokens=150,  # ~3-6 sentences
@@ -166,14 +168,16 @@ Recommended Actions:
 
 Write {max_length} chars max, based ONLY on evidence. NO speculation beyond evidence."""
 
-    def _fallback_description(
-        self, hypothesis: Dict[str, Any], language: str
-    ) -> str:
+    def _fallback_description(self, hypothesis: Dict[str, Any], language: str) -> str:
         """Fallback: use evidence snippets when LLM fails"""
         evidence = hypothesis.get("evidence", [])
 
         if not evidence:
-            return "No evidence snippets available." if language == "english" else "근거 정보 없음"
+            return (
+                "No evidence snippets available."
+                if language == "english"
+                else "근거 정보 없음"
+            )
 
         snippets = [e.get("snippet", "")[:50] for e in evidence[:2]]
         snippet_str = " | ".join(s for s in snippets if s)

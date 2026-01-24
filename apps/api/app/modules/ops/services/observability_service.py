@@ -40,7 +40,8 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
     ).scalar_one()
     recent_success = session.exec(
         select(func.count()).where(
-            TbExecutionTrace.created_at >= since_day, TbExecutionTrace.status == "success"
+            TbExecutionTrace.created_at >= since_day,
+            TbExecutionTrace.status == "success",
         )
     ).scalar_one()
     success_rate = (recent_success / recent_total) if recent_total else 0.0
@@ -66,17 +67,16 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
     )
     regression_trend_query = regression_trend_query.order_by(day_expr)
     trend_result = session.exec(regression_trend_query).all()
-    trend_map: dict[str, dict[str, int]] = defaultdict(lambda: {"PASS": 0, "WARN": 0, "FAIL": 0})
+    trend_map: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"PASS": 0, "WARN": 0, "FAIL": 0}
+    )
     regression_totals: Counter[str] = Counter()
     for day, judgment, count in trend_result:
         normalized_date = day.date().isoformat()
         trend_map[normalized_date][judgment] = int(count)
         regression_totals[judgment] += int(count)
 
-    trend_list = [
-        {"date": day, **trend_map[day]}
-        for day in sorted(trend_map.keys())
-    ]
+    trend_list = [{"date": day, **trend_map[day]} for day in sorted(trend_map.keys())]
 
     overall_reasons = Counter()
     reason_rows = session.exec(
@@ -85,7 +85,7 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
         .order_by(TbRegressionRun.created_at.desc())
         .limit(100)
     ).all()
-    for reason, in reason_rows:
+    for (reason,) in reason_rows:
         safe_reason = (reason or "").strip()
         if safe_reason:
             overall_reasons[safe_reason] += 1
@@ -95,7 +95,9 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
         .order_by(TbExecutionTrace.created_at.desc())
         .limit(500)
     ).all()
-    sample_summaries = [_extract_summary(answer) for (answer,) in traces_samples if answer is not None]
+    sample_summaries = [
+        _extract_summary(answer) for (answer,) in traces_samples if answer is not None
+    ]
     no_data_hits = sum(1 for summary in sample_summaries if "no data" in summary)
     sample_count = len(sample_summaries)
     no_data_ratio = (no_data_hits / sample_count) if sample_count else 0.0

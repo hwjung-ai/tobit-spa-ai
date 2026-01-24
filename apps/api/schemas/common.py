@@ -5,7 +5,8 @@ from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ResponseEnvelope(BaseModel, Generic[T]):
     time: datetime
@@ -21,7 +22,9 @@ class ResponseEnvelope(BaseModel, Generic[T]):
         message: str = "OK",
         code: int = 0,
     ) -> "ResponseEnvelope":
-        return cls(time=datetime.now(timezone.utc), code=code, message=message, data=data)
+        return cls(
+            time=datetime.now(timezone.utc), code=code, message=message, data=data
+        )
 
     @classmethod
     def error(
@@ -31,4 +34,6 @@ class ResponseEnvelope(BaseModel, Generic[T]):
         code: int = 1,
         data: dict[str, Any] | None = None,
     ) -> "ResponseEnvelope":
-        return cls(time=datetime.now(timezone.utc), code=code, message=message, data=data)
+        return cls(
+            time=datetime.now(timezone.utc), code=code, message=message, data=data
+        )

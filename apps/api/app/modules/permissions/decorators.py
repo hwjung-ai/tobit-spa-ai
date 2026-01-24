@@ -37,6 +37,7 @@ def require_permission(
     Returns:
         Dependency function for FastAPI
     """
+
     async def permission_checker(
         current_user: TbUser = Depends(get_current_user),
         session: Session = Depends(get_session),
@@ -91,10 +92,11 @@ def require_permission_with_resource(
     Returns:
         Dependency function that checks permission with resource_id
     """
+
     async def permission_checker_with_resource(
         current_user: TbUser = Depends(get_current_user),
         session: Session = Depends(get_session),
-        request = Depends(lambda r: r),  # Will be provided by FastAPI
+        request=Depends(lambda r: r),  # Will be provided by FastAPI
     ) -> TbUser:
         """Check permission with specific resource."""
         # In practice, FastAPI will inject the path parameter

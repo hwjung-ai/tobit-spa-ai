@@ -34,7 +34,11 @@ class ToolExecutor:
     work with tools dynamically.
     """
 
-    def __init__(self, registry: Optional[ToolRegistry] = None, cache: Optional[ToolResultCache] = None):
+    def __init__(
+        self,
+        registry: Optional[ToolRegistry] = None,
+        cache: Optional[ToolResultCache] = None,
+    ):
         """
         Initialize the executor.
 

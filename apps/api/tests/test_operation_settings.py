@@ -20,8 +20,6 @@ def client(session):
             yield test_client
 
 
-
-
 def test_get_all_operation_settings(client):
     """Test GET /settings/operations returns all settings."""
     response = client.get("/settings/operations")

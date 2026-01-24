@@ -44,7 +44,9 @@ def create_history(
     session.add(entry)
     session.commit()
     session.refresh(entry)
-    return ResponseEnvelope.success(data={"history": HistoryRead.model_validate(entry.model_dump(by_alias=True))})
+    return ResponseEnvelope.success(
+        data={"history": HistoryRead.model_validate(entry.model_dump(by_alias=True))}
+    )
 
 
 @router.get("/", response_model=ResponseEnvelope)
@@ -63,7 +65,9 @@ def list_history(
         statement = statement.where(QueryHistory.feature == feature)
     statement = statement.order_by(QueryHistory.created_at.desc()).limit(limit)
     entries = session.exec(statement).scalars().all()
-    result = [HistoryRead.model_validate(entry.model_dump(by_alias=True)) for entry in entries]
+    result = [
+        HistoryRead.model_validate(entry.model_dump(by_alias=True)) for entry in entries
+    ]
     return ResponseEnvelope.success(data={"history": result})
 
 
@@ -76,7 +80,9 @@ def delete_history(
     tenant_id, user_id = identity
     entry = session.get(QueryHistory, history_id)
     if not entry:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="History entry not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="History entry not found"
+        )
     if entry.tenant_id != tenant_id or entry.user_id != user_id:
         logger.warning(
             "history.delete.identity_mismatch",

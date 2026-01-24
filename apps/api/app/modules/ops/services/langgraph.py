@@ -63,7 +63,7 @@ class LangGraphAllRunner:
             try:
                 result = executor(question_with_hints)
                 # Handle ExecutorResult or tuple returns
-                if hasattr(result, 'blocks') and hasattr(result, 'used_tools'):
+                if hasattr(result, "blocks") and hasattr(result, "used_tools"):
                     # ExecutorResult object
                     blocks = result.blocks
                     tools = result.used_tools
@@ -71,20 +71,28 @@ class LangGraphAllRunner:
                     # Legacy tuple return
                     blocks, tools = result
                 else:
-                    raise ValueError(f"Executor {name} returned unexpected type: {type(result)}")
+                    raise ValueError(
+                        f"Executor {name} returned unexpected type: {type(result)}"
+                    )
 
                 executor_blocks[name] = blocks
                 for tool in tools:
                     if tool not in used_tools:
                         used_tools.append(tool)
-            except Exception as exc:  # pragma: no cover (LangGraph plan may hit missing data)
+            except (
+                Exception
+            ) as exc:  # pragma: no cover (LangGraph plan may hit missing data)
                 logging.exception("LangGraph executor %s failed", name)
                 errors.append(f"{name}: {exc}")
 
         if not executor_blocks:
             raise RuntimeError("LangGraph plan skipped all executors")
 
-        aggregated_blocks = [block for order in self.EXECUTOR_ORDER for block in executor_blocks.get(order, [])]
+        aggregated_blocks = [
+            block
+            for order in self.EXECUTOR_ORDER
+            for block in executor_blocks.get(order, [])
+        ]
         final_summary = self._build_final_summary(question, plan, aggregated_blocks)
         ordered_blocks = [final_summary]
         for name in self.EXECUTOR_ORDER:
@@ -127,7 +135,9 @@ class LangGraphAllRunner:
             return f"{' '.join(hints)} {question}"
         return question
 
-    def _build_final_summary(self, question: str, plan: LangGraphPlan, blocks: list[AnswerBlock]) -> MarkdownBlock:
+    def _build_final_summary(
+        self, question: str, plan: LangGraphPlan, blocks: list[AnswerBlock]
+    ) -> MarkdownBlock:
         descriptions = self._describe_blocks(blocks)
         try:
             templates = self._load_prompt_templates()
@@ -146,9 +156,7 @@ class LangGraphAllRunner:
                 raise RuntimeError("LangGraph summary returned empty content")
         except Exception:
             logging.exception("LangGraph summary call failed")
-            content = (
-                f"LangGraph summary unavailable; executed {', '.join([name for name in self.EXECUTOR_ORDER if getattr(plan, f'run_{name}')])}."
-            )
+            content = f"LangGraph summary unavailable; executed {', '.join([name for name in self.EXECUTOR_ORDER if getattr(plan, f'run_{name}')])}."
         return MarkdownBlock(type="markdown", title="final summary", content=content)
 
     def _describe_blocks(self, blocks: list[AnswerBlock]) -> str:
@@ -175,9 +183,7 @@ class LangGraphAllRunner:
         try:
             # Responses API
             response = self._llm.create_response(
-                input=input_data,
-                model=self.settings.chat_model,
-                temperature=0.1
+                input=input_data, model=self.settings.chat_model, temperature=0.1
             )
         except Exception as exc:
             if self._is_temperature_not_supported_error(exc):
@@ -186,12 +192,11 @@ class LangGraphAllRunner:
                     self.settings.chat_model,
                 )
                 response = self._llm.create_response(
-                    input=input_data,
-                    model=self.settings.chat_model
+                    input=input_data, model=self.settings.chat_model
                 )
             else:
                 raise
-        
+
         content = self._llm.get_output_text(response)
         if not content:
             raise RuntimeError("LangGraph LLM returned empty content")
@@ -209,4 +214,6 @@ class LangGraphAllRunner:
     def _is_temperature_not_supported_error(self, exc: Exception) -> bool:
         message = str(exc)
         # Handle both "Unsupported value" and "Unsupported parameter" error messages
-        return ("Unsupported value" in message or "Unsupported parameter" in message) and "temperature" in message
+        return (
+            "Unsupported value" in message or "Unsupported parameter" in message
+        ) and "temperature" in message

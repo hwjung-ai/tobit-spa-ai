@@ -4,8 +4,8 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Literal, Tuple
 
-from schemas.tool_contracts import MetricAggregateResult, MetricSeriesResult
 from core.db_pg import get_pg_connection
+from schemas.tool_contracts import MetricAggregateResult, MetricSeriesResult
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
@@ -48,7 +48,9 @@ def _calculate_time_range(time_range: str) -> Tuple[datetime, datetime]:
     return now - delta, now
 
 
-def _prepare_ci_ids(ci_id: str | None, ci_ids: list[str] | None) -> tuple[list[str], bool, int]:
+def _prepare_ci_ids(
+    ci_id: str | None, ci_ids: list[str] | None
+) -> tuple[list[str], bool, int]:
     candidates: list[str] = []
     if ci_ids:
         candidates = list(dict.fromkeys(ci_ids))
@@ -157,7 +159,9 @@ class MetricTool(BaseTool):
         """Return the Metric tool type."""
         return ToolType.METRIC
 
-    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+    async def should_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this tool should execute for the given operation.
 

@@ -21,7 +21,13 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         request.state.trace_id = trace_id
         request.state.parent_trace_id = parent_trace_id
         reset_asset_context()
-        set_request_context(request_id, tenant_id, mode="ci", trace_id=trace_id, parent_trace_id=parent_trace_id)
+        set_request_context(
+            request_id,
+            tenant_id,
+            mode="ci",
+            trace_id=trace_id,
+            parent_trace_id=parent_trace_id,
+        )
         try:
             response: Response = await call_next(request)
         finally:

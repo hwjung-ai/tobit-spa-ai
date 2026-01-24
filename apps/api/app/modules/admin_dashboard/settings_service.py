@@ -52,30 +52,25 @@ class AdminSettingsService:
             "api_rate_limit_requests_per_minute": 1000,
             "api_request_timeout_seconds": 30,
             "api_max_payload_size_mb": 50,
-
             # Document processing
             "document_processing_max_file_size_mb": 500,
             "document_processing_timeout_seconds": 300,
             "document_ocr_enabled": True,
             "document_enable_async_processing": True,
-
             # Database
             "database_connection_pool_size": 20,
             "database_query_timeout_seconds": 60,
             "database_slow_query_threshold_ms": 1000,
             "database_enable_query_logging": True,
-
             # CEP Engine
             "cep_max_rule_executions_per_minute": 10000,
             "cep_notification_retry_count": 3,
             "cep_enable_performance_monitoring": True,
-
             # Chat Enhancement
             "chat_auto_title_enabled": True,
             "chat_token_tracking_enabled": True,
             "chat_max_history_days": 90,
             "chat_enable_search": True,
-
             # Security
             "security_password_min_length": 12,
             "security_password_require_special_char": True,
@@ -83,19 +78,16 @@ class AdminSettingsService:
             "security_session_timeout_minutes": 60,
             "security_mfa_enabled": True,
             "security_enable_audit_logging": True,
-
             # Notifications
             "notifications_slack_enabled": True,
             "notifications_email_enabled": True,
             "notifications_sms_enabled": False,
             "notifications_max_retries": 3,
-
             # Monitoring
             "monitoring_metrics_retention_days": 30,
             "monitoring_alert_threshold_cpu_percent": 85,
             "monitoring_alert_threshold_memory_percent": 85,
             "monitoring_alert_threshold_disk_percent": 90,
-
             # Maintenance
             "maintenance_backup_enabled": True,
             "maintenance_backup_frequency_hours": 24,
@@ -222,7 +214,9 @@ class AdminSettingsService:
 
         for key, default_value in default_settings.items():
             if self.settings.get(key) != default_value:
-                self.update_setting(key, default_value, admin_id, reason or "Reset to defaults")
+                self.update_setting(
+                    key, default_value, admin_id, reason or "Reset to defaults"
+                )
                 count += 1
 
         logger.info(f"Reset {count} settings to defaults")
@@ -247,7 +241,9 @@ class AdminSettingsService:
 
         for key, value in settings.items():
             if key in self.settings:
-                results[key] = self.update_setting(key, value, admin_id, reason or "Imported from backup")
+                results[key] = self.update_setting(
+                    key, value, admin_id, reason or "Imported from backup"
+                )
             else:
                 logger.warning(f"Unknown setting in import: {key}")
                 results[key] = False

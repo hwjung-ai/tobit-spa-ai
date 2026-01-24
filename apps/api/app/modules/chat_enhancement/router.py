@@ -22,6 +22,7 @@ export_service = ChatExportService()
 
 class CreateThreadRequest(BaseModel):
     """Request for creating a chat thread"""
+
     title: Optional[str] = None
     description: Optional[str] = None
 
@@ -29,8 +30,10 @@ class CreateThreadRequest(BaseModel):
 # Get settings for default model
 settings = get_settings()
 
+
 class AddMessageRequest(BaseModel):
     """Request for adding a message to thread"""
+
     role: str  # "user" or "assistant"
     content: str
     tokens_in: Optional[int] = None
@@ -40,6 +43,7 @@ class AddMessageRequest(BaseModel):
 
 class ThreadResponse(BaseModel):
     """Response for chat thread"""
+
     thread_id: str
     title: str
     description: Optional[str]
@@ -52,6 +56,7 @@ class ThreadResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Response for chat message"""
+
     message_id: str
     thread_id: str
     role: str
@@ -64,6 +69,7 @@ class MessageResponse(BaseModel):
 
 class SearchHistoryRequest(BaseModel):
     """Request for searching chat history"""
+
     query: str
     search_type: str = "hybrid"  # text, vector, hybrid
     top_k: int = 10
@@ -72,6 +78,7 @@ class SearchHistoryRequest(BaseModel):
 
 class SearchHistoryResponse(BaseModel):
     """Response for search result"""
+
     thread_id: str
     message_id: str
     role: str
@@ -81,14 +88,14 @@ class SearchHistoryResponse(BaseModel):
 
 class ExportRequest(BaseModel):
     """Request for exporting conversation"""
+
     format: str  # json, csv, markdown, text
     include_metadata: bool = True
 
 
 @router.post("/threads", response_model=ThreadResponse)
 async def create_thread(
-    request: CreateThreadRequest,
-    current_user: dict = Depends(get_current_user)
+    request: CreateThreadRequest, current_user: dict = Depends(get_current_user)
 ):
     """
     Create a new chat thread
@@ -121,7 +128,7 @@ async def create_thread(
             "token_count": 0,
             "estimated_cost": 0.0,
             "created_at": datetime.utcnow().isoformat(),
-            "updated_at": datetime.utcnow().isoformat()
+            "updated_at": datetime.utcnow().isoformat(),
         }
 
     except Exception as e:
@@ -130,10 +137,7 @@ async def create_thread(
 
 
 @router.get("/threads/{thread_id}", response_model=ThreadResponse)
-async def get_thread(
-    thread_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def get_thread(thread_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get chat thread details
 
@@ -160,7 +164,7 @@ async def get_thread(
             "token_count": 1250,
             "estimated_cost": 0.0525,
             "created_at": "2026-01-18T10:00:00Z",
-            "updated_at": "2026-01-18T10:30:00Z"
+            "updated_at": "2026-01-18T10:30:00Z",
         }
 
     except Exception as e:
@@ -172,7 +176,7 @@ async def get_thread(
 async def add_message(
     thread_id: str,
     request: AddMessageRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Add message to chat thread
@@ -212,7 +216,7 @@ async def add_message(
             "tokens_in": request.tokens_in or 0,
             "tokens_out": request.tokens_out or 0,
             "model": request.model,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }
 
     except HTTPException:
@@ -227,7 +231,7 @@ async def get_thread_messages(
     thread_id: str,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get paginated messages from a thread
@@ -259,7 +263,7 @@ async def get_thread_messages(
             "page": page,
             "per_page": per_page,
             "total": 0,
-            "messages": []
+            "messages": [],
         }
 
     except Exception as e:
@@ -269,8 +273,7 @@ async def get_thread_messages(
 
 @router.post("/search", response_model=dict)
 async def search_history(
-    request: SearchHistoryRequest,
-    current_user: dict = Depends(get_current_user)
+    request: SearchHistoryRequest, current_user: dict = Depends(get_current_user)
 ):
     """
     Search across chat history
@@ -305,7 +308,7 @@ async def search_history(
             "query": request.query,
             "search_type": request.search_type,
             "results_count": 0,
-            "results": []
+            "results": [],
         }
 
     except HTTPException:
@@ -319,7 +322,7 @@ async def search_history(
 async def export_conversation(
     thread_id: str,
     request: ExportRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Export conversation in specified format
@@ -340,9 +343,7 @@ async def export_conversation(
         if request.format not in ["json", "csv", "markdown", "text"]:
             raise HTTPException(400, f"Unsupported format: {request.format}")
 
-        logger.info(
-            f"Exporting thread {thread_id} as {request.format}"
-        )
+        logger.info(f"Exporting thread {thread_id} as {request.format}")
 
         # In real implementation:
         # - Get all messages from db.ChatMessage where thread_id
@@ -356,7 +357,7 @@ async def export_conversation(
             "status": "ok",
             "thread_id": thread_id,
             "format": request.format,
-            "message": "Export in progress"
+            "message": "Export in progress",
         }
 
     except HTTPException:
@@ -367,10 +368,7 @@ async def export_conversation(
 
 
 @router.delete("/threads/{thread_id}", response_model=dict)
-async def delete_thread(
-    thread_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def delete_thread(thread_id: str, current_user: dict = Depends(get_current_user)):
     """
     Soft delete a chat thread
 
@@ -387,10 +385,7 @@ async def delete_thread(
         # - Log audit entry with soft delete reason
         # - Don't actually delete from DB (soft delete)
 
-        return {
-            "status": "ok",
-            "message": f"Thread {thread_id} deleted"
-        }
+        return {"status": "ok", "message": f"Thread {thread_id} deleted"}
 
     except Exception as e:
         logger.error(f"Delete failed: {str(e)}")
@@ -403,7 +398,7 @@ async def list_threads(
     per_page: int = Query(20, ge=1, le=100),
     sort_by: str = Query("updated_at"),
     include_deleted: bool = Query(False),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List all chat threads for current user
@@ -439,7 +434,7 @@ async def list_threads(
             "page": page,
             "per_page": per_page,
             "total": 0,
-            "threads": []
+            "threads": [],
         }
 
     except Exception as e:

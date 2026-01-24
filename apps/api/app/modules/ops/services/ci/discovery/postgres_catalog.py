@@ -7,8 +7,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from psycopg import Connection
 from core.db_pg import get_pg_connection
+from psycopg import Connection
 
 from app.shared.config_loader import load_text
 
@@ -76,7 +76,9 @@ def _fetch_columns(conn: Connection) -> list[dict[str, str]]:
 
 def _fetch_table_row_count(conn: Connection, table: str) -> int:
     with conn.cursor() as cur:
-        count_query = _load_query("postgres_catalog_table_count.sql").format(table=table)
+        count_query = _load_query("postgres_catalog_table_count.sql").format(
+            table=table
+        )
         cur.execute(count_query)
         return cur.fetchone()[0]
 
@@ -85,7 +87,9 @@ def _fetch_aggregation(
     conn: Connection, column: str, limit: int = 50
 ) -> list[dict[str, int | str | None]]:
     with conn.cursor() as cur:
-        agg_query = _load_query("postgres_catalog_aggregation.sql").format(column=column)
+        agg_query = _load_query("postgres_catalog_aggregation.sql").format(
+            column=column
+        )
         cur.execute(agg_query, (limit,))
         return [{"value": value, "count": cnt} for value, cnt in cur.fetchall()]
 
@@ -105,16 +109,18 @@ def _sample_jsonb_values(
     conn: Connection, column: str, key: str, limit: int = 5
 ) -> list[str]:
     with conn.cursor() as cur:
-        sample_query = _load_query("postgres_catalog_jsonb_sample.sql").format(column=column)
+        sample_query = _load_query("postgres_catalog_jsonb_sample.sql").format(
+            column=column
+        )
         cur.execute(sample_query, (key, key, limit))
         return [_format_sample_value(row[0]) for row in cur.fetchall()]
 
 
-def _collect_jsonb_key_stats(
-    conn: Connection, column: str
-) -> list[dict[str, object]]:
+def _collect_jsonb_key_stats(conn: Connection, column: str) -> list[dict[str, object]]:
     with conn.cursor() as cur:
-        stats_query = _load_query("postgres_catalog_jsonb_key_stats.sql").format(column=column)
+        stats_query = _load_query("postgres_catalog_jsonb_key_stats.sql").format(
+            column=column
+        )
         cur.execute(stats_query)
         results: list[dict[str, object]] = []
         for key, cnt in cur.fetchall():
@@ -131,7 +137,9 @@ def _collect_jsonb_key_stats(
 
 def _build_catalog(conn: Connection) -> dict[str, object]:
     columns = _fetch_columns(conn)
-    available_columns = {col["column_name"] for col in columns if col["table_name"] == "ci"}
+    available_columns = {
+        col["column_name"] for col in columns if col["table_name"] == "ci"
+    }
     stats: dict[str, object] = {}
     tenant_counts: list[dict[str, int | str | None]] = []
     if "tenant_id" in available_columns:
@@ -147,9 +155,7 @@ def _build_catalog(conn: Connection) -> dict[str, object]:
     }
     for column in AGG_COLUMNS:
         if column in available_columns:
-            stats["ci_counts"]["breakdowns"][column] = _fetch_aggregation(
-                conn, column
-            )
+            stats["ci_counts"]["breakdowns"][column] = _fetch_aggregation(conn, column)
     jsonb_catalog = {
         "tags_keys": _collect_jsonb_key_stats(conn, "tags"),
         "attributes_keys": _collect_jsonb_key_stats(conn, "attributes"),

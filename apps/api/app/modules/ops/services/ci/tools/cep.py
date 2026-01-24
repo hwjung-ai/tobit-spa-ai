@@ -33,7 +33,14 @@ CI_KEYS = [
     "location",
     "owner",
 ]
-TAG_ALLOWLIST = {"system", "role", "runs_on", "host_server", "ci_subtype", "connected_servers"}
+TAG_ALLOWLIST = {
+    "system",
+    "role",
+    "runs_on",
+    "host_server",
+    "ci_subtype",
+    "connected_servers",
+}
 ATTR_ALLOWLIST = {"engine", "version", "zone", "ip", "cpu_cores", "memory_gb"}
 MAX_PAYLOAD_BYTES = 16 * 1024
 STRING_TRUNCATE = 200
@@ -66,7 +73,13 @@ def _load_param_policy() -> Tuple[Dict[str, str], set[str], int, str]:
                 allowed = {str(k): str(v) for k, v in incoming_allowed.items()}
             incoming_blocked = raw.get("blocked_params")
             if isinstance(incoming_blocked, list) and incoming_blocked:
-                blocked = blocked.union({str(value).lower() for value in incoming_blocked if isinstance(value, str)})
+                blocked = blocked.union(
+                    {
+                        str(value).lower()
+                        for value in incoming_blocked
+                        if isinstance(value, str)
+                    }
+                )
             limits = raw.get("limits") or {}
             max_bytes = int(limits.get("max_param_bytes", max_bytes))
             policy_source = "yaml"
@@ -75,7 +88,9 @@ def _load_param_policy() -> Tuple[Dict[str, str], set[str], int, str]:
     return allowed, blocked, max_bytes, policy_source
 
 
-ALLOWED_PARAM_MAP, BLOCKED_PARAM_KEYS, PARAM_MAX_BYTES, PARAM_POLICY_SOURCE = _load_param_policy()
+ALLOWED_PARAM_MAP, BLOCKED_PARAM_KEYS, PARAM_MAX_BYTES, PARAM_POLICY_SOURCE = (
+    _load_param_policy()
+)
 
 
 def _truncate_value(value: Any) -> Any:
@@ -110,7 +125,9 @@ def _mask_params(params: Dict[str, Any] | None) -> tuple[Dict[str, Any] | None, 
     masked = {}
     masked_flag = False
     for key, value in params.items():
-        if isinstance(value, str) and any(token in key.lower() for token in ["token", "secret", "password", "key"]):
+        if isinstance(value, str) and any(
+            token in key.lower() for token in ["token", "secret", "password", "key"]
+        ):
             masked[key] = "***"
             masked_flag = True
         else:
@@ -157,7 +174,9 @@ def _build_evidence(
     if runtime_params_meta:
         evidence_meta["runtime_params_meta"] = runtime_params_meta
         evidence_meta["runtime_params_keys"] = runtime_params_meta.get("final_keys", [])
-        evidence_meta["runtime_params_policy_source"] = runtime_params_meta.get("policy_source")
+        evidence_meta["runtime_params_policy_source"] = runtime_params_meta.get(
+            "policy_source"
+        )
     return evidence, evidence_meta
 
 
@@ -168,11 +187,15 @@ def _truncate_text(value: Any | None, limit: int) -> str | None:
     return text if len(text) <= limit else text[:limit]
 
 
-def _normalize_metric_context(metric_context: Dict[str, Any] | None) -> Dict[str, Any] | None:
+def _normalize_metric_context(
+    metric_context: Dict[str, Any] | None,
+) -> Dict[str, Any] | None:
     if not metric_context:
         return None
     metric_name = _truncate_text(metric_context.get("metric_name"), 100)
-    agg = _truncate_text(metric_context.get("agg") or metric_context.get("aggregation"), 100)
+    agg = _truncate_text(
+        metric_context.get("agg") or metric_context.get("aggregation"), 100
+    )
     time_range = _truncate_text(metric_context.get("time_range"), 100)
     value = metric_context.get("value")
     numeric_value = value if isinstance(value, (int, float)) else None
@@ -184,7 +207,9 @@ def _normalize_metric_context(metric_context: Dict[str, Any] | None) -> Dict[str
     }
 
 
-def _normalize_history_context(history_context: Dict[str, Any] | None) -> Dict[str, Any] | None:
+def _normalize_history_context(
+    history_context: Dict[str, Any] | None,
+) -> Dict[str, Any] | None:
     if not history_context:
         return None
     source = _truncate_text(history_context.get("source"), 100) or "event_log"
@@ -224,7 +249,9 @@ def _condense_metric_history(payload: Dict[str, Any]) -> None:
         history["count"] = None
 
 
-def _attach_payload_metadata(payload: Dict[str, Any], evidence_meta: Dict[str, Any]) -> None:
+def _attach_payload_metadata(
+    payload: Dict[str, Any], evidence_meta: Dict[str, Any]
+) -> None:
     sections = _payload_sections(payload)
     evidence_meta["test_payload_sections"] = sections
     evidence_meta["test_payload_metric_keys_present"] = "metric" in payload
@@ -242,7 +269,9 @@ def build_test_payload(
     tags = ci_context.get("tags") or {}
     attrs = ci_context.get("attributes") or {}
     if tags:
-        ci_block["tags"] = {k: _truncate_value(v) for k, v in tags.items() if k in TAG_ALLOWLIST}
+        ci_block["tags"] = {
+            k: _truncate_value(v) for k, v in tags.items() if k in TAG_ALLOWLIST
+        }
     if attrs:
         ci_block["attributes"] = {
             k: _truncate_value(v) for k, v in attrs.items() if k in ATTR_ALLOWLIST
@@ -370,7 +399,11 @@ def cep_simulate(
     with get_session_context() as session:
         rule = get_rule(session, rule_id)
         if not rule:
-            return {"success": False, "error": f"Rule {rule_id} not found", "rule_id": rule_id}
+            return {
+                "success": False,
+                "error": f"Rule {rule_id} not found",
+                "rule_id": rule_id,
+            }
         start = perf_counter()
         status = "dry_run"
         references: Dict[str, Any] = {}
@@ -383,7 +416,9 @@ def cep_simulate(
         }
         payload_to_send = test_payload
         if not payload_to_send:
-            payload_to_send, meta = build_test_payload(ci_context, metric_context, history_context)
+            payload_to_send, meta = build_test_payload(
+                ci_context, metric_context, history_context
+            )
             test_meta.update({"built": True, **meta})
         else:
             test_meta.update(
@@ -394,11 +429,15 @@ def cep_simulate(
                 }
             )
         spec = dict(rule.trigger_spec or {})
-        runtime_params, runtime_meta = build_runtime_params_if_missing(spec.get("params"), payload_to_send)
+        runtime_params, runtime_meta = build_runtime_params_if_missing(
+            spec.get("params"), payload_to_send
+        )
         if runtime_params:
             spec["params"] = runtime_params
         try:
-            condition, trigger_refs = evaluate_trigger(rule.trigger_type, spec, payload_to_send)
+            condition, trigger_refs = evaluate_trigger(
+                rule.trigger_type, spec, payload_to_send
+            )
             references = trigger_refs
             references["ci_context"] = ci_context
             simulation = {
@@ -411,7 +450,9 @@ def cep_simulate(
                 "extracted_value": trigger_refs.get("extracted_value"),
                 "references": trigger_refs,
             }
-            evidence, evidence_meta = _build_evidence(trigger_refs, runtime_params_meta=runtime_meta)
+            evidence, evidence_meta = _build_evidence(
+                trigger_refs, runtime_params_meta=runtime_meta
+            )
             _attach_payload_metadata(payload_to_send, evidence_meta)
             response = {
                 "success": True,
@@ -475,9 +516,15 @@ def cep_simulate(
     response["simulation_id"] = simulation_id
     if exec_log_id:
         response["exec_log_id"] = exec_log_id
-        response["event_browser_ref"] = {"tenant_id": tenant_id, "exec_log_id": exec_log_id}
+        response["event_browser_ref"] = {
+            "tenant_id": tenant_id,
+            "exec_log_id": exec_log_id,
+        }
     else:
-        response["event_browser_ref"] = {"tenant_id": tenant_id, "simulation_id": simulation_id}
+        response["event_browser_ref"] = {
+            "tenant_id": tenant_id,
+            "simulation_id": simulation_id,
+        }
     return response
 
 
@@ -499,7 +546,9 @@ class CEPTool(BaseTool):
         """Return the CEP tool type."""
         return ToolType.CEP
 
-    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+    async def should_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this tool should execute for the given operation.
 

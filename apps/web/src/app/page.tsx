@@ -85,8 +85,10 @@ export default function Home() {
     setLoadingThreads(true);
     setThreadsError(null);
     try {
-      const payload = await authenticatedFetch<ThreadRead[]>(`/threads`);
-      setThreads(payload.data ?? []);
+      const payload = await authenticatedFetch<ThreadRead[] | { data: ThreadRead[] }>(`/threads`);
+      // Handle both direct array response and wrapped { data: [...] } response
+      const threadList = Array.isArray(payload) ? payload : (payload.data ?? []);
+      setThreads(threadList);
     } catch (error: unknown) {
       console.error("Failed to load threads", error);
       setThreadsError(error instanceof Error ? error.message : "Failed to load threads");
@@ -104,8 +106,9 @@ export default function Home() {
 
   const fetchThreadDetail = useCallback(
     async (threadId: string) => {
-      const payload = await authenticatedFetch<ThreadDetail>(`/threads/${threadId}`);
-      const detail = payload.data;
+      const payload = await authenticatedFetch<ThreadDetail | { data: ThreadDetail }>(`/threads/${threadId}`);
+      // Handle both direct response and wrapped { data: ... } response
+      const detail = (payload as { data?: ThreadDetail }).data ?? (payload as ThreadDetail);
       setActiveThread(detail);
       setThreads((prev) => {
         const existing = prev.find((thread) => thread.id === detail.id);
@@ -163,11 +166,12 @@ export default function Home() {
   };
 
   const createThreadResource = useCallback(async (): Promise<ThreadDetail> => {
-    const payload = await authenticatedFetch<ThreadDetail>(`/threads`, {
+    const payload = await authenticatedFetch<ThreadDetail | { data: ThreadDetail }>(`/threads`, {
       method: "POST",
       body: JSON.stringify({ title: "New conversation" }),
     });
-    const thread = payload.data;
+    // Handle both direct response and wrapped { data: ... } response
+    const thread = (payload as { data?: ThreadDetail }).data ?? (payload as ThreadDetail);
     setThreads((prev) => [thread, ...prev.filter((item) => item.id !== thread.id)]);
     setActiveThread(thread);
     setChunks([]);

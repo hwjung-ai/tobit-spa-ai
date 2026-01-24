@@ -23,8 +23,20 @@ def _format_value(value: Any) -> str:
     return str(value)
 
 
-def build_candidate_table(candidates: Iterable[Dict[str, Any]], role: str = "primary") -> Dict[str, Any]:
-    columns = ["ci_id", "ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category", "status", "location", "owner"]
+def build_candidate_table(
+    candidates: Iterable[Dict[str, Any]], role: str = "primary"
+) -> Dict[str, Any]:
+    columns = [
+        "ci_id",
+        "ci_code",
+        "ci_name",
+        "ci_type",
+        "ci_subtype",
+        "ci_category",
+        "status",
+        "location",
+        "owner",
+    ]
     rows: List[List[str]] = []
     for candidate in candidates:
         rows.append([_format_value(candidate.get(col)) for col in columns])
@@ -42,13 +54,25 @@ def build_candidate_table(candidates: Iterable[Dict[str, Any]], role: str = "pri
 
 
 def build_ci_detail_blocks(ci_detail: Dict[str, Any]) -> List[Dict[str, Any]]:
-    identifiers = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category", "status", "location", "owner"]
+    identifiers = [
+        "ci_code",
+        "ci_name",
+        "ci_type",
+        "ci_subtype",
+        "ci_category",
+        "status",
+        "location",
+        "owner",
+    ]
     rows = [[field, _format_value(ci_detail.get(field))] for field in identifiers]
     detail_table = table_block(["field", "value"], rows, title="CI details")
     tags = ci_detail.get("tags") or {}
     attrs = ci_detail.get("attributes") or {}
     return [
-        text_block(f"{ci_detail.get('ci_code')} · {ci_detail.get('ci_name')}", title="CI summary"),
+        text_block(
+            f"{ci_detail.get('ci_code')} · {ci_detail.get('ci_name')}",
+            title="CI summary",
+        ),
         detail_table,
         table_block(
             ["tags", "value"],
@@ -78,6 +102,7 @@ def build_aggregate_block(aggregate: Dict[str, Any]) -> Dict[str, Any]:
             "meta": {"total_groups": total},
         }
     return block
+
 
 def build_aggregate_summary_block(total_count: int) -> Dict[str, Any]:
     return number_block(
@@ -169,10 +194,15 @@ def build_path_blocks(path_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     ]
 
 
-def build_answer_text(answer: str | None, fallback: str = "CI insight ready") -> Dict[str, Any]:
+def build_answer_text(
+    answer: str | None, fallback: str = "CI insight ready"
+) -> Dict[str, Any]:
     return text_block(answer or fallback, title="Answer")
 
-def build_sql_reference_block(sql: str, params: list[Any], title: str = "Aggregation query") -> dict[str, Any]:
+
+def build_sql_reference_block(
+    sql: str, params: list[Any], title: str = "Aggregation query"
+) -> dict[str, Any]:
     block = ReferencesBlock(
         type="references",
         title=title,

@@ -65,10 +65,11 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
     }
 
     # Mock external dependencies
-    with patch('core.db_pg.get_pg_connection') as mock_pg_func, \
-         patch('core.config.get_settings'), \
-         patch('app.shared.config_loader.load_text') as mock_load:
-
+    with (
+        patch("core.db_pg.get_pg_connection") as mock_pg_func,
+        patch("core.config.get_settings"),
+        patch("app.shared.config_loader.load_text") as mock_load,
+    ):
         # Setup mocks
         mock_pg_conn = MagicMock()
         mock_pg_conn.execute.return_value.fetchall.return_value = [
@@ -76,7 +77,9 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
             ("2024-01-10", "Corrective", 180, "Completed", "Bearing"),
         ]
         mock_pg_func.return_value = mock_pg_conn
-        mock_load.return_value = "SELECT * FROM maintenance_history WHERE tenant_id = %s"
+        mock_load.return_value = (
+            "SELECT * FROM maintenance_history WHERE tenant_id = %s"
+        )
 
         # Execute
         result = await handle_list_maintenance_filtered(inputs, context, mock_session)
@@ -95,15 +98,15 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
             "maintenance_items": len(result.state_patch.get("maintenance_list", [])),
         }
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("DEMO A - LIST ACTION TRACE EVIDENCE")
-        print("="*60)
+        print("=" * 60)
         print(f"Action: {trace_evidence['action_id']}")
         print(f"Blocks returned: {trace_evidence['blocks_count']}")
         print("State patch applied: YES")
         print(f"State patch keys: {', '.join(trace_evidence['state_patch_keys'])}")
         print(f"Maintenance items: {trace_evidence['maintenance_items']}")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
 
 @pytest.mark.asyncio
@@ -135,9 +138,10 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
         "mode": "real",
     }
 
-    with patch('core.db_pg.get_pg_connection') as mock_pg_func, \
-         patch('core.config.get_settings'):
-
+    with (
+        patch("core.db_pg.get_pg_connection") as mock_pg_func,
+        patch("core.config.get_settings"),
+    ):
         # Setup mocks
         mock_pg_conn = MagicMock()
 
@@ -174,9 +178,9 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
             "created_at": ticket.get("created_at"),
         }
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("DEMO B - CRUD CREATE ACTION TRACE EVIDENCE")
-        print("="*60)
+        print("=" * 60)
         print(f"Action: {trace_evidence['action_id']}")
         print("\nTrace Hierarchy:")
         print(f"  Parent Trace ID:  {trace_evidence['parent_trace_id']}")
@@ -189,7 +193,7 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
         print("\nState Patch Applied:")
         print(f"  Keys:             {', '.join(trace_evidence['state_patch_keys'])}")
         print("  Modal Closed:     YES")
-        print("="*60 + "\n")
+        print("=" * 60 + "\n")
 
 
 @pytest.mark.asyncio
@@ -218,13 +222,13 @@ async def test_ui_action_response_includes_state_patch():
     assert data["state_patch"] == {"test_key": "test_value"}
     assert data["status"] == "ok"
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("UIActionResponse Schema Validation")
-    print("="*60)
+    print("=" * 60)
     print(f"✓ state_patch field present: {bool(data.get('state_patch'))}")
     print("✓ Response serializable: YES")
     print(f"✓ State patch value: {data['state_patch']}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 def test_executor_result_includes_state_patch():
@@ -247,12 +251,12 @@ def test_executor_result_includes_state_patch():
     assert result.tool_calls == []
     assert result.references == []
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("ExecutorResult state_patch Attribute")
-    print("="*60)
+    print("=" * 60)
     print(f"✓ state_patch property: {result.state_patch}")
     print(f"✓ Default empty dict: {ExecutorResult(blocks=[]).state_patch == {}}")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
 
 
 if __name__ == "__main__":
@@ -261,13 +265,13 @@ if __name__ == "__main__":
 
     Run with: pytest tests/test_ui_actions_with_traces.py -v -s
     """
-    print("\n" + "*"*60)
+    print("\n" + "*" * 60)
     print("UI ACTIONS WITH TRACES - PR-C CERTIFICATION")
-    print("*"*60)
+    print("*" * 60)
     print("\nThis test suite demonstrates:")
     print("1. list_maintenance_filtered with state_patch (Demo A)")
     print("2. create_maintenance_ticket with state_patch (Demo B)")
     print("3. Trace hierarchy with parent_trace_id linking")
     print("4. State patch serialization in API responses")
     print("\nExpected output: 2 trace IDs with evidence")
-    print("*"*60 + "\n")
+    print("*" * 60 + "\n")

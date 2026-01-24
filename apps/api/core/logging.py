@@ -7,7 +7,14 @@ from pathlib import Path
 from typing import Any
 
 _REQUEST_CONTEXT: ContextVar[dict[str, str]] = ContextVar(
-    "request_context", default={"request_id": "-", "tenant_id": "-", "mode": "-", "trace_id": "-", "parent_trace_id": "-"}
+    "request_context",
+    default={
+        "request_id": "-",
+        "tenant_id": "-",
+        "mode": "-",
+        "trace_id": "-",
+        "parent_trace_id": "-",
+    },
 )
 
 LOG_DIR = Path(__file__).resolve().parents[1] / "logs"
@@ -27,19 +34,33 @@ def get_request_context() -> dict[str, str]:
 
 
 def set_request_context(
-    request_id: str, tenant_id: str, mode: str = "ci", trace_id: str = "", parent_trace_id: str = ""
+    request_id: str,
+    tenant_id: str,
+    mode: str = "ci",
+    trace_id: str = "",
+    parent_trace_id: str = "",
 ) -> None:
-    _REQUEST_CONTEXT.set({
-        "request_id": request_id,
-        "tenant_id": tenant_id,
-        "mode": mode,
-        "trace_id": trace_id or request_id,
-        "parent_trace_id": parent_trace_id or "-",
-    })
+    _REQUEST_CONTEXT.set(
+        {
+            "request_id": request_id,
+            "tenant_id": tenant_id,
+            "mode": mode,
+            "trace_id": trace_id or request_id,
+            "parent_trace_id": parent_trace_id or "-",
+        }
+    )
 
 
 def clear_request_context() -> None:
-    _REQUEST_CONTEXT.set({"request_id": "-", "tenant_id": "-", "mode": "-", "trace_id": "-", "parent_trace_id": "-"})
+    _REQUEST_CONTEXT.set(
+        {
+            "request_id": "-",
+            "tenant_id": "-",
+            "mode": "-",
+            "trace_id": "-",
+            "parent_trace_id": "-",
+        }
+    )
 
 
 class StructuredFormatter(logging.Formatter):

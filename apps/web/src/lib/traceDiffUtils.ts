@@ -8,7 +8,7 @@ export interface DiffItem<T> {
   changeType: "added" | "removed" | "modified" | "unchanged";
   before?: T;
   after?: T;
-  changes?: { [key: string]: { before: unknown; after: unknown } };
+  changes?: Record<string, { before: unknown; after: unknown }>;
 }
 
 export interface AssetInfo {
@@ -128,7 +128,7 @@ function compareAssets(before: AssetInfo | null | undefined, after: AssetInfo | 
   }
 
   // Modified
-  const changes: { [key: string]: { before: unknown; after: unknown } } = {};
+  const changes: Record<string, { before: unknown; after: unknown }> = {};
   if (before.version !== after.version) {
     changes.version = { before: before.version, after: after.version };
   }
@@ -146,14 +146,16 @@ function compareAssets(before: AssetInfo | null | undefined, after: AssetInfo | 
  * Diff Applied Assets section
  */
 export function diffAppliedAssets(traceA: unknown, traceB: unknown): AssetsDiff {
-  const assetsA = traceA?.applied_assets || {};
-  const assetsB = traceB?.applied_assets || {};
+  const traceObjA = traceA as Record<string, unknown>;
+  const traceObjB = traceB as Record<string, unknown>;
+  const assetsA = (traceObjA.applied_assets as Record<string, unknown>) || {};
+  const assetsB = (traceObjB.applied_assets as Record<string, unknown>) || {};
 
   return {
-    prompt: compareAssets(assetsA.prompt, assetsB.prompt),
-    policy: compareAssets(assetsA.policy, assetsB.policy),
-    mapping: compareAssets(assetsA.mapping, assetsB.mapping),
-    queries: compareQueryArrays(assetsA.queries || [], assetsB.queries || []),
+    prompt: compareAssets(assetsA.prompt as AssetInfo | null, assetsB.prompt as AssetInfo | null),
+    policy: compareAssets(assetsA.policy as AssetInfo | null, assetsB.policy as AssetInfo | null),
+    mapping: compareAssets(assetsA.mapping as AssetInfo | null, assetsB.mapping as AssetInfo | null),
+    queries: compareQueryArrays((assetsA.queries as AssetInfo[]) || [], (assetsB.queries as AssetInfo[]) || []),
   };
 }
 
@@ -190,19 +192,22 @@ function compareQueryArrays(
 /**
  * Deep compare two objects by keys (simplified)
  */
-function deepCompareObjects(before: unknown, after: unknown): { [key: string]: { before: unknown; after: unknown } } {
-  const changes: { [key: string]: { before: unknown; after: unknown } } = {};
+function deepCompareObjects(before: unknown, after: unknown): Record<string, { before: unknown; after: unknown }> {
+  const changes: Record<string, { before: unknown; after: unknown }> = {};
 
   if (!before || !after) {
     return changes;
   }
 
+  const beforeObj = before as Record<string, unknown>;
+  const afterObj = after as Record<string, unknown>;
+
   // Compare keys in both objects
-  const allKeys = new Set([...Object.keys(before), ...Object.keys(after)]);
+  const allKeys = new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]);
 
   for (const key of allKeys) {
-    const valBefore = before[key];
-    const valAfter = after[key];
+    const valBefore = beforeObj[key];
+    const valAfter = afterObj[key];
 
     if (JSON.stringify(valBefore) !== JSON.stringify(valAfter)) {
       changes[key] = { before: valBefore, after: valAfter };
@@ -216,17 +221,17 @@ function deepCompareObjects(before: unknown, after: unknown): { [key: string]: {
  * Diff Plan section (raw + validated)
  */
 export function diffPlan(traceA: unknown, traceB: unknown): PlanDiff {
-  const planA = traceA;
-  const planB = traceB;
+  const planA = traceA as Record<string, unknown>;
+  const planB = traceB as Record<string, unknown>;
 
-  const validatedA = planA?.plan_validated;
-  const validatedB = planB?.plan_validated;
+  const validatedA = planA.plan_validated;
+  const validatedB = planB.plan_validated;
 
   const validatedChanges = deepCompareObjects(validatedA, validatedB);
   const validatedChangeType = Object.keys(validatedChanges).length > 0 ? "modified" : "same";
 
-  const rawA = planA?.plan_raw;
-  const rawB = planB?.plan_raw;
+  const rawA = planA.plan_raw;
+  const rawB = planB.plan_raw;
 
   const rawChanges = deepCompareObjects(rawA, rawB);
   const rawChangeType = Object.keys(rawChanges).length > 0 ? "modified" : "same";
@@ -253,7 +258,7 @@ export function diffPlan(traceA: unknown, traceB: unknown): PlanDiff {
 /**
  * Build signature for tool call matching (tool_name + partial params)
  */
-function buildToolSignature(toolCall: unknown): string {
+function buildToolSignature(toolCall: Record<string, unknown>): string {
   const tool = toolCall.tool_name || toolCall.step_id || "unknown";
   const params = toolCall.request ? JSON.stringify(toolCall.request).substring(0, 50) : "";
   return `${tool}::${params}`;
@@ -262,7 +267,7 @@ function buildToolSignature(toolCall: unknown): string {
 /**
  * Match tool calls between two execution_steps arrays
  */
-function matchToolCalls(before: unknown[], after: unknown[]): Map<number, number> {
+function matchToolCalls(before: Record<string, unknown>[], after: Record<string, unknown>[]): Map<number, number> {
   const matches = new Map<number, number>();
 
   // Greedy matching by signature
@@ -284,7 +289,7 @@ function matchToolCalls(before: unknown[], after: unknown[]): Map<number, number
 /**
  * Summarize tool call for diff display (with masking)
  */
-function summarizeToolCall(toolCall: unknown): string {
+function summarizeToolCall(toolCall: Record<string, unknown>): string {
   const tool = toolCall.tool_name || toolCall.step_id || "?";
   const duration = toolCall.duration_ms || 0;
   const status = toolCall.status || "?";
@@ -325,8 +330,10 @@ function maskSensitiveParams(obj: unknown): unknown {
  * Diff Tool Calls section (execution_steps)
  */
 export function diffToolCalls(traceA: unknown, traceB: unknown): ToolCallsDiff {
-  const stepsA = traceA?.execution_steps || [];
-  const stepsB = traceB?.execution_steps || [];
+  const traceObjA = traceA as Record<string, unknown>;
+  const traceObjB = traceB as Record<string, unknown>;
+  const stepsA = (traceObjA.execution_steps as Record<string, unknown>[]) || [];
+  const stepsB = (traceObjB.execution_steps as Record<string, unknown>[]) || [];
 
   const matches = matchToolCalls(stepsA, stepsB);
 
@@ -384,19 +391,21 @@ export function diffToolCalls(traceA: unknown, traceB: unknown): ToolCallsDiff {
  * Diff References section
  */
 export function diffReferences(traceA: unknown, traceB: unknown): ReferencesDiff {
-  const refsA = traceA?.references || [];
-  const refsB = traceB?.references || [];
+  const traceObjA = traceA as Record<string, unknown>;
+  const traceObjB = traceB as Record<string, unknown>;
+  const refsA = (traceObjA.references as Record<string, unknown>[]) || [];
+  const refsB = (traceObjB.references as Record<string, unknown>[]) || [];
 
-  const byType: { [type: string]: { before: string[]; after: string[]; added: string[]; removed: string[] } } = {};
+  const byType: Record<string, { before: string[]; after: string[]; added: string[]; removed: string[] }> = {};
 
   // Group references by type
-  const typesBefore = new Set(refsA.map((r: unknown) => r.ref_type));
-  const typesAfter = new Set(refsB.map((r: unknown) => r.ref_type));
+  const typesBefore = new Set(refsA.map((r: Record<string, unknown>) => r.ref_type));
+  const typesAfter = new Set(refsB.map((r: Record<string, unknown>) => r.ref_type));
   const allTypes = new Set([...typesBefore, ...typesAfter]);
 
   for (const type of allTypes) {
-    const refsBefore = refsA.filter((r: unknown) => r.ref_type === type).map((r: unknown) => r.name || r.statement || "?");
-    const refsAfter = refsB.filter((r: unknown) => r.ref_type === type).map((r: unknown) => r.name || r.statement || "?");
+    const refsBefore = refsA.filter((r: Record<string, unknown>) => r.ref_type === type).map((r: Record<string, unknown>) => (r.name || r.statement) as string || "?");
+    const refsAfter = refsB.filter((r: Record<string, unknown>) => r.ref_type === type).map((r: Record<string, unknown>) => (r.name || r.statement) as string || "?");
 
     const added = refsAfter.filter((r) => !refsBefore.includes(r));
     const removed = refsBefore.filter((r) => !refsAfter.includes(r));
@@ -419,7 +428,7 @@ export function diffReferences(traceA: unknown, traceB: unknown): ReferencesDiff
 /**
  * Match answer blocks by stable keys (type + index)
  */
-function matchAnswerBlocks(before: unknown[], after: unknown[]): Map<number, number> {
+function matchAnswerBlocks(before: Record<string, unknown>[], after: Record<string, unknown>[]): Map<number, number> {
   const matches = new Map<number, number>();
 
   for (let i = 0; i < before.length; i++) {
@@ -442,8 +451,12 @@ function matchAnswerBlocks(before: unknown[], after: unknown[]): Map<number, num
  * Diff Answer Blocks section
  */
 export function diffAnswerBlocks(traceA: unknown, traceB: unknown): AnswerBlocksDiff {
-  const blocksA = traceA?.answer?.blocks || [];
-  const blocksB = traceB?.answer?.blocks || [];
+  const traceObjA = traceA as Record<string, unknown>;
+  const traceObjB = traceB as Record<string, unknown>;
+  const answerA = traceObjA.answer as Record<string, unknown> | undefined;
+  const answerB = traceObjB.answer as Record<string, unknown> | undefined;
+  const blocksA = (answerA?.blocks as Record<string, unknown>[]) || [];
+  const blocksB = (answerB?.blocks as Record<string, unknown>[]) || [];
 
   const matches = matchAnswerBlocks(blocksA, blocksB);
 
@@ -461,8 +474,8 @@ export function diffAnswerBlocks(traceA: unknown, traceB: unknown): AnswerBlocks
     blocks.push({
       index: beforeIdx,
       changeType,
-      before: { type: blockBefore.type, title: blockBefore.title },
-      after: { type: blockAfter.type, title: blockAfter.title },
+      before: { type: blockBefore.type as string, title: blockBefore.title as string | undefined },
+      after: { type: blockAfter.type as string, title: blockAfter.title as string | undefined },
       changes: Object.keys(changes).length > 0 ? changes : undefined,
     });
   }
@@ -473,7 +486,7 @@ export function diffAnswerBlocks(traceA: unknown, traceB: unknown): AnswerBlocks
       blocks.push({
         index: i,
         changeType: "removed",
-        before: { type: blocksA[i].type, title: blocksA[i].title },
+        before: { type: blocksA[i].type as string, title: blocksA[i].title as string | undefined },
       });
     }
   }
@@ -484,7 +497,7 @@ export function diffAnswerBlocks(traceA: unknown, traceB: unknown): AnswerBlocks
       blocks.push({
         index: j,
         changeType: "added",
-        after: { type: blocksB[j].type, title: blocksB[j].title },
+        after: { type: blocksB[j].type as string, title: blocksB[j].title as string | undefined },
       });
     }
   }
@@ -503,14 +516,16 @@ export function diffAnswerBlocks(traceA: unknown, traceB: unknown): AnswerBlocks
  * Diff UI Render section
  */
 export function diffUIRender(traceA: unknown, traceB: unknown): UIRenderDiff {
-  const renderA = traceA?.ui_render || {};
-  const renderB = traceB?.ui_render || {};
+  const traceObjA = traceA as Record<string, unknown>;
+  const traceObjB = traceB as Record<string, unknown>;
+  const renderA = (traceObjA.ui_render as Record<string, unknown>) || {};
+  const renderB = (traceObjB.ui_render as Record<string, unknown>) || {};
 
-  const componentsA = renderA.rendered_blocks || [];
-  const componentsB = renderB.rendered_blocks || [];
+  const componentsA = (renderA.rendered_blocks as Record<string, unknown>[]) || [];
+  const componentsB = (renderB.rendered_blocks as Record<string, unknown>[]) || [];
 
-  const errorsBefore = componentsA.filter((c: unknown) => !c.ok).length;
-  const errorsAfter = componentsB.filter((c: unknown) => !c.ok).length;
+  const errorsBefore = componentsA.filter((c: Record<string, unknown>) => !c.ok).length;
+  const errorsAfter = componentsB.filter((c: Record<string, unknown>) => !c.ok).length;
 
   const changes: UIRenderDiff["changes"] = [];
 
@@ -524,13 +539,13 @@ export function diffUIRender(traceA: unknown, traceB: unknown): UIRenderDiff {
       changes.push({
         index: i,
         changeType: "added",
-        after: compAfter,
+        after: compAfter as { block_type: string; component_name: string; ok: boolean },
       });
     } else if (compBefore && !compAfter) {
       changes.push({
         index: i,
         changeType: "removed",
-        before: compBefore,
+        before: compBefore as { block_type: string; component_name: string; ok: boolean },
       });
     } else if (compBefore && compAfter) {
       const diff = deepCompareObjects(compBefore, compAfter);
@@ -540,8 +555,8 @@ export function diffUIRender(traceA: unknown, traceB: unknown): UIRenderDiff {
         changes.push({
           index: i,
           changeType: "modified",
-          before: compBefore,
-          after: compAfter,
+          before: compBefore as { block_type: string; component_name: string; ok: boolean },
+          after: compAfter as { block_type: string; component_name: string; ok: boolean },
           changes: diff,
         });
       }

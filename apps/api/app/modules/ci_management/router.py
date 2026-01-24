@@ -35,6 +35,7 @@ router = APIRouter(prefix="/api/ci-management", tags=["CI Management"])
 # CI Change Management Endpoints
 # ============================================================================
 
+
 @router.post("/changes", response_model=ResponseEnvelope[CIChangeRead])
 def create_ci_change(
     change: CIChangeCreate,
@@ -111,7 +112,9 @@ def list_ci_changes(
     )
 
 
-@router.post("/changes/{change_id}/approve", response_model=ResponseEnvelope[CIChangeRead])
+@router.post(
+    "/changes/{change_id}/approve", response_model=ResponseEnvelope[CIChangeRead]
+)
 def approve_ci_change(
     change_id: str,
     approval: CIChangeApprove,
@@ -136,7 +139,9 @@ def approve_ci_change(
     )
 
 
-@router.post("/changes/{change_id}/apply", response_model=ResponseEnvelope[CIChangeRead])
+@router.post(
+    "/changes/{change_id}/apply", response_model=ResponseEnvelope[CIChangeRead]
+)
 def apply_ci_change(
     change_id: str,
     session: Session = Depends(get_session),
@@ -156,7 +161,9 @@ def apply_ci_change(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/changes/{ci_id}/history", response_model=ResponseEnvelope[CIChangeHistory])
+@router.get(
+    "/changes/{ci_id}/history", response_model=ResponseEnvelope[CIChangeHistory]
+)
 def get_ci_change_history(
     ci_id: str,
     session: Session = Depends(get_session),
@@ -177,7 +184,11 @@ def get_ci_change_history(
 # CI Integrity Validation Endpoints
 # ============================================================================
 
-@router.get("/integrity/{ci_id}/issues", response_model=ResponseEnvelope[List[CIIntegrityIssueRead]])
+
+@router.get(
+    "/integrity/{ci_id}/issues",
+    response_model=ResponseEnvelope[List[CIIntegrityIssueRead]],
+)
 def get_ci_integrity_issues(
     ci_id: str,
     resolved: Optional[bool] = Query(None),
@@ -186,7 +197,9 @@ def get_ci_integrity_issues(
 ) -> ResponseEnvelope:
     """Get integrity issues for a CI."""
     tenant_id = get_current_tenant(request)
-    issues = crud.get_integrity_issues(session, ci_id=ci_id, resolved=resolved, tenant_id=tenant_id)
+    issues = crud.get_integrity_issues(
+        session, ci_id=ci_id, resolved=resolved, tenant_id=tenant_id
+    )
 
     return ResponseEnvelope(
         code=200,
@@ -195,7 +208,9 @@ def get_ci_integrity_issues(
     )
 
 
-@router.get("/integrity/{ci_id}/summary", response_model=ResponseEnvelope[CIIntegritySummary])
+@router.get(
+    "/integrity/{ci_id}/summary", response_model=ResponseEnvelope[CIIntegritySummary]
+)
 def get_ci_integrity_summary(
     ci_id: str,
     session: Session = Depends(get_session),
@@ -212,7 +227,10 @@ def get_ci_integrity_summary(
     )
 
 
-@router.post("/integrity/{issue_id}/resolve", response_model=ResponseEnvelope[CIIntegrityIssueRead])
+@router.post(
+    "/integrity/{issue_id}/resolve",
+    response_model=ResponseEnvelope[CIIntegrityIssueRead],
+)
 def resolve_integrity_issue(
     issue_id: str,
     resolved_by_user_id: str = Query(...),
@@ -241,7 +259,10 @@ def resolve_integrity_issue(
 # CI Duplicate Detection Endpoints
 # ============================================================================
 
-@router.get("/duplicates/{ci_id}", response_model=ResponseEnvelope[List[CIDuplicateRead]])
+
+@router.get(
+    "/duplicates/{ci_id}", response_model=ResponseEnvelope[List[CIDuplicateRead]]
+)
 def get_ci_duplicates(
     ci_id: str,
     session: Session = Depends(get_session),
@@ -258,7 +279,10 @@ def get_ci_duplicates(
     )
 
 
-@router.post("/duplicates/{duplicate_id}/confirm", response_model=ResponseEnvelope[CIDuplicateRead])
+@router.post(
+    "/duplicates/{duplicate_id}/confirm",
+    response_model=ResponseEnvelope[CIDuplicateRead],
+)
 def confirm_duplicate(
     duplicate_id: str,
     confirmation: CIDuplicateConfirm,
@@ -306,6 +330,7 @@ def get_duplicate_statistics(
 # Overall Statistics Endpoints
 # ============================================================================
 
+
 @router.get("/statistics/changes", response_model=ResponseEnvelope[CIChangeStats])
 def get_change_statistics(
     days: int = Query(30, ge=1, le=365),
@@ -326,6 +351,7 @@ def get_change_statistics(
 # ============================================================================
 # Health Check
 # ============================================================================
+
 
 @router.get("/health", response_model=ResponseEnvelope)
 def health_check() -> ResponseEnvelope:

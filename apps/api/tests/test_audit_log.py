@@ -38,7 +38,7 @@ def test_list_audit_logs_returns_matching_entries(session):
         limit=5,
         offset=0,
     )
-    
+
     assert result is not None
     assert len(result) >= 1
     assert any(log.trace_id == trace_id for log in result)
@@ -71,7 +71,9 @@ def test_get_audit_logs_by_trace_and_parent(session):
     assert any(log.trace_id == trace_id for log in trace_result)
 
     # Test by parent trace
-    parent_result = get_audit_logs_by_parent_trace(session=session, parent_trace_id=parent_trace_id)
+    parent_result = get_audit_logs_by_parent_trace(
+        session=session, parent_trace_id=parent_trace_id
+    )
     assert parent_result is not None
     assert len(parent_result) >= 1
     assert any(log.parent_trace_id == parent_trace_id for log in parent_result)

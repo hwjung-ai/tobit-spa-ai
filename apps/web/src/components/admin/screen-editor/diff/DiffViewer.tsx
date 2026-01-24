@@ -1,6 +1,6 @@
 "use client";
 
-import { ScreenDiff } from "@/lib/ui-screen/screen-diff-utils";
+import { ScreenDiff, DiffItem } from "@/lib/ui-screen/screen-diff-utils";
 import {
   Accordion,
   AccordionContent,
@@ -43,8 +43,8 @@ function getChangeTypeIcon(changeType: string) {
   }
 }
 
-function DiffItemRenderer({ item }: { item: unknown }) {
-  const { changeType, path } = item;
+function DiffItemRenderer({ item }: { item: DiffItem }) {
+  const { changeType, path, before, after, changes } = item;
 
   return (
     <div className={`p-3 rounded ${getChangeTypeColor(changeType)}`}>
@@ -53,21 +53,21 @@ function DiffItemRenderer({ item }: { item: unknown }) {
         <div className="flex-1 min-w-0">
           <div className="text-sm font-mono text-slate-700 break-all">{path}</div>
 
-          {item.before && !item.after && (
+          {before && !after && (
             <div className="mt-2 text-xs font-mono bg-red-100 text-red-800 p-2 rounded overflow-auto">
-              {JSON.stringify(item.before, null, 2)}
+              {JSON.stringify(before, null, 2)}
             </div>
           )}
 
-          {item.after && !item.before && (
+          {after && !before && (
             <div className="mt-2 text-xs font-mono bg-green-100 text-green-800 p-2 rounded overflow-auto">
-              {JSON.stringify(item.after, null, 2)}
+              {JSON.stringify(after, null, 2)}
             </div>
           )}
 
-          {item.changes && (
+          {changes && (
             <div className="mt-2 space-y-1">
-              {Object.entries(item.changes).map(([key, change]: [string, unknown]) => (
+              {Object.entries(changes).map(([key, change]: [string, unknown]) => (
                 <div key={key} className="text-xs">
                   <span className="font-mono text-slate-700">{key}:</span>
                   <span className="ml-2 line-through text-red-700">

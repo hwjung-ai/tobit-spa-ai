@@ -26,7 +26,9 @@ def upgrade() -> None:
         sa.Column("method", sa.Text(), nullable=False),
         sa.Column("ops_mode", sa.Text(), nullable=False),
         sa.Column("question", sa.Text(), nullable=False),
-        sa.Column("status", sa.Text(), nullable=False, server_default=sa.text("'success'")),
+        sa.Column(
+            "status", sa.Text(), nullable=False, server_default=sa.text("'success'")
+        ),
         sa.Column("duration_ms", sa.Integer(), nullable=False),
         sa.Column("request_payload", postgresql.JSONB(), nullable=True),
         sa.Column("applied_assets", postgresql.JSONB(), nullable=True),
@@ -39,10 +41,19 @@ def upgrade() -> None:
         sa.Column("answer", postgresql.JSONB(), nullable=True),
         sa.Column("ui_render", postgresql.JSONB(), nullable=True),
         sa.Column("audit_links", postgresql.JSONB(), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "created_at",
+            sa.TIMESTAMP(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
     )
-    op.create_index("idx_execution_trace_created_at", "tb_execution_trace", ["created_at"])
-    op.create_index("idx_execution_trace_parent", "tb_execution_trace", ["parent_trace_id"])
+    op.create_index(
+        "idx_execution_trace_created_at", "tb_execution_trace", ["created_at"]
+    )
+    op.create_index(
+        "idx_execution_trace_parent", "tb_execution_trace", ["parent_trace_id"]
+    )
 
 
 def downgrade() -> None:

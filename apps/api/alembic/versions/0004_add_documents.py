@@ -20,7 +20,12 @@ def upgrade() -> None:
         sa.Column("filename", sa.String(length=255), nullable=False),
         sa.Column("content_type", sa.String(length=128), nullable=False),
         sa.Column("size", sa.Integer(), nullable=False),
-        sa.Column("status", sa.String(length=32), nullable=False, server_default=sa.text("'queued'")),
+        sa.Column(
+            "status",
+            sa.String(length=32),
+            nullable=False,
+            server_default=sa.text("'queued'"),
+        ),
         sa.Column("error_message", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
@@ -29,7 +34,12 @@ def upgrade() -> None:
     op.create_table(
         "document_chunks",
         sa.Column("id", sa.String(length=36), primary_key=True),
-        sa.Column("document_id", sa.String(length=36), sa.ForeignKey("documents.id"), nullable=False),
+        sa.Column(
+            "document_id",
+            sa.String(length=36),
+            sa.ForeignKey("documents.id"),
+            nullable=False,
+        ),
         sa.Column("chunk_index", sa.Integer(), nullable=False),
         sa.Column("page", sa.Integer(), nullable=True),
         sa.Column("text", sa.Text(), nullable=False),

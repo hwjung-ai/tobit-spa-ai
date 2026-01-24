@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ChunkMetadata:
     """Metadata for a chunk"""
+
     position_in_doc: int
     page_number: Optional[int] = None
     chunk_type: str = "text"
@@ -29,7 +30,7 @@ class ChunkingStrategy:
         text: str,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         overlap: int = DEFAULT_OVERLAP,
-        document_type: str = "general"
+        document_type: str = "general",
     ) -> List[str]:
         """
         Split text into chunks using smart boundaries
@@ -94,7 +95,7 @@ class ChunkingStrategy:
 
         # Simple regex-based sentence splitter
         # Looks for sentence-ending punctuation followed by whitespace
-        sentence_pattern = r'(?<=[.!?])\s+'
+        sentence_pattern = r"(?<=[.!?])\s+"
 
         sentences = re.split(sentence_pattern, text)
 
@@ -133,19 +134,19 @@ class ChunkingStrategy:
             List of text chunks representing table data
         """
 
-        if 'data' not in table_data or not table_data['data']:
+        if "data" not in table_data or not table_data["data"]:
             return []
 
-        rows = table_data['data']
+        rows = table_data["data"]
         chunks = []
 
         for i in range(0, len(rows), chunk_size):
-            chunk_rows = rows[i:i + chunk_size]
+            chunk_rows = rows[i : i + chunk_size]
 
             # Convert rows to readable text
             chunk_text = "Table:\n"
-            if 'columns' in table_data:
-                chunk_text += ", ".join(table_data['columns']) + "\n"
+            if "columns" in table_data:
+                chunk_text += ", ".join(table_data["columns"]) + "\n"
 
             for row in chunk_rows:
                 if isinstance(row, dict):

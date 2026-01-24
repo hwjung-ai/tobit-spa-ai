@@ -19,10 +19,7 @@ class ChatEnhancementService:
         self.logger = logging.getLogger(__name__)
 
     async def create_thread(
-        self,
-        user_id: str,
-        tenant_id: str,
-        initial_title: Optional[str] = None
+        self, user_id: str, tenant_id: str, initial_title: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create new chat thread"""
 
@@ -81,7 +78,12 @@ class ChatEnhancementService:
         # In real implementation: db.insert(message)
 
         # Get thread to update token counts
-        thread = {"id": thread_id, "total_tokens_in": 0, "total_tokens_out": 0, "title": None}
+        thread = {
+            "id": thread_id,
+            "total_tokens_in": 0,
+            "total_tokens_out": 0,
+            "title": None,
+        }
 
         if tokens_in:
             thread["total_tokens_in"] += tokens_in
@@ -89,9 +91,8 @@ class ChatEnhancementService:
             thread["total_tokens_out"] += tokens_out
 
         # Calculate estimated cost (GPT-4: $0.03/$0.06 per 1K tokens)
-        thread["estimated_cost"] = (
-            (thread["total_tokens_in"] * 0.00003) +
-            (thread["total_tokens_out"] * 0.00006)
+        thread["estimated_cost"] = (thread["total_tokens_in"] * 0.00003) + (
+            thread["total_tokens_out"] * 0.00006
         )
 
         # Auto-generate title if not set and this is first assistant response
@@ -123,8 +124,8 @@ class ChatEnhancementService:
             # Create prompt for title generation
             prompt = f"""Based on this conversation excerpt, generate a concise title (max 50 chars):
 
-User: {messages[0].get('content', '')[:150]}...
-Assistant: {messages[1].get('content', '')[:150]}...
+User: {messages[0].get("content", "")[:150]}...
+Assistant: {messages[1].get("content", "")[:150]}...
 
 Respond with only the title, no other text."""
 
@@ -140,10 +141,7 @@ Respond with only the title, no other text."""
             return "New Conversation"
 
     async def search_history(
-        self,
-        user_id: str,
-        query: str,
-        search_type: str = "hybrid"
+        self, user_id: str, query: str, search_type: str = "hybrid"
     ) -> List[Dict[str, Any]]:
         """Search chat history across threads"""
 
@@ -166,7 +164,9 @@ Respond with only the title, no other text."""
                 pass
 
             execution_time_ms = int((time.time() - start_time) * 1000)
-            self.logger.info(f"Search: query='{query[:30]}', results={len(results)}, time={execution_time_ms}ms")
+            self.logger.info(
+                f"Search: query='{query[:30]}', results={len(results)}, time={execution_time_ms}ms"
+            )
 
             return results
 

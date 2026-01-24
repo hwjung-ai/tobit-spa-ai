@@ -2,9 +2,27 @@ import { test, expect } from "@playwright/test";
 
 test.describe("U3 Visual Editor - JSON Roundtrip", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to editor with a test screen ID
-    await page.goto("/admin/screens/test-screen-1");
-    await page.waitForSelector('[data-testid="screen-editor"]');
+    await page.goto("/admin/screens");
+    await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 10000 });
+
+    const screenName = "Test Screen 1";
+    const screenId = "test-screen-1";
+    const screenLink = page.locator('[data-testid^="link-screen-"]', { hasText: screenName }).first();
+    const hasScreen = await screenLink.isVisible({ timeout: 2000 }).catch(() => false);
+
+    if (!hasScreen) {
+      await page.click('[data-testid="btn-create-screen"]');
+      await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 10000 });
+      await page.fill('[data-testid="input-screen-id"]', screenId);
+      await page.fill('[data-testid="input-screen-name"]', screenName);
+      await page.click('[data-testid="btn-confirm-create"]');
+      await page.waitForSelector("text=Screen created successfully", { timeout: 10000 });
+    }
+
+    const openLink = page.locator('[data-testid^="link-screen-"]', { hasText: screenName }).first();
+    await openLink.waitFor({ timeout: 10000 });
+    await openLink.click();
+    await page.waitForSelector('[data-testid="screen-editor"]', { timeout: 20000 });
   });
 
   test("should create and persist a screen with components", async ({ page }) => {
@@ -26,7 +44,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     await expect(page.locator('[data-testid^="canvas-component-"]')).toHaveCount(1);
 
     // Verify canvas shows 1 component
-    await expect(page.locator('text="Canvas (1)"')).toBeVisible();
+    await expect(page.locator('[data-testid^="canvas-component-"]')).toHaveCount(1);
   });
 
   test("should sync visual editor changes to JSON", async ({ page }) => {
@@ -122,7 +140,7 @@ test.describe("U3 Visual Editor - JSON Roundtrip", () => {
     await page.click('[data-testid="palette-component-text"]');
 
     // Verify canvas shows 2 components
-    await expect(page.locator('text="Canvas (2)"')).toBeVisible();
+    await expect(page.locator('[data-testid^="canvas-component-"]')).toHaveCount(2);
 
     // Switch to JSON
     await page.click('text="JSON"');

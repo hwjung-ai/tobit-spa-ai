@@ -1,4 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+const openCreateModal = async (page: Page) => {
+  await page.click('[data-testid="btn-create-screen"]');
+  const modal = page.locator('[data-testid="modal-create-screen"]');
+  if (!(await modal.isVisible({ timeout: 10000 }).catch(() => false))) {
+    await page.click('[data-testid="btn-create-screen"]');
+  }
+  await modal.waitFor({ state: "visible", timeout: 10000 });
+};
 
 test.describe("U3-2-4: Template-based Screen Creation", () => {
   test.beforeEach(async ({ page }) => {
@@ -9,19 +18,20 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
   });
 
   test("should create blank screen when no template is selected", async ({ page }) => {
-    // Click create screen button
-    await page.click('[data-testid="btn-create-screen"]');
+    const suffix = Date.now();
+    const screenId = `test_blank_screen_${suffix}`;
+    const screenName = `Test Blank Screen ${suffix}`;
 
-    // Wait for create modal
-    await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 5000 });
+    // Click create screen button
+    await openCreateModal(page);
 
     // Verify blank template is selected by default
     const blankButton = page.locator('[data-testid="template-blank"]');
     await expect(blankButton).toHaveClass(/bg-sky-900/);
 
     // Fill in form
-    await page.fill('[data-testid="input-screen-id"]', "test_blank_screen");
-    await page.fill('[data-testid="input-screen-name"]', "Test Blank Screen");
+    await page.fill('[data-testid="input-screen-id"]', screenId);
+    await page.fill('[data-testid="input-screen-name"]', screenName);
 
     // Create screen
     await page.click('[data-testid="btn-confirm-create"]');
@@ -30,15 +40,16 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
 
     // Verify screen appears in list
-    await expect(page.locator('text=Test Blank Screen')).toBeVisible();
+    await expect(page.locator(`[data-testid^="link-screen-"]`, { hasText: screenName }).first()).toBeVisible();
   });
 
   test("should create screen from Read-only Detail template", async ({ page }) => {
-    // Click create screen button
-    await page.click('[data-testid="btn-create-screen"]');
+    const suffix = Date.now();
+    const screenId = `test_readonly_detail_${suffix}`;
+    const screenName = `Device Details ${suffix}`;
 
-    // Wait for create modal
-    await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 5000 });
+    // Click create screen button
+    await openCreateModal(page);
 
     // Select Read-only Detail template
     await page.click('[data-testid="template-readonly_detail"]');
@@ -48,8 +59,8 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await expect(templateButton).toHaveClass(/bg-sky-900/);
 
     // Fill in form
-    await page.fill('[data-testid="input-screen-id"]', "test_readonly_detail");
-    await page.fill('[data-testid="input-screen-name"]', "Device Details");
+    await page.fill('[data-testid="input-screen-id"]', screenId);
+    await page.fill('[data-testid="input-screen-name"]', screenName);
 
     // Create screen
     await page.click('[data-testid="btn-confirm-create"]');
@@ -58,7 +69,7 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
 
     // Open the created screen in editor
-    await page.click('text=Device Details');
+    await page.click(`text=${screenName}`);
     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
 
     // Navigate to JSON tab to verify template content
@@ -72,11 +83,12 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
   });
 
   test("should create screen from List + Filter template", async ({ page }) => {
-    // Click create screen button
-    await page.click('[data-testid="btn-create-screen"]');
+    const suffix = Date.now();
+    const screenId = `test_list_filter_${suffix}`;
+    const screenName = `Device List ${suffix}`;
 
-    // Wait for create modal
-    await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 5000 });
+    // Click create screen button
+    await openCreateModal(page);
 
     // Select List + Filter template
     await page.click('[data-testid="template-list_filter"]');
@@ -86,8 +98,8 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await expect(templateButton).toHaveClass(/bg-sky-900/);
 
     // Fill in form
-    await page.fill('[data-testid="input-screen-id"]', "test_list_filter");
-    await page.fill('[data-testid="input-screen-name"]', "Device List");
+    await page.fill('[data-testid="input-screen-id"]', screenId);
+    await page.fill('[data-testid="input-screen-name"]', screenName);
 
     // Create screen
     await page.click('[data-testid="btn-confirm-create"]');
@@ -96,25 +108,27 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
 
     // Open the created screen
-    await page.click('text=Device List');
+    await page.click(`text=${screenName}`);
     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
 
     // Navigate to JSON tab
     await page.click('[data-testid="tab-json"]');
     const jsonContent = await page.locator('[data-testid="json-editor-content"]').textContent();
 
-    // Verify DataGrid component is present
-    expect(jsonContent).toContain("DataGrid");
+    // Verify table component is present
+    expect(jsonContent).toContain('"type": "table"');
+    expect(jsonContent).toContain("Data Grid");
     expect(jsonContent).toContain("search_term");
     expect(jsonContent).toContain("items");
   });
 
   test("should create screen from List + Modal CRUD template", async ({ page }) => {
-    // Click create screen button
-    await page.click('[data-testid="btn-create-screen"]');
+    const suffix = Date.now();
+    const screenId = `test_crud_modal_${suffix}`;
+    const screenName = `Device Management ${suffix}`;
 
-    // Wait for create modal
-    await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 5000 });
+    // Click create screen button
+    await openCreateModal(page);
 
     // Select List + Modal CRUD template
     await page.click('[data-testid="template-list_modal_crud"]');
@@ -124,8 +138,8 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await expect(templateButton).toHaveClass(/bg-sky-900/);
 
     // Fill in form
-    await page.fill('[data-testid="input-screen-id"]', "test_crud_modal");
-    await page.fill('[data-testid="input-screen-name"]', "Device Management");
+    await page.fill('[data-testid="input-screen-id"]', screenId);
+    await page.fill('[data-testid="input-screen-name"]', screenName);
 
     // Create screen
     await page.click('[data-testid="btn-confirm-create"]');
@@ -134,7 +148,7 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
     await page.waitForSelector('text=Screen created successfully', { timeout: 10000 });
 
     // Open the created screen
-    await page.click('text=Device Management');
+    await page.click(`text=${screenName}`);
     await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 10000 });
 
     // Navigate to JSON tab
@@ -150,10 +164,7 @@ test.describe("U3-2-4: Template-based Screen Creation", () => {
 
   test("should switch between templates in create modal", async ({ page }) => {
     // Click create screen button
-    await page.click('[data-testid="btn-create-screen"]');
-
-    // Wait for create modal
-    await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 5000 });
+    await openCreateModal(page);
 
     // Start with Blank
     const blankButton = page.locator('[data-testid="template-blank"]');

@@ -143,7 +143,9 @@ def _normalize_runtime_path(path: str) -> str:
     return f"/runtime{cleaned}"
 
 
-def _find_runtime_api(session: Session, endpoint: str, method: str) -> ApiDefinition | None:
+def _find_runtime_api(
+    session: Session, endpoint: str, method: str
+) -> ApiDefinition | None:
     cleaned = _normalize_endpoint(endpoint)
     statement = (
         select(ApiDefinition)
@@ -163,15 +165,17 @@ def _find_runtime_api(session: Session, endpoint: str, method: str) -> ApiDefini
     api = session.exec(statement).scalars().first()
     if api:
         return api
-    return session.exec(
-        select(ApiDefinition)
-        .where(
-            ApiDefinition.path == cleaned.rstrip("/")
+    return (
+        session.exec(
+            select(ApiDefinition)
+            .where(ApiDefinition.path == cleaned.rstrip("/"))
+            .where(ApiDefinition.method == method)
+            .where(ApiDefinition.is_enabled)
+            .limit(1)
         )
-        .where(ApiDefinition.method == method)
-        .where(ApiDefinition.is_enabled)
-        .limit(1)
-    ).scalars().first()
+        .scalars()
+        .first()
+    )
 
 
 def _normalize_endpoint(endpoint: str) -> str:
@@ -182,9 +186,13 @@ def _normalize_endpoint(endpoint: str) -> str:
     return normalized
 
 
-async def _extract_runtime_params(request: Request) -> tuple[dict[str, Any], int | None, Any | None]:
+async def _extract_runtime_params(
+    request: Request,
+) -> tuple[dict[str, Any], int | None, Any | None]:
     if request.method == "GET":
-        params = {key: value for key, value in request.query_params.items() if key != "limit"}
+        params = {
+            key: value for key, value in request.query_params.items() if key != "limit"
+        }
         limit_raw = request.query_params.get("limit")
         return params, _parse_limit(limit_raw), None
     else:

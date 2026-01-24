@@ -82,7 +82,9 @@ class ScriptHttpClient:
         host = parsed.hostname
         if not allow_local:
             self._ensure_host_allowed(host)
-        timeout_secs = ((timeout_ms if timeout_ms is not None else self.config.timeout_ms) / 1000) or (DEFAULT_TIMEOUT_MS / 1000)
+        timeout_secs = (
+            (timeout_ms if timeout_ms is not None else self.config.timeout_ms) / 1000
+        ) or (DEFAULT_TIMEOUT_MS / 1000)
         with requests.request(
             method,
             url,
@@ -141,7 +143,12 @@ class ScriptHttpClient:
 class ScriptHttpFacade:
     client: ScriptHttpClient
 
-    def get(self, url: str, headers: Dict[str, str] | None = None, timeout_ms: int | None = None) -> Dict[str, Any]:
+    def get(
+        self,
+        url: str,
+        headers: Dict[str, str] | None = None,
+        timeout_ms: int | None = None,
+    ) -> Dict[str, Any]:
         return self.client.request("GET", url, headers=headers, timeout_ms=timeout_ms)
 
     def post(
@@ -151,7 +158,9 @@ class ScriptHttpFacade:
         json_body: Any | None = None,
         timeout_ms: int | None = None,
     ) -> Dict[str, Any]:
-        return self.client.request("POST", url, headers=headers, json_body=json_body, timeout_ms=timeout_ms)
+        return self.client.request(
+            "POST", url, headers=headers, json_body=json_body, timeout_ms=timeout_ms
+        )
 
 
 @dataclass
@@ -185,7 +194,9 @@ class ScriptExecutionContext:
             endpoint = self._normalize_runtime_endpoint(target)
             url = f"{self.config.base_url.rstrip('/')}{endpoint}"
         else:
-            url = f"{self.config.base_url.rstrip('/')}/api-manager/apis/{target}/execute"
+            url = (
+                f"{self.config.base_url.rstrip('/')}/api-manager/apis/{target}/execute"
+            )
         payload = {"params": params or {}, "limit": limit}
         headers = {
             "Content-Type": "application/json",
@@ -230,7 +241,9 @@ def _build_runner_config(payload: Dict[str, Any]) -> RunnerConfig:
         if isinstance(host, str) and host
     )
     blocked_private = bool(script_policy.get("blocked_private_ranges", True))
-    max_bytes = int(script_policy.get("max_response_bytes") or DEFAULT_MAX_RESPONSE_BYTES)
+    max_bytes = int(
+        script_policy.get("max_response_bytes") or DEFAULT_MAX_RESPONSE_BYTES
+    )
     timeout_ms = int(payload.get("timeout_ms") or DEFAULT_TIMEOUT_MS)
     base_url = payload.get("base_url")
     if not base_url:
@@ -268,7 +281,9 @@ def run_script(payload: Dict[str, Any]) -> Dict[str, Any]:
     params = dict(payload.get("params") or {})
     input_data = payload.get("input")
     runner_config = _build_runner_config(payload)
-    context = ScriptExecutionContext(config=runner_config, params=params, input_data=input_data)
+    context = ScriptExecutionContext(
+        config=runner_config, params=params, input_data=input_data
+    )
     _context_holder[0] = context
     namespace: Dict[str, Any] = {}
     exec(script_text, namespace)

@@ -16,8 +16,10 @@ from sqlmodel import Field, SQLModel
 # Enumerations
 # ============================================================================
 
+
 class ChangeType(str, Enum):
     """Types of changes to a CI."""
+
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"
@@ -28,6 +30,7 @@ class ChangeType(str, Enum):
 
 class ChangeStatus(str, Enum):
     """Status of a change."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -37,6 +40,7 @@ class ChangeStatus(str, Enum):
 
 class IntegrityStatus(str, Enum):
     """CI integrity status."""
+
     VALID = "valid"
     WARNING = "warning"
     ERROR = "error"
@@ -47,8 +51,10 @@ class IntegrityStatus(str, Enum):
 # Base Models
 # ============================================================================
 
+
 class TbCIChangeBase(SQLModel):
     """Base model for CI changes."""
+
     tenant_id: str = Field(max_length=36, index=True)
     ci_id: str = Field(max_length=100, index=True)
     change_type: ChangeType
@@ -68,9 +74,12 @@ class TbCIChangeBase(SQLModel):
 
 class TbCIIntegrityIssueBase(SQLModel):
     """Base model for CI integrity issues."""
+
     tenant_id: str = Field(max_length=36, index=True)
     ci_id: str = Field(max_length=100, index=True)
-    issue_type: str = Field(max_length=50)  # duplicate, missing_field, inconsistent, etc.
+    issue_type: str = Field(
+        max_length=50
+    )  # duplicate, missing_field, inconsistent, etc.
     severity: str = Field(max_length=20)  # info, warning, error
 
     description: str = Field(max_length=1000)
@@ -84,6 +93,7 @@ class TbCIIntegrityIssueBase(SQLModel):
 
 class TbCIDuplicateBase(SQLModel):
     """Base model for duplicate CI detection."""
+
     tenant_id: str = Field(max_length=36, index=True)
     ci_id_1: str = Field(max_length=100, index=True)
     ci_id_2: str = Field(max_length=100, index=True)
@@ -103,35 +113,51 @@ class TbCIDuplicateBase(SQLModel):
 # Database Models
 # ============================================================================
 
+
 class TbCIChange(TbCIChangeBase, table=True):
     """CI Change tracking table."""
+
     __tablename__ = "tb_ci_change"
 
     __table_args__ = ({"extend_existing": True},)
-    id: str = Field(primary_key=True, max_length=36, default_factory=lambda: str(uuid4()))
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    id: str = Field(
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by_trace_id: str = Field(max_length=36, default="system")
 
 
 class TbCIIntegrityIssue(TbCIIntegrityIssueBase, table=True):
     """CI Integrity validation issues table."""
+
     __tablename__ = "tb_ci_integrity_issue"
 
     __table_args__ = ({"extend_existing": True},)
-    id: str = Field(primary_key=True, max_length=36, default_factory=lambda: str(uuid4()))
-    detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    id: str = Field(
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
+    )
+    detected_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     detected_by_trace_id: str = Field(max_length=36, default="system")
 
 
 class TbCIDuplicate(TbCIDuplicateBase, table=True):
     """CI Duplicate detection table."""
+
     __tablename__ = "tb_ci_duplicate"
 
     __table_args__ = ({"extend_existing": True},)
-    id: str = Field(primary_key=True, max_length=36, default_factory=lambda: str(uuid4()))
-    detected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), index=True)
+    id: str = Field(
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
+    )
+    detected_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc), index=True
+    )
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -139,8 +165,10 @@ class TbCIDuplicate(TbCIDuplicateBase, table=True):
 # Pydantic Schemas (for API)
 # ============================================================================
 
+
 class CIChangeRead(BaseModel):
     """Schema for reading CI changes."""
+
     id: str
     tenant_id: str
     ci_id: str
@@ -160,6 +188,7 @@ class CIChangeRead(BaseModel):
 
 class CIChangeCreate(BaseModel):
     """Schema for creating CI changes."""
+
     tenant_id: str
     ci_id: str
     change_type: ChangeType
@@ -171,6 +200,7 @@ class CIChangeCreate(BaseModel):
 
 class CIChangeApprove(BaseModel):
     """Schema for approving CI changes."""
+
     approved_by_user_id: str
     approval_notes: Optional[str] = None
     approved: bool = True
@@ -178,6 +208,7 @@ class CIChangeApprove(BaseModel):
 
 class CIIntegrityIssueRead(BaseModel):
     """Schema for reading CI integrity issues."""
+
     id: str
     ci_id: str
     issue_type: str
@@ -193,6 +224,7 @@ class CIIntegrityIssueRead(BaseModel):
 
 class CIDuplicateRead(BaseModel):
     """Schema for reading CI duplicates."""
+
     id: str
     ci_id_1: str
     ci_id_2: str
@@ -208,6 +240,7 @@ class CIDuplicateRead(BaseModel):
 
 class CIDuplicateConfirm(BaseModel):
     """Schema for confirming duplicates."""
+
     confirmed_by_user_id: str
     action: str  # "merge", "ignore", "review"
     merge_into_ci_id: Optional[str] = None
@@ -217,8 +250,10 @@ class CIDuplicateConfirm(BaseModel):
 # Summary Models
 # ============================================================================
 
+
 class CIChangeHistory(BaseModel):
     """Summary of CI change history."""
+
     ci_id: str
     total_changes: int
     create_count: int
@@ -233,6 +268,7 @@ class CIChangeHistory(BaseModel):
 
 class CIIntegritySummary(BaseModel):
     """Summary of CI integrity status."""
+
     ci_id: str
     integrity_status: IntegrityStatus
     issue_count: int
@@ -245,6 +281,7 @@ class CIIntegritySummary(BaseModel):
 
 class CIChangeStats(BaseModel):
     """Statistics for CI changes."""
+
     total_changes: int
     pending_changes: int
     approved_changes: int

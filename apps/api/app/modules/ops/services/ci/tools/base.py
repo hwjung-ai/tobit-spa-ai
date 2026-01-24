@@ -133,7 +133,9 @@ class BaseTool(ABC):
         return self.tool_type.value
 
     @abstractmethod
-    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+    async def should_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this tool should execute given the parameters.
 
@@ -202,7 +204,9 @@ class BaseTool(ABC):
             },
         )
 
-    async def safe_execute(self, context: ToolContext, params: Dict[str, Any]) -> ToolResult:
+    async def safe_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> ToolResult:
         """
         Execute the tool with automatic error handling.
 
@@ -248,7 +252,9 @@ class ToolRegistry:
             ValueError: If a tool is already registered for this type
         """
         if tool_type in self._tools:
-            logger.warning(f"Tool type {tool_type.value} already registered; skipping re-registration")
+            logger.warning(
+                f"Tool type {tool_type.value} already registered; skipping re-registration"
+            )
             return
 
         self._tools[tool_type] = tool_class

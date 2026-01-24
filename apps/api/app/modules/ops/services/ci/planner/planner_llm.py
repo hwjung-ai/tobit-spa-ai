@@ -59,7 +59,9 @@ OUTPUT_TYPE_PRIORITIES = ["chart", "table", "number", "network", "text"]
 
 
 def _build_output_updates(output_types: Set[str]) -> dict[str, list[str] | str]:
-    blocks: list[str] = [otype for otype in OUTPUT_TYPE_PRIORITIES if otype in output_types]
+    blocks: list[str] = [
+        otype for otype in OUTPUT_TYPE_PRIORITIES if otype in output_types
+    ]
     if not blocks:
         blocks = ["text"]
     primary = blocks[0]
@@ -112,11 +114,15 @@ def _metric_payload_to_spec(payload: dict[str, str] | None) -> MetricSpec | None
 def _load_planner_prompt_definition() -> dict[str, Any] | None:
     prompt_data = load_prompt_asset(PROMPT_SCOPE, PROMPT_ENGINE, PROMPT_NAME)
     if not prompt_data:
-        logger.error("Prompt definition missing for ci planner (scope=%s)", PROMPT_SCOPE)
+        logger.error(
+            "Prompt definition missing for ci planner (scope=%s)", PROMPT_SCOPE
+        )
         return None
     templates = prompt_data.get("templates")
     if not isinstance(templates, dict):
-        logger.error("Prompt templates invalid for ci planner asset: %s", prompt_data.get("name"))
+        logger.error(
+            "Prompt templates invalid for ci planner asset: %s", prompt_data.get("name")
+        )
         return None
 
     logger.info(
@@ -130,7 +136,11 @@ def _load_planner_prompt_definition() -> dict[str, Any] | None:
     return prompt_data
 
 
-def _build_output_parser_messages(text: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> list[dict[str, str]] | None:
+def _build_output_parser_messages(
+    text: str,
+    schema_context: dict[str, Any] | None = None,
+    source_context: dict[str, Any] | None = None,
+) -> list[dict[str, str]] | None:
     prompt_data = _load_planner_prompt_definition()
     if not prompt_data:
         return None
@@ -180,9 +190,15 @@ def _extract_json_block(text: str) -> str | None:
     return match.group(0) if match else None
 
 
-def _call_output_parser_llm(text: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> dict | None:
+def _call_output_parser_llm(
+    text: str,
+    schema_context: dict[str, Any] | None = None,
+    source_context: dict[str, Any] | None = None,
+) -> dict | None:
     try:
-        messages = _build_output_parser_messages(text, schema_context=schema_context, source_context=source_context)
+        messages = _build_output_parser_messages(
+            text, schema_context=schema_context, source_context=source_context
+        )
         if messages is None:
             raise ValueError("Failed to build LLM messages from prompt template.")
 
@@ -213,7 +229,9 @@ def _call_output_parser_llm(text: str, schema_context: dict[str, Any] | None = N
         try:
             payload = json.loads(json_text)
         except json.JSONDecodeError as exc:
-            raise ValueError(f"LLM JSON parse error: {exc} | raw={json_text[:400]}") from exc
+            raise ValueError(
+                f"LLM JSON parse error: {exc} | raw={json_text[:400]}"
+            ) from exc
         return payload
     except Exception as exc:
         logger.warning("ci.planner.llm_fallback", extra={"error": str(exc)})
@@ -225,7 +243,14 @@ def is_metric_requested(text: str) -> bool:
     return any(keyword in normalized for keyword in METRIC_KEYWORDS)
 
 
-TAG_FILTER_KEYS = {"system", "role", "runs_on", "host_server", "ci_subtype", "connected_servers"}
+TAG_FILTER_KEYS = {
+    "system",
+    "role",
+    "runs_on",
+    "host_server",
+    "ci_subtype",
+    "connected_servers",
+}
 ATTR_FILTER_KEYS = {"engine", "version", "zone", "ip", "cpu_cores", "memory_gb"}
 METRIC_ALIASES = {
     "cpu": "cpu_usage",
@@ -272,9 +297,21 @@ AGG_KEYWORDS = {
     "건수": "count",
 }
 SERIES_KEYWORDS = {"추이", "시계열", "그래프", "trend", "series", "line", "chart"}
-CI_CODE_PATTERN = re.compile(r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE)
+CI_CODE_PATTERN = re.compile(
+    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
+)
 
-NUMBER_KEYWORDS = {"얼마나", "숫자", "수치", "크다", "얼마나", "얼마", "몇", "count", "total"}
+NUMBER_KEYWORDS = {
+    "얼마나",
+    "숫자",
+    "수치",
+    "크다",
+    "얼마나",
+    "얼마",
+    "몇",
+    "count",
+    "total",
+}
 CEP_KEYWORDS = {"simulate", "시뮬", "시뮬레이션", "규칙", "rule", "cep"}
 UUID_PATTERN = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
@@ -319,8 +356,19 @@ AUTO_VIEW_PREFERENCES = [
     (["주변", "neighbor", "연관", "관련", "near"], [View.NEIGHBORS]),
 ]
 
-CI_CODE_PATTERN = re.compile(r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE)
-GRAPH_SCOPE_METRIC_KEYWORDS = {"cpu", "latency", "error", "성능", "rps", "response", "응답", "performance"}
+CI_CODE_PATTERN = re.compile(
+    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
+)
+GRAPH_SCOPE_METRIC_KEYWORDS = {
+    "cpu",
+    "latency",
+    "error",
+    "성능",
+    "rps",
+    "response",
+    "응답",
+    "performance",
+}
 GRAPH_SCOPE_VIEWS = {View.DEPENDENCY, View.IMPACT}
 LIST_KEYWORDS = {
     "목록",
@@ -352,7 +400,9 @@ LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
 SERVER_FILTER_KEYWORDS = {"서버", "server"}
 CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
 GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
-OUTPUT_PARSER_MODEL = os.environ.get("OPS_CI_OUTPUT_PARSER_MODEL", os.environ.get("CHAT_MODEL", "gpt-4o-mini"))
+OUTPUT_PARSER_MODEL = os.environ.get(
+    "OPS_CI_OUTPUT_PARSER_MODEL", os.environ.get("CHAT_MODEL", "gpt-4o-mini")
+)
 
 PROMPT_SCOPE = "ci"
 PROMPT_ENGINE = "planner"
@@ -431,16 +481,29 @@ def _should_filter_server(text: str) -> bool:
     return any(keyword in normalized for keyword in SERVER_FILTER_KEYWORDS)
 
 
-def create_plan(question: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> Plan:
+def create_plan(
+    question: str,
+    schema_context: dict[str, Any] | None = None,
+    source_context: dict[str, Any] | None = None,
+) -> Plan:
     normalized = question.strip()
     start = perf_counter()
-    logger.info("ci.planner.start", extra={"query_len": len(normalized), "has_schema": bool(schema_context), "has_source": bool(source_context)})
+    logger.info(
+        "ci.planner.start",
+        extra={
+            "query_len": len(normalized),
+            "has_schema": bool(schema_context),
+            "has_source": bool(source_context),
+        },
+    )
     plan = Plan()
     plan.mode = _determine_mode(normalized)
     llm_payload = None
     graph_force = _is_graph_force_query(normalized)
     try:
-        llm_payload = _call_output_parser_llm(normalized, schema_context=schema_context, source_context=source_context)
+        llm_payload = _call_output_parser_llm(
+            normalized, schema_context=schema_context, source_context=source_context
+        )
     except Exception:  # pragma: no cover - placeholder
         llm_payload = None
     output_types: Set[str]
@@ -492,14 +555,23 @@ def create_plan(question: str, schema_context: dict[str, Any] | None = None, sou
             offset_int = 0
         limit_int = max(1, min(50, limit_int))
         offset_int = max(0, min(5000, offset_int))
-        plan.list = plan.list.model_copy(update={"enabled": True, "limit": limit_int, "offset": offset_int})
+        plan.list = plan.list.model_copy(
+            update={"enabled": True, "limit": limit_int, "offset": offset_int}
+        )
         plan.intent = Intent.LIST
-        plan.output = plan.output.model_copy(update={"blocks": ["table"], "primary": "table"})
+        plan.output = plan.output.model_copy(
+            update={"blocks": ["table"], "primary": "table"}
+        )
         plan.primary = plan.primary.model_copy(update={"keywords": []})
         plan.secondary = plan.secondary.model_copy(update={"keywords": []})
         logger.info(
             "ci.planner.llm.used",
-            extra={"ci_identifiers": len(ci_keywords), "output_types": ",".join(sorted(output_types)), "list_enabled": True, "list_limit": limit_int},
+            extra={
+                "ci_identifiers": len(ci_keywords),
+                "output_types": ",".join(sorted(output_types)),
+                "list_enabled": True,
+                "list_limit": limit_int,
+            },
         )
         elapsed_ms = int((perf_counter() - start) * 1000)
         logger.info(
@@ -520,7 +592,11 @@ def create_plan(question: str, schema_context: dict[str, Any] | None = None, sou
     parsed_filters = _extract_filters(normalized)
     if parsed_filters:
         plan.primary = plan.primary.model_copy(update={"filters": parsed_filters})
-    server_filter = FilterSpec(field="ci_subtype", value="server") if _should_filter_server(normalized) else None
+    server_filter = (
+        FilterSpec(field="ci_subtype", value="server")
+        if _should_filter_server(normalized)
+        else None
+    )
     aggregate_filters = _merge_filters(
         plan.primary.filters,
         llm_filters,
@@ -530,9 +606,13 @@ def create_plan(question: str, schema_context: dict[str, Any] | None = None, sou
     secondary_text = normalized
     if plan.intent == Intent.PATH:
         left, right = _split_path_candidates(normalized)
-        plan.primary = plan.primary.model_copy(update={"keywords": _extract_keywords(left)})
+        plan.primary = plan.primary.model_copy(
+            update={"keywords": _extract_keywords(left)}
+        )
         secondary_text = right
-    plan.secondary = plan.secondary.model_copy(update={"keywords": _extract_keywords(secondary_text)})
+    plan.secondary = plan.secondary.model_copy(
+        update={"keywords": _extract_keywords(secondary_text)}
+    )
     if plan.intent == Intent.AGGREGATE:
         should_group = _determine_type_aggregation(normalized) and not aggregate_filters
         group_by = ["ci_type"] if should_group else []
@@ -550,13 +630,17 @@ def create_plan(question: str, schema_context: dict[str, Any] | None = None, sou
             requested_depth = 1
 
     if plan.intent == Intent.PATH:
-        plan.graph = plan.graph.model_copy(update={
-            "depth": requested_depth if requested_depth > 1 else 4,
-            "user_requested_depth": requested_depth
-        })
+        plan.graph = plan.graph.model_copy(
+            update={
+                "depth": requested_depth if requested_depth > 1 else 4,
+                "user_requested_depth": requested_depth,
+            }
+        )
     else:
         # PATH가 아니어도 user_requested_depth 항상 기록
-        plan.graph = plan.graph.model_copy(update={"user_requested_depth": requested_depth})
+        plan.graph = plan.graph.model_copy(
+            update={"user_requested_depth": requested_depth}
+        )
     metric_spec = None
     if llm_payload:
         metric_spec = _metric_payload_to_spec(llm_payload.get("metric"))
@@ -585,9 +669,20 @@ def create_plan(question: str, schema_context: dict[str, Any] | None = None, sou
         plan = _apply_graph_scope(plan, normalized)
     if plan.mode == PlanMode.AUTO:
         plan = plan.model_copy(update={"auto": _determine_auto_spec(normalized, plan)})
-    plan = plan.model_copy(update={"output": plan.output.model_copy(update=_build_output_updates(output_types))})
+    plan = plan.model_copy(
+        update={
+            "output": plan.output.model_copy(update=_build_output_updates(output_types))
+        }
+    )
     if llm_payload:
-        logger.info("ci.planner.llm.used", extra={"ci_identifiers": len(ci_keywords), "output_types": ",".join(sorted(output_types)), "list_enabled": False})
+        logger.info(
+            "ci.planner.llm.used",
+            extra={
+                "ci_identifiers": len(ci_keywords),
+                "output_types": ",".join(sorted(output_types)),
+                "list_enabled": False,
+            },
+        )
     else:
         logger.info("ci.planner.llm.skipped", extra={"reason": "heuristic"})
     elapsed_ms = int((perf_counter() - start) * 1000)
@@ -619,11 +714,22 @@ def _determine_metric_spec(text: str):
             break
     if not metric_name:
         return None
-    time_range = next((value for key, value in TIME_RANGE_MAP.items() if key in normalized), "last_24h")
-    agg = next((value for key, value in AGG_KEYWORDS.items() if key in normalized), "avg")
-    mode = "series" if any(keyword in normalized for keyword in SERIES_KEYWORDS) else "aggregate"
+    time_range = next(
+        (value for key, value in TIME_RANGE_MAP.items() if key in normalized),
+        "last_24h",
+    )
+    agg = next(
+        (value for key, value in AGG_KEYWORDS.items() if key in normalized), "avg"
+    )
+    mode = (
+        "series"
+        if any(keyword in normalized for keyword in SERIES_KEYWORDS)
+        else "aggregate"
+    )
     # default aggregate/series based on keywords
-    return MetricSpec(metric_name=metric_name, agg=agg, time_range=time_range, mode=mode)
+    return MetricSpec(
+        metric_name=metric_name, agg=agg, time_range=time_range, mode=mode
+    )
 
 
 def _determine_list_spec(text: str) -> ListSpec | None:
@@ -661,7 +767,9 @@ def _apply_ci_type_aggregation(plan: Plan, text: str) -> Plan:
         return plan
     if plan.intent == Intent.AGGREGATE and "ci_type" in plan.aggregate.group_by:
         return plan
-    aggregate = plan.aggregate.model_copy(update={"group_by": ["ci_type"], "metrics": ["count"], "top_n": 10})
+    aggregate = plan.aggregate.model_copy(
+        update={"group_by": ["ci_type"], "metrics": ["count"], "top_n": 10}
+    )
     return plan.model_copy(
         update={
             "intent": Intent.AGGREGATE,
@@ -684,7 +792,9 @@ def _determine_graph_depth(text: str, view: View) -> int:
     match = GRAPH_DEPTH_PATTERN.search(text)
     if match:
         return max(1, int(match.group(1)))
-    return GRAPH_VIEW_DEFAULT_DEPTH.get(view, GRAPH_VIEW_DEFAULT_DEPTH.get(View.DEPENDENCY, 2))
+    return GRAPH_VIEW_DEFAULT_DEPTH.get(
+        view, GRAPH_VIEW_DEFAULT_DEPTH.get(View.DEPENDENCY, 2)
+    )
 
 
 def _has_graph_scope_keyword(text: str) -> bool:
@@ -726,7 +836,9 @@ def _apply_graph_scope(plan: Plan, text: str) -> Plan:
     metric_spec = plan.metric
     if not metric_spec:
         return plan
-    updated_metric = metric_spec.model_copy(update={"scope": "graph", "mode": "aggregate"})
+    updated_metric = metric_spec.model_copy(
+        update={"scope": "graph", "mode": "aggregate"}
+    )
     return plan.model_copy(
         update={
             "metric": updated_metric,
@@ -775,10 +887,20 @@ def _determine_auto_spec(text: str, plan: Plan) -> AutoSpec:
     normalized = text.lower()
     views = _determine_auto_views(normalized)
     depth_hint = _determine_auto_depth_hint(normalized)
-    include_metric = bool(plan.metric) or any(keyword in normalized for keyword in METRIC_KEYWORDS)
-    metric_mode = "series" if any(keyword in normalized for keyword in SERIES_KEYWORDS) else "aggregate"
-    include_history = bool(plan.history.enabled) or any(keyword in normalized for keyword in HISTORY_KEYWORDS)
-    include_cep = bool(plan.cep and plan.cep.rule_id) or any(keyword in normalized for keyword in CEP_KEYWORDS)
+    include_metric = bool(plan.metric) or any(
+        keyword in normalized for keyword in METRIC_KEYWORDS
+    )
+    metric_mode = (
+        "series"
+        if any(keyword in normalized for keyword in SERIES_KEYWORDS)
+        else "aggregate"
+    )
+    include_history = bool(plan.history.enabled) or any(
+        keyword in normalized for keyword in HISTORY_KEYWORDS
+    )
+    include_cep = bool(plan.cep and plan.cep.rule_id) or any(
+        keyword in normalized for keyword in CEP_KEYWORDS
+    )
     return AutoSpec(
         views=views,
         depth_hint=depth_hint,
@@ -810,9 +932,15 @@ def _determine_auto_path_spec(text: str) -> AutoPathSpec:
 def _determine_graph_scope_spec(text: str, views: List[View]) -> AutoGraphScopeSpec:
     normalized = text.lower()
     has_scope_view = any(view in GRAPH_SCOPE_VIEWS for view in views)
-    include_metric = has_scope_view and any(keyword in normalized for keyword in GRAPH_SCOPE_METRIC_KEYWORDS)
-    include_history = has_scope_view and any(keyword in normalized for keyword in HISTORY_KEYWORDS)
-    return AutoGraphScopeSpec(include_metric=include_metric, include_history=include_history)
+    include_metric = has_scope_view and any(
+        keyword in normalized for keyword in GRAPH_SCOPE_METRIC_KEYWORDS
+    )
+    include_history = has_scope_view and any(
+        keyword in normalized for keyword in HISTORY_KEYWORDS
+    )
+    return AutoGraphScopeSpec(
+        include_metric=include_metric, include_history=include_history
+    )
 
 
 HISTORY_KEYWORDS = {"이벤트", "알람", "로그", "event"}
@@ -863,7 +991,11 @@ def _determine_mode(text: str):
     return PlanMode.CI
 
 
-def create_plan_output(question: str, schema_context: dict[str, Any] | None = None, source_context: dict[str, Any] | None = None) -> PlanOutput:
+def create_plan_output(
+    question: str,
+    schema_context: dict[str, Any] | None = None,
+    source_context: dict[str, Any] | None = None,
+) -> PlanOutput:
     """Create a plan output with route determination (direct, plan, or reject)
 
     Args:
@@ -873,13 +1005,22 @@ def create_plan_output(question: str, schema_context: dict[str, Any] | None = No
     """
     normalized = question.strip()
     start = perf_counter()
-    logger.info("ci.planner.start", extra={"query_len": len(normalized), "has_schema": bool(schema_context), "has_source": bool(source_context)})
+    logger.info(
+        "ci.planner.start",
+        extra={
+            "query_len": len(normalized),
+            "has_schema": bool(schema_context),
+            "has_source": bool(source_context),
+        },
+    )
 
     # Try to get route from LLM first
     route = "orch"  # default
     llm_payload = None
     try:
-        llm_payload = _call_output_parser_llm(normalized, schema_context=schema_context, source_context=source_context)
+        llm_payload = _call_output_parser_llm(
+            normalized, schema_context=schema_context, source_context=source_context
+        )
         if llm_payload and llm_payload.get("route"):
             route = llm_payload["route"]
     except Exception:
@@ -896,11 +1037,11 @@ def create_plan_output(question: str, schema_context: dict[str, Any] | None = No
             direct_answer=DirectAnswerPayload(
                 answer=_generate_direct_answer(normalized),
                 confidence=0.95,
-                reasoning="Simple query that doesn't require orchestration"
+                reasoning="Simple query that doesn't require orchestration",
             ),
             confidence=0.95,
             reasoning="Direct answer route selected",
-            metadata={"elapsed_ms": elapsed_ms, "llm_route": route}
+            metadata={"elapsed_ms": elapsed_ms, "llm_route": route},
         )
 
     if route == "reject":
@@ -914,15 +1055,17 @@ def create_plan_output(question: str, schema_context: dict[str, Any] | None = No
                 reason="This query is not supported or cannot be processed",
                 policy="content_policy",
                 confidence=1.0,
-                reasoning="Query violates content policy or is not supported"
+                reasoning="Query violates content policy or is not supported",
             ),
             confidence=1.0,
             reasoning="Reject route selected",
-            metadata={"elapsed_ms": elapsed_ms, "llm_route": route}
+            metadata={"elapsed_ms": elapsed_ms, "llm_route": route},
         )
 
     # Otherwise, create a normal plan
-    plan = create_plan(normalized, schema_context=schema_context, source_context=source_context)
+    plan = create_plan(
+        normalized, schema_context=schema_context, source_context=source_context
+    )
     end = perf_counter()
     elapsed_ms = int((end - start) * 1000)
     logger.info("ci.planner.plan_created", extra={"elapsed_ms": elapsed_ms})
@@ -932,7 +1075,7 @@ def create_plan_output(question: str, schema_context: dict[str, Any] | None = No
         plan=plan,
         confidence=1.0,
         reasoning="Orchestration plan created",
-        metadata={"elapsed_ms": elapsed_ms, "llm_route": route}
+        metadata={"elapsed_ms": elapsed_ms, "llm_route": route},
     )
 
 
@@ -941,14 +1084,20 @@ def _should_direct_answer(text: str) -> bool:
     normalized = text.lower()
 
     # Simple greetings and common questions
-    if any(greeting in normalized for greeting in ["hello", "hi", "안녕", "안녕하세요"]):
+    if any(
+        greeting in normalized for greeting in ["hello", "hi", "안녕", "안녕하세요"]
+    ):
         return True
 
-    if any(keyword in normalized for keyword in ["what is", "who is", "how to", "help"]):
+    if any(
+        keyword in normalized for keyword in ["what is", "who is", "how to", "help"]
+    ):
         return True
 
     # Very simple queries that don't need database access
-    if len(normalized) < 20 and any(keyword in normalized for keyword in ["simple", "basic"]):
+    if len(normalized) < 20 and any(
+        keyword in normalized for keyword in ["simple", "basic"]
+    ):
         return True
 
     return False
@@ -959,7 +1108,10 @@ def _should_reject(text: str) -> bool:
     normalized = text.lower()
 
     # Security concerns
-    if any(keyword in normalized for keyword in ["delete all", "drop table", "format", "hack"]):
+    if any(
+        keyword in normalized
+        for keyword in ["delete all", "drop table", "format", "hack"]
+    ):
         return True
 
     # Inappropriate content

@@ -19,9 +19,15 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "query_history",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
-        sa.Column("tenant_id", sa.Text(), nullable=False, server_default=sa.text("'default'")),
-        sa.Column("user_id", sa.Text(), nullable=False, server_default=sa.text("'default'")),
+        sa.Column(
+            "id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False
+        ),
+        sa.Column(
+            "tenant_id", sa.Text(), nullable=False, server_default=sa.text("'default'")
+        ),
+        sa.Column(
+            "user_id", sa.Text(), nullable=False, server_default=sa.text("'default'")
+        ),
         sa.Column("feature", sa.Text(), nullable=False),
         sa.Column("question", sa.Text(), nullable=False),
         sa.Column("summary", sa.Text(), nullable=True),

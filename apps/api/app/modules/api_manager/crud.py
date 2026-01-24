@@ -13,7 +13,9 @@ VALID_LOGIC_TYPES = {"sql", "workflow", "python", "script", "http"}
 DRY_RUN_API_ID = "00000000-0000-0000-0000-000000000000"
 
 
-def list_api_definitions(session: Session, api_type: ApiType | None = None) -> list[TbApiDef]:
+def list_api_definitions(
+    session: Session, api_type: ApiType | None = None
+) -> list[TbApiDef]:
     statement = select(TbApiDef)
     if api_type:
         statement = statement.where(TbApiDef.api_type == api_type)
@@ -51,7 +53,9 @@ def create_api_definition(session: Session, payload: ApiDefinitionCreate) -> TbA
     return obj
 
 
-def update_api_definition(session: Session, api: TbApiDef, updates: ApiDefinitionUpdate) -> TbApiDef:
+def update_api_definition(
+    session: Session, api: TbApiDef, updates: ApiDefinitionUpdate
+) -> TbApiDef:
     data = updates.model_dump(exclude_none=True)
     if not data:
         return api

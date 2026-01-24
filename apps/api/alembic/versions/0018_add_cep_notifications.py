@@ -29,7 +29,9 @@ def upgrade() -> None:
             server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column("name", sa.Text(), nullable=False),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column(
+            "is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")
+        ),
         sa.Column("channel", sa.Text(), nullable=False),
         sa.Column("webhook_url", sa.Text(), nullable=False),
         sa.Column(
@@ -121,7 +123,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_tb_cep_notification_log_fired_at", table_name="tb_cep_notification_log")
+    op.drop_index(
+        "ix_tb_cep_notification_log_fired_at", table_name="tb_cep_notification_log"
+    )
     op.drop_index(
         "ix_tb_cep_notification_log_notification_id_fired_at",
         table_name="tb_cep_notification_log",

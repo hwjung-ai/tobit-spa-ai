@@ -21,8 +21,7 @@ def get_current_tenant(request: Request) -> str:
     tenant_id = getattr(request.state, "tenant_id", None)
     if not tenant_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tenant ID is required"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID is required"
         )
     return tenant_id
 

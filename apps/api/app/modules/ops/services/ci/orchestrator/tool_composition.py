@@ -25,12 +25,16 @@ class CompositionPipeline:
         self.results: List[Dict[str, Any]] = []
         self.logger = logger
 
-    async def execute(self, executor: ToolExecutor, initial_params: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute(
+        self, executor: ToolExecutor, initial_params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         current_result = initial_params
         for step in self.steps:
             try:
                 params = step.params_transform(current_result)
-                result = await executor.execute_async(step.tool_type, step.operation, **params)
+                result = await executor.execute_async(
+                    step.tool_type, step.operation, **params
+                )
                 self.results.append({"step": step.tool_type.value, "result": result})
                 current_result = result
             except Exception as exc:
@@ -41,11 +45,18 @@ class CompositionPipeline:
 
     def _handle_step_error(self, step: CompositionStep, error: Exception):
         if step.error_handling == "fail_fast":
-            self.logger.error(f"Composition step failed: {step.tool_type.value}/{step.operation}", extra={"error": str(error)})
+            self.logger.error(
+                f"Composition step failed: {step.tool_type.value}/{step.operation}",
+                extra={"error": str(error)},
+            )
         elif step.error_handling == "skip":
-            self.logger.warning(f"Skipping {step.tool_type.value}/{step.operation}: {error}")
+            self.logger.warning(
+                f"Skipping {step.tool_type.value}/{step.operation}: {error}"
+            )
         elif step.error_handling == "fallback":
-            self.logger.info(f"Fallback mode for {step.tool_type.value}/{step.operation}: {error}")
+            self.logger.info(
+                f"Fallback mode for {step.tool_type.value}/{step.operation}: {error}"
+            )
 
     def _aggregate_results(self) -> Dict[str, Any]:
         return {

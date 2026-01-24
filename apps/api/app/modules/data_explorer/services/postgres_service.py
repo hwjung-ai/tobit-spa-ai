@@ -29,9 +29,13 @@ def _normalize_patterns(value: str) -> list[str]:
 def _is_table_allowed(schema: str, table: str, settings: AppSettings) -> bool:
     schema_allowed = _normalize_patterns(settings.data_pg_allow_schemas)
     table_allowed = _normalize_patterns(settings.data_pg_allow_tables)
-    if schema_allowed and not any(fnmatch.fnmatch(schema, pattern) for pattern in schema_allowed):
+    if schema_allowed and not any(
+        fnmatch.fnmatch(schema, pattern) for pattern in schema_allowed
+    ):
         return False
-    if table_allowed and not any(fnmatch.fnmatch(table, pattern) for pattern in table_allowed):
+    if table_allowed and not any(
+        fnmatch.fnmatch(table, pattern) for pattern in table_allowed
+    ):
         return False
     return True
 
@@ -81,7 +85,9 @@ def run_query(
 def _split_table(table: str, settings: AppSettings) -> tuple[str, str]:
     parts = [part.strip() for part in table.split(".") if part.strip()]
     if len(parts) == 1:
-        default_schema = _normalize_patterns(settings.data_pg_allow_schemas) or ["public"]
+        default_schema = _normalize_patterns(settings.data_pg_allow_schemas) or [
+            "public"
+        ]
         return default_schema, parts[0]
     if len(parts) == 2:
         return parts[0], parts[1]
@@ -111,7 +117,9 @@ def _ensure_allowed_tables(sql_text: str, settings: AppSettings) -> None:
             continue
         parts = table_name.split(".")
         if len(parts) == 1:
-            schema = (_normalize_patterns(settings.data_pg_allow_schemas) or ["public"])[0]
+            schema = (
+                _normalize_patterns(settings.data_pg_allow_schemas) or ["public"]
+            )[0]
             table = parts[0]
         else:
             schema, table = parts[0], parts[1]

@@ -26,18 +26,29 @@ class TbOperationSettings(SQLModel, table=True):
         default="published",
         sa_column=Column(Text, nullable=False, server_default=text("'published'")),
     )
-    env_override: dict[str, Any] | None = Field(default=None, sa_column=Column(JSONB, nullable=True))
-    restart_required: bool = Field(default=False, sa_column=Column(Boolean, nullable=False, server_default=text("false")))
+    env_override: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+    restart_required: bool = Field(
+        default=False,
+        sa_column=Column(Boolean, nullable=False, server_default=text("false")),
+    )
     description: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    published_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    published_by: str | None = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     published_at: datetime | None = Field(
         default=None, sa_column=Column(TIMESTAMP(timezone=True), nullable=True)
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )

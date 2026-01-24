@@ -1,0 +1,3378 @@
+{
+  "time": "2026-01-24T11:55:48.692151Z",
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "answer": "Lookup result for app-erp-alert-04-2",
+    "blocks": [
+      {
+        "type": "text",
+        "text": "app-erp-alert-04-2 · ERP App Alert 04-2",
+        "title": "CI summary"
+      },
+      {
+        "type": "table",
+        "columns": [
+          "field",
+          "value"
+        ],
+        "rows": [
+          [
+            "ci_code",
+            "app-erp-alert-04-2"
+          ],
+          [
+            "ci_name",
+            "ERP App Alert 04-2"
+          ],
+          [
+            "ci_type",
+            "SW"
+          ],
+          [
+            "ci_subtype",
+            "app"
+          ],
+          [
+            "ci_category",
+            "application"
+          ],
+          [
+            "status",
+            "active"
+          ],
+          [
+            "location",
+            "zone-c"
+          ],
+          [
+            "owner",
+            "erp-apps"
+          ]
+        ],
+        "title": "CI details"
+      },
+      {
+        "type": "table",
+        "columns": [
+          "tags",
+          "value"
+        ],
+        "rows": [
+          [
+            "system",
+            "erp"
+          ],
+          [
+            "runs_on",
+            "was-erp-04"
+          ],
+          [
+            "ci_subtype",
+            "app"
+          ],
+          [
+            "host_server",
+            "srv-erp-04"
+          ]
+        ],
+        "title": "Tags"
+      },
+      {
+        "type": "table",
+        "columns": [
+          "attributes",
+          "value"
+        ],
+        "rows": [
+          [
+            "repo",
+            "https://git.internal/erp/alert-04"
+          ],
+          [
+            "language",
+            "python"
+          ],
+          [
+            "owner_team",
+            "erp-app"
+          ]
+        ],
+        "title": "Attributes"
+      }
+    ],
+    "trace": {
+      "route": "orch",
+      "plan_raw": {
+        "intent": "LOOKUP",
+        "view": "SUMMARY",
+        "mode": "ci",
+        "primary": {
+          "keywords": [
+            "app-erp-alert-04-2"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "secondary": {
+          "keywords": [
+            "app-erp-alert-04-2",
+            "영향",
+            "그래프를",
+            "depth",
+            "10으로"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "aggregate": {
+          "group_by": [],
+          "metrics": [],
+          "filters": [],
+          "scope": "ci",
+          "top_n": 10
+        },
+        "graph": {
+          "depth": 1,
+          "user_requested_depth": 10,
+          "limits": {
+            "max_nodes": 200,
+            "max_edges": 400,
+            "max_paths": 25
+          },
+          "view": "SUMMARY"
+        },
+        "output": {
+          "blocks": [
+            "text",
+            "table"
+          ],
+          "primary": "table"
+        },
+        "metric": null,
+        "history": {
+          "enabled": false,
+          "source": "event_log",
+          "scope": "ci",
+          "mode": "recent",
+          "time_range": "last_7d",
+          "limit": 50
+        },
+        "cep": null,
+        "auto": {
+          "views": [
+            "NEIGHBORS"
+          ],
+          "depth_hint": null,
+          "include_metric": false,
+          "metric_mode": "aggregate",
+          "include_history": false,
+          "include_cep": false,
+          "path": {
+            "source_ci_code": null,
+            "target_ci_code": null
+          },
+          "graph_scope": {
+            "include_metric": false,
+            "include_history": false
+          }
+        },
+        "list": {
+          "enabled": false,
+          "limit": 50,
+          "offset": 0
+        },
+        "normalized_from": null,
+        "normalized_to": null,
+        "steps": [],
+        "branches": [],
+        "loops": [],
+        "budget": {
+          "max_steps": 10,
+          "max_depth": 5,
+          "max_branches": 3,
+          "max_iterations": 100,
+          "timeout_seconds": null
+        },
+        "enable_multistep": false
+      },
+      "plan_validated": {
+        "intent": "LOOKUP",
+        "view": "SUMMARY",
+        "mode": "ci",
+        "primary": {
+          "keywords": [
+            "app-erp-alert-04-2"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "secondary": {
+          "keywords": [
+            "app-erp-alert-04-2",
+            "영향",
+            "그래프를",
+            "depth",
+            "10으로"
+          ],
+          "filters": [],
+          "limit": 5
+        },
+        "aggregate": {
+          "group_by": [],
+          "metrics": [],
+          "filters": [],
+          "scope": "ci",
+          "top_n": 10
+        },
+        "graph": {
+          "depth": 1,
+          "user_requested_depth": 10,
+          "limits": {
+            "max_nodes": 200,
+            "max_edges": 400,
+            "max_paths": 25
+          },
+          "view": "SUMMARY"
+        },
+        "output": {
+          "blocks": [
+            "text",
+            "table"
+          ],
+          "primary": "table"
+        },
+        "metric": null,
+        "history": {
+          "enabled": false,
+          "source": "event_log",
+          "scope": "ci",
+          "mode": "recent",
+          "time_range": "last_7d",
+          "limit": 50
+        },
+        "cep": null,
+        "auto": {
+          "views": [
+            "NEIGHBORS"
+          ],
+          "depth_hint": null,
+          "include_metric": false,
+          "metric_mode": "aggregate",
+          "include_history": false,
+          "include_cep": false,
+          "path": {
+            "source_ci_code": null,
+            "target_ci_code": null
+          },
+          "graph_scope": {
+            "include_metric": false,
+            "include_history": false
+          }
+        },
+        "list": {
+          "enabled": false,
+          "limit": 50,
+          "offset": 0
+        },
+        "normalized_from": null,
+        "normalized_to": null,
+        "steps": [],
+        "branches": [],
+        "loops": [],
+        "budget": {
+          "max_steps": 10,
+          "max_depth": 5,
+          "max_branches": 3,
+          "max_iterations": 100,
+          "timeout_seconds": null
+        },
+        "enable_multistep": false
+      },
+      "policy_decisions": {
+        "view": "SUMMARY",
+        "requested_depth": 1,
+        "clamped_depth": 1,
+        "allowed_rel_types": [],
+        "discovered_rel_types": [],
+        "user_requested_depth": 10,
+        "policy_max_depth": 1,
+        "effective_depth": 1
+      },
+      "stage_inputs": [
+        {
+          "stage": "route_plan",
+          "applied_assets": {
+            "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+          },
+          "params": {
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "prev_output": null,
+          "trace_id": "-"
+        },
+        {
+          "stage": "validate",
+          "applied_assets": {
+            "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+          },
+          "params": {
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "prev_output": {
+            "stage": "route_plan",
+            "result": {
+              "route": "plan",
+              "plan_output": {
+                "kind": "plan",
+                "direct_answer": null,
+                "plan": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "reject_payload": null,
+                "confidence": 1.0,
+                "reasoning": "Auto replan fallback",
+                "metadata": {
+                  "route": "orch"
+                }
+              }
+            },
+            "diagnostics": {
+              "status": "ok",
+              "warnings": [],
+              "errors": [],
+              "empty_flags": {},
+              "counts": {}
+            },
+            "references": [],
+            "duration_ms": 0
+          },
+          "trace_id": "-"
+        },
+        {
+          "stage": "execute",
+          "applied_assets": {
+            "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+          },
+          "params": {
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "prev_output": {
+            "stage": "validate",
+            "result": {
+              "plan_validated": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "policy_decisions": {
+                "view": "SUMMARY",
+                "requested_depth": 1,
+                "clamped_depth": 1,
+                "allowed_rel_types": [],
+                "discovered_rel_types": [],
+                "user_requested_depth": 10,
+                "policy_max_depth": 1,
+                "effective_depth": 1
+              },
+              "is_valid": true
+            },
+            "diagnostics": {
+              "status": "ok",
+              "warnings": [],
+              "errors": [],
+              "empty_flags": {},
+              "counts": {}
+            },
+            "references": [],
+            "duration_ms": 0
+          },
+          "trace_id": "-"
+        },
+        {
+          "stage": "compose",
+          "applied_assets": {
+            "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+          },
+          "params": {
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "prev_output": {
+            "stage": "execute",
+            "result": {
+              "used_tools": [
+                "ci.get"
+              ],
+              "blocks_count": 4,
+              "errors": []
+            },
+            "diagnostics": {
+              "status": "ok",
+              "warnings": [],
+              "errors": [],
+              "empty_flags": {},
+              "counts": {}
+            },
+            "references": [
+              {
+                "kind": "row",
+                "title": "ci.get",
+                "payload": {
+                  "tool": "ci.get",
+                  "input": {
+                    "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                  },
+                  "summary": {
+                    "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                    "found": true
+                  }
+                }
+              }
+            ],
+            "duration_ms": 171
+          },
+          "trace_id": "-"
+        },
+        {
+          "stage": "present",
+          "applied_assets": {
+            "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+          },
+          "params": {
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "prev_output": {
+            "stage": "compose",
+            "result": {
+              "summary": "Lookup result for app-erp-alert-04-2",
+              "blocks_count": 4,
+              "next_actions_count": 1
+            },
+            "diagnostics": {
+              "status": "ok",
+              "warnings": [],
+              "errors": [],
+              "empty_flags": {},
+              "counts": {}
+            },
+            "references": [
+              {
+                "kind": "row",
+                "title": "ci.get",
+                "payload": {
+                  "tool": "ci.get",
+                  "input": {
+                    "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                  },
+                  "summary": {
+                    "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                    "found": true
+                  }
+                }
+              }
+            ],
+            "duration_ms": 0
+          },
+          "trace_id": "-"
+        }
+      ],
+      "stage_outputs": [
+        {
+          "stage": "route_plan",
+          "result": {
+            "route": "plan",
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "diagnostics": {
+            "status": "ok",
+            "warnings": [],
+            "errors": [],
+            "empty_flags": {},
+            "counts": {}
+          },
+          "references": [],
+          "duration_ms": 0
+        },
+        {
+          "stage": "validate",
+          "result": {
+            "plan_validated": {
+              "intent": "LOOKUP",
+              "view": "SUMMARY",
+              "mode": "ci",
+              "primary": {
+                "keywords": [
+                  "app-erp-alert-04-2"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "secondary": {
+                "keywords": [
+                  "app-erp-alert-04-2",
+                  "영향",
+                  "그래프를",
+                  "depth",
+                  "10으로"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "aggregate": {
+                "group_by": [],
+                "metrics": [],
+                "filters": [],
+                "scope": "ci",
+                "top_n": 10
+              },
+              "graph": {
+                "depth": 1,
+                "user_requested_depth": 10,
+                "limits": {
+                  "max_nodes": 200,
+                  "max_edges": 400,
+                  "max_paths": 25
+                },
+                "view": "SUMMARY"
+              },
+              "output": {
+                "blocks": [
+                  "text",
+                  "table"
+                ],
+                "primary": "table"
+              },
+              "metric": null,
+              "history": {
+                "enabled": false,
+                "source": "event_log",
+                "scope": "ci",
+                "mode": "recent",
+                "time_range": "last_7d",
+                "limit": 50
+              },
+              "cep": null,
+              "auto": {
+                "views": [
+                  "NEIGHBORS"
+                ],
+                "depth_hint": null,
+                "include_metric": false,
+                "metric_mode": "aggregate",
+                "include_history": false,
+                "include_cep": false,
+                "path": {
+                  "source_ci_code": null,
+                  "target_ci_code": null
+                },
+                "graph_scope": {
+                  "include_metric": false,
+                  "include_history": false
+                }
+              },
+              "list": {
+                "enabled": false,
+                "limit": 50,
+                "offset": 0
+              },
+              "normalized_from": null,
+              "normalized_to": null,
+              "steps": [],
+              "branches": [],
+              "loops": [],
+              "budget": {
+                "max_steps": 10,
+                "max_depth": 5,
+                "max_branches": 3,
+                "max_iterations": 100,
+                "timeout_seconds": null
+              },
+              "enable_multistep": false
+            },
+            "policy_decisions": {
+              "view": "SUMMARY",
+              "requested_depth": 1,
+              "clamped_depth": 1,
+              "allowed_rel_types": [],
+              "discovered_rel_types": [],
+              "user_requested_depth": 10,
+              "policy_max_depth": 1,
+              "effective_depth": 1
+            },
+            "is_valid": true
+          },
+          "diagnostics": {
+            "status": "ok",
+            "warnings": [],
+            "errors": [],
+            "empty_flags": {},
+            "counts": {}
+          },
+          "references": [],
+          "duration_ms": 0
+        },
+        {
+          "stage": "execute",
+          "result": {
+            "used_tools": [
+              "ci.get"
+            ],
+            "blocks_count": 4,
+            "errors": []
+          },
+          "diagnostics": {
+            "status": "ok",
+            "warnings": [],
+            "errors": [],
+            "empty_flags": {},
+            "counts": {}
+          },
+          "references": [
+            {
+              "kind": "row",
+              "title": "ci.get",
+              "payload": {
+                "tool": "ci.get",
+                "input": {
+                  "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                },
+                "summary": {
+                  "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                  "found": true
+                }
+              }
+            }
+          ],
+          "duration_ms": 171
+        },
+        {
+          "stage": "compose",
+          "result": {
+            "summary": "Lookup result for app-erp-alert-04-2",
+            "blocks_count": 4,
+            "next_actions_count": 1
+          },
+          "diagnostics": {
+            "status": "ok",
+            "warnings": [],
+            "errors": [],
+            "empty_flags": {},
+            "counts": {}
+          },
+          "references": [
+            {
+              "kind": "row",
+              "title": "ci.get",
+              "payload": {
+                "tool": "ci.get",
+                "input": {
+                  "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                },
+                "summary": {
+                  "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                  "found": true
+                }
+              }
+            }
+          ],
+          "duration_ms": 0
+        },
+        {
+          "stage": "present",
+          "result": {
+            "summary": "Lookup result for app-erp-alert-04-2",
+            "blocks": [
+              {
+                "type": "text",
+                "text": "app-erp-alert-04-2 · ERP App Alert 04-2",
+                "title": "CI summary"
+              },
+              {
+                "type": "table",
+                "columns": [
+                  "field",
+                  "value"
+                ],
+                "rows": [
+                  [
+                    "ci_code",
+                    "app-erp-alert-04-2"
+                  ],
+                  [
+                    "ci_name",
+                    "ERP App Alert 04-2"
+                  ],
+                  [
+                    "ci_type",
+                    "SW"
+                  ],
+                  [
+                    "ci_subtype",
+                    "app"
+                  ],
+                  [
+                    "ci_category",
+                    "application"
+                  ],
+                  [
+                    "status",
+                    "active"
+                  ],
+                  [
+                    "location",
+                    "zone-c"
+                  ],
+                  [
+                    "owner",
+                    "erp-apps"
+                  ]
+                ],
+                "title": "CI details"
+              },
+              {
+                "type": "table",
+                "columns": [
+                  "tags",
+                  "value"
+                ],
+                "rows": [
+                  [
+                    "system",
+                    "erp"
+                  ],
+                  [
+                    "runs_on",
+                    "was-erp-04"
+                  ],
+                  [
+                    "ci_subtype",
+                    "app"
+                  ],
+                  [
+                    "host_server",
+                    "srv-erp-04"
+                  ]
+                ],
+                "title": "Tags"
+              },
+              {
+                "type": "table",
+                "columns": [
+                  "attributes",
+                  "value"
+                ],
+                "rows": [
+                  [
+                    "repo",
+                    "https://git.internal/erp/alert-04"
+                  ],
+                  [
+                    "language",
+                    "python"
+                  ],
+                  [
+                    "owner_team",
+                    "erp-app"
+                  ]
+                ],
+                "title": "Attributes"
+              }
+            ]
+          },
+          "diagnostics": {
+            "status": "ok",
+            "warnings": [],
+            "errors": [],
+            "empty_flags": {},
+            "counts": {}
+          },
+          "references": [
+            {
+              "kind": "row",
+              "title": "ci.get",
+              "payload": {
+                "tool": "ci.get",
+                "input": {
+                  "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                },
+                "summary": {
+                  "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                  "found": true
+                }
+              }
+            }
+          ],
+          "duration_ms": 0
+        }
+      ],
+      "stages": [
+        {
+          "name": "route_plan",
+          "input": {
+            "stage": "route_plan",
+            "applied_assets": {
+              "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+            },
+            "params": {
+              "plan_output": {
+                "kind": "plan",
+                "direct_answer": null,
+                "plan": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "reject_payload": null,
+                "confidence": 1.0,
+                "reasoning": "Auto replan fallback",
+                "metadata": {
+                  "route": "orch"
+                }
+              }
+            },
+            "prev_output": null,
+            "trace_id": "-"
+          },
+          "output": {
+            "route": "plan",
+            "plan_output": {
+              "kind": "plan",
+              "direct_answer": null,
+              "plan": {
+                "intent": "LOOKUP",
+                "view": "SUMMARY",
+                "mode": "ci",
+                "primary": {
+                  "keywords": [
+                    "app-erp-alert-04-2"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "secondary": {
+                  "keywords": [
+                    "app-erp-alert-04-2",
+                    "영향",
+                    "그래프를",
+                    "depth",
+                    "10으로"
+                  ],
+                  "filters": [],
+                  "limit": 5
+                },
+                "aggregate": {
+                  "group_by": [],
+                  "metrics": [],
+                  "filters": [],
+                  "scope": "ci",
+                  "top_n": 10
+                },
+                "graph": {
+                  "depth": 1,
+                  "user_requested_depth": 10,
+                  "limits": {
+                    "max_nodes": 200,
+                    "max_edges": 400,
+                    "max_paths": 25
+                  },
+                  "view": "SUMMARY"
+                },
+                "output": {
+                  "blocks": [
+                    "text",
+                    "table"
+                  ],
+                  "primary": "table"
+                },
+                "metric": null,
+                "history": {
+                  "enabled": false,
+                  "source": "event_log",
+                  "scope": "ci",
+                  "mode": "recent",
+                  "time_range": "last_7d",
+                  "limit": 50
+                },
+                "cep": null,
+                "auto": {
+                  "views": [
+                    "NEIGHBORS"
+                  ],
+                  "depth_hint": null,
+                  "include_metric": false,
+                  "metric_mode": "aggregate",
+                  "include_history": false,
+                  "include_cep": false,
+                  "path": {
+                    "source_ci_code": null,
+                    "target_ci_code": null
+                  },
+                  "graph_scope": {
+                    "include_metric": false,
+                    "include_history": false
+                  }
+                },
+                "list": {
+                  "enabled": false,
+                  "limit": 50,
+                  "offset": 0
+                },
+                "normalized_from": null,
+                "normalized_to": null,
+                "steps": [],
+                "branches": [],
+                "loops": [],
+                "budget": {
+                  "max_steps": 10,
+                  "max_depth": 5,
+                  "max_branches": 3,
+                  "max_iterations": 100,
+                  "timeout_seconds": null
+                },
+                "enable_multistep": false
+              },
+              "reject_payload": null,
+              "confidence": 1.0,
+              "reasoning": "Auto replan fallback",
+              "metadata": {
+                "route": "orch"
+              }
+            }
+          },
+          "elapsed_ms": 0,
+          "status": "ok"
+        },
+        {
+          "name": "validate",
+          "input": {
+            "stage": "validate",
+            "applied_assets": {
+              "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+            },
+            "params": {
+              "plan_output": {
+                "kind": "plan",
+                "direct_answer": null,
+                "plan": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "reject_payload": null,
+                "confidence": 1.0,
+                "reasoning": "Auto replan fallback",
+                "metadata": {
+                  "route": "orch"
+                }
+              }
+            },
+            "prev_output": {
+              "stage": "route_plan",
+              "result": {
+                "route": "plan",
+                "plan_output": {
+                  "kind": "plan",
+                  "direct_answer": null,
+                  "plan": {
+                    "intent": "LOOKUP",
+                    "view": "SUMMARY",
+                    "mode": "ci",
+                    "primary": {
+                      "keywords": [
+                        "app-erp-alert-04-2"
+                      ],
+                      "filters": [],
+                      "limit": 5
+                    },
+                    "secondary": {
+                      "keywords": [
+                        "app-erp-alert-04-2",
+                        "영향",
+                        "그래프를",
+                        "depth",
+                        "10으로"
+                      ],
+                      "filters": [],
+                      "limit": 5
+                    },
+                    "aggregate": {
+                      "group_by": [],
+                      "metrics": [],
+                      "filters": [],
+                      "scope": "ci",
+                      "top_n": 10
+                    },
+                    "graph": {
+                      "depth": 1,
+                      "user_requested_depth": 10,
+                      "limits": {
+                        "max_nodes": 200,
+                        "max_edges": 400,
+                        "max_paths": 25
+                      },
+                      "view": "SUMMARY"
+                    },
+                    "output": {
+                      "blocks": [
+                        "text",
+                        "table"
+                      ],
+                      "primary": "table"
+                    },
+                    "metric": null,
+                    "history": {
+                      "enabled": false,
+                      "source": "event_log",
+                      "scope": "ci",
+                      "mode": "recent",
+                      "time_range": "last_7d",
+                      "limit": 50
+                    },
+                    "cep": null,
+                    "auto": {
+                      "views": [
+                        "NEIGHBORS"
+                      ],
+                      "depth_hint": null,
+                      "include_metric": false,
+                      "metric_mode": "aggregate",
+                      "include_history": false,
+                      "include_cep": false,
+                      "path": {
+                        "source_ci_code": null,
+                        "target_ci_code": null
+                      },
+                      "graph_scope": {
+                        "include_metric": false,
+                        "include_history": false
+                      }
+                    },
+                    "list": {
+                      "enabled": false,
+                      "limit": 50,
+                      "offset": 0
+                    },
+                    "normalized_from": null,
+                    "normalized_to": null,
+                    "steps": [],
+                    "branches": [],
+                    "loops": [],
+                    "budget": {
+                      "max_steps": 10,
+                      "max_depth": 5,
+                      "max_branches": 3,
+                      "max_iterations": 100,
+                      "timeout_seconds": null
+                    },
+                    "enable_multistep": false
+                  },
+                  "reject_payload": null,
+                  "confidence": 1.0,
+                  "reasoning": "Auto replan fallback",
+                  "metadata": {
+                    "route": "orch"
+                  }
+                }
+              },
+              "diagnostics": {
+                "status": "ok",
+                "warnings": [],
+                "errors": [],
+                "empty_flags": {},
+                "counts": {}
+              },
+              "references": [],
+              "duration_ms": 0
+            },
+            "trace_id": "-"
+          },
+          "output": {
+            "plan_validated": {
+              "intent": "LOOKUP",
+              "view": "SUMMARY",
+              "mode": "ci",
+              "primary": {
+                "keywords": [
+                  "app-erp-alert-04-2"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "secondary": {
+                "keywords": [
+                  "app-erp-alert-04-2",
+                  "영향",
+                  "그래프를",
+                  "depth",
+                  "10으로"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "aggregate": {
+                "group_by": [],
+                "metrics": [],
+                "filters": [],
+                "scope": "ci",
+                "top_n": 10
+              },
+              "graph": {
+                "depth": 1,
+                "user_requested_depth": 10,
+                "limits": {
+                  "max_nodes": 200,
+                  "max_edges": 400,
+                  "max_paths": 25
+                },
+                "view": "SUMMARY"
+              },
+              "output": {
+                "blocks": [
+                  "text",
+                  "table"
+                ],
+                "primary": "table"
+              },
+              "metric": null,
+              "history": {
+                "enabled": false,
+                "source": "event_log",
+                "scope": "ci",
+                "mode": "recent",
+                "time_range": "last_7d",
+                "limit": 50
+              },
+              "cep": null,
+              "auto": {
+                "views": [
+                  "NEIGHBORS"
+                ],
+                "depth_hint": null,
+                "include_metric": false,
+                "metric_mode": "aggregate",
+                "include_history": false,
+                "include_cep": false,
+                "path": {
+                  "source_ci_code": null,
+                  "target_ci_code": null
+                },
+                "graph_scope": {
+                  "include_metric": false,
+                  "include_history": false
+                }
+              },
+              "list": {
+                "enabled": false,
+                "limit": 50,
+                "offset": 0
+              },
+              "normalized_from": null,
+              "normalized_to": null,
+              "steps": [],
+              "branches": [],
+              "loops": [],
+              "budget": {
+                "max_steps": 10,
+                "max_depth": 5,
+                "max_branches": 3,
+                "max_iterations": 100,
+                "timeout_seconds": null
+              },
+              "enable_multistep": false
+            },
+            "policy_decisions": {
+              "view": "SUMMARY",
+              "requested_depth": 1,
+              "clamped_depth": 1,
+              "allowed_rel_types": [],
+              "discovered_rel_types": [],
+              "user_requested_depth": 10,
+              "policy_max_depth": 1,
+              "effective_depth": 1
+            },
+            "is_valid": true
+          },
+          "elapsed_ms": 0,
+          "status": "ok"
+        },
+        {
+          "name": "execute",
+          "input": {
+            "stage": "execute",
+            "applied_assets": {
+              "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+            },
+            "params": {
+              "plan_output": {
+                "kind": "plan",
+                "direct_answer": null,
+                "plan": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "reject_payload": null,
+                "confidence": 1.0,
+                "reasoning": "Auto replan fallback",
+                "metadata": {
+                  "route": "orch"
+                }
+              }
+            },
+            "prev_output": {
+              "stage": "validate",
+              "result": {
+                "plan_validated": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "policy_decisions": {
+                  "view": "SUMMARY",
+                  "requested_depth": 1,
+                  "clamped_depth": 1,
+                  "allowed_rel_types": [],
+                  "discovered_rel_types": [],
+                  "user_requested_depth": 10,
+                  "policy_max_depth": 1,
+                  "effective_depth": 1
+                },
+                "is_valid": true
+              },
+              "diagnostics": {
+                "status": "ok",
+                "warnings": [],
+                "errors": [],
+                "empty_flags": {},
+                "counts": {}
+              },
+              "references": [],
+              "duration_ms": 0
+            },
+            "trace_id": "-"
+          },
+          "output": {
+            "used_tools": [
+              "ci.get"
+            ],
+            "blocks_count": 4,
+            "errors": []
+          },
+          "elapsed_ms": 171,
+          "status": "ok"
+        },
+        {
+          "name": "compose",
+          "input": {
+            "stage": "compose",
+            "applied_assets": {
+              "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+            },
+            "params": {
+              "plan_output": {
+                "kind": "plan",
+                "direct_answer": null,
+                "plan": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "reject_payload": null,
+                "confidence": 1.0,
+                "reasoning": "Auto replan fallback",
+                "metadata": {
+                  "route": "orch"
+                }
+              }
+            },
+            "prev_output": {
+              "stage": "execute",
+              "result": {
+                "used_tools": [
+                  "ci.get"
+                ],
+                "blocks_count": 4,
+                "errors": []
+              },
+              "diagnostics": {
+                "status": "ok",
+                "warnings": [],
+                "errors": [],
+                "empty_flags": {},
+                "counts": {}
+              },
+              "references": [
+                {
+                  "kind": "row",
+                  "title": "ci.get",
+                  "payload": {
+                    "tool": "ci.get",
+                    "input": {
+                      "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                    },
+                    "summary": {
+                      "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                      "found": true
+                    }
+                  }
+                }
+              ],
+              "duration_ms": 171
+            },
+            "trace_id": "-"
+          },
+          "output": {
+            "summary": "Lookup result for app-erp-alert-04-2",
+            "blocks_count": 4,
+            "next_actions_count": 1
+          },
+          "elapsed_ms": 0,
+          "status": "ok"
+        },
+        {
+          "name": "present",
+          "input": {
+            "stage": "present",
+            "applied_assets": {
+              "prompt": "a0e6c8a1-3060-4556-84fc-e5293f899898:v1"
+            },
+            "params": {
+              "plan_output": {
+                "kind": "plan",
+                "direct_answer": null,
+                "plan": {
+                  "intent": "LOOKUP",
+                  "view": "SUMMARY",
+                  "mode": "ci",
+                  "primary": {
+                    "keywords": [
+                      "app-erp-alert-04-2"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "secondary": {
+                    "keywords": [
+                      "app-erp-alert-04-2",
+                      "영향",
+                      "그래프를",
+                      "depth",
+                      "10으로"
+                    ],
+                    "filters": [],
+                    "limit": 5
+                  },
+                  "aggregate": {
+                    "group_by": [],
+                    "metrics": [],
+                    "filters": [],
+                    "scope": "ci",
+                    "top_n": 10
+                  },
+                  "graph": {
+                    "depth": 1,
+                    "user_requested_depth": 10,
+                    "limits": {
+                      "max_nodes": 200,
+                      "max_edges": 400,
+                      "max_paths": 25
+                    },
+                    "view": "SUMMARY"
+                  },
+                  "output": {
+                    "blocks": [
+                      "text",
+                      "table"
+                    ],
+                    "primary": "table"
+                  },
+                  "metric": null,
+                  "history": {
+                    "enabled": false,
+                    "source": "event_log",
+                    "scope": "ci",
+                    "mode": "recent",
+                    "time_range": "last_7d",
+                    "limit": 50
+                  },
+                  "cep": null,
+                  "auto": {
+                    "views": [
+                      "NEIGHBORS"
+                    ],
+                    "depth_hint": null,
+                    "include_metric": false,
+                    "metric_mode": "aggregate",
+                    "include_history": false,
+                    "include_cep": false,
+                    "path": {
+                      "source_ci_code": null,
+                      "target_ci_code": null
+                    },
+                    "graph_scope": {
+                      "include_metric": false,
+                      "include_history": false
+                    }
+                  },
+                  "list": {
+                    "enabled": false,
+                    "limit": 50,
+                    "offset": 0
+                  },
+                  "normalized_from": null,
+                  "normalized_to": null,
+                  "steps": [],
+                  "branches": [],
+                  "loops": [],
+                  "budget": {
+                    "max_steps": 10,
+                    "max_depth": 5,
+                    "max_branches": 3,
+                    "max_iterations": 100,
+                    "timeout_seconds": null
+                  },
+                  "enable_multistep": false
+                },
+                "reject_payload": null,
+                "confidence": 1.0,
+                "reasoning": "Auto replan fallback",
+                "metadata": {
+                  "route": "orch"
+                }
+              }
+            },
+            "prev_output": {
+              "stage": "compose",
+              "result": {
+                "summary": "Lookup result for app-erp-alert-04-2",
+                "blocks_count": 4,
+                "next_actions_count": 1
+              },
+              "diagnostics": {
+                "status": "ok",
+                "warnings": [],
+                "errors": [],
+                "empty_flags": {},
+                "counts": {}
+              },
+              "references": [
+                {
+                  "kind": "row",
+                  "title": "ci.get",
+                  "payload": {
+                    "tool": "ci.get",
+                    "input": {
+                      "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+                    },
+                    "summary": {
+                      "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+                      "found": true
+                    }
+                  }
+                }
+              ],
+              "duration_ms": 0
+            },
+            "trace_id": "-"
+          },
+          "output": {
+            "summary": "Lookup result for app-erp-alert-04-2",
+            "blocks": [
+              {
+                "type": "text",
+                "text": "app-erp-alert-04-2 · ERP App Alert 04-2",
+                "title": "CI summary"
+              },
+              {
+                "type": "table",
+                "columns": [
+                  "field",
+                  "value"
+                ],
+                "rows": [
+                  [
+                    "ci_code",
+                    "app-erp-alert-04-2"
+                  ],
+                  [
+                    "ci_name",
+                    "ERP App Alert 04-2"
+                  ],
+                  [
+                    "ci_type",
+                    "SW"
+                  ],
+                  [
+                    "ci_subtype",
+                    "app"
+                  ],
+                  [
+                    "ci_category",
+                    "application"
+                  ],
+                  [
+                    "status",
+                    "active"
+                  ],
+                  [
+                    "location",
+                    "zone-c"
+                  ],
+                  [
+                    "owner",
+                    "erp-apps"
+                  ]
+                ],
+                "title": "CI details"
+              },
+              {
+                "type": "table",
+                "columns": [
+                  "tags",
+                  "value"
+                ],
+                "rows": [
+                  [
+                    "system",
+                    "erp"
+                  ],
+                  [
+                    "runs_on",
+                    "was-erp-04"
+                  ],
+                  [
+                    "ci_subtype",
+                    "app"
+                  ],
+                  [
+                    "host_server",
+                    "srv-erp-04"
+                  ]
+                ],
+                "title": "Tags"
+              },
+              {
+                "type": "table",
+                "columns": [
+                  "attributes",
+                  "value"
+                ],
+                "rows": [
+                  [
+                    "repo",
+                    "https://git.internal/erp/alert-04"
+                  ],
+                  [
+                    "language",
+                    "python"
+                  ],
+                  [
+                    "owner_team",
+                    "erp-app"
+                  ]
+                ],
+                "title": "Attributes"
+              }
+            ]
+          },
+          "elapsed_ms": 0,
+          "status": "ok"
+        }
+      ],
+      "replan_events": [
+        {
+          "event_type": "replan_decision",
+          "stage_name": "execute",
+          "trigger": {
+            "trigger_type": "error",
+            "stage_name": "execute",
+            "severity": "high",
+            "reason": "runner execution error",
+            "timestamp": "2026-01-24T11:55:48.512702+00:00",
+            "metadata": null
+          },
+          "patch": {
+            "before": {
+              "intent": "LOOKUP",
+              "view": "IMPACT",
+              "mode": "ci",
+              "primary": {
+                "keywords": [
+                  "app-erp-alert-04-2"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "secondary": {
+                "keywords": [
+                  "app-erp-alert-04-2",
+                  "영향",
+                  "그래프를",
+                  "depth",
+                  "10으로"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "aggregate": {
+                "group_by": [],
+                "metrics": [],
+                "filters": [],
+                "scope": "ci",
+                "top_n": 10
+              },
+              "graph": {
+                "depth": 2,
+                "user_requested_depth": 10,
+                "limits": {
+                  "max_nodes": 200,
+                  "max_edges": 400,
+                  "max_paths": 25
+                },
+                "view": "IMPACT"
+              },
+              "output": {
+                "blocks": [
+                  "chart",
+                  "network"
+                ],
+                "primary": "chart"
+              },
+              "metric": null,
+              "history": {
+                "enabled": false,
+                "source": "event_log",
+                "scope": "ci",
+                "mode": "recent",
+                "time_range": "last_7d",
+                "limit": 50
+              },
+              "cep": null,
+              "auto": {
+                "views": [
+                  "NEIGHBORS"
+                ],
+                "depth_hint": null,
+                "include_metric": false,
+                "metric_mode": "aggregate",
+                "include_history": false,
+                "include_cep": false,
+                "path": {
+                  "source_ci_code": null,
+                  "target_ci_code": null
+                },
+                "graph_scope": {
+                  "include_metric": false,
+                  "include_history": false
+                }
+              },
+              "list": {
+                "enabled": false,
+                "limit": 50,
+                "offset": 0
+              },
+              "normalized_from": null,
+              "normalized_to": null,
+              "steps": [],
+              "branches": [],
+              "loops": [],
+              "budget": {
+                "max_steps": 10,
+                "max_depth": 5,
+                "max_branches": 3,
+                "max_iterations": 100,
+                "timeout_seconds": null
+              },
+              "enable_multistep": false
+            },
+            "after": {
+              "intent": "LOOKUP",
+              "view": "SUMMARY",
+              "mode": "ci",
+              "primary": {
+                "keywords": [
+                  "app-erp-alert-04-2"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "secondary": {
+                "keywords": [
+                  "app-erp-alert-04-2",
+                  "영향",
+                  "그래프를",
+                  "depth",
+                  "10으로"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "aggregate": {
+                "group_by": [],
+                "metrics": [],
+                "filters": [],
+                "scope": "ci",
+                "top_n": 10
+              },
+              "graph": {
+                "depth": 0,
+                "user_requested_depth": 10,
+                "limits": {
+                  "max_nodes": 200,
+                  "max_edges": 400,
+                  "max_paths": 25
+                },
+                "view": null
+              },
+              "output": {
+                "blocks": [
+                  "text",
+                  "table"
+                ],
+                "primary": "table"
+              },
+              "metric": null,
+              "history": {
+                "enabled": false,
+                "source": "event_log",
+                "scope": "ci",
+                "mode": "recent",
+                "time_range": "last_7d",
+                "limit": 50
+              },
+              "cep": null,
+              "auto": {
+                "views": [
+                  "NEIGHBORS"
+                ],
+                "depth_hint": null,
+                "include_metric": false,
+                "metric_mode": "aggregate",
+                "include_history": false,
+                "include_cep": false,
+                "path": {
+                  "source_ci_code": null,
+                  "target_ci_code": null
+                },
+                "graph_scope": {
+                  "include_metric": false,
+                  "include_history": false
+                }
+              },
+              "list": {
+                "enabled": false,
+                "limit": 50,
+                "offset": 0
+              },
+              "normalized_from": null,
+              "normalized_to": null,
+              "steps": [],
+              "branches": [],
+              "loops": [],
+              "budget": {
+                "max_steps": 10,
+                "max_depth": 5,
+                "max_branches": 3,
+                "max_iterations": 100,
+                "timeout_seconds": null
+              },
+              "enable_multistep": false
+            }
+          },
+          "timestamp": "2026-01-24T11:55:48.515274+00:00",
+          "decision_metadata": {
+            "should_replan": true
+          }
+        },
+        {
+          "event_type": "replan_execution",
+          "stage_name": "execute",
+          "trigger": {
+            "trigger_type": "error",
+            "stage_name": "execute",
+            "severity": "high",
+            "reason": "runner execution error",
+            "timestamp": "2026-01-24T11:55:48.512702+00:00",
+            "metadata": null
+          },
+          "patch": {
+            "before": {
+              "intent": "LOOKUP",
+              "view": "IMPACT",
+              "mode": "ci",
+              "primary": {
+                "keywords": [
+                  "app-erp-alert-04-2"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "secondary": {
+                "keywords": [
+                  "app-erp-alert-04-2",
+                  "영향",
+                  "그래프를",
+                  "depth",
+                  "10으로"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "aggregate": {
+                "group_by": [],
+                "metrics": [],
+                "filters": [],
+                "scope": "ci",
+                "top_n": 10
+              },
+              "graph": {
+                "depth": 2,
+                "user_requested_depth": 10,
+                "limits": {
+                  "max_nodes": 200,
+                  "max_edges": 400,
+                  "max_paths": 25
+                },
+                "view": "IMPACT"
+              },
+              "output": {
+                "blocks": [
+                  "chart",
+                  "network"
+                ],
+                "primary": "chart"
+              },
+              "metric": null,
+              "history": {
+                "enabled": false,
+                "source": "event_log",
+                "scope": "ci",
+                "mode": "recent",
+                "time_range": "last_7d",
+                "limit": 50
+              },
+              "cep": null,
+              "auto": {
+                "views": [
+                  "NEIGHBORS"
+                ],
+                "depth_hint": null,
+                "include_metric": false,
+                "metric_mode": "aggregate",
+                "include_history": false,
+                "include_cep": false,
+                "path": {
+                  "source_ci_code": null,
+                  "target_ci_code": null
+                },
+                "graph_scope": {
+                  "include_metric": false,
+                  "include_history": false
+                }
+              },
+              "list": {
+                "enabled": false,
+                "limit": 50,
+                "offset": 0
+              },
+              "normalized_from": null,
+              "normalized_to": null,
+              "steps": [],
+              "branches": [],
+              "loops": [],
+              "budget": {
+                "max_steps": 10,
+                "max_depth": 5,
+                "max_branches": 3,
+                "max_iterations": 100,
+                "timeout_seconds": null
+              },
+              "enable_multistep": false
+            },
+            "after": {
+              "intent": "LOOKUP",
+              "view": "SUMMARY",
+              "mode": "ci",
+              "primary": {
+                "keywords": [
+                  "app-erp-alert-04-2"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "secondary": {
+                "keywords": [
+                  "app-erp-alert-04-2",
+                  "영향",
+                  "그래프를",
+                  "depth",
+                  "10으로"
+                ],
+                "filters": [],
+                "limit": 5
+              },
+              "aggregate": {
+                "group_by": [],
+                "metrics": [],
+                "filters": [],
+                "scope": "ci",
+                "top_n": 10
+              },
+              "graph": {
+                "depth": 0,
+                "user_requested_depth": 10,
+                "limits": {
+                  "max_nodes": 200,
+                  "max_edges": 400,
+                  "max_paths": 25
+                },
+                "view": null
+              },
+              "output": {
+                "blocks": [
+                  "text",
+                  "table"
+                ],
+                "primary": "table"
+              },
+              "metric": null,
+              "history": {
+                "enabled": false,
+                "source": "event_log",
+                "scope": "ci",
+                "mode": "recent",
+                "time_range": "last_7d",
+                "limit": 50
+              },
+              "cep": null,
+              "auto": {
+                "views": [
+                  "NEIGHBORS"
+                ],
+                "depth_hint": null,
+                "include_metric": false,
+                "metric_mode": "aggregate",
+                "include_history": false,
+                "include_cep": false,
+                "path": {
+                  "source_ci_code": null,
+                  "target_ci_code": null
+                },
+                "graph_scope": {
+                  "include_metric": false,
+                  "include_history": false
+                }
+              },
+              "list": {
+                "enabled": false,
+                "limit": 50,
+                "offset": 0
+              },
+              "normalized_from": null,
+              "normalized_to": null,
+              "steps": [],
+              "branches": [],
+              "loops": [],
+              "budget": {
+                "max_steps": 10,
+                "max_depth": 5,
+                "max_branches": 3,
+                "max_iterations": 100,
+                "timeout_seconds": null
+              },
+              "enable_multistep": false
+            }
+          },
+          "timestamp": "2026-01-24T11:55:48.690352+00:00",
+          "execution_metadata": {
+            "fallback_plan": true
+          }
+        }
+      ],
+      "tool_calls": [
+        {
+          "tool": "ci.get",
+          "elapsed_ms": 72,
+          "input_params": {
+            "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+          },
+          "output_summary": {
+            "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+            "found": true
+          },
+          "error": null,
+          "query_asset": null
+        }
+      ],
+      "references": [
+        {
+          "kind": "row",
+          "title": "ci.get",
+          "payload": {
+            "tool": "ci.get",
+            "input": {
+              "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d"
+            },
+            "summary": {
+              "ci_id": "2f4c26e2-fdb5-47ab-92ff-6e4eb4b72f3d",
+              "found": true
+            }
+          }
+        }
+      ],
+      "errors": [],
+      "tenant_id": "t1",
+      "trace_id": "-",
+      "parent_trace_id": null,
+      "route_output": {
+        "route": "orch",
+        "plan_raw": {
+          "intent": "LOOKUP",
+          "view": "SUMMARY",
+          "mode": "ci",
+          "primary": {
+            "keywords": [
+              "app-erp-alert-04-2"
+            ],
+            "filters": [],
+            "limit": 5
+          },
+          "secondary": {
+            "keywords": [
+              "app-erp-alert-04-2",
+              "영향",
+              "그래프를",
+              "depth",
+              "10으로"
+            ],
+            "filters": [],
+            "limit": 5
+          },
+          "aggregate": {
+            "group_by": [],
+            "metrics": [],
+            "filters": [],
+            "scope": "ci",
+            "top_n": 10
+          },
+          "graph": {
+            "depth": 0,
+            "user_requested_depth": 10,
+            "limits": {
+              "max_nodes": 200,
+              "max_edges": 400,
+              "max_paths": 25
+            },
+            "view": null
+          },
+          "output": {
+            "blocks": [
+              "text",
+              "table"
+            ],
+            "primary": "table"
+          },
+          "metric": null,
+          "history": {
+            "enabled": false,
+            "source": "event_log",
+            "scope": "ci",
+            "mode": "recent",
+            "time_range": "last_7d",
+            "limit": 50
+          },
+          "cep": null,
+          "auto": {
+            "views": [
+              "NEIGHBORS"
+            ],
+            "depth_hint": null,
+            "include_metric": false,
+            "metric_mode": "aggregate",
+            "include_history": false,
+            "include_cep": false,
+            "path": {
+              "source_ci_code": null,
+              "target_ci_code": null
+            },
+            "graph_scope": {
+              "include_metric": false,
+              "include_history": false
+            }
+          },
+          "list": {
+            "enabled": false,
+            "limit": 50,
+            "offset": 0
+          },
+          "normalized_from": null,
+          "normalized_to": null,
+          "steps": [],
+          "branches": [],
+          "loops": [],
+          "budget": {
+            "max_steps": 10,
+            "max_depth": 5,
+            "max_branches": 3,
+            "max_iterations": 100,
+            "timeout_seconds": null
+          },
+          "enable_multistep": false
+        }
+      },
+      "route_decision": {
+        "route": "orch",
+        "reason": "Auto replan fallback",
+        "confidence": 1.0,
+        "metadata": {
+          "route": "orch"
+        }
+      }
+    },
+    "next_actions": [],
+    "meta": {
+      "route": "orch",
+      "route_reason": "Stage-based execution",
+      "timing_ms": 173,
+      "summary": "Lookup result for app-erp-alert-04-2",
+      "used_tools": [
+        "ci.get"
+      ],
+      "fallback": false,
+      "stages_executed": 5,
+      "plan_kind": "plan",
+      "trace_id": "-",
+      "parent_trace_id": null
+    }
+  }
+}

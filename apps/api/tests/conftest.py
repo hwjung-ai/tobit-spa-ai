@@ -18,6 +18,7 @@ sys.path.insert(0, str(apps_root))
 def _patch_jsonb_for_sqlite(metadata):
     """Patch JSONB to JSON for SQLite compatibility."""
     from sqlalchemy import JSON
+
     for table_name in list(metadata.tables.keys()):
         table = metadata.tables[table_name]
         for column in table.columns:
@@ -33,6 +34,7 @@ def test_engine():
     from sqlalchemy import JSON, text
     from sqlmodel import SQLModel, create_engine
     from sqlmodel.pool import StaticPool
+
     sqlalchemy.dialects.postgresql.JSONB = JSON
 
     engine = create_engine(
@@ -107,6 +109,7 @@ def session(test_engine):
         # Initialize operation settings for tests
         try:
             from app.modules.operation_settings.crud import create_or_update_setting
+
             # Create settings with default values
             settings_to_create = {
                 "ops_mode": {"value": "mock", "restart_required": True},
@@ -129,6 +132,7 @@ def session(test_engine):
 
         # Reset app dependency overrides for each test
         from main import app
+
         app.dependency_overrides.clear()
 
         yield session

@@ -69,7 +69,9 @@ class SmartToolSelector:
 
         return min(score, 1.0)
 
-    def _strategy_adjustment(self, tool_name: str, strategy: SelectionStrategy) -> float:
+    def _strategy_adjustment(
+        self, tool_name: str, strategy: SelectionStrategy
+    ) -> float:
         adjustments = {
             SelectionStrategy.FASTEST: {"CI_SEARCH": 0.05, "METRIC_AGGREGATE": 0.03},
             SelectionStrategy.MOST_ACCURATE: {"CI_GET": 0.05, "GRAPH_EXPAND": 0.04},

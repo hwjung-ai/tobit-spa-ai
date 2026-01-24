@@ -4,11 +4,26 @@ import { fetchApi } from "../../lib/adminUtils";
 import {
   computeTraceDiff,
   type AssetsDiff,
+  type AssetInfo,
+  type DiffItem,
+  type TraceDiff,
+  type PlanDiff,
+  type ToolCallsDiff,
+  type ReferencesDiff,
+  type AnswerBlocksDiff,
+  type UIRenderDiff,
 } from "../../lib/traceDiffUtils";
 
+interface TraceInfo {
+  trace_id: string;
+  created_at: string;
+  duration_ms: number;
+  status: string;
+}
+
 interface TraceDiffViewProps {
-  traceA: unknown;
-  traceB: unknown;
+  traceA: TraceInfo;
+  traceB: TraceInfo;
   onClose: () => void;
 }
 
@@ -117,7 +132,7 @@ function AssetsDiffSection({ diff, showOnlyChanges }: { diff: AssetsDiff; showOn
 /**
  * Asset comparison row (prompt/policy/mapping)
  */
-function AssetComparisonRow({ label, asset }: { label: string; asset: { changeType: string; before?: { name?: string; version?: string; source?: string }; after?: { name?: string; version?: string; source?: string }; changes?: Record<string, { before: unknown; after: unknown }> } }) {
+function AssetComparisonRow({ label, asset }: { label: string; asset: DiffItem<AssetInfo> }) {
   if (asset.changeType === "unchanged") {
     return null;
   }
@@ -200,7 +215,7 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: { changeTy
 /**
  * Section: Plan Diff
  */
-function PlanDiffSection({ diff, showOnlyChanges }: { diff: { changeType: string; validated?: { changeType: string; changes?: Record<string, { before: unknown; after: unknown }> }; raw?: { changeType: string; changes?: Record<string, { before: unknown; after: unknown }> } }; showOnlyChanges: boolean }) {
+function PlanDiffSection({ diff, showOnlyChanges }: { diff: PlanDiff; showOnlyChanges: boolean }) {
   if (showOnlyChanges && diff.changeType === "same") {
     return null;
   }
@@ -256,7 +271,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: { changeType: string
 /**
  * Section: Tool Calls Diff
  */
-function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: { added: Array<{ tool_name: string; summary: string }>; removed: Array<{ tool_name: string; summary: string }>; modified: Array<{ tool_name: string; changes: Record<string, { before: unknown; after: unknown }> }>; unchanged: number }; showOnlyChanges: boolean }) {
+function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: ToolCallsDiff; showOnlyChanges: boolean }) {
   const hasChanges = diff.added.length > 0 || diff.removed.length > 0 || diff.modified.length > 0;
 
   if (showOnlyChanges && !hasChanges) {
@@ -323,7 +338,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: { added: Array<
 /**
  * Section: References Diff
  */
-function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: { total_before: number; total_after: number; byType: Record<string, { before: string[]; after: string[]; added: string[]; removed: string[] }> }; showOnlyChanges: boolean }) {
+function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: ReferencesDiff; showOnlyChanges: boolean }) {
   const hasChanges = Object.values(diff.byType).some((rt) => rt.added.length > 0 || rt.removed.length > 0);
 
   if (showOnlyChanges && !hasChanges) {
@@ -368,8 +383,8 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: { total_before
 /**
  * Section: Answer Blocks Diff
  */
-function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
-  const hasChanges = diff.blocks.some((b: unknown) => b.changeType !== "unchanged");
+function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff; showOnlyChanges: boolean }) {
+  const hasChanges = diff.blocks.some((b: { changeType: string }) => b.changeType !== "unchanged");
 
   if (showOnlyChanges && !hasChanges) {
     return null;
@@ -385,7 +400,7 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: unknown; sho
       </div>
 
       <div className="space-y-2">
-        {diff.blocks.map((block: unknown, idx: number) => (
+        {diff.blocks.map((block, idx) => (
           <div key={idx} className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[11px] font-semibold text-slate-300">Block {block.index}</span>
@@ -414,7 +429,23 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: unknown; sho
 /**
  * Section: UI Render Diff
  */
-function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnlyChanges: boolean }) {
+interface UIRenderDiffProps {
+  diff: {
+    component_count_before: number;
+    component_count_after: number;
+    error_count_before: number;
+    error_count_after: number;
+    changes: Array<{
+      index: number;
+      changeType: string;
+      before?: { component_name: string; ok: boolean };
+      after?: { component_name: string; ok: boolean };
+    }>;
+  };
+  showOnlyChanges: boolean;
+}
+
+function UIRenderDiffSection({ diff, showOnlyChanges }: UIRenderDiffProps) {
   const hasChanges = diff.changes.length > 0 || diff.error_count_before !== diff.error_count_after;
 
   if (showOnlyChanges && !hasChanges) {
@@ -442,7 +473,7 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: unknown; showOnl
       )}
 
       {/* Changes */}
-      {diff.changes.map((change: unknown, idx: number) => (
+      {diff.changes.map((change, idx) => (
         <div key={idx} className="bg-slate-900/40 border border-slate-800 rounded px-3 py-2">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-semibold text-slate-300">Component {change.index}</span>
@@ -498,7 +529,8 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
       router.push(`/admin/inspector?trace_id=${encodeURIComponent(resolvedTraceId)}`);
       onClose(); // Close the diff view after kicking off RCA
     } catch (err: unknown) {
-      setRcaError(err.message || "Failed to run RCA analysis.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to run RCA analysis.";
+      setRcaError(errorMessage);
     } finally {
       setRcaLoading(false);
     }
@@ -518,9 +550,9 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
           traceDiff.tool_calls.removed.length > 0 ||
           traceDiff.tool_calls.modified.length > 0;
       case "references":
-        return Object.values(traceDiff.references.byType).some((rt: unknown) => rt.added.length > 0 || rt.removed.length > 0);
+        return Object.values(traceDiff.references.byType).some((rt) => rt.added.length > 0 || rt.removed.length > 0);
       case "answers":
-        return traceDiff.answer_blocks.blocks.some((b: unknown) => b.changeType !== "unchanged");
+        return traceDiff.answer_blocks.blocks.some((b) => b.changeType !== "unchanged");
       case "ui":
         return traceDiff.ui_render.changes.length > 0 || traceDiff.ui_render.error_count_before !== traceDiff.ui_render.error_count_after;
       default:

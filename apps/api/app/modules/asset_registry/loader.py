@@ -71,7 +71,9 @@ def load_prompt_asset(scope: str, engine: str, name: str) -> dict[str, Any] | No
     prompt_data = config_loader.load_yaml(file_path)
 
     if prompt_data:
-        logger.warning(f"Using fallback file for prompt '{name}': resources/{file_path}")
+        logger.warning(
+            f"Using fallback file for prompt '{name}': resources/{file_path}"
+        )
         fallback_payload = dict(prompt_data)
         fallback_payload["source"] = "file_fallback"
         fallback_payload["asset_id"] = None
@@ -109,7 +111,9 @@ def load_mapping_asset(mapping_type: str = "graph_relation") -> dict[str, Any] |
         ).first()
 
         if asset:
-            logger.info(f"Loaded mapping from asset registry: {asset.name} (v{asset.version})")
+            logger.info(
+                f"Loaded mapping from asset registry: {asset.name} (v{asset.version})"
+            )
             payload = dict(asset.content or {})
             payload["_asset_meta"] = {
                 "asset_id": str(asset.asset_id),
@@ -199,7 +203,9 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
         ).first()
 
         if asset:
-            logger.info(f"Loaded policy from asset registry: {asset.name} (v{asset.version})")
+            logger.info(
+                f"Loaded policy from asset registry: {asset.name} (v{asset.version})"
+            )
             payload = dict(asset.limits or {})
             payload["_asset_meta"] = {
                 "asset_id": str(asset.asset_id),
@@ -229,7 +235,9 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
         seed_path = seed_file_map[policy_type]
         seed_data = config_loader.load_yaml(seed_path)
         if seed_data and "limits" in seed_data:
-            logger.warning(f"Using seed file for policy '{policy_type}': resources/{seed_path}")
+            logger.warning(
+                f"Using seed file for policy '{policy_type}': resources/{seed_path}"
+            )
             payload = dict(seed_data["limits"] or {})
             payload["_asset_meta"] = {
                 "asset_id": None,
@@ -528,7 +536,9 @@ def load_resolver_asset(name: str) -> dict[str, Any] | None:
         ).first()
 
         if asset:
-            logger.info(f"Loaded resolver from asset registry: {name} (v{asset.version})")
+            logger.info(
+                f"Loaded resolver from asset registry: {name} (v{asset.version})"
+            )
             content = asset.content or {}
 
             payload = {
@@ -587,9 +597,10 @@ def load_screen_asset(name: str) -> dict[str, Any] | None:
     3. None (not found)
     """
     try:
-        from app.modules.asset_registry.models import TbAssetRegistry
         from core.db import get_session
         from sqlmodel import select
+
+        from app.modules.asset_registry.models import TbAssetRegistry
 
         with get_session() as session:
             asset = session.exec(

@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Literal, Tuple
 
-from schemas.tool_contracts import HistoryRecord, HistoryResult
 from core.db_pg import get_pg_connection
+from schemas.tool_contracts import HistoryRecord, HistoryResult
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
@@ -93,13 +93,21 @@ def event_log_recent(
 ) -> dict[str, object]:
     metadata = _load_event_log_metadata()
     if not metadata.get("available"):
-        return {"available": False, "warnings": metadata.get("warnings", []), "meta": {"source": "event_log"}}
+        return {
+            "available": False,
+            "warnings": metadata.get("warnings", []),
+            "meta": {"source": "event_log"},
+        }
     ci_ref = metadata["ci_col"]
     time_col = metadata["time_col"]
     tenant_col = metadata.get("tenant_col")
     warnings = metadata.get("warnings", []).copy()
     if not ci_ref or not time_col:
-        return {"available": False, "warnings": warnings, "meta": {"source": "event_log"}}
+        return {
+            "available": False,
+            "warnings": warnings,
+            "meta": {"source": "event_log"},
+        }
     time_from, time_to = _calculate_time_range(time_range)
     sanitized_limit = max(1, min(MAX_LIMIT, limit or 50))
     selected_columns: List[str] = []
@@ -135,7 +143,9 @@ def event_log_recent(
         where_clauses.insert(0, f"{tenant_col} = %s")
         params.insert(0, tenant_id)
     else:
-        warnings.append("tenant_id column missing in event_log; tenant scope not enforced")
+        warnings.append(
+            "tenant_id column missing in event_log; tenant scope not enforced"
+        )
     columns_sql = ", ".join(selected_columns)
     query_template = _load_query("event_log_recent.sql")
     query = query_template.format(
@@ -149,7 +159,9 @@ def event_log_recent(
         with conn.cursor() as cur:
             cur.execute(query, params)
             for row in cur.fetchall():
-                rows.append([str(item) if item is not None else "<null>" for item in row])
+                rows.append(
+                    [str(item) if item is not None else "<null>" for item in row]
+                )
     meta = {
         "source": "event_log",
         "ci_col": ci_ref,
@@ -188,7 +200,9 @@ def recent_work_and_maintenance(
         if len(row) >= 5:
             records.append(
                 HistoryRecord(
-                    timestamp=row[0].isoformat() if hasattr(row[0], 'isoformat') else str(row[0]),
+                    timestamp=row[0].isoformat()
+                    if hasattr(row[0], "isoformat")
+                    else str(row[0]),
                     event_type=row[1] or "work",
                     ci_id=str(row[2]) if row[2] else "",
                     ci_code=str(row[3]) if row[3] else "",
@@ -202,8 +216,23 @@ def recent_work_and_maintenance(
     )
 
 
-HISTORY_WORK_KEYWORDS = {"작업", "work", "deployment", "integration", "audit", "upgrade", "change"}
-HISTORY_MAINT_KEYWORDS = {"유지보수", "maintenance", "maint", "점검", "inspection", "routine"}
+HISTORY_WORK_KEYWORDS = {
+    "작업",
+    "work",
+    "deployment",
+    "integration",
+    "audit",
+    "upgrade",
+    "change",
+}
+HISTORY_MAINT_KEYWORDS = {
+    "유지보수",
+    "maintenance",
+    "maint",
+    "점검",
+    "inspection",
+    "routine",
+}
 
 
 def detect_history_sections(question: str) -> set[str]:
@@ -241,7 +270,9 @@ class HistoryTool(BaseTool):
         """Return the History tool type."""
         return ToolType.HISTORY
 
-    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+    async def should_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this tool should execute for the given operation.
 

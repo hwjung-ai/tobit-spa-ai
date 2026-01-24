@@ -55,7 +55,9 @@ class ToolResultCache:
         async with self._lock:
             if len(self._cache) >= self._max_size:
                 # Evict least recently used entry
-                lru_key = min(self._cache.values(), key=lambda entry: entry.last_accessed).key
+                lru_key = min(
+                    self._cache.values(), key=lambda entry: entry.last_accessed
+                ).key
                 del self._cache[lru_key]
 
             ttl_value = ttl or self._determine_ttl(tool_type, operation)
@@ -68,9 +70,13 @@ class ToolResultCache:
             )
             self._cache[key] = entry
 
-    def generate_key(self, tool_type: str, operation: str, params: Dict[str, Any]) -> str:
+    def generate_key(
+        self, tool_type: str, operation: str, params: Dict[str, Any]
+    ) -> str:
         cacheable_params = {
-            k: v for k, v in params.items() if k not in {"operation", "request_id", "trace_id"}
+            k: v
+            for k, v in params.items()
+            if k not in {"operation", "request_id", "trace_id"}
         }
         key_payload = json.dumps(
             {"tool": tool_type, "operation": operation, "params": cacheable_params},
@@ -100,7 +106,4 @@ class ToolResultCache:
 
     def snapshot_keys(self) -> Dict[str, bool]:
         now = datetime.now()
-        return {
-            key: (entry.expires_at > now)
-            for key, entry in self._cache.items()
-        }
+        return {key: (entry.expires_at > now) for key, entry in self._cache.items()}

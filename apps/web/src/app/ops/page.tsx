@@ -40,8 +40,6 @@ const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
 const MODE_STORAGE_KEY = "ops:mode";
 const HISTORY_LIMIT = 40;
 
-type OpsResponse = AnswerEnvelope | CiAnswerPayload;
-
 const formatTimestamp = (value: string) => {
   if (!value) return "";
   try {
@@ -158,22 +156,34 @@ const buildStageSnapshots = (
 const parseReplanEvents = (events?: unknown[]): ReplanEvent[] => {
   if (!events || !Array.isArray(events)) return [];
 
-  return events.map((event: any) => ({
-    id: event.id,
-    event_type: event.event_type || "replan_event",
-    stage_name: event.stage_name || "unknown",
-    trigger: event.trigger || {
+  return events.map((event: Record<string, unknown>) => ({
+    id: event.id as string,
+    event_type: (event.event_type as string) || "replan_event",
+    stage_name: (event.stage_name as string) || "unknown",
+    trigger: (event.trigger as {
+      trigger_type: string;
+      reason: string;
+      severity: string;
+      stage_name: string;
+    }) || {
       trigger_type: "unknown",
       reason: "Unknown trigger",
       severity: "medium",
-      stage_name: event.stage_name || "unknown",
+      stage_name: (event.stage_name as string) || "unknown",
     },
-    patch: event.patch || {
+    patch: (event.patch as {
+      before: unknown;
+      after: unknown;
+    }) || {
       before: {},
       after: {},
     },
-    timestamp: event.timestamp || new Date().toISOString(),
-    decision_metadata: event.decision_metadata || null,
+    timestamp: (event.timestamp as string) || new Date().toISOString(),
+    decision_metadata: event.decision_metadata as {
+      trace_id: string;
+      should_replan: boolean;
+      evaluation_time: number;
+    } | null,
   }));
 };
 
@@ -406,14 +416,14 @@ export default function OpsPage() {
 
   // Build stage snapshots from trace data
   const stageSnapshots = useMemo(() => {
-    const stageInputs = (traceData as any)?.stage_inputs;
-    const stageOutputs = (traceData as any)?.stage_outputs;
-    return buildStageSnapshots(stageInputs, stageOutputs);
-  }, [traceData]);
+  const stageInputs = (traceData as { stage_inputs?: StageInput[] })?.stage_inputs;
+  const stageOutputs = (traceData as { stage_outputs?: StageOutput[] })?.stage_outputs;
+  return buildStageSnapshots(stageInputs, stageOutputs);
+}, [traceData]);
 
   // Build replan events from trace data
   const replanEvents = useMemo(() => {
-    const events = (traceData as any)?.replan_events;
+    const events = (traceData as { replan_events?: ReplanEvent[] })?.replan_events;
     return parseReplanEvents(events);
   }, [traceData]);
 

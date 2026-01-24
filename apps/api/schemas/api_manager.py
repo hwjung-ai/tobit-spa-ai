@@ -40,7 +40,9 @@ class ApiDefinitionUpdate(BaseModel):
 
     @model_validator(mode="after")
     @classmethod
-    def ensure_editable_fields(cls, values: ApiDefinitionUpdate) -> "ApiDefinitionUpdate":
+    def ensure_editable_fields(
+        cls, values: ApiDefinitionUpdate
+    ) -> "ApiDefinitionUpdate":
         if values.logic is not None and values.mode is None:
             raise ValueError("mode must accompany logic changes")
         return values

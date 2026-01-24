@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class SchemaColumn(SQLModel):
     """Represents a column in a database table"""
+
     name: str = Field(min_length=1)
     data_type: str = Field(min_length=1)
     is_nullable: bool = Field(default=True)
@@ -22,6 +23,7 @@ class SchemaColumn(SQLModel):
 
 class SchemaTable(SQLModel):
     """Represents a database table"""
+
     name: str = Field(min_length=1)
     schema_name: str = Field(min_length=1, default="public")
     description: Optional[str] = None
@@ -33,12 +35,15 @@ class SchemaTable(SQLModel):
 
 class SchemaCatalog(SQLModel):
     """Represents a schema catalog for a database source"""
+
     name: str = Field(min_length=1)
     description: Optional[str] = None
     source_ref: str = Field(min_length=1)  # Reference to the source asset ID
     tables: List[SchemaTable] = Field(default_factory=list)
     last_scanned_at: Optional[datetime] = None
-    scan_status: str = Field(default="pending")  # "pending", "scanning", "completed", "failed"
+    scan_status: str = Field(
+        default="pending"
+    )  # "pending", "scanning", "completed", "failed"
     scan_metadata: Dict[str, Any] | None = Field(default_factory=dict)
 
     @property
@@ -63,6 +68,7 @@ class SchemaCatalog(SQLModel):
 
 class SchemaAsset(SQLModel):
     """Asset for storing schema information"""
+
     # Asset metadata
     asset_type: str = Field(default="schema")
     name: str = Field(min_length=1)
@@ -86,8 +92,7 @@ class SchemaAsset(SQLModel):
 
     # For spec_json pattern consistency (P0-7)
     spec_json: Dict[str, Any] | None = Field(
-        default=None,
-        description="JSON spec for the schema catalog"
+        default=None, description="JSON spec for the schema catalog"
     )
 
     @property
@@ -155,6 +160,7 @@ class SchemaAssetResponse(SQLModel):
 
 class ScanRequest(SQLModel):
     """Request to scan a schema"""
+
     source_ref: str
     include_tables: Optional[List[str]] = None
     exclude_tables: Optional[List[str]] = None
@@ -163,6 +169,7 @@ class ScanRequest(SQLModel):
 
 class ScanResult(SQLModel):
     """Result of a schema scan"""
+
     scan_id: str
     source_ref: str
     status: str

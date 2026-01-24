@@ -17,6 +17,7 @@ def generate_trace_id() -> str:
     """Generate a unique trace_id"""
     return str(uuid.uuid4())
 
+
 def generate_demo_a_trace() -> Dict[str, Any]:
     """
     Demo A: Read-only screen render trace
@@ -80,6 +81,7 @@ def generate_demo_a_trace() -> Dict[str, Any]:
             }
         ],
     }
+
 
 def generate_demo_b_trace_pair() -> tuple[Dict[str, Any], Dict[str, Any]]:
     """
@@ -170,7 +172,9 @@ def generate_demo_b_trace_pair() -> tuple[Dict[str, Any], Dict[str, Any]]:
             "blocks": [
                 {
                     "type": "markdown",
-                    "content": "## ✅ 유지보수 티켓 생성 완료\n\n**티켓 ID**: {}\n**장비**: DEVICE-001\n**타입**: Preventive\n**예정일**: 2024-02-01\n**담당자**: Engineer-A".format(ticket_id),
+                    "content": "## ✅ 유지보수 티켓 생성 완료\n\n**티켓 ID**: {}\n**장비**: DEVICE-001\n**타입**: Preventive\n**예정일**: 2024-02-01\n**담당자**: Engineer-A".format(
+                        ticket_id
+                    ),
                 }
             ],
         },
@@ -199,12 +203,13 @@ def generate_demo_b_trace_pair() -> tuple[Dict[str, Any], Dict[str, Any]]:
 
     return parent_trace, child_trace
 
+
 def main():
     """Generate and print trace evidence"""
 
-    print("\n" + "="*70)
-    print(" "*10 + "UI CREATOR CERTIFICATION - TRACE EVIDENCE (PR-C)")
-    print("="*70 + "\n")
+    print("\n" + "=" * 70)
+    print(" " * 10 + "UI CREATOR CERTIFICATION - TRACE EVIDENCE (PR-C)")
+    print("=" * 70 + "\n")
 
     # Demo A: Read-only trace
     print("[DEMO A] Read-only Screen Render")
@@ -215,7 +220,9 @@ def main():
     print(f"Feature:            {demo_a_trace['feature']}")
     print(f"Status:             {demo_a_trace['status']}")
     print(f"Duration:           {demo_a_trace['duration_ms']}ms")
-    print(f"Applied Assets:     {list(demo_a_trace['applied_assets']['screens'].keys())}")
+    print(
+        f"Applied Assets:     {list(demo_a_trace['applied_assets']['screens'].keys())}"
+    )
     print("State Patch:        None (read-only action)")
     print(f"Timestamp:          {demo_a_trace['created_at']}\n")
 
@@ -236,13 +243,17 @@ def main():
     print(f"  - Duration:               {child_trace['duration_ms']}ms")
     print("  - State Patch Applied:    YES")
     print(f"  - State Patch Keys:       {list(child_trace['state_patch'].keys())}")
-    print(f"  - Ticket Created:         {child_trace['state_patch']['last_created_ticket']['id']}")
-    print(f"  - Modal Closed:           {not child_trace['state_patch']['modal_open']}\n")
+    print(
+        f"  - Ticket Created:         {child_trace['state_patch']['last_created_ticket']['id']}"
+    )
+    print(
+        f"  - Modal Closed:           {not child_trace['state_patch']['modal_open']}\n"
+    )
 
     # Print trace hierarchy
-    print("="*70)
+    print("=" * 70)
     print("TRACE HIERARCHY")
-    print("="*70)
+    print("=" * 70)
     print(f"{parent_trace['trace_id']}")
     print("    ↓ (parent_trace_id)")
     print(f"{child_trace['trace_id']}\n")
@@ -251,17 +262,17 @@ def main():
     traces_output = {
         "demo_a": {
             "description": "Read-only screen render trace",
-            "trace_id": demo_a_trace['trace_id'],
+            "trace_id": demo_a_trace["trace_id"],
             "action": "list_maintenance_filtered",
             "has_state_patch": False,
         },
         "demo_b": {
             "description": "CRUD create action with parent_trace linking",
-            "parent_trace_id": parent_trace['trace_id'],
-            "child_trace_id": child_trace['trace_id'],
+            "parent_trace_id": parent_trace["trace_id"],
+            "child_trace_id": child_trace["trace_id"],
             "action": "create_maintenance_ticket",
-            "ticket_id": child_trace['state_patch']['last_created_ticket']['id'],
-            "state_patch_keys": list(child_trace['state_patch'].keys()),
+            "ticket_id": child_trace["state_patch"]["last_created_ticket"]["id"],
+            "state_patch_keys": list(child_trace["state_patch"].keys()),
             "has_parent_linking": True,
         },
     }
@@ -271,9 +282,9 @@ def main():
     with open(output_file, "w") as f:
         json.dump(traces_output, f, indent=2)
 
-    print("="*70)
+    print("=" * 70)
     print("CERTIFICATION SUMMARY")
-    print("="*70)
+    print("=" * 70)
     print("✓ PR-A: state_patch in response - IMPLEMENTED")
     print("✓ PR-B: CRUD handlers with state_patch - IMPLEMENTED")
     print("✓ PR-C: Trace evidence collected")
@@ -281,14 +292,15 @@ def main():
     print(f"  - Demo B parent_trace_id: {parent_trace['trace_id']}")
     print(f"  - Demo B child_trace_id: {child_trace['trace_id']}")
     print(f"  - Evidence file: {output_file}")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     # Return trace IDs for use in E2E tests
     return {
-        "demo_a_trace_id": demo_a_trace['trace_id'],
-        "demo_b_parent_trace_id": parent_trace['trace_id'],
-        "demo_b_child_trace_id": child_trace['trace_id'],
+        "demo_a_trace_id": demo_a_trace["trace_id"],
+        "demo_b_parent_trace_id": parent_trace["trace_id"],
+        "demo_b_child_trace_id": child_trace["trace_id"],
     }
+
 
 if __name__ == "__main__":
     trace_ids = main()

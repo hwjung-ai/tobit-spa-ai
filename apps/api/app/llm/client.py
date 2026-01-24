@@ -31,7 +31,9 @@ class LlmClient:
         Synchronous wrapper for client.responses.create
         """
         model = model or self.default_model
-        logging.debug("LLM create_response: model=%s, input=%s", model, str(input)[:100])
+        logging.debug(
+            "LLM create_response: model=%s, input=%s", model, str(input)[:100]
+        )
         return self.client.responses.create(
             model=model,
             input=input,
@@ -51,7 +53,9 @@ class LlmClient:
         Asynchronous wrapper for client.responses.create
         """
         model = model or self.default_model
-        logging.debug("LLM acreate_response: model=%s, input=%s", model, str(input)[:100])
+        logging.debug(
+            "LLM acreate_response: model=%s, input=%s", model, str(input)[:100]
+        )
         return await self.async_client.responses.create(
             model=model,
             input=input,
@@ -72,8 +76,10 @@ class LlmClient:
         Yields raw events from the stream.
         """
         model = model or self.default_model
-        logging.debug("LLM stream_response: model=%s, input=%s", model, str(input)[:100])
-        
+        logging.debug(
+            "LLM stream_response: model=%s, input=%s", model, str(input)[:100]
+        )
+
         # Note: openai-python SDK handles the SSE iteration automatically
         async with await self.async_client.responses.create(
             model=model,
@@ -91,7 +97,9 @@ class LlmClient:
                 else:
                     yield event
 
-    def embed(self, input: Union[str, List[str]], model: Optional[str] = None, **kwargs) -> Any:
+    def embed(
+        self, input: Union[str, List[str]], model: Optional[str] = None, **kwargs
+    ) -> Any:
         """
         Embeddings still use the /v1/embeddings endpoint.
         """
@@ -120,7 +128,7 @@ class LlmClient:
             items = response.output_items or []
         elif isinstance(response, dict):
             items = response.get("output_items") or []
-        
+
         # Ensure all items are dicts
         processed = []
         for item in items:

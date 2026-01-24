@@ -28,10 +28,16 @@ def _load_query_sql(scope: str, name: str) -> str | None:
     return None
 
 
-def run_config(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock], list[str]]:
+def run_config(
+    question: str, tenant_id: str = "t1"
+) -> tuple[list[AnswerBlock], list[str]]:
     # Load queries with DB priority fallback to files
-    ci_select_query = _load_query_sql("ci", "resolve_ci") or load_text("queries/postgres/ci/resolve_ci.sql")
-    ci_ext_select_query = _load_query_sql("ci", "ci_attributes") or load_text("queries/postgres/ci/ci_attributes.sql")
+    ci_select_query = _load_query_sql("ci", "resolve_ci") or load_text(
+        "queries/postgres/ci/resolve_ci.sql"
+    )
+    ci_ext_select_query = _load_query_sql("ci", "ci_attributes") or load_text(
+        "queries/postgres/ci/ci_attributes.sql"
+    )
 
     if not ci_select_query or not ci_ext_select_query:
         return [
@@ -75,7 +81,9 @@ def run_config(question: str, tenant_id: str = "t1") -> tuple[list[AnswerBlock],
             )
         ], []
 
-    blocks = _build_blocks(ci, ci_row, ci_ext, tenant_id, ci_select_query, ci_ext_select_query)
+    blocks = _build_blocks(
+        ci, ci_row, ci_ext, tenant_id, ci_select_query, ci_ext_select_query
+    )
     return blocks, ["postgres"]
 
 
@@ -130,7 +138,10 @@ def _build_blocks(
         ["criticality", str(ci_row["criticality"])],
         ["owner", ci_row["owner"]],
         ["location", ci_row["location"]],
-        ["updated_at", ci_row["updated_at"].isoformat() if ci_row["updated_at"] else "unknown"],
+        [
+            "updated_at",
+            ci_row["updated_at"].isoformat() if ci_row["updated_at"] else "unknown",
+        ],
     ]
     base_table = TableBlock(
         type="table",
@@ -174,7 +185,10 @@ def _build_blocks(
             ReferenceItem(
                 kind="sql",
                 title="ci lookup",
-                payload={"sql": ci_select_query.strip(), "params": [tenant_id, ci.ci_id]},
+                payload={
+                    "sql": ci_select_query.strip(),
+                    "params": [tenant_id, ci.ci_id],
+                },
             ),
             ReferenceItem(
                 kind="sql",

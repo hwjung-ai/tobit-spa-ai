@@ -11,7 +11,11 @@ from app.modules.ops.services.ci.orchestrator.runner import _find_exact_candidat
 def test_find_exact_candidate_matches_ci_name_case_insensitive() -> None:
     candidates = [
         {"ci_id": "1", "ci_code": "app-x-01", "ci_name": "Other"},
-        {"ci_id": "2", "ci_code": "app-apm-scheduler-05-1", "ci_name": "APM_App_Scheduler_05-1"},
+        {
+            "ci_id": "2",
+            "ci_code": "app-apm-scheduler-05-1",
+            "ci_name": "APM_App_Scheduler_05-1",
+        },
     ]
     selected = _find_exact_candidate(candidates, ["apm_app_scheduler_05-1"])
     assert selected is not None

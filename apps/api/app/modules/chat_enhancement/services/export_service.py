@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ExportFormat(str, Enum):
     """Supported export formats"""
+
     JSON = "json"
     CSV = "csv"
     MARKDOWN = "md"
@@ -24,9 +25,7 @@ class ChatExportService:
 
     @staticmethod
     def export_to_json(
-        thread_id: str,
-        messages: List[dict],
-        metadata: Optional[dict] = None
+        thread_id: str, messages: List[dict], metadata: Optional[dict] = None
     ) -> str:
         """Export conversation to JSON"""
 
@@ -35,16 +34,13 @@ class ChatExportService:
             "metadata": metadata or {},
             "messages": messages,
             "exported_at": datetime.utcnow().isoformat(),
-            "message_count": len(messages)
+            "message_count": len(messages),
         }
 
         return json.dumps(data, indent=2, default=str)
 
     @staticmethod
-    def export_to_csv(
-        messages: List[dict],
-        title: str = "conversation"
-    ) -> str:
+    def export_to_csv(messages: List[dict], title: str = "conversation") -> str:
         """Export conversation to CSV"""
 
         output = StringIO()
@@ -56,22 +52,21 @@ class ChatExportService:
 
         # Write messages
         for msg in messages:
-            writer.writerow([
-                msg.get("created_at", ""),
-                msg.get("role", ""),
-                msg.get("content", "")[:500],  # Limit content length
-                msg.get("tokens_in", ""),
-                msg.get("tokens_out", ""),
-                msg.get("model", "")
-            ])
+            writer.writerow(
+                [
+                    msg.get("created_at", ""),
+                    msg.get("role", ""),
+                    msg.get("content", "")[:500],  # Limit content length
+                    msg.get("tokens_in", ""),
+                    msg.get("tokens_out", ""),
+                    msg.get("model", ""),
+                ]
+            )
 
         return output.getvalue()
 
     @staticmethod
-    def export_to_markdown(
-        messages: List[dict],
-        title: str = "Conversation"
-    ) -> str:
+    def export_to_markdown(messages: List[dict], title: str = "Conversation") -> str:
         """Export conversation to Markdown"""
 
         lines = [
@@ -80,12 +75,14 @@ class ChatExportService:
             f"Exported: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             f"Total messages: {len(messages)}",
-            ""
+            "",
         ]
 
         for i, msg in enumerate(messages, 1):
             role = msg.get("role", "unknown")
-            role_emoji = "👤" if role == "user" else "🤖" if role == "assistant" else "⚙️"
+            role_emoji = (
+                "👤" if role == "user" else "🤖" if role == "assistant" else "⚙️"
+            )
 
             lines.append(f"## {role_emoji} {role.capitalize()}")
             lines.append("")
@@ -106,10 +103,7 @@ class ChatExportService:
         return "\n".join(lines)
 
     @staticmethod
-    def export_to_text(
-        messages: List[dict],
-        title: str = "Conversation"
-    ) -> str:
+    def export_to_text(messages: List[dict], title: str = "Conversation") -> str:
         """Export conversation to plain text"""
 
         lines = [
@@ -135,7 +129,7 @@ class ChatExportService:
         format: ExportFormat,
         title: str = "Conversation",
         thread_id: Optional[str] = None,
-        metadata: Optional[dict] = None
+        metadata: Optional[dict] = None,
     ) -> Union[str, bytes]:
         """Export conversation in specified format"""
 

@@ -69,7 +69,9 @@ class ActionRegistry:
         if not handler:
             raise ValueError(f"Unknown action_id: {action_id}")
 
-        self._logger.info(f"Executing action: {action_id}", extra={"action_id": action_id})
+        self._logger.info(
+            f"Executing action: {action_id}", extra={"action_id": action_id}
+        )
 
         try:
             result = await handler(inputs, context, session)
@@ -195,31 +197,34 @@ async def handle_list_maintenance_filtered(
                 """
                 rows = conn.execute(
                     query_with_filter,
-                    (tenant_id, device_id, "2099-01-01", "2024-01-01")
+                    (tenant_id, device_id, "2099-01-01", "2024-01-01"),
                 ).fetchall()
             else:
                 # Query all maintenance records
                 rows = conn.execute(
-                    query_sql,
-                    (tenant_id, None, "2099-01-01", "2024-01-01")
+                    query_sql, (tenant_id, None, "2099-01-01", "2024-01-01")
                 ).fetchall()
 
             # Format as table
             table_rows = []
-            for i, row in enumerate(rows[offset:offset+limit], 1):
+            for i, row in enumerate(rows[offset : offset + limit], 1):
                 # row format: (start_time, maint_type, duration_min, result, summary)
-                table_rows.append([
-                    f"M{offset+i:03d}",
-                    device_id or "General",
-                    row[1] if len(row) > 1 else "Maintenance",
-                    row[3] if len(row) > 3 else "Completed",
-                ])
+                table_rows.append(
+                    [
+                        f"M{offset + i:03d}",
+                        device_id or "General",
+                        row[1] if len(row) > 1 else "Maintenance",
+                        row[3] if len(row) > 3 else "Completed",
+                    ]
+                )
 
             blocks = [
                 {
                     "type": "table",
                     "columns": ["ID", "Device", "Type", "Status"],
-                    "rows": table_rows if table_rows else [["M001", "General", "Preventive", "Scheduled"]],
+                    "rows": table_rows
+                    if table_rows
+                    else [["M001", "General", "Preventive", "Scheduled"]],
                 }
             ]
 
@@ -244,7 +249,9 @@ async def handle_list_maintenance_filtered(
                             "status": row[3] if len(row) > 3 else "Completed",
                             "date": str(row[0]) if len(row) > 0 else "",
                         }
-                        for i, row in enumerate(rows[offset:offset+limit], offset+1)
+                        for i, row in enumerate(
+                            rows[offset : offset + limit], offset + 1
+                        )
                     ],
                     "pagination": {"offset": offset, "limit": limit, "total": total},
                 },
@@ -297,7 +304,9 @@ async def handle_create_maintenance_ticket(
 
     # Validate inputs
     if not all([device_id, maint_type, scheduled_date]):
-        raise ValueError("Missing required fields: device_id, maintenance_type, scheduled_date")
+        raise ValueError(
+            "Missing required fields: device_id, maintenance_type, scheduled_date"
+        )
 
     try:
         # Get PostgreSQL connection
@@ -308,12 +317,15 @@ async def handle_create_maintenance_ticket(
             # Find CI ID for the device_id (ci_code)
             ci_rows = conn.execute(
                 "SELECT ci_id FROM ci WHERE tenant_id = %s AND ci_code = %s LIMIT 1",
-                (tenant_id, device_id)
+                (tenant_id, device_id),
             ).fetchall()
 
             if not ci_rows:
                 # Create a mock response if device not found
-                logger.warning(f"Device {device_id} not found in CI table", extra={"device_id": device_id})
+                logger.warning(
+                    f"Device {device_id} not found in CI table",
+                    extra={"device_id": device_id},
+                )
                 ticket_id = f"MAINT-{str(uuid.uuid4())[:8].upper()}"
                 blocks = [
                     {
@@ -341,18 +353,18 @@ async def handle_create_maintenance_ticket(
                     insert_query,
                     (
                         str(uuid.uuid4()),  # id
-                        tenant_id,          # tenant_id
-                        ci_id,              # ci_id
-                        maint_type,         # maint_type
+                        tenant_id,  # tenant_id
+                        ci_id,  # ci_id
+                        maint_type,  # maint_type
                         f"Scheduled {maint_type}",  # summary
                         f"Scheduled for {scheduled_date}. Assigned to: {assigned_to}",  # detail
-                        now,                # start_time
-                        None,               # end_time
-                        0,                  # duration_min
-                        assigned_to,        # performer
-                        "Scheduled",        # result
-                        now,                # created_at
-                    )
+                        now,  # start_time
+                        None,  # end_time
+                        0,  # duration_min
+                        assigned_to,  # performer
+                        "Scheduled",  # result
+                        now,  # created_at
+                    ),
                 )
                 conn.commit()
 

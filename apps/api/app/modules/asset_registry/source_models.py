@@ -26,8 +26,12 @@ class SourceConnection(SQLModel):
     database: str | None = None
 
     # P0-9: Use secret_key_ref instead of direct password storage
-    password_encrypted: str | None = Field(default=None, description="DEPRECATED: Use secret_key_ref instead")
-    secret_key_ref: str | None = Field(default=None, description="Reference to secret in secrets manager")
+    password_encrypted: str | None = Field(
+        default=None, description="DEPRECATED: Use secret_key_ref instead"
+    )
+    secret_key_ref: str | None = Field(
+        default=None, description="Reference to secret in secrets manager"
+    )
 
     # Connection settings
     timeout: int = Field(default=30)
@@ -73,8 +77,7 @@ class SourceAsset(SQLModel):
 
     # For spec_json pattern consistency (P0-7)
     spec_json: Dict[str, Any] | None = Field(
-        default=None,
-        description="JSON spec for the source connection"
+        default=None, description="JSON spec for the source connection"
     )
 
     @property

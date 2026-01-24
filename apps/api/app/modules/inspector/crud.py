@@ -15,7 +15,9 @@ from app.modules.inspector.models import (
 )
 
 
-def create_execution_trace(session: Session, trace: TbExecutionTrace) -> TbExecutionTrace:
+def create_execution_trace(
+    session: Session, trace: TbExecutionTrace
+) -> TbExecutionTrace:
     session.add(trace)
     session.commit()
     session.refresh(trace)
@@ -71,13 +73,20 @@ def list_execution_traces(
         filters.append(TbExecutionTrace.route == route)
     if replan_count is not None:
         # replan_events의 개수가 replan_count와 일치하는 것만 필터링
-        filters.append(func.coalesce(func.array_length(TbExecutionTrace.replan_events, 1), 0) == replan_count)
+        filters.append(
+            func.coalesce(func.array_length(TbExecutionTrace.replan_events, 1), 0)
+            == replan_count
+        )
 
     statement = select(TbExecutionTrace)
     if filters:
         statement = statement.where(*filters)
 
-    statement = statement.order_by(TbExecutionTrace.created_at.desc()).offset(offset).limit(limit)
+    statement = (
+        statement.order_by(TbExecutionTrace.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
 
     total_stmt = select(func.count()).select_from(TbExecutionTrace)
     if filters:
@@ -117,7 +126,9 @@ def get_golden_query(session: Session, golden_query_id: str) -> TbGoldenQuery | 
     return session.get(TbGoldenQuery, golden_query_id)
 
 
-def list_golden_queries(session: Session, enabled_only: bool = False) -> list[TbGoldenQuery]:
+def list_golden_queries(
+    session: Session, enabled_only: bool = False
+) -> list[TbGoldenQuery]:
     """List all golden queries"""
     statement = select(TbGoldenQuery)
     if enabled_only:

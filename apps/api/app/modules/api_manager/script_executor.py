@@ -43,7 +43,9 @@ def execute_script_api(
 ) -> ApiScriptExecuteResult:
     runtime_policy = _dict_or_empty(runtime_policy or {})
     if not runtime_policy.get("allow_runtime"):
-        raise HTTPException(status_code=400, detail="Script execution is disabled for this API")
+        raise HTTPException(
+            status_code=400, detail="Script execution is disabled for this API"
+        )
     script_policy = _dict_or_empty(runtime_policy.get("script"))
     timeout_ms = int(script_policy.get("timeout_ms") or DEFAULT_SCRIPT_TIMEOUT_MS)
     max_bytes = int(script_policy.get("max_response_bytes") or DEFAULT_OUTPUT_BYTES)

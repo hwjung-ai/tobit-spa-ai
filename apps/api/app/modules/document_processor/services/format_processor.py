@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 class DocumentProcessingError(Exception):
     """Exception raised during document processing"""
+
     pass
 
 
@@ -48,13 +49,13 @@ class DocumentProcessor:
     """Main processor for handling various document formats"""
 
     SUPPORTED_FORMATS = {
-        'pdf': 'application/pdf',
-        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
+        "pdf": "application/pdf",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
     }
 
     def __init__(self):
@@ -106,20 +107,17 @@ class DocumentProcessor:
                 if not text:
                     text = ""
 
-                pages.append({
-                    "page_num": page_num,
-                    "text": text,
-                    "tables": [],
-                    "images": []
-                })
+                pages.append(
+                    {"page_num": page_num, "text": text, "tables": [], "images": []}
+                )
 
             return {
                 "pages": pages,
                 "metadata": {
                     "page_count": len(pages),
                     "format": "pdf",
-                    "extraction_method": "pdf_text"
-                }
+                    "extraction_method": "pdf_text",
+                },
             }
 
         except Exception as e:
@@ -134,16 +132,8 @@ class DocumentProcessor:
         try:
             doc = DocxDocument(file_path)
             content = {
-                "pages": [{
-                    "page_num": 0,
-                    "text": "",
-                    "tables": [],
-                    "images": []
-                }],
-                "metadata": {
-                    "format": "docx",
-                    "extraction_method": "docx_native"
-                }
+                "pages": [{"page_num": 0, "text": "", "tables": [], "images": []}],
+                "metadata": {"format": "docx", "extraction_method": "docx_native"},
             }
 
             # Extract text from paragraphs
@@ -157,11 +147,13 @@ class DocumentProcessor:
                 for row in table.rows:
                     table_data.append([cell.text for cell in row.cells])
 
-                content["pages"][0]["tables"].append({
-                    "data": table_data,
-                    "rows": len(table.rows),
-                    "cols": len(table.columns) if table.columns else 0
-                })
+                content["pages"][0]["tables"].append(
+                    {
+                        "data": table_data,
+                        "rows": len(table.rows),
+                        "cols": len(table.columns) if table.columns else 0,
+                    }
+                )
 
             return content
 
@@ -180,25 +172,31 @@ class DocumentProcessor:
 
             for sheet_name in excel_file.sheet_names:
                 df = pd.read_excel(file_path, sheet_name=sheet_name)
-                sheets.append({
-                    "sheet_name": sheet_name,
-                    "columns": df.columns.tolist(),
-                    "rows": len(df),
-                    "data_preview": df.head(10).to_dict('records') if len(df) > 0 else []
-                })
+                sheets.append(
+                    {
+                        "sheet_name": sheet_name,
+                        "columns": df.columns.tolist(),
+                        "rows": len(df),
+                        "data_preview": df.head(10).to_dict("records")
+                        if len(df) > 0
+                        else [],
+                    }
+                )
 
             content = {
-                "pages": [{
-                    "page_num": 0,
-                    "text": f"Excel file with {len(sheets)} sheets",
-                    "tables": sheets,
-                    "images": []
-                }],
+                "pages": [
+                    {
+                        "page_num": 0,
+                        "text": f"Excel file with {len(sheets)} sheets",
+                        "tables": sheets,
+                        "images": [],
+                    }
+                ],
                 "metadata": {
                     "format": "xlsx",
                     "extraction_method": "xlsx_native",
-                    "sheet_count": len(sheets)
-                }
+                    "sheet_count": len(sheets),
+                },
             }
 
             return content
@@ -217,29 +215,23 @@ class DocumentProcessor:
             slides = []
 
             for slide_num, slide in enumerate(prs.slides):
-                slide_data = {
-                    "slide_num": slide_num,
-                    "text": "",
-                    "shapes": []
-                }
+                slide_data = {"slide_num": slide_num, "text": "", "shapes": []}
 
                 for shape in slide.shapes:
                     if hasattr(shape, "text") and shape.text:
                         slide_data["text"] += shape.text + "\n"
-                        slide_data["shapes"].append({
-                            "type": "text",
-                            "content": shape.text
-                        })
+                        slide_data["shapes"].append(
+                            {"type": "text", "content": shape.text}
+                        )
                     elif hasattr(shape, "table"):
                         # Extract table
                         table_data = []
                         for row in shape.table.rows:
                             table_data.append([cell.text for cell in row.cells])
 
-                        slide_data["shapes"].append({
-                            "type": "table",
-                            "data": table_data
-                        })
+                        slide_data["shapes"].append(
+                            {"type": "table", "data": table_data}
+                        )
 
                 slides.append(slide_data)
 
@@ -248,8 +240,8 @@ class DocumentProcessor:
                 "metadata": {
                     "format": "pptx",
                     "extraction_method": "pptx_native",
-                    "slide_count": len(slides)
-                }
+                    "slide_count": len(slides),
+                },
             }
 
         except Exception as e:
@@ -268,18 +260,13 @@ class DocumentProcessor:
             text = pytesseract.image_to_string(image)
 
             return {
-                "pages": [{
-                    "page_num": 0,
-                    "text": text,
-                    "tables": [],
-                    "images": []
-                }],
+                "pages": [{"page_num": 0, "text": text, "tables": [], "images": []}],
                 "metadata": {
                     "format": "image",
                     "extraction_method": "ocr_pytesseract",
                     "width": image.width,
-                    "height": image.height
-                }
+                    "height": image.height,
+                },
             }
 
         except Exception as e:

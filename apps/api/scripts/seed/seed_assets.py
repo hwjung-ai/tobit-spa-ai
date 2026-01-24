@@ -30,9 +30,12 @@ from app.modules.asset_registry.resolver_models import (
     TransformationRule,
 )
 from app.modules.asset_registry.schema_models import SchemaAssetCreate, SchemaCatalog
-from app.modules.asset_registry.source_models import SourceAssetCreate, SourceConnection, SourceType
+from app.modules.asset_registry.source_models import (
+    SourceAssetCreate,
+    SourceConnection,
+    SourceType,
+)
 from app.shared.config_loader import load_yaml
-
 
 RESOURCES_DIR = ROOT / "resources"
 SOURCE_DIR = "sources"
@@ -248,10 +251,24 @@ def _export_resolvers(session) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed asset registry from resources and/or export fallback YAMLs.")
-    parser.add_argument("--import-resources", action="store_true", help="Import resources into DB (published).")
-    parser.add_argument("--export-resources", action="store_true", help="Export published assets to resources YAML.")
-    parser.add_argument("--force", action="store_true", help="Overwrite published assets by creating a new version.")
+    parser = argparse.ArgumentParser(
+        description="Seed asset registry from resources and/or export fallback YAMLs."
+    )
+    parser.add_argument(
+        "--import-resources",
+        action="store_true",
+        help="Import resources into DB (published).",
+    )
+    parser.add_argument(
+        "--export-resources",
+        action="store_true",
+        help="Export published assets to resources YAML.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite published assets by creating a new version.",
+    )
     parser.add_argument(
         "--types",
         default="source,schema,resolver",

@@ -11,7 +11,8 @@ class ThreadCreate(BaseModel):
         default=None, description="Optional human-friendly title for the thread"
     )
     builder: str | None = Field(
-        default=None, description="Optional slug of the builder that created this thread"
+        default=None,
+        description="Optional slug of the builder that created this thread",
     )
 
 

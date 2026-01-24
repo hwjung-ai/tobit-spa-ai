@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import random
@@ -274,7 +274,9 @@ def main() -> None:
     print(f"Inserted {len(ci_rows)} CI records with {len(ext_rows)} ext rows")
 
 
-def _maybe_create_db(system: dict[str, Any], server_code: str, server_idx: int) -> tuple | None:
+def _maybe_create_db(
+    system: dict[str, Any], server_code: str, server_idx: int
+) -> tuple | None:
     if random.random() >= 0.4:
         return None
     db_id = uuid.uuid4()
@@ -308,7 +310,9 @@ def _maybe_create_db(system: dict[str, Any], server_code: str, server_idx: int) 
     return ci_row, ext_row
 
 
-def _build_was(system: dict[str, Any], server_code: str, server_idx: int) -> tuple[tuple, tuple, str]:
+def _build_was(
+    system: dict[str, Any], server_code: str, server_idx: int
+) -> tuple[tuple, tuple, str]:
     was_id = uuid.uuid4()
     code = f"was-{system['code']}-{server_idx:02d}"
     ci_row = build_ci_row(
@@ -341,7 +345,9 @@ def _build_was(system: dict[str, Any], server_code: str, server_idx: int) -> tup
     return ci_row, ext_row, code
 
 
-def _maybe_create_web(system: dict[str, Any], server_code: str, server_idx: int, was_code: str) -> tuple | None:
+def _maybe_create_web(
+    system: dict[str, Any], server_code: str, server_idx: int, was_code: str
+) -> tuple | None:
     if random.random() >= 0.5:
         return None
     web_id = uuid.uuid4()
@@ -375,7 +381,9 @@ def _maybe_create_web(system: dict[str, Any], server_code: str, server_idx: int,
     return ci_row, ext_row
 
 
-def _build_apps(system: dict[str, Any], server_code: str, server_idx: int, was_code: str) -> list[tuple[tuple, tuple]]:
+def _build_apps(
+    system: dict[str, Any], server_code: str, server_idx: int, was_code: str
+) -> list[tuple[tuple, tuple]]:
     apps: list[tuple[tuple, tuple]] = []
     count = random.choices([1, 2, 3], weights=[0.65, 0.25, 0.1])[0]
     for idx in range(1, count + 1):
@@ -414,7 +422,10 @@ def _build_apps(system: dict[str, Any], server_code: str, server_idx: int, was_c
 
 
 def _build_network_segments(
-    system: dict[str, Any], server_codes: list[str], ci_rows: list[tuple], ext_rows: list[tuple]
+    system: dict[str, Any],
+    server_codes: list[str],
+    ci_rows: list[tuple],
+    ext_rows: list[tuple],
 ) -> None:
     for idx in range(1, 3):
         net_id = uuid.uuid4()

@@ -52,7 +52,9 @@ def _get_or_create_thread(
             session.refresh(thread)
         return thread
     title = _derive_title(message)
-    thread = ChatThread(title=title, tenant_id=tenant_id, user_id=user_id, builder=builder)
+    thread = ChatThread(
+        title=title, tenant_id=tenant_id, user_id=user_id, builder=builder
+    )
     session.add(thread)
     session.commit()
     session.refresh(thread)
@@ -73,15 +75,16 @@ def _persist_assistant_response(
     if not content.strip():
         return
     thread.updated_at = datetime.now(timezone.utc)
-    should_update_title = (
-        not thread.title_finalized
-        or thread.title.startswith("New conversation")
+    should_update_title = not thread.title_finalized or thread.title.startswith(
+        "New conversation"
     )
     if should_update_title:
         title_source = prompt or content
         thread.title = _derive_title(title_source)
         thread.title_finalized = True
-    assistant = ChatMessage(thread_id=thread.id, role="assistant", content=content.strip())
+    assistant = ChatMessage(
+        thread_id=thread.id, role="assistant", content=content.strip()
+    )
     session.add(assistant)
     session.add(thread)
     session.commit()
@@ -89,14 +92,20 @@ def _persist_assistant_response(
 
 @router.get("/stream")
 async def stream_chat(
-    thread_id: str | None = Query(None, description="Optional thread id to append the chat"),
-    message: str | None = Query(None, min_length=1, description="Primary prompt to start the chat"),
+    thread_id: str | None = Query(
+        None, description="Optional thread id to append the chat"
+    ),
+    message: str | None = Query(
+        None, min_length=1, description="Primary prompt to start the chat"
+    ),
     prompt: str | None = Query(
         None,
         min_length=1,
         description="Legacy prompt field; message is preferred",
     ),
-    builder: str | None = Query(None, description="Optional builder slug to tag the thread"),
+    builder: str | None = Query(
+        None, description="Optional builder slug to tag the thread"
+    ),
     session: Session = Depends(get_session),
     identity: Tuple[str, str] = Depends(_resolve_identity),
     orchestrator: BaseOrchestrator = Depends(get_orchestrator),
@@ -108,13 +117,15 @@ async def stream_chat(
     if not message and prompt:  # TODO: remove prompt fallback in next release
         message = prompt
     tenant_id, user_id = identity
-    thread = _get_or_create_thread(session, tenant_id, user_id, thread_id, resolved_message, builder=builder)
+    thread = _get_or_create_thread(
+        session, tenant_id, user_id, thread_id, resolved_message, builder=builder
+    )
     _save_user_message(session, thread.id, resolved_message)
 
     assistant_buffer: list[str] = []
     done_sent = False
     prompt_for_orchestrator = resolved_message
-    
+
     # 1. Fetch recent messages for context window
     MAX_HISTORY_MESSAGES = 10
     history_stmt = (
@@ -128,17 +139,21 @@ async def stream_chat(
     # (though typically we want it at the end).
     # Since we just saved it, it should be the most recent one.
     # Let's just re-build the prompt from history + current message carefully.
-    
+
     # Re-order to chronological
     past_messages = sorted(past_messages, key=lambda m: m.created_at)
-    
+
     context_str = ""
     for msg in past_messages:
         # Skip the current message if it's already in the DB (which it is, we just saved it)
-        # We will append resolved_message explicitly at the end to be safe, 
+        # We will append resolved_message explicitly at the end to be safe,
         # or we can just use the history including the current message.
         # Let's use the history excluding the current one to clear confusion, then append current.
-        if msg.content == resolved_message and msg.role == "user" and msg == past_messages[-1]:
+        if (
+            msg.content == resolved_message
+            and msg.role == "user"
+            and msg == past_messages[-1]
+        ):
             continue
         context_str += f"{msg.role.upper()}: {msg.content}\n"
 
@@ -153,9 +168,7 @@ async def stream_chat(
         )
     elif context_str:
         prompt_for_orchestrator = (
-            "Conversation History:\n"
-            f"{context_str}\n"
-            f"User asks:\n{resolved_message}"
+            f"Conversation History:\n{context_str}\nUser asks:\n{resolved_message}"
         )
 
     logging.debug(

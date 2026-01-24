@@ -31,7 +31,9 @@ class ExecutionTracer:
         self._start_times: Dict[str, datetime] = {}
         self._trace_info: Dict[str, Dict[str, Any]] = {}
 
-    def start_trace(self, tool_type: str, operation: str, params: Dict[str, Any]) -> str:
+    def start_trace(
+        self, tool_type: str, operation: str, params: Dict[str, Any]
+    ) -> str:
         trace_id = f"{tool_type}_{operation}_{int(time.time() * 1000)}"
         self._start_times[trace_id] = datetime.now()
         self._trace_info[trace_id] = {
@@ -124,7 +126,9 @@ class ExecutionTracer:
             for trace in self.traces:
                 lines.append(
                     ",".join(
-                        str(getattr(trace, field)) if getattr(trace, field) is not None else ""
+                        str(getattr(trace, field))
+                        if getattr(trace, field) is not None
+                        else ""
                         for field in header
                     )
                 )

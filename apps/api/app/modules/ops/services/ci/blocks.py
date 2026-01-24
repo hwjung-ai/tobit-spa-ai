@@ -48,7 +48,9 @@ class PathBlock(TypedDict, total=False):
 Block = TextBlock | NumberBlock | TableBlock | NetworkBlock | PathBlock
 
 
-def text_block(text: str, title: str | None = None, block_id: str | None = None) -> TextBlock:
+def text_block(
+    text: str, title: str | None = None, block_id: str | None = None
+) -> TextBlock:
     payload: TextBlock = {"type": "text", "text": text}
     if title:
         payload["title"] = title
@@ -99,7 +101,12 @@ def chart_block(
     return payload
 
 
-def number_block(label: str, value: float | int, title: str | None = None, block_id: str | None = None) -> NumberBlock:
+def number_block(
+    label: str,
+    value: float | int,
+    title: str | None = None,
+    block_id: str | None = None,
+) -> NumberBlock:
     payload: NumberBlock = {"type": "number", "label": label, "value": value}
     if title:
         payload["title"] = title

@@ -61,16 +61,16 @@ def _fetch_relationship_types(driver: Driver) -> list[str]:
 def _fetch_relationship_counts(driver: Driver) -> list[dict[str, object]]:
     query = _load_query("relationship_counts.cypher")
     with driver.session() as session:
-        result = session.execute_read(
-            lambda tx: tx.run(query).data()
-        )
+        result = session.execute_read(lambda tx: tx.run(query).data())
         return [{"rel_type": row["rel_type"], "count": row["cnt"]} for row in result]
 
 
 def _fetch_labels(driver: Driver) -> list[str]:
     query = _load_query("labels.cypher")
     with driver.session() as session:
-        return session.execute_read(lambda tx: [record["label"] for record in tx.run(query)])
+        return session.execute_read(
+            lambda tx: [record["label"] for record in tx.run(query)]
+        )
 
 
 def _fetch_ci_properties(driver: Driver) -> tuple[list[str], list[str]]:

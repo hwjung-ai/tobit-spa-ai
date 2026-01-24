@@ -26,9 +26,10 @@ logger = get_logger(__name__)
 # Action-specific input validators (legacy, for backward compatibility)
 class HistoryQueryInputs(BaseModel):
     """Input schema for run_history_query action"""
+
     device_id: str
     date_from: str  # ISO date (YYYY-MM-DD)
-    date_to: str    # ISO date (YYYY-MM-DD)
+    date_to: str  # ISO date (YYYY-MM-DD)
 
 
 # Legacy action registry (kept for backward compatibility)
@@ -165,12 +166,21 @@ def render_action_payload(
     logger.info(
         "render_action_payload",
         extra={
-            "template_keys": list(payload_template.keys()) if isinstance(payload_template, dict) else "N/A",
+            "template_keys": list(payload_template.keys())
+            if isinstance(payload_template, dict)
+            else "N/A",
         },
     )
 
     rendered = BindingEngine.render_template(payload_template, binding_context)
 
-    logger.debug("render_action_payload.result", extra={"rendered_keys": list(rendered.keys()) if isinstance(rendered, dict) else "N/A"})
+    logger.debug(
+        "render_action_payload.result",
+        extra={
+            "rendered_keys": list(rendered.keys())
+            if isinstance(rendered, dict)
+            else "N/A"
+        },
+    )
 
     return rendered

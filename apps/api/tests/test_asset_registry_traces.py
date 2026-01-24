@@ -1,10 +1,9 @@
-from fastapi.testclient import TestClient
-from sqlmodel import Session
-
 from app.modules.asset_registry.models import TbAssetRegistry
 from app.modules.inspector.models import TbExecutionTrace
 from core.db import get_session
+from fastapi.testclient import TestClient
 from main import app
+from sqlmodel import Session
 
 
 def _make_client(session: Session) -> TestClient:

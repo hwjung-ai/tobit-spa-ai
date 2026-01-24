@@ -39,7 +39,21 @@ from .resolvers import resolve_ci, resolve_time_range
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
-METRIC_KEYWORDS = {"온도", "temp", "temperature", "cpu", "사용률", "추이", "graph", "그래프", "memory", "ram", "disk", "network", "트래픽"}
+METRIC_KEYWORDS = {
+    "온도",
+    "temp",
+    "temperature",
+    "cpu",
+    "사용률",
+    "추이",
+    "graph",
+    "그래프",
+    "memory",
+    "ram",
+    "disk",
+    "network",
+    "트래픽",
+}
 HIST_KEYWORDS = {"정비", "유지보수", "작업", "변경", "이력", "최근 변경", "최근"}
 GRAPH_KEYWORDS = {"영향", "의존", "경로", "연결", "토폴로지", "구성요소", "관계"}
 
@@ -57,7 +71,9 @@ def _fallback_error_message(status: str) -> str | None:
     return _FALLBACK_ERRORS.get(status)
 
 
-def _serialize_references(items: list[dict[str, Any]] | list[Any] | None) -> list[dict[str, Any]]:
+def _serialize_references(
+    items: list[dict[str, Any]] | list[Any] | None,
+) -> list[dict[str, Any]]:
     serialized: list[dict[str, Any]] = []
     if not items:
         return serialized
@@ -86,7 +102,9 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
     parent_trace_id = parent_raw if parent_raw and parent_raw != "-" else None
 
     if mode == "config":
-        blocks, used_tools, route_reason, summary, fallback, error = _handle_config_mode(question, settings)
+        blocks, used_tools, route_reason, summary, fallback, error = (
+            _handle_config_mode(question, settings)
+        )
         executor_result = None
     elif settings.ops_mode != "real":
         blocks = _build_mock_blocks(mode, question)
@@ -95,7 +113,9 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         summary = f"Mocked OPS response for {mode}"
     else:
         result = _execute_real_mode(mode, question, settings)
-        blocks, used_tools, extra_error, executor_result = _normalize_real_result(result)
+        blocks, used_tools, extra_error, executor_result = _normalize_real_result(
+            result
+        )
         if extra_error:
             error = extra_error
             if ";" in error:
@@ -135,7 +155,9 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
         "summary": executor_result.summary if executor_result else {},
     }
     if executor_result:
-        trace_payload["tool_calls"] = [call.model_dump() for call in executor_result.tool_calls]
+        trace_payload["tool_calls"] = [
+            call.model_dump() for call in executor_result.tool_calls
+        ]
         trace_payload["references"] = _serialize_references(executor_result.references)
 
     request_payload = {"question": question, "mode": mode}
@@ -166,7 +188,9 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
     return envelope
 
 
-def _execute_real_mode(mode: OpsMode, question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
+def _execute_real_mode(
+    mode: OpsMode, question: str, settings: Any
+) -> tuple[list[AnswerBlock], list[str]]:
     executor = {
         "config": _run_config,
         "history": _run_history,
@@ -182,7 +206,9 @@ def _execute_real_mode(mode: OpsMode, question: str, settings: Any) -> tuple[lis
 
 
 def _normalize_real_result(
-    real_result: tuple[list[AnswerBlock], list[str]] | tuple[list[AnswerBlock], list[str], str | None] | ExecutorResult
+    real_result: tuple[list[AnswerBlock], list[str]]
+    | tuple[list[AnswerBlock], list[str], str | None]
+    | ExecutorResult,
 ) -> tuple[list[AnswerBlock], list[str], str | None, ExecutorResult | None]:
     # Handle ExecutorResult from new executors
     if isinstance(real_result, ExecutorResult):
@@ -209,43 +235,60 @@ def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[s
         return placeholder_blocks, ["placeholder"]
 
 
-def _run_history(question: str, settings: Any) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
+def _run_history(
+    question: str, settings: Any
+) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
     return run_hist(question, tenant_id=tenant_id)
 
 
-def _run_graph(question: str, settings: Any) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
+def _run_graph(
+    question: str, settings: Any
+) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
     return run_graph(question, tenant_id=tenant_id)
 
 
-def _run_metric(question: str, settings: Any) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
+def _run_metric(
+    question: str, settings: Any
+) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
     tenant_id = getattr(settings, "tenant_id", "t1")
     return run_metric(question, tenant_id=tenant_id)
 
 
-
-def _run_all(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str], str | None]:
+def _run_all(
+    question: str, settings: Any
+) -> tuple[list[AnswerBlock], list[str], str | None]:
     if settings.ops_enable_langgraph:
         if settings.openai_api_key:
             try:
                 return _run_all_langgraph(question, settings)
             except Exception as exc:
-                logging.exception("LangGraph ALL execution failed; falling back to rule-based")
-                fallback_blocks, fallback_tools, fallback_error = _run_all_rule_based(question, settings)
+                logging.exception(
+                    "LangGraph ALL execution failed; falling back to rule-based"
+                )
+                fallback_blocks, fallback_tools, fallback_error = _run_all_rule_based(
+                    question, settings
+                )
                 lang_err = f"langgraph: {exc}"
                 combined_error = "; ".join(filter(None, [lang_err, fallback_error]))
                 return fallback_blocks, fallback_tools, combined_error or None
-        logging.warning("LangGraph requested but OpenAI API key missing; using rule-based ALL executor")
+        logging.warning(
+            "LangGraph requested but OpenAI API key missing; using rule-based ALL executor"
+        )
     return _run_all_rule_based(question, settings)
 
 
-def _run_all_langgraph(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str], str | None]:
+def _run_all_langgraph(
+    question: str, settings: Any
+) -> tuple[list[AnswerBlock], list[str], str | None]:
     runner = LangGraphAllRunner(settings)
     return runner.run(question)
 
 
-def _run_all_rule_based(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str], str | None]:
+def _run_all_rule_based(
+    question: str, settings: Any
+) -> tuple[list[AnswerBlock], list[str], str | None]:
     selected = _determine_all_executors(question)
     successful_blocks: dict[str, list[AnswerBlock]] = {}
     used_tools: list[str] = []
@@ -262,7 +305,9 @@ def _run_all_rule_based(question: str, settings: Any) -> tuple[list[AnswerBlock]
             logging.exception("ALL executor %s failed", name)
             errors.append(f"{name}: {exc}")
     if not successful_blocks:
-        raise RuntimeError("ALL executors all failed" + (f": {'; '.join(errors)}" if errors else ""))
+        raise RuntimeError(
+            "ALL executors all failed" + (f": {'; '.join(errors)}" if errors else "")
+        )
     summary_block = _build_all_summary(question, list(successful_blocks.keys()))
     ordered_blocks: list[AnswerBlock] = [summary_block]
     for name in ALL_EXECUTOR_ORDER:
@@ -286,7 +331,9 @@ def _determine_all_executors(question: str) -> list[str]:
     return selected
 
 
-def _resolve_executor(name: str) -> Callable[[str, Any], tuple[list[AnswerBlock], list[str]]]:
+def _resolve_executor(
+    name: str,
+) -> Callable[[str, Any], tuple[list[AnswerBlock], list[str]]]:
     executors: dict[str, Callable[[str, Any], tuple[list[AnswerBlock], list[str]]]] = {
         "metric": _run_metric,
         "hist": _run_history,
@@ -347,7 +394,9 @@ def _build_config_placeholder(question: str, settings: Any) -> list[AnswerBlock]
     return [markdown, table, references]
 
 
-def _handle_config_mode(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str], str, str, bool, str | None]:
+def _handle_config_mode(
+    question: str, settings: Any
+) -> tuple[list[AnswerBlock], list[str], str, str, bool, str | None]:
     if settings.ops_mode == "real":
         try:
             blocks, used_tools = run_config_executor(question)
@@ -360,7 +409,9 @@ def _handle_config_mode(question: str, settings: Any) -> tuple[list[AnswerBlock]
                 None,
             )
         except Exception as exc:
-            logging.exception("Config executor failed; returning placeholder", exc_info=exc)
+            logging.exception(
+                "Config executor failed; returning placeholder", exc_info=exc
+            )
             placeholder = _build_config_placeholder(question, settings)
             return (
                 placeholder,
@@ -396,7 +447,9 @@ def _safe_resolve_time_range_text(question: str) -> str:
         time_range = resolve_time_range(question, datetime.now(timezone.utc))
         return f"{time_range.start.isoformat()} ~ {time_range.end.isoformat()} ({time_range.bucket})"
     except Exception:
-        logging.debug("resolve_time_range failed while building ALL summary", exc_info=True)
+        logging.debug(
+            "resolve_time_range failed while building ALL summary", exc_info=True
+        )
     return "unknown"
 
 
@@ -451,13 +504,23 @@ def _mock_timeseries() -> TimeSeriesBlock:
     now = datetime.now(timezone.utc)
     series = TimeSeriesSeries(
         name="cpu_utilization",
-        data=[_timeseries_point(now, -20, 60), _timeseries_point(now, -10, 64), _timeseries_point(now, 0, 59)],
+        data=[
+            _timeseries_point(now, -20, 60),
+            _timeseries_point(now, -10, 64),
+            _timeseries_point(now, 0, 59),
+        ],
     )
     memory = TimeSeriesSeries(
         name="memory_pressure",
-        data=[_timeseries_point(now, -20, 70), _timeseries_point(now, -10, 73), _timeseries_point(now, 0, 71)],
+        data=[
+            _timeseries_point(now, -20, 70),
+            _timeseries_point(now, -10, 73),
+            _timeseries_point(now, 0, 71),
+        ],
     )
-    return TimeSeriesBlock(type="timeseries", title="Recent metrics", series=[series, memory])
+    return TimeSeriesBlock(
+        type="timeseries", title="Recent metrics", series=[series, memory]
+    )
 
 
 def _mock_graph() -> GraphBlock:
@@ -473,6 +536,8 @@ def _mock_graph() -> GraphBlock:
     return GraphBlock(type="graph", title="Dependency graph", nodes=nodes, edges=edges)
 
 
-def _timeseries_point(origin: datetime, minutes_delta: int, value: int) -> TimeSeriesPoint:
+def _timeseries_point(
+    origin: datetime, minutes_delta: int, value: int
+) -> TimeSeriesPoint:
     timestamp = (origin + timedelta(minutes=minutes_delta)).isoformat()
     return TimeSeriesPoint(timestamp=timestamp, value=float(value))

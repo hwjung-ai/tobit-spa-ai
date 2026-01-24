@@ -103,11 +103,16 @@ async def on_startup() -> None:
                 logger.info("Database migrations completed successfully")
             except Exception as upgrade_error:
                 # If explicit target fails, try current version
-                logger.warning(f"Migration with explicit target failed: {upgrade_error}")
+                logger.warning(
+                    f"Migration with explicit target failed: {upgrade_error}"
+                )
                 logger.info("Proceeding with current database schema")
         except Exception as e:
             import logging
-            logging.getLogger(__name__).error(f"Failed to initialize migrations: {e}", exc_info=True)
+
+            logging.getLogger(__name__).error(
+                f"Failed to initialize migrations: {e}", exc_info=True
+            )
 
     # Start CEP scheduler
     start_scheduler()
@@ -126,9 +131,19 @@ async def on_shutdown() -> None:
 
 @app.get("/health")
 def health():
-    return {"time": datetime.utcnow().isoformat(), "code": 0, "message": "OK", "data": {"status": "up"}}
+    return {
+        "time": datetime.utcnow().isoformat(),
+        "code": 0,
+        "message": "OK",
+        "data": {"status": "up"},
+    }
 
 
 @app.get("/hello")
 def hello():
-    return {"time": datetime.utcnow().isoformat(), "code": 0, "message": "OK", "data": {"hello": "tobit-spa-ai"}}
+    return {
+        "time": datetime.utcnow().isoformat(),
+        "code": 0,
+        "message": "OK",
+        "data": {"hello": "tobit-spa-ai"},
+    }

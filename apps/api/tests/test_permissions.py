@@ -220,7 +220,9 @@ class TestPermissionChecks:
         )
         assert result.granted is True
 
-    def test_developer_cannot_delete_api(self, session: Session, developer_user: TbUser):
+    def test_developer_cannot_delete_api(
+        self, session: Session, developer_user: TbUser
+    ):
         """Test developer cannot delete API."""
         result = check_permission(
             session,

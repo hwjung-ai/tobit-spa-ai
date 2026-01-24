@@ -10,7 +10,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("chat_thread", sa.Column("builder", sa.String(length=100), nullable=True))
+    op.add_column(
+        "chat_thread", sa.Column("builder", sa.String(length=100), nullable=True)
+    )
 
 
 def downgrade() -> None:

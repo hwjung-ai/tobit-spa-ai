@@ -13,46 +13,57 @@ class OpsQueryRequest(BaseModel):
     mode: OpsMode
     question: str
 
+
 # CI Rerun schemas
 # View is imported from plan_schema
+
 
 class RerunGraphPatch(BaseModel):
     depth: int | None = None
     limits: Dict[str, int] | None = None
     view: View | None = None
 
+
 class RerunAggregatePatch(BaseModel):
     group_by: List[str] | None = None
     top_n: int | None = None
 
+
 class RerunOutputPatch(BaseModel):
     primary: str | None = None
     blocks: List[str] | None = None
+
 
 class RerunMetricPatch(BaseModel):
     time_range: str | None = None
     agg: Literal["count", "max", "min", "avg"] | None = None
     mode: Literal["aggregate", "series"] | None = None
 
+
 class RerunHistoryPatch(BaseModel):
     time_range: Literal["last_24h", "last_7d", "last_30d"] | None = None
     limit: int | None = None
+
 
 class RerunListPatch(BaseModel):
     offset: int | None = None
     limit: int | None = None
 
+
 class RerunAutoPathPatch(BaseModel):
     source_ci_code: str | None = None
     target_ci_code: str | None = None
+
 
 class RerunAutoGraphScopePatch(BaseModel):
     include_metric: bool | None = None
     include_history: bool | None = None
 
+
 class RerunAutoPatch(BaseModel):
     path: RerunAutoPathPatch | None = None
     graph_scope: RerunAutoGraphScopePatch | None = None
+
 
 class RerunPatch(BaseModel):
     view: View | None = None
@@ -64,15 +75,18 @@ class RerunPatch(BaseModel):
     auto: RerunAutoPatch | None = None
     list: RerunListPatch | None = None
 
+
 class RerunContext(BaseModel):
     selected_ci_id: str | None = None
     selected_secondary_ci_id: str | None = None
+
 
 class RerunRequest(BaseModel):
     base_plan: Plan
     selected_ci_id: str | None = None
     selected_secondary_ci_id: str | None = None
     patch: RerunPatch | None = None
+
 
 class CiAskRequest(BaseModel):
     question: str
@@ -81,6 +95,7 @@ class CiAskRequest(BaseModel):
     source_asset: str | None = None
     schema_asset: str | None = None
     resolver_asset: str | None = None
+
 
 class CiAskResponse(BaseModel):
     answer: str
@@ -93,6 +108,7 @@ class CiAskResponse(BaseModel):
 # UI Actions schemas
 class UIActionRequest(BaseModel):
     """Request for UI action execution"""
+
     trace_id: str | None = None
     action_id: str
     inputs: Dict[str, Any] = {}
@@ -101,6 +117,7 @@ class UIActionRequest(BaseModel):
 
 class UIActionResponse(BaseModel):
     """Response from UI action execution"""
+
     trace_id: str
     status: Literal["ok", "error"]
     blocks: List[Dict[str, Any]] = []
@@ -112,6 +129,7 @@ class UIActionResponse(BaseModel):
 # Regression Watch schemas
 class GoldenQueryCreate(BaseModel):
     """Create a new golden query"""
+
     name: str
     query_text: str
     ops_type: OpsMode
@@ -120,6 +138,7 @@ class GoldenQueryCreate(BaseModel):
 
 class GoldenQueryRead(BaseModel):
     """Golden query read response"""
+
     id: str
     name: str
     query_text: str
@@ -131,6 +150,7 @@ class GoldenQueryRead(BaseModel):
 
 class GoldenQueryUpdate(BaseModel):
     """Update golden query"""
+
     name: str | None = None
     query_text: str | None = None
     enabled: bool | None = None
@@ -139,6 +159,7 @@ class GoldenQueryUpdate(BaseModel):
 
 class RegressionBaseline(BaseModel):
     """Regression baseline info"""
+
     id: str
     golden_query_id: str
     baseline_trace_id: str
@@ -150,6 +171,7 @@ class RegressionBaseline(BaseModel):
 
 class RegressionRunRequest(BaseModel):
     """Request to run regression check"""
+
     golden_query_id: str
     trigger_by: Literal["manual", "asset_change", "schedule"] = "manual"
     trigger_info: Dict[str, Any] | None = None
@@ -157,6 +179,7 @@ class RegressionRunRequest(BaseModel):
 
 class RegressionRunResult(BaseModel):
     """Regression run result"""
+
     id: str
     golden_query_id: str
     baseline_id: str
@@ -173,6 +196,7 @@ class RegressionRunResult(BaseModel):
 # Stage schemas for orchestration
 class StageInput(BaseModel):
     """Input for a stage in the orchestration pipeline"""
+
     stage: str  # "route_plan" | "validate" | "execute" | "compose" | "present"
     applied_assets: Dict[str, str]  # asset_type -> asset_id:version
     params: Dict[str, Any]
@@ -182,6 +206,7 @@ class StageInput(BaseModel):
 
 class StageDiagnostics(BaseModel):
     """Diagnostics information for stage execution"""
+
     status: str  # "ok" | "warning" | "error"
     warnings: List[str] = []
     errors: List[str] = []
@@ -191,6 +216,7 @@ class StageDiagnostics(BaseModel):
 
 class StageOutput(BaseModel):
     """Output from a stage in the orchestration pipeline"""
+
     stage: str
     result: Dict[str, Any]
     diagnostics: StageDiagnostics
@@ -201,14 +227,16 @@ class StageOutput(BaseModel):
 # ReplanEvent schemas for orchestration
 class ReplanPatchDiff(BaseModel):
     """Patch diff for replan events (P0-2)"""
+
     before: Dict[str, Any]
     after: Dict[str, Any]
 
 
 class ReplanTrigger(BaseModel):
     """Replan trigger information with safe parsing (P0-1)"""
+
     trigger_type: str  # e.g., "manual", "error", "timeout", "policy_violation"
-    stage_name: str   # e.g., "validate", "execute", "compose"
+    stage_name: str  # e.g., "validate", "execute", "compose"
     severity: str = "low"  # "low", "medium", "high", "critical"
     reason: str
     timestamp: str
@@ -223,6 +251,7 @@ def safe_parse_trigger(trigger_str: str) -> ReplanTrigger:
     # Try to parse as JSON first
     try:
         import json
+
         data = json.loads(trigger_str)
         return ReplanTrigger(**data)
     except (json.JSONDecodeError, TypeError):
@@ -233,7 +262,7 @@ def safe_parse_trigger(trigger_str: str) -> ReplanTrigger:
                 trigger_type=parts[0],
                 stage_name=parts[1],
                 reason=parts[2] if len(parts) > 2 else "Unknown",
-                timestamp="now"
+                timestamp="now",
             )
         else:
             raise ValueError(f"Invalid trigger format: {trigger_str}")
@@ -241,10 +270,11 @@ def safe_parse_trigger(trigger_str: str) -> ReplanTrigger:
 
 class ReplanEvent(BaseModel):
     """Replan event for orchestration control loop (P0-2)"""
+
     event_type: str  # "replan_request", "replan_decision", "replan_execution"
-    stage_name: str   # Internal/API/Trace: snake_case (P0-3)
+    stage_name: str  # Internal/API/Trace: snake_case (P0-3)
     trigger: ReplanTrigger  # P0-1: Use safe_parse_trigger
-    patch: ReplanPatchDiff   # P0-2: before/after structure
+    patch: ReplanPatchDiff  # P0-2: before/after structure
     timestamp: str
     decision_metadata: Dict[str, Any] | None = None
     execution_metadata: Dict[str, Any] | None = None
@@ -252,6 +282,7 @@ class ReplanEvent(BaseModel):
 
 class ExecutionContext(BaseModel):
     """Execution context for orchestration pipeline with asset override support"""
+
     # Required fields
     tenant_id: str
     question: str
@@ -280,6 +311,7 @@ class ExecutionContext(BaseModel):
 # Isolated Stage Test schemas
 class IsolatedStageTestRequest(BaseModel):
     """Request for isolated stage testing"""
+
     stage: str  # "route_plan", "validate", "execute", "compose", "present"
     question: str
     tenant_id: str
@@ -287,8 +319,10 @@ class IsolatedStageTestRequest(BaseModel):
     baseline_trace_id: Optional[str] = None
     test_plan: Optional[Dict[str, Any]] = None  # Pre-defined plan for testing
 
+
 class StageTestResponse(BaseModel):
     """Response from isolated stage test"""
+
     stage: str
     result: Dict[str, Any]
     duration_ms: int

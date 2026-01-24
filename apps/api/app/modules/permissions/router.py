@@ -101,7 +101,8 @@ def get_my_permissions(
         data={
             "role_permissions": [p.value for p in perms["role_permissions"]],
             "resource_permissions": perms["resource_permissions"],
-            "effective_permissions": len(perms["role_permissions"]) + len(perms["resource_permissions"]),
+            "effective_permissions": len(perms["role_permissions"])
+            + len(perms["resource_permissions"]),
         }
     )
 
@@ -152,13 +153,19 @@ def get_user_permissions(
     )
 
 
-@router.post("/grant", response_model=ResponseEnvelope, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/grant", response_model=ResponseEnvelope, status_code=status.HTTP_201_CREATED
+)
 def grant_permission(
     user_id: str = Query(..., description="User to grant permission to"),
     resource_type: str = Query(..., description="Resource type"),
     permission: ResourcePermission = Query(..., description="Permission to grant"),
-    resource_id: Optional[str] = Query(None, description="Specific resource ID (None = all of type)"),
-    expires_at: Optional[datetime] = Query(None, description="Optional expiration time"),
+    resource_id: Optional[str] = Query(
+        None, description="Specific resource ID (None = all of type)"
+    ),
+    expires_at: Optional[datetime] = Query(
+        None, description="Optional expiration time"
+    ),
     session: Session = Depends(get_session),
     current_user: TbUser = Depends(require_role(UserRole.ADMIN)),
 ) -> ResponseEnvelope:

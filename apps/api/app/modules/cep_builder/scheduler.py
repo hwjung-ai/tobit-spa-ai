@@ -60,7 +60,9 @@ def _compute_next_run(rule: TbCepRule, now: datetime | None = None) -> datetime:
         try:
             return croniter(cron_expr, now).get_next(datetime)
         except CroniterBadCronError as exc:
-            logger.warning("Invalid cron expression for CEP rule %s: %s", rule.rule_id, exc)
+            logger.warning(
+                "Invalid cron expression for CEP rule %s: %s", rule.rule_id, exc
+            )
     if interval:
         try:
             seconds = int(interval)
@@ -108,7 +110,9 @@ def start_scheduler() -> None:
     if _scheduler_task and not _scheduler_task.done():
         return
     if not _acquire_leader_lock():
-        logger.info("CEP scheduler leader not acquired; scheduler disabled in this process")
+        logger.info(
+            "CEP scheduler leader not acquired; scheduler disabled in this process"
+        )
         _ensure_state_record(False, notes="leader unavailable")
         _ensure_follower_loop()
         return
@@ -265,7 +269,9 @@ async def _run_metric_rule(rule: TbCepRule) -> dict[str, Any]:
         return result
     async with sem:
         try:
-            execution = await asyncio.to_thread(manual_trigger, rule, None, "cep-metric-poll")
+            execution = await asyncio.to_thread(
+                manual_trigger, rule, None, "cep-metric-poll"
+            )
             trigger_refs = (execution.get("references") or {}).get("trigger") or {}
             result["status"] = execution.get("status", "unknown")
             result["matched"] = bool(execution.get("condition_met"))
@@ -279,7 +285,9 @@ async def _run_metric_rule(rule: TbCepRule) -> dict[str, Any]:
             result["error"] = str(exc.detail) if exc.detail is not None else str(exc)
             return result
         except Exception as exc:
-            logger.exception("Metric rule %s encountered an unexpected error", rule.rule_id)
+            logger.exception(
+                "Metric rule %s encountered an unexpected error", rule.rule_id
+            )
             result["status"] = "fail"
             result["error"] = str(exc)
             return result
@@ -315,7 +323,9 @@ async def _metric_poll_loop() -> None:
                 spec = rule.trigger_spec or {}
                 poll_interval = spec.get("poll_interval_seconds")
                 try:
-                    poll_secs = float(poll_interval) if poll_interval is not None else 0.0
+                    poll_secs = (
+                        float(poll_interval) if poll_interval is not None else 0.0
+                    )
                 except (TypeError, ValueError):
                     poll_secs = 0.0
                 last_polled = _metric_last_polled.get(str(rule.rule_id))
@@ -330,8 +340,12 @@ async def _metric_poll_loop() -> None:
             _metric_telemetry["metric_poll_last_tick_skipped_count"] = 0
             _metric_telemetry["metric_poll_last_tick_fail_count"] = 0
             _metric_telemetry["metric_poll_last_error"] = None
-            _metric_telemetry["metric_poll_recent_matches"] = _metric_telemetry["metric_poll_recent_matches"][:20]
-            _metric_telemetry["metric_poll_recent_failures"] = _metric_telemetry["metric_poll_recent_failures"][:20]
+            _metric_telemetry["metric_poll_recent_matches"] = _metric_telemetry[
+                "metric_poll_recent_matches"
+            ][:20]
+            _metric_telemetry["metric_poll_recent_failures"] = _metric_telemetry[
+                "metric_poll_recent_failures"
+            ][:20]
             matches: list[dict[str, Any]] = []
             failures: list[dict[str, Any]] = []
             if tasks:
@@ -452,12 +466,24 @@ def get_metric_poll_stats() -> dict[str, Any]:
     return {
         "metric_polling_enabled": get_settings().cep_enable_metric_polling,
         "metric_poll_last_tick_at": _isoformat(telemetry["metric_poll_last_tick_at"]),
-        "metric_poll_last_tick_duration_ms": telemetry["metric_poll_last_tick_duration_ms"],
-        "metric_poll_last_tick_rule_count": telemetry["metric_poll_last_tick_rule_count"],
-        "metric_poll_last_tick_evaluated_count": telemetry["metric_poll_last_tick_evaluated_count"],
-        "metric_poll_last_tick_matched_count": telemetry["metric_poll_last_tick_matched_count"],
-        "metric_poll_last_tick_skipped_count": telemetry["metric_poll_last_tick_skipped_count"],
-        "metric_poll_last_tick_fail_count": telemetry["metric_poll_last_tick_fail_count"],
+        "metric_poll_last_tick_duration_ms": telemetry[
+            "metric_poll_last_tick_duration_ms"
+        ],
+        "metric_poll_last_tick_rule_count": telemetry[
+            "metric_poll_last_tick_rule_count"
+        ],
+        "metric_poll_last_tick_evaluated_count": telemetry[
+            "metric_poll_last_tick_evaluated_count"
+        ],
+        "metric_poll_last_tick_matched_count": telemetry[
+            "metric_poll_last_tick_matched_count"
+        ],
+        "metric_poll_last_tick_skipped_count": telemetry[
+            "metric_poll_last_tick_skipped_count"
+        ],
+        "metric_poll_last_tick_fail_count": telemetry[
+            "metric_poll_last_tick_fail_count"
+        ],
         "metric_poll_last_error": telemetry["metric_poll_last_error"],
     }
 
@@ -465,7 +491,9 @@ def get_metric_poll_stats() -> dict[str, Any]:
 def get_metric_polling_telemetry() -> dict[str, Any]:
     telemetry = get_metric_poll_stats()
     telemetry["recent_matches"] = list(_metric_telemetry["metric_poll_recent_matches"])
-    telemetry["recent_failures"] = list(_metric_telemetry["metric_poll_recent_failures"])
+    telemetry["recent_failures"] = list(
+        _metric_telemetry["metric_poll_recent_failures"]
+    )
     return telemetry
 
 

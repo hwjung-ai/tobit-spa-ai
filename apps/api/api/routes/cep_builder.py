@@ -9,8 +9,16 @@ from schemas import ResponseEnvelope
 router = APIRouter(prefix="/cep-builder", tags=["cep-builder"])
 
 _rules: list[dict[str, str]] = [
-    {"id": str(uuid.uuid4()), "name": "Busy Hours", "rule": '{"condition":"traffic > 80"}'},
-    {"id": str(uuid.uuid4()), "name": "Payment Alert", "rule": '{"condition":"amount > 1000"}'},
+    {
+        "id": str(uuid.uuid4()),
+        "name": "Busy Hours",
+        "rule": '{"condition":"traffic > 80"}',
+    },
+    {
+        "id": str(uuid.uuid4()),
+        "name": "Payment Alert",
+        "rule": '{"condition":"amount > 1000"}',
+    },
 ]
 
 

@@ -25,7 +25,9 @@ def upgrade() -> None:
 
     # Create indices for tb_role_permission
     op.create_index("ix_tb_role_permission_role", "tb_role_permission", ["role"])
-    op.create_index("ix_tb_role_permission_permission", "tb_role_permission", ["permission"])
+    op.create_index(
+        "ix_tb_role_permission_permission", "tb_role_permission", ["permission"]
+    )
     op.create_index(
         "ix_tb_role_permission_role_permission",
         "tb_role_permission",
@@ -50,14 +52,20 @@ def upgrade() -> None:
     )
 
     # Create indices for tb_resource_permission
-    op.create_index("ix_tb_resource_permission_user_id", "tb_resource_permission", ["user_id"])
+    op.create_index(
+        "ix_tb_resource_permission_user_id", "tb_resource_permission", ["user_id"]
+    )
     op.create_index(
         "ix_tb_resource_permission_user_resource",
         "tb_resource_permission",
         ["user_id", "resource_type", "resource_id"],
     )
-    op.create_index("ix_tb_resource_permission_permission", "tb_resource_permission", ["permission"])
-    op.create_index("ix_tb_resource_permission_expires", "tb_resource_permission", ["expires_at"])
+    op.create_index(
+        "ix_tb_resource_permission_permission", "tb_resource_permission", ["permission"]
+    )
+    op.create_index(
+        "ix_tb_resource_permission_expires", "tb_resource_permission", ["expires_at"]
+    )
 
 
 def downgrade() -> None:

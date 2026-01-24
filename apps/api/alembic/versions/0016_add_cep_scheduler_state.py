@@ -29,7 +29,9 @@ def upgrade() -> None:
             server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column("instance_id", sa.Text(), nullable=False),
-        sa.Column("is_leader", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "is_leader", sa.Boolean(), nullable=False, server_default=sa.text("false")
+        ),
         sa.Column(
             "last_heartbeat_at",
             postgresql.TIMESTAMP(timezone=True),
@@ -50,8 +52,12 @@ def upgrade() -> None:
         ),
         sa.Column("notes", sa.Text(), nullable=True),
     )
-    op.create_unique_constraint("uq_tb_cep_scheduler_state_instance", "tb_cep_scheduler_state", ["instance_id"])
-    op.create_index("ix_tb_cep_scheduler_state_is_leader", "tb_cep_scheduler_state", ["is_leader"])
+    op.create_unique_constraint(
+        "uq_tb_cep_scheduler_state_instance", "tb_cep_scheduler_state", ["instance_id"]
+    )
+    op.create_index(
+        "ix_tb_cep_scheduler_state_is_leader", "tb_cep_scheduler_state", ["is_leader"]
+    )
     op.create_index(
         "ix_tb_cep_scheduler_state_updated_at",
         "tb_cep_scheduler_state",
@@ -60,7 +66,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_tb_cep_scheduler_state_updated_at", table_name="tb_cep_scheduler_state")
-    op.drop_index("ix_tb_cep_scheduler_state_is_leader", table_name="tb_cep_scheduler_state")
-    op.drop_constraint("uq_tb_cep_scheduler_state_instance", "tb_cep_scheduler_state", type_="unique")
+    op.drop_index(
+        "ix_tb_cep_scheduler_state_updated_at", table_name="tb_cep_scheduler_state"
+    )
+    op.drop_index(
+        "ix_tb_cep_scheduler_state_is_leader", table_name="tb_cep_scheduler_state"
+    )
+    op.drop_constraint(
+        "uq_tb_cep_scheduler_state_instance", "tb_cep_scheduler_state", type_="unique"
+    )
     op.drop_table("tb_cep_scheduler_state")

@@ -23,7 +23,12 @@ def upgrade() -> None:
     op.create_table(
         "chat_message",
         sa.Column("id", sa.String(length=36), primary_key=True),
-        sa.Column("thread_id", sa.String(length=36), sa.ForeignKey("chat_thread.id"), nullable=False),
+        sa.Column(
+            "thread_id",
+            sa.String(length=36),
+            sa.ForeignKey("chat_thread.id"),
+            nullable=False,
+        ),
         sa.Column("role", sa.String(length=16), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),

@@ -18,7 +18,13 @@ def parse_and_index_document(document_id: str) -> dict[str, str]:
         logging.error("Document %s failed to process: %s", document_id, exc)
         return {"document_id": document_id, "status": "failed", "error": str(exc)}
     except Exception as exc:
-        logging.exception("Unexpected failure while processing document %s: %s", document_id, exc)
-        return {"document_id": document_id, "status": "failed", "error": "internal error"}
+        logging.exception(
+            "Unexpected failure while processing document %s: %s", document_id, exc
+        )
+        return {
+            "document_id": document_id,
+            "status": "failed",
+            "error": "internal error",
+        }
     finally:
         session.close()

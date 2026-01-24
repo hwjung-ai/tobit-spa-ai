@@ -15,15 +15,11 @@ class RegressionCRUD:
 
     @staticmethod
     async def compare_stage_traces(
-        baseline_trace_id: str,
-        comparison_trace_id: str,
-        stages: Optional[list] = None
+        baseline_trace_id: str, comparison_trace_id: str, stages: Optional[list] = None
     ):
         """Compare two traces' stages."""
         return await regression_service.compare_stages_direct(
-            baseline_trace_id,
-            comparison_trace_id,
-            stages
+            baseline_trace_id, comparison_trace_id, stages
         )
 
 

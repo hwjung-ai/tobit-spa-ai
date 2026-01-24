@@ -14,6 +14,7 @@ class PlanOutputKind(str, Enum):
 
 class DirectAnswerPayload(BaseModel):
     """Payload for direct answer response"""
+
     answer: str
     confidence: float = 1.0
     reasoning: Optional[str] = None
@@ -22,6 +23,7 @@ class DirectAnswerPayload(BaseModel):
 
 class RejectPayload(BaseModel):
     """Payload for reject response"""
+
     reason: str
     policy: Optional[str] = None
     confidence: float = 1.0
@@ -87,7 +89,9 @@ class GraphSpec(BaseModel):
 
 class OutputSpec(BaseModel):
     blocks: List[str] = Field(default_factory=lambda: ["text", "table"])
-    primary: Literal["text", "table", "network", "path", "number", "markdown", "chart"] = "table"
+    primary: Literal[
+        "text", "table", "network", "path", "number", "markdown", "chart"
+    ] = "table"
 
 
 class MetricSpec(BaseModel):
@@ -137,7 +141,10 @@ class AutoSpec(BaseModel):
     include_history: bool = False
     include_cep: bool = False
     path: AutoPathSpec = Field(default_factory=lambda: AutoPathSpec())
-    graph_scope: AutoGraphScopeSpec = Field(default_factory=lambda: AutoGraphScopeSpec())
+    graph_scope: AutoGraphScopeSpec = Field(
+        default_factory=lambda: AutoGraphScopeSpec()
+    )
+
 
 class PlanMode(str, Enum):
     CI = "ci"
@@ -146,6 +153,7 @@ class PlanMode(str, Enum):
 
 class BudgetSpec(BaseModel):
     """Budget constraints for plan execution"""
+
     max_steps: int = 10
     max_depth: int = 5
     max_branches: int = 3
@@ -155,6 +163,7 @@ class BudgetSpec(BaseModel):
 
 class StepCondition(BaseModel):
     """Condition to determine step execution or branching"""
+
     field: str
     operator: Literal["==", "!=", "<", ">", "<=", ">=", "contains", "matches"]
     value: str | int | float | bool
@@ -162,6 +171,7 @@ class StepCondition(BaseModel):
 
 class PlanStep(BaseModel):
     """Individual step in a multi-step plan"""
+
     step_id: str
     name: str
     description: str | None = None
@@ -185,6 +195,7 @@ class PlanStep(BaseModel):
 
 class PlanBranch(BaseModel):
     """Conditional branch in a plan"""
+
     branch_id: str
     name: str
     condition: StepCondition
@@ -194,6 +205,7 @@ class PlanBranch(BaseModel):
 
 class PlanLoop(BaseModel):
     """Loop construct in a plan"""
+
     loop_id: str
     name: str
     max_iterations: int = 10
@@ -247,6 +259,7 @@ class Plan(BaseModel):
 
 class PlanOutput(BaseModel):
     """Unified output for planner with three possible kinds"""
+
     kind: PlanOutputKind
     # kind=direct일 때
     direct_answer: Optional[DirectAnswerPayload] = None

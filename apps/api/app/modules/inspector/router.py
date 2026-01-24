@@ -11,6 +11,7 @@ from sqlmodel import Session, select
 from app.modules.audit_log.crud import get_audit_logs_by_trace
 from app.modules.audit_log.models import TbAuditLog
 from app.modules.inspector import crud
+from app.modules.inspector.models import TbExecutionTrace
 from app.modules.inspector.regression import service
 from app.modules.inspector.regression.schemas import RegressionAnalysisRequest
 from app.modules.inspector.schemas import (
@@ -19,7 +20,6 @@ from app.modules.inspector.schemas import (
     TraceSummary,
     UIRenderPayload,
 )
-from app.modules.inspector.models import TbExecutionTrace
 
 router = APIRouter(prefix="/inspector", tags=["inspector"])
 
@@ -32,7 +32,9 @@ def _truncate_question(question: str | None, length: int = 120) -> str:
 
 @router.get("/traces", response_model=ResponseEnvelope)
 def list_traces(
-    q: str | None = Query(None, description="Search text for question/feature/endpoint"),
+    q: str | None = Query(
+        None, description="Search text for question/feature/endpoint"
+    ),
     feature: str | None = Query(None),
     status: str | None = Query(None),
     from_ts: datetime | None = Query(None, alias="from"),
@@ -41,7 +43,9 @@ def list_traces(
     offset: int = Query(0, ge=0),
     asset_id: str | None = Query(None),
     parent_trace_id: str | None = Query(None),
-    route: str | None = Query(None, description="Filter by route: direct, orch, reject"),
+    route: str | None = Query(
+        None, description="Filter by route: direct, orch, reject"
+    ),
     replan_count: int | None = Query(None, description="Filter by number of replans"),
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
@@ -83,9 +87,13 @@ def list_traces(
 
 
 @router.post("/traces", response_model=ResponseEnvelope)
-def create_trace(payload: ExecutionTraceCreate, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def create_trace(
+    payload: ExecutionTraceCreate, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     if crud.get_execution_trace(session, payload.trace_id):
-        raise HTTPException(status_code=409, detail=f"Trace {payload.trace_id} already exists")
+        raise HTTPException(
+            status_code=409, detail=f"Trace {payload.trace_id} already exists"
+        )
 
     trace = TbExecutionTrace(
         trace_id=payload.trace_id,
@@ -119,7 +127,9 @@ def create_trace(payload: ExecutionTraceCreate, session: Session = Depends(get_s
 
 
 @router.get("/traces/{trace_id}", response_model=ResponseEnvelope)
-def get_trace(trace_id: str, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def get_trace(
+    trace_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     trace = crud.get_execution_trace(session, trace_id)
     if not trace:
         raise HTTPException(status_code=404, detail=f"Trace {trace_id} not found")
@@ -149,7 +159,9 @@ def list_inspector_audit_logs(
         statement = statement.where(TbAuditLog.resource_type == resource_type)
     if resource_id:
         statement = statement.where(TbAuditLog.resource_id == resource_id)
-    statement = statement.order_by(TbAuditLog.created_at.desc()).limit(limit).offset(offset)
+    statement = (
+        statement.order_by(TbAuditLog.created_at.desc()).limit(limit).offset(offset)
+    )
     logs = session.exec(statement).all()
     return ResponseEnvelope.success(
         data={
@@ -207,9 +219,7 @@ async def compare_stages(
     """Compare stages between two traces directly."""
     try:
         result = await service.regression_service.compare_stages_direct(
-            baseline_trace_id,
-            comparison_trace_id,
-            stages
+            baseline_trace_id, comparison_trace_id, stages
         )
         return ResponseEnvelope.success(data=result.model_dump())
     except Exception as e:

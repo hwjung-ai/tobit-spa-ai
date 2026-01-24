@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -178,19 +178,20 @@ export default function PublishGateModal({
     setIsRunning(false);
   }, [editorState.screen]);
 
-  // Handle dialog open state change - run validation on open, reset on close
+  useEffect(() => {
+    if (open) {
+      runValidation();
+    } else {
+      setChecks([]);
+      setIsRunning(false);
+    }
+  }, [open, runValidation]);
+
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
-      if (newOpen) {
-        // Dialog is opening - run validation
-        runValidation();
-      } else {
-        // Dialog is closing - reset checks
-        setChecks([]);
-      }
       onOpenChange(newOpen);
     },
-    [onOpenChange, runValidation]
+    [onOpenChange]
   );
 
   const canPublish = checks.every((c) => c.status !== "fail");

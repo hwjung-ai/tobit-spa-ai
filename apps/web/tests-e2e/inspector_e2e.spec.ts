@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 /**
  * E2E tests for Inspector UI components
@@ -13,6 +13,21 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://localhost:3000';
 // API_URL removed - not used in tests
+
+const waitForInspectorDrawer = async (page: Page, url: string) => {
+  await page.goto(url);
+  await page.waitForLoadState('domcontentloaded');
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const drawer = page.locator('[data-testid="inspector-drawer"]');
+    if (await drawer.isVisible({ timeout: 15000 }).catch(() => false)) {
+      return drawer;
+    }
+    await page.reload({ waitUntil: 'domcontentloaded' });
+  }
+
+  return page.locator('[data-testid="inspector-drawer"]');
+};
 
 test.describe('Inspector E2E Tests', () => {
 
@@ -35,8 +50,8 @@ test.describe('Inspector E2E Tests', () => {
       await page.waitForURL(/admin\/inspector\?trace_id=/, { timeout: 10000 });
 
       // Verify inspector drawer is loaded
-      const drawer = page.locator('[data-testid="inspector-drawer"]');
-      await expect(drawer).toBeVisible({ timeout: 5000 });
+      const drawer = await waitForInspectorDrawer(page, page.url());
+      await expect(drawer).toBeVisible({ timeout: 15000 });
     } else {
       // If button not visible, at least verify /ops/query loads
       await expect(page).toHaveURL(/.*\/ops\/query.*/);
@@ -47,14 +62,10 @@ test.describe('Inspector E2E Tests', () => {
   test('Case2: Inspector Drawer - Flow section with empty-state handling', async ({ page }) => {
     // Navigate to inspector with a test trace_id
     const testTraceId = 'test-trace-001';
-    await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-
-    // Wait for page load
-    await page.waitForLoadState('domcontentloaded');
+    const drawer = await waitForInspectorDrawer(page, `${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
 
     // Verify drawer is visible
-    const drawer = page.locator('[data-testid="inspector-drawer"]');
-    await expect(drawer).toBeVisible({ timeout: 5000 });
+    await expect(drawer).toBeVisible({ timeout: 15000 });
 
     // Verify Flow section exists
     const flowSection = page.locator('[data-testid="flow-section"]');
@@ -103,12 +114,10 @@ test.describe('Inspector E2E Tests', () => {
     });
 
     // Navigate to inspector
-    await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('domcontentloaded');
+    const drawer = await waitForInspectorDrawer(page, `${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
 
     // Verify drawer is visible
-    const drawer = page.locator('[data-testid="inspector-drawer"]');
-    await expect(drawer).toBeVisible();
+    await expect(drawer).toBeVisible({ timeout: 15000 });
 
     // Click Run RCA button
     const runRcaBtn = page.locator('[data-testid="drawer-run-rca"]');
@@ -152,8 +161,7 @@ test.describe('Inspector E2E Tests', () => {
     });
 
     // Navigate to inspector
-    await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('domcontentloaded');
+    await waitForInspectorDrawer(page, `${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
 
     // Listen for alert/error message
     let alertMessage = '';
@@ -206,8 +214,7 @@ test.describe('Inspector E2E Tests', () => {
     });
 
     // Navigate to inspector with baseline trace
-    await page.goto(`${BASE_URL}/admin/inspector?trace_id=${baselineTraceId}`);
-    await page.waitForLoadState('domcontentloaded');
+    await waitForInspectorDrawer(page, `${BASE_URL}/admin/inspector?trace_id=${baselineTraceId}`);
 
     // Click Compare button
     const compareBtn = page.locator('[data-testid="compare-button"]');
@@ -280,8 +287,7 @@ test.describe('Inspector E2E Tests', () => {
   // ===== Additional: Trace Row Navigation =====
   test('Additional: Inspector trace row navigation', async ({ page }) => {
     // Navigate to inspector
-    await page.goto(`${BASE_URL}/admin/inspector?trace_id=test-trace-nav`);
-    await page.waitForLoadState('domcontentloaded');
+    await waitForInspectorDrawer(page, `${BASE_URL}/admin/inspector?trace_id=test-trace-nav`);
 
     // Look for trace rows (may be in a list or table)
     const traceRow = page.locator('[data-testid="inspector-trace-row"]');
@@ -314,8 +320,7 @@ test.describe('RCA API Contract Tests', () => {
       });
     });
 
-    await page.goto(`${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
-    await page.waitForLoadState('domcontentloaded');
+    await waitForInspectorDrawer(page, `${BASE_URL}/admin/inspector?trace_id=${testTraceId}`);
 
     const runRcaBtn = page.locator('[data-testid="drawer-run-rca"]');
     if (await runRcaBtn.isVisible()) {

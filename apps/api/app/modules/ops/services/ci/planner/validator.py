@@ -37,7 +37,15 @@ def get_default_budget() -> BudgetSpec:
 
     # Ultimate fallback
     return BudgetSpec()
-AUTO_ALLOWED_GRAPH_VIEWS = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}
+
+
+AUTO_ALLOWED_GRAPH_VIEWS = {
+    View.COMPOSITION,
+    View.DEPENDENCY,
+    View.IMPACT,
+    View.NEIGHBORS,
+    View.PATH,
+}
 AUTO_VIEW_DEFAULT_DEPTHS = {
     View.COMPOSITION: 2,
     View.DEPENDENCY: 2,
@@ -133,20 +141,30 @@ def _validate_step_references(plan: Plan) -> tuple[bool, List[str]]:
 
     for step in plan.steps:
         if step.next_step_id and step.next_step_id not in all_step_ids:
-            errors.append(f"Step {step.step_id} references unknown next_step_id: {step.next_step_id}")
+            errors.append(
+                f"Step {step.step_id} references unknown next_step_id: {step.next_step_id}"
+            )
         if step.error_next_step_id and step.error_next_step_id not in all_step_ids:
-            errors.append(f"Step {step.step_id} references unknown error_next_step_id: {step.error_next_step_id}")
+            errors.append(
+                f"Step {step.step_id} references unknown error_next_step_id: {step.error_next_step_id}"
+            )
 
     for branch in plan.branches:
         if branch.merge_step_id and branch.merge_step_id not in all_step_ids:
-            errors.append(f"Branch {branch.branch_id} references unknown merge_step_id: {branch.merge_step_id}")
+            errors.append(
+                f"Branch {branch.branch_id} references unknown merge_step_id: {branch.merge_step_id}"
+            )
         for step in branch.steps:
             if step.next_step_id and step.next_step_id not in all_step_ids:
-                errors.append(f"Step {step.step_id} in branch {branch.branch_id} references unknown next_step_id: {step.next_step_id}")
+                errors.append(
+                    f"Step {step.step_id} in branch {branch.branch_id} references unknown next_step_id: {step.next_step_id}"
+                )
 
     for loop in plan.loops:
         if loop.next_step_id and loop.next_step_id not in all_step_ids:
-            errors.append(f"Loop {loop.loop_id} references unknown next_step_id: {loop.next_step_id}")
+            errors.append(
+                f"Loop {loop.loop_id} references unknown next_step_id: {loop.next_step_id}"
+            )
 
     return len(errors) == 0, errors
 
@@ -163,21 +181,29 @@ def _validate_budget_constraints(plan: Plan) -> tuple[bool, List[str]]:
         total_steps += len(loop.steps) * loop.max_iterations
 
     if total_steps > budget.max_steps:
-        errors.append(f"Total steps ({total_steps}) exceeds max_steps budget ({budget.max_steps})")
+        errors.append(
+            f"Total steps ({total_steps}) exceeds max_steps budget ({budget.max_steps})"
+        )
 
     if len(plan.branches) > budget.max_branches:
-        errors.append(f"Number of branches ({len(plan.branches)}) exceeds max_branches budget ({budget.max_branches})")
+        errors.append(
+            f"Number of branches ({len(plan.branches)}) exceeds max_branches budget ({budget.max_branches})"
+        )
 
     for loop in plan.loops:
         if loop.max_iterations > budget.max_iterations:
-            errors.append(f"Loop {loop.loop_id} max_iterations ({loop.max_iterations}) exceeds budget ({budget.max_iterations})")
+            errors.append(
+                f"Loop {loop.loop_id} max_iterations ({loop.max_iterations}) exceeds budget ({budget.max_iterations})"
+            )
 
     # Validate timeout_seconds
     if budget.timeout_seconds is not None:
         if budget.timeout_seconds < 1:
             errors.append(f"timeout_seconds ({budget.timeout_seconds}) must be >= 1")
         elif budget.timeout_seconds > 3600:
-            errors.append(f"timeout_seconds ({budget.timeout_seconds}) exceeds maximum of 3600 seconds (1 hour)")
+            errors.append(
+                f"timeout_seconds ({budget.timeout_seconds}) exceeds maximum of 3600 seconds (1 hour)"
+            )
 
     # Validate max_depth
     if budget.max_depth < 1:
@@ -247,8 +273,12 @@ def _apply_auto_mode(plan: Plan, auto_spec: AutoSpec) -> tuple[Plan, Dict[str, A
         requested_depth = depth_hint or AUTO_VIEW_DEFAULT_DEPTHS.get(view, 2)
         depth_map[view.value] = policy.clamp_depth(view.value, requested_depth)
     primary_view = applied_views[0] if applied_views else View.NEIGHBORS
-    primary_depth = depth_map.get(primary_view.value, policy.clamp_depth(primary_view.value, depth_hint or 2))
-    normalized_graph = plan.graph.copy(update={"view": primary_view, "depth": primary_depth})
+    primary_depth = depth_map.get(
+        primary_view.value, policy.clamp_depth(primary_view.value, depth_hint or 2)
+    )
+    normalized_graph = plan.graph.copy(
+        update={"view": primary_view, "depth": primary_depth}
+    )
     applied_path = auto_spec.path
     path_warnings: List[str] = []
     if (
@@ -270,14 +300,20 @@ def _apply_auto_mode(plan: Plan, auto_spec: AutoSpec) -> tuple[Plan, Dict[str, A
         metric_spec = None
         metric_trace["status"] = "disabled"
     elif metric_spec:
-        mode_applied = auto_spec.metric_mode if auto_spec.metric_mode in {"aggregate", "series"} else metric_spec.mode
+        mode_applied = (
+            auto_spec.metric_mode
+            if auto_spec.metric_mode in {"aggregate", "series"}
+            else metric_spec.mode
+        )
         if metric_spec.mode != mode_applied:
             metric_spec = metric_spec.copy(update={"mode": mode_applied})
         metric_trace["status"] = "enabled"
         metric_trace["mode_applied"] = metric_spec.mode
     updated_plan = updated_plan.copy(update={"metric": metric_spec})
     history_spec = updated_plan.history
-    history_trace: Dict[str, Any] = {"include_history_requested": auto_spec.include_history}
+    history_trace: Dict[str, Any] = {
+        "include_history_requested": auto_spec.include_history
+    }
     if auto_spec.include_history:
         history_updates = {"enabled": True}
         if not history_spec.enabled:
@@ -344,7 +380,9 @@ def _is_absolute_date(value: str) -> bool:
     return bool(DATE_PATTERN.match(value))
 
 
-def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) -> Tuple[Plan, Dict[str, Any]]:
+def validate_plan(
+    plan: Plan, resolver_payload: Dict[str, Any] | None = None
+) -> Tuple[Plan, Dict[str, Any]]:
     normalized = plan.copy()
     mode = normalized.mode
     logger.info(
@@ -361,7 +399,9 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
     if normalized.enable_multistep and not multistep_valid:
         error_msgs = []
         if multistep_trace.get("unique_ids", {}).get("duplicates"):
-            error_msgs.append(f"Duplicate step IDs: {multistep_trace['unique_ids']['duplicates']}")
+            error_msgs.append(
+                f"Duplicate step IDs: {multistep_trace['unique_ids']['duplicates']}"
+            )
         if multistep_trace.get("references", {}).get("errors"):
             error_msgs.extend(multistep_trace["references"]["errors"])
         if multistep_trace.get("budget", {}).get("errors"):
@@ -388,10 +428,12 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
         update={
             "primary": normalized.primary.copy(update={"limit": primary_limit}),
             "view": view,
-            "graph": normalized.graph.copy(update={"view": graph_view, "depth": clamped_depth}),
+            "graph": normalized.graph.copy(
+                update={"view": graph_view, "depth": clamped_depth}
+            ),
         }
     )
-# Auto mode adjustments
+    # Auto mode adjustments
     auto_trace: Dict[str, Any] | None = None
     if mode == PlanMode.AUTO:
         normalized, auto_trace = _apply_auto_mode(normalized, normalized.auto)
@@ -406,11 +448,21 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
     # - policy_max_depth: 정책에서 허용하는 최대 깊이
     # - effective_depth: 실제 적용된 깊이 (사용자 요청 vs 정책 상한선 중 작은 값)
     if normalized.graph.user_requested_depth is not None:
-        trace["policy_decisions"]["user_requested_depth"] = normalized.graph.user_requested_depth
+        trace["policy_decisions"]["user_requested_depth"] = (
+            normalized.graph.user_requested_depth
+        )
     # requested_depth는 정책 결정 후의 effective_depth와 같음
-    trace["policy_decisions"]["policy_max_depth"] = requested_depth  # build_policy_trace에서 결정된 상한
-    trace["policy_decisions"]["effective_depth"] = requested_depth   # 최종 적용 깊이
-    graph_views = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.NEIGHBORS, View.PATH}
+    trace["policy_decisions"]["policy_max_depth"] = (
+        requested_depth  # build_policy_trace에서 결정된 상한
+    )
+    trace["policy_decisions"]["effective_depth"] = requested_depth  # 최종 적용 깊이
+    graph_views = {
+        View.COMPOSITION,
+        View.DEPENDENCY,
+        View.IMPACT,
+        View.NEIGHBORS,
+        View.PATH,
+    }
     if normalized.list.enabled and (
         view in graph_views
         or graph_view in graph_views
@@ -438,7 +490,9 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
     if list_spec.enabled:
         limit_applied = _clamp_list_limit(list_spec.limit)
         offset_applied = _clamp_list_offset(list_spec.offset)
-        applied_spec = list_spec.copy(update={"limit": limit_applied, "offset": offset_applied})
+        applied_spec = list_spec.copy(
+            update={"limit": limit_applied, "offset": offset_applied}
+        )
         normalized = normalized.copy(update={"list": applied_spec})
         list_trace: Dict[str, Any] = {
             "requested": list_spec.dict(),
@@ -472,20 +526,28 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
     if metric_spec:
         allowed_time_ranges = {"last_1h", "last_24h", "last_7d"}
         allowed_aggs = {"count", "max", "min", "avg"}
-        allowed_modes = {"aggregate"} if metric_spec.scope == "graph" else {"aggregate", "series"}
+        allowed_modes = (
+            {"aggregate"} if metric_spec.scope == "graph" else {"aggregate", "series"}
+        )
         if not (
             metric_spec.time_range in allowed_time_ranges
             or _is_absolute_date(metric_spec.time_range)
         ):
-            raise ValueError(f"Invalid time_range '{metric_spec.time_range}' for metric")
+            raise ValueError(
+                f"Invalid time_range '{metric_spec.time_range}' for metric"
+            )
         if metric_spec.agg not in allowed_aggs:
             raise ValueError(f"Invalid agg '{metric_spec.agg}' for metric")
         scope_requested = metric_spec.scope
         mode_requested = metric_spec.mode
-        mode_applied = mode_requested if mode_requested in allowed_modes else "aggregate"
+        mode_applied = (
+            mode_requested if mode_requested in allowed_modes else "aggregate"
+        )
         warnings: List[str] = []
         if metric_spec.scope == "graph" and metric_spec.mode == "series":
-            warnings.append("Series charts are not supported over graph scope; forcing aggregate")
+            warnings.append(
+                "Series charts are not supported over graph scope; forcing aggregate"
+            )
             mode_applied = "aggregate"
         normalized_metric = metric_spec
         if mode_requested != mode_applied:
@@ -542,9 +604,13 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
                 },
             )
         allowed_scopes = {"ci", "graph"}
-        scope_applied = history_spec.scope if history_spec.scope in allowed_scopes else "ci"
+        scope_applied = (
+            history_spec.scope if history_spec.scope in allowed_scopes else "ci"
+        )
         if history_spec.scope not in allowed_scopes:
-            warnings.append(f"scope '{history_spec.scope}' not supported, falling back to 'ci'")
+            warnings.append(
+                f"scope '{history_spec.scope}' not supported, falling back to 'ci'"
+            )
             logger.info(
                 "ci.validator.clamp",
                 extra={
@@ -557,9 +623,13 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
         history_updates["scope"] = scope_applied
         history_trace["scope_applied"] = scope_applied
         allowed_modes = {"recent"}
-        mode_applied = history_spec.mode if history_spec.mode in allowed_modes else "recent"
+        mode_applied = (
+            history_spec.mode if history_spec.mode in allowed_modes else "recent"
+        )
         if history_spec.mode not in allowed_modes:
-            warnings.append(f"mode '{history_spec.mode}' not supported, forcing 'recent'")
+            warnings.append(
+                f"mode '{history_spec.mode}' not supported, forcing 'recent'"
+            )
             logger.info(
                 "ci.validator.clamp",
                 extra={
@@ -572,7 +642,9 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
         history_updates["mode"] = mode_applied
         history_trace["mode_applied"] = mode_applied
         if history_spec.source != "event_log":
-            warnings.append(f"source '{history_spec.source}' not supported, forcing 'event_log'")
+            warnings.append(
+                f"source '{history_spec.source}' not supported, forcing 'event_log'"
+            )
             logger.info(
                 "ci.validator.clamp",
                 extra={
@@ -584,16 +656,25 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
             )
         history_updates["source"] = "event_log"
         history_trace["source"] = "event_log"
-        normalized = normalized.copy(update={"history": history_spec.copy(update=history_updates)})
+        normalized = normalized.copy(
+            update={"history": history_spec.copy(update=history_updates)}
+        )
         if warnings:
             history_trace["warnings"] = warnings
         if history_updates.get("scope") == "graph":
             graph_view_trace = normalized.graph.view or view
             requested_depth_history = normalized.graph.depth
-            clamped_history_depth = policy.clamp_depth(graph_view_trace.value, requested_depth_history)
+            clamped_history_depth = policy.clamp_depth(
+                graph_view_trace.value, requested_depth_history
+            )
             normalized = normalized.copy(
                 update={
-                    "graph": normalized.graph.copy(update={"view": graph_view_trace, "depth": clamped_history_depth})
+                    "graph": normalized.graph.copy(
+                        update={
+                            "view": graph_view_trace,
+                            "depth": clamped_history_depth,
+                        }
+                    )
                 }
             )
             history_trace["graph"] = {
@@ -611,7 +692,10 @@ def validate_plan(plan: Plan, resolver_payload: Dict[str, Any] | None = None) ->
         cep_updates["dry_run"] = True
         cep_updates["mode"] = "simulate"
         rule_id = cep_spec.rule_id
-        if rule_id and not re.fullmatch(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", rule_id):
+        if rule_id and not re.fullmatch(
+            r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+            rule_id,
+        ):
             rule_id = None
         cep_updates["rule_id"] = rule_id
         cep_trace["rule_id_parsed"] = rule_id

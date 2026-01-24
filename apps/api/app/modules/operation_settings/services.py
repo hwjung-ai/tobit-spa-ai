@@ -106,7 +106,10 @@ class OperationSettingsService:
             "cep_enable_cep_scheduler": current_app_settings.ops_enable_cep_scheduler,
         }
 
-        for setting_key, config in OperationSettingsService.CONFIGURABLE_SETTINGS.items():
+        for (
+            setting_key,
+            config,
+        ) in OperationSettingsService.CONFIGURABLE_SETTINGS.items():
             env_value = env_values.get(setting_key)
             effective = get_setting_effective_value(
                 session,
@@ -226,5 +229,7 @@ class OperationSettingsService:
             "restart_required": setting.restart_required,
             "description": config["description"],
             "published_by": updated_by,
-            "published_at": setting.published_at.isoformat() if setting.published_at else None,
+            "published_at": setting.published_at.isoformat()
+            if setting.published_at
+            else None,
         }

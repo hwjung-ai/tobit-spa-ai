@@ -15,10 +15,12 @@ conn_str = f"host={host} port={port} dbname={db} user={user} password={pwd}"
 try:
     with psycopg.connect(conn_str) as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'tb_execution_trace'")
+            cur.execute(
+                "SELECT column_name FROM information_schema.columns WHERE table_name = 'tb_execution_trace'"
+            )
             columns = [row[0] for row in cur.fetchall()]
             print(f"Columns in tb_execution_trace: {columns}")
-            
+
             cur.execute("SELECT version_num FROM alembic_version")
             print(f"Alembic version in DB: {cur.fetchone()}")
 except Exception as e:

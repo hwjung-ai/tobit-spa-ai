@@ -69,7 +69,9 @@ class DocumentIndexService:
         self.session.commit()
 
         try:
-            path = self.storage.path_for(document.tenant_id, document.id, document.filename)
+            path = self.storage.path_for(
+                document.tenant_id, document.id, document.filename
+            )
             if not path.exists():
                 raise DocumentProcessingError("Uploaded document is missing on disk")
 

@@ -35,9 +35,15 @@ def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
     references_list: list[dict] = []
     used_tools = ["postgres", "timescale"]
 
-    work_h_query = _load_query_sql("history", "work_history") or load_text("queries/postgres/history/work_history.sql")
-    maint_h_query = _load_query_sql("history", "maintenance_history") or load_text("queries/postgres/history/maintenance_history.sql")
-    event_l_query = _load_query_sql("history", "event_log") or load_text("queries/postgres/history/event_log.sql")
+    work_h_query = _load_query_sql("history", "work_history") or load_text(
+        "queries/postgres/history/work_history.sql"
+    )
+    maint_h_query = _load_query_sql("history", "maintenance_history") or load_text(
+        "queries/postgres/history/maintenance_history.sql"
+    )
+    event_l_query = _load_query_sql("history", "event_log") or load_text(
+        "queries/postgres/history/event_log.sql"
+    )
 
     if not work_h_query or not maint_h_query or not event_l_query:
         error_block = MarkdownBlock(
@@ -56,7 +62,9 @@ def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
         fallback_blocks = _build_history_fallback(tenant_id, question)
-        fallback_dicts = [b.dict() if hasattr(b, "dict") else b for b in fallback_blocks]
+        fallback_dicts = [
+            b.dict() if hasattr(b, "dict") else b for b in fallback_blocks
+        ]
         return ExecutorResult(
             blocks=fallback_dicts,
             used_tools=used_tools,
@@ -101,7 +109,16 @@ def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
     sections = history_tools.detect_history_sections(question)
     include_work = "work" in sections or not sections
     include_maint = "maintenance" in sections or not sections
-    blocks = _build_blocks(ci, time_range, stats, work_rows, maint_rows, event_rows, include_work, include_maint)
+    blocks = _build_blocks(
+        ci,
+        time_range,
+        stats,
+        work_rows,
+        maint_rows,
+        event_rows,
+        include_work,
+        include_maint,
+    )
 
     references_block = _build_references(
         work_rows,
@@ -123,7 +140,9 @@ def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
                 references_list.append(item.dict())
 
     # Convert blocks to dicts
-    blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+    blocks_dict = [
+        block.dict() if hasattr(block, "dict") else block for block in blocks
+    ]
 
     int((perf_counter() - start_time) * 1000)
     return ExecutorResult(
@@ -172,8 +191,17 @@ def _build_blocks(
             TableBlock(
                 type="table",
                 title="Work history",
-                columns=["start_time", "work_type", "impact_level", "result", "summary"],
-                rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in work_rows],
+                columns=[
+                    "start_time",
+                    "work_type",
+                    "impact_level",
+                    "result",
+                    "summary",
+                ],
+                rows=[
+                    [str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""]
+                    for row in work_rows
+                ],
             )
         )
     if include_maint:
@@ -181,15 +209,32 @@ def _build_blocks(
             TableBlock(
                 type="table",
                 title="Maintenance history",
-                columns=["start_time", "maint_type", "duration_min", "result", "summary"],
-                rows=[[str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""] for row in maint_rows],
+                columns=[
+                    "start_time",
+                    "maint_type",
+                    "duration_min",
+                    "result",
+                    "summary",
+                ],
+                rows=[
+                    [str(row[0]), row[1], str(row[2]), row[3] or "", row[4] or ""]
+                    for row in maint_rows
+                ],
             )
         )
     tables.append(
         TableBlock(
             type="table",
             title="Event log",
-            columns=["time", "ci_code", "ci_name", "severity", "event_type", "source", "title"],
+            columns=[
+                "time",
+                "ci_code",
+                "ci_name",
+                "severity",
+                "event_type",
+                "source",
+                "title",
+            ],
             rows=[
                 [
                     str(row[0]),
@@ -247,7 +292,14 @@ def _build_references(
     return ReferencesBlock(
         type="references",
         title="History queries",
-        items=items or [ReferenceItem(kind="sql", title="history query", payload={"sql": "No rows returned", "params": []})],
+        items=items
+        or [
+            ReferenceItem(
+                kind="sql",
+                title="history query",
+                payload={"sql": "No rows returned", "params": []},
+            )
+        ],
     )
 
 
@@ -270,7 +322,15 @@ def _build_history_fallback(tenant_id: str, question: str) -> list[AnswerBlock]:
             TableBlock(
                 type="table",
                 title="Work history (최근 7일)",
-                columns=["start_time", "ci_code", "ci_name", "work_type", "impact_level", "result", "summary"],
+                columns=[
+                    "start_time",
+                    "ci_code",
+                    "ci_name",
+                    "work_type",
+                    "impact_level",
+                    "result",
+                    "summary",
+                ],
                 rows=[
                     [
                         str(row[0]),
@@ -291,7 +351,15 @@ def _build_history_fallback(tenant_id: str, question: str) -> list[AnswerBlock]:
             TableBlock(
                 type="table",
                 title="Maintenance history (최근 7일)",
-                columns=["start_time", "ci_code", "ci_name", "maint_type", "duration_min", "result", "summary"],
+                columns=[
+                    "start_time",
+                    "ci_code",
+                    "ci_name",
+                    "maint_type",
+                    "duration_min",
+                    "result",
+                    "summary",
+                ],
                 rows=[
                     [
                         str(row[0]),

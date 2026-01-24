@@ -121,7 +121,7 @@ class TestSQLValidator:
             is_valid=True,
             errors=["Error 1"],
             warnings=["Warning 1"],
-            metadata={"key": "value"}
+            metadata={"key": "value"},
         )
 
         result_dict = result.to_dict()

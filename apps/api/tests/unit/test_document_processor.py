@@ -79,7 +79,7 @@ class TestChunkingStrategy:
             "data": [
                 {"Name": "Alice", "Age": 30, "City": "NYC"},
                 {"Name": "Bob", "Age": 25, "City": "LA"},
-            ]
+            ],
         }
 
         chunks = ChunkingStrategy.chunk_table(table_data, chunk_size=1)
@@ -99,10 +99,10 @@ class TestChunkingStrategy:
     def test_has_content_changed(self):
         """Test content change detection"""
         old_hash = ChunkingStrategy.compute_source_hash("original")
-        
+
         # Same content
         assert not ChunkingStrategy.has_content_changed(old_hash, "original")
-        
+
         # Different content
         assert ChunkingStrategy.has_content_changed(old_hash, "modified")
 

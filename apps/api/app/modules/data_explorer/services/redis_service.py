@@ -77,7 +77,11 @@ def _validate_key(key: str, settings: AppSettings) -> None:
 
 
 def _allowed_prefixes(settings: AppSettings) -> list[str]:
-    return [item.strip() for item in settings.data_redis_allowed_prefixes.split(",") if item.strip()]
+    return [
+        item.strip()
+        for item in settings.data_redis_allowed_prefixes.split(",")
+        if item.strip()
+    ]
 
 
 def _validate_command_keys(tokens: list[str], settings: AppSettings) -> None:

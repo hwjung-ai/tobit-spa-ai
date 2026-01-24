@@ -28,12 +28,14 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 class LoginRequest(BaseModel):
     """Login request schema."""
+
     email: str
     password: str
 
 
 class TokenResponse(BaseModel):
     """Token response schema."""
+
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
@@ -42,11 +44,13 @@ class TokenResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     """Refresh token request schema."""
+
     refresh_token: str
 
 
 class AccessTokenResponse(BaseModel):
     """Access token only response."""
+
     access_token: str
     token_type: str = "bearer"
 
@@ -93,7 +97,7 @@ def login(
     access_token = create_access_token(
         data={
             "sub": user.id,
-            "email": user.email, # This uses the property we added
+            "email": user.email,  # This uses the property we added
             "role": user.role,
             "tenant_id": user.tenant_id,
         },

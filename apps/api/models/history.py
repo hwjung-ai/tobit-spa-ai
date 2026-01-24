@@ -15,7 +15,9 @@ class QueryHistory(SQLModel, table=True):
 
     id: uuid.UUID = Field(
         default_factory=uuid.uuid4,
-        sa_column=Column(postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa_column=Column(
+            postgresql.UUID(as_uuid=True), primary_key=True, nullable=False
+        ),
     )
     tenant_id: str = Field(
         default="default",

@@ -37,7 +37,9 @@ def run_metric(question: str, tenant_id: str = "t1") -> ExecutorResult:
     references: list[dict] = []
     used_tools = ["postgres", "timescale"]
 
-    query_template = _load_query_sql("metric", "metric_timeseries") or load_text("queries/postgres/metric/metric_timeseries.sql")
+    query_template = _load_query_sql("metric", "metric_timeseries") or load_text(
+        "queries/postgres/metric/metric_timeseries.sql"
+    )
     if not query_template:
         error_block = MarkdownBlock(
             type="markdown",
@@ -118,7 +120,9 @@ def run_metric(question: str, tenant_id: str = "t1") -> ExecutorResult:
         )
 
     stats = _calculate_stats(rows)
-    blocks = _build_blocks(ci, metric_hit, time_range, stats, rows, query_template, params)
+    blocks = _build_blocks(
+        ci, metric_hit, time_range, stats, rows, query_template, params
+    )
 
     # Extract references from blocks
     for block in blocks:
@@ -127,7 +131,9 @@ def run_metric(question: str, tenant_id: str = "t1") -> ExecutorResult:
                 references.append(item.dict())
 
     # Convert blocks to dicts
-    blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+    blocks_dict = [
+        block.dict() if hasattr(block, "dict") else block for block in blocks
+    ]
 
     int((perf_counter() - start_time) * 1000)
     return ExecutorResult(
@@ -198,9 +204,14 @@ def _build_blocks(
     )
     series = TimeSeriesSeries(
         name=metric.metric_name,
-        data=[TimeSeriesPoint(timestamp=row[0].isoformat(), value=float(row[1])) for row in rows],
+        data=[
+            TimeSeriesPoint(timestamp=row[0].isoformat(), value=float(row[1]))
+            for row in rows
+        ],
     )
-    timeseries = TimeSeriesBlock(type="timeseries", title="Metric trend", series=[series])
+    timeseries = TimeSeriesBlock(
+        type="timeseries", title="Metric trend", series=[series]
+    )
     references = ReferencesBlock(
         type="references",
         title="Metric SQL",

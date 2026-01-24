@@ -49,7 +49,9 @@ def list_definitions(
 
 
 @router.get("/apis/{api_id}", response_model=ResponseEnvelope)
-def get_definition(api_id: str, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def get_definition(
+    api_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
         raise HTTPException(status_code=404, detail="API not found")
@@ -57,7 +59,9 @@ def get_definition(api_id: str, session: Session = Depends(get_session)) -> Resp
 
 
 @router.post("/apis", response_model=ResponseEnvelope)
-def create_definition(payload: ApiDefinitionCreate, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def create_definition(
+    payload: ApiDefinitionCreate, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     data = payload.model_dump()
     created = create_custom_definition(session, data)
     return ResponseEnvelope.success(data={"api": to_read(created).model_dump()})
@@ -78,7 +82,9 @@ def update_definition_endpoint(
             "tags": payload.tags,
         }
     else:
-        updates = payload.model_dump(exclude_unset=True, exclude={"tags"} if payload.tags is None else {})
+        updates = payload.model_dump(
+            exclude_unset=True, exclude={"tags"} if payload.tags is None else {}
+        )
         if payload.tags is not None:
             updates["tags"] = payload.tags
     updated = update_definition(session, definition, updates)
@@ -86,7 +92,9 @@ def update_definition_endpoint(
 
 
 @router.delete("/apis/{api_id}", response_model=ResponseEnvelope)
-def delete_definition(api_id: str, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def delete_definition(
+    api_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
         raise HTTPException(status_code=404, detail="API not found")
@@ -95,7 +103,9 @@ def delete_definition(api_id: str, session: Session = Depends(get_session)) -> R
 
 
 @router.post("/apis/{api_id}/test", response_model=ResponseEnvelope)
-def test_definition(api_id: str, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def test_definition(
+    api_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     definition = session.get(ApiDefinition, api_id)
     if not definition or definition.deleted_at:
         raise HTTPException(status_code=404, detail="API not found")
@@ -110,13 +120,20 @@ def test_definition(api_id: str, session: Session = Depends(get_session)) -> Res
             raise HTTPException(status_code=400, detail=str(error))
         envelope = build_test_response(rows, "Custom SQL test", "custom")
         return ResponseEnvelope.success(data={"answer": envelope.model_dump()})
-    raise HTTPException(status_code=501, detail="Logic test not implemented for this mode")
+    raise HTTPException(
+        status_code=501, detail="Logic test not implemented for this mode"
+    )
 
 
 @router.post("/sync/system", response_model=ResponseEnvelope)
-def sync_system(request: Request, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def sync_system(
+    request: Request, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     schema = request.app.openapi()
     synced, skipped = sync_system_definitions(session, schema)
     return ResponseEnvelope.success(
-        data={"sync": {"synced": synced, "skipped": skipped}, "message": "System sync completed"}
+        data={
+            "sync": {"synced": synced, "skipped": skipped},
+            "message": "System sync completed",
+        }
     )

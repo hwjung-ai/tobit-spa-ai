@@ -37,9 +37,7 @@ def _build_applied_assets(state: dict[str, Any]) -> Dict[str, Any]:
         "queries": [
             _summarize_asset(entry) for entry in state.get("queries", []) if entry
         ],
-        "screens": [
-            entry for entry in state.get("screens", []) if entry
-        ],
+        "screens": [entry for entry in state.get("screens", []) if entry],
     }
 
 
@@ -72,10 +70,14 @@ def _compute_asset_versions(state: dict[str, Any]) -> List[str]:
     return versions
 
 
-def _resolve_screen_assets(session: Session, blocks: List[Dict[str, Any]] | None) -> List[Dict[str, Any]]:
+def _resolve_screen_assets(
+    session: Session, blocks: List[Dict[str, Any]] | None
+) -> List[Dict[str, Any]]:
     if not blocks:
         return []
-    screen_blocks = [b for b in blocks if isinstance(b, dict) and b.get("type") == "ui_screen"]
+    screen_blocks = [
+        b for b in blocks if isinstance(b, dict) and b.get("type") == "ui_screen"
+    ]
     if not screen_blocks:
         return []
 
@@ -181,7 +183,12 @@ def persist_execution_trace(
     references = trace_payload.get("references")
     answer_data: Dict[str, Any] = {
         "envelope_meta": answer_meta,
-        "blocks": [block if isinstance(block, dict) else getattr(block, "dict", lambda: block)() for block in (blocks or [])],
+        "blocks": [
+            block
+            if isinstance(block, dict)
+            else getattr(block, "dict", lambda: block)()
+            for block in (blocks or [])
+        ],
     }
     trace_entry = TbExecutionTrace(
         trace_id=trace_id,

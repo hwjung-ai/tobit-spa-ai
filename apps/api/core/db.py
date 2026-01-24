@@ -17,7 +17,9 @@ engine = create_engine(
     future=True,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=Session)
+SessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine, class_=Session
+)
 
 
 def init_db() -> None:

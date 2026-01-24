@@ -103,9 +103,7 @@ class ApiTestRunner:
                 results=results,
             )
 
-            self.logger.info(
-                f"Test run for API {api_id}: {passed}/{len(tests)} passed"
-            )
+            self.logger.info(f"Test run for API {api_id}: {passed}/{len(tests)} passed")
 
             return run_result
 
@@ -142,9 +140,7 @@ class ApiTestRunner:
                 status = "fail"
                 error = "Output mismatch"
 
-            result = TestResult(
-                test_id=test_id, status=status, error_message=error
-            )
+            result = TestResult(test_id=test_id, status=status, error_message=error)
 
             self.logger.info(f"Test {test_id}: {status}")
 

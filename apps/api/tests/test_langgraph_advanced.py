@@ -74,8 +74,10 @@ class TestQueryAnalyzer:
 
     def test_calculate_complex_complexity(self, analyzer):
         """Test complexity calculation for complex query."""
-        query = "Show metrics and relationships for all nodes where status is error and " \
-                "timestamp is after 2024-01-01 and (type is critical or severity is high)"
+        query = (
+            "Show metrics and relationships for all nodes where status is error and "
+            "timestamp is after 2024-01-01 and (type is critical or severity is high)"
+        )
         complexity = analyzer._calculate_complexity(query)
         assert complexity > 5
 
@@ -251,13 +253,13 @@ class TestLangGraphAdvancedRunner:
     @pytest.fixture
     def runner(self):
         settings = AppSettings(openai_api_key="test-key")
-        with patch('app.modules.ops.services.langgraph_advanced.get_llm_client'):
+        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
             return LangGraphAdvancedRunner(settings)
 
     def test_initialization(self):
         """Test runner initialization."""
         settings = AppSettings(openai_api_key="test-key")
-        with patch('app.modules.ops.services.langgraph_advanced.get_llm_client'):
+        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
             runner = LangGraphAdvancedRunner(settings)
             assert runner.settings == settings
             assert runner.analyzer is not None
@@ -297,7 +299,7 @@ class TestLangGraphAdvancedRunner:
 
         assert isinstance(blocks, list)
         # Summary should indicate depth was considered
-        summary_text = blocks[0].content if hasattr(blocks[0], 'content') else ""
+        summary_text = blocks[0].content if hasattr(blocks[0], "content") else ""
         assert "Execution Summary" in str(summary_text) or len(blocks) > 0
 
     def test_run_sequential_mode(self, runner):
@@ -379,7 +381,9 @@ class TestLangGraphAdvancedRunner:
             tools_needed=["metric_executor", "graph_executor"],
         )
 
-        blocks, tools = runner._execute_decomposed(state, analysis, ExecutionMode.HYBRID)
+        blocks, tools = runner._execute_decomposed(
+            state, analysis, ExecutionMode.HYBRID
+        )
 
         assert isinstance(blocks, list)
         assert len(blocks) > 0
@@ -392,7 +396,13 @@ class TestLangGraphAdvancedRunner:
             original_query="test",
             decomposed_queries=[],
             execution_path=["simple_metric"],
-            results={"sub_query_0": {"query": "test", "type": "metric", "tools": ["metric_executor"]}},
+            results={
+                "sub_query_0": {
+                    "query": "test",
+                    "type": "metric",
+                    "tools": ["metric_executor"],
+                }
+            },
             errors=[],
             metadata={"complexity": 2},
             depth=1,
@@ -409,7 +419,7 @@ class TestLangGraphAdvancedRunner:
         blocks = []
         summary = runner._build_summary(state, analysis, blocks)
 
-        assert hasattr(summary, 'content')
+        assert hasattr(summary, "content")
         assert "Execution Summary" in summary.content
         assert "test" in summary.content
 
@@ -467,7 +477,7 @@ class TestIntegration:
         """Test complete workflow from simple to complex queries."""
         settings = AppSettings(openai_api_key="test-key")
 
-        with patch('app.modules.ops.services.langgraph_advanced.get_llm_client'):
+        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
             runner = LangGraphAdvancedRunner(settings)
 
             # Simple query
@@ -484,7 +494,7 @@ class TestIntegration:
         """Test query analysis leading to execution."""
         settings = AppSettings(openai_api_key="test-key")
 
-        with patch('app.modules.ops.services.langgraph_advanced.get_llm_client'):
+        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
             runner = LangGraphAdvancedRunner(settings)
 
             # Analyze

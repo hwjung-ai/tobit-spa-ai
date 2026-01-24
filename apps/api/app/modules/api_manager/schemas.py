@@ -135,7 +135,9 @@ class ApiDefinitionRead(BaseModel):
             flattened: list[str] = []
             for entry in value.values():
                 if isinstance(entry, list):
-                    flattened.extend(str(item) for item in entry if isinstance(item, str))
+                    flattened.extend(
+                        str(item) for item in entry if isinstance(item, str)
+                    )
             return flattened
         return [str(value)]
 

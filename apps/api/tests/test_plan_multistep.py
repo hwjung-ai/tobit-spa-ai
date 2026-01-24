@@ -135,14 +135,20 @@ except ImportError:
 
         for step in plan.steps:
             if step.next_step_id and step.next_step_id not in all_step_ids:
-                errors.append(f"Step {step.step_id} references unknown next_step_id: {step.next_step_id}")
+                errors.append(
+                    f"Step {step.step_id} references unknown next_step_id: {step.next_step_id}"
+                )
             if step.error_next_step_id and step.error_next_step_id not in all_step_ids:
-                errors.append(f"Step {step.step_id} references unknown error_next_step_id: {step.error_next_step_id}")
+                errors.append(
+                    f"Step {step.step_id} references unknown error_next_step_id: {step.error_next_step_id}"
+                )
 
         for branch in plan.branches:
             for step in branch.steps:
                 if step.next_step_id and step.next_step_id not in all_step_ids:
-                    errors.append(f"Step {step.step_id} in branch {branch.branch_id} references unknown next_step_id: {step.next_step_id}")
+                    errors.append(
+                        f"Step {step.step_id} in branch {branch.branch_id} references unknown next_step_id: {step.next_step_id}"
+                    )
 
         trace["references"] = {
             "valid": len(errors) == 0,
@@ -159,23 +165,33 @@ except ImportError:
 
         budget_errors: List[str] = []
         if total_steps > budget.max_steps:
-            budget_errors.append(f"Total steps ({total_steps}) exceeds max_steps budget ({budget.max_steps})")
+            budget_errors.append(
+                f"Total steps ({total_steps}) exceeds max_steps budget ({budget.max_steps})"
+            )
 
         if len(plan.branches) > budget.max_branches:
-            budget_errors.append(f"Number of branches ({len(plan.branches)}) exceeds max_branches budget ({budget.max_branches})")
+            budget_errors.append(
+                f"Number of branches ({len(plan.branches)}) exceeds max_branches budget ({budget.max_branches})"
+            )
 
         # Validate timeout_seconds
         if budget.timeout_seconds is not None:
             if budget.timeout_seconds < 1:
-                budget_errors.append(f"timeout_seconds ({budget.timeout_seconds}) must be >= 1")
+                budget_errors.append(
+                    f"timeout_seconds ({budget.timeout_seconds}) must be >= 1"
+                )
             elif budget.timeout_seconds > 3600:
-                budget_errors.append(f"timeout_seconds ({budget.timeout_seconds}) exceeds maximum of 3600 seconds (1 hour)")
+                budget_errors.append(
+                    f"timeout_seconds ({budget.timeout_seconds}) exceeds maximum of 3600 seconds (1 hour)"
+                )
 
         # Validate max_depth
         if budget.max_depth < 1:
             budget_errors.append(f"max_depth ({budget.max_depth}) must be >= 1")
         elif budget.max_depth > 10:
-            budget_errors.append(f"max_depth ({budget.max_depth}) exceeds maximum of 10")
+            budget_errors.append(
+                f"max_depth ({budget.max_depth}) exceeds maximum of 10"
+            )
 
         trace["budget"] = {
             "valid": len(budget_errors) == 0,
@@ -197,7 +213,9 @@ except ImportError:
             "steps_in_loops": sum(len(loop.steps) for loop in plan.loops),
         }
 
-        is_valid = (len(duplicates) == 0) and (len(errors) == 0) and (len(budget_errors) == 0)
+        is_valid = (
+            (len(duplicates) == 0) and (len(errors) == 0) and (len(budget_errors) == 0)
+        )
 
         if not is_valid:
             error_msgs = []
@@ -206,7 +224,9 @@ except ImportError:
             error_msgs.extend(errors)
             error_msgs.extend(budget_errors)
             if is_valid is False:
-                raise ValueError(f"Multi-step plan validation failed: {'; '.join(error_msgs)}")
+                raise ValueError(
+                    f"Multi-step plan validation failed: {'; '.join(error_msgs)}"
+                )
 
         return plan, {"multistep": trace}
 
@@ -601,7 +621,9 @@ class TestPlanValidation:
         normalized, trace = validate_plan(plan)
         assert normalized.enable_multistep is True
         assert trace.get("multistep", {}).get("structure", {}).get("total_steps") == 2
-        assert trace.get("multistep", {}).get("structure", {}).get("total_branches") == 1
+        assert (
+            trace.get("multistep", {}).get("structure", {}).get("total_branches") == 1
+        )
         assert trace.get("multistep", {}).get("structure", {}).get("total_loops") == 1
 
     def test_validate_timeout_invalid_range(self):

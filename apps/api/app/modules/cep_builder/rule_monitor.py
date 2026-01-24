@@ -168,8 +168,16 @@ class RulePerformanceMonitor:
 
         try:
             p50 = statistics.median(execution_times)
-            p95 = statistics.quantiles(execution_times, n=20)[18] if len(execution_times) > 20 else max(execution_times)
-            p99 = statistics.quantiles(execution_times, n=100)[98] if len(execution_times) > 100 else max(execution_times)
+            p95 = (
+                statistics.quantiles(execution_times, n=20)[18]
+                if len(execution_times) > 20
+                else max(execution_times)
+            )
+            p99 = (
+                statistics.quantiles(execution_times, n=100)[98]
+                if len(execution_times) > 100
+                else max(execution_times)
+            )
         except (statistics.StatisticsError, IndexError):
             p50 = p95 = p99 = statistics.mean(execution_times)
 
@@ -213,12 +221,14 @@ class RulePerformanceMonitor:
         errors = []
         for metric in error_metrics[:limit]:
             for error in metric.errors:
-                errors.append({
-                    "rule_id": rule_id,
-                    "error": error,
-                    "timestamp": metric.created_at.isoformat(),
-                    "execution_time_ms": metric.execution_time_ms,
-                })
+                errors.append(
+                    {
+                        "rule_id": rule_id,
+                        "error": error,
+                        "timestamp": metric.created_at.isoformat(),
+                        "execution_time_ms": metric.execution_time_ms,
+                    }
+                )
 
         return errors
 
@@ -237,9 +247,7 @@ class RulePerformanceMonitor:
 
         total_executions = sum(s.total_executions for s in all_stats)
         avg_success_rate = (
-            statistics.mean(s.success_rate for s in all_stats)
-            if all_stats
-            else 0.0
+            statistics.mean(s.success_rate for s in all_stats) if all_stats else 0.0
         )
 
         # Identify critical rules (low success rate or high error count)
@@ -279,8 +287,7 @@ class RulePerformanceMonitor:
         for rule_id in self.metrics:
             original_count = len(self.metrics[rule_id])
             self.metrics[rule_id] = [
-                m for m in self.metrics[rule_id]
-                if m.created_at > cutoff_time
+                m for m in self.metrics[rule_id] if m.created_at > cutoff_time
             ]
             total_removed += original_count - len(self.metrics[rule_id])
 

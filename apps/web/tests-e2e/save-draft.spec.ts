@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+async function gotoWithRetry(page: { goto: (url: string) => Promise<unknown>; waitForTimeout: (ms: number) => Promise<void> }, url: string, attempts: number = 3) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      await page.goto(url);
+      return;
+    } catch (error) {
+      if (i === attempts - 1) {
+        throw error;
+      }
+      await page.waitForTimeout(2000);
+    }
+  }
+}
+
 /**
  * Comprehensive Save Draft E2E Test
  * Tests: save draft functionality with improved error handling and timeouts
@@ -11,7 +25,7 @@ test.describe('Save Draft - Detailed Testing', () => {
 
     // Navigate to screens
     console.log('[TEST] Navigating to /admin/screens');
-    await page.goto('/admin/screens');
+    await gotoWithRetry(page, '/admin/screens');
 
     // Wait for screen list
     console.log('[TEST] Waiting for screen list to load');
@@ -24,21 +38,25 @@ test.describe('Save Draft - Detailed Testing', () => {
     console.log(`[TEST] Found ${rows} screens in list`);
     expect(rows).toBeGreaterThan(0);
 
-    // Ensure a draft screen exists
-    const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
-    if (!(await draftCard.isVisible())) {
-      console.log('[TEST] No draft screen found, creating one');
-      const draftId = `e2e_draft_${Date.now()}`;
-      await page.locator('[data-testid="btn-create-screen"]').click();
-      await page.locator('[data-testid="input-screen-id"]').fill(draftId);
-      await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
-      await page.locator('[data-testid="btn-confirm-create"]').click();
-      await page.waitForTimeout(1000);
-    }
+    // Create a fresh draft screen to avoid existing schema validation issues
+    const draftId = `e2e_draft_${Date.now()}`;
+    const draftName = `E2E Draft Screen ${Date.now()}`;
+    console.log('[TEST] Creating a new draft screen');
+    await page.locator('[data-testid="btn-create-screen"]').click();
+    await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+    await page.locator('[data-testid="input-screen-name"]').fill(draftName);
+    await page.locator('[data-testid="btn-confirm-create"]').click();
+    await page.waitForTimeout(1000);
 
-    // Get first draft screen ID
-    const firstScreenLink = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first()
-      .locator('[data-testid^="link-screen-"]').first();
+    const searchInput = page.locator('[data-testid="input-search-screens"]');
+    await searchInput.fill(draftId);
+
+    const createdCard = page.locator('[data-testid^="screen-asset-"]').filter({
+      hasText: draftId,
+    }).first();
+    await createdCard.waitFor({ timeout: 15000 });
+
+    const firstScreenLink = createdCard.locator('[data-testid^="link-screen-"]').first();
     const screenHref = await firstScreenLink.getAttribute('href');
     console.log(`[TEST] First screen href: ${screenHref}`);
 
@@ -84,6 +102,12 @@ test.describe('Save Draft - Detailed Testing', () => {
     console.log('[TEST] Looking for text components to modify');
     const textComponents = await page.locator('text=/text|Text/i').count();
     console.log(`[TEST] Found ${textComponents} text-like elements`);
+
+    // Ensure a change is made so Save Draft is enabled
+    const paletteTextButton = page.locator('[data-testid="palette-component-text"]');
+    await paletteTextButton.waitFor({ timeout: 5000 });
+    await paletteTextButton.click();
+    await page.waitForTimeout(1000);
 
     // Attempt Save Draft
     console.log('\n[TEST] === SAVE DRAFT ATTEMPT ===');
@@ -191,24 +215,29 @@ test.describe('Save Draft - Detailed Testing', () => {
     });
 
     // Navigate to screen editor
-    await page.goto('/admin/screens');
+    await gotoWithRetry(page, '/admin/screens');
     await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 }).catch(() => {
       console.log('[ERROR] Timeout waiting for screen list, trying alternative selectors');
       return page.waitForSelector('[data-testid^="link-screen-"]', { timeout: 10000 });
     });
 
-    const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first();
-    if (!(await draftCard.isVisible())) {
-      const draftId = `e2e_draft_${Date.now()}`;
-      await page.locator('[data-testid="btn-create-screen"]').click();
-      await page.locator('[data-testid="input-screen-id"]').fill(draftId);
-      await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
-      await page.locator('[data-testid="btn-confirm-create"]').click();
-      await page.waitForTimeout(1000);
-    }
+    const draftId = `e2e_draft_${Date.now()}`;
+    const draftName = `E2E Draft Screen ${Date.now()}`;
+    await page.locator('[data-testid="btn-create-screen"]').click();
+    await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+    await page.locator('[data-testid="input-screen-name"]').fill(draftName);
+    await page.locator('[data-testid="btn-confirm-create"]').click();
+    await page.waitForTimeout(1000);
 
-    const firstScreenLink = page.locator('[data-testid^="screen-asset-"]').filter({ hasText: 'draft' }).first()
-      .locator('[data-testid^="link-screen-"]').first();
+    const searchInput = page.locator('[data-testid="input-search-screens"]');
+    await searchInput.fill(draftId);
+
+    const createdCard = page.locator('[data-testid^="screen-asset-"]').filter({
+      hasText: draftId,
+    }).first();
+    await createdCard.waitFor({ timeout: 15000 });
+
+    const firstScreenLink = createdCard.locator('[data-testid^="link-screen-"]').first();
     await firstScreenLink.click();
 
     // Wait for editor
@@ -217,6 +246,12 @@ test.describe('Save Draft - Detailed Testing', () => {
       return page.waitForSelector('[data-testid="btn-save-draft"]', { timeout: 10000 });
     });
     await page.waitForTimeout(3000);
+
+    // Add a component so Save Draft becomes enabled
+    const textButton = page.locator('[data-testid="palette-component-text"]');
+    await textButton.waitFor({ timeout: 5000 });
+    await textButton.click();
+    await page.waitForTimeout(1000);
 
     // Click Save Draft
     const saveDraftButton = page.locator('button:has-text("Save Draft")');

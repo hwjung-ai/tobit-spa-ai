@@ -122,34 +122,44 @@ class ChartBlock(BaseModel):
 
 class UIInput(BaseModel):
     """UI input field definition"""
+
     id: str
     label: str
     kind: Literal["text", "number", "select", "date", "datetime", "checkbox"]
     required: bool = False
     placeholder: str | None = None
     default: Any | None = None
-    options: list[dict[str, Any]] | None = None  # for select: [{"label": "...", "value": "..."}]
+    options: list[dict[str, Any]] | None = (
+        None  # for select: [{"label": "...", "value": "..."}]
+    )
 
 
 class UIAction(BaseModel):
     """UI action button definition"""
+
     id: str
     label: str
     endpoint: str = "/ops/ui-actions"
     method: Literal["POST"] = "POST"
-    payload_template: dict[str, Any]  # with {{trace_id}}, {{inputs.<id>}}, {{action_id}}
-    variant: Literal["default", "destructive", "outline", "secondary", "ghost", "link"] = "default"
+    payload_template: dict[
+        str, Any
+    ]  # with {{trace_id}}, {{inputs.<id>}}, {{action_id}}
+    variant: Literal[
+        "default", "destructive", "outline", "secondary", "ghost", "link"
+    ] = "default"
 
 
 class UIBindings(BaseModel):
     """UI state bindings (future-proof)"""
+
     loading: str | None = None  # e.g. "state.loading"
-    error: str | None = None    # e.g. "state.error"
+    error: str | None = None  # e.g. "state.error"
     result_blocks: str | None = None  # e.g. "state.result.blocks"
 
 
 class UIPanelBlock(BaseModel):
     """Interactive UI panel block with inputs and actions"""
+
     type: Literal["ui_panel"]
     title: str | None = None
     id: str | None = None
@@ -160,10 +170,13 @@ class UIPanelBlock(BaseModel):
 
 class UIScreenBlock(BaseModel):
     """Screen rendering trigger block - references a published Screen Asset"""
+
     type: Literal["ui_screen"]
     screen_id: str  # Published Screen Asset ID (stable key)
     params: dict[str, Any] | None = None  # Initial parameters for screen
-    bindings: dict[str, str] | None = None  # State binding rules (key=screen path, value=binding expr)
+    bindings: dict[str, str] | None = (
+        None  # State binding rules (key=screen path, value=binding expr)
+    )
     id: str | None = None  # Block instance ID (optional, for trace reference)
     title: str | None = None  # Optional title (renderer may ignore)
 

@@ -3,8 +3,6 @@
 from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
-
 from app.modules.ops.services.ci.planner.plan_schema import (
     DirectAnswerPayload,
     Plan,
@@ -12,6 +10,7 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     PlanOutputKind,
     RejectPayload,
 )
+from fastapi.testclient import TestClient
 from main import app
 
 
@@ -83,15 +82,17 @@ def test_ci_ask_reject_route(monkeypatch, client):
 def test_ci_ask_orchestration_stages(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.ci.planner import planner_llm, validator
     from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.planner import planner_llm, validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
 
     plan = Plan()
 
     def fake_plan_output(_: str, **_kwargs: Any) -> PlanOutput:
-        return PlanOutput(kind=PlanOutputKind.PLAN, plan=plan, confidence=1.0, reasoning="orch")
+        return PlanOutput(
+            kind=PlanOutputKind.PLAN, plan=plan, confidence=1.0, reasoning="orch"
+        )
 
     def fake_validate_plan(_: Plan, **_kwargs: Any):
         return plan, {"policy_decisions": {"dummy": True}}
@@ -130,7 +131,9 @@ def test_ci_ask_orchestration_stages(monkeypatch, client):
 
     monkeypatch.setattr(planner_llm, "create_plan_output", fake_plan_output)
     monkeypatch.setattr(validator, "validate_plan", fake_validate_plan)
-    monkeypatch.setattr(CIOrchestratorRunner, "_run_async_with_stages", fake_run_with_stages)
+    monkeypatch.setattr(
+        CIOrchestratorRunner, "_run_async_with_stages", fake_run_with_stages
+    )
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
     response = client.post("/ops/ci/ask", json={"question": "cpu usage"})
@@ -145,8 +148,8 @@ def test_ci_ask_orchestration_stages(monkeypatch, client):
 def test_ci_ask_rerun_replan_events(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.ci.planner import validator
     from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.planner import validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
 
@@ -187,15 +190,17 @@ def test_ci_ask_rerun_replan_events(monkeypatch, client):
 def test_ci_ask_auto_replan_on_error(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.ci.planner import planner_llm, validator
     from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.planner import planner_llm, validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
 
     plan = Plan()
 
     def fake_plan_output(_: str, **_kwargs: Any) -> PlanOutput:
-        return PlanOutput(kind=PlanOutputKind.PLAN, plan=plan, confidence=1.0, reasoning="orch")
+        return PlanOutput(
+            kind=PlanOutputKind.PLAN, plan=plan, confidence=1.0, reasoning="orch"
+        )
 
     def fake_validate_plan(_: Plan, **_kwargs: Any):
         return plan, {"policy_decisions": {"dummy": True}}
@@ -208,7 +213,11 @@ def test_ci_ask_auto_replan_on_error(monkeypatch, client):
             return {
                 "answer": "fail",
                 "blocks": [{"type": "text", "text": "fail"}],
-                "trace": {"errors": ["boom"], "stage_inputs": [{}], "stage_outputs": [{}]},
+                "trace": {
+                    "errors": ["boom"],
+                    "stage_inputs": [{}],
+                    "stage_outputs": [{}],
+                },
                 "next_actions": [],
                 "meta": {"route": "orch"},
             }
@@ -256,13 +265,18 @@ def test_ci_ask_resolver_asset_applies_rules(monkeypatch, client):
             {
                 "rule_type": "alias_mapping",
                 "name": "alias-ci",
-                "rule_data": {"source_entity": "srv-foo-01", "target_entity": "srv-erp-01"},
+                "rule_data": {
+                    "source_entity": "srv-foo-01",
+                    "target_entity": "srv-erp-01",
+                },
             }
         ]
     }
 
     monkeypatch.setattr(planner_llm, "create_plan_output", fake_plan_output)
-    monkeypatch.setattr(ops_router, "load_resolver_asset", lambda _name: resolver_payload)
+    monkeypatch.setattr(
+        ops_router, "load_resolver_asset", lambda _name: resolver_payload
+    )
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
     response = client.post(

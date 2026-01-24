@@ -1,7 +1,5 @@
 """Test CI Runner Tool Contract implementation."""
 
-
-
 from schemas.tool_contracts import ToolCall
 
 
@@ -144,7 +142,11 @@ class TestReferenceExtraction:
                 "type": "references",
                 "items": [
                     {"kind": "sql", "title": "Query 1", "payload": "SELECT * FROM ci"},
-                    {"kind": "cypher", "title": "Query 2", "payload": "MATCH (n) RETURN n"},
+                    {
+                        "kind": "cypher",
+                        "title": "Query 2",
+                        "payload": "MATCH (n) RETURN n",
+                    },
                 ],
             },
         ]

@@ -360,7 +360,7 @@ export default function PropertiesPanel() {
 }
 
 interface PropsFormFieldProps {
-  field: unknown;
+  field: PropsFormFieldSchema;
   value: unknown;
   onChange: (value: unknown) => void;
 }
@@ -394,7 +394,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
             <SelectValue placeholder="Select..." />
           </SelectTrigger>
           <SelectContent>
-            {field.options.map((opt: unknown) => (
+            {field.options.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>

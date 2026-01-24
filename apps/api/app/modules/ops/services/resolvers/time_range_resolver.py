@@ -60,7 +60,9 @@ WEEK_WORD_MAP = {
 }
 
 
-def resolve_time_range(question: str, now: datetime, tz: ZoneInfo | None = None) -> TimeRange:
+def resolve_time_range(
+    question: str, now: datetime, tz: ZoneInfo | None = None
+) -> TimeRange:
     zone = tz or ASIA_SEOUL
     current = now.astimezone(zone)
     text = question.lower()
@@ -85,8 +87,12 @@ def resolve_time_range(question: str, now: datetime, tz: ZoneInfo | None = None)
         return TimeRange(start=start, end=current, bucket="1 day")
     if "2025-12" in text:
         return TimeRange(
-            start=current.replace(year=2025, month=12, day=1, hour=0, minute=0, second=0, microsecond=0),
-            end=current.replace(year=2025, month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
+            start=current.replace(
+                year=2025, month=12, day=1, hour=0, minute=0, second=0, microsecond=0
+            ),
+            end=current.replace(
+                year=2025, month=12, day=1, hour=0, minute=0, second=0, microsecond=0
+            )
             + timedelta(days=31),
             bucket="6 hours",
         )
@@ -103,7 +109,9 @@ def resolve_time_range(question: str, now: datetime, tz: ZoneInfo | None = None)
             bucket="6 hours",
         )
     if "어제" in text:
-        yesterday = (current - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        yesterday = (current - timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
         return TimeRange(
             start=yesterday,
             end=yesterday + timedelta(days=1),
@@ -136,7 +144,9 @@ def _parse_week_of_month(text: str, zone: ZoneInfo) -> TimeRange | None:
     return _build_week_range(year, month, week_index, zone)
 
 
-def _weekday_range(year: int, month: int, week_index: int, zone: ZoneInfo) -> TimeRange | None:
+def _weekday_range(
+    year: int, month: int, week_index: int, zone: ZoneInfo
+) -> TimeRange | None:
     month_start = datetime(year, month, 1, tzinfo=zone)
     total_days = calendar.monthrange(year, month)[1]
     next_month_start = (
@@ -160,7 +170,9 @@ def _weekday_range(year: int, month: int, week_index: int, zone: ZoneInfo) -> Ti
     return TimeRange(start=start, end=end, bucket="6 hours")
 
 
-def _build_week_range(year: int, month: int, week_index: int, zone: ZoneInfo) -> TimeRange | None:
+def _build_week_range(
+    year: int, month: int, week_index: int, zone: ZoneInfo
+) -> TimeRange | None:
     return _weekday_range(year, month, week_index, zone)
 
 
@@ -182,15 +194,27 @@ def _shift_months(timestamp: datetime, months: int) -> datetime:
         month += 12
         year -= 1
     day = min(timestamp.day, calendar.monthrange(year, month)[1])
-    return timestamp.replace(year=year, month=month, day=day, hour=0, minute=0, second=0, microsecond=0)
+    return timestamp.replace(
+        year=year, month=month, day=day, hour=0, minute=0, second=0, microsecond=0
+    )
 
 
 def _shift_years(timestamp: datetime, years: int) -> datetime:
     try:
-        return timestamp.replace(year=timestamp.year - years, hour=0, minute=0, second=0, microsecond=0)
+        return timestamp.replace(
+            year=timestamp.year - years, hour=0, minute=0, second=0, microsecond=0
+        )
     except ValueError:
         # handle leap day
-        return timestamp.replace(month=2, day=28, year=timestamp.year - years, hour=0, minute=0, second=0, microsecond=0)
+        return timestamp.replace(
+            month=2,
+            day=28,
+            year=timestamp.year - years,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
 
 
 def _parse_date_range(text: str, zone: ZoneInfo) -> TimeRange | None:

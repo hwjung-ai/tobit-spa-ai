@@ -22,11 +22,16 @@ class ChatThreadBase(SQLModel):
     deleted_at: datetime | None = None
     title_finalized: bool = Field(default=False)
     summary: str | None = None
-    builder: str | None = Field(default=None, description="Optional slug of the builder that created this thread")
+    builder: str | None = Field(
+        default=None,
+        description="Optional slug of the builder that created this thread",
+    )
 
 
 class ChatThread(ChatThreadBase, table=True):
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True, max_length=36)
+    id: str = Field(
+        default_factory=lambda: str(uuid4()), primary_key=True, max_length=36
+    )
     __tablename__ = "chat_thread"
 
 
@@ -40,5 +45,7 @@ class ChatMessageBase(SQLModel):
 
 
 class ChatMessage(ChatMessageBase, table=True):
-    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True, max_length=36)
+    id: str = Field(
+        default_factory=lambda: str(uuid4()), primary_key=True, max_length=36
+    )
     __tablename__ = "chat_message"

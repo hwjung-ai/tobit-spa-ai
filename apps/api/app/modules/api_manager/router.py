@@ -56,8 +56,7 @@ class ExecuteApiRequest(BaseModel):
 
 @router.get("/apis", response_model=dict)
 async def list_apis(
-    scope: Optional[str] = Query(None),
-    session: Session = Depends(get_session)
+    scope: Optional[str] = Query(None), session: Session = Depends(get_session)
 ):
     """List all available APIs (public endpoint - no authentication required)"""
 
@@ -96,12 +95,7 @@ async def list_apis(
             for api in apis
         ]
 
-        return {
-            "status": "ok",
-            "data": {
-                "apis": api_list
-            }
-        }
+        return {"status": "ok", "data": {"apis": api_list}}
 
     except Exception as e:
         logger.error(f"List APIs failed: {str(e)}")
@@ -110,6 +104,7 @@ async def list_apis(
 
 class SaveApiRequest(BaseModel):
     """Request to save/create API from frontend"""
+
     api_name: str
     api_type: str  # "system" or "custom"
     method: str
@@ -130,13 +125,21 @@ async def create_or_update_api(
     request: SaveApiRequest,
     api_id: Optional[str] = Query(None),
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Create or update API definition"""
     try:
         # Map frontend field names to backend field names
-        api_scope = ApiScope(request.api_type) if request.api_type in ["system", "custom"] else ApiScope.custom
-        api_mode = ApiMode(request.logic_type) if request.logic_type in ["sql", "python", "workflow"] else ApiMode.sql
+        api_scope = (
+            ApiScope(request.api_type)
+            if request.api_type in ["system", "custom"]
+            else ApiScope.custom
+        )
+        api_mode = (
+            ApiMode(request.logic_type)
+            if request.logic_type in ["sql", "python", "workflow"]
+            else ApiMode.sql
+        )
 
         if api_id:
             # Update existing API
@@ -150,7 +153,11 @@ async def create_or_update_api(
             api.description = request.description
             api.tags = request.tags
             api.mode = api_mode
-            api.logic = request.logic_body if request.logic_type == "sql" else request.logic_body
+            api.logic = (
+                request.logic_body
+                if request.logic_type == "sql"
+                else request.logic_body
+            )
             api.updated_at = datetime.utcnow()
         else:
             # Create new API
@@ -163,7 +170,7 @@ async def create_or_update_api(
                 tags=request.tags,
                 mode=api_mode,
                 logic=request.logic_body,
-                is_enabled=request.is_active
+                is_enabled=request.is_active,
             )
             session.add(api)
 
@@ -185,10 +192,14 @@ async def create_or_update_api(
                     "mode": api.mode.value if api.mode else None,
                     "logic": api.logic,
                     "is_enabled": api.is_enabled,
-                    "created_at": api.created_at.isoformat() if api.created_at else None,
-                    "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+                    "created_at": api.created_at.isoformat()
+                    if api.created_at
+                    else None,
+                    "updated_at": api.updated_at.isoformat()
+                    if api.updated_at
+                    else None,
                 }
-            }
+            },
         }
     except Exception as e:
         logger.error(f"Create/update API failed: {str(e)}")
@@ -197,8 +208,7 @@ async def create_or_update_api(
 
 @router.post("/create", response_model=dict)
 async def create_api(
-    request: CreateApiRequest,
-    current_user: dict = Depends(get_current_user)
+    request: CreateApiRequest, current_user: dict = Depends(get_current_user)
 ):
     """
     Create new dynamic API
@@ -214,10 +224,7 @@ async def create_api(
     try:
         api = await api_service.create_api(request.dict(), current_user)
 
-        return {
-            "status": "ok",
-            "data": api
-        }
+        return {"status": "ok", "data": api}
 
     except Exception as e:
         logger.error(f"Create API failed: {str(e)}")
@@ -225,25 +232,14 @@ async def create_api(
 
 
 @router.get("/{api_id}", response_model=dict)
-async def get_api(
-    api_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def get_api(api_id: str, current_user: dict = Depends(get_current_user)):
     """Get API definition"""
 
     try:
         # In real implementation: db.get(ApiDefinition, api_id)
-        api = {
-            "id": api_id,
-            "name": "Example API",
-            "version": 1,
-            "status": "active"
-        }
+        api = {"id": api_id, "name": "Example API", "version": 1, "status": "active"}
 
-        return {
-            "status": "ok",
-            "data": api
-        }
+        return {"status": "ok", "data": api}
 
     except Exception as e:
         logger.error(f"Get API failed: {str(e)}")
@@ -255,7 +251,7 @@ async def update_api(
     api_id: str,
     request: SaveApiRequest,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Update API definition
@@ -267,8 +263,15 @@ async def update_api(
             raise HTTPException(status_code=404, detail="API not found")
 
         # Map frontend field names to backend field names
-        ApiScope(request.api_type) if request.api_type in ["system", "custom"] else ApiScope.custom
-        api_mode = ApiMode(request.logic_type) if request.logic_type in ["sql", "python", "workflow"] else ApiMode.sql
+        ApiScope(request.api_type) if request.api_type in [
+            "system",
+            "custom",
+        ] else ApiScope.custom
+        api_mode = (
+            ApiMode(request.logic_type)
+            if request.logic_type in ["sql", "python", "workflow"]
+            else ApiMode.sql
+        )
 
         # Update fields
         api.name = request.api_name
@@ -300,10 +303,14 @@ async def update_api(
                     "mode": api.mode.value if api.mode else None,
                     "logic": api.logic,
                     "is_enabled": api.is_enabled,
-                    "created_at": api.created_at.isoformat() if api.created_at else None,
-                    "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+                    "created_at": api.created_at.isoformat()
+                    if api.created_at
+                    else None,
+                    "updated_at": api.updated_at.isoformat()
+                    if api.updated_at
+                    else None,
                 }
-            }
+            },
         }
 
     except Exception as e:
@@ -315,7 +322,7 @@ async def update_api(
 async def rollback_api(
     api_id: str,
     target_version: int = Query(...),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Rollback API to previous version
@@ -331,7 +338,7 @@ async def rollback_api(
         return {
             "status": "ok",
             "message": f"Rolled back to version {target_version}",
-            "data": api
+            "data": api,
         }
 
     except Exception as e:
@@ -340,20 +347,13 @@ async def rollback_api(
 
 
 @router.get("/{api_id}/versions", response_model=dict)
-async def get_versions(
-    api_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def get_versions(api_id: str, current_user: dict = Depends(get_current_user)):
     """Get version history"""
 
     try:
         versions = await api_service.get_api_versions(api_id)
 
-        return {
-            "status": "ok",
-            "api_id": api_id,
-            "versions": versions
-        }
+        return {"status": "ok", "api_id": api_id, "versions": versions}
 
     except Exception as e:
         logger.error(f"Get versions failed: {str(e)}")
@@ -362,9 +362,7 @@ async def get_versions(
 
 @router.post("/{api_id}/validate-sql", response_model=dict)
 async def validate_sql(
-    api_id: str,
-    sql: str = Query(...),
-    current_user: dict = Depends(get_current_user)
+    api_id: str, sql: str = Query(...), current_user: dict = Depends(get_current_user)
 ):
     """
     Validate SQL query
@@ -384,7 +382,7 @@ async def validate_sql(
             "is_valid": validation.is_valid,
             "errors": validation.errors,
             "warnings": validation.warnings,
-            "metadata": validation.metadata
+            "metadata": validation.metadata,
         }
 
     except Exception as e:
@@ -396,7 +394,7 @@ async def validate_sql(
 async def execute_api(
     api_id: str,
     request: ExecuteApiRequest,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Execute API with parameters
@@ -409,7 +407,7 @@ async def execute_api(
 
         return {
             "status": "ok" if result.get("status") == "success" else "error",
-            "data": result
+            "data": result,
         }
 
     except Exception as e:
@@ -418,10 +416,7 @@ async def execute_api(
 
 
 @router.post("/{api_id}/test", response_model=dict)
-async def run_tests(
-    api_id: str,
-    current_user: dict = Depends(get_current_user)
-):
+async def run_tests(api_id: str, current_user: dict = Depends(get_current_user)):
     """
     Run all tests for API
 
@@ -439,13 +434,9 @@ async def run_tests(
             "failed": test_result.failed,
             "errors": test_result.errors,
             "results": [
-                {
-                    "test_id": r.test_id,
-                    "status": r.status,
-                    "error": r.error_message
-                }
+                {"test_id": r.test_id, "status": r.status, "error": r.error_message}
                 for r in test_result.results
-            ]
+            ],
         }
 
     except Exception as e:
@@ -454,22 +445,13 @@ async def run_tests(
 
 
 @router.get("/apis/{api_id}/execution-logs", response_model=dict)
-async def get_logs(
-    api_id: str,
-    limit: int = Query(50, ge=1, le=500)
-):
+async def get_logs(api_id: str, limit: int = Query(50, ge=1, le=500)):
     """Get API execution history (public endpoint - no authentication required)"""
 
     try:
         logs = await api_service.get_execution_logs(api_id, limit)
 
-        return {
-            "status": "ok",
-            "data": {
-                "api_id": api_id,
-                "logs": logs
-            }
-        }
+        return {"status": "ok", "data": {"api_id": api_id, "logs": logs}}
 
     except Exception as e:
         logger.error(f"Get logs failed: {str(e)}")
@@ -480,7 +462,7 @@ async def get_logs(
 async def delete_api(
     api_id: str,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Delete API (soft delete)"""
 
@@ -494,10 +476,7 @@ async def delete_api(
         session.add(api)
         session.commit()
 
-        return {
-            "status": "ok",
-            "message": f"API {api_id} deleted"
-        }
+        return {"status": "ok", "message": f"API {api_id} deleted"}
 
     except HTTPException:
         raise
@@ -507,10 +486,7 @@ async def delete_api(
 
 
 @router.post("/dry-run", response_model=dict)
-async def dry_run(
-    request: dict,
-    session: Session = Depends(get_session)
-):
+async def dry_run(request: dict, session: Session = Depends(get_session)):
     """
     Execute SQL query without saving (dry-run/test)
 
@@ -541,15 +517,10 @@ async def dry_run(
             "columns": ["result"],
             "rows": [{"result": 1}],
             "row_count": 1,
-            "duration_ms": 10
+            "duration_ms": 10,
         }
 
-        return {
-            "status": "ok",
-            "data": {
-                "result": result
-            }
-        }
+        return {"status": "ok", "data": {"result": result}}
 
     except HTTPException:
         raise

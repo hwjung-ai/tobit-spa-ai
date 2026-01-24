@@ -24,7 +24,9 @@ def create_thread(
 ) -> ThreadRead:
     tenant_id, user_id = identity
     title = payload.title or "New conversation"
-    thread = ChatThread(title=title, tenant_id=tenant_id, user_id=user_id, builder=payload.builder)
+    thread = ChatThread(
+        title=title, tenant_id=tenant_id, user_id=user_id, builder=payload.builder
+    )
     session.add(thread)
     session.commit()
     session.refresh(thread)
@@ -48,14 +50,14 @@ def list_threads(
 
 
 @router.get("/{thread_id}", response_model=ThreadDetail)
-def get_thread(
-    thread_id: str, session: Session = Depends(get_session)
-) -> ThreadDetail:
+def get_thread(thread_id: str, session: Session = Depends(get_session)) -> ThreadDetail:
     thread = session.get(ChatThread, thread_id)
     if not thread or thread.deleted_at:
         raise HTTPException(status_code=404, detail="Thread not found")
-    messages_stmt = select(ChatMessage).where(ChatMessage.thread_id == thread_id).order_by(
-        ChatMessage.created_at
+    messages_stmt = (
+        select(ChatMessage)
+        .where(ChatMessage.thread_id == thread_id)
+        .order_by(ChatMessage.created_at)
     )
     messages = session.exec(messages_stmt).scalars().all()
     thread_data = thread.model_dump()
@@ -64,9 +66,7 @@ def get_thread(
 
 
 @router.delete("/{thread_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_thread(
-    thread_id: str, session: Session = Depends(get_session)
-) -> None:
+def delete_thread(thread_id: str, session: Session = Depends(get_session)) -> None:
     thread = session.get(ChatThread, thread_id)
     if not thread:
         raise HTTPException(status_code=404, detail="Thread not found")

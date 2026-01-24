@@ -143,6 +143,7 @@ class TestEncryptionManager:
         """Test that initializing without key raises error."""
         # Temporarily unset ENCRYPTION_KEY
         import os
+
         original_key = os.environ.pop("ENCRYPTION_KEY", None)
 
         try:
@@ -187,6 +188,7 @@ class TestUserEncryption:
     def user_with_encryption(self, encryption_key):
         """Create a test user with encryption."""
         import os
+
         original_key = os.environ.get("ENCRYPTION_KEY")
         os.environ["ENCRYPTION_KEY"] = encryption_key
 
@@ -263,6 +265,7 @@ class TestApiKeyEncryption:
     def api_key_with_encryption(self, encryption_key):
         """Create a test API key with encryption."""
         import os
+
         original_key = os.environ.get("ENCRYPTION_KEY")
         os.environ["ENCRYPTION_KEY"] = encryption_key
 
@@ -301,7 +304,9 @@ class TestApiKeyEncryption:
     def test_api_key_decrypt_hash(self, api_key_with_encryption):
         """Test decrypting API key hash."""
         original_hash = "$2b$12$test_bcrypt_hash"
-        api_key_with_encryption.key_hash = api_key_with_encryption.encrypt_hash(original_hash)
+        api_key_with_encryption.key_hash = api_key_with_encryption.encrypt_hash(
+            original_hash
+        )
 
         decrypted = api_key_with_encryption.decrypt_hash()
         assert decrypted == original_hash

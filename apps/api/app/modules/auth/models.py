@@ -11,6 +11,7 @@ from sqlmodel import Field, SQLModel
 
 class UserRole(str, Enum):
     """User role enumeration."""
+
     ADMIN = "admin"
     MANAGER = "manager"
     DEVELOPER = "developer"
@@ -19,6 +20,7 @@ class UserRole(str, Enum):
 
 class TbUserBase(SQLModel):
     """Base user model."""
+
     username: str = Field(max_length=100)
     password_hash: str = Field(max_length=255)
     role: UserRole = Field(default=UserRole.VIEWER)
@@ -28,28 +30,21 @@ class TbUserBase(SQLModel):
     # Encrypted fields (stored encrypted in database)
     email_encrypted: str = Field(max_length=512, description="Encrypted email address")
     phone_encrypted: Optional[str] = Field(
-        default=None,
-        max_length=512,
-        description="Encrypted phone number"
+        default=None, max_length=512, description="Encrypted phone number"
     )
 
 
 class TbUser(TbUserBase, table=True):
     """User account table."""
+
     __tablename__ = "tb_user"
     __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
-        primary_key=True,
-        max_length=36,
-        default_factory=lambda: str(uuid4())
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
     )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     def get_email(self) -> str:
         """Decrypt and return email address."""
@@ -105,12 +100,14 @@ class TbUser(TbUserBase, table=True):
 
 class TbUserRead(TbUserBase):
     """User read schema (without password hash)."""
+
     id: str
     email: str | None = None
 
 
 class TbRefreshTokenBase(SQLModel):
     """Base refresh token model."""
+
     user_id: str = Field(foreign_key="tb_user.id", index=True, max_length=36)
     token_hash: str = Field(max_length=255)
     expires_at: datetime
@@ -119,14 +116,11 @@ class TbRefreshTokenBase(SQLModel):
 
 class TbRefreshToken(TbRefreshTokenBase, table=True):
     """Refresh token storage table."""
+
     __tablename__ = "tb_refresh_token"
     __table_args__ = ({"extend_existing": True},)
 
     id: str = Field(
-        primary_key=True,
-        max_length=36,
-        default_factory=lambda: str(uuid4())
+        primary_key=True, max_length=36, default_factory=lambda: str(uuid4())
     )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

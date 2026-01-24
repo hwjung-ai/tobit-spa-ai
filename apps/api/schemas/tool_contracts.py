@@ -133,7 +133,9 @@ class ToolCall(BaseModel):
     input_params: Dict[str, Any] = Field(default_factory=dict)
     output_summary: Dict[str, Any] = Field(default_factory=dict)
     error: str | None = None
-    query_asset: str | None = None  # Query asset identifier: "{asset_id}:v{version}" if used
+    query_asset: str | None = (
+        None  # Query asset identifier: "{asset_id}:v{version}" if used
+    )
 
 
 class ToolCallTrace(BaseModel):
@@ -152,7 +154,11 @@ class ExecutorResult(BaseModel):
     """
 
     blocks: List[Dict[str, Any]]  # Answer blocks to display
-    used_tools: List[str]  # Tools used during execution (e.g., ["postgres", "timescale"])
+    used_tools: List[
+        str
+    ]  # Tools used during execution (e.g., ["postgres", "timescale"])
     tool_calls: List[ToolCall] = Field(default_factory=list)  # Tool execution trace
-    references: List[Dict[str, Any]] = Field(default_factory=list)  # Extracted references
+    references: List[Dict[str, Any]] = Field(
+        default_factory=list
+    )  # Extracted references
     summary: Dict[str, Any] = Field(default_factory=dict)  # Execution summary

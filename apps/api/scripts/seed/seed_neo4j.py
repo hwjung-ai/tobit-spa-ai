@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sys
@@ -26,32 +26,40 @@ SYSTEM_DEPENDENCIES = {
 
 
 def _load_ci_rows() -> list[dict]:
-        with get_postgres_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT ci.ci_id, ci.tenant_id, ci.ci_code, ci.ci_type, ci.ci_subtype, ci.ci_category, ci_ext.tags "
-                    "FROM ci LEFT JOIN ci_ext ON ci.ci_id = ci_ext.ci_id"
-                )
-                rows = []
-                for ci_id, tenant_id, ci_code, ci_type, ci_subtype, ci_category, tags in cur.fetchall():
-                    if not tags:
-                        parsed_tags = {}
-                    elif isinstance(tags, (str, bytes, bytearray)):
-                        parsed_tags = json.loads(tags)
-                    else:
-                        parsed_tags = tags
-                    rows.append(
-                        {
-                            "ci_id": str(ci_id),
-                            "tenant_id": tenant_id,
-                            "ci_code": ci_code,
+    with get_postgres_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT ci.ci_id, ci.tenant_id, ci.ci_code, ci.ci_type, ci.ci_subtype, ci.ci_category, ci_ext.tags "
+                "FROM ci LEFT JOIN ci_ext ON ci.ci_id = ci_ext.ci_id"
+            )
+            rows = []
+            for (
+                ci_id,
+                tenant_id,
+                ci_code,
+                ci_type,
+                ci_subtype,
+                ci_category,
+                tags,
+            ) in cur.fetchall():
+                if not tags:
+                    parsed_tags = {}
+                elif isinstance(tags, (str, bytes, bytearray)):
+                    parsed_tags = json.loads(tags)
+                else:
+                    parsed_tags = tags
+                rows.append(
+                    {
+                        "ci_id": str(ci_id),
+                        "tenant_id": tenant_id,
+                        "ci_code": ci_code,
                         "ci_type": ci_type,
                         "ci_subtype": ci_subtype,
                         "ci_category": ci_category,
                         "tags": parsed_tags,
                     }
                 )
-            return rows
+        return rows
 
 
 def _system_code(ci_code: str) -> str | None:
@@ -63,12 +71,12 @@ def _system_code(ci_code: str) -> str | None:
 
 def _merge_nodes(driver: Driver, records: Iterable[dict]) -> None:
     def _merge(tx, params):
-                tx.run(
-                    "MERGE (n:CI {ci_id: $ci_id})"
-                    " SET n.ci_code = $ci_code, n.ci_type = $ci_type, n.ci_subtype = $ci_subtype,"
-                    " n.ci_category = $ci_category, n.tenant_id = $tenant_id",
-                    **params,
-                )
+        tx.run(
+            "MERGE (n:CI {ci_id: $ci_id})"
+            " SET n.ci_code = $ci_code, n.ci_type = $ci_type, n.ci_subtype = $ci_subtype,"
+            " n.ci_category = $ci_category, n.tenant_id = $tenant_id",
+            **params,
+        )
 
     with driver.session() as session:
         session.execute_write(lambda tx: tx.run("MATCH (n:CI) DETACH DELETE n"))
@@ -132,8 +140,7 @@ def _create_relationships(driver: Driver, records: list[dict]) -> None:
                     session.execute_write(
                         lambda tx, source=record["ci_code"], target=runs_on: tx.run(
                             "MATCH (src:CI {ci_code: $source}), (target:CI {ci_code: $target}) "
-                            "MERGE (src)-[r:%s]->(target)"
-                            % rel_type,
+                            "MERGE (src)-[r:%s]->(target)" % rel_type,
                             source=source,
                             target=target,
                         )
@@ -168,7 +175,9 @@ def _create_relationships(driver: Driver, records: list[dict]) -> None:
                 connected = record.get("tags", {}).get("connected_servers", [])
                 for server_code in connected:
                     session.execute_write(
-                        lambda tx, server=server_code, network=record["ci_code"]: tx.run(
+                        lambda tx,
+                        server=server_code,
+                        network=record["ci_code"]: tx.run(
                             "MATCH (s:CI {ci_code: $server}), (n:CI {ci_code: $network}) "
                             "MERGE (s)-[:CONNECTED_TO]->(n)",
                             server=server,
@@ -197,8 +206,12 @@ def main() -> None:
     _merge_nodes(driver, records)
     _create_relationships(driver, records)
     with driver.session() as session:
-        node_count = session.execute_read(lambda tx: tx.run("MATCH (n:CI) RETURN count(n) AS count").single())["count"]
-        rel_count = session.execute_read(lambda tx: tx.run("MATCH ()-[r]->() RETURN count(r) AS count").single())["count"]
+        node_count = session.execute_read(
+            lambda tx: tx.run("MATCH (n:CI) RETURN count(n) AS count").single()
+        )["count"]
+        rel_count = session.execute_read(
+            lambda tx: tx.run("MATCH ()-[r]->() RETURN count(r) AS count").single()
+        )["count"]
     print(f"Seeded Neo4j with {node_count} nodes and {rel_count} relationships")
     driver.close()
 

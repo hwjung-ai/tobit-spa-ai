@@ -129,9 +129,7 @@ class TestStageExecutor:
         executor = StageExecutor(context=base_context)
 
         # Mock the stage handler to raise an error
-        executor._execute_route_plan = AsyncMock(
-            side_effect=ValueError("Test error")
-        )
+        executor._execute_route_plan = AsyncMock(side_effect=ValueError("Test error"))
 
         output = await executor.execute_stage(stage_input)
 
@@ -201,12 +199,8 @@ class TestStageExecutor:
         executor = StageExecutor(context=base_context)
 
         # Mock all stage handlers
-        executor._execute_route_plan = AsyncMock(
-            return_value={"kind": "plan"}
-        )
-        executor._execute_validate = AsyncMock(
-            return_value={"valid": True}
-        )
+        executor._execute_route_plan = AsyncMock(return_value={"kind": "plan"})
+        executor._execute_validate = AsyncMock(return_value={"valid": True})
         executor._execute_execute = AsyncMock(
             return_value={"rows": [{"metric": "cpu", "value": 75}]}
         )

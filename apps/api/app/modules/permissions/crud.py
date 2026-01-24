@@ -187,7 +187,9 @@ def check_permission(
         resource_perm = session.exec(stmt).first()
         if resource_perm:
             # Check expiration
-            if resource_perm.expires_at and resource_perm.expires_at.replace(tzinfo=timezone.utc) <= datetime.now(timezone.utc):
+            if resource_perm.expires_at and resource_perm.expires_at.replace(
+                tzinfo=timezone.utc
+            ) <= datetime.now(timezone.utc):
                 return PermissionCheck(
                     granted=False,
                     reason="Resource permission has expired",
@@ -211,7 +213,9 @@ def check_permission(
 
         resource_perm = session.exec(stmt).first()
         if resource_perm:
-            if resource_perm.expires_at and resource_perm.expires_at <= datetime.now(timezone.utc):
+            if resource_perm.expires_at and resource_perm.expires_at <= datetime.now(
+                timezone.utc
+            ):
                 return PermissionCheck(
                     granted=False,
                     reason="Resource type permission has expired",

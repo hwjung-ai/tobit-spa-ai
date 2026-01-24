@@ -40,6 +40,7 @@ HTTP_TIMEOUT = 5.0
 # Template pattern: {{params.field}} or {{params.nested.field}}
 PLACEHOLDER_PATTERN = re.compile(r"{{\s*([^}\s]+)\s*}}")
 
+
 def _resolve_path(source: Any, keys: list[str], error_message: str) -> Any:
     """Resolve nested dictionary/list path for template expressions."""
     current = source
@@ -60,7 +61,7 @@ def _evaluate_http_expression(expression: str, params: dict[str, Any]) -> Any:
     if not parts or parts[0] != "params":
         raise HTTPException(
             status_code=400,
-            detail=f"HTTP template expression '{expression}' must start with 'params'"
+            detail=f"HTTP template expression '{expression}' must start with 'params'",
         )
 
     try:
@@ -70,11 +71,13 @@ def _evaluate_http_expression(expression: str, params: dict[str, Any]) -> Any:
     except Exception as exc:
         raise HTTPException(
             status_code=400,
-            detail=f"Template expression '{expression}' resolution failed: {str(exc)}"
+            detail=f"Template expression '{expression}' resolution failed: {str(exc)}",
         ) from exc
 
 
-def _render_http_templates(spec: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
+def _render_http_templates(
+    spec: dict[str, Any], params: dict[str, Any]
+) -> dict[str, Any]:
     """
     Apply {{params.xxx}} template substitution to all string fields in HTTP spec.
     Supports recursive substitution in nested dicts and lists.
@@ -96,10 +99,12 @@ def _render_http_templates(spec: dict[str, Any], params: dict[str, Any]) -> dict
             # Full expression match: preserve type (e.g., {{params.count}} → 10)
             if len(matches) == 1 and matches[0].group(0).strip() == value.strip():
                 return _evaluate_http_expression(matches[0].group(1), params)
+
             # Partial substitution: convert to string
             def _replace(match: re.Match[str]) -> str:
                 resolved = _evaluate_http_expression(match.group(1), params)
                 return str(resolved)
+
             return PLACEHOLDER_PATTERN.sub(_replace, value)
         return value
 
@@ -120,7 +125,9 @@ def validate_select_sql(sql: str) -> None:
     if ";" in sql:
         raise HTTPException(status_code=400, detail="Semicolons are not allowed")
     if not (upper.startswith("SELECT") or upper.startswith("WITH")):
-        raise HTTPException(status_code=400, detail="Only SELECT/WITH statements are allowed")
+        raise HTTPException(
+            status_code=400, detail="Only SELECT/WITH statements are allowed"
+        )
     match = BANNED_PATTERN.search(upper)
     if match:
         raise HTTPException(
@@ -148,7 +155,9 @@ def execute_sql_api(
     rows: list[dict[str, Any]] = []
     row_count = 0
     try:
-        session.exec(sa_text(f"SET LOCAL statement_timeout = '{STATEMENT_TIMEOUT_MS}ms'"))
+        session.exec(
+            sa_text(f"SET LOCAL statement_timeout = '{STATEMENT_TIMEOUT_MS}ms'")
+        )
         result = session.exec(sa_text(wrapped_sql), params=bind_params)
         columns = list(result.keys())
         for record in result:
@@ -188,7 +197,13 @@ def execute_sql_api(
     )
 
 
-def execute_http_api(session: Session, api_id: str, logic_body: str, params: dict[str, Any] | None, executed_by: str) -> ApiExecuteResponse:
+def execute_http_api(
+    session: Session,
+    api_id: str,
+    logic_body: str,
+    params: dict[str, Any] | None,
+    executed_by: str,
+) -> ApiExecuteResponse:
     try:
         spec = json.loads(logic_body) if logic_body else {}
     except json.JSONDecodeError as exc:
@@ -220,7 +235,9 @@ def execute_http_api(session: Session, api_id: str, logic_body: str, params: dic
     except Exception as exc:
         status = "fail"
         error_message = str(exc)
-        raise HTTPException(status_code=502, detail="External HTTP request failed") from exc
+        raise HTTPException(
+            status_code=502, detail="External HTTP request failed"
+        ) from exc
     finally:
         duration_ms = int((perf_counter() - start) * 1000)
         try:

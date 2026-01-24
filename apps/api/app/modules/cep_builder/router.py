@@ -70,7 +70,9 @@ from .schemas import (
 router = APIRouter(prefix="/cep", tags=["cep-builder"])
 
 
-def _snapshot_summary(snapshot: TbCepMetricPollSnapshot | None) -> dict[str, Any] | None:
+def _snapshot_summary(
+    snapshot: TbCepMetricPollSnapshot | None,
+) -> dict[str, Any] | None:
     if not snapshot:
         return None
     return {
@@ -143,17 +145,25 @@ def list_rules_endpoint(
 
 
 @router.get("/rules/{rule_id}")
-def get_rule_endpoint(rule_id: str, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def get_rule_endpoint(
+    rule_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     rule = get_rule(session, rule_id)
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
-    return ResponseEnvelope.success(data={"rule": CepRuleRead.from_orm(rule).model_dump()})
+    return ResponseEnvelope.success(
+        data={"rule": CepRuleRead.from_orm(rule).model_dump()}
+    )
 
 
 @router.post("/rules")
-def create_rule_endpoint(payload: CepRuleCreate, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def create_rule_endpoint(
+    payload: CepRuleCreate, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     rule = create_rule(session, payload)
-    return ResponseEnvelope.success(data={"rule": CepRuleRead.from_orm(rule).model_dump()})
+    return ResponseEnvelope.success(
+        data={"rule": CepRuleRead.from_orm(rule).model_dump()}
+    )
 
 
 @router.put("/rules/{rule_id}")
@@ -166,7 +176,9 @@ def update_rule_endpoint(
     if not rule:
         raise HTTPException(status_code=404, detail="Rule not found")
     updated = update_rule(session, rule, payload)
-    return ResponseEnvelope.success(data={"rule": CepRuleRead.from_orm(updated).model_dump()})
+    return ResponseEnvelope.success(
+        data={"rule": CepRuleRead.from_orm(updated).model_dump()}
+    )
 
 
 @router.post("/rules/{rule_id}/simulate")
@@ -183,7 +195,9 @@ def simulate_rule_endpoint(
     references: dict[str, Any] = {}
     error_message: str | None = None
     try:
-        condition, trigger_refs = evaluate_trigger(rule.trigger_type, rule.trigger_spec, payload.test_payload)
+        condition, trigger_refs = evaluate_trigger(
+            rule.trigger_type, rule.trigger_spec, payload.test_payload
+        )
         references["trigger"] = trigger_refs
         condition_evaluated = trigger_refs.get("condition_evaluated", True)
         action_ref = {
@@ -228,7 +242,9 @@ def trigger_rule_endpoint(
     executed_by = payload.executed_by or "cep-builder"
     result = manual_trigger(rule, payload.payload, executed_by)
     if result["status"] == "fail":
-        raise HTTPException(status_code=500, detail=result["error_message"] or "Trigger failed")
+        raise HTTPException(
+            status_code=500, detail=result["error_message"] or "Trigger failed"
+        )
     response = CepTriggerResponse(
         status=result["status"],
         result=result["result"],
@@ -257,16 +273,23 @@ def list_notifications_endpoint(
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
     notifications = list_notifications(session, active_only=active_only)
-    payload = [CepNotificationRead.from_orm(notification).model_dump() for notification in notifications]
+    payload = [
+        CepNotificationRead.from_orm(notification).model_dump()
+        for notification in notifications
+    ]
     return ResponseEnvelope.success(data={"notifications": payload})
 
 
 @router.get("/notifications/{notification_id}")
-def get_notification_endpoint(notification_id: str, session: Session = Depends(get_session)) -> ResponseEnvelope:
+def get_notification_endpoint(
+    notification_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
     notification = get_notification(session, notification_id)
     if not notification:
         raise HTTPException(status_code=404, detail="Notification not found")
-    return ResponseEnvelope.success(data={"notification": CepNotificationRead.from_orm(notification).model_dump()})
+    return ResponseEnvelope.success(
+        data={"notification": CepNotificationRead.from_orm(notification).model_dump()}
+    )
 
 
 @router.post("/notifications")
@@ -275,7 +298,9 @@ def create_notification_endpoint(
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
     notification = create_notification(session, payload.model_dump())
-    return ResponseEnvelope.success(data={"notification": CepNotificationRead.from_orm(notification).model_dump()})
+    return ResponseEnvelope.success(
+        data={"notification": CepNotificationRead.from_orm(notification).model_dump()}
+    )
 
 
 @router.put("/notifications/{notification_id}")
@@ -289,7 +314,9 @@ def update_notification_endpoint(
         raise HTTPException(status_code=404, detail="Notification not found")
     update_payload = payload.model_dump(exclude_unset=True)
     updated = update_notification(session, notification, update_payload)
-    return ResponseEnvelope.success(data={"notification": CepNotificationRead.from_orm(updated).model_dump()})
+    return ResponseEnvelope.success(
+        data={"notification": CepNotificationRead.from_orm(updated).model_dump()}
+    )
 
 
 @router.get("/notifications/{notification_id}/logs")
@@ -348,7 +375,9 @@ def list_events_endpoint(
                 notification_id=str(notification.notification_id),
             ).model_dump()
         )
-    return ResponseEnvelope.success(data={"events": events, "limit": limit, "offset": offset})
+    return ResponseEnvelope.success(
+        data={"events": events, "limit": limit, "offset": offset}
+    )
 
 
 @router.get("/events/run")
@@ -398,8 +427,12 @@ def get_run_endpoint(
         "status": exec_log.status,
         "duration_ms": exec_log.duration_ms,
         "error_message": exec_log.error_message,
-        "condition_evaluated": trigger.get("condition_evaluated") if "condition_evaluated" in trigger else references.get("condition_evaluated"),
-        "extracted_value": trigger.get("extracted_value") if "extracted_value" in trigger else references.get("extracted_value"),
+        "condition_evaluated": trigger.get("condition_evaluated")
+        if "condition_evaluated" in trigger
+        else references.get("condition_evaluated"),
+        "extracted_value": trigger.get("extracted_value")
+        if "extracted_value" in trigger
+        else references.get("extracted_value"),
         "evidence": {
             "runtime_endpoint": evidence.get("runtime_endpoint"),
             "method": evidence.get("method"),
@@ -438,7 +471,10 @@ def ack_event_endpoint(
     )
     event_broadcaster.publish(
         "summary",
-        {"unacked_count": summary["unacked_count"], "by_severity": summary["by_severity"]},
+        {
+            "unacked_count": summary["unacked_count"],
+            "by_severity": summary["by_severity"],
+        },
     )
     return ResponseEnvelope.success(data={"event": payload})
 
@@ -461,7 +497,10 @@ async def event_stream(session: Session = Depends(get_session)) -> EventSourceRe
             while True:
                 try:
                     message = await asyncio.wait_for(queue.get(), timeout=20)
-                    yield {"event": message["type"], "data": json.dumps(message["data"])}
+                    yield {
+                        "event": message["type"],
+                        "data": json.dumps(message["data"]),
+                    }
                 except asyncio.TimeoutError:
                     yield {"event": "ping", "data": "{}"}
         finally:
@@ -497,7 +536,9 @@ def get_event_endpoint(
                 condition_evaluated = exec_log.references.get("condition_evaluated")
             if extracted_value is None:
                 extracted_value = exec_log.references.get("extracted_value")
-    if (condition_evaluated is None or extracted_value is None) and notification.rule_id:
+    if (
+        condition_evaluated is None or extracted_value is None
+    ) and notification.rule_id:
         exec_log = get_latest_exec_log_for_rule(
             session, rule_id=str(notification.rule_id), before=log.fired_at
         )
@@ -537,7 +578,9 @@ def scheduler_status(session: Session = Depends(get_session)) -> ResponseEnvelop
         .where(TbCepSchedulerState.is_leader.is_(True))
         .order_by(desc(TbCepSchedulerState.updated_at))
     ).first()
-    leader = latest_leader if latest_leader and latest_leader.updated_at >= cutoff else None
+    leader = (
+        latest_leader if latest_leader and latest_leader.updated_at >= cutoff else None
+    )
     leader_stale = bool(latest_leader and latest_leader.updated_at < cutoff)
     response = {
         "instance_id": get_scheduler_instance_id(),
@@ -564,13 +607,17 @@ def metric_polling_snapshots(
     since_minutes: int | None = Query(None, ge=1),
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
-    snapshots = list_metric_poll_snapshots(session, limit=limit, since_minutes=since_minutes)
+    snapshots = list_metric_poll_snapshots(
+        session, limit=limit, since_minutes=since_minutes
+    )
     payload = [_snapshot_summary(snapshot) for snapshot in snapshots]
     return ResponseEnvelope.success(data={"snapshots": payload})
 
 
 @router.get("/scheduler/metric-polling/snapshots/latest")
-def metric_polling_snapshots_latest(session: Session = Depends(get_session)) -> ResponseEnvelope:
+def metric_polling_snapshots_latest(
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
     snapshots = list_metric_poll_snapshots(session, limit=1)
     latest = _snapshot_summary(snapshots[0]) if snapshots else None
     return ResponseEnvelope.success(data={"snapshot": latest})

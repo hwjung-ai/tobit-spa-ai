@@ -26,100 +26,103 @@ const readOnlyDetailTemplate: ScreenTemplate = {
   description: "Display device/entity details with labeled text fields",
   generate: ({ screen_id, name }) => ({
     id: screen_id,
+    screen_id,
     name,
-    version: 1,
+    version: "1.0",
     components: [
       {
         id: "comp_title",
-        type: "Text",
+        type: "text",
         label: "Title",
         props: {
           text: name,
           variant: "heading",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_label_id",
-        type: "Text",
+        type: "text",
         label: "ID Label",
         props: {
           text: "ID:",
           variant: "label",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_value_id",
-        type: "Text",
+        type: "text",
         label: "ID Value",
         props: {
           text: "{{state.device_id}}",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_label_name",
-        type: "Text",
+        type: "text",
         label: "Name Label",
         props: {
           text: "Name:",
           variant: "label",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_value_name",
-        type: "Text",
+        type: "text",
         label: "Name Value",
         props: {
           text: "{{state.device_name}}",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_label_status",
-        type: "Text",
+        type: "text",
         label: "Status Label",
         props: {
           text: "Status:",
           variant: "label",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_value_status",
-        type: "Text",
+        type: "text",
         label: "Status Value",
         props: {
           text: "{{state.status}}",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
     ],
     state: {
       schema: {
-        device_id: "string",
-        device_name: "string",
-        status: "string",
+        device_id: { type: "string" },
+        device_name: { type: "string" },
+        status: { type: "string" },
       },
-      initial_values: {
+      initial: {
         device_id: "",
         device_name: "",
         status: "",
       },
     },
     actions: [],
+    bindings: null,
     layout: {
-      type: "vertical",
-      spacing: "md",
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
     },
   }),
 };
@@ -134,45 +137,46 @@ const listFilterTemplate: ScreenTemplate = {
   description: "Searchable/filterable data grid",
   generate: ({ screen_id, name }) => ({
     id: screen_id,
+    screen_id,
     name,
-    version: 1,
+    version: "1.0",
     components: [
       {
         id: "comp_title",
-        type: "Text",
+        type: "text",
         label: "Title",
         props: {
           text: name,
           variant: "heading",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_filter_label",
-        type: "Text",
+        type: "text",
         label: "Filter Label",
         props: {
           text: "Search:",
           variant: "label",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_search_input",
-        type: "Input",
+        type: "input",
         label: "Search Input",
         props: {
           placeholder: "Enter search term",
           value: "{{state.search_term}}",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_datagrid",
-        type: "DataGrid",
+        type: "table",
         label: "Data Grid",
         props: {
           data: "{{state.items}}",
@@ -182,24 +186,26 @@ const listFilterTemplate: ScreenTemplate = {
             { field: "status", header: "Status" },
           ],
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
     ],
     state: {
       schema: {
-        search_term: "string",
-        items: "array",
+        search_term: { type: "string" },
+        items: { type: "array" },
       },
-      initial_values: {
+      initial: {
         search_term: "",
         items: [],
       },
     },
     actions: [],
+    bindings: null,
     layout: {
-      type: "vertical",
-      spacing: "md",
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
     },
   }),
 };
@@ -214,33 +220,33 @@ const listModalCrudTemplate: ScreenTemplate = {
   description: "Data grid with create/edit modal",
   generate: ({ screen_id, name }) => ({
     id: screen_id,
+    screen_id,
     name,
-    version: 1,
+    version: "1.0",
     components: [
       {
         id: "comp_title",
-        type: "Text",
+        type: "text",
         label: "Title",
         props: {
           text: name,
           variant: "heading",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [],
       },
       {
         id: "comp_create_btn",
-        type: "Button",
+        type: "button",
         label: "Create Button",
         props: {
           text: "Create New",
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [
           {
             id: "action_open_create_modal",
             handler: "set_state",
-            context_required: [],
             payload_template: {
               modal_open: "true",
               is_edit: "false",
@@ -250,7 +256,7 @@ const listModalCrudTemplate: ScreenTemplate = {
       },
       {
         id: "comp_datagrid",
-        type: "DataGrid",
+        type: "table",
         label: "Data Grid",
         props: {
           data: "{{state.items}}",
@@ -260,12 +266,11 @@ const listModalCrudTemplate: ScreenTemplate = {
             { field: "status", header: "Status" },
           ],
         },
-        visibility: { rule: "true", mode: "always" },
+        visibility: { rule: "true" },
         actions: [
           {
             id: "action_edit_row",
             handler: "set_state",
-            context_required: [],
             payload_template: {
               modal_open: "true",
               is_edit: "true",
@@ -275,50 +280,49 @@ const listModalCrudTemplate: ScreenTemplate = {
       },
       {
         id: "comp_modal",
-        type: "Modal",
+        type: "modal",
         label: "Edit Modal",
         props: {
           open: "{{state.modal_open}}",
           title: "{{state.is_edit ? 'Edit' : 'Create'}} Item",
         },
-        visibility: { rule: "{{state.modal_open}}", mode: "when_true" },
+        visibility: { rule: "{{state.modal_open}}" },
         actions: [],
         children: [
           {
             id: "comp_form_name",
-            type: "Input",
+            type: "input",
             label: "Name",
             props: {
               placeholder: "Item name",
               value: "{{state.form_name}}",
             },
-            visibility: { rule: "true", mode: "always" },
+            visibility: { rule: "true" },
             actions: [],
           },
           {
             id: "comp_form_status",
-            type: "Input",
+            type: "input",
             label: "Status",
             props: {
               placeholder: "Status",
               value: "{{state.form_status}}",
             },
-            visibility: { rule: "true", mode: "always" },
+            visibility: { rule: "true" },
             actions: [],
           },
           {
             id: "comp_save_btn",
-            type: "Button",
+            type: "button",
             label: "Save",
             props: {
               text: "Save",
             },
-            visibility: { rule: "true", mode: "always" },
+            visibility: { rule: "true" },
             actions: [
               {
                 id: "action_save_item",
                 handler: "http_request",
-                context_required: ["device_id"],
                 payload_template: {
                   method: "POST",
                   endpoint: "/api/items",
@@ -332,12 +336,12 @@ const listModalCrudTemplate: ScreenTemplate = {
           },
           {
             id: "comp_cancel_btn",
-            type: "Button",
+            type: "button",
             label: "Cancel",
             props: {
               text: "Cancel",
             },
-            visibility: { rule: "true", mode: "always" },
+            visibility: { rule: "true" },
             actions: [
               {
                 id: "action_close_modal",
@@ -354,13 +358,13 @@ const listModalCrudTemplate: ScreenTemplate = {
     ],
     state: {
       schema: {
-        items: "array",
-        modal_open: "boolean",
-        is_edit: "boolean",
-        form_name: "string",
-        form_status: "string",
+        items: { type: "array" },
+        modal_open: { type: "boolean" },
+        is_edit: { type: "boolean" },
+        form_name: { type: "string" },
+        form_status: { type: "string" },
       },
-      initial_values: {
+      initial: {
         items: [],
         modal_open: false,
         is_edit: false,
@@ -369,9 +373,11 @@ const listModalCrudTemplate: ScreenTemplate = {
       },
     },
     actions: [],
+    bindings: null,
     layout: {
-      type: "vertical",
-      spacing: "md",
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
     },
   }),
 };
@@ -396,22 +402,23 @@ export function getTemplateById(id: string): ScreenTemplate | undefined {
  * Helper: Create a minimal blank screen
  */
 export function createMinimalScreen(
-  screen_id: string,
-  name: string
+  screen_id: string
 ): ScreenSchemaV1 {
   return {
     id: screen_id,
-    name,
-    version: 1,
+    screen_id,
+    version: "1.0",
     components: [],
     state: {
       schema: {},
-      initial_values: {},
+      initial: {},
     },
     actions: [],
+    bindings: null,
     layout: {
-      type: "vertical",
-      spacing: "md",
+      type: "form",
+      direction: "vertical",
+      spacing: 16,
     },
   };
 }

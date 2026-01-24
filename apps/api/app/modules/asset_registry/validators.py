@@ -87,7 +87,14 @@ def validate_mapping_asset(asset: TbAssetRegistry) -> None:
         raise ValueError("Mapping content 'views' must be a dictionary")
 
     # Extended validation: views structure details
-    required_views = {"SUMMARY", "COMPOSITION", "DEPENDENCY", "IMPACT", "PATH", "NEIGHBORS"}
+    required_views = {
+        "SUMMARY",
+        "COMPOSITION",
+        "DEPENDENCY",
+        "IMPACT",
+        "PATH",
+        "NEIGHBORS",
+    }
 
     for view_name in required_views:
         if view_name not in views:
@@ -99,25 +106,35 @@ def validate_mapping_asset(asset: TbAssetRegistry) -> None:
 
         # rel_types required
         if "rel_types" not in view_config:
-            raise ValueError(f"Mapping content.views.{view_name} must have 'rel_types' field")
+            raise ValueError(
+                f"Mapping content.views.{view_name} must have 'rel_types' field"
+            )
 
         rel_types = view_config["rel_types"]
         if not isinstance(rel_types, list):
-            raise ValueError(f"Mapping content.views.{view_name}.rel_types must be a list")
+            raise ValueError(
+                f"Mapping content.views.{view_name}.rel_types must be a list"
+            )
 
         # All elements must be strings
         for rel_type in rel_types:
             if not isinstance(rel_type, str):
-                raise ValueError(f"Mapping content.views.{view_name}.rel_types must contain only strings")
+                raise ValueError(
+                    f"Mapping content.views.{view_name}.rel_types must contain only strings"
+                )
 
     # summary_neighbors_allowlist validation (optional)
     if "summary_neighbors_allowlist" in asset.content:
         allowlist = asset.content["summary_neighbors_allowlist"]
         if not isinstance(allowlist, list):
-            raise ValueError("Mapping content.summary_neighbors_allowlist must be a list")
+            raise ValueError(
+                "Mapping content.summary_neighbors_allowlist must be a list"
+            )
         for rel_type in allowlist:
             if not isinstance(rel_type, str):
-                raise ValueError("Mapping content.summary_neighbors_allowlist must contain only strings")
+                raise ValueError(
+                    "Mapping content.summary_neighbors_allowlist must contain only strings"
+                )
 
     # exclude_rel_types validation (optional)
     if "exclude_rel_types" in asset.content:
@@ -172,7 +189,14 @@ def validate_policy_asset(asset: TbAssetRegistry) -> None:
         if not views or not isinstance(views, dict):
             raise ValueError("limits.views must be a dictionary")
 
-        required_views = {"SUMMARY", "COMPOSITION", "DEPENDENCY", "IMPACT", "PATH", "NEIGHBORS"}
+        required_views = {
+            "SUMMARY",
+            "COMPOSITION",
+            "DEPENDENCY",
+            "IMPACT",
+            "PATH",
+            "NEIGHBORS",
+        }
         for view_name in required_views:
             if view_name not in views:
                 raise ValueError(f"limits.views must include '{view_name}'")
@@ -183,19 +207,29 @@ def validate_policy_asset(asset: TbAssetRegistry) -> None:
 
             # default_depth validation
             default_depth = view_policy.get("default_depth")
-            if default_depth is None or not isinstance(default_depth, int) or default_depth < 1:
-                raise ValueError(f"limits.views.{view_name}.default_depth must be integer >= 1")
+            if (
+                default_depth is None
+                or not isinstance(default_depth, int)
+                or default_depth < 1
+            ):
+                raise ValueError(
+                    f"limits.views.{view_name}.default_depth must be integer >= 1"
+                )
 
             # max_depth validation
             max_depth = view_policy.get("max_depth")
             if max_depth is None or not isinstance(max_depth, int) or max_depth < 1:
-                raise ValueError(f"limits.views.{view_name}.max_depth must be integer >= 1")
+                raise ValueError(
+                    f"limits.views.{view_name}.max_depth must be integer >= 1"
+                )
             if max_depth > 10:
                 raise ValueError(f"limits.views.{view_name}.max_depth must be <= 10")
 
             # default_depth <= max_depth constraint
             if default_depth > max_depth:
-                raise ValueError(f"limits.views.{view_name}.default_depth must be <= max_depth")
+                raise ValueError(
+                    f"limits.views.{view_name}.default_depth must be <= max_depth"
+                )
 
 
 def validate_query_asset(asset: TbAssetRegistry) -> None:
@@ -212,10 +246,19 @@ def validate_query_asset(asset: TbAssetRegistry) -> None:
 
     # Check for dangerous keywords using word boundaries to avoid false positives
     # e.g., "updated_at" should not trigger "UPDATE"
-    dangerous_keywords = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "TRUNCATE", "EXEC", "EXECUTE"]
+    dangerous_keywords = [
+        "INSERT",
+        "UPDATE",
+        "DELETE",
+        "DROP",
+        "ALTER",
+        "TRUNCATE",
+        "EXEC",
+        "EXECUTE",
+    ]
     for keyword in dangerous_keywords:
         # Word boundary pattern: keyword must be preceded and followed by non-word characters
-        pattern = r'\b' + keyword + r'\b'
+        pattern = r"\b" + keyword + r"\b"
         if re.search(pattern, sql_upper):
             raise ValueError(f"Query asset cannot contain {keyword} statements")
 
@@ -277,8 +320,14 @@ def _validate_layout_width(width: dict[str, Any]) -> None:
         return
     if width_type == "percent":
         value = width.get("value")
-        if value is None or not isinstance(value, (int, float)) or not (0 < value <= 100):
-            raise ValueError("layout.width percent value must be numeric between 0 (exclusive) and 100")
+        if (
+            value is None
+            or not isinstance(value, (int, float))
+            or not (0 < value <= 100)
+        ):
+            raise ValueError(
+                "layout.width percent value must be numeric between 0 (exclusive) and 100"
+            )
         return
     if width_type == "ratio":
         ratio = width.get("value")
@@ -287,7 +336,9 @@ def _validate_layout_width(width: dict[str, Any]) -> None:
             or len(ratio) != 2
             or not all(isinstance(n, (int, float)) and n > 0 for n in ratio)
         ):
-            raise ValueError("layout.width ratio must be a two-element list of positive numbers")
+            raise ValueError(
+                "layout.width ratio must be a two-element list of positive numbers"
+            )
         return
     raise ValueError(f"Unknown layout.width type '{width_type}'")
 
@@ -313,7 +364,9 @@ def _validate_layout_children(node: dict[str, Any], component_ids: set[str]) -> 
             raise ValueError(f"layout.children[{idx}] must be an object")
         component_id = child.get("component_id")
         if component_id and component_id not in component_ids:
-            raise ValueError(f"layout child component_id '{component_id}' does not match any component")
+            raise ValueError(
+                f"layout child component_id '{component_id}' does not match any component"
+            )
         _validate_layout_children(child, component_ids)
 
 
@@ -338,7 +391,9 @@ def validate_screen_asset(asset: TbAssetRegistry) -> None:
 
     # Validate screen_id matches
     if schema.get("screen_id") != asset.screen_id:
-        raise ValueError(f"Screen schema screen_id '{schema.get('screen_id')}' must match asset screen_id '{asset.screen_id}'")
+        raise ValueError(
+            f"Screen schema screen_id '{schema.get('screen_id')}' must match asset screen_id '{asset.screen_id}'"
+        )
 
     # Validate layout
     layout = schema.get("layout", {})
@@ -351,7 +406,11 @@ def validate_screen_asset(asset: TbAssetRegistry) -> None:
     if layout["type"] not in valid_layout_types:
         raise ValueError(f"layout.type must be one of {valid_layout_types}")
 
-    component_ids = {comp.get("id") for comp in schema.get("components", []) if isinstance(comp, dict) and "id" in comp}
+    component_ids = {
+        comp.get("id")
+        for comp in schema.get("components", [])
+        if isinstance(comp, dict) and "id" in comp
+    }
     _validate_layout_children(layout, component_ids)
 
     # Validate components array
@@ -363,12 +422,16 @@ def validate_screen_asset(asset: TbAssetRegistry) -> None:
     def validate_binding_expressions(obj: Any, path: str = ""):
         if isinstance(obj, str):
             # Find all {{...}} patterns
-            binding_exprs = re.findall(r'{{([^}]+)}}', obj)
+            binding_exprs = re.findall(r"{{([^}]+)}}", obj)
             for expr in binding_exprs:
                 expr_clean = expr.strip()
                 # Validate: must be state.x, inputs.x, context.x, or trace_id
-                if expr_clean != "trace_id" and not re.match(r'^(state|inputs|context)\.[a-zA-Z0-9_\.]+$', expr_clean):
-                    raise ValueError(f"Invalid binding expression '{{{{' + '{expr_clean}' + '}}}}' at {path}: must use dot-path format")
+                if expr_clean != "trace_id" and not re.match(
+                    r"^(state|inputs|context)\.[a-zA-Z0-9_\.]+$", expr_clean
+                ):
+                    raise ValueError(
+                        f"Invalid binding expression '{{{{' + '{expr_clean}' + '}}}}' at {path}: must use dot-path format"
+                    )
         elif isinstance(obj, dict):
             for key, value in obj.items():
                 validate_binding_expressions(value, f"{path}.{key}" if path else key)
@@ -384,11 +447,16 @@ def validate_screen_asset(asset: TbAssetRegistry) -> None:
         if "actions" in comp and isinstance(comp["actions"], list):
             for aidx, action in enumerate(comp["actions"]):
                 if isinstance(action, dict) and "payload_template" in action:
-                    validate_binding_expressions(action["payload_template"], f"components[{idx}].actions[{aidx}].payload_template")
+                    validate_binding_expressions(
+                        action["payload_template"],
+                        f"components[{idx}].actions[{aidx}].payload_template",
+                    )
 
     # Validate top-level actions if present
     actions = schema.get("actions", [])
     if actions and isinstance(actions, list):
         for aidx, action in enumerate(actions):
             if isinstance(action, dict) and "payload_template" in action:
-                validate_binding_expressions(action["payload_template"], f"actions[{aidx}].payload_template")
+                validate_binding_expressions(
+                    action["payload_template"], f"actions[{aidx}].payload_template"
+                )

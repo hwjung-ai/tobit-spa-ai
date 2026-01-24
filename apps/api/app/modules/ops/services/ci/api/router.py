@@ -177,9 +177,13 @@ def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
             if patch.auto.graph_scope.include_metric is not None:
                 graph_updates["include_metric"] = patch.auto.graph_scope.include_metric
             if patch.auto.graph_scope.include_history is not None:
-                graph_updates["include_history"] = patch.auto.graph_scope.include_history
+                graph_updates["include_history"] = (
+                    patch.auto.graph_scope.include_history
+                )
             if graph_updates:
-                auto_updates["graph_scope"] = plan.auto.graph_scope.copy(update=graph_updates)
+                auto_updates["graph_scope"] = plan.auto.graph_scope.copy(
+                    update=graph_updates
+                )
         if auto_updates:
             updates["auto"] = plan.auto.copy(update=auto_updates)
     return plan.copy(update=updates) if updates else plan
@@ -225,7 +229,10 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             logger.info("ci.runner.planner.start", extra={"llm_called": False})
             plan_raw = planner_llm.create_plan(payload.question)
             elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
-            logger.info("ci.runner.planner.done", extra={"llm_called": False, "elapsed_ms": elapsed_ms})
+            logger.info(
+                "ci.runner.planner.done",
+                extra={"llm_called": False, "elapsed_ms": elapsed_ms},
+            )
             logger.info("ci.runner.validator.start", extra={"phase": "initial"})
             plan_validated, plan_trace = validator.validate_plan(plan_raw)
             logger.info("ci.runner.validator.done", extra={"phase": "initial"})

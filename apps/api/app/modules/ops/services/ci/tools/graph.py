@@ -36,7 +36,9 @@ def _pattern_for_direction(direction: Direction, depth: int) -> str:
     return f"-[rels*1..{depth}]-"
 
 
-def _collect_path_entities(path) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[str], List[str]]:
+def _collect_path_entities(
+    path,
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[str], List[str]]:
     nodes: List[Dict[str, Any]] = []
     edges: List[Dict[str, Any]] = []
     node_ids: List[str] = []
@@ -68,7 +70,9 @@ def _collect_path_entities(path) -> tuple[List[Dict[str, Any]], List[Dict[str, A
     return nodes, edges, node_ids, rel_types
 
 
-def _gather_unique_entities(paths: List[Any], max_nodes: int, max_edges: int) -> Dict[str, Any]:
+def _gather_unique_entities(
+    paths: List[Any], max_nodes: int, max_edges: int
+) -> Dict[str, Any]:
     unique_nodes: Dict[str, Dict[str, Any]] = {}
     unique_edges: List[Dict[str, Any]] = []
     rel_type_counter = Counter()
@@ -125,7 +129,9 @@ def graph_expand(
     patterns = _pattern_for_direction(view_policy.direction_default, used_depth)
     applied_limits = DEFAULT_LIMITS.copy()
     if limits:
-        applied_limits.update({k: max(1, v) for k, v in limits.items() if v is not None})
+        applied_limits.update(
+            {k: max(1, v) for k, v in limits.items() if v is not None}
+        )
     cypher_template = _load_query("graph_expand.cypher")
     cypher = cypher_template.format(patterns=patterns)
     driver = get_neo4j_driver()
@@ -145,7 +151,9 @@ def graph_expand(
     finally:
         driver.close()
     paths = [record["path"] for record in results if "path" in record]
-    nodes_payload = _gather_unique_entities(paths, applied_limits["max_nodes"], applied_limits["max_edges"])
+    nodes_payload = _gather_unique_entities(
+        paths, applied_limits["max_nodes"], applied_limits["max_edges"]
+    )
     meta = {
         "depth": used_depth,
         "limits": applied_limits,
@@ -237,7 +245,9 @@ class GraphTool(BaseTool):
         """Return the Graph tool type."""
         return ToolType.GRAPH
 
-    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+    async def should_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this tool should execute for the given operation.
 

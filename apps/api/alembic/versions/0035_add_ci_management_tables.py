@@ -51,10 +51,18 @@ def upgrade() -> None:
         sa.Column("related_ci_ids", sa.Text(), nullable=True),
         sa.Column("tenant_id", sa.String(64), nullable=False),
     )
-    op.create_index("ix_tb_ci_integrity_issue_ci_id", "tb_ci_integrity_issue", ["ci_id"])
-    op.create_index("ix_tb_ci_integrity_issue_severity", "tb_ci_integrity_issue", ["severity"])
-    op.create_index("ix_tb_ci_integrity_issue_is_resolved", "tb_ci_integrity_issue", ["is_resolved"])
-    op.create_index("ix_tb_ci_integrity_issue_tenant_id", "tb_ci_integrity_issue", ["tenant_id"])
+    op.create_index(
+        "ix_tb_ci_integrity_issue_ci_id", "tb_ci_integrity_issue", ["ci_id"]
+    )
+    op.create_index(
+        "ix_tb_ci_integrity_issue_severity", "tb_ci_integrity_issue", ["severity"]
+    )
+    op.create_index(
+        "ix_tb_ci_integrity_issue_is_resolved", "tb_ci_integrity_issue", ["is_resolved"]
+    )
+    op.create_index(
+        "ix_tb_ci_integrity_issue_tenant_id", "tb_ci_integrity_issue", ["tenant_id"]
+    )
 
     # Create tb_ci_duplicate table
     op.create_table(
@@ -74,7 +82,9 @@ def upgrade() -> None:
     )
     op.create_index("ix_tb_ci_duplicate_ci_id_1", "tb_ci_duplicate", ["ci_id_1"])
     op.create_index("ix_tb_ci_duplicate_ci_id_2", "tb_ci_duplicate", ["ci_id_2"])
-    op.create_index("ix_tb_ci_duplicate_is_confirmed", "tb_ci_duplicate", ["is_confirmed"])
+    op.create_index(
+        "ix_tb_ci_duplicate_is_confirmed", "tb_ci_duplicate", ["is_confirmed"]
+    )
     op.create_index("ix_tb_ci_duplicate_is_merged", "tb_ci_duplicate", ["is_merged"])
     op.create_index("ix_tb_ci_duplicate_tenant_id", "tb_ci_duplicate", ["tenant_id"])
 

@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ControlLoopPolicy:
     """Policy configuration for the control loop"""
+
     def __init__(
         self,
         max_replans: int = 3,
@@ -28,7 +29,11 @@ class ControlLoopPolicy:
         cooling_period_seconds: int = 300,
     ):
         self.max_replans = max_replans
-        self.allowed_triggers = allowed_triggers or ["error", "timeout", "policy_violation"]
+        self.allowed_triggers = allowed_triggers or [
+            "error",
+            "timeout",
+            "policy_violation",
+        ]
         self.enable_automatic_replan = enable_automatic_replan
         self.min_interval_seconds = min_interval_seconds
         self.cooling_period_seconds = cooling_period_seconds
@@ -54,6 +59,7 @@ class ControlLoopPolicy:
 
 class ControlLoopRuntime:
     """Runtime state for the control loop"""
+
     def __init__(self, policy: ControlLoopPolicy):
         self.policy = policy
         self.replan_count = 0
@@ -87,17 +93,23 @@ class ControlLoopRuntime:
         if self.last_replan_time:
             time_since_last = (datetime.now() - self.last_replan_time).total_seconds()
             if time_since_last < self.policy.min_interval_seconds:
-                logger.info(f"Minimum interval not met: {time_since_last:.1f}s < {self.policy.min_interval_seconds}s")
+                logger.info(
+                    f"Minimum interval not met: {time_since_last:.1f}s < {self.policy.min_interval_seconds}s"
+                )
                 return False
 
         # Check cooling period
         if self.last_replan_time:
             time_since_last = (datetime.now() - self.last_replan_time).total_seconds()
             if time_since_last < self.policy.cooling_period_seconds:
-                logger.warning(f"Replan within cooling period: {time_since_last:.1f}s < {self.policy.cooling_period_seconds}s")
+                logger.warning(
+                    f"Replan within cooling period: {time_since_last:.1f}s < {self.policy.cooling_period_seconds}s"
+                )
                 # Allow if critical severity
                 if trigger.severity == "critical":
-                    logger.info("Critical severity override: allowing replan during cooling period")
+                    logger.info(
+                        "Critical severity override: allowing replan during cooling period"
+                    )
                     return True
                 else:
                     return False
@@ -114,14 +126,18 @@ class ControlLoopRuntime:
         trigger_type = event.trigger.trigger_type
         self.trigger_counts[trigger_type] = self.trigger_counts.get(trigger_type, 0) + 1
 
-        logger.info(f"Recorded replan #{self.replan_count}: {trigger_type} - {event.trigger.reason}")
+        logger.info(
+            f"Recorded replan #{self.replan_count}: {trigger_type} - {event.trigger.reason}"
+        )
 
     def get_stats(self) -> Dict[str, Any]:
         """Get control loop statistics"""
         return {
             "replan_count": self.replan_count,
             "max_replans": self.policy.max_replans,
-            "last_replan_time": self.last_replan_time.isoformat() if self.last_replan_time else None,
+            "last_replan_time": self.last_replan_time.isoformat()
+            if self.last_replan_time
+            else None,
             "replan_history_count": len(self.replan_history),
             "trigger_counts": self.trigger_counts.copy(),
             "policy": {
@@ -130,12 +146,13 @@ class ControlLoopRuntime:
                 "enable_automatic_replan": self.policy.enable_automatic_replan,
                 "min_interval_seconds": self.policy.min_interval_seconds,
                 "cooling_period_seconds": self.policy.cooling_period_seconds,
-            }
+            },
         }
 
 
 class ControlLoopManager:
     """Main control loop manager"""
+
     def __init__(self, policy: ControlLoopPolicy = None):
         self.policy = policy or ControlLoopPolicy()
         self.runtime = ControlLoopRuntime(self.policy)
@@ -147,7 +164,9 @@ class ControlLoopManager:
         if errors:
             raise ValueError(f"Invalid control loop policy: {', '.join(errors)}")
 
-    def evaluate_replan_request(self, trigger: ReplanTrigger | str, patch_diff: ReplanPatchDiff) -> bool:
+    def evaluate_replan_request(
+        self, trigger: ReplanTrigger | str, patch_diff: ReplanPatchDiff
+    ) -> bool:
         """
         Evaluate a replan request and return decision
         """
@@ -159,9 +178,13 @@ class ControlLoopManager:
             trigger = safe_parse_trigger(trigger)
 
         # Log the evaluation
-        logger.info(f"Evaluating replan request for {trigger.trigger_type} at stage {trigger.stage_name}")
+        logger.info(
+            f"Evaluating replan request for {trigger.trigger_type} at stage {trigger.stage_name}"
+        )
         logger.info(f"Trigger reason: {trigger.reason}")
-        logger.info(f"Current replan count: {self.runtime.replan_count}/{self.policy.max_replans}")
+        logger.info(
+            f"Current replan count: {self.runtime.replan_count}/{self.policy.max_replans}"
+        )
 
         # Check if we should replan
         should_replan = self.runtime.should_replan(trigger)
@@ -177,7 +200,7 @@ class ControlLoopManager:
                 "trace_id": trace_id,
                 "should_replan": should_replan,
                 "evaluation_time": time.time(),
-            }
+            },
         )
 
         # Record decision
@@ -207,9 +230,13 @@ class ControlLoopManager:
         if not self.runtime.last_replan_time:
             return True
 
-        time_since_last = (datetime.now() - self.runtime.last_replan_time).total_seconds()
+        time_since_last = (
+            datetime.now() - self.runtime.last_replan_time
+        ).total_seconds()
         if time_since_last < self.policy.cooling_period_seconds:
-            logger.warning(f"Trigger {trigger_type} within cooling period: {time_since_last:.1f}s")
+            logger.warning(
+                f"Trigger {trigger_type} within cooling period: {time_since_last:.1f}s"
+            )
             return False
         return True
 

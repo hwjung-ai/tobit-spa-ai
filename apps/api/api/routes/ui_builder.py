@@ -9,7 +9,7 @@ from schemas import ResponseEnvelope
 router = APIRouter(prefix="/ui-builder", tags=["ui-builder"])
 
 _pages: list[dict[str, str]] = [
-    {"id": str(uuid.uuid4()), "name": "Landing", "schema": '{}'},
+    {"id": str(uuid.uuid4()), "name": "Landing", "schema": "{}"},
     {"id": str(uuid.uuid4()), "name": "Dashboard", "schema": '{"type":"page"}'},
 ]
 

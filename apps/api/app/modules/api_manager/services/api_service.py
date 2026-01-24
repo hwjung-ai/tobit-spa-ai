@@ -148,7 +148,9 @@ class ApiManagerService:
             self.logger.error(f"Failed to update API: {str(e)}")
             raise
 
-    async def rollback_api(self, api_id: str, target_version: int, current_user: Dict) -> Dict:
+    async def rollback_api(
+        self, api_id: str, target_version: int, current_user: Dict
+    ) -> Dict:
         """
         Rollback to previous version
 

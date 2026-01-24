@@ -69,16 +69,20 @@ export function extractStatePaths(schema?: StateSchema): string[] {
 
   const paths: string[] = [];
 
-  function traverse(obj: unknown, prefix: string = "") {
-    if (!obj || typeof obj !== "object") return;
+  function traverse(obj: Record<string, unknown>, prefix: string = "") {
+    if (!obj) return;
 
-    if (obj.type === "object" && obj.properties) {
-      Object.keys(obj.properties).forEach((key) => {
+    const type = obj.type as string;
+    const properties = obj.properties as Record<string, Record<string, unknown>> | undefined;
+    const items = obj.items as Record<string, unknown> | undefined;
+
+    if (type === "object" && properties) {
+      Object.keys(properties).forEach((key) => {
         const newPrefix = prefix ? `${prefix}.${key}` : key;
         paths.push(newPrefix);
-        traverse(obj.properties[key], newPrefix);
+        traverse(properties[key], newPrefix);
       });
-    } else if (obj.type === "array" && obj.items) {
+    } else if (type === "array" && items) {
       const newPrefix = prefix ? `${prefix}[]` : "[]";
       paths.push(newPrefix);
       // Don't traverse array items as they're typically data
@@ -178,23 +182,23 @@ export function getAvailableSources(
 }
 
 /**
- * Validate if a path exists in the schema
- * Returns true if the path is valid
+ * Validate if a path exists in a schema
+ * Returns true if path is valid
  */
 export function isValidPath(path: string, schema?: StateSchema): boolean {
   if (!schema || !path) return false;
 
   const parts = path.split(".");
-  let current: unknown = schema;
+  let current: Record<string, unknown> = schema;
 
   for (const part of parts) {
     if (part === "[]") {
       // Array indicator, continue
       if (current.type !== "array") return false;
-      current = current.items;
+      current = current.items as Record<string, unknown>;
     } else {
       if (current.type === "object" && current.properties) {
-        current = current.properties[part];
+        current = current.properties[part] as Record<string, unknown>;
       } else {
         return false;
       }
@@ -213,27 +217,27 @@ export function getPathType(path: string, schema?: StateSchema): string {
   if (!schema || !path) return "any";
 
   const parts = path.split(".");
-  let current: unknown = schema;
+  let current: Record<string, unknown> = schema;
 
   for (const part of parts) {
     if (part === "[]") {
       if (current.type === "array") {
-        current = current.items;
+        current = current.items as Record<string, unknown>;
       } else {
         return "unknown";
       }
     } else {
       if (current.type === "object" && current.properties) {
-        current = current.properties[part];
+        current = current.properties[part] as Record<string, unknown>;
       } else {
-        return current.type || "any";
+        return (current.type as string) || "any";
       }
     }
 
     if (!current) return "unknown";
   }
 
-  return current.type || "any";
+  return (current.type as string) || "any";
 }
 
 /**

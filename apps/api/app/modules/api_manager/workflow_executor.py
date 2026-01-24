@@ -46,20 +46,28 @@ def execute_workflow_api(
         workflow_params["input"] = input_payload
     spec = workflow_api.logic_spec or {}
     if not isinstance(spec, dict):
-        raise HTTPException(status_code=400, detail="Workflow spec must be a dictionary")
+        raise HTTPException(
+            status_code=400, detail="Workflow spec must be a dictionary"
+        )
     version = spec.get("version", 1)
     if version != 1:
         raise HTTPException(status_code=400, detail="Unsupported workflow spec version")
     nodes = spec.get("nodes")
     if not isinstance(nodes, list) or not nodes:
-        raise HTTPException(status_code=400, detail="Workflow spec must define at least one node")
+        raise HTTPException(
+            status_code=400, detail="Workflow spec must define at least one node"
+        )
     seen_ids: set[str] = set()
     for node in nodes:
         node_id = node.get("id")
         if not node_id or not isinstance(node_id, str):
-            raise HTTPException(status_code=400, detail="Every workflow node requires an id")
+            raise HTTPException(
+                status_code=400, detail="Every workflow node requires an id"
+            )
         if node_id in seen_ids:
-            raise HTTPException(status_code=400, detail=f"Duplicate node id '{node_id}'")
+            raise HTTPException(
+                status_code=400, detail=f"Duplicate node id '{node_id}'"
+            )
         seen_ids.add(node_id)
 
     steps_context: dict[str, dict[str, Any]] = {}
@@ -74,15 +82,27 @@ def execute_workflow_api(
             node_id = node["id"]
             node_type = node.get("type")
             if node_type not in {"sql", "script"}:
-                raise HTTPException(status_code=400, detail=f"Unsupported node type '{node_type}'")
+                raise HTTPException(
+                    status_code=400, detail=f"Unsupported node type '{node_type}'"
+                )
             node_api_id = node.get("api_id")
             if not node_api_id:
-                raise HTTPException(status_code=400, detail=f"Node '{node_id}' missing api_id")
+                raise HTTPException(
+                    status_code=400, detail=f"Node '{node_id}' missing api_id"
+                )
             node_api = session.get(TbApiDef, node_api_id)
             if not node_api:
-                raise HTTPException(status_code=404, detail=f"Node API '{node_api_id}' not found")
-            node_params = _render_templates(node.get("params") or {}, workflow_params, steps_context)
-            node_input = _render_templates(node.get("input"), workflow_params, steps_context) if node_type == "script" else None
+                raise HTTPException(
+                    status_code=404, detail=f"Node API '{node_api_id}' not found"
+                )
+            node_params = _render_templates(
+                node.get("params") or {}, workflow_params, steps_context
+            )
+            node_input = (
+                _render_templates(node.get("input"), workflow_params, steps_context)
+                if node_type == "script"
+                else None
+            )
             node_limit = _parse_node_limit(node.get("limit"), limit)
             step_refs: dict[str, Any] | None = None
             step_rows: list[dict[str, Any]] = []
@@ -101,7 +121,10 @@ def execute_workflow_api(
                     )
                     step_rows = sql_result.rows
                     step_columns = sql_result.columns
-                    step_output = {"columns": sql_result.columns, "rows": sql_result.rows}
+                    step_output = {
+                        "columns": sql_result.columns,
+                        "rows": sql_result.rows,
+                    }
                     step_refs = {
                         "node_id": node_id,
                         "node_type": "sql",
@@ -212,11 +235,15 @@ def execute_workflow_api(
             )
 
 
-def _render_templates(value: Any, params: Dict[str, Any], steps: Dict[str, dict[str, Any]]) -> Any:
+def _render_templates(
+    value: Any, params: Dict[str, Any], steps: Dict[str, dict[str, Any]]
+) -> Any:
     if value is None:
         return None
     if isinstance(value, dict):
-        return {key: _render_templates(item, params, steps) for key, item in value.items()}
+        return {
+            key: _render_templates(item, params, steps) for key, item in value.items()
+        }
     if isinstance(value, list):
         return [_render_templates(item, params, steps) for item in value]
     if isinstance(value, str):
@@ -225,28 +252,45 @@ def _render_templates(value: Any, params: Dict[str, Any], steps: Dict[str, dict[
             return value
         if len(matches) == 1 and matches[0].group(0).strip() == value.strip():
             return _evaluate_expression(matches[0].group(1), params, steps)
+
         def _replace(match: re.Match[str]) -> str:
             resolved = _evaluate_expression(match.group(1), params, steps)
             return str(resolved)
+
         return PLACEHOLDER_PATTERN.sub(_replace, value)
     return value
 
 
-def _evaluate_expression(expression: str, params: Dict[str, Any], steps: Dict[str, dict[str, Any]]) -> Any:
+def _evaluate_expression(
+    expression: str, params: Dict[str, Any], steps: Dict[str, dict[str, Any]]
+) -> Any:
     parts = expression.split(".")
     if not parts:
-        raise HTTPException(status_code=400, detail=f"Invalid template expression '{expression}'")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid template expression '{expression}'"
+        )
     head, *rest = parts
     if head == "params":
         return _resolve_path(params, rest, f"missing param for '{expression}'")
     if head == "steps":
         if len(rest) < 2:
-            raise HTTPException(status_code=400, detail=f"Workflow expression '{expression}' is malformed")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Workflow expression '{expression}' is malformed",
+            )
         node_id = rest[0]
         if node_id not in steps:
-            raise HTTPException(status_code=400, detail=f"Unknown workflow step '{node_id}'")
-        return _resolve_path(steps[node_id], rest[1:], f"Workflow step '{node_id}' missing data for '{expression}'")
-    raise HTTPException(status_code=400, detail=f"Unsupported template root '{head}' in '{expression}'")
+            raise HTTPException(
+                status_code=400, detail=f"Unknown workflow step '{node_id}'"
+            )
+        return _resolve_path(
+            steps[node_id],
+            rest[1:],
+            f"Workflow step '{node_id}' missing data for '{expression}'",
+        )
+    raise HTTPException(
+        status_code=400, detail=f"Unsupported template root '{head}' in '{expression}'"
+    )
 
 
 def _resolve_path(source: Any, keys: list[str], error_message: str) -> Any:
@@ -265,4 +309,6 @@ def _parse_node_limit(node_limit: Any, default_limit: int | None) -> int | None:
     try:
         return int(node_limit)
     except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Workflow node limit must be an integer")
+        raise HTTPException(
+            status_code=400, detail="Workflow node limit must be an integer"
+        )

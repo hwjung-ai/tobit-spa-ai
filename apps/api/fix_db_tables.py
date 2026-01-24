@@ -1,4 +1,3 @@
-
 import os
 import sys
 
@@ -15,18 +14,19 @@ from apps.api.core.config import get_settings
 settings = get_settings()
 engine = create_engine(settings.postgres_dsn)
 
+
 def recreate_tables():
     print("Re-creating tables individually...")
-    
+
     # Try to drop target tables first
     with engine.connect() as conn:
         conn.execute(text("DROP TABLE IF EXISTS tb_asset_version_history CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS tb_asset_registry CASCADE"))
         conn.commit()
-        
+
     # Get all tables from metadata
     tables = SQLModel.metadata.sorted_tables
-    
+
     for table in tables:
         print(f"Checking/Creating table: {table.name}")
         try:
@@ -35,9 +35,10 @@ def recreate_tables():
         except Exception as e:
             msg = str(e)
             if "already exists" in msg or "DuplicateTable" in msg:
-                 print(f"  - Table {table.name} already exists (likely)")
+                print(f"  - Table {table.name} already exists (likely)")
             else:
-                 print(f"  - Error creationg {table.name}: {e}")
+                print(f"  - Error creationg {table.name}: {e}")
+
 
 if __name__ == "__main__":
     recreate_tables()

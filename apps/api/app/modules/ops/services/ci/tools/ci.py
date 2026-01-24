@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Literal
 
+from core.db_pg import get_pg_connection
 from psycopg import Connection
 from schemas.tool_contracts import (
     CIAggregateResult,
@@ -9,7 +10,6 @@ from schemas.tool_contracts import (
     CIRecord,
     CISearchResult,
 )
-from core.db_pg import get_pg_connection
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,
@@ -21,7 +21,14 @@ from app.shared.config_loader import load_text
 
 SEARCH_COLUMNS = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category"]
 FILTER_FIELDS = {"ci_type", "ci_subtype", "ci_category", "status", "location", "owner"}
-JSONB_TAG_KEYS = {"system", "role", "runs_on", "host_server", "ci_subtype", "connected_servers"}
+JSONB_TAG_KEYS = {
+    "system",
+    "role",
+    "runs_on",
+    "host_server",
+    "ci_subtype",
+    "connected_servers",
+}
 JSONB_ATTR_KEYS = {"engine", "version", "zone", "ip", "cpu_cores", "memory_gb"}
 MAX_SEARCH_LIMIT = 50
 MAX_AGG_ROWS = 200
@@ -35,6 +42,7 @@ def _load_query(name: str) -> str:
     if not query:
         raise ValueError(f"CI query '{name}' not found")
     return query
+
 
 FilterOp = Literal["=", "!=", "ILIKE"]
 
@@ -51,7 +59,9 @@ def _clamp_limit(value: int | None, default: int, max_value: int) -> int:
     return max(1, min(max_value, value))
 
 
-def _build_filter_clauses(filters: Iterable[FilterSpec], params: List[Any]) -> List[str]:
+def _build_filter_clauses(
+    filters: Iterable[FilterSpec], params: List[Any]
+) -> List[str]:
     clauses: List[str] = []
     for spec in filters:
         field = spec.get("field")
@@ -110,7 +120,9 @@ def ci_search(
 ) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
     with get_pg_connection() as conn:
-        rows = _ci_search_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
+        rows = _ci_search_inner(
+            conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort
+        )
         records = [CIRecord(**row) for row in rows]
         return CISearchResult(
             records=records,
@@ -129,7 +141,9 @@ def ci_search_broad_or(
 ) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
     with get_pg_connection() as conn:
-        rows = _ci_search_broad_or_inner(conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort)
+        rows = _ci_search_broad_or_inner(
+            conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort
+        )
         records = [CIRecord(**row) for row in rows]
         return CISearchResult(
             records=records,
@@ -305,7 +319,9 @@ def ci_aggregate(
         elif metric == "count_distinct":
             metric_clause.append("COUNT(DISTINCT ci.ci_id) AS count_distinct")
     group_clause = ", ".join(f"ci.{field}" for field in group_list)
-    order_by_clause = "ORDER BY count DESC" if group_list and "count" in metric_list else ""
+    order_by_clause = (
+        "ORDER BY count DESC" if group_list and "count" in metric_list else ""
+    )
     where_clause = " AND ".join(where_clauses)
     if group_list:
         select_clause = ", ".join(f"ci.{field}" for field in group_list)
@@ -325,7 +341,9 @@ def ci_aggregate(
             metric_clause=", ".join(metric_clause),
             where_clause=where_clause,
         )
-    count_query = _load_query("ci_aggregate_count.sql").format(where_clause=where_clause)
+    count_query = _load_query("ci_aggregate_count.sql").format(
+        where_clause=where_clause
+    )
     count_params = list(params)
     query_params = params + [sanitized_limit] if group_list else params
     with get_pg_connection() as conn:
@@ -361,7 +379,9 @@ def ci_list_preview(
     where_clauses.extend(_build_filter_clauses(filters or (), params))
     total_params = list(params)
     where_clause = " AND ".join(where_clauses)
-    total_query = _load_query("ci_aggregate_count.sql").format(where_clause=where_clause)
+    total_query = _load_query("ci_aggregate_count.sql").format(
+        where_clause=where_clause
+    )
     query_template = _load_query("ci_list_preview.sql")
     query = query_template.format(where_clause=where_clause)
     params.extend([sanitized_limit, sanitized_offset])
@@ -413,7 +433,9 @@ class CITool(BaseTool):
         """Return the CI tool type."""
         return ToolType.CI
 
-    async def should_execute(self, context: ToolContext, params: Dict[str, Any]) -> bool:
+    async def should_execute(
+        self, context: ToolContext, params: Dict[str, Any]
+    ) -> bool:
         """
         Determine if this tool should execute for the given operation.
 
@@ -489,9 +511,7 @@ class CITool(BaseTool):
                         error=f"CI with ID '{params['ci_id']}' not found",
                     )
             elif operation == "get_by_code":
-                result = ci_get_by_code(
-                    tenant_id=tenant_id, ci_code=params["ci_code"]
-                )
+                result = ci_get_by_code(tenant_id=tenant_id, ci_code=params["ci_code"])
                 if result is None:
                     return ToolResult(
                         success=False,

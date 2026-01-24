@@ -33,7 +33,9 @@ def _require_enabled(settings: AppSettings) -> None:
         "No data rows returned; only names/types are exposed."
     ),
 )
-def list_postgres_tables(settings: AppSettings = Depends(get_settings)) -> ResponseEnvelope:
+def list_postgres_tables(
+    settings: AppSettings = Depends(get_settings),
+) -> ResponseEnvelope:
     _require_enabled(settings)
     try:
         tables = postgres_service.list_tables(settings)
@@ -87,9 +89,11 @@ def query_postgres(
 @router.get(
     "/neo4j/labels",
     summary="List Neo4j labels",
-    description="Read-only label list for Neo4j. Used to seed the Browse tab."
+    description="Read-only label list for Neo4j. Used to seed the Browse tab.",
 )
-def list_neo4j_labels(settings: AppSettings = Depends(get_settings)) -> ResponseEnvelope:
+def list_neo4j_labels(
+    settings: AppSettings = Depends(get_settings),
+) -> ResponseEnvelope:
     _require_enabled(settings)
     try:
         labels = neo4j_service.list_labels(settings)
@@ -112,7 +116,9 @@ def query_neo4j(
 ) -> ResponseEnvelope:
     _require_enabled(settings)
     try:
-        columns, rows = neo4j_service.run_query(settings, payload.cypher, payload.params)
+        columns, rows = neo4j_service.run_query(
+            settings, payload.cypher, payload.params
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return ResponseEnvelope.success(data={"columns": columns, "rows": rows})
@@ -144,7 +150,7 @@ def scan_redis_keys(
 @router.get(
     "/redis/key",
     summary="Inspect Redis key",
-    description="Returns key type, TTL, and entries (GET/HGETALL/SCAN depending on type). Read-only."
+    description="Returns key type, TTL, and entries (GET/HGETALL/SCAN depending on type). Read-only.",
 )
 def get_redis_key(
     key: str = Query(..., min_length=1),

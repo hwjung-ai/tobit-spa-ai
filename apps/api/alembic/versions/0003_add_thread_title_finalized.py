@@ -10,7 +10,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("chat_thread", sa.Column("title_finalized", sa.Boolean(), nullable=False, server_default=sa.false()))
+    op.add_column(
+        "chat_thread",
+        sa.Column(
+            "title_finalized", sa.Boolean(), nullable=False, server_default=sa.false()
+        ),
+    )
     op.alter_column("chat_thread", "title_finalized", server_default=None)
 
 

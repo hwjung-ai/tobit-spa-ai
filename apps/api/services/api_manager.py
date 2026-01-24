@@ -10,7 +10,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
 
-def list_api_definitions(session: Session, scope: ApiScope | None = None) -> list[ApiDefinition]:
+def list_api_definitions(
+    session: Session, scope: ApiScope | None = None
+) -> list[ApiDefinition]:
     statement = select(ApiDefinition).where(ApiDefinition.deleted_at.is_(None))
     if scope:
         statement = statement.where(ApiDefinition.scope == scope)
@@ -38,7 +40,9 @@ def create_custom_definition(session: Session, data: dict[str, Any]) -> ApiDefin
     return obj
 
 
-def update_definition(session: Session, instance: ApiDefinition, data: dict[str, Any]) -> ApiDefinition:
+def update_definition(
+    session: Session, instance: ApiDefinition, data: dict[str, Any]
+) -> ApiDefinition:
     for key, value in data.items():
         if value is None:
             continue
@@ -56,7 +60,9 @@ def soft_delete_definition(session: Session, instance: ApiDefinition) -> None:
     session.commit()
 
 
-def sync_system_definitions(session: Session, openapi_schema: dict[str, Any]) -> tuple[int, int]:
+def sync_system_definitions(
+    session: Session, openapi_schema: dict[str, Any]
+) -> tuple[int, int]:
     synced = 0
     skipped = 0
     if not openapi_schema:
@@ -98,7 +104,9 @@ def sync_system_definitions(session: Session, openapi_schema: dict[str, Any]) ->
     return synced, skipped
 
 
-def build_test_response(table: list[dict[str, Any]], summary: str, route: str) -> AnswerEnvelope:
+def build_test_response(
+    table: list[dict[str, Any]], summary: str, route: str
+) -> AnswerEnvelope:
     columns = list(table[0].keys()) if table else ["result"]
     rows = [
         [str(value) if value is not None else "" for value in row.values()]
@@ -111,7 +119,9 @@ def build_test_response(table: list[dict[str, Any]], summary: str, route: str) -
         rows=rows or [["no results"]],
     )
     return AnswerEnvelope(
-        meta=AnswerMeta(route=route, route_reason=summary, timing_ms=0, summary=summary),
+        meta=AnswerMeta(
+            route=route, route_reason=summary, timing_ms=0, summary=summary
+        ),
         blocks=[MarkdownBlock(type="markdown", content=f"### {summary}"), table_block],
     )
 

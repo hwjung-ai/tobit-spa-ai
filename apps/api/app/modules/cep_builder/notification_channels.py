@@ -171,7 +171,7 @@ class EmailNotificationChannel(NotificationChannel):
                     {metadata_html}
                     <hr style="border: none; border-top: 1px solid #ddd; margin-top: 20px;">
                     <small style="color: #7f8c8d;">
-                        Sent at {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+                        Sent at {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}
                     </small>
                 </body>
             </html>
@@ -269,7 +269,10 @@ class WebhookNotificationChannel(NotificationChannel):
 
     def validate_config(self) -> bool:
         """Validate webhook URL"""
-        return bool(self.url and (self.url.startswith("http://") or self.url.startswith("https://")))
+        return bool(
+            self.url
+            and (self.url.startswith("http://") or self.url.startswith("https://"))
+        )
 
     async def send(self, message: NotificationMessage) -> bool:
         """Send notification via webhook"""
@@ -313,7 +316,9 @@ class NotificationChannelFactory:
     """Factory for creating notification channels"""
 
     @staticmethod
-    def create(channel_type: str, config: Dict[str, Any]) -> Optional[NotificationChannel]:
+    def create(
+        channel_type: str, config: Dict[str, Any]
+    ) -> Optional[NotificationChannel]:
         """Create notification channel based on type"""
 
         channel_type = channel_type.lower()
@@ -386,9 +391,7 @@ class NotificationService:
         results = {}
 
         # If no channels specified, use all registered channels
-        channels_to_use = (
-            channel_ids if channel_ids else list(self.channels.keys())
-        )
+        channels_to_use = channel_ids if channel_ids else list(self.channels.keys())
 
         for channel_id in channels_to_use:
             if channel_id in self.channels:

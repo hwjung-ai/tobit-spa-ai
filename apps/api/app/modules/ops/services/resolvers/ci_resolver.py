@@ -65,7 +65,9 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
             # 단계 2: ci_code 패턴 검색
             remaining = limit - len(hits)
             if remaining > 0:
-                for row in _query_pattern(cur, tenant_id, question, "ci_code", remaining):
+                for row in _query_pattern(
+                    cur, tenant_id, question, "ci_code", remaining
+                ):
                     if row[1] in seen_codes:
                         continue
                     hits.append(_row_to_hit(row, 0.8))
@@ -76,7 +78,9 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
             # 단계 3: ci_name 패턴 검색
             remaining = limit - len(hits)
             if remaining > 0:
-                for row in _query_pattern(cur, tenant_id, question, "ci_name", remaining):
+                for row in _query_pattern(
+                    cur, tenant_id, question, "ci_name", remaining
+                ):
                     if row[1] in seen_codes:
                         continue
                     hits.append(_row_to_hit(row, 0.6))
@@ -88,7 +92,9 @@ def _extract_codes(question: str) -> list[str]:
     return [match.group(0).lower() for match in CI_CODE_PATTERN.finditer(question)]
 
 
-def _query_pattern(cur, tenant_id: str, question: str, field: str, limit: int) -> list[tuple]:
+def _query_pattern(
+    cur, tenant_id: str, question: str, field: str, limit: int
+) -> list[tuple]:
     term = _primary_term(question)
     if not term:
         return []

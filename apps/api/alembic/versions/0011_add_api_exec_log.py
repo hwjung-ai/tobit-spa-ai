@@ -19,13 +19,24 @@ depends_on = None
 def upgrade() -> None:
     op.create_table(
         "tb_api_exec_log",
-        sa.Column("exec_id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column(
+            "exec_id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False
+        ),
         sa.Column("api_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("executed_at", postgresql.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
+        sa.Column(
+            "executed_at",
+            postgresql.TIMESTAMP(timezone=True),
+            nullable=False,
+            server_default=sa.text("now()"),
+        ),
         sa.Column("executed_by", sa.Text(), nullable=True),
         sa.Column("status", sa.Text(), nullable=False),
-        sa.Column("duration_ms", sa.Integer(), nullable=False, server_default=sa.text("0")),
-        sa.Column("row_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
+        sa.Column(
+            "duration_ms", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
+        sa.Column(
+            "row_count", sa.Integer(), nullable=False, server_default=sa.text("0")
+        ),
         sa.Column("request_params", postgresql.JSONB(), nullable=True),
         sa.Column("error_message", sa.Text(), nullable=True),
     )

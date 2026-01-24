@@ -1,6 +1,5 @@
 """API Keys management router."""
 
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlmodel import Session
 
@@ -56,7 +55,9 @@ def create_new_api_key(
                 "scope": api_key.scope,
                 "is_active": api_key.is_active,
                 "created_at": api_key.created_at.isoformat(),
-                "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+                "expires_at": api_key.expires_at.isoformat()
+                if api_key.expires_at
+                else None,
             },
             "key": full_key,
             "warning": "⚠️  Save this key in a secure location. You won't be able to see it again.",
@@ -146,8 +147,12 @@ def get_api_key_details(
                 "key_prefix": api_key.key_prefix,
                 "scope": api_key.scope,
                 "is_active": api_key.is_active,
-                "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None,
-                "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+                "last_used_at": api_key.last_used_at.isoformat()
+                if api_key.last_used_at
+                else None,
+                "expires_at": api_key.expires_at.isoformat()
+                if api_key.expires_at
+                else None,
                 "created_at": api_key.created_at.isoformat(),
                 "created_by_trace_id": api_key.created_by_trace_id,
             }

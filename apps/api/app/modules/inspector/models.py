@@ -99,7 +99,9 @@ class TbExecutionTrace(SQLModel, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
 
 
@@ -137,11 +139,15 @@ class TbGoldenQuery(SQLModel, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
 
 
@@ -179,7 +185,9 @@ class TbRegressionBaseline(SQLModel, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
 
 
@@ -239,7 +247,9 @@ class TbRegressionRun(SQLModel, table=True):
     )
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
 
 
@@ -300,11 +310,15 @@ class TbRegressionRuleConfig(SQLModel, table=True):
 
     created_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow,
-        sa_column=Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+        sa_column=Column(
+            TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+        ),
     )
     updated_by: str | None = Field(
         default=None,

@@ -1,6 +1,5 @@
 """Test OPS Executors Tool Contract implementation."""
 
-
 import pytest
 from schemas import MarkdownBlock, ReferenceItem, ReferencesBlock, TableBlock
 from schemas.tool_contracts import ExecutorResult, ToolCall
@@ -13,7 +12,9 @@ class TestExecutorResultStructure:
         """Test creating an ExecutorResult instance."""
         blocks = [{"type": "markdown", "title": "Test", "content": "Test content"}]
         tool_calls = [
-            ToolCall(tool="metric.series", elapsed_ms=100, input_params={}, output_summary={})
+            ToolCall(
+                tool="metric.series", elapsed_ms=100, input_params={}, output_summary={}
+            )
         ]
         references = [{"kind": "sql", "title": "Query", "payload": "SELECT 1"}]
 
@@ -79,6 +80,7 @@ class TestMetricExecutorToolContract:
         """Test that metric_executor module can be imported."""
         try:
             from app.modules.ops.services.executors.metric_executor import run_metric
+
             assert callable(run_metric)
         except ImportError:
             pytest.fail("metric_executor should be importable")
@@ -87,6 +89,7 @@ class TestMetricExecutorToolContract:
         """Test that hist_executor module can be imported."""
         try:
             from app.modules.ops.services.executors.hist_executor import run_hist
+
             assert callable(run_hist)
         except ImportError:
             pytest.fail("hist_executor should be importable")
@@ -99,6 +102,7 @@ class TestHistExecutorToolContract:
         """Test that hist_executor module can be imported."""
         try:
             from app.modules.ops.services.executors.hist_executor import run_hist
+
             assert callable(run_hist)
         except ImportError:
             pytest.fail("hist_executor should be importable")
@@ -111,6 +115,7 @@ class TestGraphExecutorToolContract:
         """Test that graph_executor module can be imported."""
         try:
             from app.modules.ops.services.executors.graph_executor import run_graph
+
             assert callable(run_graph)
         except ImportError:
             pytest.fail("graph_executor should be importable")
@@ -140,7 +145,9 @@ class TestExecutorBackwardCompatibility:
         blocks = [{"type": "markdown", "content": "test"}]
         used_tools = ["postgres"]
 
-        normalized_blocks, normalized_tools, error, executor = _normalize_real_result((blocks, used_tools))
+        normalized_blocks, normalized_tools, error, executor = _normalize_real_result(
+            (blocks, used_tools)
+        )
 
         assert normalized_blocks == blocks
         assert normalized_tools == used_tools
@@ -155,8 +162,8 @@ class TestExecutorBackwardCompatibility:
         used_tools = ["postgres"]
         error = "Test error"
 
-        normalized_blocks, normalized_tools, normalized_error, executor = _normalize_real_result(
-            (blocks, used_tools, error)
+        normalized_blocks, normalized_tools, normalized_error, executor = (
+            _normalize_real_result((blocks, used_tools, error))
         )
 
         assert normalized_blocks == blocks
@@ -242,7 +249,9 @@ class TestReferenceExtraction:
             TableBlock(type="table", title="Table", columns=["col1"], rows=[]),
         ]
 
-        blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+        blocks_dict = [
+            block.dict() if hasattr(block, "dict") else block for block in blocks
+        ]
 
         references = []
         for block_dict in blocks_dict:

@@ -22,7 +22,11 @@ def test_handle_ops_query_mock_mode_uses_mock_blocks(monkeypatch):
     assert envelope.meta.used_tools == ["mock"]
     assert not envelope.meta.fallback
     assert envelope.blocks
-    assert any(block.type == "timeseries" for block in envelope.blocks if hasattr(block, "type"))
+    assert any(
+        block.type == "timeseries"
+        for block in envelope.blocks
+        if hasattr(block, "type")
+    )
 
 
 def test_handle_ops_query_real_mode_fallbacks_and_flags_error(monkeypatch):
@@ -66,8 +70,14 @@ def test_ops_metric_real_blocks_shape(monkeypatch):
     monkeypatch.setenv("OPS_MODE", "mock")
     envelope = handle_ops_query("metric", "srv-erp-01 CPU 사용률 지난 7일")
     assert any(getattr(block, "type", None) == "markdown" for block in envelope.blocks)
-    assert any(getattr(block, "type", None) == "timeseries" for block in envelope.blocks)
-    ref_blocks = [block for block in envelope.blocks if getattr(block, "type", None) == "references"]
+    assert any(
+        getattr(block, "type", None) == "timeseries" for block in envelope.blocks
+    )
+    ref_blocks = [
+        block
+        for block in envelope.blocks
+        if getattr(block, "type", None) == "references"
+    ]
     assert ref_blocks
     assert any(item.kind == "sql" for block in ref_blocks for item in block.items)
     assert "mock" in envelope.meta.used_tools
@@ -77,20 +87,44 @@ def test_ops_hist_real_blocks_shape(monkeypatch):
     monkeypatch.setenv("OPS_MODE", "mock")
     envelope = handle_ops_query("hist", "srv-erp-01 최근 이력")
     assert any(getattr(block, "type", None) == "markdown" for block in envelope.blocks)
-    assert len([block for block in envelope.blocks if getattr(block, "type", None) == "table"]) >= 1
-    ref_blocks = [block for block in envelope.blocks if getattr(block, "type", None) == "references"]
+    assert (
+        len(
+            [
+                block
+                for block in envelope.blocks
+                if getattr(block, "type", None) == "table"
+            ]
+        )
+        >= 1
+    )
+    ref_blocks = [
+        block
+        for block in envelope.blocks
+        if getattr(block, "type", None) == "references"
+    ]
     assert ref_blocks
-    assert len([item for block in ref_blocks for item in block.items if item.kind == "sql"]) >= 1
+    assert (
+        len(
+            [item for block in ref_blocks for item in block.items if item.kind == "sql"]
+        )
+        >= 1
+    )
     assert "mock" in envelope.meta.used_tools
 
 
-@pytest.mark.skipif(not (HAS_DB and HAS_NEO4J), reason="Postgres or Neo4j not configured")
+@pytest.mark.skipif(
+    not (HAS_DB and HAS_NEO4J), reason="Postgres or Neo4j not configured"
+)
 def test_ops_graph_real_blocks_shape(monkeypatch):
     monkeypatch.setenv("OPS_MODE", "mock")
     envelope = handle_ops_query("graph", "srv-erp-01 영향도 보여줘")
     assert any(getattr(block, "type", None) == "markdown" for block in envelope.blocks)
     # The mock mode doesn't return graph blocks, so adjust the test
-    ref_blocks = [block for block in envelope.blocks if getattr(block, "type", None) == "references"]
+    ref_blocks = [
+        block
+        for block in envelope.blocks
+        if getattr(block, "type", None) == "references"
+    ]
     assert ref_blocks
     assert any(item.kind == "cypher" for block in ref_blocks for item in block.items)
     assert "mock" in envelope.meta.used_tools
@@ -133,25 +167,44 @@ def test_ops_all_langgraph_with_executor_result(monkeypatch):
         return ExecutorResult(
             blocks=[
                 {"type": "markdown", "title": "History", "content": "Test history"},
-                {"type": "table", "title": "Events", "columns": ["time", "event"], "rows": [["2024-01-01", "test"]]}
+                {
+                    "type": "table",
+                    "title": "Events",
+                    "columns": ["time", "event"],
+                    "rows": [["2024-01-01", "test"]],
+                },
             ],
             used_tools=["postgres"],
-            tool_calls=[ToolCall(tool="postgres", query="SELECT * FROM events", params={})],
-            references=[{"kind": "sql", "title": "query", "payload": {"sql": "SELECT * FROM events"}}],
-            summary={"status": "success"}
+            tool_calls=[
+                ToolCall(tool="postgres", query="SELECT * FROM events", params={})
+            ],
+            references=[
+                {
+                    "kind": "sql",
+                    "title": "query",
+                    "payload": {"sql": "SELECT * FROM events"},
+                }
+            ],
+            summary={"status": "success"},
         )
 
     def mock_metric_executor(_question: str):
         return ExecutorResult(
-            blocks=[{"type": "markdown", "title": "Metrics", "content": "Test metrics"}],
+            blocks=[
+                {"type": "markdown", "title": "Metrics", "content": "Test metrics"}
+            ],
             used_tools=["timescale"],
             tool_calls=[],
             references=[],
-            summary={"status": "success"}
+            summary={"status": "success"},
         )
 
-    monkeypatch.setattr("app.modules.ops.services.langgraph.run_hist", mock_hist_executor)
-    monkeypatch.setattr("app.modules.ops.services.langgraph.run_metric", mock_metric_executor)
+    monkeypatch.setattr(
+        "app.modules.ops.services.langgraph.run_hist", mock_hist_executor
+    )
+    monkeypatch.setattr(
+        "app.modules.ops.services.langgraph.run_metric", mock_metric_executor
+    )
 
     # Mock LLM calls
     def mock_call_llm(self, prompt: str, system_prompt: str) -> str:
@@ -163,7 +216,10 @@ def test_ops_all_langgraph_with_executor_result(monkeypatch):
     monkeypatch.setattr(LangGraphAllRunner, "_call_llm", mock_call_llm)
 
     from core.config import AppSettings
-    settings = AppSettings(openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real")
+
+    settings = AppSettings(
+        openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real"
+    )
     runner = LangGraphAllRunner(settings)
     blocks, tools, error = runner.run("MES_App_Report_02-2 최근 6개월 작업이력")
 
@@ -187,27 +243,39 @@ def test_ops_all_langgraph_temperature_fallback(monkeypatch):
         call_count["count"] += 1
         if call_count["count"] == 1 and "temperature" in kwargs:
             # First call with temperature - raise error with proper exception
-            raise Exception("Unsupported parameter: 'temperature' is not supported with this model.")
+            raise Exception(
+                "Unsupported parameter: 'temperature' is not supported with this model."
+            )
+
         # Second call without temperature or different call - return success
         class MockResponse:
             output_text = '{"run_metric": true, "run_hist": false, "run_graph": false}'
+
         return MockResponse()
 
     def mock_metric_executor(_question: str):
         from schemas.tool_contracts import ExecutorResult
+
         return ExecutorResult(
             blocks=[{"type": "markdown", "title": "Metrics", "content": "Test"}],
             used_tools=["timescale"],
             tool_calls=[],
             references=[],
-            summary={"status": "success"}
+            summary={"status": "success"},
         )
 
-    monkeypatch.setattr("app.llm.client.LlmClient.create_response", mock_create_response)
-    monkeypatch.setattr("app.modules.ops.services.langgraph.run_metric", mock_metric_executor)
+    monkeypatch.setattr(
+        "app.llm.client.LlmClient.create_response", mock_create_response
+    )
+    monkeypatch.setattr(
+        "app.modules.ops.services.langgraph.run_metric", mock_metric_executor
+    )
 
     from core.config import AppSettings
-    settings = AppSettings(openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real")
+
+    settings = AppSettings(
+        openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real"
+    )
     runner = LangGraphAllRunner(settings)
     blocks, tools, error = runner.run("Test query")
 
@@ -231,12 +299,16 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
         return ExecutorResult(
             blocks=[
                 {"type": "markdown", "title": "Summary", "content": "Test"},
-                {"type": "table", "columns": ["a", "b"], "rows": [["1", "2"]]}  # No title
+                {
+                    "type": "table",
+                    "columns": ["a", "b"],
+                    "rows": [["1", "2"]],
+                },  # No title
             ],
             used_tools=["test"],
             tool_calls=[],
             references=[],
-            summary={"status": "success"}
+            summary={"status": "success"},
         )
 
     def mock_call_llm(self, prompt: str, system_prompt: str) -> str:
@@ -245,11 +317,16 @@ def test_ops_all_langgraph_dict_blocks(monkeypatch):
         else:
             return "Summary text"
 
-    monkeypatch.setattr("app.modules.ops.services.langgraph.run_metric", mock_metric_executor)
+    monkeypatch.setattr(
+        "app.modules.ops.services.langgraph.run_metric", mock_metric_executor
+    )
     monkeypatch.setattr(LangGraphAllRunner, "_call_llm", mock_call_llm)
 
     from core.config import AppSettings
-    settings = AppSettings(openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real")
+
+    settings = AppSettings(
+        openai_api_key="test-key", ops_enable_langgraph=True, ops_mode="real"
+    )
     runner = LangGraphAllRunner(settings)
 
     # Should not crash with dict blocks
@@ -325,7 +402,9 @@ def test_ops_config_placeholder(monkeypatch):
     assert envelope.blocks
     assert any(getattr(block, "type", None) == "markdown" for block in envelope.blocks)
     assert any(getattr(block, "type", None) == "table" for block in envelope.blocks)
-    assert any(getattr(block, "type", None) == "references" for block in envelope.blocks)
+    assert any(
+        getattr(block, "type", None) == "references" for block in envelope.blocks
+    )
 
 
 def test_ops_config_real_blocks_shape(monkeypatch):
@@ -335,8 +414,21 @@ def test_ops_config_real_blocks_shape(monkeypatch):
     assert not envelope.meta.fallback
     assert any(getattr(block, "type", None) == "markdown" for block in envelope.blocks)
     # The mock only returns 1 table block, so adjust the expectation
-    assert len([block for block in envelope.blocks if getattr(block, "type", None) == "table"]) >= 1
-    ref_blocks = [block for block in envelope.blocks if getattr(block, "type", None) == "references"]
+    assert (
+        len(
+            [
+                block
+                for block in envelope.blocks
+                if getattr(block, "type", None) == "table"
+            ]
+        )
+        >= 1
+    )
+    ref_blocks = [
+        block
+        for block in envelope.blocks
+        if getattr(block, "type", None) == "references"
+    ]
     assert ref_blocks
     # Mock doesn't always provide SQL references, so check if there are any items at all
     assert any(block.items for block in ref_blocks)

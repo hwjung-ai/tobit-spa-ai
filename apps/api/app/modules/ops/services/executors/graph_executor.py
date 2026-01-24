@@ -37,8 +37,12 @@ def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
     references_list: list[dict] = []
     used_tools = ["neo4j", "postgres"]
 
-    base_graph_query_template = _load_query_sql("graph", "dependency_expand") or load_text("queries/neo4j/graph/dependency_expand.cypher")
-    component_query = _load_query_sql("graph", "component_composition") or load_text("queries/neo4j/graph/component_composition.cypher")
+    base_graph_query_template = _load_query_sql(
+        "graph", "dependency_expand"
+    ) or load_text("queries/neo4j/graph/dependency_expand.cypher")
+    component_query = _load_query_sql("graph", "component_composition") or load_text(
+        "queries/neo4j/graph/component_composition.cypher"
+    )
 
     if not base_graph_query_template or not component_query:
         error_block = MarkdownBlock(
@@ -76,8 +80,14 @@ def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
     driver = get_neo4j_driver()
     query_start = perf_counter()
     try:
-        records = _run_graph_query(driver, base_graph_query_template, tenant_id, ci.ci_code, depth)
-        comp_records = _run_component_query(driver, component_query, tenant_id, ci.ci_code) if include_components else []
+        records = _run_graph_query(
+            driver, base_graph_query_template, tenant_id, ci.ci_code, depth
+        )
+        comp_records = (
+            _run_component_query(driver, component_query, tenant_id, ci.ci_code)
+            if include_components
+            else []
+        )
     finally:
         driver.close()
     query_elapsed_ms = int((perf_counter() - query_start) * 1000)
@@ -104,7 +114,9 @@ def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
         nodes = [
             GraphNode(
                 id=ci.ci_code,
-                data={"label": f"{ci.ci_code}\n{ci.ci_name or ''}\n({ci.ci_subtype or ''})"},
+                data={
+                    "label": f"{ci.ci_code}\n{ci.ci_name or ''}\n({ci.ci_subtype or ''})"
+                },
                 position=GraphPosition(x=0.0, y=0.0),
             )
         ]
@@ -122,7 +134,12 @@ def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
         ),
     )
     references_block = _build_references(
-        base_graph_query_template, component_query, tenant_id, ci.ci_code, depth, include_components
+        base_graph_query_template,
+        component_query,
+        tenant_id,
+        ci.ci_code,
+        depth,
+        include_components,
     )
 
     # Extract references from references_block
@@ -130,11 +147,15 @@ def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
         for item in references_block.items:
             references_list.append(item.dict())
 
-    graph_block = GraphBlock(type="graph", title="Dependency graph", nodes=nodes, edges=edges)
+    graph_block = GraphBlock(
+        type="graph", title="Dependency graph", nodes=nodes, edges=edges
+    )
     blocks = [markdown, graph_block, references_block]
 
     # Convert blocks to dicts
-    blocks_dict = [block.dict() if hasattr(block, "dict") else block for block in blocks]
+    blocks_dict = [
+        block.dict() if hasattr(block, "dict") else block for block in blocks
+    ]
 
     int((perf_counter() - start_time) * 1000)
     return ExecutorResult(
@@ -152,7 +173,9 @@ def run_graph(question: str, tenant_id: str = "t1") -> ExecutorResult:
     )
 
 
-def _run_graph_query(driver, query_template: str, tenant_id: str, ci_code: str, depth: int):
+def _run_graph_query(
+    driver, query_template: str, tenant_id: str, ci_code: str, depth: int
+):
     query = query_template.format(depth=depth)
     with driver.session() as session:
         result = session.run(query, tenant_id=tenant_id, ci_code=ci_code, depth=depth)
@@ -186,7 +209,11 @@ def _build_graph(records, comp_records):
     for record in comp_records:
         _add_node(record["sys"], node_map)
         _add_node(record["c"], node_map)
-        edges.append(_create_edge(record["sys"]["ci_code"], record["c"]["ci_code"], "COMPOSED_OF"))
+        edges.append(
+            _create_edge(
+                record["sys"]["ci_code"], record["c"]["ci_code"], "COMPOSED_OF"
+            )
+        )
     if records:
         root = records[0]["n"]["ci_code"]
     elif comp_records:
@@ -208,7 +235,9 @@ def _add_node(node, node_map):
 
 
 def _create_edge(source: str, target: str, label: str | None):
-    return GraphEdge(id=f"{source}-{label}-{target}", source=source, target=target, label=label)
+    return GraphEdge(
+        id=f"{source}-{label}-{target}", source=source, target=target, label=label
+    )
 
 
 def _assign_levels(node_map, edges, root_code):
@@ -245,7 +274,9 @@ def _layout_graph(node_map, edges, levels):
             nodes.append(
                 GraphNode(
                     id=node_id,
-                    data={"label": f"{node_id}\n{data['ci_name'] or ''}\n({data['ci_subtype'] or ''})"},
+                    data={
+                        "label": f"{node_id}\n{data['ci_name'] or ''}\n({data['ci_subtype'] or ''})"
+                    },
                     position=pos,
                 )
             )
@@ -284,7 +315,10 @@ def _build_references(
             ReferenceItem(
                 kind="cypher",
                 title="component query",
-                payload={"cypher": component_query.strip(), "params": {"tenant_id": tenant_id, "ci_code": ci_code}},
+                payload={
+                    "cypher": component_query.strip(),
+                    "params": {"tenant_id": tenant_id, "ci_code": ci_code},
+                },
             )
         )
     return ReferencesBlock(type="references", title="Graph queries", items=items)

@@ -4,7 +4,6 @@ import os
 from typing import Any
 
 import psycopg
-
 from app.modules.asset_registry.loader import load_source_asset
 
 from .config import AppSettings
@@ -25,7 +24,9 @@ def _build_dsn_from_source(source_payload: dict[str, Any]) -> str | None:
     port = connection.get("port") or 5432
     user = connection.get("username")
     database = connection.get("database")
-    password = connection.get("password_encrypted") or _resolve_secret(connection.get("secret_key_ref"))
+    password = connection.get("password_encrypted") or _resolve_secret(
+        connection.get("secret_key_ref")
+    )
 
     if not host or not user or not database:
         return None

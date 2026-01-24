@@ -40,7 +40,12 @@ def upgrade() -> None:
             postgresql.JSONB(),
             nullable=True,
         ),
-        sa.Column("restart_required", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column(
+            "restart_required",
+            sa.Boolean(),
+            nullable=False,
+            server_default=sa.text("false"),
+        ),
         sa.Column(
             "description",
             sa.Text(),
@@ -71,8 +76,12 @@ def upgrade() -> None:
     )
 
     # Create indexes
-    op.create_index("idx_operation_settings_key", "tb_operation_settings", ["setting_key"])
-    op.create_index("idx_operation_settings_source", "tb_operation_settings", ["source"])
+    op.create_index(
+        "idx_operation_settings_key", "tb_operation_settings", ["setting_key"]
+    )
+    op.create_index(
+        "idx_operation_settings_source", "tb_operation_settings", ["source"]
+    )
 
 
 def downgrade() -> None:

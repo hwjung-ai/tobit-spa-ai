@@ -51,9 +51,7 @@ def run_query(
             keys = result.keys()
             rows = []
             for record in result:
-                serialized = {
-                    key: _serialize_value(record[key]) for key in keys
-                }
+                serialized = {key: _serialize_value(record[key]) for key in keys}
                 rows.append(serialized)
             return list(keys), rows
     finally:

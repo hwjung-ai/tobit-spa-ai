@@ -6,7 +6,9 @@ from typing import Any, Dict
 AssetInfo = Dict[str, Any]
 
 
-_ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar("inspector_asset_context", default=None)
+_ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar(
+    "inspector_asset_context", default=None
+)
 
 
 def _initial_context() -> Dict[str, Any]:

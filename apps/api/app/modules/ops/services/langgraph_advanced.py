@@ -21,8 +21,10 @@ from app.llm.client import get_llm_client
 # State Management
 # ============================================================================
 
+
 class ExecutionState(TypedDict):
     """Graph execution state with full context."""
+
     query: str
     original_query: str
     decomposed_queries: List[str]
@@ -37,6 +39,7 @@ class ExecutionState(TypedDict):
 
 class QueryType(str, Enum):
     """Types of queries that can be handled."""
+
     METRIC = "metric"
     GRAPH = "graph"
     HISTORY = "history"
@@ -48,6 +51,7 @@ class QueryType(str, Enum):
 
 class ExecutionMode(str, Enum):
     """Execution modes for the graph."""
+
     SEQUENTIAL = "sequential"
     PARALLEL = "parallel"
     HYBRID = "hybrid"
@@ -57,9 +61,11 @@ class ExecutionMode(str, Enum):
 # Query Analysis and Decomposition
 # ============================================================================
 
+
 @dataclass
 class QueryAnalysis:
     """Analysis result for a query."""
+
     query_type: QueryType
     complexity: int  # 1-10 scale
     requires_decomposition: bool
@@ -118,15 +124,27 @@ class QueryAnalyzer:
         query_lower = query.lower()
 
         # Simple keyword-based detection
-        if any(kw in query_lower for kw in ["metric", "measure", "count", "sum", "avg"]):
+        if any(
+            kw in query_lower for kw in ["metric", "measure", "count", "sum", "avg"]
+        ):
             return QueryType.METRIC
-        elif any(kw in query_lower for kw in ["relationship", "graph", "connect", "link", "node"]):
+        elif any(
+            kw in query_lower
+            for kw in ["relationship", "graph", "connect", "link", "node"]
+        ):
             return QueryType.GRAPH
-        elif any(kw in query_lower for kw in ["history", "log", "event", "change", "timeline"]):
+        elif any(
+            kw in query_lower
+            for kw in ["history", "log", "event", "change", "timeline"]
+        ):
             return QueryType.HISTORY
-        elif any(kw in query_lower for kw in ["ci", "configuration", "asset", "resource"]):
+        elif any(
+            kw in query_lower for kw in ["ci", "configuration", "asset", "resource"]
+        ):
             return QueryType.CI
-        elif any(kw in query_lower for kw in ["if", "condition", "when", "case", "check"]):
+        elif any(
+            kw in query_lower for kw in ["if", "condition", "when", "case", "check"]
+        ):
             return QueryType.CONDITIONAL
         elif "and" in query_lower or "or" in query_lower or "," in query:
             return QueryType.COMPOSITE
@@ -238,7 +256,9 @@ class QueryAnalyzer:
             parts = query.split(" if ")
             if len(parts) >= 2:
                 conditions["type"] = "conditional"
-                conditions["condition"] = parts[1].split(" then ")[0] if " then " in parts[1] else parts[1]
+                conditions["condition"] = (
+                    parts[1].split(" then ")[0] if " then " in parts[1] else parts[1]
+                )
 
         if "then" in query.lower():
             parts = query.split(" then ")
@@ -263,6 +283,7 @@ class QueryAnalyzer:
 # ============================================================================
 # Conditional Routing
 # ============================================================================
+
 
 class ConditionalRouter:
     """Routes execution based on conditions."""
@@ -330,6 +351,7 @@ class ConditionalRouter:
 # Dynamic Tool Composition
 # ============================================================================
 
+
 class ToolComposer:
     """Composes tools dynamically based on query requirements."""
 
@@ -388,6 +410,7 @@ class ToolComposer:
 # Advanced LangGraph Runner with StateGraph
 # ============================================================================
 
+
 class LangGraphAdvancedRunner:
     """Advanced LangGraph runner with StateGraph, recursive queries, and conditional branching."""
 
@@ -433,7 +456,9 @@ class LangGraphAdvancedRunner:
             # Execute based on query type
             if analysis.requires_decomposition:
                 state["decomposed_queries"] = analysis.sub_queries
-                blocks, tools = self._execute_decomposed(state, analysis, execution_mode)
+                blocks, tools = self._execute_decomposed(
+                    state, analysis, execution_mode
+                )
             else:
                 blocks, tools = self._execute_simple(state, analysis)
 
@@ -469,18 +494,20 @@ class LangGraphAdvancedRunner:
 **Query Analysis:**
 - Type: {analysis.query_type.value}
 - Complexity: {analysis.complexity}/10
-- Tools: {', '.join(analysis.tools_needed)}
+- Tools: {", ".join(analysis.tools_needed)}
 - Estimated Time: {analysis.estimated_execution_time_ms}ms
 
 **Execution Plan:**
-Will execute {', '.join(analysis.tools_needed)} in sequence.
+Will execute {", ".join(analysis.tools_needed)} in sequence.
 """
 
-        blocks.append(MarkdownBlock(
-            type="markdown",
-            title="Query Analysis",
-            content=analysis_content,
-        ))
+        blocks.append(
+            MarkdownBlock(
+                type="markdown",
+                title="Query Analysis",
+                content=analysis_content,
+            )
+        )
 
         return blocks, analysis.tools_needed
 
@@ -494,14 +521,18 @@ Will execute {', '.join(analysis.tools_needed)} in sequence.
         blocks = []
         all_tools = set()
 
-        state["execution_path"].append(f"decomposed_{len(analysis.sub_queries)}_queries")
+        state["execution_path"].append(
+            f"decomposed_{len(analysis.sub_queries)}_queries"
+        )
 
         # Execute sub-queries
         for i, sub_query in enumerate(analysis.sub_queries):
             state["depth"] += 1
 
             if state["depth"] > state["max_depth"]:
-                state["errors"].append(f"Max recursion depth ({state['max_depth']}) reached")
+                state["errors"].append(
+                    f"Max recursion depth ({state['max_depth']}) reached"
+                )
                 break
 
             # Analyze sub-query
@@ -527,11 +558,11 @@ Will execute {', '.join(analysis.tools_needed)} in sequence.
         # Build execution summary
         summary_content = f"""
 **Decomposed Execution:**
-- Original Query: {state['original_query']}
+- Original Query: {state["original_query"]}
 - Sub-queries: {len(analysis.sub_queries)}
 - Execution Mode: {execution_mode.value}
-- Depth: {state['depth']}/{state['max_depth']}
-- Tools Used: {', '.join(sorted(all_tools)) if all_tools else 'None'}
+- Depth: {state["depth"]}/{state["max_depth"]}
+- Tools Used: {", ".join(sorted(all_tools)) if all_tools else "None"}
 
 **Sub-query Results:**
 """
@@ -539,11 +570,13 @@ Will execute {', '.join(analysis.tools_needed)} in sequence.
         for i, result in state["results"].items():
             summary_content += f"\n- {result['query']} → {result['type']}"
 
-        blocks.append(MarkdownBlock(
-            type="markdown",
-            title="Decomposed Execution Summary",
-            content=summary_content,
-        ))
+        blocks.append(
+            MarkdownBlock(
+                type="markdown",
+                title="Decomposed Execution Summary",
+                content=summary_content,
+            )
+        )
 
         return blocks, list(all_tools)
 
@@ -556,16 +589,16 @@ Will execute {', '.join(analysis.tools_needed)} in sequence.
         """Build final summary block."""
         content = f"""
 **Execution Summary:**
-- Query: {state['original_query']}
+- Query: {state["original_query"]}
 - Query Type: {analysis.query_type.value}
 - Complexity: {analysis.complexity}/10
-- Execution Path: {' → '.join(state['execution_path'])}
-- Total Depth: {state['depth']}/{state['max_depth']}
-- Timestamp: {state['timestamp']}
+- Execution Path: {" → ".join(state["execution_path"])}
+- Total Depth: {state["depth"]}/{state["max_depth"]}
+- Timestamp: {state["timestamp"]}
 
 **Results:**
-- Sub-queries Executed: {len(state['results'])}
-- Errors: {len(state['errors'])}
+- Sub-queries Executed: {len(state["results"])}
+- Errors: {len(state["errors"])}
 
 """
 

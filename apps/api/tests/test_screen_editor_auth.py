@@ -30,7 +30,7 @@ def admin_user(session):
     """Create an admin user for testing."""
     from app.core.security import get_password_hash
     from app.modules.auth.models import TbUser
-    
+
     user = TbUser(
         id="admin-001",
         username="admin@example.com",
@@ -50,8 +50,7 @@ def admin_user(session):
 def auth_token(client, admin_user) -> str:
     """Get authentication token for admin user."""
     response = client.post(
-        "/auth/login",
-        json={"email": "admin@example.com", "password": "admin123"}
+        "/auth/login", json={"email": "admin@example.com", "password": "admin123"}
     )
     assert response.status_code == 200
     return response.json()["data"]["access_token"]
@@ -66,9 +65,12 @@ def check_auth_enabled():
     development environments where auth is disabled.
     """
     from core.config import get_settings
+
     settings = get_settings()
     if not settings.enable_auth:
-        pytest.skip("Authentication is disabled - skipping authentication tests (normal in dev environment)")
+        pytest.skip(
+            "Authentication is disabled - skipping authentication tests (normal in dev environment)"
+        )
 
 
 class TestScreenEditorAuth:
@@ -90,12 +92,16 @@ class TestScreenEditorAuth:
                     "components": [],
                     "state": {"initial": {}},
                 },
-            }
+            },
         )
 
         # Should return 401 Unauthorized
         assert response.status_code == 401
-        assert "authorization" in response.text.lower() or "credentials" in response.text.lower() or "unauthorized" in response.text.lower()
+        assert (
+            "authorization" in response.text.lower()
+            or "credentials" in response.text.lower()
+            or "unauthorized" in response.text.lower()
+        )
 
     def test_save_draft_with_valid_token(self, client, auth_token):
         """Test that save draft works with valid token."""
@@ -156,14 +162,17 @@ class TestScreenEditorAuth:
                     "components": [],
                     "state": {"initial": {}},
                 },
-            }
+            },
         )
 
         # Should return 401 with error message
         assert response.status_code == 401
         response_data = response.json()
         assert "detail" in response_data
-        assert any(text in response_data["detail"].lower() for text in ["missing", "authorization", "header", "token"])
+        assert any(
+            text in response_data["detail"].lower()
+            for text in ["missing", "authorization", "header", "token"]
+        )
 
     def test_publish_requires_auth(self, client, auth_token):
         """Test that publish endpoint requires authentication."""
@@ -339,7 +348,10 @@ class TestScreenEditorAuthFlow:
         assert publish_response.status_code == 422
         response_data = publish_response.json()
         assert "detail" in response_data
-        assert any(text in str(response_data["detail"]).lower() for text in ["components", "required", "at least"])
+        assert any(
+            text in str(response_data["detail"]).lower()
+            for text in ["components", "required", "at least"]
+        )
 
     def test_stage_published_endpoint_blocks_drafts(self, client, auth_token):
         """Requesting ?stage=published should hide draft screens and succeed after publish."""
@@ -389,7 +401,7 @@ class TestScreenEditorAuthFlow:
             headers={"Authorization": f"Bearer {auth_token}"},
         )
         assert post_publish.status_code == 200
-    
+
     def test_token_in_authorization_header(self, client, auth_token):
         """Verify that token is correctly sent in Authorization header."""
         # This test verifies the format expected by the backend

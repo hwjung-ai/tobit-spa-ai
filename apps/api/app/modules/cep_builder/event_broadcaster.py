@@ -8,7 +8,9 @@ from typing import Any
 class CepEventBroadcaster:
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._subscribers: list[tuple[asyncio.Queue[dict[str, Any]], asyncio.AbstractEventLoop]] = []
+        self._subscribers: list[
+            tuple[asyncio.Queue[dict[str, Any]], asyncio.AbstractEventLoop]
+        ] = []
 
     def subscribe(self) -> asyncio.Queue[dict[str, Any]]:
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=200)
@@ -20,7 +22,9 @@ class CepEventBroadcaster:
     def unsubscribe(self, queue: asyncio.Queue[dict[str, Any]]) -> None:
         with self._lock:
             self._subscribers = [
-                (item_queue, loop) for item_queue, loop in self._subscribers if item_queue is not queue
+                (item_queue, loop)
+                for item_queue, loop in self._subscribers
+                if item_queue is not queue
             ]
 
     def publish(self, event_type: str, data: dict[str, Any]) -> None:
@@ -34,7 +38,9 @@ class CepEventBroadcaster:
                 continue
 
 
-def _safe_put_nowait(queue: asyncio.Queue[dict[str, Any]], payload: dict[str, Any]) -> None:
+def _safe_put_nowait(
+    queue: asyncio.Queue[dict[str, Any]], payload: dict[str, Any]
+) -> None:
     if queue.full():
         try:
             queue.get_nowait()

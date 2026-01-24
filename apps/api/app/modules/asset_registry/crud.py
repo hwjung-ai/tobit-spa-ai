@@ -234,7 +234,11 @@ def publish_asset(
         actor=published_by,
         changes={"status": old_status + " -> published", "version": asset.version},
         old_values={"status": old_status},
-        new_values={"status": "published", "published_by": published_by, "published_at": asset.published_at.isoformat()},
+        new_values={
+            "status": "published",
+            "published_by": published_by,
+            "published_at": asset.published_at.isoformat(),
+        },
         metadata={"asset_type": asset.asset_type, "asset_name": asset.name},
     )
 
@@ -316,10 +320,21 @@ def rollback_asset(
         resource_id=str(current.asset_id),
         action="rollback",
         actor=executed_by,
-        changes={"version": old_version + " -> " + str(current.version), "from_version": to_version},
+        changes={
+            "version": old_version + " -> " + str(current.version),
+            "from_version": to_version,
+        },
         old_values={"version": old_version},
-        new_values={"version": current.version, "published_by": executed_by, "published_at": current.published_at.isoformat()},
-        metadata={"asset_type": current.asset_type, "asset_name": current.name, "from_version": to_version},
+        new_values={
+            "version": current.version,
+            "published_by": executed_by,
+            "published_at": current.published_at.isoformat(),
+        },
+        metadata={
+            "asset_type": current.asset_type,
+            "asset_name": current.name,
+            "from_version": to_version,
+        },
     )
 
     # Record rollback in history
@@ -351,6 +366,8 @@ def delete_asset(
     session.delete(asset)
     session.commit()
     return asset
+
+
 def unpublish_asset(
     session: Session,
     asset: TbAssetRegistry,
@@ -413,7 +430,9 @@ def create_source_asset(
     content = {
         "source_type": source_data.source_type.value,
         "connection": source_data.connection.model_dump(),
-        "spec": source_data.connection.spec if hasattr(source_data.connection, "spec") else None,
+        "spec": source_data.connection.spec
+        if hasattr(source_data.connection, "spec")
+        else None,
     }
 
     update_asset(
@@ -488,7 +507,9 @@ def update_source_asset(
     # Update connection if provided
     if updates.connection:
         content["connection"] = updates.connection.model_dump()
-        content["spec"] = updates.connection.spec if hasattr(updates.connection, "spec") else None
+        content["spec"] = (
+            updates.connection.spec if hasattr(updates.connection, "spec") else None
+        )
 
     # Build update dictionary
     update_dict = {}
@@ -533,6 +554,7 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
         raise ValueError("Source asset not found")
 
     import time
+
     start_time = time.time()
 
     def resolve_secret(secret_ref: str | None) -> str | None:
@@ -547,6 +569,7 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
         # Test connection based on source type
         if asset.source_type == SourceType.POSTGRESQL:
             import psycopg2
+
             conn = psycopg2.connect(
                 host=asset.connection.host,
                 port=asset.connection.port,
@@ -572,6 +595,7 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
 
         elif asset.source_type == SourceType.REDIS:
             import redis
+
             r = redis.Redis(
                 host=asset.connection.host,
                 port=asset.connection.port,
@@ -756,6 +780,7 @@ def scan_schema(session: Session, asset_id: str) -> ScanResult:
 
         # Get the source asset
         from .crud import get_source_asset
+
         source_asset = get_source_asset(session, asset_id)
         if not source_asset:
             raise ValueError("Source asset not found")
@@ -789,6 +814,7 @@ def scan_schema(session: Session, asset_id: str) -> ScanResult:
             error_message=str(e),
             execution_time_ms=int((time.time() - start_time) * 1000),
         )
+
 
 # Resolver Asset CRUD operations
 def create_resolver_asset(
@@ -862,8 +888,9 @@ def get_resolver_asset(session: Session, asset_id: str) -> ResolverAsset | None:
             ResolverType,
             TransformationRule,
         )
+
         rule_type = rule_data.get("rule_type", "alias_mapping")
-        
+
         if rule_type == "alias_mapping":
             rule_data_obj = AliasMapping(**rule_data)
         elif rule_type == "pattern_rule":
@@ -872,7 +899,7 @@ def get_resolver_asset(session: Session, asset_id: str) -> ResolverAsset | None:
             rule_data_obj = TransformationRule(**rule_data)
         else:
             rule_data_obj = rule_data
-        
+
         rule = ResolverRule(
             rule_type=ResolverType(rule_type),
             name=rule_data.get("name", ""),
@@ -966,9 +993,7 @@ def delete_resolver_asset(session: Session, asset_id: str) -> ResolverAsset:
 
 
 def simulate_resolver_configuration(
-    session: Session,
-    asset_id: str,
-    test_entities: List[str]
+    session: Session, asset_id: str, test_entities: List[str]
 ) -> Dict[str, Any]:
     """Simulate resolver configuration with test entities"""
     asset = get_resolver_asset(session, asset_id)
@@ -985,7 +1010,7 @@ def simulate_resolver_configuration(
             "transformations_applied": [],
             "confidence_score": 0.0,
             "matched_rules": [],
-            "metadata": {"simulation": True}
+            "metadata": {"simulation": True},
         }
 
         # Apply alias mappings
@@ -1005,6 +1030,6 @@ def simulate_resolver_configuration(
         "results": results,
         "metadata": {
             "resolver_version": asset.version,
-            "rule_count": len(asset.config.rules)
-        }
+            "rule_count": len(asset.config.rules),
+        },
     }

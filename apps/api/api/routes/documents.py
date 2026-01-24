@@ -51,7 +51,6 @@ def _truncate_snippet(text: str, limit: int = 200) -> str:
     return normalized[: limit - 1].rstrip() + "…"
 
 
-
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
@@ -101,7 +100,9 @@ def list_documents(
         .order_by(Document.updated_at.desc())
     )
     documents = session.exec(statement).scalars().all()
-    payloads = [DocumentItem.model_validate(doc.model_dump()).model_dump() for doc in documents]
+    payloads = [
+        DocumentItem.model_validate(doc.model_dump()).model_dump() for doc in documents
+    ]
     return ResponseEnvelope.success(data={"documents": payloads})
 
 
@@ -225,7 +226,9 @@ async def query_document_stream(
         raise HTTPException(status_code=503, detail=str(exc))
 
     embedding = search_service.embed_query(request.query)
-    chunks = search_service.fetch_top_chunks(session, document_id, request.top_k, embedding)
+    chunks = search_service.fetch_top_chunks(
+        session, document_id, request.top_k, embedding
+    )
     if not chunks:
         raise HTTPException(status_code=404, detail="Document has no indexed chunks")
 
@@ -238,8 +241,7 @@ async def query_document_stream(
         for chunk in chunks
     ]
     context_snippets = [
-        f"[chunk:{chunk.id} page:{chunk.page}] {chunk.text}"
-        for chunk in chunks
+        f"[chunk:{chunk.id} page:{chunk.page}] {chunk.text}" for chunk in chunks
     ]
     context = "Document context:\n" + "\n\n".join(context_snippets)
     prompt = f"{context}\n\nQuestion: {request.query}"

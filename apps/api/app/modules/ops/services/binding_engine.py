@@ -18,6 +18,7 @@ from typing import Any, Dict
 
 class BindingError(Exception):
     """Binding engine error"""
+
     pass
 
 
@@ -25,7 +26,7 @@ class BindingEngine:
     """Template binding engine for UI actions"""
 
     # Pattern for {{variable.path}} expressions
-    BINDING_PATTERN = re.compile(r'\{\{\s*([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)\s*\}\}')
+    BINDING_PATTERN = re.compile(r"\{\{\s*([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)*)\s*\}\}")
 
     @staticmethod
     def get_nested_value(obj: Any, path: str) -> Any:
@@ -79,8 +80,7 @@ class BindingEngine:
 
     @staticmethod
     def render_template(
-        template: Dict[str, Any] | str | Any,
-        context: Dict[str, Any]
+        template: Dict[str, Any] | str | Any, context: Dict[str, Any]
     ) -> Dict[str, Any] | str | Any:
         """
         Render template by substituting {{expr}} with values from context.
@@ -113,8 +113,7 @@ class BindingEngine:
 
     @staticmethod
     def _render_dict(
-        template_dict: Dict[str, Any],
-        context: Dict[str, Any]
+        template_dict: Dict[str, Any], context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Recursively render all values in dict"""
         result = {}
@@ -151,7 +150,7 @@ class BindingEngine:
             expr = match.group(1)
             value = BindingEngine._resolve_expression(expr, context)
             value_str = "" if value is None else str(value)
-            result = result[:match.start()] + value_str + result[match.end():]
+            result = result[: match.start()] + value_str + result[match.end() :]
 
         return result
 
@@ -243,8 +242,16 @@ def mask_sensitive_inputs(inputs: Dict[str, Any]) -> Dict[str, Any]:
 
     masked = inputs.copy()
     sensitive_patterns = [
-        "password", "secret", "token", "api_key", "api_secret",
-        "credit_card", "cc_", "ssn", "phone", "email"
+        "password",
+        "secret",
+        "token",
+        "api_key",
+        "api_secret",
+        "credit_card",
+        "cc_",
+        "ssn",
+        "phone",
+        "email",
     ]
 
     def mask_value(value):

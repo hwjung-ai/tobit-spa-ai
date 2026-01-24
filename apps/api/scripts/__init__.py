@@ -1,1 +1,1 @@
-﻿"""Scripts package entry point."""
+"""Scripts package entry point."""

@@ -22,11 +22,13 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 class DocumentUploadRequest(BaseModel):
     """Request for document upload"""
+
     pass
 
 
 class DocumentResponse(BaseModel):
     """Response for document"""
+
     id: str
     filename: str
     format: Optional[str]
@@ -41,6 +43,7 @@ class DocumentResponse(BaseModel):
 
 class SearchRequest(BaseModel):
     """Request for document search"""
+
     query: str
     search_type: str = "hybrid"  # text, vector, hybrid
     top_k: int = 10
@@ -52,6 +55,7 @@ class SearchRequest(BaseModel):
 
 class SearchResultResponse(BaseModel):
     """Response for search result"""
+
     chunk_id: str
     document_id: str
     document_name: str
@@ -63,6 +67,7 @@ class SearchResultResponse(BaseModel):
 
 class ChunkResponse(BaseModel):
     """Response for document chunk"""
+
     id: str
     document_id: str
     chunk_index: int
@@ -84,8 +89,7 @@ export_service = DocumentExportService()
 
 @router.post("/upload", response_model=dict)
 async def upload_document(
-    file: UploadFile = File(...),
-    current_user: dict = Depends(get_current_user)
+    file: UploadFile = File(...), current_user: dict = Depends(get_current_user)
 ):
     """
     Upload document for processing
@@ -110,7 +114,7 @@ async def upload_document(
         raise HTTPException(
             400,
             f"Unsupported format: {file_ext}. "
-            f"Supported: {', '.join(processor.SUPPORTED_FORMATS.keys())}"
+            f"Supported: {', '.join(processor.SUPPORTED_FORMATS.keys())}",
         )
 
     try:
@@ -135,7 +139,7 @@ async def upload_document(
             "message": "Document queued for processing",
             "filename": file.filename,
             "size": file_size,
-            "format": file_ext
+            "format": file_ext,
         }
 
     except DocumentProcessingError as e:
@@ -148,8 +152,7 @@ async def upload_document(
 
 @router.get("/{document_id}", response_model=DocumentResponse)
 async def get_document(
-    document_id: str,
-    current_user: dict = Depends(get_current_user)
+    document_id: str, current_user: dict = Depends(get_current_user)
 ):
     """
     Get document details and processing status
@@ -172,7 +175,7 @@ async def get_document(
             "processing_status": "done",
             "processing_progress": 100,
             "total_chunks": 42,
-            "created_at": "2026-01-18T12:00:00Z"
+            "created_at": "2026-01-18T12:00:00Z",
         }
 
     except Exception as e:
@@ -182,8 +185,7 @@ async def get_document(
 
 @router.post("/search", response_model=dict)
 async def search_documents(
-    request: SearchRequest,
-    current_user: dict = Depends(get_current_user)
+    request: SearchRequest, current_user: dict = Depends(get_current_user)
 ):
     """
     Advanced document search with multiple strategies
@@ -212,7 +214,7 @@ async def search_documents(
             date_from=None,  # Parse from request if provided
             date_to=None,
             document_types=request.document_types or [],
-            min_relevance=request.min_relevance
+            min_relevance=request.min_relevance,
         )
 
         # Perform search (placeholder - would be actual DB query)
@@ -229,7 +231,7 @@ async def search_documents(
             "query": request.query,
             "search_type": request.search_type,
             "results_count": len(results),
-            "results": results
+            "results": results,
         }
 
     except HTTPException:
@@ -244,7 +246,7 @@ async def get_document_chunks(
     document_id: str,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all chunks for a document with pagination
@@ -268,7 +270,7 @@ async def get_document_chunks(
             "page": page,
             "per_page": per_page,
             "total_chunks": 42,
-            "chunks": []
+            "chunks": [],
         }
 
     except Exception as e:
@@ -282,7 +284,7 @@ async def share_document(
     user_id: Optional[str] = Query(None),
     access_type: str = Query("read"),
     expires_in_days: Optional[int] = Query(None),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Share document with another user
@@ -309,10 +311,7 @@ async def share_document(
         # - Create document_access record
         # - Log audit entry
 
-        return {
-            "status": "ok",
-            "message": f"Document shared with user {user_id}"
-        }
+        return {"status": "ok", "message": f"Document shared with user {user_id}"}
 
     except Exception as e:
         logger.error(f"Share failed: {str(e)}")
@@ -323,7 +322,7 @@ async def share_document(
 async def export_document(
     document_id: str,
     format: str = Query("json"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Export document chunks in specified format
@@ -346,11 +345,7 @@ async def export_document(
         # - Format using export_service
         # - Return as file download
 
-        return {
-            "status": "ok",
-            "format": format,
-            "message": "Export in progress"
-        }
+        return {"status": "ok", "format": format, "message": "Export in progress"}
 
     except Exception as e:
         logger.error(f"Export failed: {str(e)}")
@@ -359,8 +354,7 @@ async def export_document(
 
 @router.delete("/{document_id}", response_model=dict)
 async def delete_document(
-    document_id: str,
-    current_user: dict = Depends(get_current_user)
+    document_id: str, current_user: dict = Depends(get_current_user)
 ):
     """
     Delete (soft delete) a document
@@ -377,10 +371,7 @@ async def delete_document(
         # - Log audit entry
         # - Don't actually delete from DB (soft delete)
 
-        return {
-            "status": "ok",
-            "message": f"Document {document_id} deleted"
-        }
+        return {"status": "ok", "message": f"Document {document_id} deleted"}
 
     except Exception as e:
         logger.error(f"Delete failed: {str(e)}")
@@ -392,7 +383,7 @@ async def list_documents(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
     sort_by: str = Query("created_at"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     List all documents for current user
@@ -415,7 +406,7 @@ async def list_documents(
             "page": page,
             "per_page": per_page,
             "total": 0,
-            "documents": []
+            "documents": [],
         }
 
     except Exception as e:
