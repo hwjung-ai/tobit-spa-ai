@@ -4,13 +4,18 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import BlockRenderer, {
   type AnswerBlock,
-  type AnswerEnvelope,
   type AnswerMeta,
 } from "../../components/answer/BlockRenderer";
 import { type NextAction } from "./nextActions";
-import { authenticatedFetch } from "@/lib/apiClient";
+import { authenticatedFetch, getApiResponseData } from "@/lib/apiClient/index";
+import {
+  type ServerHistoryEntry,
+  type CiAnswerPayload,
+  type ApiServerHistoryEntry,
+  type LocalOpsHistoryEntry,
+  type AnswerEnvelope,
+} from "@/lib/apiClientTypes";
 import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
-import { type OpsHistoryEntry } from "@/components/ops/types/opsTypes";
 import Toast from "@/components/admin/Toast";
 
 type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
@@ -27,46 +32,7 @@ const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
 const MODE_STORAGE_KEY = "ops:mode";
 const HISTORY_LIMIT = 40;
 
-interface CiAnswerPayload {
-  answer: string;
-  blocks: AnswerBlock[];
-  trace?: {
-    plan_validated?: unknown;
-    policy_decisions?: unknown;
-    [key: string]: unknown;
-  };
-  next_actions?: NextAction[];
-  meta?: AnswerMeta;
-}
-
 type OpsResponse = AnswerEnvelope | CiAnswerPayload;
-
-interface OpsHistoryEntry {
-  id: string;
-  createdAt: string;
-  uiMode: UiMode;
-  backendMode: BackendMode;
-  question: string;
-  response: OpsResponse;
-  status: "ok" | "error";
-  summary: string;
-  errorDetails?: string;
-  trace?: unknown;
-  nextActions?: NextAction[];
-}
-
-interface ServerHistoryEntry {
-  id: string;
-  tenant_id: string;
-  user_id: string;
-  feature: string;
-  question: string;
-  summary: string | null;
-  status: "ok" | "error";
-  response: AnswerEnvelope | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-}
 
 const formatTimestamp = (value: string) => {
   if (!value) return "";
@@ -128,19 +94,19 @@ const previewFromBlock = (block: AnswerBlock) => {
   }
 };
 
-const extractSummary = (envelope: AnswerEnvelope | null, question: string) => {
-  if (!envelope) {
+  const extractSummary = (envelope: AnswerEnvelope | null, question: string): string => {
+    if (!envelope) {
+      return question || "(no summary)";
+    }
+    if (envelope.meta?.summary) {
+      return safeStringify(envelope.meta.summary);
+    }
+    const candidate = envelope.blocks?.map(previewFromBlock).find((value) => value);
+    if (candidate) {
+      return candidate.split("\n")[0];
+    }
     return question || "(no summary)";
-  }
-  if (envelope.meta?.summary) {
-    return safeStringify(envelope.meta.summary);
-  }
-  const candidate = envelope.blocks?.map(previewFromBlock).find((value) => value);
-  if (candidate) {
-    return candidate.split("\n")[0];
-  }
-  return question || "(no summary)";
-};
+  };
 
 const normalizeError = async (error: unknown) => {
   if (error instanceof Error) {
@@ -192,7 +158,7 @@ const genId = () => {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
-const hydrateServerEntry = (entry: ServerHistoryEntry): OpsHistoryEntry | null => {
+const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | null => {
   const metadata = entry.metadata ?? {};
   const backendMode =
     (metadata?.backendMode ||
@@ -218,15 +184,16 @@ const hydrateServerEntry = (entry: ServerHistoryEntry): OpsHistoryEntry | null =
     question: entry.question,
     response: envelope,
     status,
-    summary: entry.summary ?? extractSummary(envelope, entry.question),
-    errorDetails: metadata?.errorDetails ?? metadata?.error_details,
-    trace: metadata?.trace,
+    summary: (entry.summary ?? extractSummary(envelope, entry.question)) ?? "",
+    errorDetails: (metadata?.errorDetails ?? metadata?.error_details) as string | undefined,
+    trace: metadata?.trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined,
     nextActions: metadata?.nextActions as NextAction[] | undefined,
+    next_actions: metadata?.nextActions as NextAction[] | undefined,
   };
 };
 
 export default function OpsPage() {
-  const [history, setHistory] = useState<OpsHistoryEntry[]>([]);
+  const [history, setHistory] = useState<LocalOpsHistoryEntry[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uiMode, setUiMode] = useState<UiMode>("all");
   const [question, setQuestion] = useState("");
@@ -241,7 +208,7 @@ export default function OpsPage() {
 
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
   const pushHistoryEntry = useCallback(
-    (entry: OpsHistoryEntry) => {
+    (entry: LocalOpsHistoryEntry) => {
       setHistory((prev) => {
         const next = [entry, ...prev];
         if (next.length > HISTORY_LIMIT) {
@@ -254,34 +221,34 @@ export default function OpsPage() {
     [setHistory, setSelectedId]
   );
 
-  const fetchHistory = useCallback(async () => {
+   const fetchHistory = useCallback(async () => {
     setHistoryLoading(true);
     setHistoryError(null);
     try {
-      const payload = await authenticatedFetch(`/history?feature=ops&limit=${HISTORY_LIMIT}`);
-      const rawHistory = (payload?.data?.history ?? []) as ServerHistoryEntry[];
+      const payload = await authenticatedFetch<{ history: ApiServerHistoryEntry[] }>(`/history?feature=ops&limit=${HISTORY_LIMIT}`);
+      const rawHistory = payload?.data?.history ?? [];
       const hydrated = rawHistory
-        .map(hydrateServerEntry)
-        .filter((entry): entry is OpsHistoryEntry => Boolean(entry));
+        .map((entry: ApiServerHistoryEntry): LocalOpsHistoryEntry | null => hydrateServerEntry(entry))
+        .filter((entry): entry is LocalOpsHistoryEntry => Boolean(entry));
       if (hydrated.length === 0) {
         setHistory([]);
         setSelectedId(null);
       } else {
         setHistory(hydrated);
         setSelectedId((prev) =>
-          prev && hydrated.some((item) => item.id === prev) ? prev : hydrated[0].id
+          prev && hydrated.some((item: LocalOpsHistoryEntry) => item.id === prev) ? prev : hydrated[0].id
         );
       }
     } catch (error: unknown) {
       console.error("Failed to load OPS history", error);
-      setHistoryError(error?.message || "Failed to load history");
+      setHistoryError(error instanceof Error ? error.message : "Failed to load history");
     } finally {
       setHistoryLoading(false);
     }
   }, []);
 
   const persistHistoryEntry = useCallback(
-    async (entry: OpsHistoryEntry) => {
+    async (entry: LocalOpsHistoryEntry) => {
       try {
         await authenticatedFetch(`/history`, {
           method: "POST",
@@ -404,7 +371,8 @@ export default function OpsPage() {
 
     try {
       const response = await authenticatedFetch(`/inspector/traces/${encodeURIComponent(traceId)}`);
-      if (!response?.data?.trace) {
+      const responseWithData = getApiResponseData<{ trace?: unknown }>(response);
+      if (!responseWithData?.trace) {
         setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
         return;
       }
@@ -457,18 +425,18 @@ export default function OpsPage() {
     setStatusMessage(null);
     const requestedMode = currentModeDefinition;
     const payload = { mode: requestedMode.backend, question: question.trim() };
-    let envelope: AnswerEnvelope;
-    let status: OpsHistoryEntry["status"] = "ok";
+    let envelope: AnswerEnvelope = buildErrorEnvelope(requestedMode.backend, "No response");
+    let status: LocalOpsHistoryEntry["status"] = "ok";
     let errorDetails: string | undefined;
     let trace: unknown;
     let nextActions: NextAction[] | undefined;
     try {
       if (requestedMode.id === "ci") {
-        const response = await authenticatedFetch(`/ops/ci/ask`, {
+        const response = await authenticatedFetch<CiAnswerPayload>(`/ops/ci/ask`, {
           method: "POST",
           body: JSON.stringify({ question: question.trim() }),
         });
-        const ciPayload = response.data;
+        const ciPayload = response?.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
         }
@@ -488,11 +456,11 @@ export default function OpsPage() {
         trace = ciPayload.trace;
         nextActions = ciPayload.next_actions;
       } else {
-        const data = await authenticatedFetch(`/ops/query`, {
+        const data = await authenticatedFetch<{ answer?: AnswerEnvelope }>(`/ops/query`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
-        const answer = data.data?.answer as AnswerEnvelope | undefined;
+        const answer = data?.data as AnswerEnvelope | undefined;
         if (!answer || !Array.isArray(answer.blocks) || typeof answer.meta !== "object") {
           throw new Error("Invalid OPS response format");
         }
@@ -510,7 +478,7 @@ export default function OpsPage() {
       }
       setStatusMessage(`Error: ${normalized.message}`);
     } finally {
-      const entry: OpsHistoryEntry = {
+      const entry: LocalOpsHistoryEntry = {
         id: genId(),
         createdAt: new Date().toISOString(),
         uiMode: requestedMode.id,
@@ -520,8 +488,9 @@ export default function OpsPage() {
         status,
         summary: extractSummary(envelope, question.trim()),
         errorDetails,
-        trace,
+        trace: trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined,
         nextActions,
+        next_actions: nextActions,
       };
       pushHistoryEntry(entry);
       void persistHistoryEntry(entry);
@@ -566,17 +535,17 @@ export default function OpsPage() {
       if (action.type !== "rerun") {
         return;
       }
-      const basePlan = selectedEntry.trace?.plan_validated;
+      const basePlan = (selectedEntry.trace as { plan_validated?: unknown })?.plan_validated;
       if (!basePlan) {
         setStatusMessage("Unable to rerun: missing plan snapshot");
         return;
       }
       setIsRunning(true);
       setStatusMessage(null);
-      let envelope: AnswerEnvelope;
+      let envelope: AnswerEnvelope = buildErrorEnvelope(selectedEntry.backendMode ?? "config", "No response");
       let trace: unknown;
       let nextActions: NextAction[] | undefined;
-      let status: OpsHistoryEntry["status"] = "ok";
+      let status: LocalOpsHistoryEntry["status"] = "ok";
       let errorDetails: string | undefined;
       try {
         const rerunBody: {
@@ -602,11 +571,11 @@ export default function OpsPage() {
         if (action.payload?.patch) {
           rerunBody.rerun.patch = action.payload.patch;
         }
-        const data = await authenticatedFetch(`/ops/ci/ask`, {
+        const data = await authenticatedFetch<CiAnswerPayload>(`/ops/ci/ask`, {
           method: "POST",
           body: JSON.stringify(rerunBody),
         });
-        const ciPayload = data.data;
+        const ciPayload = data?.data;
         if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
           throw new Error("Invalid CI response format");
         }
@@ -637,7 +606,7 @@ export default function OpsPage() {
         }
         setStatusMessage(`Error: ${normalized.message}`);
       } finally {
-        const entry: OpsHistoryEntry = {
+      const entry: LocalOpsHistoryEntry = {
           id: genId(),
           createdAt: new Date().toISOString(),
           uiMode: selectedEntry.uiMode ?? "ci",
@@ -647,8 +616,9 @@ export default function OpsPage() {
           status,
           summary: extractSummary(envelope, selectedEntry.question),
           errorDetails,
-          trace,
+          trace: trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined,
           nextActions,
+          next_actions: nextActions,
         };
         pushHistoryEntry(entry);
         setIsRunning(false);
@@ -841,13 +811,13 @@ export default function OpsPage() {
                   Reason: {meta.route_reason}
                 </p>
                 <p className="text-[11px] text-slate-400">
-                  Timing: {meta.timing_ms} ms · Used tools: {meta.used_tools.join(", ") || "N/A"}
+                  Timing: {meta.timing_ms} ms · Used tools: {meta.used_tools?.join(", ") || "N/A"}
                 </p>
                 <p className="text-[11px] text-slate-400">
                   Fallback: {meta.fallback ? "yes" : "no"}
                 </p>
                 {meta.error ? (
-                  <p className="text-[11px] text-rose-300">Error: {meta.error}</p>
+                  <p className="text-[11px] text-rose-300">Error: {String(meta.error)}</p>
                 ) : null}
                 {selectedEntry.errorDetails ? (
                   <details className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-300">
@@ -932,7 +902,7 @@ export default function OpsPage() {
     </div>
 
     <Toast
-      message={statusMessage}
+      message={statusMessage ?? ""}
       type={statusMessage?.includes("trace_id가 없습니다") ? "warning" : statusMessage?.includes("찾을 수 없습니다") ? "error" : "info"}
       onDismiss={() => setStatusMessage(null)}
       duration={3000}

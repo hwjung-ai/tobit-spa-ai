@@ -28,12 +28,17 @@ import {
   AnswerBlock,
   AssetSummary,
   AssetOverride,
+  AssetVersion,
   FlowSpan,
+  StageInput,
   StageOutput,
   ExecutionTraceDetail,
   TraceSummaryRow,
   TraceListResponse,
-} from "../../../lib/apiClient";
+  ExecutionStep,
+  ReferenceEntry,
+  UIRenderedBlock,
+} from "../../../lib/apiClient/index";
 
 const PER_PAGE = 20;
 
@@ -468,12 +473,12 @@ function InspectorContent() {
     return "ok";
   };
 
-  const stageSnapshots = useMemo(() => {
+  const stageSnapshots: StageSnapshot[] = useMemo(() => {
     const inputs = traceDetail?.stage_inputs ?? [];
     const outputs = traceDetail?.stage_outputs ?? [];
     return STAGE_ORDER.map((stage) => {
-      const stageInput = inputs.find((entry) => entry.stage === stage);
-      const stageOutput = outputs.find((entry) => entry.stage === stage);
+      const stageInput = inputs.find((entry: StageInput) => entry.stage === stage);
+      const stageOutput = outputs.find((entry: StageOutput) => entry.stage === stage);
         return {
           name: stage,
           label: STAGE_LABELS[stage] ?? stage.toUpperCase(),
@@ -482,7 +487,7 @@ function InspectorContent() {
           input: stageInput ?? null,
           output: stageOutput ?? null,
           diagnostics: stageOutput?.diagnostics ?? null,
-        };
+        } as StageSnapshot;
     });
   }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
 
@@ -943,7 +948,7 @@ function InspectorContent() {
                         <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Queries</p>
                         {traceDetail.applied_assets?.queries?.length ? (
                           <ul className="space-y-2">
-                            {traceDetail.applied_assets.queries.map((query) => (
+                            {traceDetail.applied_assets.queries.map((query: {asset_id: string | null; name: string | null; source: string | null}) => (
                               <li key={query.asset_id || `${query.name}-${query.source}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-300">
                                 {query.name || "query"} · {query.source} · {query.asset_id ?? "seed"}
                               </li>
@@ -957,7 +962,7 @@ function InspectorContent() {
                         <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Screens</p>
                         {traceDetail.applied_assets?.screens?.length ? (
                           <ul className="space-y-2">
-                            {traceDetail.applied_assets.screens.map((screen) => (
+                            {traceDetail.applied_assets.screens.map((screen: {asset_id: string | null; screen_id: string | null; status: string | null; version: number | string | null}) => (
                               <li key={screen.asset_id || `${screen.screen_id}-${screen.status}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-300">
                                 {screen.screen_id || "screen"} · {screen.status ?? "unknown"} · {screen.version ?? "?"}
                               </li>
@@ -1014,7 +1019,7 @@ function InspectorContent() {
                               </tr>
                             </thead>
                             <tbody>
-                              {traceDetail.execution_steps.map((step) => (
+                              {traceDetail.execution_steps.map((step: ExecutionStep) => (
                                 <tr
                                   key={`${step.step_id}-${step.tool_name}-${step.duration_ms}`}
                                   className="border-b border-slate-800"
@@ -1078,8 +1083,8 @@ function InspectorContent() {
                     )}
                     <div className="grid gap-4 md:grid-cols-2">
                       {STAGE_ORDER.map((stage) => {
-                        const stageInput = traceDetail.stage_inputs?.find((entry) => entry.stage === stage);
-                        const stageOutput = traceDetail.stage_outputs?.find((entry) => entry.stage === stage);
+                        const stageInput = traceDetail.stage_inputs?.find((entry: StageInput) => entry.stage === stage);
+                        const stageOutput = traceDetail.stage_outputs?.find((entry: StageOutput) => entry.stage === stage);
                         const status = normalizeStageStatus(stageOutput);
                         const warnings = stageOutput?.diagnostics?.warnings ?? [];
                         const errors = stageOutput?.diagnostics?.errors ?? [];
@@ -1112,7 +1117,7 @@ function InspectorContent() {
                                   <div className="bg-amber-500/5 border border-amber-400/30 rounded-xl p-3 text-amber-200">
                                     <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300">Warnings</p>
                                     <ul className="mt-2 space-y-1">
-                                      {warnings.map((warning, index) => (
+                                      {warnings.map((warning: string, index: number) => (
                                         <li key={`${stage}-warn-${index}`}>{warning}</li>
                                       ))}
                                     </ul>
@@ -1122,7 +1127,7 @@ function InspectorContent() {
                                   <div className="bg-rose-500/5 border border-rose-400/30 rounded-xl p-3 text-rose-200">
                                     <p className="text-[10px] uppercase tracking-[0.3em] text-rose-300">Errors</p>
                                     <ul className="mt-2 space-y-1">
-                                      {errors.map((error, index) => (
+                                      {errors.map((error: string, index: number) => (
                                         <li key={`${stage}-err-${index}`}>{error}</li>
                                       ))}
                                     </ul>
@@ -1143,7 +1148,7 @@ function InspectorContent() {
                     </div>
                     {traceDetail.execution_steps && traceDetail.execution_steps.length ? (
                       <div className="space-y-3">
-                        {traceDetail.execution_steps.map((step, index) => (
+                        {traceDetail.execution_steps.map((step: ExecutionStep, index: number) => (
                           <article
                             key={`${step.step_id ?? index}-${step.tool_name ?? "tool"}`}
                             className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 space-y-3"
@@ -1179,7 +1184,7 @@ function InspectorContent() {
                             )}
                             {step.references && step.references.length ? (
                               <p className="text-[11px] text-slate-400">
-                                References: {step.references.map((ref) => ref.name).join(", ")}
+                                References: {step.references.map((ref: {name: string}) => ref.name).join(", ")}
                               </p>
                             ) : null}
                           </article>
@@ -1221,7 +1226,7 @@ function InspectorContent() {
                             </tr>
                           </thead>
                           <tbody>
-                            {traceDetail.references.map((ref, index) => (
+                            {traceDetail.references.map((ref: ReferenceEntry, index: number) => (
                               <tr key={`${ref.name}-${index}`} className="border-b border-slate-800">
                                 <td className="px-2 py-2 text-[11px] text-slate-400">{ref.ref_type}</td>
                                 <td className="px-2 py-2 text-slate-100">{ref.name}</td>
@@ -1265,7 +1270,7 @@ function InspectorContent() {
                     </div>
                     {traceDetail.answer?.blocks && traceDetail.answer.blocks.length > 0 ? (
                       <div className="grid gap-3 md:grid-cols-2">
-                        {traceDetail.answer.blocks.map((block, index) => (
+                        {traceDetail.answer.blocks.map((block: AnswerBlock, index: number) => (
                           <article
                             key={`${block.type}-${index}`}
                             className="bg-slate-950/40 border border-slate-800 rounded-xl p-4 space-y-2"
@@ -1306,7 +1311,7 @@ function InspectorContent() {
                       <div className="space-y-3">
                         <div className="text-xs text-slate-400 uppercase tracking-[0.3em]">Rendered Blocks</div>
                         <div className="grid gap-2">
-                          {traceDetail.ui_render.rendered_blocks.map((block, index) => (
+                          {traceDetail.ui_render.rendered_blocks.map((block: UIRenderedBlock, index: number) => (
                             <div key={`${block.block_type}-${index}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px]">
                               <div className="flex items-center justify-between">
                                 <span>{block.block_type}</span>
@@ -1319,7 +1324,7 @@ function InspectorContent() {
                         </div>
                         {traceDetail.ui_render.warnings.length > 0 && (
                           <ul className="list-disc list-inside text-[11px] text-slate-400">
-                            {traceDetail.ui_render.warnings.map((warning, idx) => (
+                            {traceDetail.ui_render.warnings.map((warning: string, idx: number) => (
                               <li key={idx}>{warning}</li>
                             ))}
                           </ul>
@@ -1388,8 +1393,8 @@ function InspectorContent() {
                         {flowViewMode === "timeline" ? (
                           <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
                             {traceDetail.flow_spans
-                              .sort((a, b) => a.ts_start_ms - b.ts_start_ms)
-                              .map((span) => {
+                              .sort((a: FlowSpan, b: FlowSpan) => a.ts_start_ms - b.ts_start_ms)
+                              .map((span: FlowSpan) => {
                                 const statusClass =
                                   span.status === "ok"
                                     ? "bg-emerald-900/40 text-emerald-200"
@@ -1429,7 +1434,7 @@ function InspectorContent() {
                               onEdgesChange={onEdgesChange}
                               onNodeClick={(event, node) => {
                                 setSelectedNodeId(node.id);
-                                const span = traceDetail.flow_spans?.find((s) => s.span_id === node.id);
+                                const span = traceDetail.flow_spans?.find((s: FlowSpan) => s.span_id === node.id);
                                 if (span) {
                                   setSelectedSpan(span);
                                 }
@@ -1501,7 +1506,7 @@ function InspectorContent() {
                         <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-3 space-y-2">
                           <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Related Tool Call</p>
                           {(() => {
-                            const step = traceDetail.execution_steps.find((s) => s.tool_name === selectedSpan.links.tool_call_id);
+                            const step = traceDetail.execution_steps?.find((s: ExecutionStep) => s.tool_name === selectedSpan.links.tool_call_id);
                             return step ? (
                               <div className="space-y-2">
                                 {renderJsonDetails("Request", step.request)}

@@ -3,21 +3,9 @@
 import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type StageStatus, type StageSnapshot } from "@/lib/apiClientTypes";
 
-type StageStatus = "pending" | "ok" | "warning" | "error" | "skipped";
-
-interface StageSnapshot {
-  name: string;
-  label: string;
-  status: StageStatus;
-  duration_ms?: number;
-  input?: unknown;
-  output?: unknown;
-  diagnostics?: {
-    warnings?: string[];
-    errors?: string[];
-  };
-}
+export type { StageStatus, StageSnapshot };
 
 interface StagePipelineProps {
   className?: string;
