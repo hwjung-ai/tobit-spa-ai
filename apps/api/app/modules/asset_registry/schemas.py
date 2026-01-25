@@ -25,6 +25,19 @@ class PromptAssetCreate(BaseModel):
     created_by: str | None = None
 
 
+class QueryAssetCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    asset_type: str = "query"
+    name: str
+    description: str | None = None
+    scope: str
+    query_sql: str
+    query_params: dict[str, Any]
+    query_metadata: dict[str, Any]
+    tags: dict[str, Any] | None = None
+    created_by: str | None = None
+
+
 class ScreenAssetCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     asset_type: str = "screen"

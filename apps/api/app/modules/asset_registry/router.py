@@ -53,6 +53,7 @@ from app.modules.asset_registry.schemas import (
     PromptAssetCreate,
     PromptAssetRead,
     PromptAssetUpdate,
+    QueryAssetCreate,
     QueryAssetUpdate,
     ScreenAssetCreate,
     ScreenAssetRead,
@@ -79,7 +80,7 @@ from typing import Union
 
 @router.post("/assets", response_model=ResponseEnvelope)
 def create_asset(
-    payload: Union[PromptAssetCreate, ScreenAssetCreate],
+    payload: Union[PromptAssetCreate, ScreenAssetCreate, QueryAssetCreate],
     current_user: TbUser = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -87,6 +88,8 @@ def create_asset(
         return create_screen_asset_impl(payload, session, current_user)
     elif isinstance(payload, PromptAssetCreate):
         return create_prompt_asset_impl(payload, session, current_user)
+    elif isinstance(payload, QueryAssetCreate):
+        return create_query_asset_impl(payload, session, current_user)
     else:
         raise HTTPException(status_code=400, detail="Invalid asset type")
 
@@ -224,6 +227,55 @@ def create_prompt_asset_impl(
                     created_at=asset.created_at,
                     updated_at=asset.updated_at,
                 )
+            }
+        )
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create asset: {str(e)}")
+
+
+def create_query_asset_impl(
+    payload: QueryAssetCreate, session: Session, current_user: TbUser
+):
+    """Create a query asset"""
+    if payload.asset_type != "query":
+        raise HTTPException(status_code=400, detail="asset_type must be 'query'")
+
+    try:
+        asset = TbAssetRegistry(
+            asset_type="query",
+            name=payload.name,
+            description=payload.description,
+            scope=payload.scope,
+            query_sql=payload.query_sql,
+            query_params=payload.query_params,
+            query_metadata=payload.query_metadata,
+            tags=payload.tags,
+            created_by=payload.created_by,
+            status="draft",
+        )
+        session.add(asset)
+        session.commit()
+        session.refresh(asset)
+
+        # Create initial version history
+        history = TbAssetVersionHistory(
+            asset_id=asset.asset_id,
+            version=asset.version,
+            snapshot={
+                "query_sql": asset.query_sql,
+                "query_params": asset.query_params,
+                "query_metadata": asset.query_metadata,
+                "name": asset.name,
+                "description": asset.description,
+            },
+        )
+        session.add(history)
+        session.commit()
+
+        return ResponseEnvelope.success(
+            data={
+                "asset": _serialize_asset(asset)
             }
         )
     except Exception as e:

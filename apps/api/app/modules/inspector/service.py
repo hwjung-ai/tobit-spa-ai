@@ -171,6 +171,9 @@ def persist_execution_trace(
     blocks: List[Dict[str, Any]] | None,
     flow_spans: List[Dict[str, Any]] | None = None,
 ) -> TbExecutionTrace:
+    from core.logging import get_logger
+    logger = get_logger(__name__)
+
     assets = get_tracked_assets()
     resolved_screens = _resolve_screen_assets(session, blocks)
     if resolved_screens:
@@ -190,6 +193,14 @@ def persist_execution_trace(
             for block in (blocks or [])
         ],
     }
+
+    stage_inputs = trace_payload.get("stage_inputs", [])
+    stage_outputs = trace_payload.get("stage_outputs", [])
+    logger.info(
+        f"Persisting trace {trace_id}: route={trace_payload.get('route', 'orch')}, "
+        f"stage_inputs={len(stage_inputs)}, stage_outputs={len(stage_outputs)}"
+    )
+
     trace_entry = TbExecutionTrace(
         trace_id=trace_id,
         parent_trace_id=parent_trace_id,
@@ -214,8 +225,8 @@ def persist_execution_trace(
         flow_spans=flow_spans,
         # New orchestration fields
         route=trace_payload.get("route", "orch"),
-        stage_inputs=trace_payload.get("stage_inputs", []),
-        stage_outputs=trace_payload.get("stage_outputs", []),
+        stage_inputs=stage_inputs,
+        stage_outputs=stage_outputs,
         replan_events=trace_payload.get("replan_events", []),
     )
     return create_execution_trace(session, trace_entry)

@@ -21,12 +21,12 @@ from ..ci.tools import history as history_tools
 from ..resolvers import resolve_ci, resolve_time_range
 
 
-def _load_query_sql(scope: str, name: str) -> str | None:
-    """Load query SQL with DB priority fallback to file."""
+def _load_query_sql(scope: str, name: str) -> str:
+    """Load query SQL from Asset Registry only (no fallback)."""
     asset, _ = load_query_asset(scope, name)
-    if asset:
+    if asset and "sql" in asset:
         return asset.get("sql")
-    return None
+    raise ValueError(f"Query asset not found in Asset Registry: {name} (scope={scope})")
 
 
 def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
@@ -35,38 +35,19 @@ def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
     references_list: list[dict] = []
     used_tools = ["postgres", "timescale"]
 
-    work_h_query = _load_query_sql("history", "work_history") or load_text(
-        "queries/postgres/history/work_history.sql"
-    )
-    maint_h_query = _load_query_sql("history", "maintenance_history") or load_text(
-        "queries/postgres/history/maintenance_history.sql"
-    )
-    event_l_query = _load_query_sql("history", "event_log") or load_text(
-        "queries/postgres/history/event_log.sql"
-    )
-
-    if not work_h_query or not maint_h_query or not event_l_query:
-        error_block = MarkdownBlock(
-            type="markdown",
-            title="Error",
-            content="### 쿼리 파일 로드 실패\n- History 관련 SQL 파일을 찾을 수 없거나 읽는 데 실패했습니다.",
-        )
-        return ExecutorResult(
-            blocks=[error_block.dict()],
-            used_tools=used_tools,
-            tool_calls=tool_calls,
-            references=references_list,
-            summary={"status": "error", "reason": "query_load_failed"},
-        )
+    work_h_query = _load_query_sql("history", "work_history")
+    maint_h_query = _load_query_sql("history", "maintenance_history")
+    event_l_query = _load_query_sql("history", "event_log")
 
     ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=1)
     if not ci_hits:
-        fallback_blocks = _build_history_fallback(tenant_id, question)
-        fallback_dicts = [
-            b.dict() if hasattr(b, "dict") else b for b in fallback_blocks
-        ]
+        error_block = MarkdownBlock(
+            type="markdown",
+            title="No CI Found",
+            content="### CI를 찾을 수 없습니다\n- 질문에서 CI를 지정하거나 검색어를 사용해 주세요.",
+        )
         return ExecutorResult(
-            blocks=fallback_dicts,
+            blocks=[error_block.dict()],
             used_tools=used_tools,
             tool_calls=tool_calls,
             references=references_list,
@@ -303,76 +284,3 @@ def _build_references(
     )
 
 
-def _build_history_fallback(tenant_id: str, question: str) -> list[AnswerBlock]:
-    history = history_tools.recent_work_and_maintenance(tenant_id, "last_7d", limit=50)
-    work_rows = history.get("work_rows", [])
-    maint_rows = history.get("maint_rows", [])
-    sections = history_tools.detect_history_sections(question)
-    include_work = "work" in sections or not sections
-    include_maint = "maintenance" in sections or not sections
-    blocks: list[AnswerBlock] = [
-        MarkdownBlock(
-            type="markdown",
-            title="전체 이력 fallback",
-            content="CI 없이 전체 이력을 보여드립니다.",
-        ),
-    ]
-    if include_work:
-        blocks.append(
-            TableBlock(
-                type="table",
-                title="Work history (최근 7일)",
-                columns=[
-                    "start_time",
-                    "ci_code",
-                    "ci_name",
-                    "work_type",
-                    "impact_level",
-                    "result",
-                    "summary",
-                ],
-                rows=[
-                    [
-                        str(row[0]),
-                        row[1] or "-",
-                        row[2] or "-",
-                        row[3],
-                        str(row[4]),
-                        row[5] or "",
-                        row[6] or "",
-                    ]
-                    for row in work_rows
-                ]
-                or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
-            )
-        )
-    if include_maint:
-        blocks.append(
-            TableBlock(
-                type="table",
-                title="Maintenance history (최근 7일)",
-                columns=[
-                    "start_time",
-                    "ci_code",
-                    "ci_name",
-                    "maint_type",
-                    "duration_min",
-                    "result",
-                    "summary",
-                ],
-                rows=[
-                    [
-                        str(row[0]),
-                        row[1] or "-",
-                        row[2] or "-",
-                        row[3],
-                        str(row[4]),
-                        row[5] or "",
-                        row[6] or "",
-                    ]
-                    for row in maint_rows
-                ]
-                or [["데이터 없음", "-", "-", "-", "-", "-", "-"]],
-            )
-        )
-    return blocks

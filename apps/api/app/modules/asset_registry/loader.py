@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from core.config import get_settings
 from core.db import get_session_context
 from sqlmodel import select
 
@@ -20,6 +21,11 @@ from app.shared import config_loader
 from .models import TbAssetRegistry
 
 logger = logging.getLogger(__name__)
+
+def _is_real_mode() -> bool:
+    """Check if running in real mode (no fallback allowed)."""
+    settings = get_settings()
+    return settings.ops_mode == "real"
 
 
 def load_prompt_asset(
@@ -82,7 +88,15 @@ def load_prompt_asset(
             )
             return payload
 
-    # Fallback to file
+    # Fallback to file (only in test/dev mode)
+    if _is_real_mode():
+        raise ValueError(
+            f"[REAL MODE] Prompt asset not found in Asset Registry: {name} "
+            f"(scope={scope}, engine={engine}). "
+            f"Asset must be published to Asset Registry (DB) in real mode. "
+            f"Please create and publish the asset in Admin → Assets."
+        )
+
     file_path = f"prompts/{scope}/{engine}.yaml"
     prompt_data = config_loader.load_yaml(file_path)
 
@@ -161,7 +175,14 @@ def load_mapping_asset(
             )
             return payload
 
-    # Fallback to seed file
+    # Fallback to seed file (only in test/dev mode)
+    if _is_real_mode():
+        raise ValueError(
+            f"[REAL MODE] Mapping asset not found in Asset Registry: {mapping_type}. "
+            f"Asset must be published to Asset Registry (DB) in real mode. "
+            f"Please create and publish the asset in Admin → Assets."
+        )
+
     seed_path = "mappings/graph_relation_mapping.yaml"
     seed_data = config_loader.load_yaml(seed_path)
 
@@ -265,7 +286,14 @@ def load_policy_asset(
             )
             return payload
 
-    # Fallback to seed file
+    # Fallback to seed file or hardcoded (only in test/dev mode)
+    if _is_real_mode():
+        raise ValueError(
+            f"[REAL MODE] Policy asset not found in Asset Registry: {policy_type}. "
+            f"Asset must be published to Asset Registry (DB) in real mode. "
+            f"Please create and publish the asset in Admin → Assets."
+        )
+
     seed_file_map = {
         "plan_budget": "policies/plan_budget.yaml",
         "view_depth": "policies/view_depth_policies.yaml",
@@ -394,7 +422,14 @@ def load_query_asset(
                 asset_identifier,
             )
 
-    # Fallback to file
+    # Fallback to file (only in test/dev mode)
+    if _is_real_mode():
+        raise ValueError(
+            f"[REAL MODE] Query asset not found in Asset Registry: {name} (scope={scope}). "
+            f"Asset must be published to Asset Registry (DB) in real mode. "
+            f"Please create and publish the asset in Admin → Assets."
+        )
+
     file_path = f"queries/{scope}/{name}.sql"
     query_text = config_loader.load_text(file_path)
 
@@ -483,6 +518,14 @@ def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] |
     source_config = config_loader.load_yaml(config_file)
 
     if source_config:
+        # Fallback to file (only in test/dev mode)
+        if _is_real_mode():
+            raise ValueError(
+                f"[REAL MODE] Source asset not found in Asset Registry: {name}. "
+                f"Asset must be published to Asset Registry (DB) in real mode. "
+                f"Please create and publish the asset in Admin → Assets."
+            )
+
         logger.warning(f"Using config file for source '{name}': {config_file}")
         source_data = dict(source_config)
         source_data["source"] = "file_fallback"
@@ -562,6 +605,14 @@ def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] |
     schema_config = config_loader.load_yaml(config_file)
 
     if schema_config:
+        # Fallback to file (only in test/dev mode)
+        if _is_real_mode():
+            raise ValueError(
+                f"[REAL MODE] Schema asset not found in Asset Registry: {name}. "
+                f"Asset must be published to Asset Registry (DB) in real mode. "
+                f"Please create and publish the asset in Admin → Assets."
+            )
+
         logger.warning(f"Using config file for schema '{name}': {config_file}")
         schema_data = dict(schema_config)
         schema_data["source"] = "file_fallback"
@@ -643,6 +694,14 @@ def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any]
     resolver_config = config_loader.load_yaml(config_file)
 
     if resolver_config:
+        # Fallback to file (only in test/dev mode)
+        if _is_real_mode():
+            raise ValueError(
+                f"[REAL MODE] Resolver asset not found in Asset Registry: {name}. "
+                f"Asset must be published to Asset Registry (DB) in real mode. "
+                f"Please create and publish the asset in Admin → Assets."
+            )
+
         logger.warning(f"Using config file for resolver {name}: {config_file}")
         resolver_data = dict(resolver_config)
         resolver_data["source"] = "file_fallback"

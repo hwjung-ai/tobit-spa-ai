@@ -1057,3 +1057,124 @@ def simulate_resolver_configuration(
             "rule_count": len(asset.config.rules),
         },
     }
+
+
+# Query Asset CRUD operations
+def create_query_asset(
+    session: Session,
+    query_data: Any,  # QueryAssetCreate from query_models
+    created_by: str | None = None,
+) -> Any:  # QueryAssetResponse
+    """Create a new query asset"""
+    # Create TbAssetRegistry record
+    asset = create_asset(
+        session=session,
+        name=query_data.name,
+        asset_type="query",
+        description=query_data.description,
+        scope=query_data.scope,
+        query_sql=query_data.query_sql,
+        query_params=query_data.query_params,
+        query_metadata=query_data.query_metadata,
+        tags=query_data.tags,
+        created_by=created_by,
+    )
+
+    # Import QueryAssetResponse locally to avoid circular imports
+    from .query_models import QueryAssetResponse
+
+    return QueryAssetResponse(
+        asset_id=str(asset.asset_id),
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        scope=asset.scope,
+        query_sql=asset.query_sql or "",
+        query_params=asset.query_params or {},
+        query_metadata=asset.query_metadata or {},
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+    )
+
+
+def get_query_asset(session: Session, asset_id: str) -> Any | None:  # QueryAssetResponse | None
+    """Get query asset by ID"""
+    asset = get_asset(session, asset_id)
+    if not asset or asset.asset_type != "query":
+        return None
+
+    from .query_models import QueryAssetResponse
+
+    return QueryAssetResponse(
+        asset_id=str(asset.asset_id),
+        asset_type=asset.asset_type,
+        name=asset.name,
+        description=asset.description,
+        version=asset.version,
+        status=asset.status,
+        scope=asset.scope,
+        query_sql=asset.query_sql or "",
+        query_params=asset.query_params or {},
+        query_metadata=asset.query_metadata or {},
+        tags=asset.tags,
+        created_by=asset.created_by,
+        published_by=asset.published_by,
+        published_at=asset.published_at,
+        created_at=asset.created_at,
+        updated_at=asset.updated_at,
+    )
+
+
+def update_query_asset(
+    session: Session,
+    asset_id: str,
+    updates: Any,  # QueryAssetUpdate from query_models
+    updated_by: str | None = None,
+) -> Any:  # QueryAssetResponse
+    """Update a query asset"""
+    asset = get_query_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Query asset not found")
+
+    # Build update dictionary
+    update_dict = {}
+    if updates.name is not None:
+        update_dict["name"] = updates.name
+    if updates.description is not None:
+        update_dict["description"] = updates.description
+    if updates.query_sql is not None:
+        update_dict["query_sql"] = updates.query_sql
+    if updates.query_params is not None:
+        update_dict["query_params"] = updates.query_params
+    if updates.query_metadata is not None:
+        update_dict["query_metadata"] = updates.query_metadata
+    if updates.tags is not None:
+        update_dict["tags"] = updates.tags
+
+    # Update the asset
+    # Need to get the actual TbAssetRegistry object
+    tb_asset = get_asset(session, asset_id)
+    if tb_asset:
+        update_asset(
+            session=session,
+            asset=tb_asset,
+            updates=update_dict,
+            updated_by=updated_by,
+        )
+
+    return get_query_asset(session, asset_id)
+
+
+def delete_query_asset(session: Session, asset_id: str) -> Any:  # QueryAssetResponse
+    """Delete a query asset"""
+    asset = get_query_asset(session, asset_id)
+    if not asset:
+        raise ValueError("Query asset not found")
+
+    return delete_asset(session, asset_id)

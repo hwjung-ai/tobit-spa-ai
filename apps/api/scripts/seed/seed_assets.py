@@ -12,8 +12,9 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.core.db import get_session_context
+from core.db import get_session_context
 from app.modules.asset_registry.crud import (
+    create_asset,
     create_resolver_asset,
     create_schema_asset,
     create_source_asset,
@@ -41,6 +42,7 @@ RESOURCES_DIR = ROOT / "resources"
 SOURCE_DIR = "sources"
 SCHEMA_DIR = "schemas"
 RESOLVER_DIR = "resolvers"
+QUERY_DIR = "queries"
 
 
 def _load_resource_names(folder: str) -> list[str]:
@@ -180,6 +182,55 @@ def _seed_resolver(session, name: str, force: bool) -> bool:
     return True
 
 
+def _seed_query(session, scope: str, name: str, force: bool) -> bool:
+    """Seed a query asset from YAML and SQL files"""
+    # Load YAML metadata
+    yaml_path = f"queries/postgres/{scope}/{name}.yaml"
+    payload = load_yaml(yaml_path)
+    if not payload:
+        return False
+
+    existing = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "query")
+        .where(TbAssetRegistry.name == name)
+        .where(TbAssetRegistry.scope == scope)
+        .where(TbAssetRegistry.status == "published")
+    ).first()
+    if existing and not force:
+        return False
+
+    # Load SQL content
+    from app.shared.config_loader import load_text
+    sql_path = f"queries/postgres/{scope}/{name}.sql"
+    query_sql = load_text(sql_path) or ""
+
+    # Import QueryAssetCreate locally to avoid circular imports
+    from app.modules.asset_registry.query_models import QueryAssetCreate
+    from app.modules.asset_registry.crud import create_asset
+
+    # Convert tags list to dict if needed
+    tags = payload.get("tags", {})
+    if isinstance(tags, list):
+        tags = {"tags": tags}
+
+    # Create the asset directly using create_asset
+    asset = create_asset(
+        session=session,
+        name=payload.get("name", name),
+        asset_type="query",
+        description=payload.get("description"),
+        scope=payload.get("scope", scope),
+        query_sql=query_sql,
+        query_params=payload.get("query_params", {}),
+        query_metadata=payload.get("query_metadata", {}),
+        tags=tags,
+        created_by="seed",
+    )
+    publish_asset(session, asset, published_by="seed")
+    return True
+
+
 def _export_sources(session) -> int:
     assets = session.exec(
         select(TbAssetRegistry)
@@ -271,8 +322,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--types",
-        default="source,schema,resolver",
-        help="Comma-separated asset types to process (source,schema,resolver).",
+        default="source,schema,resolver,query",
+        help="Comma-separated asset types to process (source,schema,resolver,query).",
     )
     args = parser.parse_args()
 
@@ -291,6 +342,17 @@ def main() -> None:
             if "resolver" in selected_types:
                 for name in _load_resource_names(RESOLVER_DIR):
                     _seed_resolver(session, name, args.force)
+            if "query" in selected_types:
+                # Seed query assets from queries/postgres/{scope}/*.sql
+                import os
+                query_base = RESOURCES_DIR / "queries" / "postgres"
+                if query_base.exists():
+                    for scope_dir in query_base.iterdir():
+                        if scope_dir.is_dir():
+                            scope = scope_dir.name
+                            for sql_file in scope_dir.glob("*.sql"):
+                                name = sql_file.stem
+                                _seed_query(session, scope, name, args.force)
 
         if args.export_resources:
             if "source" in selected_types:

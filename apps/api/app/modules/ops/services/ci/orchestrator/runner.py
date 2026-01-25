@@ -4967,6 +4967,9 @@ class CIOrchestratorRunner:
                     ),
                 }
             )
+            self.logger.info(
+                f"Stage recorded: {stage_name}, status={stage_output_payload.get('diagnostics', {}).get('status', 'ok')}, duration={stage_output_payload.get('duration_ms', 0)}ms"
+            )
 
         try:
             route_start = perf_counter()
@@ -5199,6 +5202,9 @@ class CIOrchestratorRunner:
             "orch"
             if plan_output.kind == PlanOutputKind.PLAN
             else plan_output.kind.value
+        )
+        self.logger.info(
+            f"Trace creation: route={route_kind}, stage_inputs={len(stage_inputs)}, stage_outputs={len(stage_outputs)}"
         )
         trace = {
             "route": route_kind,
