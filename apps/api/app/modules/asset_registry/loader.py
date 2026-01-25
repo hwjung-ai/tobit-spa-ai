@@ -22,22 +22,38 @@ from .models import TbAssetRegistry
 logger = logging.getLogger(__name__)
 
 
-def load_prompt_asset(scope: str, engine: str, name: str) -> dict[str, Any] | None:
+def load_prompt_asset(
+    scope: str, engine: str, name: str, version: int | None = None
+) -> dict[str, Any] | None:
     """
     Load prompt asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. File from resources/prompts/
+
+    Args:
+        scope: Prompt scope (e.g., "ci")
+        engine: LLM engine (e.g., "openai")
+        name: Asset name
+        version: Specific version to load (None for published)
     """
     with get_session_context() as session:
         # Try DB first
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "prompt")
             .where(TbAssetRegistry.scope == scope)
             .where(TbAssetRegistry.engine == engine)
             .where(TbAssetRegistry.name == name)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            # Load specific version
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            # Load published version
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(f"Loaded prompt from asset registry: {name} (v{asset.version})")
@@ -95,20 +111,32 @@ def load_prompt_asset(scope: str, engine: str, name: str) -> dict[str, Any] | No
     return None
 
 
-def load_mapping_asset(mapping_type: str = "graph_relation") -> dict[str, Any] | None:
+def load_mapping_asset(
+    mapping_type: str = "graph_relation", version: int | None = None
+) -> dict[str, Any] | None:
     """
     Load mapping asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. Seed file from resources/
     3. Legacy file (current location)
+
+    Args:
+        mapping_type: Mapping type identifier
+        version: Specific version to load (None for published)
     """
     with get_session_context() as session:
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "mapping")
             .where(TbAssetRegistry.mapping_type == mapping_type)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(
@@ -187,20 +215,32 @@ def load_mapping_asset(mapping_type: str = "graph_relation") -> dict[str, Any] |
     return None
 
 
-def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None:
+def load_policy_asset(
+    policy_type: str = "plan_budget", version: int | None = None
+) -> dict[str, Any] | None:
     """
     Load policy asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. Seed file from resources/
     3. Hardcoded defaults
+
+    Args:
+        policy_type: Policy type identifier
+        version: Specific version to load (None for published)
     """
     with get_session_context() as session:
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "policy")
             .where(TbAssetRegistry.policy_type == policy_type)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(
@@ -298,11 +338,18 @@ def load_policy_asset(policy_type: str = "plan_budget") -> dict[str, Any] | None
     return None
 
 
-def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str | None]:
+def load_query_asset(
+    scope: str, name: str, version: int | None = None
+) -> tuple[dict[str, Any] | None, str | None]:
     """
     Load query asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. File from resources/queries/
+
+    Args:
+        scope: Query scope (e.g., "ops")
+        name: Asset name
+        version: Specific version to load (None for published)
 
     Returns:
         Tuple of (asset_data, asset_id_version_str)
@@ -310,13 +357,19 @@ def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str 
     """
     with get_session_context() as session:
         # Try DB first
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "query")
             .where(TbAssetRegistry.scope == scope)
             .where(TbAssetRegistry.name == name)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(f"Loaded query from asset registry: {name} (v{asset.version})")
@@ -370,26 +423,33 @@ def load_query_asset(scope: str, name: str) -> tuple[dict[str, Any] | None, str 
     return None, None
 
 
-def load_source_asset(name: str) -> dict[str, Any] | None:
+def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
     Load source asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. Config file from config/sources/
 
     Args:
-        name: Name of the source asset
+        name: Name of source asset
+        version: Specific version to load (None for published)
 
     Returns:
         Dictionary containing source connection details
     """
     with get_session_context() as session:
         # Try DB first
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "source")
             .where(TbAssetRegistry.name == name)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(f"Loaded source from asset registry: {name} (v{asset.version})")
@@ -442,26 +502,33 @@ def load_source_asset(name: str) -> dict[str, Any] | None:
     return None
 
 
-def load_schema_asset(name: str) -> dict[str, Any] | None:
+def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
     Load schema asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. Config file from config/schemas/
 
     Args:
-        name: Name of the schema asset
+        name: Name of schema asset
+        version: Specific version to load (None for published)
 
     Returns:
         Dictionary containing schema catalog information
     """
     with get_session_context() as session:
         # Try DB first
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "schema")
             .where(TbAssetRegistry.name == name)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(f"Loaded schema from asset registry: {name} (v{asset.version})")
@@ -514,26 +581,33 @@ def load_schema_asset(name: str) -> dict[str, Any] | None:
     return None
 
 
-def load_resolver_asset(name: str) -> dict[str, Any] | None:
+def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
     Load resolver asset with fallback priority:
-    1. Published asset from DB
+    1. Specific version from DB (if version specified) or Published asset from DB
     2. Config file from config/resolvers/
 
     Args:
-        name: Name of the resolver asset
+        name: Name of resolver asset
+        version: Specific version to load (None for published)
 
     Returns:
         Dictionary containing resolver configuration
     """
     with get_session_context() as session:
         # Try DB first
-        asset = session.exec(
+        query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "resolver")
             .where(TbAssetRegistry.name == name)
-            .where(TbAssetRegistry.status == "published")
-        ).first()
+        )
+
+        if version is not None:
+            query = query.where(TbAssetRegistry.version == version)
+        else:
+            query = query.where(TbAssetRegistry.status == "published")
+
+        asset = session.exec(query).first()
 
         if asset:
             logger.info(
@@ -588,13 +662,19 @@ def load_resolver_asset(name: str) -> dict[str, Any] | None:
     return None
 
 
-def load_screen_asset(name: str) -> dict[str, Any] | None:
+def load_screen_asset(
+    name: str, version: int | None = None
+) -> dict[str, Any] | None:
     """Load screen asset with fallback priority.
 
     Priority:
-    1. DB (published screen asset)
+    1. DB (specific version or published screen asset)
     2. File (resources/screens/{name}.json)
     3. None (not found)
+
+    Args:
+        name: Asset name
+        version: Specific version to load (None for published)
     """
     try:
         from core.db import get_session
@@ -603,12 +683,18 @@ def load_screen_asset(name: str) -> dict[str, Any] | None:
         from app.modules.asset_registry.models import TbAssetRegistry
 
         with get_session() as session:
-            asset = session.exec(
+            query = (
                 select(TbAssetRegistry)
                 .where(TbAssetRegistry.asset_type == "screen")
                 .where(TbAssetRegistry.name == name)
-                .where(TbAssetRegistry.status == "published")
-            ).first()
+            )
+
+            if version is not None:
+                query = query.where(TbAssetRegistry.version == version)
+            else:
+                query = query.where(TbAssetRegistry.status == "published")
+
+            asset = session.exec(query).first()
 
             if asset:
                 logger.info(f"Screen asset loaded from DB: {name} (v{asset.version})")

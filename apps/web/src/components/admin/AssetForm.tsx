@@ -9,9 +9,10 @@ import Toast from "./Toast";
 interface AssetFormProps {
     asset: Asset;
     onSave: () => void;
+    onLoadVersion?: (version: number) => void; // Optional callback for version switching
 }
 
-export default function AssetForm({ asset, onSave }: AssetFormProps) {
+export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormProps) {
     const readOnlyPayload = useMemo(() => {
         if (!asset.content) {
             return "";
@@ -33,6 +34,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
         query_sql: asset.query_sql || "",
         query_params: asset.query_params ? JSON.stringify(asset.query_params, null, 2) : "",
         query_metadata: asset.query_metadata ? JSON.stringify(asset.query_metadata, null, 2) : "",
+        tags: asset.tags ? JSON.stringify(asset.tags, null, 2) : "",
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -42,6 +44,7 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
     const [showRollbackModal, setShowRollbackModal] = useState(false);
     const [rollbackVersion, setRollbackVersion] = useState("");
+    const [selectedVersion, setSelectedVersion] = useState<number>(asset.version);
 
     const handleDelete = async () => {
         if (!confirm("Are you sure you want to delete this draft asset? This action cannot be undone.")) return;
@@ -111,6 +114,14 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                 }
                 if (formData.query_metadata.trim()) {
                     payload.query_metadata = JSON.parse(formData.query_metadata);
+                }
+            } else if (asset.asset_type === "screen") {
+                if (formData.content.trim()) {
+                    payload.content = JSON.parse(formData.content);
+                    payload.screen_schema = payload.content; // Sync content to screen_schema
+                }
+                if (formData.tags.trim()) {
+                    payload.tags = JSON.parse(formData.tags);
                 }
             }
 
@@ -227,10 +238,37 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                                 {asset.status}
                             </p>
                         </div>
-                        <div>
-                            <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1">Version</label>
-                            <p className="text-slate-300 font-mono">v{asset.version}</p>
+                    <div>
+                        <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1">Version</label>
+                        <div className="flex items-center gap-2">
+                            <select
+                                value={selectedVersion}
+                                onChange={(e) => {
+                                    const version = parseInt(e.target.value, 10);
+                                    setSelectedVersion(version);
+                                    if (onLoadVersion) {
+                                        onLoadVersion(version);
+                                    }
+                                }}
+                                className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-lg text-slate-300 font-mono text-sm focus:outline-none focus:border-sky-500"
+                            >
+                                <option value={asset.version}>v{asset.version} (current)</option>
+                                {/* Future: Add option to load all versions history */}
+                            </select>
+                            <button
+                                onClick={() => {
+                                    setSelectedVersion(asset.version);
+                                    if (onLoadVersion) {
+                                        onLoadVersion(asset.version);
+                                    }
+                                }}
+                                className="text-xs text-sky-400 hover:text-sky-300"
+                                title="View all versions"
+                            >
+                                History...
+                            </button>
                         </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -380,7 +418,61 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                     </div>
                 )}
 
-                {!["prompt", "mapping", "policy", "query"].includes(asset.asset_type) && (
+                {asset.asset_type === "screen" && (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Screen ID</label>
+                            <input
+                                type="text"
+                                value={asset.screen_id || ""}
+                                disabled
+                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Stable identifier for the screen (immutable)</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Screen Schema (JSON)</label>
+                            <textarea
+                                value={formData.content}
+                                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                disabled={!isDraft}
+                                rows={16}
+                                placeholder="{}"
+                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">UI definition following screen.schema.json format</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Tags (JSON)</label>
+                            <textarea
+                                value={formData.tags || ""}
+                                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                                disabled={!isDraft}
+                                rows={4}
+                                placeholder="{}"
+                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Optional metadata tags (e.g., {`{"category": "maintenance"}`})</p>
+                        </div>
+
+                        <div className="flex items-center justify-between bg-slate-950/50 rounded-lg p-4 border border-slate-800">
+                            <div className="space-y-1">
+                                <p className="text-sm font-medium text-slate-300">Screen Editor</p>
+                                <p className="text-xs text-slate-500">Use the visual screen editor for better UX</p>
+                            </div>
+                            <Link
+                                href={`/admin/screens/${asset.asset_id}`}
+                                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors font-medium text-sm"
+                            >
+                                Open Screen Editor →
+                            </Link>
+                        </div>
+                    </div>
+                )}
+
+                {!["prompt", "mapping", "policy", "query", "screen"].includes(asset.asset_type) && (
                     <div className="space-y-3 text-sm text-slate-400">
                         <p>
                             이 Asset 타입은 현재 Admin Assets 화면에서 편집을 지원하지 않습니다.
@@ -453,9 +545,9 @@ export default function AssetForm({ asset, onSave }: AssetFormProps) {
                         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                             Enter the version number to rollback to. This will move the <strong>published status</strong> to the selected version and increment the version number.
                         </p>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-2">Version Number</label>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs text-slate-500 uppercase tracking-wider mb-2">Version Number</label>
                                 <input
                                     type="number"
                                     min="1"
