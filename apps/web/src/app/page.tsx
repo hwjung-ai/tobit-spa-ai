@@ -383,11 +383,14 @@ export default function Home() {
                   className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-sky-400 disabled:bg-slate-700"
                   disabled={!inputValue.trim() || status === "streaming"}
                 >
-                  {status === "streaming" ? "Streaming…" : "메시지 전송"}
+                  <span className={status === "streaming" ? "animate-pulse" : ""}>
+                    {status === "streaming" ? "Streaming…" : "메시지 전송"}
+                  </span>
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-[0.3em] ${status === "error" ? "text-rose-400" : "text-slate-500"
-                    }`}
+                  className={`text-xs uppercase tracking-[0.3em] ${
+                    status === "streaming" ? "animate-pulse" : ""
+                  } ${status === "error" ? "text-rose-400" : "text-slate-500"}`}
                 >
                   {status === "streaming" ? "SSE live" : status === "idle" ? "Ready" : "Error"}
                 </span>

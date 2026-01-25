@@ -3,6 +3,7 @@
 import { Asset, formatRelativeTime } from "../../lib/adminUtils";
 import Link from "next/link";
 import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
@@ -16,6 +17,20 @@ interface AssetTableProps {
 }
 
 export default function AssetTable({ assets }: AssetTableProps) {
+    const searchParams = useSearchParams();
+    
+    // Build detail URL with preserved filter parameters
+    const buildDetailUrl = (assetId: string) => {
+        const params = new URLSearchParams();
+        const type = searchParams?.get("type");
+        const status = searchParams?.get("status");
+        
+        if (type) params.append("type", type);
+        if (status) params.append("status", status);
+        
+        const queryString = params.toString();
+        return `/admin/assets/${assetId}${queryString ? `?${queryString}` : ""}`;
+    };
     const colDefs = useMemo<ColDef<Asset>[]>(() => [
         {
             headerName: "Name",
@@ -26,7 +41,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
                 if (!params.data) return null;
                 return (
                     <Link
-                        href={`/admin/assets/${params.data.asset_id}`}
+                        href={buildDetailUrl(params.data.asset_id)}
                         className="text-sky-400 hover:text-sky-300 font-medium transition-colors"
                     >
                         {params.value}
@@ -102,7 +117,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
             cellRenderer: (params: ICellRendererParams<Asset>) => (
                 <div className="flex justify-end w-full pr-2">
                     <Link
-                        href={`/admin/assets/${params.value}`}
+                        href={buildDetailUrl(params.value)}
                         className="text-slate-500 hover:text-sky-400 transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

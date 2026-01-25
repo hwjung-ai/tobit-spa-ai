@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { Asset, fetchApi } from "../../../../lib/adminUtils";
 import AssetForm from "../../../../components/admin/AssetForm";
 import Link from "next/link";
@@ -12,8 +13,22 @@ import { useQuery } from "@tanstack/react-query";
 export default function AssetDetailPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const assetId = params.assetId as string;
     const [confirm, ConfirmDialogComponent] = useConfirm();
+
+    // Build back URL with preserved filter parameters
+    const backUrl = useMemo(() => {
+        const params = new URLSearchParams();
+        const type = searchParams?.get("type");
+        const status = searchParams?.get("status");
+
+        if (type) params.append("type", type);
+        if (status) params.append("status", status);
+
+        const queryString = params.toString();
+        return `/admin/assets${queryString ? `?${queryString}` : ""}`;
+    }, [searchParams]);
 
     const { data: asset, isLoading, error, refetch } = useQuery({
         queryKey: ["asset", assetId],
@@ -81,6 +96,12 @@ export default function AssetDetailPage() {
                 <div className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border border-slate-800 bg-slate-900/40 p-12">
                     <div className="w-12 h-12 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
                     <p className="text-slate-500 font-medium">Loading asset details...</p>
+                    <Link
+                        href={backUrl}
+                        className="mt-6 px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium inline-block"
+                    >
+                        ← Return to Asset List
+                    </Link>
                 </div>
             </div>
         );
@@ -98,7 +119,7 @@ export default function AssetDetailPage() {
                     <h2 className="text-xl font-bold text-white mb-2">Error Loading Asset</h2>
                     <p className="text-slate-400 mb-8 max-w-xl text-center">{(error as Error)?.message || "The requested asset could not be found or retrieved from the server."}</p>
                     <Link
-                        href="/admin/assets"
+                        href={backUrl}
                         className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium inline-block"
                     >
                         ← Return to Asset List
@@ -113,7 +134,7 @@ export default function AssetDetailPage() {
             <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
                 <div className="flex-1 space-y-4">
                     <Link
-                        href="/admin/assets"
+                        href={backUrl}
                         className="text-sky-500 hover:text-sky-400 font-medium text-sm flex items-center gap-1 transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

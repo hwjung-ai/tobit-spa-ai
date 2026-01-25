@@ -10,19 +10,18 @@ const NAV_ITEMS = [
   { label: "API", href: "/api-manager" },
   { label: "Screens", href: "/ui/screens" },
   { label: "CEP", href: "/cep-builder" },
-  { label: "Data", href: "/data", adminOnly: true },
   { label: "Admin", href: "/admin/assets", adminOnly: true },
 ];
 
 export default function NavTabs() {
   const pathname = usePathname() || "/";
-  const enableDataExplorer =
-    process.env.NEXT_PUBLIC_ENABLE_DATA_EXPLORER === "true";
+  const enableAdmin =
+    process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
   return (
     <nav className="flex gap-4 text-sm uppercase tracking-[0.3em]">
       {NAV_ITEMS.filter((item) =>
-        item.adminOnly ? enableDataExplorer : true
+        item.adminOnly ? enableAdmin : true
       ).map((item) => {
         const isActive =
           pathname === item.href ||

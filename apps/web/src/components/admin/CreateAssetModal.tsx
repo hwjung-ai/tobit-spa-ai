@@ -11,7 +11,7 @@ interface CreateAssetModalProps {
 
 export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModalProps) {
   const [name, setName] = useState("");
-  const [assetType, setAssetType] = useState<"prompt" | "mapping" | "policy" | "query" | "screen">("prompt");
+  const [assetType, setAssetType] = useState<"prompt" | "mapping" | "policy" | "query" | "screen" | "source" | "schema" | "resolver">("prompt");
   const [description, setDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
@@ -83,8 +83,8 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
                 Asset Category
               </label>
-              <div className="grid grid-cols-5 gap-3">
-                {(["prompt", "mapping", "policy", "query", "screen"] as const).map((type) => (
+              <div className="grid grid-cols-4 gap-3">
+                {(["prompt", "mapping", "policy", "query", "screen", "source", "schema", "resolver"] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setAssetType(type)}

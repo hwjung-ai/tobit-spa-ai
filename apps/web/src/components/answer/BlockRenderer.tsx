@@ -825,7 +825,7 @@ function prepareChartData(series: TimeSeriesSeries[]) {
 import Neo4jGraphFlow, {
   type Neo4jFlowEdge,
   type Neo4jFlowNode,
-} from "../data/Neo4jGraphFlow";
+} from "../admin/Neo4jGraphFlow";
 
 function GraphFlowRenderer({ block }: { block: GraphBlock }) {
   const [highlightNodeIds, setHighlightNodeIds] = useState<Set<string>>(new Set());
