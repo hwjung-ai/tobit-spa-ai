@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect } from "react";
 import { Asset, fetchApi } from "../../lib/adminUtils";
@@ -6,6 +5,7 @@ import ValidationAlert from "./ValidationAlert";
 import Toast from "./Toast";
 import Link from "next/link";
 import { useConfirm } from "@/hooks/use-confirm";
+import { useSearchParams } from "next/navigation";
 import {
   SCREEN_TEMPLATES,
   createMinimalScreen,
@@ -17,11 +17,16 @@ interface ScreenAssetPanelProps {
 }
 
 export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelProps) {
+  const searchParams = useSearchParams();
   const [screens, setScreens] = useState<Asset[]>([]);
   const [filteredScreens, setFilteredScreens] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "draft" | "published">("all");
+  
+  // Initialize filter state from URL params
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [filterStatus, setFilterStatus] = useState<"all" | "draft" | "published">(
+    (searchParams.get("status") as "all" | "draft" | "published") || "all"
+  );
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "warning" } | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -35,9 +40,30 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
   const [refreshTrigger] = useState(0);
   const [confirm, ConfirmDialogComponent] = useConfirm();
 
+  // Fetch screens when URL params change
   useEffect(() => {
     fetchScreens();
-  }, [refreshTrigger]);
+  }, [searchParams]);
+
+  // Update URL with current filter state
+  const updateUrlParams = (search: string, status: "all" | "draft" | "published") => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (search) {
+      params.set("search", search);
+    } else {
+      params.delete("search");
+    }
+    
+    if (status !== "all") {
+      params.set("status", status);
+    } else {
+      params.delete("status");
+    }
+    
+    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+    window.history.replaceState({}, "", newUrl);
+  };
 
   useEffect(() => {
     let filtered = screens;
@@ -358,14 +384,20 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           type="text"
           placeholder="Search by ID or name..."
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={e => {
+            setSearchTerm(e.target.value);
+            updateUrlParams(e.target.value, filterStatus);
+          }}
           className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-sky-500"
           data-testid="input-search-screens"
         />
 
         <select
           value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value as "all" | "draft" | "published")}
+          onChange={e => {
+            setFilterStatus(e.target.value as "all" | "draft" | "published");
+            updateUrlParams(searchTerm, e.target.value as "all" | "draft" | "published");
+          }}
           className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-sky-500"
           data-testid="select-filter-status"
         >
