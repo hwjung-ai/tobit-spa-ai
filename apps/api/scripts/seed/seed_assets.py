@@ -43,6 +43,9 @@ SOURCE_DIR = "sources"
 SCHEMA_DIR = "schemas"
 RESOLVER_DIR = "resolvers"
 QUERY_DIR = "queries"
+POLICY_DIR = "policies"
+PROMPT_DIR = "prompts"
+MAPPING_DIR = "mappings"
 
 
 def _load_resource_names(folder: str) -> list[str]:
@@ -108,7 +111,6 @@ def _seed_schema(session, name: str, force: bool) -> bool:
         return False
 
     catalog_payload = payload.get("catalog") or {}
-    catalog = SchemaCatalog(**catalog_payload) if catalog_payload else None
     schema_data = SchemaAssetCreate(
         name=payload.get("name", name),
         description=payload.get("description"),
@@ -116,10 +118,34 @@ def _seed_schema(session, name: str, force: bool) -> bool:
         scope=payload.get("scope"),
         tags=payload.get("tags") or {},
     )
-    if catalog is not None:
-        setattr(schema_data, "catalog", catalog)
-    created = create_schema_asset(session, schema_data, created_by="seed")
-    publish_asset(session, created, published_by="seed")
+    # Create TbAssetRegistry record directly
+    from app.modules.asset_registry.crud import update_asset
+
+    asset = create_asset(
+        session=session,
+        name=schema_data.name,
+        asset_type="schema",
+        description=schema_data.description,
+        scope=schema_data.scope,
+        tags=schema_data.tags,
+        created_by="seed",
+    )
+
+    # Store schema data in content field
+    content = {
+        "source_ref": schema_data.source_ref,
+        "catalog": catalog_payload,
+        "spec": None,
+    }
+
+    update_asset(
+        session=session,
+        asset=asset,
+        updates={"content": content},
+        updated_by="seed",
+    )
+
+    publish_asset(session, asset, published_by="seed")
     return True
 
 
@@ -170,15 +196,33 @@ def _seed_resolver(session, name: str, force: bool) -> bool:
         default_namespace=payload.get("default_namespace"),
         tags=payload.get("tags") or {},
     )
-    resolver_data = ResolverAssetCreate(
+    # Create TbAssetRegistry record directly
+    asset = create_asset(
+        session=session,
         name=payload.get("name", name),
+        asset_type="resolver",
         description=payload.get("description"),
-        config=config,
         scope=payload.get("scope"),
         tags=payload.get("tags") or {},
+        created_by="seed",
     )
-    created = create_resolver_asset(session, resolver_data, created_by="seed")
-    publish_asset(session, created, published_by="seed")
+
+    # Store resolver data in content field
+    content = {
+        "rules": [rule.model_dump() for rule in rules],
+        "default_namespace": payload.get("default_namespace"),
+        "spec": None,
+    }
+
+    from app.modules.asset_registry.crud import update_asset
+    update_asset(
+        session=session,
+        asset=asset,
+        updates={"content": content},
+        updated_by="seed",
+    )
+
+    publish_asset(session, asset, published_by="seed")
     return True
 
 
@@ -227,6 +271,184 @@ def _seed_query(session, scope: str, name: str, force: bool) -> bool:
         tags=tags,
         created_by="seed",
     )
+    publish_asset(session, asset, published_by="seed")
+    return True
+
+
+def _seed_policy(session, name: str, force: bool) -> bool:
+    """Seed a policy asset from YAML file"""
+    payload = load_yaml(f"{POLICY_DIR}/{name}.yaml")
+    if not payload:
+        return False
+
+    existing = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "policy")
+        .where(TbAssetRegistry.name == name)
+        .where(TbAssetRegistry.status == "published")
+    ).first()
+    if existing and not force:
+        return False
+
+    # Create TbAssetRegistry record directly
+    asset = create_asset(
+        session=session,
+        name=payload.get("name", name),
+        asset_type="policy",
+        description=payload.get("description"),
+        scope=payload.get("scope"),
+        policy_type=payload.get("policy_type"),
+        limits=payload.get("limits"),
+        tags=payload.get("tags") or {},
+        created_by="seed",
+    )
+
+    # Store additional data in content field
+    content = {
+        "policy_type": payload.get("policy_type"),
+        "limits": payload.get("limits"),
+        "metadata": payload.get("metadata"),
+        "spec": None,
+    }
+
+    from app.modules.asset_registry.crud import update_asset
+    update_asset(
+        session=session,
+        asset=asset,
+        updates={"content": content},
+        updated_by="seed",
+    )
+
+    publish_asset(session, asset, published_by="seed")
+    return True
+
+
+def _seed_prompt(session, scope: str, name: str, force: bool) -> bool:
+    """Seed a prompt asset from YAML file"""
+    # Load YAML metadata
+    yaml_path = f"{PROMPT_DIR}/{scope}/{name}.yaml"
+    payload = load_yaml(yaml_path)
+    if not payload:
+        return False
+
+    existing = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "prompt")
+        .where(TbAssetRegistry.name == name)
+        .where(TbAssetRegistry.scope == scope)
+        .where(TbAssetRegistry.status == "published")
+    ).first()
+    if existing and not force:
+        return False
+
+    # Convert templates to template string format
+    templates = payload.get("templates", {})
+    template_str = _format_prompt_template(templates)
+    params = payload.get("params", [])
+
+    # Derive engine from prompt name
+    valid_engines = [
+        "planner",
+        "compose",
+        "langgraph",
+        "response_builder",
+        "validator",
+        "all_router",
+        "graph_router",
+        "history_router",
+        "metric_router",
+    ]
+    # Try to find matching engine from name or use the prompt name directly
+    engine = payload.get("engine")
+    if not engine:
+        # Check if name matches any valid engine
+        if name in valid_engines:
+            engine = name
+        else:
+            # Fallback to using the prompt name as engine
+            engine = name
+
+    # Create input_schema with 'question' property for validation
+    input_schema = {
+        "type": "object",
+        "properties": {"question": {"type": "string"}},
+        "required": ["question"],
+    }
+
+    # Create output_contract with 'plan' property for validation
+    # Also include templates and params for the loader to use
+    output_contract = {
+        "type": "object",
+        "properties": {
+            "plan": {
+                "type": "object",
+                "properties": {
+                    "steps": {"type": "array"},
+                    "policy": {"type": "object"},
+                },
+            }
+        },
+        "templates": templates,  # For loader: output_contract.get("templates")
+        "params": params,         # For loader: output_contract.get("params")
+    }
+
+    # Create TbAssetRegistry record directly
+    asset = create_asset(
+        session=session,
+        name=payload.get("name", name),
+        asset_type="prompt",
+        scope=scope,
+        engine=engine,
+        template=template_str,
+        input_schema=input_schema,
+        output_contract=output_contract,
+        tags=payload.get("tags") or {},
+        created_by="seed",
+    )
+
+    publish_asset(session, asset, published_by="seed")
+    return True
+
+
+def _format_prompt_template(templates: dict[str, str]) -> str:
+    """Format templates dict into a single template string"""
+    parts = []
+    for role, template in templates.items():
+        parts.append(f"### {role.upper()}\n{template}")
+    return "\n\n".join(parts)
+
+
+def _seed_mapping(session, name: str, force: bool) -> bool:
+    """Seed a mapping asset from YAML file"""
+    payload = load_yaml(f"{MAPPING_DIR}/{name}.yaml")
+    if not payload:
+        return False
+
+    existing = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "mapping")
+        .where(TbAssetRegistry.name == name)
+        .where(TbAssetRegistry.status == "published")
+    ).first()
+    if existing and not force:
+        return False
+
+    # Store the content from YAML directly
+    mapping_content = payload.get("content") or {}
+
+    # Create TbAssetRegistry record directly
+    asset = create_asset(
+        session=session,
+        name=payload.get("name", name),
+        asset_type="mapping",
+        description=payload.get("description"),
+        scope=payload.get("scope"),
+        mapping_type=payload.get("mapping_type"),
+        content=mapping_content,
+        tags=payload.get("tags") or {},
+        created_by="seed",
+    )
+
     publish_asset(session, asset, published_by="seed")
     return True
 
@@ -322,8 +544,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--types",
-        default="source,schema,resolver,query",
-        help="Comma-separated asset types to process (source,schema,resolver,query).",
+        default="source,schema,resolver,query,policy,prompt,mapping",
+        help="Comma-separated asset types to process (source,schema,resolver,query,policy,prompt,mapping).",
     )
     args = parser.parse_args()
 
@@ -353,6 +575,23 @@ def main() -> None:
                             for sql_file in scope_dir.glob("*.sql"):
                                 name = sql_file.stem
                                 _seed_query(session, scope, name, args.force)
+            if "policy" in selected_types:
+                for name in _load_resource_names(POLICY_DIR):
+                    _seed_policy(session, name, args.force)
+            if "prompt" in selected_types:
+                # Seed prompt assets from prompts/{scope}/*.yaml
+                import os
+                prompt_base = RESOURCES_DIR / "prompts"
+                if prompt_base.exists():
+                    for scope_dir in prompt_base.iterdir():
+                        if scope_dir.is_dir():
+                            scope = scope_dir.name
+                            for yaml_file in scope_dir.glob("*.yaml"):
+                                name = yaml_file.stem
+                                _seed_prompt(session, scope, name, args.force)
+            if "mapping" in selected_types:
+                for name in _load_resource_names(MAPPING_DIR):
+                    _seed_mapping(session, name, args.force)
 
         if args.export_resources:
             if "source" in selected_types:

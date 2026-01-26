@@ -32,8 +32,20 @@ def validate_prompt_asset(asset: TbAssetRegistry) -> None:
     if not asset.scope or asset.scope not in ["ci", "ops"]:
         raise ValueError("Prompt asset must have scope of 'ci' or 'ops'")
 
-    if not asset.engine or asset.engine not in ["planner", "langgraph"]:
-        raise ValueError("Prompt asset must have engine of 'planner' or 'langgraph'")
+    # Accept all valid engine types including routers and langgraph
+    valid_engines = [
+        "planner",
+        "compose",
+        "langgraph",
+        "response_builder",
+        "validator",
+        "all_router",
+        "graph_router",
+        "history_router",
+        "metric_router",
+    ]
+    if not asset.engine or asset.engine not in valid_engines:
+        raise ValueError(f"Prompt asset must have engine of one of {valid_engines}")
 
     if not asset.template or not asset.template.strip():
         raise ValueError("Prompt asset must have non-empty template")

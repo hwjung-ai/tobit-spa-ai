@@ -176,6 +176,23 @@ def create_prompt_asset_impl(
     if payload.asset_type != "prompt":
         raise HTTPException(status_code=400, detail="asset_type must be 'prompt'")
 
+    # Check for existing published asset with same name, scope, and engine
+    existing_published = session.exec(
+        select(TbAssetRegistry)
+        .where(TbAssetRegistry.asset_type == "prompt")
+        .where(TbAssetRegistry.name == payload.name)
+        .where(TbAssetRegistry.scope == payload.scope)
+        .where(TbAssetRegistry.engine == payload.engine)
+        .where(TbAssetRegistry.status == "published")
+    ).first()
+
+    if existing_published:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Published prompt asset with name '{payload.name}' (scope='{payload.scope}', engine='{payload.engine}') already exists. "
+                   f"Please publish this draft to replace it, or delete the existing published version first."
+        )
+
     try:
         asset = TbAssetRegistry(
             asset_type="prompt",

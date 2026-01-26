@@ -7,13 +7,16 @@ in the orchestration pipeline (route_plan, validate, execute, compose, present).
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any, Dict, List, Optional
 
 from core.db import get_session_context
 from core.logging import get_logger
 
+from app.llm.client import get_llm_client
 from app.modules.asset_registry.crud import get_asset
+from app.modules.asset_registry.loader import load_prompt_asset
 from app.modules.ops.schemas import (
     ExecutionContext,
     StageDiagnostics,
@@ -22,6 +25,7 @@ from app.modules.ops.schemas import (
 )
 from app.modules.ops.services.ci.tools.base import ToolContext
 from app.modules.ops.services.ci.tools.executor import ToolExecutor
+from app.shared import config_loader
 
 logger = get_logger(__name__)
 
@@ -53,6 +57,7 @@ class StageExecutor:
         self.logger = logger
         self.stage_inputs: List[StageInput] = []
         self.stage_outputs: List[StageOutput] = []
+        self._llm = None  # Lazy-loaded LLM client
 
     def _resolve_asset(self, asset_type: str, default_key: str) -> str:
         """
@@ -352,13 +357,64 @@ class StageExecutor:
         }
 
     async def _execute_compose(self, stage_input: StageInput) -> Dict[str, Any]:
-        """Execute the compose stage."""
+        """Execute the compose stage - LLM generates summary from execution results."""
         stage_output = stage_input.prev_output
         if not stage_output:
             raise ValueError("Previous stage output is required for compose stage")
 
-        execution_results = stage_output.get("execution_results", [])
-        plan_output = stage_output.get("plan_output")
+        # Debug logging
+        self.logger.info(
+            "compose_stage.debug",
+            extra={
+                "stage_output_keys": list(stage_output.keys()) if stage_output else [],
+                "result_keys": list(stage_output.get("result", {}).keys()) if stage_output.get("result") else [],
+            },
+        )
+
+        # Get execution_results from tool_calls if available
+        # tool_calls may be in result dict (from execute_output) or at top level
+        tool_calls = stage_output.get("tool_calls", [])
+        if not tool_calls:
+            tool_calls = stage_output.get("result", {}).get("tool_calls", [])
+
+        self.logger.info(
+            "compose_stage.tool_calls",
+            extra={"tool_calls_count": len(tool_calls) if tool_calls else 0},
+        )
+
+        execution_results = self._convert_tool_calls_to_execution_results(tool_calls)
+
+        # Fallback to execution_results if tool_calls is empty
+        if not execution_results:
+            execution_results = stage_output.get("execution_results", [])
+            if not execution_results:
+                execution_results = stage_output.get("result", {}).get("execution_results", [])
+
+        # Fallback: extract from base_result if no tool_calls or execution_results
+        # This handles the case where runner doesn't use run_tool() for execution
+        if not execution_results:
+            base_result = stage_output.get("result", {}).get("base_result", {})
+            self.logger.info(
+                "compose_stage.base_result_fallback",
+                extra={
+                    "has_base_result": bool(base_result),
+                    "base_result_keys": list(base_result.keys()) if base_result else [],
+                    "blocks_count": len(base_result.get("blocks", [])) if base_result else 0,
+                },
+            )
+            if base_result:
+                # Convert base_result blocks to execution_results format for LLM
+                execution_results = self._convert_base_result_to_execution_results(
+                    base_result
+                )
+
+        self.logger.info(
+            "compose_stage.execution_results",
+            extra={"execution_results_count": len(execution_results)},
+        )
+
+        # Get plan_output from params (not from prev_output)
+        plan_output = stage_input.params.get("plan_output")
 
         # Compose results based on plan intent
         composed_result = {
@@ -368,8 +424,11 @@ class StageExecutor:
         }
 
         # Extract main results based on intent
-        if plan_output and plan_output.plan:
-            intent = plan_output.plan.intent
+        intent = "UNKNOWN"
+        if plan_output:
+            plan = plan_output.get("plan") if isinstance(plan_output, dict) else getattr(plan_output, "plan", None)
+            if plan:
+                intent = plan.get("intent") if isinstance(plan, dict) else getattr(plan, "intent", "UNKNOWN")
 
             if intent == "LOOKUP":
                 # For lookup, focus on primary results
@@ -407,68 +466,107 @@ class StageExecutor:
             all_references.extend(result.get("references", []))
         composed_result["references"] = all_references
 
+        # LLM을 호출하여 실행 결과를 바탕으로 자연스러운 요약 생성
+        question = stage_input.params.get("question", "")
+        llm_summary = await self._generate_llm_summary(
+            question=question,
+            intent=intent,
+            execution_results=execution_results,
+            composed_result=composed_result,
+        )
+        composed_result["llm_summary"] = llm_summary
+
         return composed_result
 
     async def _execute_present(self, stage_input: StageInput) -> Dict[str, Any]:
         """Execute the present stage."""
-        stage_output = stage_input.prev_output
-        if not stage_output:
-            raise ValueError("Previous stage output is required for present stage")
-
-        plan_output = stage_output.get("plan_output")
-        composed_result = stage_output.get("composed_result", stage_output)
+        # Get plan_output from params (as model_dump dict)
+        plan_output = stage_input.params.get("plan_output", {})
+        # Get composed_result from prev_output
+        # The compose stage returns composed_result which is stored in stage_output.result
+        stage_output = stage_input.prev_output or {}
+        # First check for result key (from StageOutput.model_dump())
+        if "result" in stage_output:
+            composed_result = stage_output.get("result", {})
+        # Fallback to composed_result key (for backwards compatibility)
+        else:
+            composed_result = stage_output.get("composed_result", stage_output)
 
         # Prepare presentation blocks based on plan
         blocks = []
 
-        if plan_output.kind == "direct" and plan_output.direct_answer:
-            # Direct answer - simple text block
-            blocks.append(
-                {
-                    "type": "text",
-                    "content": plan_output.direct_answer.answer,
-                    "metadata": {
-                        "confidence": plan_output.direct_answer.confidence,
-                        "reasoning": plan_output.direct_answer.reasoning,
-                    },
-                }
-            )
+        plan_kind = plan_output.get("kind") if isinstance(plan_output, dict) else getattr(plan_output, "kind", None)
 
-        elif plan_output.kind == "plan" and plan_output.plan:
+        if plan_kind == "direct":
+            direct_answer = plan_output.get("direct_answer") if isinstance(plan_output, dict) else getattr(plan_output, "direct_answer", None)
+            if direct_answer:
+                # Direct answer - simple text block
+                blocks.append(
+                    {
+                        "type": "text",
+                        "content": direct_answer.get("answer") if isinstance(direct_answer, dict) else direct_answer.answer,
+                        "metadata": {
+                            "confidence": direct_answer.get("confidence") if isinstance(direct_answer, dict) else getattr(direct_answer, "confidence", 1.0),
+                            "reasoning": direct_answer.get("reasoning") if isinstance(direct_answer, dict) else getattr(direct_answer, "reasoning", None),
+                        },
+                    }
+                )
+
+        elif plan_kind == "plan":
+            # Add LLM summary as the first block if available
+            llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
+            if llm_summary:
+                blocks.append({
+                    "type": "markdown",
+                    "content": llm_summary,
+                    "metadata": {"generated_by": "llm_compose"},
+                })
+
             # Plan execution - compose blocks based on intent
-            intent = plan_output.plan.intent
+            plan = plan_output.get("plan") if isinstance(plan_output, dict) else getattr(plan_output, "plan", None)
+            intent = plan.get("intent") if isinstance(plan, dict) else getattr(plan, "intent", None) if plan else None
 
-            if intent == "LOOKUP":
-                # Create table block for lookup results
-                if "primary_result" in composed_result:
-                    blocks.append(
-                        self._create_table_block(composed_result["primary_result"])
-                    )
+            # Always add blocks from runner's base_result if available
+            # The runner already has its own blocks from _run_async()
+            # We're here to add the LLM summary markdown block
+            # Don't duplicate blocks from compose stage
+            base_result = stage_input.params.get("base_result", {})
+            runner_blocks = base_result.get("blocks", [])
+            blocks.extend(runner_blocks)
 
-            elif intent == "AGGREGATE":
-                # Create chart and table blocks for aggregate results
-                if "aggregate_result" in composed_result:
-                    blocks.append(
-                        self._create_chart_block(composed_result["aggregate_result"])
-                    )
-                    blocks.append(
-                        self._create_table_block(composed_result["aggregate_result"])
-                    )
-
-            elif intent == "PATH":
-                # Create network and table blocks for path results
-                if "path_results" in composed_result:
-                    blocks.append(
-                        self._create_network_block(composed_result["path_results"])
-                    )
-                    blocks.append(
-                        self._create_table_block(composed_result["path_results"])
-                    )
+            # Disable old block creation - using runner's blocks instead
+            # if False:  # Disable duplicate block creation
+            #     if intent == "LOOKUP":
+            #         # Create table block for lookup results
+            #         if "primary_result" in composed_result:
+            #             blocks.append(
+            #                 self._create_table_block(composed_result["primary_result"])
+            #             )
+            #
+            #     elif intent == "AGGREGATE":
+            #         # Create chart and table blocks for aggregate results
+            #         if "aggregate_result" in composed_result:
+            #             blocks.append(
+            #                 self._create_chart_block(composed_result["aggregate_result"])
+            #             )
+            #             blocks.append(
+            #                 self._create_table_block(composed_result["aggregate_result"])
+            #             )
+            #
+            #     elif intent == "PATH":
+            #         # Create network and table blocks for path results
+            #         if "path_results" in composed_result:
+            #             blocks.append(
+            #                 self._create_network_block(composed_result["path_results"])
+            #             )
+            #             blocks.append(
+            #                 self._create_table_block(composed_result["path_results"])
+            #             )
 
         result = {
             "blocks": blocks,
             "references": composed_result.get("references", []),
-            "summary": self._generate_summary(composed_result),
+            "summary": composed_result.get("llm_summary") or self._generate_summary(composed_result),
             "presented_at": time.time(),
         }
 
@@ -580,3 +678,298 @@ class StageExecutor:
                 "edge_count": len(result.get("edges", [])),
             },
         }
+
+    async def _generate_llm_summary(
+        self,
+        question: str,
+        intent: str,
+        execution_results: List[Dict[str, Any]],
+        composed_result: Dict[str, Any],
+    ) -> str:
+        """Generate LLM summary from execution results."""
+        # Skip LLM call if no question or no execution results
+        if not question or not execution_results:
+            return self._generate_summary(composed_result)
+
+        # Describe execution results for LLM context
+        evidence = self._describe_execution_results(execution_results, composed_result)
+
+        try:
+            # Load prompt templates
+            templates = self._load_compose_prompt_templates()
+            system_prompt = templates.get("system")
+            user_template = templates.get("user")
+
+            if not system_prompt or not user_template:
+                logging.warning("Compose prompt templates missing, using fallback summary")
+                return self._generate_summary(composed_result)
+
+            # Build prompt with question, intent, and evidence
+            prompt = (
+                user_template.replace("{question}", question)
+                .replace("{intent}", intent)
+                .replace("{evidence}", evidence)
+            )
+
+            # Call LLM
+            summary = self._call_llm_for_summary(prompt, system_prompt)
+            if summary:
+                return summary.strip()
+        except Exception as exc:
+            logging.exception("LLM compose summary failed, using fallback")
+
+        return self._generate_summary(composed_result)
+
+    def _describe_execution_results(
+        self, execution_results: List[Dict[str, Any]], composed_result: Dict[str, Any]
+    ) -> str:
+        """Describe execution results for LLM context."""
+        if not execution_results:
+            return "No execution results available."
+
+        lines = ["Execution Results:"]
+        for i, result in enumerate(execution_results, 1):
+            mode = result.get("mode", "unknown")
+            lines.append(f"\n{i}. {mode.upper()} Result:")
+
+            # Add count info
+            count = result.get("count", 0)
+            if count:
+                lines.append(f"   - Count: {count}")
+
+            # Add headers for table results
+            headers = result.get("headers", [])
+            if headers:
+                lines.append(f"   - Columns: {', '.join(headers[:5])}")
+
+            # Add row count
+            rows = result.get("rows", [])
+            if rows:
+                lines.append(f"   - Rows: {len(rows)}")
+                # Show first row as sample
+                if rows:
+                    sample_row = rows[0]
+                    if isinstance(sample_row, dict):
+                        sample_str = ", ".join(
+                            f"{k}={v}" for k, v in list(sample_row.items())[:3]
+                        )
+                        lines.append(f"   - Sample: {sample_str}")
+                    elif isinstance(sample_row, list):
+                        lines.append(f"   - Sample: {sample_row[:3]}")
+
+            # Add metrics for aggregate results
+            metrics = result.get("metrics", {})
+            if metrics:
+                lines.append(f"   - Metrics: {metrics}")
+
+            # Add graph info
+            node_count = result.get("node_count")
+            edge_count = result.get("edge_count")
+            if node_count is not None:
+                lines.append(f"   - Nodes: {node_count}, Edges: {edge_count or 0}")
+
+            # Add errors if any
+            error = result.get("error")
+            if error:
+                lines.append(f"   - Error: {error}")
+
+        # Add summary from composed_result
+        results_summary = composed_result.get("results_summary", [])
+        if results_summary:
+            lines.append("\nSummary:")
+            lines.extend(f"   - {s}" for s in results_summary)
+
+        return "\n".join(lines)
+
+    def _load_compose_prompt_templates(self) -> Dict[str, str]:
+        """Load compose prompt templates from asset registry."""
+        try:
+            prompt_data = load_prompt_asset("ci", "compose", "ci_compose_summary")
+            if not prompt_data or "templates" not in prompt_data:
+                logging.warning("Compose prompt templates not found in asset registry, falling back to file")
+                prompt_data = config_loader.load_yaml("prompts/ci/compose.yaml")
+                if not prompt_data or "templates" not in prompt_data:
+                    return {}
+            templates = prompt_data.get("templates", {})
+            if not isinstance(templates, dict):
+                return {}
+            return templates
+        except Exception as exc:
+            logging.warning(f"Failed to load compose prompt from asset registry: {exc}, falling back to file")
+            prompt_data = config_loader.load_yaml("prompts/ci/compose.yaml")
+            if not prompt_data or "templates" not in prompt_data:
+                return {}
+            templates = prompt_data.get("templates", {})
+            if not isinstance(templates, dict):
+                return {}
+            return templates
+
+    def _call_llm_for_summary(self, prompt: str, system_prompt: str) -> str:
+        """Call LLM to generate summary."""
+        if self._llm is None:
+            self._llm = get_llm_client()
+
+        input_data = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
+        ]
+
+        try:
+            response = self._llm.create_response(input=input_data)
+            content = self._llm.get_output_text(response)
+            if content:
+                return content.strip()
+        except Exception as exc:
+            logging.warning(f"LLM call failed: {exc}")
+
+        return ""
+
+    def _convert_tool_calls_to_execution_results(
+        self, tool_calls: List[Any]
+    ) -> List[Dict[str, Any]]:
+        """Convert tool_calls to execution_results format."""
+        if not tool_calls:
+            return []
+
+        execution_results = []
+        for call in tool_calls:
+            # Handle both ToolCall objects and dict formats
+            if hasattr(call, "model_dump"):
+                # Pydantic model (ToolCall)
+                tool = call.tool or ""
+                output_summary = call.output_summary or {}
+            elif isinstance(call, dict):
+                # Dict format
+                tool = call.get("tool", "")
+                output_summary = call.get("output_summary", {})
+            else:
+                continue
+
+            # Map tool names to modes
+            mode_map = {
+                "ci.lookup": "primary",
+                "ci.search": "primary",
+                "ci.get": "primary",
+                "ci.aggregate": "aggregate",
+                "metric.aggregate": "aggregate",
+                "graph.expand": "path",
+                "ci.graph": "path",
+            }
+
+            mode = mode_map.get(tool, "unknown")
+
+            result = {
+                "mode": mode,
+                "tool": tool,
+            }
+
+            # Add count if available
+            if isinstance(output_summary, dict):
+                result["count"] = output_summary.get("count", output_summary.get("total", 0))
+
+                # Add headers for table results
+                headers = output_summary.get("headers", [])
+                if headers:
+                    result["headers"] = headers
+
+                # Add rows
+                rows = output_summary.get("rows", [])
+                if rows:
+                    result["rows"] = rows
+
+                # Add metrics for aggregate results
+                metrics = output_summary.get("metrics", {})
+                if metrics:
+                    result["metrics"] = metrics
+
+                # Add graph info
+                node_count = output_summary.get("node_count")
+                edge_count = output_summary.get("edge_count")
+                if node_count is not None:
+                    result["node_count"] = node_count
+                    result["edge_count"] = edge_count or 0
+
+            execution_results.append(result)
+
+        return execution_results
+
+    def _convert_base_result_to_execution_results(
+        self, base_result: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Convert base_result to execution_results format for LLM summarization.
+
+        base_result structure from runner:
+        {
+            "answer": str,
+            "blocks": List[Block],
+            "meta": {"used_tools": List[str]},
+            "trace": {...}
+        }
+        """
+        execution_results = []
+        if not base_result:
+            return execution_results
+
+        # Extract blocks to build execution context
+        blocks = base_result.get("blocks", [])
+        answer = base_result.get("answer", "")
+        meta = base_result.get("meta", {})
+        used_tools = meta.get("used_tools", [])
+
+        # Build a primary result from the blocks for LLM context
+        primary_result = {
+            "mode": "primary",
+            "tool": "ci.lookup",
+            "summary": answer,
+            "blocks_count": len(blocks),
+            "used_tools": used_tools,
+        }
+
+        # Extract key data from blocks for LLM context
+        block_summaries = []
+        for block in blocks:
+            if isinstance(block, dict):
+                block_type = block.get("type", "unknown")
+                block_title = block.get("title", "")
+
+                if block_type == "table":
+                    rows_count = len(block.get("rows", []))
+                    block_summaries.append(
+                        f"{block_title}: {rows_count} rows"
+                    )
+                elif block_type == "markdown":
+                    content_preview = (
+                        block.get("content", "")[:100]
+                        if block.get("content")
+                        else ""
+                    )
+                    block_summaries.append(
+                        f"{block_title}: {content_preview}..."
+                    )
+                elif block_type == "references":
+                    ref_count = len(block.get("items", []))
+                    block_summaries.append(f"{block_title}: {ref_count} references")
+
+        if block_summaries:
+            primary_result["block_summaries"] = block_summaries
+
+        # Add any metric data if present
+        metric_blocks = [
+            b
+            for b in blocks
+            if isinstance(b, dict) and b.get("type") == "metric"
+        ]
+        if metric_blocks:
+            primary_result["has_metrics"] = True
+            primary_result["metric_blocks_count"] = len(metric_blocks)
+
+        # Add any graph data if present
+        graph_blocks = [
+            b for b in blocks if isinstance(b, dict) and b.get("type") == "graph"
+        ]
+        if graph_blocks:
+            primary_result["has_graph"] = True
+            primary_result["graph_blocks_count"] = len(graph_blocks)
+
+        execution_results.append(primary_result)
+        return execution_results
