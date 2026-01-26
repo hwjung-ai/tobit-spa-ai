@@ -58,6 +58,7 @@ from app.modules.ops.services.ci.planner.planner_llm import (
     METRIC_KEYWORDS,
     SERIES_KEYWORDS,
     TIME_RANGE_MAP,
+    _sanitize_korean_particles,
 )
 from app.modules.ops.services.ci.tools import (
     ToolContext,
@@ -117,7 +118,7 @@ def _find_exact_candidate(
     return None
 
 
-CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
+CI_IDENTIFIER_PATTERN = re.compile(r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE)
 
 RUNNER_MARKER = "RUNNER_PATCH_GRAPH_20260112"
 HISTORY_FALLBACK_KEYWORDS = {"이력", "작업", "점검", "history", "log", "이벤트", "기록"}
@@ -607,11 +608,12 @@ class CIOrchestratorRunner:
         normalized = self.question.lower()
         # Accept identifiers containing underscores and multiple hyphen segments.
         # Examples: os-erp-02, apm_app_scheduler_05-1, app-apm-scheduler-05-1
-        matches = re.findall(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", normalized)
+        matches = CI_IDENTIFIER_PATTERN.findall(normalized)
         unique = []
         for match in matches:
-            if match not in unique:
-                unique.append(match)
+            sanitized = _sanitize_korean_particles(match)
+            if sanitized not in unique:
+                unique.append(sanitized)
         if unique:
             return tuple(unique[:5])
         return None
@@ -661,9 +663,11 @@ class CIOrchestratorRunner:
         for token in keywords:
             if not token:
                 continue
-            match = CI_IDENTIFIER_PATTERN.fullmatch(token.lower())
+            # Sanitize Korean particles before matching
+            sanitized = _sanitize_korean_particles(token.lower())
+            match = CI_IDENTIFIER_PATTERN.fullmatch(sanitized)
             if match:
-                identifiers.append(token)
+                identifiers.append(sanitized)
         return identifiers
 
     def _has_ci_identifier_in_keywords(self) -> bool:
@@ -4961,7 +4965,7 @@ class CIOrchestratorRunner:
                     "name": stage_name,
                     "input": stage_input_payload,
                     "output": stage_output_payload.get("result"),
-                    "elapsed_ms": stage_output_payload.get("duration_ms", 0),
+                    "duration_ms": stage_output_payload.get("duration_ms", 0),
                     "status": stage_output_payload.get("diagnostics", {}).get(
                         "status", "ok"
                     ),
@@ -5137,6 +5141,9 @@ class CIOrchestratorRunner:
                 execute_output = StageOutput(
                     stage="execute",
                     result={
+                        "base_result": base_result,  # Include base_result for compose stage
+                        "tool_calls": [call.model_dump() for call in self.tool_calls],  # Serialize tool_calls for compose stage
+                        "execution_results": base_result.get("results", []),  # Include execution_results for compose stage
                         "used_tools": base_result.get("meta", {}).get("used_tools", []),
                         "blocks_count": len(blocks),
                         "errors": self.errors,
@@ -5156,33 +5163,32 @@ class CIOrchestratorRunner:
                 )
                 record_stage("execute", execute_input, execute_output)
 
+                compose_start = perf_counter()
                 compose_input = self._build_stage_input(
                     "compose", plan_output, execute_output.model_dump()
                 )
-                compose_output = StageOutput(
-                    stage="compose",
-                    result={
-                        "summary": answer,
-                        "blocks_count": len(blocks),
-                        "next_actions_count": len(base_result.get("next_actions", [])),
-                    },
-                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
-                    references=self.references,
-                    duration_ms=0,
-                )
+                # Add question to params for LLM summary
+                compose_input.params["question"] = self.question
+                # Use StageExecutor for compose stage
+                compose_output = await self._stage_executor.execute_stage(compose_input)
                 record_stage("compose", compose_input, compose_output)
 
+                present_start = perf_counter()
+                # Build present_input with both compose_output and base_result
                 present_input = self._build_stage_input(
                     "present", plan_output, compose_output.model_dump()
                 )
-                present_output = StageOutput(
-                    stage="present",
-                    result={"summary": answer, "blocks": blocks},
-                    diagnostics=StageDiagnostics(status="ok", warnings=[], errors=[]),
-                    references=self.references,
-                    duration_ms=0,
-                )
+                # Add base_result to params so StageExecutor can access runner's blocks
+                present_input.params["base_result"] = base_result
+                # Use StageExecutor for present stage to include LLM summary
+                present_output = await self._stage_executor.execute_stage(present_input)
                 record_stage("present", present_input, present_output)
+
+                # Update blocks and answer from present_output
+                present_result = present_output.result
+                if present_result:
+                    blocks = present_result.get("blocks", blocks)
+                    answer = present_result.get("summary", answer)
 
         except Exception as exc:
             self.errors.append(str(exc))
