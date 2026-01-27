@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Iterable
 
-from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
     MarkdownBlock,
@@ -21,6 +20,18 @@ from app.shared.config_loader import load_text
 
 from ..resolvers import resolve_ci, resolve_metric, resolve_time_range
 from ..resolvers.types import CIHit, MetricHit, TimeRange
+from core.config import get_settings
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
+
+
+
+
+def _get_connection():
+    """Get connection using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 def _load_query_sql(scope: str, name: str) -> str | None:
@@ -165,10 +176,14 @@ def _build_metric_params(
 
 
 def _fetch_timeseries(query: str, params: Iterable) -> list[tuple]:
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             cur.execute(query, tuple(params))
             return cur.fetchall()
+    finally:
+        connection.close()
 
 
 def _calculate_stats(rows: list[tuple]) -> dict[str, float]:

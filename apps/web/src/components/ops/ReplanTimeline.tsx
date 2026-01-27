@@ -4,11 +4,12 @@ import { useState } from "react";
 import {
   Clock,
   AlertTriangle,
-  RefreshCw,
   X,
   Bug,
   Lightbulb,
   TrendingUp,
+  CheckCircle,
+  ChevronDown,
   Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -138,7 +139,7 @@ export default function ReplanTimeline({
   triggerFilter = [],
   onEventSelect,
 }: ReplanTimelineProps) {
-  const [selectedEvent, setSelectedEvent] = useState<ReplanEvent | null>(null);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
   const [filteredTriggers, setFilteredTriggers] = useState<Set<string>>(
     new Set(triggerFilter)
   );
@@ -165,18 +166,28 @@ export default function ReplanTimeline({
     return new Date(timestamp).toLocaleTimeString();
   };
 
+  const toggleEvent = (event: ReplanEvent, index: number) => {
+    const eventId = event.id ?? `${event.stage_name}-${event.timestamp}-${index}`;
+    if (expandedEventId === eventId) {
+      setExpandedEventId(null);
+    } else {
+      setExpandedEventId(eventId);
+      onEventSelect?.(event);
+    }
+  };
+
   return (
-    <div className={cn("flex flex-col h-full rounded-2xl border border-slate-800 bg-slate-950/60", className)}>
+    <div className={cn("flex flex-col rounded-2xl border border-slate-800 bg-slate-950/60", className)}>
       {/* Header */}
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
-              Replan Event Timeline
+              Replan Events
             </h2>
             {traceId && (
-              <p className="text-xs text-slate-400 mt-1">
-                Trace ID: {traceId.slice(0, 8)}...
+              <p className="text-xs text-slate-400 mt-1 break-all">
+                Trace ID: {traceId}
               </p>
             )}
           </div>
@@ -215,200 +226,123 @@ export default function ReplanTimeline({
         </div>
       </div>
 
-      {/* Timeline */}
-      <div className="flex-1 overflow-auto p-4">
+      {/* Events List - Inline Accordion Style */}
+      <div className="p-4 space-y-2 max-h-[600px] overflow-auto">
         {filteredEvents.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-slate-500">
+          <div className="flex items-center justify-center h-24 text-slate-500">
             <div className="text-center">
-              <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No replan events found</p>
+              <Clock className="h-6 w-6 mx-auto mb-1 opacity-50" />
+              <p className="text-xs">No replan events</p>
             </div>
           </div>
         ) : (
-          <div className="relative">
-            {/* Timeline Line */}
-            <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-700"></div>
+          filteredEvents.map((event, index) => {
+            const triggerConfig = TRIGGER_CONFIG[event.trigger.trigger_type as keyof typeof TRIGGER_CONFIG] || TRIGGER_CONFIG.error;
+            const Icon = triggerConfig.icon;
+            const eventId = event.id ?? `${event.stage_name}-${event.timestamp}-${index}`;
+            const isExpanded = expandedEventId === eventId;
+            const isApproved = event.decision_metadata?.should_replan ?? false;
 
-            {/* Events */}
-            <div className="space-y-4">
-              {filteredEvents.map((event, index) => {
-                const triggerConfig = TRIGGER_CONFIG[event.trigger.trigger_type as keyof typeof TRIGGER_CONFIG] || TRIGGER_CONFIG.error;
-                const Icon = triggerConfig.icon;
-                const stageColor = StageColors[event.stage_name as keyof typeof StageColors] || StageColors.route_plan;
-                const eventId = event.id ?? `${event.stage_name}-${event.timestamp}-${index}`;
-                const isSelected =
-                  selectedEvent &&
-                  (selectedEvent.id ?? `${selectedEvent.stage_name}-${selectedEvent.timestamp}`) ===
-                    `${event.stage_name}-${event.timestamp}`;
-
-                return (
-                  <div
-                    key={eventId}
-                    className={cn(
-                      "relative cursor-pointer transition-all hover:scale-[1.02]",
-                      isSelected && "ring-2 ring-blue-400"
+            return (
+              <div
+                key={eventId}
+                className={cn(
+                  "rounded-lg border transition-all",
+                  triggerConfig.color,
+                  isApproved ? "border-slate-600" : "border-slate-700/50"
+                )}
+              >
+                {/* Summary Bar - Always Visible */}
+                <button
+                  onClick={() => toggleEvent(event, index)}
+                  className="w-full p-3 flex items-center justify-between text-left hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                    <span className="text-sm font-medium text-white">{triggerConfig.label}</span>
+                    <span className="text-slate-500 text-xs">{event.stage_name}</span>
+                    <span className={cn(
+                      "px-1.5 py-0.5 rounded text-xs font-medium",
+                      SEVERITY_COLORS[event.trigger.severity as keyof typeof SEVERITY_COLORS]
+                    )}>
+                      {event.trigger.severity}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isApproved ? (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-400/30 text-xs text-emerald-400">
+                        <CheckCircle className="h-3 w-3" />
+                        Approved
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-500/10 border border-rose-400/30 text-xs text-rose-400">
+                        <X className="h-3 w-3" />
+                        Denied
+                      </span>
                     )}
-                    onClick={() => {
-                      setSelectedEvent(event);
-                      onEventSelect?.(event);
-                    }}
-                  >
-                    {/* Timeline Dot */}
-                    <div className="absolute left-2 top-4 transform -translate-x-1/2">
-                      <div className={cn(
-                        "w-3 h-3 rounded-full border-2",
-                        triggerConfig.color,
-                        event.decision_metadata?.should_replan ? "ring-2 ring-white" : "opacity-50"
-                      )}>
-                        <Icon className="h-2 w-2 mx-auto" />
-                      </div>
+                    <span className="text-xs text-slate-400">{formatTime(event.timestamp)}</span>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-slate-400 transition-transform",
+                      isExpanded && "rotate-180"
+                    )} />
+                  </div>
+                </button>
+
+                {/* Expanded Details */}
+                {isExpanded && (
+                  <div className="px-3 pb-3 pt-2 space-y-3 border-t border-slate-700/50 mt-2">
+                    {/* Trigger Reason */}
+                    <div>
+                      <p className="text-xs text-slate-500 mb-1">Reason</p>
+                      <p className="text-xs text-slate-200">{event.trigger.reason}</p>
                     </div>
 
-                    {/* Event Card */}
-                    <div className={cn(
-                      "ml-8 p-3 rounded-lg border transition-all",
-                      triggerConfig.color,
-                      event.decision_metadata?.should_replan ? "border-slate-600" : "border-slate-700/50",
-                      selectedEvent?.id === event.id && "ring-1 ring-white/10"
-                    )}>
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            <h3 className="text-sm font-medium text-white">
-                              {triggerConfig.label} Event
-                            </h3>
-                            <span className={cn(
-                              "text-xs px-1.5 py-0.5 rounded-full",
-                              stageColor,
-                              "font-medium"
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-900/50 rounded p-2">
+                        <p className="text-slate-500">Type</p>
+                        <p className="text-slate-200">{event.event_type}</p>
+                      </div>
+                      <div className="bg-slate-900/50 rounded p-2">
+                        <p className="text-slate-500">Stage</p>
+                        <p className="text-slate-200">{event.stage_name}</p>
+                      </div>
+                      {event.decision_metadata && (
+                        <>
+                          <div className="bg-slate-900/50 rounded p-2">
+                            <p className="text-slate-500">Decision</p>
+                            <p className={cn(
+                              isApproved ? "text-emerald-400" : "text-rose-400"
                             )}>
-                              {event.stage_name.replace(/_/g, ' ')}
-                            </span>
+                              {isApproved ? "Approved" : "Denied"}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
-                            <span>{formatTime(event.timestamp)}</span>
-                            <span className={cn(
-                              "flex items-center gap-1",
-                              SEVERITY_COLORS[event.trigger.severity as keyof typeof SEVERITY_COLORS]
-                            )}>
-                              {event.trigger.severity} severity
-                            </span>
+                          <div className="bg-slate-900/50 rounded p-2">
+                            <p className="text-slate-500">Eval Time</p>
+                            <p className="text-slate-200">
+                              {((event.decision_metadata.evaluation_time ?? 0) * 1000).toFixed(2)}ms
+                            </p>
                           </div>
-                        </div>
-
-                        {event.decision_metadata?.should_replan && (
-                          <div className="flex items-center gap-1 px-2 py-1 rounded bg-green-500/10 border border-green-400/30">
-                            <RefreshCw className="h-3 w-3 text-emerald-400" />
-                            <span className="text-xs text-emerald-400">Replanned</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Trigger Reason */}
-                      <div className="mt-2">
-                        <p className="text-xs text-slate-300">
-                          <strong>Reason:</strong> {event.trigger.reason}
-                        </p>
-                      </div>
-
-                      {/* Decision Metadata */}
-                      <div className="mt-2 p-2 rounded bg-slate-900/50 text-xs">
-                        <p>Decision: {event.decision_metadata?.should_replan ? "Approved" : "Denied"}</p>
-                        <p>Evaluation time: {((event.decision_metadata?.evaluation_time ?? 0) * 1000).toFixed(2)}ms</p>
-                      </div>
-
-                      {/* Patch Diff Toggle */}
-                      {event.patch && (
-                        <PatchDiffViewer patch={event.patch} />
+                        </>
                       )}
                     </div>
 
-                    {/* Connection Line */}
-                    {index < filteredEvents.length - 1 && (
-                      <div className="absolute left-3.5 top-12 w-px h-6 bg-slate-700"></div>
+                    {/* Timestamp */}
+                    <div className="text-xs text-slate-400">
+                      {new Date(event.timestamp).toLocaleString()}
+                    </div>
+
+                    {/* Patch Diff */}
+                    {event.patch && (
+                      <PatchDiffViewer patch={event.patch} />
                     )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Selected Event Details */}
-      {selectedEvent && (
-        <div className="p-4 border-t border-slate-800 bg-slate-900/30">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-white">Event Details</h3>
-            <button
-              onClick={() => setSelectedEvent(null)}
-              className="text-slate-400 hover:text-slate-300"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-slate-400">Event Type</p>
-                <p className="font-medium text-white">
-                  {selectedEvent.event_type}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400">Stage</p>
-                <p className="font-medium text-white capitalize">
-                  {selectedEvent.stage_name.replace(/_/g, ' ')}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400">Trigger Type</p>
-                <p className="font-medium text-white">
-                  {selectedEvent.trigger.trigger_type}
-                </p>
-              </div>
-              <div>
-                <p className="text-slate-400">Decision</p>
-                <p className={cn(
-                  "font-medium",
-                  selectedEvent.decision_metadata?.should_replan ? "text-emerald-400" : "text-rose-400"
-                )}>
-                  {selectedEvent.decision_metadata?.should_replan ? "Approved" : "Denied"}
-                </p>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-slate-400 mb-1">Trigger Reason</p>
-              <p className="text-sm text-slate-300">
-                {selectedEvent.trigger?.reason ?? "N/A"}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-slate-400 mb-1">Timestamp</p>
-              <p className="text-sm text-slate-300">
-                {new Date(selectedEvent.timestamp).toLocaleString()}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-slate-400 mb-1">Patch Information</p>
-              <div className="bg-slate-800/50 rounded p-2 text-slate-300 text-xs">
-                <p>Changes detected at stage: {selectedEvent.stage_name}</p>
-                {selectedEvent.patch && (
-                  <div className="mt-1">
-                    <p>Before: {Object.keys(selectedEvent.patch.before || {}).length} properties</p>
-                    <p>After: {Object.keys(selectedEvent.patch.after || {}).length} properties</p>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }

@@ -129,6 +129,7 @@ def stop_watching():
     global _observer
     if _observer and _observer.is_alive():
         _observer.stop()
-        _observer.join()
+        # Don't join() to avoid blocking during uvicorn reload
+        # The thread will exit naturally after stop() is called
         _observer = None
         logger.info("Stopped resource file watcher.")

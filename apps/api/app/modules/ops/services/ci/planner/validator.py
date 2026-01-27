@@ -383,6 +383,17 @@ def _is_absolute_date(value: str) -> bool:
 def validate_plan(
     plan: Plan, resolver_payload: Dict[str, Any] | None = None
 ) -> Tuple[Plan, Dict[str, Any]]:
+    # Load and track policy asset for budget constraints
+    # This ensures policy is tracked even when Plan is deserialized from JSON
+    from app.modules.asset_registry.loader import load_policy_asset
+
+    logger.info("validate_plan: Loading policy asset for tracking")
+    policy_data = load_policy_asset("plan_budget")
+    if policy_data:
+        logger.info(f"validate_plan: Policy loaded from source={policy_data.get('_asset_meta', {}).get('source', 'unknown')}")
+    else:
+        logger.warning("validate_plan: Policy load returned None")
+
     normalized = plan.copy()
     mode = normalized.mode
     logger.info(

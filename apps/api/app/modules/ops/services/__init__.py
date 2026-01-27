@@ -30,6 +30,7 @@ from schemas.tool_contracts import ExecutorResult
 
 from app.modules.inspector.service import persist_execution_trace
 
+# Legacy executors
 from .executors.config_executor import run_config as run_config_executor
 from .executors.graph_executor import run_graph
 from .executors.hist_executor import run_hist
@@ -38,6 +39,18 @@ from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
+
+
+def _get_required_tenant_id(settings: Any) -> str:
+    """Get tenant_id from settings, raise error if missing."""
+    tenant_id = getattr(settings, "tenant_id", None)
+    if not tenant_id:
+        raise ValueError(
+            "tenant_id is required in settings. "
+            "Please ensure tenant_id is set in the request settings."
+        )
+    return tenant_id
+
 
 METRIC_KEYWORDS = {
     "온도",
@@ -87,7 +100,7 @@ def _serialize_references(
     return serialized
 
 
-def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
+def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict[str, Any] | None]:
     settings = get_settings()
     started = time.perf_counter()
     fallback = False
@@ -185,19 +198,34 @@ def handle_ops_query(mode: OpsMode, question: str) -> AnswerEnvelope:
     except Exception as exc:
         logging.exception("ops.trace.persist_failed", exc_info=exc)
 
-    return envelope
+    # Build trace data for client (same as persist payload)
+    trace_data = {
+        "plan_validated": None,  # OPS query doesn't use plan
+        "policy_decisions": None,  # OPS query doesn't use policy
+        "tool_calls": trace_payload.get("tool_calls", []),
+        "references": trace_payload.get("references", []),
+        "used_tools": trace_payload.get("used_tools", []),
+        "summary": trace_payload.get("summary", {}),
+        "stage_inputs": None,  # OPS query doesn't have stages
+        "stage_outputs": None,  # OPS query doesn't have stages
+    }
+
+    return envelope, trace_data
 
 
 def _execute_real_mode(
     mode: OpsMode, question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str]]:
+    # Universal executor for relation, metric, history modes
+    if mode in ("relation", "metric", "history", "hist"):
+        tenant_id = _get_required_tenant_id(settings)
+        result = execute_universal(question, mode, tenant_id)
+        return result.blocks, result.used_tools
+
+    # Legacy executors for other modes
     executor = {
         "config": _run_config,
-        "history": _run_history,
-        "relation": _run_graph,
         "graph": _run_graph,
-        "metric": _run_metric,
-        "hist": _run_history,
         "all": _run_all,
     }.get(mode)
     if executor is None:
@@ -227,7 +255,7 @@ def _normalize_real_result(
 
 
 def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[str]]:
-    tenant_id = getattr(settings, "tenant_id", "t1")
+    tenant_id = _get_required_tenant_id(settings)
     try:
         return run_config_executor(question, tenant_id=tenant_id)
     except Exception:
@@ -238,21 +266,28 @@ def _run_config(question: str, settings: Any) -> tuple[list[AnswerBlock], list[s
 def _run_history(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
-    tenant_id = getattr(settings, "tenant_id", "t1")
+    tenant_id = _get_required_tenant_id(settings)
     return run_hist(question, tenant_id=tenant_id)
+
+
+def _run_ci_search(
+    question: str, settings: Any
+) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
+    tenant_id = _get_required_tenant_id(settings)
+    return run_ci_search(question, tenant_id=tenant_id)
 
 
 def _run_graph(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
-    tenant_id = getattr(settings, "tenant_id", "t1")
+    tenant_id = _get_required_tenant_id(settings)
     return run_graph(question, tenant_id=tenant_id)
 
 
 def _run_metric(
     question: str, settings: Any
 ) -> ExecutorResult | tuple[list[AnswerBlock], list[str]]:
-    tenant_id = getattr(settings, "tenant_id", "t1")
+    tenant_id = _get_required_tenant_id(settings)
     return run_metric(question, tenant_id=tenant_id)
 
 
@@ -359,7 +394,7 @@ def _build_all_summary(question: str, executed_names: list[str]) -> MarkdownBloc
 def _build_config_placeholder(question: str, settings: Any) -> list[AnswerBlock]:
     ci_hint = _safe_resolve_ci_code(question)
     time_range = _safe_resolve_time_range_text(question)
-    tenant_id = getattr(settings, "tenant_id", "t1")
+    tenant_id = _get_required_tenant_id(settings)
     markdown = MarkdownBlock(
         type="markdown",
         title="Config executor not implemented yet",
@@ -444,7 +479,7 @@ def _safe_resolve_ci_code(question: str) -> str:
 
 def _safe_resolve_time_range_text(question: str) -> str:
     try:
-        time_range = resolve_time_range(question, datetime.now(timezone.utc))
+        time_range = resolve_time_range(question, datetime.now(get_settings().timezone_offset))
         return f"{time_range.start.isoformat()} ~ {time_range.end.isoformat()} ({time_range.bucket})"
     except Exception:
         logging.debug(
@@ -501,7 +536,7 @@ def _mock_table() -> TableBlock:
 
 
 def _mock_timeseries() -> TimeSeriesBlock:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(get_settings().timezone_offset)
     series = TimeSeriesSeries(
         name="cpu_utilization",
         data=[

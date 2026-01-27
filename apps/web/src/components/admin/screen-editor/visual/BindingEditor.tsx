@@ -74,9 +74,19 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
       <div ref={ref} className={`space-y-3 ${className}`}>
         {showModeToggle && (
           <Tabs value={localMode} onValueChange={(val) => handleModeChange(val as "binding" | "static")}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="binding">Binding</TabsTrigger>
-              <TabsTrigger value="static">Static</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50">
+              <TabsTrigger
+                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+                value="binding"
+              >
+                Binding
+              </TabsTrigger>
+              <TabsTrigger
+                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+                value="static"
+              >
+                Static
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="binding" className="space-y-2">

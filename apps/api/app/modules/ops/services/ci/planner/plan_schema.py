@@ -234,7 +234,12 @@ class Plan(BaseModel):
     steps: List[PlanStep] = Field(default_factory=lambda: [])
     branches: List[PlanBranch] = Field(default_factory=lambda: [])
     loops: List[PlanLoop] = Field(default_factory=lambda: [])
-    budget: BudgetSpec = Field(default_factory=lambda: BudgetSpec())
+    budget: BudgetSpec = Field(
+        default_factory=lambda: __import__(
+            "app.modules.ops.services.ci.planner.validator",
+            fromlist=["get_default_budget"]
+        ).get_default_budget()
+    )
     enable_multistep: bool = False
 
     @field_validator("view", mode="before")

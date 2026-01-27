@@ -8,24 +8,38 @@ from sqlmodel import Field, SQLModel
 
 
 class SourceType(str, enum.Enum):
+    # SQL Databases
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
-    REDIS = "redis"
-    MONGODB = "mongodb"
-    KAFKA = "kafka"
-    S3 = "s3"
     BIGQUERY = "bigquery"
     SNOWFLAKE = "snowflake"
+    # NoSQL / Graph
+    MONGODB = "mongodb"
+    NEO4J = "neo4j"
+    REDIS = "redis"
+    # Message Queue
+    KAFKA = "kafka"
+    # Storage
+    S3 = "s3"
+    # API
+    REST_API = "rest_api"
+    GRAPHQL_API = "graphql_api"
 
 
 class SourceConnection(SQLModel):
     # Connection parameters
-    host: str = Field(min_length=1)
+    host: str | None = Field(default=None)
     port: int = Field(default=5432)
-    username: str = Field(min_length=1)
+    username: str | None = Field(default=None)
     database: str | None = None
 
-    # P0-9: Use secret_key_ref instead of direct password storage
+    # URI-based connection (alternative to host/port/username)
+    uri: str | None = Field(default=None, description="Connection URI (e.g., bolt://localhost, postgresql://...)")
+
+    # Password fields
+    password: str | None = Field(
+        default=None, description="Plain text password (use only in development)"
+    )
     password_encrypted: str | None = Field(
         default=None, description="DEPRECATED: Use secret_key_ref instead"
     )
@@ -46,6 +60,9 @@ class SourceConnection(SQLModel):
     @property
     def connection_string(self) -> str:
         """Generate connection string without password"""
+        if self.uri:
+            # Extract host from URI for display
+            return self.uri
         base = f"{self.username}@{self.host}:{self.port}"
         if self.database:
             base += f"/{self.database}"

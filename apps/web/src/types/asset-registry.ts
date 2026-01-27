@@ -8,7 +8,10 @@ export type SourceType =
   | "kafka"
   | "s3"
   | "bigquery"
-  | "snowflake";
+  | "snowflake"
+  | "neo4j"
+  | "rest_api"
+  | "graphql_api";
 
 export interface SourceConnection {
   host: string;
@@ -284,14 +287,98 @@ export const isResolverAsset = (asset: unknown): asset is ResolverAssetResponse 
 };
 
 // Utility types
-export type AssetType = "source" | "schema" | "resolver";
+export type AssetType = "source" | "schema" | "resolver" | "query";
 
 export type AssetResponse =
   | SourceAssetResponse
   | SchemaAssetResponse
-  | ResolverAssetResponse;
+  | ResolverAssetResponse
+  | QueryAssetResponse;
 
 export type AssetListResponse =
   | SourceListResponse
   | SchemaListResponse
-  | ResolverListResponse;
+  | ResolverListResponse
+  | QueryListResponse;
+
+// Query Asset Types
+export interface HTTPQuery {
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+  path: string;
+  headers?: Record<string, string> | null;
+  parameters?: Record<string, unknown> | null;
+  body?: Record<string, unknown> | null;
+  response_mapping?: {
+    items?: string | null;
+    fields?: Record<string, string> | null;
+  } | null;
+}
+
+export interface QueryMetadata {
+  tool_type: string;
+  operation: string;
+  source_ref: string;
+  source_type: SourceType;
+  schema_ref?: string | null;
+}
+
+export interface QueryAsset {
+  asset_type: "query";
+  name: string;
+  description?: string | null;
+  version: number;
+  status: string;
+  scope?: string | null;
+  // Source-specific query types
+  query_sql?: string | null;
+  query_cypher?: string | null;
+  query_http?: HTTPQuery | null;
+  query_params?: Record<string, unknown> | null;
+  query_metadata?: QueryMetadata | null;
+  tags?: Record<string, unknown> | null;
+  created_by?: string | null;
+  published_by?: string | null;
+  published_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  spec_json?: Record<string, unknown> | null;
+}
+
+export interface QueryAssetCreate {
+  name: string;
+  description?: string | null;
+  scope?: string | null;
+  query_sql?: string | null;
+  query_cypher?: string | null;
+  query_http?: HTTPQuery | null;
+  query_params?: Record<string, unknown> | null;
+  query_metadata?: QueryMetadata | null;
+  tags?: Record<string, unknown> | null;
+}
+
+export interface QueryAssetUpdate {
+  name?: string | null;
+  description?: string | null;
+  query_sql?: string | null;
+  query_cypher?: string | null;
+  query_http?: HTTPQuery | null;
+  query_params?: Record<string, unknown> | null;
+  query_metadata?: QueryMetadata | null;
+  tags?: Record<string, unknown> | null;
+}
+
+export interface QueryAssetResponse extends QueryAsset {
+  asset_id: string;
+}
+
+export interface QueryListResponse {
+  assets: QueryAssetResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+// Type guard for Query Asset
+export const isQueryAsset = (asset: unknown): asset is QueryAssetResponse => {
+  return asset !== null && typeof asset === "object" && "asset_type" in asset && asset.asset_type === "query";
+};

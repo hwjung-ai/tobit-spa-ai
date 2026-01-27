@@ -4,7 +4,6 @@ import json
 from typing import Any
 
 import psycopg
-from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
     MarkdownBlock,
@@ -13,11 +12,20 @@ from schemas import (
     TableBlock,
 )
 
-from app.modules.asset_registry.loader import load_query_asset
+from app.modules.asset_registry.loader import load_query_asset, load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 from app.shared.config_loader import load_text
+from core.config import get_settings
 
 from ..resolvers import resolve_ci
 from ..resolvers.types import CIHit
+
+
+def _get_connection():
+    """Get connection for config operations using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 def _load_query_sql(scope: str, name: str) -> str | None:
@@ -61,7 +69,9 @@ def run_config(
     ci = ci_hits[0]
 
     try:
-        with get_pg_connection() as conn:
+        connection = _get_connection()
+        try:
+            conn = connection.connection if hasattr(connection, 'connection') else connection
             ci_row = _fetch_ci(conn, ci_select_query, tenant_id, ci.ci_id)
             if not ci_row:
                 return [
@@ -72,6 +82,8 @@ def run_config(
                     )
                 ], ["postgres"]
             ci_ext = _fetch_ci_ext(conn, ci_ext_select_query, ci.ci_id)
+        finally:
+            connection.close()
     except Exception as e:
         return [
             MarkdownBlock(

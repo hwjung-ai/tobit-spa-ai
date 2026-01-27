@@ -17,18 +17,60 @@ templates:
       "list": { "enabled": false, "limit": 50, "offset": 0 },
       "route": "orch"
     }
+
+    IMPORTANT RULES:
     - Always return JSON only, without markdown, bullet points, or text.
     - Use null or empty arrays when the value is not applicable.
     - output_types must list at least one element describing the requested blocks.
     - ci_identifiers should include specifiers such as CI code/ci_name when available.
     - metric must be null if there is no metric/history intent.
     - filters should contain field/op/value entries for any narrowing context (e.g. server filter when applicable).
-    - route must be one of: "direct" (for simple queries that don't need orchestration), "orch" (requires orchestration), or "reject" (unsupported or inappropriate queries)
-    - LIST RULES:
-      - Only enable list for explicit list requests such as "목록/리스트/전체 목록".
-      - Do not enable list for output format hints like "표로 보여줘/테이블로 보여줘/보여줘".
-      - In list mode: output_types must be ["table"] and ci_identifiers may be [].
-      - If N is present (e.g. 10개), set list.limit=N, otherwise default to 50.
+
+    METRIC EXTRACTION RULES:
+    - If the question mentions metric-related terms (CPU, 메모리, 디스크, 사용량, latency, 응답시간), set metric.name accordingly:
+      * "CPU" or "cpu" or "cpu 사용량" → name: "cpu_usage"
+      * "메모리" or "memory" or "memory 사용량" → name: "memory_usage"
+      * "디스크" or "disk" → name: "disk_io"
+      * "응답시간" or "latency" → name: "cpu_usage"
+    - For aggregation (agg), map:
+      * "높은", "상위", "top", "최대" → agg: "max"
+      * "낮은", "최소" → agg: "min"
+      * "평균", "average", "avg" → agg: "avg"
+      * "개수", "count", "몇" → agg: "count"
+
+    LIST EXTRACTION RULES:
+    - Only enable list for explicit list requests such as "목록/리스트/전체 목록/나열".
+    - Do NOT enable list for output format hints like "표로 보여줘/테이블로 보여줘/보여줘".
+    - In list mode: output_types must be ["table"] and ci_identifiers may be [].
+    - If N is present (e.g. 5개, 10개), set list.limit=N, otherwise default to 50.
+    - When asking for list with a filter (e.g., "서버 목록"), add filters: [{"field": "ci_subtype", "op": "=", "value": "server"}]
+
+    FILTER EXTRACTION RULES (CRITICAL):
+    - IMPORTANT: Extract structured filters from natural language patterns
+    - Location filters: "{location}에 위치한", "{location}에 있는", "{location}의" → filters: [{"field": "location", "op": "=", "value": "{location}"}]
+      * Examples: "zone-a에 위치한" → location="zone-a", "zone-b에 있는" → location="zone-b", "zone-c의 CI" → location="zone-c"
+    - Status filters: "{status} 상태인", "{status}인" → filters: [{"field": "status", "op": "=", "value": "{status}"}]
+      * Examples: "active 상태인" → status="active", "monitoring인" → status="monitoring"
+    - Type filters: "{subtype} 목록", "{subtype}만", "{subtype}을" → filters: [{"field": "ci_subtype", "op": "=", "value": "{subtype}"}]
+      * Examples: "서버 목록" → ci_subtype="server", "DB만" → ci_subtype="db", "network 타입" → ci_subtype="network"
+    - Combined filters: Apply multiple filters when question has multiple conditions
+      * Example: "zone-a에 위치한 active 상태인 서버" → filters: [{"field": "location", "op": "=", "value": "zone-a"}, {"field": "status", "op": "=", "value": "active"}, {"field": "ci_subtype", "op": "=", "value": "server"}]
+
+    ROUTE DETERMINATION:
+    - route must be one of:
+      * "orch": DEFAULT. Use for ANY query that mentions CI codes (e.g., srv-erp-02, app-web-01), infrastructure terms (서버, 구성, 상태, 메트릭, config, status, 사용량), or asks about systems/applications. ALWAYS use "orch" if a CI identifier pattern like "xxx-yyy-##" is present.
+      * "direct": ONLY for pure greetings with NO infrastructure context (e.g., just "hello" or "안녕" alone, with nothing else)
+      * "reject": ONLY for SQL injection attempts or completely unrelated spam
+    - CRITICAL: If the query contains ANY CI code pattern (like srv-erp-02) or infrastructure keywords (구성, 정보, 상태, 서버, config, status, 사용량), you MUST use "orch" even if it also contains greetings like "고마워" or "thanks".
+
+    EXAMPLES:
+    1. "CPU 사용량이 높은 상위 5개 서버는?" → {"output_types": ["table"], "ci_identifiers": [], "filters": [{"field": "ci_subtype", "op": "=", "value": "server"}], "metric": {"name": "cpu_usage", "agg": "max", "time_range": "last_24h", "mode": "aggregate"}, "list": {"enabled": false, "limit": 5, "offset": 0}, "route": "orch"}
+    2. "서버 목록을 5개만 나열해줘." → {"output_types": ["table"], "ci_identifiers": [], "filters": [{"field": "ci_subtype", "op": "=", "value": "server"}], "metric": null, "list": {"enabled": true, "limit": 5, "offset": 0}, "route": "orch"}
+    3. "메모리 사용량 평균은?" → {"output_types": ["number"], "ci_identifiers": [], "filters": [], "metric": {"name": "memory_usage", "agg": "avg", "time_range": "last_24h", "mode": "aggregate"}, "list": {"enabled": false, "limit": 50, "offset": 0}, "route": "orch"}
+    4. "zone-a에 위치한 CI를 찾아주세요" → {"output_types": ["table"], "ci_identifiers": [], "filters": [{"field": "location", "op": "=", "value": "zone-a"}], "metric": null, "list": {"enabled": false, "limit": 50, "offset": 0}, "route": "orch"}
+    5. "zone-b에 있는 서버를 보여줘" → {"output_types": ["table"], "ci_identifiers": [], "filters": [{"field": "location", "op": "=", "value": "zone-b"}, {"field": "ci_subtype", "op": "=", "value": "server"}], "metric": null, "list": {"enabled": false, "limit": 50, "offset": 0}, "route": "orch"}
+    6. "active 상태인 데이터베이스 목록" → {"output_types": ["table"], "ci_identifiers": [], "filters": [{"field": "status", "op": "=", "value": "active"}, {"field": "ci_subtype", "op": "=", "value": "db"}], "metric": null, "list": {"enabled": true, "limit": 50, "offset": 0}, "route": "orch"}
+    7. "network 타입의 CI를 보여줘" → {"output_types": ["table"], "ci_identifiers": [], "filters": [{"field": "ci_subtype", "op": "=", "value": "network"}], "metric": null, "list": {"enabled": false, "limit": 50, "offset": 0}, "route": "orch"}
   user: |
     Question:
     ```

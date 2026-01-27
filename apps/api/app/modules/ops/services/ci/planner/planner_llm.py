@@ -9,7 +9,7 @@ from typing import Any, Iterable, List, Set, Tuple
 from core.logging import get_logger
 
 from app.llm.client import get_llm_client
-from app.modules.asset_registry.loader import load_prompt_asset
+from app.modules.asset_registry.loader import load_prompt_asset, load_mapping_asset
 from app.modules.ops.services.ci.planner.plan_schema import (
     AutoGraphScopeSpec,
     AutoPathSpec,
@@ -32,24 +32,285 @@ from app.modules.ops.services.ci.planner.plan_schema import (
 logger = get_logger(__name__)
 
 
+# 캐싱을 위한 전역 변수
+_METRIC_ALIASES_CACHE = None
+_AGG_KEYWORDS_CACHE = None
+_SERIES_KEYWORDS_CACHE = None
+_HISTORY_KEYWORDS_CACHE = None
+_LIST_KEYWORDS_CACHE = None
+_TABLE_HINTS_CACHE = None
+_CEP_KEYWORDS_CACHE = None
+_GRAPH_SCOPE_KEYWORDS_CACHE = None
+_AUTO_KEYWORDS_CACHE = None
+_FILTERABLE_FIELDS_CACHE = None
+
+# 정규식 패턴 (코드 구조상 필수적, 유지)
 ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 # Depth 파싱: "depth 10", "깊이 10" 등
 DEPTH_PATTERN = re.compile(r"(?:depth|깊이)\s+(\d+)", re.IGNORECASE)
 
 
+# Mapping Asset 로딩 함수들
+def _get_metric_aliases():
+    """metric_aliases mapping asset 로드 (캐싱 적용)"""
+    global _METRIC_ALIASES_CACHE
+    if _METRIC_ALIASES_CACHE is not None:
+        return _METRIC_ALIASES_CACHE
+
+    mapping, _ = load_mapping_asset("metric_aliases")
+    if mapping:
+        # DB content structure: {"aliases": {...}, "keywords": [...]}
+        _METRIC_ALIASES_CACHE = mapping
+        return _METRIC_ALIASES_CACHE
+
+    # Fallback
+    return {
+        "aliases": {
+            "cpu": "cpu_usage",
+            "cpu_usage": "cpu_usage",
+            "memory": "memory_usage",
+            "memory_usage": "memory_usage",
+            "disk": "disk_io",
+            "disk_io": "disk_io",
+            "network": "network_in",
+            "network_in": "network_in",
+            "temperature": "temperature",
+            "latency": "cpu_usage",
+            "응답시간": "cpu_usage",
+            "response": "cpu_usage",
+            "rps": "network_in",
+            "error": "error",
+            "사용량": "cpu_usage",
+            "usage": "cpu_usage",
+        },
+        "keywords": ["지표", "지수", "메트릭", "metric"]
+    }
+
+
+def _get_agg_keywords():
+    """agg_keywords mapping asset 로드 (캐싱 적용)"""
+    global _AGG_KEYWORDS_CACHE
+    if _AGG_KEYWORDS_CACHE is not None:
+        return _AGG_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("agg_keywords")
+    if mapping:
+        # DB content structure: {"mappings": {...}}
+        _AGG_KEYWORDS_CACHE = mapping.get("mappings", {})
+        return _AGG_KEYWORDS_CACHE
+
+    # Fallback
+    return {
+        "최대": "max", "maximum": "max", "max": "max",
+        "최소": "min", "minimum": "min", "min": "min",
+        "평균": "avg", "average": "avg", "avg": "avg",
+        "count": "count", "건수": "count",
+        "높은": "max", "상위": "max", "top": "max", "가장": "max",
+    }
+
+
+def _get_series_keywords():
+    """series_keywords mapping asset 로드 (캐싱 적용)"""
+    global _SERIES_KEYWORDS_CACHE
+    if _SERIES_KEYWORDS_CACHE is not None:
+        return _SERIES_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("series_keywords")
+    if mapping:
+        # DB content structure: {"keywords": [...]}
+        _SERIES_KEYWORDS_CACHE = set(mapping.get("keywords", []))
+        return _SERIES_KEYWORDS_CACHE
+
+    # Fallback
+    return {"추이", "시계열", "그래프", "trend", "series", "line", "chart"}
+
+
+def _get_history_keywords():
+    """history_keywords mapping asset 로드 (캐싱 적용)"""
+    global _HISTORY_KEYWORDS_CACHE
+    if _HISTORY_KEYWORDS_CACHE is not None:
+        return _HISTORY_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("history_keywords")
+    if mapping:
+        # DB content structure: {"keywords": [...], "time_map": {...}}
+        _HISTORY_KEYWORDS_CACHE = {
+            "keywords": set(mapping.get("keywords", [])),
+            "time_map": mapping.get("time_map", {}),
+        }
+        return _HISTORY_KEYWORDS_CACHE
+
+    # Fallback
+    return {
+        "keywords": {"이벤트", "알람", "로그", "event"},
+        "time_map": {
+            "24시간": "last_24h", "하루": "last_24h", "오늘": "last_24h",
+            "7일": "last_7d", "일주일": "last_7d", "지난주": "last_7d",
+            "30일": "last_30d", "한달": "last_30d",
+        }
+    }
+
+
+def _get_list_keywords():
+    """list_keywords mapping asset 로드 (캐싱 적용)"""
+    global _LIST_KEYWORDS_CACHE
+    if _LIST_KEYWORDS_CACHE is not None:
+        return _LIST_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("list_keywords")
+    if mapping:
+        # DB content structure: {"keywords": [...]}
+        _LIST_KEYWORDS_CACHE = set(mapping.get("keywords", []))
+        return _LIST_KEYWORDS_CACHE
+
+    # Fallback
+    return {
+        "목록", "리스트", "list", "전체 목록",
+        "나열", "목록으로", "리스트로",
+    }
+
+
+def _get_table_hints():
+    """table_hints mapping asset 로드 (캐싱 적용)"""
+    global _TABLE_HINTS_CACHE
+    if _TABLE_HINTS_CACHE is not None:
+        return _TABLE_HINTS_CACHE
+
+    mapping, _ = load_mapping_asset("table_hints")
+    if mapping:
+        # DB content structure: {"keywords": [...]}
+        _TABLE_HINTS_CACHE = set(mapping.get("keywords", []))
+        return _TABLE_HINTS_CACHE
+
+    # Fallback
+    return {
+        "표", "테이블", "table", "표로", "테이블로",
+        "보여줘", "표로 보여줘", "테이블로 보여줘",
+        "정리", "정리해서", "추출", "가져와",
+        "뽑아", "뽑아줘", "출력",
+    }
+
+
+def _get_cep_keywords():
+    """cep_keywords mapping asset 로드 (캐싱 적용)"""
+    global _CEP_KEYWORDS_CACHE
+    if _CEP_KEYWORDS_CACHE is not None:
+        return _CEP_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("cep_keywords")
+    if mapping:
+        # DB content structure: {"keywords": [...]}
+        _CEP_KEYWORDS_CACHE = set(mapping.get("keywords", []))
+        return _CEP_KEYWORDS_CACHE
+
+    # Fallback
+    return {"simulate", "시뮬", "시뮬레이션", "규칙", "rule", "cep"}
+
+
+def _get_graph_scope_keywords():
+    """graph_scope_keywords mapping asset 로드 (캐싱 적용)"""
+    global _GRAPH_SCOPE_KEYWORDS_CACHE
+    if _GRAPH_SCOPE_KEYWORDS_CACHE is not None:
+        return _GRAPH_SCOPE_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("graph_scope_keywords")
+    if mapping:
+        # DB content structure: {"scope_keywords": [...], "metric_keywords": [...]}
+        _GRAPH_SCOPE_KEYWORDS_CACHE = {
+            "scope_keywords": set(mapping.get("scope_keywords", [])),
+            "metric_keywords": set(mapping.get("metric_keywords", [])),
+        }
+        return _GRAPH_SCOPE_KEYWORDS_CACHE
+
+    # Fallback
+    return {
+        "scope_keywords": {
+            "범위", "영향", "영향권", "주변", "연관", "관련",
+            "의존", "dependency", "impact", "neighbors",
+        },
+        "metric_keywords": {
+            "cpu", "latency", "error", "성능", "rps",
+            "response", "응답", "performance",
+        },
+    }
+
+
+def _get_auto_keywords():
+    """auto_keywords mapping asset 로드 (캐싱 적용)"""
+    global _AUTO_KEYWORDS_CACHE
+    if _AUTO_KEYWORDS_CACHE is not None:
+        return _AUTO_KEYWORDS_CACHE
+
+    mapping, _ = load_mapping_asset("auto_keywords")
+    if mapping:
+        # DB content structure: {"keywords": [...]}
+        _AUTO_KEYWORDS_CACHE = set(mapping.get("keywords", []))
+        return _AUTO_KEYWORDS_CACHE
+
+    # Fallback
+    return {"점검", "상태", "요약", "진단", "health", "overview", "status"}
+
+
+def _get_filterable_fields():
+    """filterable_fields mapping asset 로드 (캐싱 적용)"""
+    global _FILTERABLE_FIELDS_CACHE
+    if _FILTERABLE_FIELDS_CACHE is not None:
+        return _FILTERABLE_FIELDS_CACHE
+
+    mapping, _ = load_mapping_asset("filterable_fields")
+    if mapping:
+        # DB content structure: {"tag_filter_keys": [...], "attr_filter_keys": [...]}
+        _FILTERABLE_FIELDS_CACHE = {
+            "tag_keys": set(mapping.get("tag_filter_keys", [])),
+            "attr_keys": set(mapping.get("attr_filter_keys", [])),
+        }
+        return _FILTERABLE_FIELDS_CACHE
+
+    # Fallback
+    return {
+        "tag_keys": {
+            "system", "role", "runs_on", "host_server",
+            "ci_subtype", "connected_servers",
+        },
+        "attr_keys": {
+            "engine", "version", "zone", "ip", "cpu_cores", "memory_gb"
+        },
+    }
+
+
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
+# (아래의 determine_output_types 함수에서 _get_*() 함수를 호출)
+
+
 def determine_output_types(text: str) -> Set[str]:
     normalized = text.lower()
     output_types: Set[str] = set()
+    
+    # Number keywords (하드코딩 유지 - 코드 구조상 필수적)
+    NUMBER_KEYWORDS = {
+        "얼마나", "숫자", "수치", "크다", "얼마나",
+        "얼마", "몇", "count", "total",
+    }
     if any(keyword in normalized for keyword in NUMBER_KEYWORDS):
         output_types.add("number")
-    if any(keyword in normalized for keyword in AGG_KEYWORDS):
+    
+    # Mapping Asset 로드
+    agg_keywords = _get_agg_keywords()
+    if any(keyword in normalized for keyword in agg_keywords.keys()):
         output_types.add("aggregate")
-    if any(keyword in normalized for keyword in SERIES_KEYWORDS):
+    
+    series_keywords = _get_series_keywords()
+    if any(keyword in normalized for keyword in series_keywords):
         output_types.add("chart")
-    if any(keyword in normalized for keyword in TABLE_HINTS):
+    
+    table_hints = _get_table_hints()
+    if any(keyword in normalized for keyword in table_hints):
         output_types.add("table")
-    if any(keyword in normalized for keyword in GRAPH_SCOPE_KEYWORDS):
+    
+    graph_scope_keywords = _get_graph_scope_keywords()
+    if any(keyword in normalized for keyword in graph_scope_keywords["scope_keywords"]):
         output_types.add("network")
+    
     if not output_types:
         output_types.add("text")
     return output_types
@@ -87,9 +348,11 @@ def _normalize_time_range(value: str | None) -> str:
         year, month, day = match.groups()
         return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
     lower = trimmed.lower()
-    if lower in TIME_RANGE_MAP:
-        return TIME_RANGE_MAP[lower]
-    for key, mapped in TIME_RANGE_MAP.items():
+    history_keywords = _get_history_keywords()
+    time_map = history_keywords.get("time_map", {})
+    if lower in time_map:
+        return time_map[lower]
+    for key, mapped in time_map.items():
         if key in lower:
             return mapped
     if lower in {"last_1h", "last_24h", "last_7d"}:
@@ -240,63 +503,12 @@ def _call_output_parser_llm(
 
 def is_metric_requested(text: str) -> bool:
     normalized = text.lower()
-    return any(keyword in normalized for keyword in METRIC_KEYWORDS)
+    metric_aliases = _get_metric_aliases()
+    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
+    return any(keyword in normalized for keyword in metric_keywords)
 
 
-TAG_FILTER_KEYS = {
-    "system",
-    "role",
-    "runs_on",
-    "host_server",
-    "ci_subtype",
-    "connected_servers",
-}
-ATTR_FILTER_KEYS = {"engine", "version", "zone", "ip", "cpu_cores", "memory_gb"}
-METRIC_ALIASES = {
-    "cpu": "cpu_usage",
-    "cpu_usage": "cpu_usage",
-    "memory": "memory_usage",
-    "memory_usage": "memory_usage",
-    "disk": "disk_io",
-    "disk_io": "disk_io",
-    "network": "network_in",
-    "network_in": "network_in",
-    "temperature": "temperature",
-    "latency": "cpu_usage",
-    "응답시간": "cpu_usage",
-    "response": "cpu_usage",
-    "rps": "network_in",
-    "error": "error",
-}
-METRIC_KEYWORDS = set(METRIC_ALIASES.keys()) | {"지표", "지수"}
-TIME_RANGE_MAP = {
-    "최근 1시간": "last_1h",
-    "한시간": "last_1h",
-    "최근 한시간": "last_1h",
-    "최근 시간": "last_1h",
-    "최근 24시간": "last_24h",
-    "하루": "last_24h",
-    "오늘": "last_24h",
-    "24시간": "last_24h",
-    "최근 하루": "last_24h",
-    "최근 일주일": "last_7d",
-    "지난주": "last_7d",
-    "7일": "last_7d",
-}
-AGG_KEYWORDS = {
-    "최대": "max",
-    "maximum": "max",
-    "max": "max",
-    "최소": "min",
-    "minimum": "min",
-    "min": "min",
-    "평균": "avg",
-    "average": "avg",
-    "avg": "avg",
-    "count": "count",
-    "건수": "count",
-}
-SERIES_KEYWORDS = {"추이", "시계열", "그래프", "trend", "series", "line", "chart"}
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
 CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
 )
@@ -312,23 +524,9 @@ NUMBER_KEYWORDS = {
     "count",
     "total",
 }
-CEP_KEYWORDS = {"simulate", "시뮬", "시뮬레이션", "규칙", "rule", "cep"}
 UUID_PATTERN = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
-
-GRAPH_SCOPE_KEYWORDS = {
-    "범위",
-    "영향",
-    "영향권",
-    "주변",
-    "연관",
-    "관련",
-    "의존",
-    "dependency",
-    "impact",
-    "neighbors",
-}
 GRAPH_VIEW_KEYWORD_MAP = {
     "의존": View.DEPENDENCY,
     "dependency": View.DEPENDENCY,
@@ -347,7 +545,7 @@ GRAPH_VIEW_DEFAULT_DEPTH = {
 }
 GRAPH_DEPTH_PATTERN = re.compile(r"(\d+)\s*(?:단계|depth|깊이)")
 
-AUTO_KEYWORDS = {"점검", "상태", "요약", "진단", "health", "overview", "status"}
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
 AUTO_VIEW_PREFERENCES = [
     (["path", "경로", "연결"], [View.PATH]),
     (["의존", "dependency", "depends", "전원", "네트워크"], [View.DEPENDENCY]),
@@ -359,46 +557,12 @@ AUTO_VIEW_PREFERENCES = [
 CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
 )
-GRAPH_SCOPE_METRIC_KEYWORDS = {
-    "cpu",
-    "latency",
-    "error",
-    "성능",
-    "rps",
-    "response",
-    "응답",
-    "performance",
-}
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
 GRAPH_SCOPE_VIEWS = {View.DEPENDENCY, View.IMPACT}
-LIST_KEYWORDS = {
-    "목록",
-    "리스트",
-    "list",
-    "전체 목록",
-    "나열",
-    "목록으로",
-    "리스트로",
-}
-TABLE_HINTS = {
-    "표",
-    "테이블",
-    "table",
-    "표로",
-    "테이블로",
-    "보여줘",
-    "표로 보여줘",
-    "테이블로 보여줘",
-    "정리",
-    "정리해서",
-    "추출",
-    "가져와",
-    "뽑아",
-    "뽑아줘",
-    "출력",
-}
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
 LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
 SERVER_FILTER_KEYWORDS = {"서버", "server"}
-CI_IDENTIFIER_PATTERN = re.compile(r"[a-z0-9_]+(?:-[a-z0-9_]+)+", re.IGNORECASE)
+CI_IDENTIFIER_PATTERN = re.compile(r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE)
 GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
 OUTPUT_PARSER_MODEL = os.environ.get(
     "OPS_CI_OUTPUT_PARSER_MODEL", os.environ.get("CHAT_MODEL", "gpt-4o-mini")
@@ -435,17 +599,70 @@ def _determine_view(text: str, intent: Intent) -> View:
 
 def _extract_keywords(text: str) -> List[str]:
     tokens = re.findall(r"[a-zA-Z0-9가-힣\-_]+", text)
-    return [token for token in tokens if len(token) > 1][:5]
+    # Sanitize Korean particles from tokens that look like CI identifiers
+    sanitized = []
+    for token in tokens:
+        # Check if token looks like a CI identifier (has hyphens)
+        if '-' in token and re.match(r'[a-z0-9_]+(?:-[a-z0-9_]+)+', token.lower()):
+            sanitized.append(_sanitize_korean_particles(token))
+        else:
+            sanitized.append(token)
+    return [token for token in sanitized if len(token) > 1][:5]
+
+
+def _extract_natural_language_filters(text: str) -> List[FilterSpec]:
+    """Extract filters from natural language patterns like 'zone-a에 위치한'"""
+    filters: List[FilterSpec] = []
+    normalized = text.lower()
+
+    # Location patterns: "zone-a에 위치한", "zone-b에 있는", "zone-c의"
+    location_pattern = r"(zone-[abc])\s*(?:에\s*위치한|에\s*있는|의)"
+    for match in re.finditer(location_pattern, normalized):
+        location = match.group(1)
+        filters.append(FilterSpec(field="location", op="=", value=location))
+
+    # Status patterns: "active 상태인", "monitoring인"
+    status_patterns = [
+        (r"(active|monitoring|inactive)\s*상태인", 1),
+        (r"(active|monitoring|inactive)\s*(?:상태)?인", 1),
+    ]
+    for pattern, group in status_patterns:
+        for match in re.finditer(pattern, normalized):
+            status = match.group(group)
+            filters.append(FilterSpec(field="status", op="=", value=status))
+
+    # CI subtype patterns: "서버", "network", "database/db", "was", "web", "app"
+    subtype_map = {
+        "서버": "server", "server": "server",
+        "network": "network", "네트워크": "network",
+        "db": "db", "database": "db", "데이터베이스": "db",
+        "was": "was", "웹": "web", "web": "web",
+        "app": "app", "앱": "app", "애플리케이션": "app",
+        "os": "os", "운영체제": "os",
+    }
+
+    # Check for subtype patterns followed by particle or at end of sentence
+    for korean, english in subtype_map.items():
+        # Pattern: subtype followed by typical Korean particles or sentence boundary
+        pattern = rf"\b{korean}\b\s*(?:을|를|의|인|만|목록|리스트|보여|찾아|알려|$|\))"
+        if re.search(pattern, normalized, re.IGNORECASE):
+            filters.append(FilterSpec(field="ci_subtype", op="=", value=english))
+
+    return filters
 
 
 def _extract_filters(text: str) -> List[FilterSpec]:
     filters: List[FilterSpec] = []
+    filterable_fields = _get_filterable_fields()
     for key, value in re.findall(r"(\w+)=([\w-]+)", text):
         normalized = key.lower()
-        if normalized in TAG_FILTER_KEYS:
+        if normalized in filterable_fields["tag_filter_keys"]:
             filters.append(FilterSpec(field=f"tags.{normalized}", value=value))
-        elif normalized in ATTR_FILTER_KEYS:
+        elif normalized in filterable_fields["attr_filter_keys"]:
             filters.append(FilterSpec(field=f"attributes.{normalized}", value=value))
+    # Also try natural language filter extraction
+    nl_filters = _extract_natural_language_filters(text)
+    filters.extend(nl_filters)
     return filters
 
 
@@ -511,7 +728,9 @@ def create_plan(
     llm_filters_payload = None
     if llm_payload:
         output_types = set(llm_payload.get("output_types") or ["text"])
-        ci_keywords = tuple(llm_payload.get("ci_identifiers") or ())
+        # Sanitize Korean particles from LLM-returned CI identifiers
+        raw_ci_keywords = llm_payload.get("ci_identifiers") or ()
+        ci_keywords = tuple(_sanitize_korean_particles(k) for k in raw_ci_keywords)
         llm_filters_payload = llm_payload.get("filters")
     else:
         output_types = determine_output_types(normalized)
@@ -707,23 +926,33 @@ def _split_path_candidates(text: str) -> Tuple[str, str]:
 
 def _determine_metric_spec(text: str):
     normalized = text.lower()
+    metric_aliases = _get_metric_aliases()
+    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
+    
     metric_name = None
-    for alias in METRIC_KEYWORDS:
+    for alias in metric_keywords:
         if alias in normalized:
-            metric_name = METRIC_ALIASES.get(alias, alias)
+            metric_name = metric_aliases["aliases"].get(alias, alias)
             break
     if not metric_name:
         return None
+    
+    history_keywords = _get_history_keywords()
+    time_map = history_keywords.get("time_map", {})
     time_range = next(
-        (value for key, value in TIME_RANGE_MAP.items() if key in normalized),
+        (value for key, value in time_map.items() if key in normalized),
         "last_24h",
     )
+    
+    agg_keywords = _get_agg_keywords()
     agg = next(
-        (value for key, value in AGG_KEYWORDS.items() if key in normalized), "avg"
+        (value for key, value in agg_keywords.items() if key in normalized), "avg"
     )
+    
+    series_keywords = _get_series_keywords()
     mode = (
         "series"
-        if any(keyword in normalized for keyword in SERIES_KEYWORDS)
+        if any(keyword in normalized for keyword in series_keywords)
         else "aggregate"
     )
     # default aggregate/series based on keywords
@@ -737,11 +966,12 @@ def _determine_list_spec(text: str) -> ListSpec | None:
     if _is_graph_force_query(normalized):
         return None
     match = LIST_LIMIT_PATTERN.search(normalized)
-    has_hint = any(keyword in normalized for keyword in LIST_KEYWORDS)
+    list_keywords = _get_list_keywords()
+    has_hint = any(keyword in normalized for keyword in list_keywords)
     if not has_hint and not match:
         return None
     if not has_hint:
-        # Heuristic: if the user asks for N items and mentions CI/names, treat as list.
+        # Heuristic: if user asks for N items and mentions CI/names, treat as list.
         if "ci" not in normalized and "이름" not in normalized:
             return None
     limit = 50
@@ -755,7 +985,8 @@ def _determine_type_aggregation(text: str) -> bool:
     normalized = text.lower()
     if not any(keyword in normalized for keyword in TYPE_AGG_KEYWORDS):
         return False
-    if any(keyword in normalized for keyword in LIST_KEYWORDS):
+    list_keywords = _get_list_keywords()
+    if any(keyword in normalized for keyword in list_keywords):
         return False
     return True
 
@@ -799,7 +1030,8 @@ def _determine_graph_depth(text: str, view: View) -> int:
 
 def _has_graph_scope_keyword(text: str) -> bool:
     normalized = text.lower()
-    return any(keyword in normalized for keyword in GRAPH_SCOPE_KEYWORDS)
+    graph_scope_keywords = _get_graph_scope_keywords()
+    return any(keyword in normalized for keyword in graph_scope_keywords["scope_keywords"])
 
 
 def _is_graph_force_query(text: str) -> bool:
@@ -813,11 +1045,32 @@ def _is_graph_force_query(text: str) -> bool:
     return False
 
 
+def _sanitize_korean_particles(text: str) -> str:
+    """Remove Korean particles (조사) from the end of text.
+
+    Korean particles that should be stripped:
+    - 조사 (particles): 의, 을, 를, 이, 가, 은, 는, 과, 와, 부터, 까지, 에서, 으로, 로, 만, 조차, 처럼
+    """
+    korean_particles = {
+        '의', '을', '를', '이', '가', '은', '는', '과', '와',
+        '부터', '까지', '에서', '으로', '로', '만', '조차', '처럼',
+        '랑', '이나', '나', '께', '한테', '더러'
+    }
+    result = text
+    for particle in sorted(korean_particles, key=len, reverse=True):
+        if result.endswith(particle):
+            result = result[:-len(particle)]
+            break
+    return result.strip()
+
+
 def _extract_identifier_candidates(text: str) -> list[str]:
     matches = CI_IDENTIFIER_PATTERN.findall(text)
     deduped: list[str] = []
     for match in matches:
         value = match.strip()
+        # Sanitize Korean particles from extracted identifiers
+        value = _sanitize_korean_particles(value)
         if value and value not in deduped:
             deduped.append(value)
     return deduped[:5]
@@ -887,20 +1140,30 @@ def _determine_auto_spec(text: str, plan: Plan) -> AutoSpec:
     normalized = text.lower()
     views = _determine_auto_views(normalized)
     depth_hint = _determine_auto_depth_hint(normalized)
+    
+    metric_aliases = _get_metric_aliases()
+    metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
     include_metric = bool(plan.metric) or any(
-        keyword in normalized for keyword in METRIC_KEYWORDS
+        keyword in normalized for keyword in metric_keywords
     )
+    
+    series_keywords = _get_series_keywords()
     metric_mode = (
         "series"
-        if any(keyword in normalized for keyword in SERIES_KEYWORDS)
+        if any(keyword in normalized for keyword in series_keywords)
         else "aggregate"
     )
+    
+    history_keywords = _get_history_keywords()
     include_history = bool(plan.history.enabled) or any(
-        keyword in normalized for keyword in HISTORY_KEYWORDS
+        keyword in normalized for keyword in history_keywords["keywords"]
     )
+    
+    cep_keywords = _get_cep_keywords()
     include_cep = bool(plan.cep and plan.cep.rule_id) or any(
-        keyword in normalized for keyword in CEP_KEYWORDS
+        keyword in normalized for keyword in cep_keywords
     )
+    
     return AutoSpec(
         views=views,
         depth_hint=depth_hint,
@@ -932,28 +1195,23 @@ def _determine_auto_path_spec(text: str) -> AutoPathSpec:
 def _determine_graph_scope_spec(text: str, views: List[View]) -> AutoGraphScopeSpec:
     normalized = text.lower()
     has_scope_view = any(view in GRAPH_SCOPE_VIEWS for view in views)
+    
+    graph_scope_keywords = _get_graph_scope_keywords()
     include_metric = has_scope_view and any(
-        keyword in normalized for keyword in GRAPH_SCOPE_METRIC_KEYWORDS
+        keyword in normalized for keyword in graph_scope_keywords["metric_keywords"]
     )
+    
+    history_keywords = _get_history_keywords()
     include_history = has_scope_view and any(
-        keyword in normalized for keyword in HISTORY_KEYWORDS
+        keyword in normalized for keyword in history_keywords["keywords"]
     )
+    
     return AutoGraphScopeSpec(
         include_metric=include_metric, include_history=include_history
     )
 
 
-HISTORY_KEYWORDS = {"이벤트", "알람", "로그", "event"}
-HISTORY_TIME_MAP = {
-    "24시간": "last_24h",
-    "하루": "last_24h",
-    "오늘": "last_24h",
-    "7일": "last_7d",
-    "일주일": "last_7d",
-    "지난주": "last_7d",
-    "30일": "last_30d",
-    "한달": "last_30d",
-}
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
 
 TYPE_KEYWORDS = {"종류", "타입", "type", "category", "kind"}
 TYPE_AGG_KEYWORDS = TYPE_KEYWORDS
@@ -961,23 +1219,29 @@ TYPE_AGG_KEYWORDS = TYPE_KEYWORDS
 
 def _determine_history_spec(text: str):
     normalized = text.lower()
-    if not any(keyword in normalized for keyword in HISTORY_KEYWORDS):
+    history_keywords = _get_history_keywords()
+    if not any(keyword in normalized for keyword in history_keywords["keywords"]):
         return None
+    
+    time_map = history_keywords.get("time_map", {})
     time_range = "last_7d"
-    for key, value in HISTORY_TIME_MAP.items():
+    for key, value in time_map.items():
         if key in normalized:
             time_range = value
             break
+    
     limit = 50
-    match = re.search(r"(\\d{1,3})\\s*개", normalized)
+    match = re.search(r"(\d{1,3})\s*개", normalized)
     if match:
         limit = min(200, max(1, int(match.group(1))))
+    
     scope = "graph" if _has_graph_scope_keyword(normalized) else "ci"
     return HistorySpec(enabled=True, scope=scope, time_range=time_range, limit=limit)
 
 
 def _determine_cep_spec(text: str) -> CepSpec | None:
-    if not any(keyword in text.lower() for keyword in CEP_KEYWORDS):
+    cep_keywords = _get_cep_keywords()
+    if not any(keyword in text.lower() for keyword in cep_keywords):
         return None
     match = UUID_PATTERN.search(text)
     rule_id = match.group(0) if match else None
@@ -986,7 +1250,8 @@ def _determine_cep_spec(text: str) -> CepSpec | None:
 
 def _determine_mode(text: str):
     normalized = text.lower()
-    if any(keyword in normalized for keyword in AUTO_KEYWORDS):
+    auto_keywords = _get_auto_keywords()
+    if any(keyword in normalized for keyword in auto_keywords):
         return PlanMode.AUTO
     return PlanMode.CI
 
@@ -1025,6 +1290,30 @@ def create_plan_output(
             route = llm_payload["route"]
     except Exception:
         logger.warning("ci.planner.route_fallback", extra={"reason": "heuristic"})
+
+    # Safety check: if query contains CI identifiers or infrastructure keywords, override reject/direct to orch
+    # This prevents valid infrastructure queries from being incorrectly classified
+    if route in ("reject", "direct"):
+        INFRA_KEYWORDS = {
+            "구성", "구성정보", "상태", "정보", "메트릭", "cpu", "memory", "disk",
+            "서버", "server", "database", "db", "app", "application", "네트워크",
+            "config", "configuration", "status", "health", "metric", "연결", "의존",
+        }
+        ci_codes = CI_CODE_PATTERN.findall(normalized)
+        ci_identifiers = CI_IDENTIFIER_PATTERN.findall(normalized)
+        has_infra_keyword = any(kw in normalized.lower() for kw in INFRA_KEYWORDS)
+        if ci_codes or ci_identifiers or has_infra_keyword:
+            logger.warning(
+                "ci.planner.reject_override",
+                extra={
+                    "reason": "ci_identifier_or_infra_keyword_detected",
+                    "ci_codes": ci_codes[:5],
+                    "ci_identifiers": ci_identifiers[:5],
+                    "has_infra_keyword": has_infra_keyword,
+                    "original_route": route,
+                },
+            )
+            route = "orch"
 
     # Use LLM-determined route if available, otherwise use heuristic
     if route == "direct":

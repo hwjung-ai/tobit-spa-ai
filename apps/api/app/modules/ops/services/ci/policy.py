@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Iterable, List
 
 import yaml
+from core.config import get_settings
 from core.logging import get_logger
 
-from app.modules.ops.services.ci.view_registry import VIEW_REGISTRY
+from app.modules.ops.services.ci.view_registry import get_view_registry, get_view_policy
+from app.modules.asset_registry.loader import load_mapping_asset
 
 logger = get_logger(__name__)
 
@@ -39,7 +41,7 @@ def _load_relation_mapping() -> dict[str, object]:
     try:
         from app.modules.asset_registry.loader import load_mapping_asset
 
-        mapping_data = load_mapping_asset("graph_relation")
+        mapping_data, _ = load_mapping_asset("graph_relation")
         if mapping_data:
             return mapping_data
     except Exception as e:
@@ -59,6 +61,7 @@ def _load_relation_mapping() -> dict[str, object]:
 _RELATION_MAPPING_CACHE = None
 _VIEW_RELATION_MAPPING_CACHE = None
 _EXCLUDE_REL_TYPES_CACHE = None
+_SUMMARY_NEIGHBORS_ALLOWLIST_CACHE = None
 
 
 def _ensure_relation_mapping() -> dict[str, object]:
@@ -90,6 +93,31 @@ def _ensure_exclude_rel_types() -> set[str]:
     return _EXCLUDE_REL_TYPES_CACHE
 
 
+def _ensure_summary_neighbors_allowlist() -> List[str]:
+    """
+    Lazy load SUMMARY/NEIGHBORS allowlist from mapping asset.
+    Falls back to hardcoded SUMMARY_NEIGHBORS_ALLOWLIST if asset not found.
+    """
+    global _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE
+    if _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE is None:
+        try:
+            mapping_asset, _ = load_mapping_asset("graph_relation_allowlist")
+            if mapping_asset:
+                content = mapping_asset.get("content", {})
+                allowlist = content.get("summary_neighbors_allowlist", [])
+                if allowlist:
+                    _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE = allowlist
+                    logger.info(f"Loaded {len(allowlist)} allowed relation types from mapping asset")
+                    return _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE
+        except Exception as e:
+            logger.warning(f"Failed to load graph_relation_allowlist asset: {e}")
+
+        # Fallback to hardcoded list
+        logger.warning("Using hardcoded SUMMARY_NEIGHBORS_ALLOWLIST")
+        _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE = SUMMARY_NEIGHBORS_ALLOWLIST
+    return _SUMMARY_NEIGHBORS_ALLOWLIST_CACHE
+
+
 def _load_json(path: Path) -> dict[str, object]:
     if not path.exists():
         return {}
@@ -119,7 +147,7 @@ def _ensure_combined_catalog() -> dict[str, object]:
         "postgres": postgres,
         "neo4j": neo4j,
         "meta": {
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(get_settings().timezone_offset).isoformat(),
             "discovered_rel_types": rel_types,
         },
     }
@@ -151,7 +179,8 @@ def get_allowed_rel_types(
     view: str, discovered: Iterable[str] | None = None
 ) -> List[str]:
     view_key = view.upper()
-    if view_key not in VIEW_REGISTRY:
+    registry = get_view_registry()
+    if view_key not in registry:
         raise ValueError(f"Unknown view '{view}'")
     # Use lazy-loaded view relation mapping
     view_mapping = _ensure_view_relation_mapping()
@@ -165,14 +194,15 @@ def get_allowed_rel_types(
     exclude_types = _ensure_exclude_rel_types()
     filtered = [rel for rel in discovered_list if rel not in exclude_types]
     if view_key in SUMMARY_NEIGHBORS_VIEWS:
-        controlled = [rel for rel in filtered if rel in SUMMARY_NEIGHBORS_ALLOWLIST]
+        allowlist = _ensure_summary_neighbors_allowlist()
+        controlled = [rel for rel in filtered if rel in allowlist]
         return controlled or filtered
     return filtered
 
 
 def clamp_depth(view: str, requested: int | None = None) -> int:
     view_key = view.upper()
-    policy = VIEW_REGISTRY.get(view_key)
+    policy = get_view_policy(view_key)
     if not policy:
         raise ValueError(f"Unknown view '{view}'")
     depth = requested if requested is not None else policy.default_depth

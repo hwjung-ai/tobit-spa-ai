@@ -1,1 +1,4 @@
-SELECT DISTINCT metric_name FROM metric_def ORDER BY metric_name LIMIT %s
+SELECT metric_id, metric_name, unit, description, value_type
+FROM metric_def
+ORDER BY metric_name
+LIMIT 100

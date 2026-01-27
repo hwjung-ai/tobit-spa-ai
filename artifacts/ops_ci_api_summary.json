@@ -30,13 +30,15 @@
       "raw_response": "artifacts/ops_ci_api_raw/lookup_server_status.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
         }
       ],
       "meta_excerpt": {
-        "used_tools": [],
-        "summary": "CI srv-erp- not found",
+        "used_tools": [
+          "ci.get"
+        ],
+        "summary": "다음과 같이 요약드립니다.\n\n- 현재 상태: 모니터링 중입니다.\n- 기본 정보: 코드 **srv-erp-01**, 이름 **ERP Server 01**, 유형 **HW(서버)**, 카테고리 **infrastructure**, 태그 **role=server**, **system=erp**로 확인됩니다.\n- 주요 속성: IP **10.103.1.237**, Zone **zone-a**, CPU 코어 **32**이며, 추가 속성 한 건이 더 있습니다.\n- 참고: 결과 요약에 **\"Found 0 items\"**로 표시되나 상세 정보는 존재합니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -51,7 +53,8 @@
           "user_requested_depth": 1,
           "policy_max_depth": 1,
           "effective_depth": 1
-        }
+        },
+        "references_count": 1
       },
       "mock_terms": []
     },
@@ -70,13 +73,15 @@
       "raw_response": "artifacts/ops_ci_api_raw/metric_cpu_usage.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
         }
       ],
       "meta_excerpt": {
-        "used_tools": [],
-        "summary": "CI srv-erp- not found",
+        "used_tools": [
+          "ci.get"
+        ],
+        "summary": "제공된 실행 결과에는 srv-erp-01의 cpu_usage 시계열 데이터가 포함되어 있지 않아, 요청하신 기간(2025-12-01 ~ 2025-12-31)의 평균 및 마지막 값을 산출할 수 없습니다.  \n현재 결과는 CI 메타데이터(Code: srv-erp-01, Name: ERP Server 01 등)만 제공합니다.  \n**CPU 사용량 시계열 데이터가 누락**되어 있습니다. 원하시면 데이터 소스 위치를 알려주시면 해당 기간의 값을 조회해 드리거나 쿼리 예시를 제공하겠습니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -91,7 +96,8 @@
           "user_requested_depth": 1,
           "policy_max_depth": 1,
           "effective_depth": 1
-        }
+        },
+        "references_count": 1
       },
       "mock_terms": []
     },
@@ -110,13 +116,15 @@
       "raw_response": "artifacts/ops_ci_api_raw/history_events.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
         }
       ],
       "meta_excerpt": {
-        "used_tools": [],
-        "summary": "CI srv-erp- not found",
+        "used_tools": [
+          "ci.get"
+        ],
+        "summary": "요약: 2025-12-01 ~ 2025-12-31 기간 동안 srv-erp-01에 대한 severity 2 이상 이벤트는 **0건**으로 확인되었습니다. 현재 CI 상세 정보는 ERP 서버 01이 모니터링 상태임을 나타내며, 해당 기간에 이상 이벤트가 발견되지 않았습니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -131,7 +139,8 @@
           "user_requested_depth": 1,
           "policy_max_depth": 1,
           "effective_depth": 1
-        }
+        },
+        "references_count": 1
       },
       "mock_terms": []
     },
@@ -150,22 +159,15 @@
       "raw_response": "artifacts/ops_ci_api_raw/list_servers.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 10
         }
       ],
       "meta_excerpt": {
         "used_tools": [
-          "ci.search",
-          "ci.search",
-          "ci.search_broad"
+          "ci.search"
         ],
-        "summary": "Multiple CI candidates",
+        "summary": "요청하신 조건(owner=erp-platform, status=monitoring)에 해당하는 서버 목록을 확인했습니다. 다만 실행 결과에 데이터가 없어 **해당 조건의 서버 목록이 존재하지 않거나 데이터가 아직 수집되지 않았습니다**. 필요하신 경우 데이터 소스의 수집 상태를 점검하거나 조건을 확장해 재검색할 수 있습니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -181,7 +183,7 @@
           "policy_max_depth": 1,
           "effective_depth": 1
         },
-        "references_count": 3
+        "references_count": 1
       },
       "mock_terms": []
     },
@@ -200,13 +202,13 @@
       "raw_response": "artifacts/ops_ci_api_raw/multi_step_app_history.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
         }
       ],
       "meta_excerpt": {
         "used_tools": [],
-        "summary": "CI app-erp-alert-01- not found",
+        "summary": "요청하신 CI 'app-erp-alert-01-1'에 대해 2025-12-01 ~ 2025-12-31 기간의 작업/배포 이력 및 구동 호스트를 조회했으나, 해당 CI를 시스템에서 찾을 수 없었습니다. 결과는 **0개 항목**으로 반환되어 이 기간의 이력과 구동 호스트를 제공할 수 없습니다. CI 이름/ID를 재확인하시고, 다른 기간이나 대상도 시도해 보시거나 시스템 관리자에게 존재 여부를 확인해 주시기 바랍니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -240,13 +242,13 @@
       "raw_response": "artifacts/ops_ci_api_raw/no_data_guidance.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
         }
       ],
       "meta_excerpt": {
         "used_tools": [],
-        "summary": "CI srv-erp- not found",
+        "summary": "요청하신 CI 'srv-erp-99'의 상태를 조회한 결과, 시스템에서 해당 항목을 찾지 못했습니다. 조회된 항목은 **0**개이며, 현재 상태를 파악할 수 없습니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -280,21 +282,15 @@
       "raw_response": "artifacts/ops_ci_api_raw/ambiguous_integration.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
-        },
-        {
-          "type": "table",
-          "title": "CI candidates (primary endpoint)",
-          "rows": 9
         }
       ],
       "meta_excerpt": {
         "used_tools": [
-          "ci.search",
-          "ci.search_broad"
+          "ci.search"
         ],
-        "summary": "Multiple CI candidates",
+        "summary": "이번 조회에서 integration 앱의 최근 배포 상태에 해당하는 항목은 **0건**으로 확인되었습니다. 즉, 조회 범위 내에서 배포 기록이 존재하지 않아 현재 배포 상태를 파악할 수 없습니다. 앱 이름/시간 범위/환경(Prod/Staging) 등을 재확인하고 범위를 확장하여 재조회하시길 권장드립니다.",
         "route": "orch"
       },
       "trace_excerpt": {
@@ -310,7 +306,7 @@
           "policy_max_depth": 1,
           "effective_depth": 1
         },
-        "references_count": 2
+        "references_count": 1
       },
       "mock_terms": []
     },
@@ -329,13 +325,13 @@
       "raw_response": "artifacts/ops_ci_api_raw/policy_depth.json",
       "blocks_summary": [
         {
-          "type": "text",
+          "type": "markdown",
           "title": null
         }
       ],
       "meta_excerpt": {
         "used_tools": [],
-        "summary": "CI app-erp-alert-01-1 not found",
+        "summary": "요청하신 'app-erp-alert-01-1' 영향 그래프를 depth 10으로 확장하려 했으나, 해당 CI를 시스템에서 찾을 수 없어 확장이 불가합니다. 검색 결과는 **0개의 항목**으로 확인되었습니다. 원인으로는 CI ID 오타, 삭제/이관, 또는 다른 환경에서의 존재 가능성이 있습니다. CI ID를 재확인하시고 필요 시 다른 식별자나 상위 CI를 통해 재시도해 주세요. 원하시면 존재하는 다른 CI에 대해 depth 10 확장을 도와드리겠습니다.",
         "route": "orch"
       },
       "trace_excerpt": {

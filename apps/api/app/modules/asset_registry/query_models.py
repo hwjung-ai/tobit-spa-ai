@@ -11,7 +11,12 @@ class QueryAssetCreate(BaseModel):
     name: str
     description: str | None = None
     scope: str
-    query_sql: str
+    # SQL for PostgreSQL/MySQL/BigQuery/Snowflake
+    query_sql: str | None = None
+    # Cypher for Neo4j
+    query_cypher: str | None = None
+    # HTTP config for REST/GraphQL APIs
+    query_http: dict[str, Any] | None = None
     query_params: dict[str, Any] = {}
     query_metadata: dict[str, Any] = {}
     tags: dict[str, Any] = {}
@@ -23,6 +28,8 @@ class QueryAssetUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     query_sql: str | None = None
+    query_cypher: str | None = None
+    query_http: dict[str, Any] | None = None
     query_params: dict[str, Any] | None = None
     query_metadata: dict[str, Any] | None = None
     tags: dict[str, Any] | None = None
@@ -37,7 +44,10 @@ class QueryAssetResponse(BaseModel):
     version: int
     status: str
     scope: str
-    query_sql: str
+    # Source-specific query types
+    query_sql: str | None = None
+    query_cypher: str | None = None
+    query_http: dict[str, Any] | None = None
     query_params: dict[str, Any]
     query_metadata: dict[str, Any]
     tags: dict[str, Any] | None = None

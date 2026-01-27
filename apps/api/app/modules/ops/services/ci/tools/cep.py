@@ -15,7 +15,6 @@ from app.modules.ops.services.ci.tools.base import (
     BaseTool,
     ToolContext,
     ToolResult,
-    ToolType,
 )
 
 try:
@@ -542,9 +541,9 @@ class CEPTool(BaseTool):
     """
 
     @property
-    def tool_type(self) -> ToolType:
+    def tool_type(self) -> str:
         """Return the CEP tool type."""
-        return ToolType.CEP
+        return "cep"
 
     async def should_execute(
         self, context: ToolContext, params: Dict[str, Any]

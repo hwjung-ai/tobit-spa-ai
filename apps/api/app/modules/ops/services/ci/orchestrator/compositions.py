@@ -4,18 +4,18 @@ from app.modules.ops.services.ci.orchestrator.tool_composition import (
     CompositionPipeline,
     CompositionStep,
 )
-from app.modules.ops.services.ci.tools.base import ToolType
+from app.modules.ops.services.ci.tools.base import ToolType, CommonToolTypes
 
 COMPOSITION_SEARCH_WITH_CONTEXT = CompositionPipeline(
     [
         CompositionStep(
-            tool_type=ToolType.CI,
+            tool_type=CommonToolTypes.CI,
             operation="search",
             params_transform=lambda params: params,
             error_handling="fail_fast",
         ),
         CompositionStep(
-            tool_type=ToolType.METRIC,
+            tool_type=CommonToolTypes.METRIC,
             operation="aggregate",
             params_transform=lambda search_result: {
                 "ci_ids": [ci["id"] for ci in search_result.get("records", [])],
@@ -26,7 +26,7 @@ COMPOSITION_SEARCH_WITH_CONTEXT = CompositionPipeline(
             error_handling="skip",
         ),
         CompositionStep(
-            tool_type=ToolType.HISTORY,
+            tool_type=CommonToolTypes.HISTORY,
             operation="event_log",
             params_transform=lambda metric_result: {
                 "ci_ids": metric_result.get("ci_ids", []),

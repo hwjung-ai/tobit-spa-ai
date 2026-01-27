@@ -133,17 +133,18 @@ body {
 }
 
 .ag-theme-cep .ag-row-selected {
-  background-color: #020617 !important;
-  /* 거의 검정에 가까운 진한 네이비 */
+  background-color: rgba(56, 189, 248, 0.12) !important;
+  /* 읽기 쉬운 하늘색 배경 */
   border-left: 4px solid #38bdf8 !important;
-  /* 더 밝은 하늘색으로 강조 */
-  box-shadow: inset 4px 0 20px -10px rgba(56, 189, 248, 0.4);
+  /* 밝은 하늘색으로 강조 */
+  box-shadow: inset 4px 0 20px -10px rgba(56, 189, 248, 0.3);
 }
 
 .ag-theme-cep .ag-row-selected .ag-cell {
   background-color: transparent !important;
   font-weight: 500;
-  /* 선택된 행 텍스트 약간 두껍게 */
+  color: #e0f2fe !important;
+  /* 선택된 행 텍스트를 밝은 하늘색으로 변경하여 가독성 확보 */
 }
 
 .ag-theme-cep .ag-cell {

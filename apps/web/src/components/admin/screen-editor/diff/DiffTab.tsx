@@ -27,7 +27,7 @@ export default function DiffTab() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-slate-950 text-slate-100">
       <DiffControls />
       <DiffSummary diff={diff} />
       <DiffViewer diff={diff} />

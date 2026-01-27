@@ -59,7 +59,7 @@ e2e-test:
 	pytest tests/ops_e2e/
 
 dev:
-	npx concurrently --kill-others-on-fail --names "API,WORKER,WEB" --prefix-colors "blue,magenta,green" "cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000" "cd apps/api && .venv/bin/python run_worker.py" "cd apps/web && npm run dev:log"
+	npx concurrently --names "API,WORKER,WEB" --prefix-colors "blue,magenta,green" "cd apps/api && .venv/bin/python -m uvicorn main:app --reload --port 8000" "cd apps/api && .venv/bin/python run_worker.py" "cd apps/web && npm run dev:log"
 
 status:
 	git status

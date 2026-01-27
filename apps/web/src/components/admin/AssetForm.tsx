@@ -8,7 +8,7 @@ import Toast from "./Toast";
 import SourceAssetForm from "./SourceAssetForm";
 import SchemaAssetForm from "./SchemaAssetForm";
 import ResolverAssetForm from "./ResolverAssetForm";
-import type { SourceAssetResponse, SchemaAssetResponse, ResolverAssetResponse } from "../../types/asset-registry";
+import type { SourceAssetResponse, SchemaAssetResponse, ResolverAssetResponse, SourceType } from "../../types/asset-registry";
 import { isSourceAsset, isSchemaAsset, isResolverAsset } from "../../types/asset-registry";
 
 interface AssetFormProps {
@@ -37,10 +37,21 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
         content: asset.content ? JSON.stringify(asset.content, null, 2) : "",
         limits: asset.limits ? JSON.stringify(asset.limits, null, 2) : "",
         query_sql: asset.query_sql || "",
+        query_cypher: (asset as any).query_cypher || "",
+        query_http: (asset as any).query_http ? JSON.stringify((asset as any).query_http, null, 2) : "",
         query_params: asset.query_params ? JSON.stringify(asset.query_params, null, 2) : "",
-        query_metadata: asset.query_metadata ? JSON.stringify(asset.query_metadata, null, 2) : "",
+        query_metadata: asset.query_metadata ? JSON.stringify(asset.query_metadata, null, 2) : '{"source_type":"postgresql","source_ref":"","tool_type":"","operation":""}',
         tags: asset.tags ? JSON.stringify(asset.tags, null, 2) : "",
     });
+
+    // Parse query metadata to get current source type
+    const queryMetadata = useMemo(() => {
+        try {
+            return JSON.parse(formData.query_metadata || "{}");
+        } catch {
+            return { source_type: "postgresql" as SourceType, source_ref: "", tool_type: "", operation: "" };
+        }
+    }, [formData.query_metadata]);
 
     const [isSaving, setIsSaving] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
@@ -114,6 +125,10 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 }
             } else if (asset.asset_type === "query") {
                 payload.query_sql = formData.query_sql || null;
+                payload.query_cypher = formData.query_cypher || null;
+                if (formData.query_http.trim()) {
+                    payload.query_http = JSON.parse(formData.query_http);
+                }
                 if (formData.query_params.trim()) {
                     payload.query_params = JSON.parse(formData.query_params);
                 }
@@ -365,18 +380,125 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
 
                 {asset.asset_type === "query" && (
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">SQL Query (SELECT only)</label>
-                            <textarea
-                                value={formData.query_sql}
-                                onChange={(e) => setFormData({ ...formData, query_sql: e.target.value })}
-                                disabled={!isDraft}
-                                rows={12}
-                                placeholder="SELECT ..."
-                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
-                            />
+                        {/* Source Type & Asset Selection */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Source Type</label>
+                                <select
+                                    value={queryMetadata.source_type || "postgresql"}
+                                    onChange={(e) => {
+                                        const newMetadata = { ...queryMetadata, source_type: e.target.value as SourceType };
+                                        setFormData({ ...formData, query_metadata: JSON.stringify(newMetadata, null, 2) });
+                                    }}
+                                    disabled={!isDraft}
+                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                >
+                                    <option value="postgresql">PostgreSQL</option>
+                                    <option value="mysql">MySQL</option>
+                                    <option value="bigquery">Google BigQuery</option>
+                                    <option value="snowflake">Snowflake</option>
+                                    <option value="neo4j">Neo4j</option>
+                                    <option value="rest_api">REST API</option>
+                                    <option value="graphql_api">GraphQL API</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Source Asset Reference</label>
+                                <input
+                                    type="text"
+                                    value={queryMetadata.source_ref || ""}
+                                    onChange={(e) => {
+                                        const newMetadata = { ...queryMetadata, source_ref: e.target.value };
+                                        setFormData({ ...formData, query_metadata: JSON.stringify(newMetadata, null, 2) });
+                                    }}
+                                    disabled={!isDraft}
+                                    placeholder="e.g., primary_postgres, neo4j_main"
+                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                />
+                            </div>
                         </div>
 
+                        {/* Query Input based on Source Type */}
+                        {(queryMetadata.source_type === "postgresql" || queryMetadata.source_type === "mysql" ||
+                          queryMetadata.source_type === "bigquery" || queryMetadata.source_type === "snowflake") && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">SQL Query</label>
+                                <textarea
+                                    value={formData.query_sql}
+                                    onChange={(e) => setFormData({ ...formData, query_sql: e.target.value })}
+                                    disabled={!isDraft}
+                                    rows={12}
+                                    placeholder="SELECT ..."
+                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                />
+                            </div>
+                        )}
+
+                        {queryMetadata.source_type === "neo4j" && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Cypher Query</label>
+                                <textarea
+                                    value={formData.query_cypher}
+                                    onChange={(e) => setFormData({ ...formData, query_cypher: e.target.value })}
+                                    disabled={!isDraft}
+                                    rows={12}
+                                    placeholder="MATCH (ci:CI) RETURN ci"
+                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                />
+                            </div>
+                        )}
+
+                        {(queryMetadata.source_type === "rest_api" || queryMetadata.source_type === "graphql_api") && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">HTTP Method</label>
+                                        <select
+                                            value={JSON.parse(formData.query_http || "{}").method || "GET"}
+                                            onChange={(e) => {
+                                                const httpConfig = JSON.parse(formData.query_http || "{}");
+                                                setFormData({ ...formData, query_http: JSON.stringify({ ...httpConfig, method: e.target.value }, null, 2) });
+                                            }}
+                                            disabled={!isDraft}
+                                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                        >
+                                            <option value="GET">GET</option>
+                                            <option value="POST">POST</option>
+                                            <option value="PUT">PUT</option>
+                                            <option value="DELETE">DELETE</option>
+                                            <option value="PATCH">PATCH</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-2">Path</label>
+                                        <input
+                                            type="text"
+                                            value={JSON.parse(formData.query_http || "{}").path || ""}
+                                            onChange={(e) => {
+                                                const httpConfig = JSON.parse(formData.query_http || "{}");
+                                                setFormData({ ...formData, query_http: JSON.stringify({ ...httpConfig, path: e.target.value }, null, 2) });
+                                            }}
+                                            disabled={!isDraft}
+                                            placeholder="/api/v1/servers"
+                                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">Response Mapping (JSONPath)</label>
+                                    <textarea
+                                        value={formData.query_http}
+                                        onChange={(e) => setFormData({ ...formData, query_http: e.target.value })}
+                                        disabled={!isDraft}
+                                        rows={6}
+                                        placeholder='{"items": "$.data.servers[*]", "fields": {"id": "$.id", "name": "$.name"}}'
+                                        className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Query Parameters & Metadata */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">Query Parameters (JSON)</label>
@@ -396,7 +518,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                     onChange={(e) => setFormData({ ...formData, query_metadata: e.target.value })}
                                     disabled={!isDraft}
                                     rows={6}
-                                    placeholder="{}"
+                                    placeholder='{"source_type": "postgresql", "source_ref": "primary_postgres", "tool_type": "metric", "operation": "aggregate_by_ci"}'
                                     className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
                                 />
                             </div>

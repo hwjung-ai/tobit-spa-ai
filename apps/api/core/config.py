@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import timedelta, timezone
 from pathlib import Path
 from typing import ClassVar, List, Literal, Optional
 
@@ -19,6 +20,7 @@ class AppSettings(BaseSettings):
     ops_default_source_asset: str | None = None
     ops_default_schema_asset: str | None = None
     ops_default_resolver_asset: str | None = None
+    ops_timezone: str = "Asia/Seoul"
 
     cep_enable_metric_polling: bool = False
     cep_metric_poll_global_interval_seconds: int = 10
@@ -132,6 +134,22 @@ class AppSettings(BaseSettings):
             or Path(__file__).resolve().parents[1] / "storage"
         )
         return base.expanduser()
+
+    @property
+    def timezone_offset(self) -> timezone:
+        """
+        Get timezone object based on ops_timezone setting.
+        Supports common timezone names.
+        """
+        tz_map = {
+            "UTC": timezone.utc,
+            "Asia/Seoul": timezone(timedelta(hours=9)),
+            "KST": timezone(timedelta(hours=9)),
+            "JST": timezone(timedelta(hours=9)),
+            "EST": timezone(timedelta(hours=-5)),
+            "PST": timezone(timedelta(hours=-8)),
+        }
+        return tz_map.get(self.ops_timezone, timezone.utc)
 
     @classmethod
     def cached_settings(cls) -> "AppSettings":

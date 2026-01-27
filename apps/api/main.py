@@ -30,6 +30,9 @@ from app.modules.ops.router import router as ops_router
 from app.modules.ops.services.ci.tools.registry_init import (
     initialize_tools,  # noqa: E402
 )
+from app.modules.ops.services.domain.registry_init import (
+    initialize_domain_planners,  # noqa: E402
+)
 
 # from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type issues
 from app.modules.permissions.router import router as permissions_router
@@ -43,7 +46,8 @@ from apps.api.core.logging import configure_logging
 from apps.api.core.middleware import RequestIDMiddleware
 from apps.api.core.security_middleware import add_security_middleware
 
-initialize_tools()
+# Note: initialize_domain_planners() and initialize_tools() are now called in on_startup()
+# to avoid duplicate initialization during uvicorn reload
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -81,12 +85,26 @@ app.include_router(history_router)
 
 @app.on_event("startup")
 async def on_startup() -> None:
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Initialize OPS domain registry (before tools, as tools may depend on domains)
+    logger.info("Startup: Initializing OPS domain planners...")
+    initialize_domain_planners()
+    logger.info("Startup: OPS domain planners initialized.")
+
+    # Initialize OPS tool registry
+    logger.info("Startup: Initializing OPS tools...")
+    initialize_tools()
+    logger.info("Startup: OPS tools initialized.")
+
+    # Load .env file into os.environ for secret resolution
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent / ".env")
     # Run database migrations
     # Disabled to prevent startup crash due to broken migration history
     if False:
         try:
-            import logging
-
             from alembic import command
             from alembic.config import Config as AlembicConfig
 
@@ -108,25 +126,38 @@ async def on_startup() -> None:
                 )
                 logger.info("Proceeding with current database schema")
         except Exception as e:
-            import logging
-
             logging.getLogger(__name__).error(
                 f"Failed to initialize migrations: {e}", exc_info=True
             )
 
     # Start CEP scheduler
+    logger.info("Startup: Starting CEP scheduler...")
     start_scheduler()
+    logger.info("Startup: CEP scheduler started.")
+
     # Start resource watcher
     enable_watcher = os.environ.get("ENABLE_RESOURCE_WATCHER", "true").lower() == "true"
+    logger.info(f"Startup: Starting resource watcher (enabled={enable_watcher})...")
     config_loader.start_watching(enable_watcher)
+    logger.info("Startup: Resource watcher started.")
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
+    import logging
+    logger = logging.getLogger(__name__)
+
+    logger.info("Shutdown: Stopping CEP scheduler...")
     # Stop CEP scheduler
     stop_scheduler()
+    logger.info("Shutdown: CEP scheduler stopped.")
+
+    logger.info("Shutdown: Stopping resource watcher...")
     # Stop resource watcher
     config_loader.stop_watching()
+    logger.info("Shutdown: Resource watcher stopped.")
+
+    logger.info("Shutdown: All cleanup complete.")
 
 
 @app.get("/health")

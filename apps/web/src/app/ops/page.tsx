@@ -52,7 +52,16 @@ const formatTimestamp = (value: string) => {
     if (Number.isNaN(date.getTime())) {
       return value;
     }
-    return date.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+    // Convert to KST (UTC+9) manually and format as YYYY-MM-DD HH:MM:SS +9:00
+    const kstOffset = 9 * 60 * 60 * 1000; // 9 hours in milliseconds
+    const kstTime = new Date(date.getTime() + kstOffset);
+    const year = kstTime.getUTCFullYear();
+    const month = String(kstTime.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(kstTime.getUTCDate()).padStart(2, '0');
+    const hours = String(kstTime.getUTCHours()).padStart(2, '0');
+    const minutes = String(kstTime.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(kstTime.getUTCSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} +9:00`;
   } catch {
     return value;
   }
@@ -296,21 +305,8 @@ export default function OpsPage() {
   const router = useRouter();
 
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
-  const pushHistoryEntry = useCallback(
-    (entry: LocalOpsHistoryEntry) => {
-      setHistory((prev) => {
-        const next = [entry, ...prev];
-        if (next.length > HISTORY_LIMIT) {
-          return next.slice(0, HISTORY_LIMIT);
-        }
-        return next;
-      });
-      setSelectedId(entry.id);
-    },
-    [setHistory, setSelectedId]
-  );
 
-   const fetchHistory = useCallback(async () => {
+  const fetchHistory = useCallback(async () => {
      setHistoryLoading(true);
      setHistoryError(null);
      try {
@@ -400,7 +396,7 @@ export default function OpsPage() {
     // Otherwise, return the most recent entry (first in array)
     return history[0] ?? null;
   }, [history, selectedId]);
-  const meta = (selectedEntry?.response?.meta ?? null) as unknown as AnswerMeta | null;
+  const meta = (selectedEntry?.response?.data?.meta ?? null) as unknown as AnswerMeta | null;
   const traceData = selectedEntry?.trace as
     | {
       plan_validated?: unknown;
@@ -412,7 +408,9 @@ export default function OpsPage() {
   const currentTraceId =
     typeof selectedEntry?.response?.meta?.trace_id === "string"
       ? selectedEntry.response.meta.trace_id
-      : undefined;
+      : typeof selectedEntry?.trace?.trace_id === "string"
+        ? selectedEntry.trace.trace_id
+        : undefined;
 
   // Build stage snapshots from trace data
   const stageSnapshots = useMemo(() => {
@@ -470,7 +468,9 @@ export default function OpsPage() {
     const fallbackTraceId =
       typeof history[0]?.response?.meta?.trace_id === "string"
         ? history[0].response.meta.trace_id
-        : undefined;
+        : typeof history[0]?.trace?.trace_id === "string"
+          ? history[0].trace.trace_id
+          : undefined;
     const traceId = currentTraceId ?? fallbackTraceId;
 
     if (!traceId) {
@@ -478,24 +478,8 @@ export default function OpsPage() {
       return;
     }
 
-    try {
-      const response = await authenticatedFetch<ResponseEnvelope<{ trace?: unknown }>>(
-        `/inspector/traces/${encodeURIComponent(traceId)}`
-      );
-      if (!response?.data?.trace) {
-        setStatusMessage(`Trace를 찾을 수 없습니다 (${traceId.slice(0, 8)}...). 서버에 저장되지 않았을 수 있습니다.`);
-        return;
-      }
-      setStatusMessage(null);
-      router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류";
-      if (errorMessage.includes("404") || errorMessage.includes("not found")) {
-        setStatusMessage(`Trace (${traceId.slice(0, 8)}...)가 서버에 저장되지 않았습니다. 질의를 다시 실행해주세요.`);
-      } else {
-        setStatusMessage(`Trace 확인 실패: ${errorMessage}`);
-      }
-    }
+    // Navigate directly to inspector - it will handle missing traces gracefully
+    router.push(`/admin/inspector?trace_id=${encodeURIComponent(traceId)}`);
   }, [currentTraceId, router, history]);
 
   const traceCopyLabel =
@@ -558,7 +542,7 @@ export default function OpsPage() {
         trace = ciPayload.trace;
         nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
       } else {
-        const data = await authenticatedFetch<ResponseEnvelope<{ answer?: AnswerEnvelope }>>(`/ops/query`, {
+        const data = await authenticatedFetch<ResponseEnvelope<{ answer?: AnswerEnvelope; trace?: unknown }>>(`/ops/query`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
@@ -567,6 +551,7 @@ export default function OpsPage() {
           throw new Error("Invalid OPS response format");
         }
         envelope = answer;
+        trace = data?.data?.trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined;
       }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
@@ -594,13 +579,14 @@ export default function OpsPage() {
         nextActions,
         next_actions: nextActions,
       };
-      pushHistoryEntry(entry);
-      void persistHistoryEntry(entry);
+      // Save to server DB and refresh history from server (no localStorage)
+      await persistHistoryEntry(entry);
+      await fetchHistory();
       setQuestion("");
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [currentModeDefinition, isRunning, question, pushHistoryEntry, persistHistoryEntry]);
+  }, [currentModeDefinition, isRunning, question, persistHistoryEntry, fetchHistory]);
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {
@@ -714,12 +700,14 @@ export default function OpsPage() {
           nextActions,
           next_actions: nextActions,
         };
-        pushHistoryEntry(entry);
+        // Save to server DB and refresh history from server (no localStorage)
+        await persistHistoryEntry(entry);
+        await fetchHistory();
         setIsRunning(false);
         setTraceOpen(false);
       }
     },
-    [currentModeDefinition.backend, pushHistoryEntry, selectedEntry]
+    [currentModeDefinition.backend, persistHistoryEntry, fetchHistory, selectedEntry]
   );
 
   const gridColsClass = isFullScreen

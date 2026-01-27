@@ -35,7 +35,7 @@ class CompositionPipeline:
                 result = await executor.execute_async(
                     step.tool_type, step.operation, **params
                 )
-                self.results.append({"step": step.tool_type.value, "result": result})
+                self.results.append({"step": str(step.tool_type), "result": result})
                 current_result = result
             except Exception as exc:
                 self._handle_step_error(step, exc)
@@ -46,12 +46,12 @@ class CompositionPipeline:
     def _handle_step_error(self, step: CompositionStep, error: Exception):
         if step.error_handling == "fail_fast":
             self.logger.error(
-                f"Composition step failed: {step.tool_type.value}/{step.operation}",
+                f"Composition step failed: {str(step.tool_type)}/{step.operation}",
                 extra={"error": str(error)},
             )
         elif step.error_handling == "skip":
             self.logger.warning(
-                f"Skipping {step.tool_type.value}/{step.operation}: {error}"
+                f"Skipping {str(step.tool_type)}/{step.operation}: {error}"
             )
         elif step.error_handling == "fallback":
             self.logger.info(

@@ -281,13 +281,13 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                   <button
                     onClick={() => setSelectedTemplate(null)}
                     className={`p-3 rounded border transition-all text-sm font-medium ${selectedTemplate === null
-                      ? "bg-sky-900/50 border-sky-500 text-sky-300"
-                      : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
+                      ? "bg-sky-600 border-sky-400 text-white"
+                      : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-700/50"
                       }`}
                     data-testid="template-blank"
                   >
                     <div className="font-semibold">Blank</div>
-                    <div className="text-xs text-slate-400 mt-1">Start from scratch</div>
+                    <div className={`text-xs mt-1 ${selectedTemplate === null ? "text-sky-100" : "text-slate-400"}`}>Start from scratch</div>
                   </button>
 
                   {/* Template Options */}
@@ -296,13 +296,13 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       key={template.id}
                       onClick={() => setSelectedTemplate(template.id)}
                       className={`p-3 rounded border transition-all text-sm font-medium ${selectedTemplate === template.id
-                        ? "bg-sky-900/50 border-sky-500 text-sky-300"
-                        : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600"
+                        ? "bg-sky-600 border-sky-400 text-white"
+                        : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-700/50"
                         }`}
                       data-testid={`template-${template.id}`}
                     >
                       <div className="font-semibold">{template.name}</div>
-                      <div className="text-xs text-slate-400 mt-1 line-clamp-2">
+                      <div className={`text-xs mt-1 line-clamp-2 ${selectedTemplate === template.id ? "text-sky-100" : "text-slate-400"}`}>
                         {template.description}
                       </div>
                     </button>

@@ -88,8 +88,7 @@ export default function ComponentTreeView() {
             <div className="flex gap-1">
               <Button
                 size="sm"
-                variant="outline"
-                className="text-[10px] px-2 h-7"
+                className="text-[10px] px-2 h-7 bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   moveComponent(node.component.id, "up");
@@ -101,8 +100,7 @@ export default function ComponentTreeView() {
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                className="text-[10px] px-2 h-7"
+                className="text-[10px] px-2 h-7 bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
                 onClick={(e) => {
                   e.stopPropagation();
                   moveComponent(node.component.id, "down");

@@ -15,14 +15,22 @@ import { fetchApi } from "../../lib/adminUtils";
 import type { ConnectionTestResult, SourceAssetResponse, SourceType } from "../../types/asset-registry";
 
 const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
+  // SQL Databases
   postgresql: "PostgreSQL",
   mysql: "MySQL",
-  redis: "Redis",
-  mongodb: "MongoDB",
-  kafka: "Kafka",
-  s3: "Amazon S3",
   bigquery: "Google BigQuery",
   snowflake: "Snowflake",
+  // NoSQL / Graph
+  mongodb: "MongoDB",
+  neo4j: "Neo4j",
+  redis: "Redis",
+  // Message Queue
+  kafka: "Kafka",
+  // Storage
+  s3: "Amazon S3",
+  // API
+  rest_api: "REST API",
+  graphql_api: "GraphQL API",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -99,6 +107,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
     if (!editingSource) return null;
 
     const sourceTypes = Object.keys(SOURCE_TYPE_LABELS) as SourceType[];
+    const currentSourceType = editingSource.source_type || "postgresql";
 
     return (
       <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 py-1 custom-scrollbar">
@@ -166,78 +175,202 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
             <h3 className="text-sm font-semibold text-slate-200 uppercase tracking-wider">Connection Settings</h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="host">Host</Label>
-              <Input
-                id="host"
-                value={editingSource.connection?.host || ""}
-                onChange={(e) => setEditingSource({
-                  ...editingSource,
-                  connection: {
-                    ...editingSource.connection,
-                    host: e.target.value
-                  }
-                })}
-                placeholder="db.example.com"
-                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
-              />
-            </div>
+          {/* Database Connection Fields (PostgreSQL, MySQL, BigQuery, Snowflake) */}
+          {(currentSourceType === "postgresql" || currentSourceType === "mysql" ||
+            currentSourceType === "bigquery" || currentSourceType === "snowflake") && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="host">Host</Label>
+                  <Input
+                    id="host"
+                    value={editingSource.connection?.host || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        host: e.target.value
+                      }
+                    })}
+                    placeholder="db.example.com"
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="port">Port</Label>
-              <Input
-                id="port"
-                type="number"
-                value={editingSource.connection?.port || ""}
-                onChange={(e) => setEditingSource({
-                  ...editingSource,
-                  connection: {
-                    ...editingSource.connection,
-                    port: parseInt(e.target.value) || 5432
-                  }
-                })}
-                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="port">Port</Label>
+                  <Input
+                    id="port"
+                    type="number"
+                    value={editingSource.connection?.port || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        port: parseInt(e.target.value) || 5432
+                      }
+                    })}
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={editingSource.connection?.username || ""}
-                onChange={(e) => setEditingSource({
-                  ...editingSource,
-                  connection: {
-                    ...editingSource.connection,
-                    username: e.target.value
-                  }
-                })}
-                placeholder="admin"
-                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
-              />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    value={editingSource.connection?.username || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        username: e.target.value
+                      }
+                    })}
+                    placeholder="admin"
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="database">Database Name</Label>
-              <Input
-                id="database"
-                value={editingSource.connection?.database || ""}
-                onChange={(e) => setEditingSource({
-                  ...editingSource,
-                  connection: {
-                    ...editingSource.connection,
-                    database: e.target.value
-                  }
-                })}
-                placeholder="production_db"
-                className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
-              />
-            </div>
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="database">Database Name</Label>
+                  <Input
+                    id="database"
+                    value={editingSource.connection?.database || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        database: e.target.value
+                      }
+                    })}
+                    placeholder="production_db"
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
+          {/* Neo4j Connection Fields */}
+          {currentSourceType === "neo4j" && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="host">Host</Label>
+                  <Input
+                    id="host"
+                    value={editingSource.connection?.host || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        host: e.target.value
+                      }
+                    })}
+                    placeholder="neo4j.example.com"
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="port">Port</Label>
+                  <Input
+                    id="port"
+                    type="number"
+                    value={editingSource.connection?.port || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        port: parseInt(e.target.value) || 7687
+                      }
+                    })}
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  value={editingSource.connection?.username || ""}
+                  onChange={(e) => setEditingSource({
+                    ...editingSource,
+                    connection: {
+                      ...editingSource.connection,
+                      username: e.target.value
+                    }
+                  })}
+                  placeholder="neo4j"
+                  className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                />
+              </div>
+            </>
+          )}
+
+          {/* REST API / GraphQL API Connection Fields */}
+          {(currentSourceType === "rest_api" || currentSourceType === "graphql_api") && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="host">Base URL</Label>
+                <Input
+                  id="host"
+                  value={editingSource.connection?.host || ""}
+                  onChange={(e) => setEditingSource({
+                    ...editingSource,
+                    connection: {
+                      ...editingSource.connection,
+                      host: e.target.value
+                    }
+                  })}
+                  placeholder="https://api.example.com"
+                  className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">API Key / Username</Label>
+                  <Input
+                    id="username"
+                    value={editingSource.connection?.username || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        username: e.target.value
+                      }
+                    })}
+                    placeholder="api_key_id"
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="database">Auth Token (optional)</Label>
+                  <Input
+                    id="database"
+                    type="password"
+                    value={editingSource.connection?.database || ""}
+                    onChange={(e) => setEditingSource({
+                      ...editingSource,
+                      connection: {
+                        ...editingSource.connection,
+                        database: e.target.value
+                      }
+                    })}
+                    placeholder="Bearer token or API secret"
+                    className="bg-slate-950/50 border-slate-800/80 focus:border-sky-500/50 transition-colors"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Common Fields for all source types */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="timeout">Timeout (seconds)</Label>
@@ -301,11 +434,11 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Card>
+        <Card className="bg-slate-950/50 border-slate-800 text-slate-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs">Connection Details</CardTitle>
+            <CardTitle className="text-xs text-slate-300">Connection Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm">
+          <CardContent className="space-y-1 text-sm text-slate-300">
             <div>Type: {SOURCE_TYPE_LABELS[asset.source_type as SourceType]}</div>
             <div>Host: {asset.connection?.host}</div>
             <div>Port: {asset.connection?.port}</div>
@@ -315,11 +448,11 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-slate-950/50 border-slate-800 text-slate-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs">Metadata</CardTitle>
+            <CardTitle className="text-xs text-slate-300">Metadata</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm">
+          <CardContent className="space-y-1 text-sm text-slate-300">
             <div>ID: {asset.asset_id}</div>
             <div>Version: {asset.version}</div>
             <div>Scope: {asset.scope || "None"}</div>
@@ -332,9 +465,9 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
       </div>
 
       {asset.description && (
-        <Card>
+        <Card className="bg-slate-950/50 border-slate-800 text-slate-200">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs">Description</CardTitle>
+            <CardTitle className="text-xs text-slate-300">Description</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-300">
@@ -349,6 +482,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           variant="outline"
           size="sm"
           onClick={handleEditSource}
+          className="border-slate-700 bg-slate-950/50 text-slate-300 hover:bg-slate-800 hover:text-slate-200"
         >
           Edit Connection
         </Button>
@@ -357,6 +491,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           size="sm"
           onClick={handleTestConnection}
           disabled={testMutation.isPending}
+          className="border-slate-700 bg-slate-950/50 text-slate-300 hover:bg-slate-800 hover:text-slate-200"
         >
           {testMutation.isPending ? "Testing..." : "Test Connection"}
         </Button>

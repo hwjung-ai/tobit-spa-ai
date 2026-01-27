@@ -84,11 +84,10 @@ export default function ScreenEditorHeader({
 
             <div className="flex items-center gap-3">
               <span
-                className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${
-                  status === "published"
-                    ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
-                    : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
-                }`}
+                className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${status === "published"
+                  ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
+                  : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
+                  }`}
                 data-testid="status-badge"
               >
                 {status}
@@ -110,7 +109,12 @@ export default function ScreenEditorHeader({
                   disabled={isSaving || !isDirty}
                   variant="outline"
                   size="sm"
-                  className={isSaving || !isDirty ? "cursor-not-allowed" : "cursor-pointer"}
+                  className={`
+                    ${isSaving || !isDirty
+                      ? "cursor-not-allowed bg-slate-900/50 text-slate-400 border-slate-800/50"
+                      : "cursor-pointer bg-slate-800 text-white border-slate-500 hover:bg-slate-700"
+                    }
+                  `}
                   data-testid="btn-save-draft"
                 >
                   {isSaving ? "Saving..." : "Save Draft"}
@@ -120,7 +124,7 @@ export default function ScreenEditorHeader({
                   onClick={onPublish}
                   disabled={isPublishing || !canPublish}
                   size="sm"
-                  className={`bg-sky-600 hover:bg-sky-700 text-white ${isPublishing || !canPublish ? "cursor-not-allowed" : "cursor-pointer"}`}
+                  className={`bg-sky-600 hover:bg-sky-700 text-white border-none ${isPublishing || !canPublish ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
                   data-testid="btn-publish-screen"
                 >
                   {isPublishing ? "Publishing..." : "Publish"}
@@ -133,7 +137,7 @@ export default function ScreenEditorHeader({
                 onClick={onRollback}
                 variant="outline"
                 size="sm"
-                className="text-orange-400 border-orange-700 hover:bg-orange-950/30"
+                className="text-orange-400 border-orange-900 bg-orange-950/20 hover:bg-orange-950/40"
                 data-testid="btn-rollback-screen"
               >
                 Rollback to Draft
@@ -148,9 +152,10 @@ export default function ScreenEditorHeader({
                 }}
                 variant="outline"
                 size="sm"
-                className={`flex items-center gap-1 text-slate-200 border-slate-600 hover:border-slate-500 ${
-                  status === "draft" || !assetId ? "cursor-not-allowed opacity-70" : "hover:bg-slate-800"
-                }`}
+                className={`flex items-center gap-1 border-slate-700 ${status === "draft" || !assetId
+                  ? "cursor-not-allowed bg-slate-900/50 text-slate-400"
+                  : "bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600"
+                  }`}
                 disabled={status === "draft" || !assetId}
                 data-testid="btn-open-runtime"
               >
@@ -162,11 +167,10 @@ export default function ScreenEditorHeader({
                   onClick={handleRunRegression}
                   disabled={ctaDisabled}
                   size="sm"
-                  className={`text-[11px] uppercase tracking-wider ${
-                    ctaDisabled
-                      ? "cursor-not-allowed opacity-70 border border-slate-700 text-slate-500"
-                      : "bg-slate-800 hover:bg-slate-700 text-white"
-                  }`}
+                  className={`text-[11px] uppercase tracking-wider ${ctaDisabled
+                    ? "cursor-not-allowed bg-slate-900/50 text-slate-400 border border-slate-800/50"
+                    : "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+                    }`}
                 >
                   Run Regression
                 </Button>
@@ -175,9 +179,10 @@ export default function ScreenEditorHeader({
                   disabled={ctaDisabled}
                   variant="outline"
                   size="sm"
-                  className={`flex items-center gap-1 text-slate-200 border-slate-600 ${
-                    ctaDisabled ? "cursor-not-allowed opacity-70" : "hover:border-slate-500 hover:bg-slate-800"
-                  }`}
+                  className={`flex items-center gap-1 ${ctaDisabled
+                    ? "cursor-not-allowed bg-slate-900/50 text-slate-400 border-slate-800/50"
+                    : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white"
+                    }`}
                 >
                   <ExternalLink className="w-3 h-3" />
                   <span className="text-[11px]">Open Inspector</span>

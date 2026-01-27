@@ -17,7 +17,6 @@ from app.modules.ops.services.ci.tools.base import (
     ToolContext,
     ToolRegistry,
     ToolResult,
-    ToolType,
     get_tool_registry,
 )
 from app.modules.ops.services.ci.tools.cache import ToolResultCache
@@ -49,7 +48,7 @@ class ToolExecutor:
         self.logger = logger
         self._cache = cache
 
-    def can_execute(self, tool_type: ToolType, params: Dict[str, Any]) -> bool:
+    def can_execute(self, tool_type: str, params: Dict[str, Any]) -> bool:
         """
         Check if a tool can execute the given operation.
 
@@ -69,14 +68,14 @@ class ToolExecutor:
             return asyncio.run(tool.should_execute(ToolContext(tenant_id=""), params))
         except Exception as e:
             self.logger.debug(
-                f"Tool capability check failed for {tool_type.value}",
+                f"Tool capability check failed for {str(tool_type)}",
                 extra={"error": str(e)},
             )
             return False
 
     def execute(
         self,
-        tool_type: ToolType,
+        tool_type: str,
         context: ToolContext,
         params: Dict[str, Any],
     ) -> ToolResult:
@@ -99,8 +98,8 @@ class ToolExecutor:
         if not self.registry.is_registered(tool_type):
             return ToolResult(
                 success=False,
-                error=f"Tool type '{tool_type.value}' is not registered",
-                error_details={"tool_type": tool_type.value},
+                error=f"Tool type '{str(tool_type)}' is not registered",
+                error_details={"tool_type": str(tool_type)},
             )
 
         tool = self.registry.get_tool(tool_type)
@@ -112,10 +111,10 @@ class ToolExecutor:
         except Exception as e:
             # Fallback error handling if async execution fails
             self.logger.error(
-                f"Tool execution failed for {tool_type.value}",
+                f"Tool execution failed for {str(tool_type)}",
                 extra={
                     "error": str(e),
-                    "tool_type": tool_type.value,
+                    "tool_type": str(tool_type),
                     "tenant_id": context.tenant_id,
                 },
             )
@@ -124,13 +123,13 @@ class ToolExecutor:
                 error=str(e),
                 error_details={
                     "exception_type": type(e).__name__,
-                    "tool_type": tool_type.value,
+                    "tool_type": str(tool_type),
                 },
             )
 
     async def execute_async(
         self,
-        tool_type: ToolType,
+        tool_type: str,
         context: ToolContext,
         params: Dict[str, Any],
     ) -> Dict[str, Any]:
@@ -149,7 +148,7 @@ class ToolExecutor:
             ValueError: If tool type is not registered or execution fails
         """
         if not self.registry.is_registered(tool_type):
-            raise ValueError(f"Tool type '{tool_type.value}' is not registered")
+            raise ValueError(f"Tool type '{str(tool_type)}' is not registered")
 
         tool = self.registry.get_tool(tool_type)
         operation = params.get("operation")
@@ -158,7 +157,7 @@ class ToolExecutor:
 
         cache_key: str | None = None
         if self._cache:
-            cache_key = self._cache.generate_key(tool_type.value, operation, params)
+            cache_key = self._cache.generate_key(str(tool_type), operation, params)
             cached = await self._cache.get(cache_key)
             if cached:
                 context.set_metadata("cache_hit", True)
@@ -168,10 +167,10 @@ class ToolExecutor:
             result = await tool.safe_execute(context, params)
         except Exception as exc:
             self.logger.error(
-                f"Async tool execution failed for {tool_type.value}",
+                f"Async tool execution failed for {str(tool_type)}",
                 extra={
                     "error": str(exc),
-                    "tool_type": tool_type.value,
+                    "tool_type": str(tool_type),
                     "tenant_id": context.tenant_id,
                 },
             )
@@ -184,7 +183,7 @@ class ToolExecutor:
             await self._cache.set(
                 cache_key,
                 result.data,
-                tool_type=tool_type.value,
+                tool_type=str(tool_type),
                 operation=operation,
             )
 
@@ -194,17 +193,17 @@ class ToolExecutor:
         """Attach or replace the cache instance used by this executor."""
         self._cache = cache
 
-    def get_available_tools(self) -> Dict[str, ToolType]:
+    def get_available_tools(self) -> Dict[str, str]:
         """
         Get list of available tool types.
 
         Returns:
-            Dictionary mapping tool names to ToolType values
+            Dictionary mapping tool names to str values
         """
         tools = self.registry.get_available_tools()
         return {tool.tool_name: tool.tool_type for tool in tools.values()}
 
-    def is_available(self, tool_type: ToolType) -> bool:
+    def is_available(self, tool_type: str) -> bool:
         """Check if a tool is registered and available."""
         return self.registry.is_registered(tool_type)
 

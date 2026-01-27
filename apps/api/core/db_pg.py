@@ -24,8 +24,15 @@ def _build_dsn_from_source(source_payload: dict[str, Any]) -> str | None:
     port = connection.get("port") or 5432
     user = connection.get("username")
     database = connection.get("database")
-    password = connection.get("password_encrypted") or _resolve_secret(
-        connection.get("secret_key_ref")
+
+    # Resolve password using multiple methods (same order as ConnectionFactory)
+    # 1. secret_key_ref (env:VARIABLE_NAME)
+    # 2. password_encrypted
+    # 3. direct password (for testing/dev)
+    password = (
+        _resolve_secret(connection.get("secret_key_ref"))
+        or connection.get("password_encrypted")
+        or connection.get("password")
     )
 
     if not host or not user or not database:
@@ -36,9 +43,17 @@ def _build_dsn_from_source(source_payload: dict[str, Any]) -> str | None:
     return f"postgresql://{user}@{host}:{port}/{database}"
 
 
-def get_pg_connection(settings: AppSettings | None = None) -> psycopg.Connection:
+def get_pg_connection(settings: AppSettings | None = None, use_source_asset: bool = False) -> psycopg.Connection:
+    """
+    Get PostgreSQL connection.
+
+    Args:
+        settings: Application settings
+        use_source_asset: If True, use source asset from DB (for OPS operations).
+                         If False (default), use direct env vars (for system operations).
+    """
     settings = settings or AppSettings.cached_settings()
-    if settings.ops_default_source_asset:
+    if use_source_asset and settings.ops_default_source_asset:
         source_payload = load_source_asset(settings.ops_default_source_asset)
         if source_payload:
             dsn = _build_dsn_from_source(source_payload)

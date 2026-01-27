@@ -24,6 +24,7 @@ import InspectorStagePipeline, { type StageStatus } from "../../../components/op
 import ReplanTimeline from "../../../components/ops/ReplanTimeline";
 import AssetOverrideModal from "../../../components/ops/AssetOverrideModal";
 import { generateNodes, generateEdges, filterToolSpans } from "../../../lib/flowGraphUtils";
+import { cn } from "@/lib/utils";
 import {
   AnswerBlock,
   AssetSummary,
@@ -242,6 +243,43 @@ function InspectorContent() {
       fetchTraceDetail(traceIdParam);
     }
   }, [searchParams, fetchTraceDetail]);
+
+  // Load asset names when trace detail is loaded (for InspectorStagePipeline)
+  useEffect(() => {
+    const loadAssetNames = async () => {
+      if (traceDetail && Object.keys(availableAssets).length === 0) {
+        try {
+          const response = await fetchApi<{ assets: Asset[] }>("/asset-registry/assets");
+          const grouped: Record<string, AssetVersion[]> = {};
+          response.data.assets.forEach((asset) => {
+            if (!asset.asset_type) return;
+            const status = asset.status === "published" ? "published" : "draft";
+            const assetVersion: AssetVersion = {
+              id: asset.asset_id,
+              asset_id: asset.asset_id,
+              asset_type: asset.asset_type,
+              version: String(asset.version ?? "1"),
+              name: asset.name,
+              description: asset.description ?? undefined,
+              created_at: asset.updated_at ?? asset.published_at ?? new Date().toISOString(),
+              status,
+              author: "system",
+              size: 0,
+              metadata: {},
+            };
+            if (!grouped[asset.asset_type]) {
+              grouped[asset.asset_type] = [];
+            }
+            grouped[asset.asset_type].push(assetVersion);
+          });
+          setAvailableAssets(grouped);
+        } catch {
+          // Ignore errors for asset loading
+        }
+      }
+    };
+    loadAssetNames();
+  }, [traceDetail, availableAssets]);
 
   useEffect(() => {
     setTraceCopyStatus("idle");
@@ -491,6 +529,20 @@ function InspectorContent() {
         } as StageSnapshot;
     });
   }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
+
+  // availableAssets를 assetNames 형식으로 변환
+  const assetNames = useMemo(() => {
+    const names: Record<string, { name: string; version?: string }> = {};
+    Object.entries(availableAssets).forEach(([_, assetList]) => {
+      assetList.forEach((asset) => {
+        names[asset.asset_id] = {
+          name: asset.name,
+          version: asset.version,
+        };
+      });
+    });
+    return names;
+  }, [availableAssets]);
 
   const loadOverrideAssets = useCallback(async () => {
     setAssetOverrideLoading(true);
@@ -1078,7 +1130,12 @@ function InspectorContent() {
                       )}
                     </div>
                     {traceDetail.stage_outputs?.length ? (
-                      <InspectorStagePipeline traceId={traceDetail.trace_id} stages={stageSnapshots} />
+                      <InspectorStagePipeline
+                        traceId={traceDetail.trace_id}
+                        stages={stageSnapshots}
+                        showAssets={true}
+                        assetNames={assetNames}
+                      />
                     ) : (
                       <p className="text-xs text-slate-500">Stage trace가 아직 없습니다.</p>
                     )}
@@ -1089,6 +1146,8 @@ function InspectorContent() {
                         const status = normalizeStageStatus(stageOutput);
                         const warnings = stageOutput?.diagnostics?.warnings ?? [];
                         const errors = stageOutput?.diagnostics?.errors ?? [];
+                        const appliedAssets = stageInput?.applied_assets;
+
                         return (
                           <article
                             key={stage}
@@ -1110,6 +1169,49 @@ function InspectorContent() {
                                 </span>
                               </div>
                             </div>
+
+                            {/* Applied Assets Cards */}
+                            {appliedAssets && Object.keys(appliedAssets).length > 0 && (
+                              <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-800">
+                                <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-2">
+                                  Applied Assets
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                  {Object.entries(appliedAssets).map(([type, value]) => {
+                                    if (!value) return null;
+                                    const config = {
+                                      prompt: { icon: "⭐", color: "text-blue-400" },
+                                      policy: { icon: "🛡️", color: "text-emerald-400" },
+                                      mapping: { icon: "🗺️", color: "text-amber-400" },
+                                      source: { icon: "💾", color: "text-slate-300" },
+                                      schema: { icon: "📊", color: "text-fuchsia-300" },
+                                      resolver: { icon: "🔧", color: "text-orange-300" },
+                                      query: { icon: "🔍", color: "text-purple-400" },
+                                    }[type] || { icon: "📄", color: "text-slate-400" };
+
+                                    const displayValue = String(value).replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
+
+                                    return (
+                                      <div
+                                        key={type}
+                                        className={cn(
+                                          "flex items-center gap-1.5 px-2 py-1 rounded-md",
+                                          "bg-slate-950/60 border border-slate-700/50 text-xs"
+                                        )}
+                                        title={`${type}: ${value}`}
+                                      >
+                                        <span>{config.icon}</span>
+                                        <span className="text-slate-400 capitalize">{type}:</span>
+                                        <span className={cn("font-mono", config.color)}>
+                                          {displayValue}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
                             {renderJsonDetails("Stage input", stageInput)}
                             {renderJsonDetails("Stage output", stageOutput)}
                             {(warnings.length > 0 || errors.length > 0) && (

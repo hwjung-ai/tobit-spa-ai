@@ -3,17 +3,28 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
-from core.db_pg import get_pg_connection
 
 from app.shared.config_loader import load_text
 
 from .types import CIHit
+from core.config import get_settings
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 
 CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app|mes)-[a-z0-9-]+\b", re.IGNORECASE
 )
 
 _QUERY_BASE = "queries/postgres/ci"
+
+
+
+
+def _get_connection():
+    """Get connection using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 def _load_query(name: str) -> str:
@@ -40,7 +51,9 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
     hits: list[CIHit] = []
     seen_codes: set[str] = set()
 
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             if codes:
                 # 단계 1: 명시 CI코드의 정확 매칭만 수행
@@ -84,6 +97,9 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
                     if row[1] in seen_codes:
                         continue
                     hits.append(_row_to_hit(row, 0.6))
+
+    finally:
+        connection.close()
 
     return hits
 

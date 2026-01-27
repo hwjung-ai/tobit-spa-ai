@@ -2,11 +2,11 @@
 
 export default function DiffControls() {
   return (
-    <div className="px-4 py-3 border-b border-slate-200 bg-white">
+    <div className="px-4 py-3 border-b border-slate-800 bg-slate-950">
       <div className="flex items-center gap-4">
-        <div className="text-sm font-medium text-slate-700">Compare Mode:</div>
+        <div className="text-sm font-medium text-slate-300">Compare Mode:</div>
         <div className="flex items-center gap-2">
-          <span className="text-sm px-3 py-1.5 rounded bg-slate-100 text-slate-700 font-medium">
+          <span className="text-sm px-3 py-1.5 rounded bg-slate-800 text-slate-300 font-medium border border-slate-700">
             Draft vs Published
           </span>
         </div>

@@ -7,10 +7,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from core.db_pg import get_pg_connection
 from psycopg import Connection
 
 from app.shared.config_loader import load_text
+from core.config import get_settings
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "postgres_catalog.json"
@@ -25,6 +27,15 @@ AGG_COLUMNS = [
 ]
 
 _QUERY_BASE = "queries/postgres/discovery"
+
+
+
+
+def _get_connection():
+    """Get connection using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 def _load_query(name: str) -> str:
@@ -183,10 +194,15 @@ def _write_catalog(payload: dict[str, object]) -> None:
 
 def main() -> None:
     try:
-        with get_pg_connection() as conn:
+        connection = _get_connection()
+        try:
+            conn = connection.connection if hasattr(connection, 'connection') else connection
             catalog = _build_catalog(conn)
             _write_catalog(catalog)
             print(f"Wrote Postgres catalog to {OUTPUT_PATH}")
+        finally:
+            connection.close()
+
     except Exception as exc:
         _exit_error(str(exc))
 

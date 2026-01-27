@@ -311,27 +311,15 @@ def list_assets(asset_type: str | None = None, status: str | None = None):
         assets = session.exec(q).all()
         return ResponseEnvelope.success(
             data={
-                "assets": [
-                    {
-                        "asset_id": str(a.asset_id),
-                        "screen_id": a.screen_id,
-                        "asset_type": a.asset_type,
-                        "name": a.name,
-                        "description": a.description,
-                        "version": a.version,
-                        "status": a.status,
-                        "published_at": a.published_at,
-                        "updated_at": a.updated_at,
-                    }
-                    for a in assets
-                ],
+                "assets": [_serialize_asset(a) for a in assets],
                 "total": len(assets),
             }
         )
 
 
 def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
-    return {
+    content = asset.content or {}
+    result = {
         "asset_id": str(asset.asset_id),
         "asset_type": asset.asset_type,
         "name": asset.name,
@@ -351,7 +339,7 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "query_params": asset.query_params,
         "query_metadata": asset.query_metadata,
         "screen_id": asset.screen_id,
-        "screen_schema": asset.screen_schema,
+        "schema_json": asset.schema_json,
         "tags": asset.tags,
         "created_by": asset.created_by,
         "published_by": asset.published_by,
@@ -359,6 +347,17 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "created_at": asset.created_at,
         "updated_at": asset.updated_at,
     }
+    
+    # Add type-specific fields for Source, Schema, Resolver assets
+    if asset.asset_type == "source":
+        result["source_type"] = content.get("source_type")
+        result["connection"] = content.get("connection", {})
+    elif asset.asset_type == "schema":
+        result["catalog"] = content.get("catalog", {})
+    elif asset.asset_type == "resolver":
+        result["config"] = content.get("config", {})
+    
+    return result
 
 
 def _truncate_question(question: str | None, length: int = 120) -> str:
@@ -423,7 +422,7 @@ def _to_screen_asset(
         "description": asset.description,
         "version": asset.version,
         "status": asset.status,
-        "schema_json": schema or asset.screen_schema,
+        "schema_json": schema or asset.schema_json,
         "tags": asset.tags,
         "created_by": asset.created_by,
         "published_by": asset.published_by,

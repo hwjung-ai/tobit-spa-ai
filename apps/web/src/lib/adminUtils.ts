@@ -31,6 +31,16 @@ export interface Asset {
   query_params: Record<string, unknown> | null;
   query_metadata: Record<string, unknown> | null;
 
+  // Source Asset fields
+  source_type?: string | null;
+  connection?: Record<string, unknown> | null;
+
+  // Schema Asset fields
+  catalog?: Record<string, unknown> | null;
+
+  // Resolver Asset fields
+  config?: Record<string, unknown> | null;
+
   // Screen-specific fields
   schema_json?: Record<string, unknown> | null;
   screen_schema?: Record<string, unknown> | null;

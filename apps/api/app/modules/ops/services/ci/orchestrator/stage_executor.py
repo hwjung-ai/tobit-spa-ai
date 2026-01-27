@@ -249,8 +249,22 @@ class StageExecutor:
 
     async def _execute_execute(self, stage_input: StageInput) -> Dict[str, Any]:
         """Execute the execute stage."""
-        plan_output = stage_input.params.get("plan_output")
+        plan_output_dict = stage_input.params.get("plan_output")
         applied_assets = stage_input.applied_assets
+
+        # plan_output is a dict from model_dump(), need to convert back to PlanOutput or handle as dict
+        # For now, handle as dict with proper key access
+        plan_output_kind = plan_output_dict.get("kind") if plan_output_dict else None
+        plan_dict = plan_output_dict.get("plan") if plan_output_dict else None
+
+        self.logger.info(
+            "execute_stage.plan_check",
+            extra={
+                "has_plan_output": plan_output_dict is not None,
+                "plan_output_kind": plan_output_kind,
+                "has_plan_dict": plan_dict is not None,
+            },
+        )
 
         # Apply asset overrides if in test mode
         if self.context.test_mode:
@@ -272,8 +286,19 @@ class StageExecutor:
         results = []
         references = []
 
-        if plan_output.kind == "plan" and plan_output.plan:
-            plan = plan_output.plan
+        if plan_output_kind == "plan" and plan_dict:
+            # Convert dict back to Plan object for easier access
+            from app.modules.ops.services.ci.planner.plan_schema import Plan
+            plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
+
+            self.logger.info(
+                "execute_stage.plan_created",
+                extra={
+                    "plan_intent": plan.intent,
+                    "has_metric": plan.metric is not None,
+                    "metric_name": plan.metric.metric_name if plan.metric else None,
+                },
+            )
 
             # Execute primary query
             if plan.primary and plan.primary.keywords:
@@ -312,7 +337,41 @@ class StageExecutor:
                     self.logger.error(f"Failed to execute secondary query: {str(e)}")
 
             # Execute aggregate query
-            if plan.aggregate and plan.aggregate.group_by:
+            # Check for metric aggregation first (when plan.metric exists)
+            self.logger.info(
+                "execute_stage.metric_check",
+                extra={
+                    "has_metric": plan.metric is not None,
+                    "metric_name": plan.metric.metric_name if plan.metric else None,
+                },
+            )
+            if plan.metric and plan.metric.metric_name:
+                try:
+                    self.logger.info(
+                        "execute_stage.metric_aggregate_start",
+                        extra={
+                            "metric_name": plan.metric.metric_name,
+                            "agg": plan.metric.agg,
+                            "time_range": plan.metric.time_range,
+                        },
+                    )
+                    metric_aggregate_result = await self.tool_executor.execute_tool(
+                        tool_type="metric",
+                        params={
+                            "operation": "aggregate_by_ci",
+                            "metric_name": plan.metric.metric_name,
+                            "agg": plan.metric.agg,
+                            "time_range": plan.metric.time_range,
+                            "filters": plan.aggregate.filters,
+                            "top_n": plan.aggregate.top_n,
+                        },
+                        context=tool_context,
+                    )
+                    results.append(metric_aggregate_result)
+                    references.extend(metric_aggregate_result.get("references", []))
+                except Exception as e:
+                    self.logger.error(f"Failed to execute metric aggregate query: {str(e)}")
+            elif plan.aggregate and (plan.aggregate.group_by or plan.aggregate.metrics or plan.aggregate.filters):
                 try:
                     aggregate_result = await self.tool_executor.execute_tool(
                         tool_type="ci_aggregate",
@@ -408,6 +467,21 @@ class StageExecutor:
                     base_result
                 )
 
+        # Extract CI Detail information for compose stage
+        ci_detail = stage_output.get("result", {}).get("ci_detail")
+        ci_detail_blocks = stage_output.get("result", {}).get("ci_detail_blocks")
+        ci_detail_message = stage_output.get("result", {}).get("ci_detail_message")
+
+        self.logger.info(
+            "compose_stage.ci_detail",
+            extra={
+                "has_ci_detail": bool(ci_detail),
+                "ci_detail_code": ci_detail.get("ci_code") if ci_detail else None,
+                "has_ci_detail_blocks": bool(ci_detail_blocks),
+                "has_ci_detail_message": bool(ci_detail_message),
+            },
+        )
+
         self.logger.info(
             "compose_stage.execution_results",
             extra={"execution_results_count": len(execution_results)},
@@ -421,6 +495,9 @@ class StageExecutor:
             "composed": True,
             "results_count": len(execution_results),
             "results_summary": [],
+            "ci_detail": ci_detail,
+            "ci_detail_blocks": ci_detail_blocks,
+            "ci_detail_message": ci_detail_message,
         }
 
         # Extract main results based on intent
@@ -772,6 +849,43 @@ class StageExecutor:
             error = result.get("error")
             if error:
                 lines.append(f"   - Error: {error}")
+
+        # Add CI Detail information if available
+        ci_detail = composed_result.get("ci_detail")
+        if ci_detail:
+            lines.append("\nCI Detail:")
+            lines.append(f"   - Code: {ci_detail.get('ci_code')}")
+            lines.append(f"   - Name: {ci_detail.get('ci_name')}")
+            lines.append(f"   - Type: {ci_detail.get('ci_type')}")
+            lines.append(f"   - Subtype: {ci_detail.get('ci_subtype')}")
+            lines.append(f"   - Category: {ci_detail.get('ci_category')}")
+            lines.append(f"   - Status: {ci_detail.get('status')}")
+
+            # Add tags if available
+            tags = ci_detail.get("tags")
+            if tags and isinstance(tags, dict):
+                lines.append(f"   - Tags: {', '.join(f'{k}={v}' for k, v in tags.items() if v)}")
+
+            # Add attributes if available
+            attributes = ci_detail.get("attributes")
+            if attributes and isinstance(attributes, dict):
+                # Show only first few attributes to avoid too much detail
+                attr_items = list(attributes.items())[:3]
+                if attr_items:
+                    attr_str = ", ".join(f'{k}="{v}"' for k, v in attr_items)
+                    lines.append(f"   - Attributes: {attr_str}")
+                    if len(attributes) > 3:
+                        lines.append(f"   - ... and {len(attributes) - 3} more attributes")
+
+        # Add CI Detail blocks information if available
+        ci_detail_blocks = composed_result.get("ci_detail_blocks")
+        if ci_detail_blocks:
+            lines.append(f"\nCI Detail Blocks: {len(ci_detail_blocks)} blocks found")
+
+        # Add CI Detail message if available
+        ci_detail_message = composed_result.get("ci_detail_message")
+        if ci_detail_message:
+            lines.append(f"\nCI Detail Message: {ci_detail_message}")
 
         # Add summary from composed_result
         results_summary = composed_result.get("results_summary", [])

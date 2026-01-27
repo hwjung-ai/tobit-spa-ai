@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from core.db_pg import get_pg_connection
+from core.config import get_settings
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 
 from app.modules.asset_registry.loader import load_query_asset
 from app.shared.config_loader import load_text
@@ -14,6 +16,13 @@ METRIC_KEYWORDS = [
     ("disk_io", {"disk", "iops", "io"}),
     ("network_in", {"network", "트래픽", "bandwidth", "inbound"}),
 ]
+
+
+def _get_connection():
+    """Get connection using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 def resolve_metric(question: str) -> MetricHit | None:
@@ -33,7 +42,9 @@ def _fetch_metric(metric_name: str) -> MetricHit | None:
     query = query or load_text("queries/postgres/metric/metric_resolver.sql")
     if not query:
         raise ValueError("Metric resolver query not found")
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             cur.execute(query, (metric_name,))
             row = cur.fetchone()
@@ -41,3 +52,5 @@ def _fetch_metric(metric_name: str) -> MetricHit | None:
                 return None
             metric_id, name = row
             return MetricHit(metric_id=str(metric_id), metric_name=name)
+    finally:
+        connection.close()

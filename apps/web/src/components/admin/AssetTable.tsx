@@ -14,9 +14,11 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AssetTableProps {
     assets: Asset[];
+    statusFilter?: "all" | "draft" | "published";
+    onStatusFilterChange?: (status: "all" | "draft" | "published") => void;
 }
 
-export default function AssetTable({ assets }: AssetTableProps) {
+export default function AssetTable({ assets, statusFilter = "all", onStatusFilterChange }: AssetTableProps) {
     const searchParams = useSearchParams();
     
     // Build detail URL with preserved filter parameters
@@ -146,7 +148,7 @@ export default function AssetTable({ assets }: AssetTableProps) {
         <div className="flex flex-col w-full h-full overflow-hidden">
             {/* Grid Header with Count */}
             <div className="flex justify-between items-center px-4 py-2 border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
                         Assets Registry
@@ -154,6 +156,41 @@ export default function AssetTable({ assets }: AssetTableProps) {
                     <span className="px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 text-[10px] font-mono font-bold border border-slate-700">
                         count: {assets.length}
                     </span>
+                    {/* Status Filter Buttons */}
+                    {onStatusFilterChange && (
+                        <div className="flex gap-1.5 ml-4">
+                            <button
+                                onClick={() => onStatusFilterChange("all")}
+                                className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                    statusFilter === "all"
+                                        ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
+                                        : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
+                                }`}
+                            >
+                                All
+                            </button>
+                            <button
+                                onClick={() => onStatusFilterChange("draft")}
+                                className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                    statusFilter === "draft"
+                                        ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
+                                        : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
+                                }`}
+                            >
+                                Draft
+                            </button>
+                            <button
+                                onClick={() => onStatusFilterChange("published")}
+                                className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                    statusFilter === "published"
+                                        ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
+                                        : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
+                                }`}
+                            >
+                                Published
+                            </button>
+                        </div>
+                    )}
                 </div>
                 <div className="text-[10px] text-slate-500 font-medium italic">
                     Drag columns to reorder • Click headers to sort

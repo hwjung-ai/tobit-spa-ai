@@ -9,6 +9,7 @@ from typing import Any
 
 from core.db import get_session
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from starlette.requests import Request
 from schemas.common import ResponseEnvelope
 from sqlalchemy import desc, select
 from sqlmodel import Session
@@ -487,7 +488,10 @@ def event_summary_endpoint(session: Session = Depends(get_session)) -> ResponseE
 
 
 @router.get("/events/stream")
-async def event_stream(session: Session = Depends(get_session)) -> EventSourceResponse:
+async def event_stream(
+    request: Request,
+    session: Session = Depends(get_session)
+) -> EventSourceResponse:
     summary = summarize_events(session)
 
     async def event_generator():
@@ -495,14 +499,26 @@ async def event_stream(session: Session = Depends(get_session)) -> EventSourceRe
         queue = event_broadcaster.subscribe()
         try:
             while True:
+                # Check if client disconnected or server is shutting down
+                if await request.is_disconnected():
+                    break
+
                 try:
-                    message = await asyncio.wait_for(queue.get(), timeout=20)
+                    # Use shorter timeout (1s) to allow faster shutdown detection
+                    message = await asyncio.wait_for(queue.get(), timeout=1.0)
                     yield {
                         "event": message["type"],
                         "data": json.dumps(message["data"]),
                     }
                 except asyncio.TimeoutError:
+                    # Check disconnect again on timeout
+                    if await request.is_disconnected():
+                        break
                     yield {"event": "ping", "data": "{}"}
+        except (asyncio.CancelledError, GeneratorExit):
+            # Gracefully handle shutdown request
+            yield {"event": "shutdown", "data": "{}"}
+            raise
         finally:
             event_broadcaster.unsubscribe(queue)
 

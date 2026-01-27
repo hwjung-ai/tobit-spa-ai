@@ -16,7 +16,7 @@ def list_tables(settings: AppSettings, schemas: Iterable[str]) -> list[tuple[str
           AND table_schema = ANY(%s)
         ORDER BY table_schema, table_name
     """
-    with get_pg_connection(settings) as conn:
+    with get_pg_connection(settings, use_source_asset=False) as conn:
         with conn.cursor() as cursor:
             cursor.execute(query, (list(schemas),))
             return cursor.fetchall()
@@ -33,7 +33,7 @@ def preview_table(
         sql.Identifier(schema),
         sql.Identifier(table),
     )
-    with get_pg_connection(settings) as conn:
+    with get_pg_connection(settings, use_source_asset=False) as conn:
         with conn.cursor() as cursor:
             cursor.execute("SET TRANSACTION READ ONLY")
             cursor.execute(f"SET LOCAL statement_timeout = {timeout_ms}")
@@ -49,7 +49,7 @@ def execute_query(
     timeout_ms: int,
 ) -> tuple[list[str], list[dict[str, Any]]]:
     try:
-        with get_pg_connection(settings) as conn:
+        with get_pg_connection(settings, use_source_asset=False) as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SET TRANSACTION READ ONLY")
                 cursor.execute(f"SET LOCAL statement_timeout = {timeout_ms}")

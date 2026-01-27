@@ -16,28 +16,28 @@ interface DiffViewerProps {
 function getChangeTypeColor(changeType: string): string {
   switch (changeType) {
     case "added":
-      return "bg-green-50 border-l-4 border-green-500";
+      return "bg-green-950/30 border-l-4 border-green-500";
     case "removed":
-      return "bg-red-50 border-l-4 border-red-500";
+      return "bg-red-950/30 border-l-4 border-red-500";
     case "modified":
-      return "bg-amber-50 border-l-4 border-amber-500";
+      return "bg-amber-950/30 border-l-4 border-amber-500";
     case "unchanged":
-      return "bg-slate-50 border-l-4 border-slate-300";
+      return "bg-slate-900 border-l-4 border-slate-700";
     default:
-      return "bg-white";
+      return "bg-slate-950";
   }
 }
 
 function getChangeTypeIcon(changeType: string) {
   switch (changeType) {
     case "added":
-      return <Plus className="w-4 h-4 text-green-600" />;
+      return <Plus className="w-4 h-4 text-green-400" />;
     case "removed":
-      return <Minus className="w-4 h-4 text-red-600" />;
+      return <Minus className="w-4 h-4 text-red-400" />;
     case "modified":
-      return <Edit className="w-4 h-4 text-amber-600" />;
+      return <Edit className="w-4 h-4 text-amber-400" />;
     case "unchanged":
-      return <Check className="w-4 h-4 text-slate-400" />;
+      return <Check className="w-4 h-4 text-slate-500" />;
     default:
       return null;
   }
@@ -51,29 +51,29 @@ function DiffItemRenderer({ item }: { item: DiffItem }) {
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">{getChangeTypeIcon(changeType)}</div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-mono text-slate-700 break-all">{path}</div>
+          <div className="text-sm font-mono text-slate-300 break-all">{path}</div>
 
           {before && !after && (
-            <div className="mt-2 text-xs font-mono bg-red-100 text-red-800 p-2 rounded overflow-auto">
+            <div className="mt-2 text-xs font-mono bg-slate-950 text-red-300 p-2 rounded overflow-auto border border-red-900/50">
               {JSON.stringify((before as Record<string, unknown>), null, 2)}
             </div>
           )}
 
           {after && !before && (
-            <div className="mt-2 text-xs font-mono bg-green-100 text-green-800 p-2 rounded overflow-auto">
+            <div className="mt-2 text-xs font-mono bg-slate-950 text-green-300 p-2 rounded overflow-auto border border-green-900/50">
               {JSON.stringify((after as Record<string, unknown>), null, 2)}
             </div>
           )}
 
           {changes && (
             <div className="mt-2 space-y-1">
-              {Object.entries(changes).map(([key, change]: [string, {before: unknown, after: unknown}]) => (
+              {Object.entries(changes).map(([key, change]: [string, { before: unknown, after: unknown }]) => (
                 <div key={key} className="text-xs">
-                  <span className="font-mono text-slate-700">{key}:</span>
-                  <span className="ml-2 line-through text-red-700">
+                  <span className="font-mono text-slate-400">{key}:</span>
+                  <span className="ml-2 line-through text-red-400 opacity-70">
                     {JSON.stringify(change.before, null, 2)}
                   </span>
-                  <span className="ml-2 text-green-700">
+                  <span className="ml-2 text-green-400">
                     → {JSON.stringify(change.after, null, 2)}
                   </span>
                 </div>
@@ -117,14 +117,14 @@ export default function DiffViewer({ diff }: DiffViewerProps) {
   ];
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="flex-1 overflow-auto bg-slate-950">
       <Accordion type="multiple" defaultValue={sections.filter((s) => s.defaultOpen).map((s, i) => `section-${i}`)}>
         {sections.map((section, idx) => (
           <AccordionItem key={`section-${idx}`} value={`section-${idx}`} className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover:bg-slate-100 font-medium text-sm">
+            <AccordionTrigger className="px-4 py-3 hover:bg-slate-900 font-medium text-sm text-slate-200">
               <div className="flex items-center gap-2">
                 <span>{section.title}</span>
-                <span className="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded">
+                <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700">
                   {section.count}
                 </span>
               </div>

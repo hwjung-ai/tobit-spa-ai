@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from time import perf_counter
 from typing import Iterable
 
-from core.db_pg import get_pg_connection
 from schemas import (
     AnswerBlock,
     MarkdownBlock,
@@ -14,11 +13,20 @@ from schemas import (
 )
 from schemas.tool_contracts import ExecutorResult, ToolCall
 
-from app.modules.asset_registry.loader import load_query_asset
+from app.modules.asset_registry.loader import load_query_asset, load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 from app.shared.config_loader import load_text
+from core.config import get_settings
 
 from ..ci.tools import history as history_tools
 from ..resolvers import resolve_ci, resolve_time_range
+
+
+def _get_connection():
+    """Get connection using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 def _load_query_sql(scope: str, name: str) -> str:
@@ -140,10 +148,14 @@ def run_hist(question: str, tenant_id: str = "t1") -> ExecutorResult:
 
 
 def _fetch_history(query: str, params: Iterable) -> list[tuple]:
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             cur.execute(query, tuple(params))
             return cur.fetchall()
+    finally:
+        connection.close()
 
 
 def _build_blocks(
@@ -282,5 +294,3 @@ def _build_references(
             )
         ],
     )
-
-

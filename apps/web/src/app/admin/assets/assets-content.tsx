@@ -161,7 +161,11 @@ export default function AssetsPageContent() {
                     </div>
                 ) : (
                     <div className="animate-in fade-in duration-500">
-                        <AssetTable assets={assets} />
+                        <AssetTable
+                            assets={assets}
+                            statusFilter={statusFilter}
+                            onStatusFilterChange={handleStatusFilterChange}
+                        />
                     </div>
                 )}
             </div>

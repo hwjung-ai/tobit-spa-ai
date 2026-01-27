@@ -3,10 +3,10 @@ from __future__ import annotations
 from . import cep, ci, graph, history, metric
 from .base import (
     BaseTool,
+    CommonToolTypes,
     ToolContext,
     ToolRegistry,
     ToolResult,
-    ToolType,
     get_tool_registry,
     register_tool,
 )
@@ -18,6 +18,14 @@ from .executor import (
     ToolExecutor,
     get_tool_executor,
 )
+from .query_registry import (
+    QueryAssetRegistry,
+    get_query_asset_registry,
+    load_query_asset_simple,
+)
+
+# Type alias for backward compatibility
+ToolType = str
 
 __all__ = [
     "cep",
@@ -28,7 +36,8 @@ __all__ = [
     "BaseTool",
     "ToolContext",
     "ToolResult",
-    "ToolType",
+    "ToolType",  # Backward compatibility: now just str
+    "CommonToolTypes",  # Constants for common tool types
     "ToolRegistry",
     "get_tool_registry",
     "register_tool",
@@ -36,4 +45,7 @@ __all__ = [
     "get_tool_executor",
     "ToolResultAdapter",
     "extract_dict_from_result",
+    "QueryAssetRegistry",
+    "get_query_asset_registry",
+    "load_query_asset_simple",
 ]

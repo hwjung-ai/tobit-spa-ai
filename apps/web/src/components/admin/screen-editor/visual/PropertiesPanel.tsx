@@ -189,16 +189,16 @@ export default function PropertiesPanel() {
                     <label className="block text-xs font-medium text-slate-300 mb-2">
                       {field.label || field.name}
                     </label>
-                     <BindingEditor
-                       value={(formData[field.name] as string | undefined) ?? ""}
-                       onChange={(value) => handlePropChange(field.name, value)}
-                       stateTree={pathTrees.stateTree}
-                       contextTree={pathTrees.contextTree}
-                       inputsTree={pathTrees.inputsTree}
-                       placeholder={`Bind ${field.name}...`}
-                       className="text-xs"
-                       showModeToggle={true}
-                     />
+                    <BindingEditor
+                      value={(formData[field.name] as string | undefined) ?? ""}
+                      onChange={(value) => handlePropChange(field.name, value)}
+                      stateTree={pathTrees.stateTree}
+                      contextTree={pathTrees.contextTree}
+                      inputsTree={pathTrees.inputsTree}
+                      placeholder={`Bind ${field.name}...`}
+                      className="text-xs"
+                      showModeToggle={true}
+                    />
                   </div>
                 ))
               )}
@@ -648,11 +648,17 @@ function FieldBindingControl({
         </span>
       </div>
       <Tabs value={mode} onValueChange={(val) => setMode(val as "binding" | "static")}>
-        <TabsList className="grid grid-cols-2 gap-2">
-          <TabsTrigger className="h-8 text-[10px] uppercase tracking-[0.1em] px-2" value="static">
+        <TabsList className="grid grid-cols-2 gap-2 bg-slate-800/50">
+          <TabsTrigger
+            className="h-8 text-[10px] uppercase tracking-[0.1em] px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+            value="static"
+          >
             Static
           </TabsTrigger>
-          <TabsTrigger className="h-8 text-[10px] uppercase tracking-[0.1em] px-2" value="binding">
+          <TabsTrigger
+            className="h-8 text-[10px] uppercase tracking-[0.1em] px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+            value="binding"
+          >
             Binding
           </TabsTrigger>
         </TabsList>

@@ -10,7 +10,7 @@ Import this module early in your application startup to initialize all tools.
 from __future__ import annotations
 
 from app.modules.ops.services.ci.tools.base import (
-    ToolType,
+    CommonToolTypes,
     register_tool,
 )
 from app.modules.ops.services.ci.tools.cep import CEPTool
@@ -32,11 +32,11 @@ def initialize_tools() -> None:
     Should be called once during application startup.
     """
     # Register each tool type with its implementation class
-    register_tool(ToolType.CI, CITool)
-    register_tool(ToolType.GRAPH, GraphTool)
-    register_tool(ToolType.METRIC, MetricTool)
-    register_tool(ToolType.HISTORY, HistoryTool)
-    register_tool(ToolType.CEP, CEPTool)
+    register_tool(CommonToolTypes.CI, CITool)
+    register_tool(CommonToolTypes.GRAPH, GraphTool)
+    register_tool(CommonToolTypes.METRIC, MetricTool)
+    register_tool(CommonToolTypes.HISTORY, HistoryTool)
+    register_tool(CommonToolTypes.CEP, CEPTool)
 
 
 # Auto-initialize tools when this module is imported

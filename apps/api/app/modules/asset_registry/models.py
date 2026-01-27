@@ -55,6 +55,10 @@ class TbAssetRegistry(SQLModel, table=True):
 
     # Query fields
     query_sql: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    query_cypher: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    query_http: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
     query_params: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSONB, nullable=True)
     )
@@ -62,11 +66,13 @@ class TbAssetRegistry(SQLModel, table=True):
         default=None, sa_column=Column(JSONB, nullable=True)
     )
 
+    # Schema fields (for schema and screen assets)
+    schema_json: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+
     # Screen fields
     screen_id: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    screen_schema: dict[str, Any] | None = Field(
-        default=None, sa_column=Column("schema_json", JSONB, nullable=True)
-    )
 
     # Common fields
     tags: dict[str, Any] | None = Field(
@@ -93,6 +99,17 @@ class TbAssetRegistry(SQLModel, table=True):
             TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
         ),
     )
+
+    # Alias property for backward compatibility
+    @property
+    def screen_schema(self) -> dict[str, Any] | None:
+        """Alias for schema_json for backward compatibility."""
+        return self.schema_json
+
+    @screen_schema.setter
+    def screen_schema(self, value: dict[str, Any] | None) -> None:
+        """Alias for schema_json for backward compatibility."""
+        self.schema_json = value
 
 
 class TbAssetVersionHistory(SQLModel, table=True):

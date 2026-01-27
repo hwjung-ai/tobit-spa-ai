@@ -14,8 +14,19 @@ from typing import Any, Callable, Dict
 
 from core.logging import get_logger
 from sqlalchemy.orm import Session
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 
 logger = get_logger(__name__)
+
+
+
+
+def _get_connection():
+    """Get connection using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 class ExecutorResult:
@@ -166,8 +177,7 @@ async def handle_list_maintenance_filtered(
         AnswerBlock with table of maintenance tickets
     """
     from core.config import get_settings
-    from core.db_pg import get_pg_connection
-
+    
     from app.shared.config_loader import load_text
 
     device_id = inputs.get("device_id", "").strip()
@@ -294,8 +304,7 @@ async def handle_create_maintenance_ticket(
     from datetime import datetime, timezone
 
     from core.config import get_settings
-    from core.db_pg import get_pg_connection
-
+    
     device_id = inputs.get("device_id", "").strip()
     maint_type = inputs.get("maintenance_type", "").strip()
     scheduled_date = inputs.get("scheduled_date", "").strip()

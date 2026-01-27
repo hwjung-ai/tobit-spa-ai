@@ -51,13 +51,7 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     View,
 )
 from app.modules.ops.services.ci.planner.planner_llm import (
-    AGG_KEYWORDS,
     ISO_DATE_PATTERN,
-    LIST_KEYWORDS,
-    METRIC_ALIASES,
-    METRIC_KEYWORDS,
-    SERIES_KEYWORDS,
-    TIME_RANGE_MAP,
     _sanitize_korean_particles,
 )
 from app.modules.ops.services.ci.tools import (
@@ -619,13 +613,34 @@ class CIOrchestratorRunner:
         return None
 
     def _sanitize_ci_keywords(self, keywords: Sequence[str]) -> List[str]:
+        # Import functions locally to avoid circular dependency
+        from app.modules.ops.services.ci.planner.planner_llm import (
+            _get_agg_keywords,
+            _get_history_keywords,
+            _get_list_keywords,
+            _get_metric_aliases,
+            _get_series_keywords,
+        )
+
         filtered = set()
-        filtered.update(k.lower() for k in METRIC_KEYWORDS)
-        filtered.update(k.lower() for k in METRIC_ALIASES.keys())
-        filtered.update(k.lower() for k in AGG_KEYWORDS.keys())
-        filtered.update(k.lower() for k in TIME_RANGE_MAP.keys())
-        filtered.update(k.lower() for k in SERIES_KEYWORDS)
-        filtered.update(k.lower() for k in LIST_KEYWORDS)
+        # Get metric aliases and extract keywords
+        metric_aliases = _get_metric_aliases()
+        metric_keywords = set(metric_aliases.get("aliases", {}).keys()) | set(metric_aliases.get("keywords", []))
+        filtered.update(k.lower() for k in metric_keywords)
+        filtered.update(k.lower() for k in metric_aliases.get("aliases", {}).keys())
+        # Get agg keywords
+        agg_keywords = _get_agg_keywords()
+        filtered.update(k.lower() for k in agg_keywords.keys())
+        # Get time range map from history keywords
+        history_keywords = _get_history_keywords()
+        time_map = history_keywords.get("time_map", {})
+        filtered.update(k.lower() for k in time_map.keys())
+        # Get series and list keywords
+        series_keywords = _get_series_keywords()
+        filtered.update(k.lower() for k in series_keywords)
+        list_keywords = _get_list_keywords()
+        filtered.update(k.lower() for k in list_keywords)
+
         sanitized: List[str] = []
         for token in keywords:
             normalized = token.lower().strip()

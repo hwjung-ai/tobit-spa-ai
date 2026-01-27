@@ -4,18 +4,20 @@ import importlib
 import re
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 from core.config import get_settings
-from core.db import get_session
+from core.db import get_session, get_session_context
 from core.logging import get_logger, get_request_context
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import JSONResponse
 from schemas import ResponseEnvelope
 from sqlmodel import Session
 
 from app.modules.asset_registry.loader import (
+    load_mapping_asset,
+    load_policy_asset,
     load_resolver_asset,
     load_schema_asset,
     load_source_asset,
@@ -27,6 +29,7 @@ from app.modules.inspector.span_tracker import (
     get_all_spans,
     start_span,
 )
+from models.history import QueryHistory
 
 from .schemas import (
     CiAskRequest,
@@ -91,9 +94,72 @@ def _generate_references_from_tool_calls(
 
 
 @router.post("/query", response_model=ResponseEnvelope)
-def query_ops(payload: OpsQueryRequest) -> ResponseEnvelope:
-    envelope = handle_ops_query(payload.mode, payload.question)
-    return ResponseEnvelope.success(data={"answer": envelope.model_dump()})
+def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
+    # 요청 받을 때 history 생성 (상태: processing)
+    user_id = request.headers.get("X-User-Id", "default")
+    tenant_id = request.headers.get("X-Tenant-Id")
+    if not tenant_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="X-Tenant-Id header is required"
+        )
+
+    history_entry = QueryHistory(
+        tenant_id=tenant_id,
+        user_id=user_id,
+        feature="ops",
+        question=payload.question,
+        summary=None,
+        status="processing",
+        response=None,
+        metadata_info={
+            "uiMode": payload.mode,
+            "backendMode": payload.mode,
+        },
+    )
+
+    # history를 DB에 저장하고 ID 생성
+    history_id = None
+    try:
+        with get_session() as session:
+            session.add(history_entry)
+            session.commit()
+            session.refresh(history_entry)
+        history_id = history_entry.id
+    except Exception as exc:
+        logger.exception("ops.query.history.create_failed", exc_info=exc)
+        history_id = None
+
+    # OPS 쿼리 실행
+    envelope, trace_data = handle_ops_query(payload.mode, payload.question)
+    response_payload = ResponseEnvelope.success(data={
+        "answer": envelope.model_dump(),
+        "trace": trace_data,
+    })
+
+    # 응답 완료 시 history 업데이트
+    status = "ok"
+    if history_id:
+        try:
+            with get_session() as session:
+                history_entry = session.get(QueryHistory, history_id)
+                if history_entry:
+                    history_entry.status = status
+                    history_entry.response = response_payload.model_dump()
+                    history_entry.summary = envelope.meta.summary if envelope.meta else ""
+                    history_entry.metadata_info = {
+                        "uiMode": payload.mode,
+                        "backendMode": payload.mode,
+                        "trace_id": envelope.meta.trace_id if envelope.meta else None,
+                        "trace": trace_data,  # Include full trace data for consistency with CI ask
+                    }
+                    session.add(history_entry)
+                    session.commit()
+        except Exception as exc:
+            logger.exception("ops.query.history.update_failed", exc_info=exc)
+
+    return response_payload
 
 
 @router.get("/observability/kpis", response_model=ResponseEnvelope)
@@ -244,7 +310,13 @@ def rca_analyze_regression(
 
 
 def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
-    return x_tenant_id or "t1"
+    if not x_tenant_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="X-Tenant-Id header is required"
+        )
+    return x_tenant_id
 
 
 def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
@@ -330,7 +402,11 @@ def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
 
 
 @router.post("/ci/ask")
-def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
+def ask_ci(
+    payload: CiAskRequest,
+    request: Request,
+    tenant_id: str = Depends(_tenant_id),
+):
     start = time.perf_counter()
     status = "ok"
     envelope_blocks: list[dict[str, Any]] | None = None
@@ -342,6 +418,34 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         has_trace_plan_validated = bool(payload.rerun.base_plan)
         if payload.rerun.patch:
             patch_keys = list(payload.rerun.patch.dict(exclude_none=True).keys())
+
+    # 요청 받을 때 history 생성 (상태: processing)
+    user_id = request.headers.get("X-User-Id", "default")
+    history_entry = QueryHistory(
+        tenant_id=tenant_id,
+        user_id=user_id,
+        feature="ops",
+        question=payload.question,
+        summary=None,
+        status="processing",
+        response=None,
+        metadata_info={
+            "uiMode": "ci",
+            "backendMode": "ci",
+        },
+    )
+
+    # history를 DB에 저장하고 ID 생성
+    try:
+        with get_session() as session:
+            session.add(history_entry)
+            session.commit()
+            session.refresh(history_entry)
+        history_id = history_entry.id
+    except Exception as exc:
+        logger.exception("ci.history.create_failed", exc_info=exc)
+        history_id = None
+
     logger.info(
         "ci.ask.start",
         extra={
@@ -349,6 +453,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             "has_patch": patched,
             "patch_keys": patch_keys,
             "has_trace_plan_validated": has_trace_plan_validated,
+            "history_id": str(history_id) if history_id else None,
         },
     )
     response_payload: ResponseEnvelope | None = None
@@ -443,6 +548,10 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         source_payload = (
             load_source_asset(source_asset_name) if source_asset_name else None
         )
+        # Load mapping asset to ensure tracking
+        mapping_payload, _ = load_mapping_asset("graph_relation")
+        # Load policy asset to ensure tracking (for all routes including reject)
+        policy_payload = load_policy_asset("plan_budget")
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload
@@ -461,8 +570,12 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             "resolver_rules_applied": resolver_rules_applied,
         }
         replan_events: list[Dict[str, Any]] = []
+        # Store planner timing to include in route_plan stage duration
+        planner_elapsed_ms: int = 0
 
         if payload.rerun:
+            # Start route_plan timing for rerun path (captures validation time)
+            route_plan_start = time.perf_counter()
             logger.info("ci.runner.planner.skipped", extra={"reason": "rerun"})
             validator_span = start_span("validator", "stage")
             try:
@@ -475,6 +588,9 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 )
                 logger.info("ci.runner.validator.done", extra={"phase": "rerun"})
                 end_span(validator_span, links={"plan_path": "plan.validated"})
+                # Calculate route_plan time for rerun (validation time only)
+                planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
+                logger.info(f"ci.runner.rerun.route_plan_time: {planner_elapsed_ms}ms")
             except Exception as e:
                 end_span(
                     validator_span,
@@ -494,7 +610,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 selected_ci_id=payload.rerun.selected_ci_id,
                 selected_secondary_ci_id=payload.rerun.selected_secondary_ci_id,
             )
-            timestamp = datetime.now(timezone.utc).isoformat()
+            timestamp = datetime.now(get_settings().timezone_offset).isoformat()
             replan_events.append(
                 {
                     "event_type": "replan_execution",
@@ -524,9 +640,10 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 }
             )
         else:
+            # Start route_plan timing BEFORE planner to capture full planning time
+            route_plan_start = time.perf_counter()
             planner_span = start_span("planner", "stage")
             try:
-                planner_start = time.perf_counter()
                 logger.info(
                     "ci.runner.planner.start",
                     extra={
@@ -540,10 +657,10 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                     schema_context=schema_payload,
                     source_context=source_payload,
                 )
-                elapsed_ms = int((time.perf_counter() - planner_start) * 1000)
+                planner_elapsed_ms = int((time.perf_counter() - route_plan_start) * 1000)
                 logger.info(
                     "ci.runner.planner.done",
-                    extra={"llm_called": False, "elapsed_ms": elapsed_ms},
+                    extra={"llm_called": False, "elapsed_ms": planner_elapsed_ms},
                 )
                 end_span(planner_span, links={"plan_path": "plan.raw"})
             except Exception as e:
@@ -580,13 +697,14 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
             raise ValueError("Planner output missing")
 
         context = get_request_context()
-        active_trace_id = context.get("trace_id")
-        request_id = context.get("request_id")
+        # request.state에서 먼저 확인 (middleware에서 설정한 값)
+        active_trace_id = getattr(request.state, "trace_id", None) or context.get("trace_id")
+        request_id = getattr(request.state, "request_id", None) or context.get("request_id")
         logger.info(
             f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}"
         )
-        if not active_trace_id or active_trace_id == "-":
-            active_trace_id = request_id or str(uuid.uuid4())
+        if not active_trace_id or active_trace_id == "-" or active_trace_id == "None":
+            active_trace_id = str(uuid.uuid4())
             logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
         parent_trace_id = context.get("parent_trace_id")
         if parent_trace_id == "-":
@@ -613,6 +731,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 }
                 return payload
 
+            # route_plan_start was already set before planner to capture full planning time
             route_input = StageInput(
                 stage="route_plan",
                 applied_assets={},
@@ -624,6 +743,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 "route_plan",
                 {"route": plan_output.kind.value},
                 "ok",
+                duration=int((time.perf_counter() - route_plan_start) * 1000),
             )
             stage_inputs.append(route_input.model_dump())
             stage_outputs.append(route_output)
@@ -700,6 +820,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                     "reject_reason": reject_reason,
                 }
 
+            present_start = time.perf_counter()
             present_input = StageInput(
                 stage="present",
                 applied_assets={},
@@ -711,6 +832,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 "present",
                 {"summary": answer, "blocks": blocks, "references": references},
                 "ok",
+                duration=int((time.perf_counter() - present_start) * 1000),
             )
             stage_inputs.append(present_input.model_dump())
             stage_outputs.append(present_output)
@@ -793,6 +915,26 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                 trace_payload = result.get("trace") or {}
                 meta = result.get("meta") or {}
 
+                # Add planner timing to route_plan stage duration (planner happens before runner)
+                logger.info(f"ci.route_plan.timing: planner_elapsed_ms={planner_elapsed_ms}, stages_count={len(trace_payload.get('stages', []))}")
+                if planner_elapsed_ms > 0:
+                    # Update stage_outputs
+                    stage_outputs = trace_payload.get("stage_outputs", [])
+                    for stage_output in stage_outputs:
+                        if stage_output and stage_output.get("stage") == "route_plan":
+                            original_duration = stage_output.get("duration_ms", 0)
+                            stage_output["duration_ms"] = original_duration + planner_elapsed_ms
+                            logger.info(f"ci.route_plan.updated stage_output: {original_duration} -> {original_duration + planner_elapsed_ms}")
+                            break
+                    # Also update stages array (for response)
+                    stages = trace_payload.get("stages", [])
+                    for stage in stages:
+                        if stage and stage.get("name") == "route_plan":
+                            original_duration = stage.get("duration_ms", 0)
+                            stage["duration_ms"] = original_duration + planner_elapsed_ms
+                            logger.info(f"ci.route_plan.updated stages: {original_duration} -> {original_duration + planner_elapsed_ms}")
+                            break
+
                 # Generate references from tool calls if not already present
                 tool_calls = (
                     trace_payload.get("tool_calls") or result.get("tool_calls") or []
@@ -831,7 +973,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                         stage_name="execute",
                         severity="high",
                         reason="runner execution error",
-                        timestamp=datetime.now(timezone.utc).isoformat(),
+                        timestamp=datetime.now(get_settings().timezone_offset).isoformat(),
                     )
                     fallback_plan = build_fallback_plan(plan_validated)
                     patch_diff = ReplanPatchDiff(
@@ -844,7 +986,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                         "stage_name": "execute",
                         "trigger": trigger.model_dump(),
                         "patch": patch_diff.model_dump(),
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(get_settings().timezone_offset).isoformat(),
                         "decision_metadata": {
                             "should_replan": should_replan,
                         },
@@ -913,7 +1055,7 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
                             "stage_name": "execute",
                             "trigger": trigger.model_dump(),
                             "patch": patch_diff.model_dump(),
-                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "timestamp": datetime.now(get_settings().timezone_offset).isoformat(),
                             "execution_metadata": {
                                 "fallback_plan": True,
                             },
@@ -944,12 +1086,12 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         flow_spans = get_all_spans()
 
         try:
-            with get_session() as session:
+            with get_session_context() as session:
                 persist_execution_trace(
                     session=session,
                     trace_id=active_trace_id,
                     parent_trace_id=parent_trace_id,
-                    feature="ci",
+                    feature="ops",
                     endpoint="/ops/ci/ask",
                     method="POST",
                     ops_mode=get_settings().ops_mode,
@@ -967,6 +1109,27 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         except Exception as exc:
             logger.exception("ci.trace.persist_failed", exc_info=exc)
         status = "error" if trace_status == "error" else "ok"
+
+        # 응답 완료 시 history 업데이트
+        if history_id:
+            try:
+                with get_session() as session:
+                    history_entry = session.get(QueryHistory, history_id)
+                    if history_entry:
+                        history_entry.status = status
+                        history_entry.response = response_payload.model_dump() if response_payload else None
+                        history_entry.summary = result.get("meta", {}).get("summary") or result.get("meta", {}).get("answer", "")[:200]
+                        history_entry.metadata_info = {
+                            "uiMode": "ci",
+                            "backendMode": "ci",
+                            "trace": trace_payload,
+                            "nextActions": next_actions,
+                        }
+                        session.add(history_entry)
+                        session.commit()
+            except Exception as exc:
+                logger.exception("ci.history.update_failed", exc_info=exc)
+
         # Inject trace_id into result meta before creating response
         if result.get("meta") is None:
             result["meta"] = {}
@@ -984,6 +1147,20 @@ def ask_ci(payload: CiAskRequest, tenant_id: str = Depends(_tenant_id)):
         logger.exception("ci.ask.error", exc_info=exc)
         error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
         error_response = JSONResponse(status_code=500, content=error_body)
+
+        # 에러 발생 시 history도 업데이트
+        if history_id:
+            try:
+                with get_session() as session:
+                    history_entry = session.get(QueryHistory, history_id)
+                    if history_entry:
+                        history_entry.status = "error"
+                        history_entry.response = error_body
+                        history_entry.summary = f"Error: {str(exc)[:200]}"
+                        session.add(history_entry)
+                        session.commit()
+            except Exception as hist_exc:
+                logger.exception("ci.history.error_update_failed", exc_info=hist_exc)
     finally:
         elapsed_ms = (
             duration_ms
@@ -1933,7 +2110,13 @@ async def execute_isolated_stage_test(
     get_settings()
 
     # Setup
-    tenant_id = x_tenant_id or "t1"
+    if not x_tenant_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="X-Tenant-Id header is required"
+        )
+    tenant_id = x_tenant_id
     trace_id = str(uuid.uuid4())
 
     # Validate stage

@@ -139,10 +139,12 @@ def load_mapping_asset(
         version: Specific version to load (None for published)
     """
     with get_session_context() as session:
+        # Query by name instead of mapping_type since mapping_type may be NULL
+        # Assets are created with name = mapping_type identifier
         query = (
             select(TbAssetRegistry)
             .where(TbAssetRegistry.asset_type == "mapping")
-            .where(TbAssetRegistry.mapping_type == mapping_type)
+            .where(TbAssetRegistry.name == mapping_type)
         )
 
         if version is not None:
@@ -156,14 +158,7 @@ def load_mapping_asset(
             logger.info(
                 f"Loaded mapping from asset registry: {asset.name} (v{asset.version})"
             )
-            payload = dict(asset.content or {})
-            payload["_asset_meta"] = {
-                "asset_id": str(asset.asset_id),
-                "name": asset.name,
-                "version": asset.version,
-                "source": "asset_registry",
-                "mapping_type": mapping_type,
-            }
+            metadata_str = f"asset_registry:{asset.name}:v{asset.version}"
             track_mapping_asset(
                 {
                     "asset_id": str(asset.asset_id),
@@ -173,7 +168,8 @@ def load_mapping_asset(
                     "mapping_type": mapping_type,
                 }
             )
-            return payload
+            # Return tuple: (content_dict, metadata_str)
+            return (dict(asset.content or {}), metadata_str)
 
     # Fallback to seed file (only in test/dev mode)
     if _is_real_mode():
@@ -188,14 +184,7 @@ def load_mapping_asset(
 
     if seed_data and "content" in seed_data:
         logger.warning(f"Using seed file for mapping: resources/{seed_path}")
-        payload = dict(seed_data.get("content") or {})
-        payload["_asset_meta"] = {
-            "asset_id": None,
-            "name": mapping_type,
-            "version": None,
-            "source": "seed_file",
-            "mapping_type": mapping_type,
-        }
+        metadata_str = f"seed_file:{mapping_type}"
         track_mapping_asset(
             {
                 "asset_id": None,
@@ -205,7 +194,8 @@ def load_mapping_asset(
                 "mapping_type": mapping_type,
             }
         )
-        return payload
+        # Return tuple: (content_dict, metadata_str)
+        return (dict(seed_data.get("content") or {}), metadata_str)
 
     # Legacy fallback
     legacy_path = "app/modules/ops/services/ci/relation_mapping.yaml"
@@ -213,14 +203,7 @@ def load_mapping_asset(
 
     if legacy_data:
         logger.warning(f"Using legacy file for mapping: {legacy_path}")
-        payload = dict(legacy_data)
-        payload["_asset_meta"] = {
-            "asset_id": None,
-            "name": mapping_type,
-            "version": None,
-            "source": "legacy_file",
-            "mapping_type": mapping_type,
-        }
+        metadata_str = f"legacy_file:{mapping_type}"
         track_mapping_asset(
             {
                 "asset_id": None,
@@ -230,10 +213,11 @@ def load_mapping_asset(
                 "mapping_type": mapping_type,
             }
         )
-        return payload
+        # Return tuple: (content_dict, metadata_str)
+        return (dict(legacy_data), metadata_str)
 
     logger.warning(f"Mapping asset not found: {mapping_type}")
-    return None
+    return (None, None)
 
 
 def load_policy_asset(
@@ -261,19 +245,35 @@ def load_policy_asset(
         else:
             query = query.where(TbAssetRegistry.status == "published")
 
-        asset = session.exec(query).first()
+        # Order by created_at DESC to get the most recent asset first
+        query = query.order_by(TbAssetRegistry.created_at.desc())
+
+        results = session.exec(query).all()
+
+        # Warn if multiple assets found
+        if len(results) > 1:
+            logger.warning(
+                f"Found {len(results)} policy assets with policy_type='{policy_type}'. "
+                f"Using the most recent one (created_at={results[0].created_at}). "
+                f"Consider removing duplicate assets."
+            )
+
+        asset = results[0] if results else None
 
         if asset:
             logger.info(
-                f"Loaded policy from asset registry: {asset.name} (v{asset.version})"
+                f"Loaded policy from asset registry: {asset.name} (v{asset.version}), policy_type={policy_type}"
             )
-            payload = dict(asset.limits or {})
-            payload["_asset_meta"] = {
-                "asset_id": str(asset.asset_id),
-                "name": asset.name,
-                "version": asset.version,
-                "source": "asset_registry",
-                "policy_type": policy_type,
+            # Use content field for policy data (not limits field which is for budget policies)
+            payload = {
+                "content": asset.content or {},
+                "_asset_meta": {
+                    "asset_id": str(asset.asset_id),
+                    "name": asset.name,
+                    "version": asset.version,
+                    "source": "asset_registry",
+                    "policy_type": policy_type,
+                }
             }
             track_policy_asset(
                 {
@@ -325,45 +325,12 @@ def load_policy_asset(
             )
             return payload
 
-    # Ultimate fallback to hardcoded defaults
-    logger.warning(f"Using hardcoded defaults for policy '{policy_type}'")
-    if policy_type == "plan_budget":
-        return {
-            "max_steps": 10,
-            "timeout_ms": 120000,  # 2 minutes
-            "max_depth": 5,
-            "max_branches": 3,
-            "max_iterations": 100,
-        }
-    elif policy_type == "view_depth":
-        # Return a minimal view_depth policy (this shouldn't normally be used)
-        logger.warning("No view_depth policy found in DB or seed file, returning None")
-        payload = {
-            "max_steps": 10,
-            "timeout_ms": 120000,
-            "max_depth": 5,
-            "max_branches": 3,
-            "max_iterations": 100,
-            "_asset_meta": {
-                "asset_id": None,
-                "name": policy_type,
-                "version": None,
-                "source": "default",
-                "policy_type": policy_type,
-            },
-        }
-        track_policy_asset(
-            {
-                "asset_id": None,
-                "name": policy_type,
-                "version": None,
-                "source": "default",
-                "policy_type": policy_type,
-            }
-        )
-        return payload
-
-    return None
+    # No fallback - policy asset is required
+    logger.error(f"Policy asset '{policy_type}' not found in DB or seed files")
+    raise ValueError(
+        f"Policy asset '{policy_type}' is required but not found. "
+        f"Please create the policy asset in the database or provide a seed file."
+    )
 
 
 def load_query_asset(
@@ -414,6 +381,8 @@ def load_query_asset(
             return (
                 {
                     "sql": asset.query_sql,
+                    "cypher": asset.query_cypher,
+                    "http": asset.query_http,
                     "params": asset.query_params or {},
                     "metadata": asset.query_metadata or {},
                     "source": "asset_registry",
@@ -576,11 +545,15 @@ def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] |
         if asset:
             logger.info(f"Loaded schema from asset registry: {name} (v{asset.version})")
             content = asset.content or {}
+            schema_json = asset.schema_json or {}
+
+            # Use schema_json for catalog if available, otherwise use content
+            catalog = schema_json if schema_json else content.get("catalog", {})
 
             payload = {
                 "name": asset.name,
                 "source_ref": content.get("source_ref"),
-                "catalog": content.get("catalog", {}),
+                "catalog": catalog,
                 "spec": content.get("spec"),
                 "source": "asset_registry",
                 "asset_id": str(asset.asset_id),

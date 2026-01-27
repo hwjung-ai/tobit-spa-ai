@@ -1,0 +1,697 @@
+{
+  "ci": {
+    "table_name": "ci",
+    "columns": [
+      {
+        "name": "ci_id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "text",
+        "nullable": false,
+        "default": "'t1'::text",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_type",
+        "type": "USER-DEFINED",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_subtype",
+        "type": "USER-DEFINED",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_code",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_name",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_category",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "nullable": false,
+        "default": "'active'::text",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "criticality",
+        "type": "integer",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": 32,
+        "scale": 0,
+        "comment": null
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "owner",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": "now()",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": "now()",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "deleted_at",
+        "type": "timestamp with time zone",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  },
+  "ci_ext": {
+    "table_name": "ci_ext",
+    "columns": [
+      {
+        "name": "ci_id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "attributes",
+        "type": "jsonb",
+        "nullable": false,
+        "default": "'{}'::jsonb",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tags",
+        "type": "jsonb",
+        "nullable": false,
+        "default": "'{}'::jsonb",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": "now()",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  },
+  "event_log": {
+    "table_name": "event_log",
+    "columns": [
+      {
+        "name": "time",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "text",
+        "nullable": false,
+        "default": "'t1'::text",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_id",
+        "type": "uuid",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "event_type",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "severity",
+        "type": "integer",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": 32,
+        "scale": 0,
+        "comment": null
+      },
+      {
+        "name": "source",
+        "type": "USER-DEFINED",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "message",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "attributes",
+        "type": "jsonb",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  },
+  "maintenance_history": {
+    "table_name": "maintenance_history",
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "text",
+        "nullable": false,
+        "default": "'t1'::text",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "maint_type",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "summary",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "detail",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "start_time",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "end_time",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "duration_min",
+        "type": "integer",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": 32,
+        "scale": 0,
+        "comment": null
+      },
+      {
+        "name": "performer",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "result",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": "now()",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  },
+  "metric_def": {
+    "table_name": "metric_def",
+    "columns": [
+      {
+        "name": "metric_id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "metric_name",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "unit",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "value_type",
+        "type": "USER-DEFINED",
+        "nullable": false,
+        "default": "'gauge'::metric_value_type",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": "now()",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  },
+  "metric_value": {
+    "table_name": "metric_value",
+    "columns": [
+      {
+        "name": "time",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "text",
+        "nullable": false,
+        "default": "'t1'::text",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_id",
+        "type": "uuid",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "metric_id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "value",
+        "type": "double precision",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": 53,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "quality",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tags",
+        "type": "jsonb",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  },
+  "work_history": {
+    "table_name": "work_history",
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "tenant_id",
+        "type": "text",
+        "nullable": false,
+        "default": "'t1'::text",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "ci_id",
+        "type": "uuid",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "work_type",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "summary",
+        "type": "text",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "detail",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "requested_by",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "approved_by",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "impact_level",
+        "type": "integer",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": 32,
+        "scale": 0,
+        "comment": null
+      },
+      {
+        "name": "start_time",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "end_time",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "duration_min",
+        "type": "integer",
+        "nullable": false,
+        "default": null,
+        "max_length": null,
+        "precision": 32,
+        "scale": 0,
+        "comment": null
+      },
+      {
+        "name": "result",
+        "type": "text",
+        "nullable": true,
+        "default": null,
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "default": "now()",
+        "max_length": null,
+        "precision": null,
+        "scale": null,
+        "comment": null
+      }
+    ]
+  }
+}

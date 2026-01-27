@@ -574,7 +574,8 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
                 host=asset.connection.host,
                 port=asset.connection.port,
                 user=asset.connection.username,
-                password=asset.connection.password_encrypted
+                password=asset.connection.password
+                or asset.connection.password_encrypted
                 or resolve_secret(asset.connection.secret_key_ref)
                 or "",
                 database=asset.connection.database,
@@ -593,13 +594,46 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
                 test_result={"rows": 1},
             )
 
+        elif asset.source_type == SourceType.NEO4J:
+            from neo4j import GraphDatabase
+
+            # Build URI from host and port
+            uri = asset.connection.uri or f"bolt://{asset.connection.host}:{asset.connection.port}"
+
+            driver = GraphDatabase.driver(
+                uri,
+                auth=(
+                    asset.connection.username,
+                    asset.connection.password
+                    or asset.connection.password_encrypted
+                    or resolve_secret(asset.connection.secret_key_ref)
+                    or ""
+                ),
+            )
+            driver.verify_connectivity()
+
+            # Check if database is accessible
+            with driver.session() as session:
+                result = session.run("RETURN 1 as num")
+                result.single()
+
+            driver.close()
+
+            return ConnectionTestResult(
+                success=True,
+                message="Connection successful",
+                execution_time_ms=int((time.time() - start_time) * 1000),
+                test_result={"uri": uri},
+            )
+
         elif asset.source_type == SourceType.REDIS:
             import redis
 
             r = redis.Redis(
                 host=asset.connection.host,
                 port=asset.connection.port,
-                password=asset.connection.password_encrypted
+                password=asset.connection.password
+                or asset.connection.password_encrypted
                 or resolve_secret(asset.connection.secret_key_ref),
                 decode_responses=True,
             )

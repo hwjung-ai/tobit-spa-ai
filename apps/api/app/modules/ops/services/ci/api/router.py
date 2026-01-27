@@ -104,7 +104,13 @@ class CiAskResponse(BaseModel):
 
 
 def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
-    return x_tenant_id or "t1"
+    if not x_tenant_id:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="X-Tenant-Id header is required"
+        )
+    return x_tenant_id
 
 
 def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:

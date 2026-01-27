@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any, Dict, Iterable, List, Literal
 
-from core.db_pg import get_pg_connection
 from psycopg import Connection
 from schemas.tool_contracts import (
     CIAggregateResult,
@@ -18,6 +17,9 @@ from app.modules.ops.services.ci.tools.base import (
     ToolType,
 )
 from app.shared.config_loader import load_text
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
+from core.config import get_settings
 
 SEARCH_COLUMNS = ["ci_code", "ci_name", "ci_type", "ci_subtype", "ci_category"]
 FILTER_FIELDS = {"ci_type", "ci_subtype", "ci_category", "status", "location", "owner"}
@@ -42,6 +44,13 @@ def _load_query(name: str) -> str:
     if not query:
         raise ValueError(f"CI query '{name}' not found")
     return query
+
+
+def _get_connection():
+    """Get connection for CI operations using source asset."""
+    settings = get_settings()
+    source_asset = load_source_asset(settings.ops_default_source_asset)
+    return ConnectionFactory.create(source_asset)
 
 
 FilterOp = Literal["=", "!=", "ILIKE"]
@@ -119,7 +128,10 @@ def ci_search(
     sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
 ) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        # For PostgreSQL connection, get the underlying psycopg connection
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         rows = _ci_search_inner(
             conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort
         )
@@ -130,6 +142,8 @@ def ci_search(
             query=None,
             params=[],
         )
+    finally:
+        connection.close()
 
 
 def ci_search_broad_or(
@@ -140,7 +154,9 @@ def ci_search_broad_or(
     sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
 ) -> CISearchResult:
     sanitized_limit = _clamp_limit(limit, 10, MAX_SEARCH_LIMIT)
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         rows = _ci_search_broad_or_inner(
             conn, tenant_id, keywords or (), filters or (), sanitized_limit, sort
         )
@@ -151,6 +167,8 @@ def ci_search_broad_or(
             query=None,
             params=[],
         )
+    finally:
+        connection.close()
 
 
 def _ci_search_broad_or_inner(
@@ -248,7 +266,9 @@ def _ci_search_inner(
 
 
 def ci_get(tenant_id: str, ci_id: str) -> CIRecord | None:
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             query = _load_query("ci_get.sql").format(field="ci_id")
             cur.execute(query, (ci_id, tenant_id))
@@ -268,10 +288,14 @@ def ci_get(tenant_id: str, ci_id: str) -> CIRecord | None:
                 tags=row[9] or {},
                 attributes=row[10] or {},
             )
+    finally:
+        connection.close()
 
 
 def ci_get_by_code(tenant_id: str, ci_code: str) -> CIRecord | None:
-    with get_pg_connection() as conn:
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             query = _load_query("ci_get.sql").format(field="ci_code")
             cur.execute(query, (ci_code, tenant_id))
@@ -291,6 +315,8 @@ def ci_get_by_code(tenant_id: str, ci_code: str) -> CIRecord | None:
                 tags=row[9] or {},
                 attributes=row[10] or {},
             )
+    finally:
+        connection.close()
 
 
 def ci_aggregate(
@@ -346,7 +372,10 @@ def ci_aggregate(
     )
     count_params = list(params)
     query_params = params + [sanitized_limit] if group_list else params
-    with get_pg_connection() as conn:
+
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             cur.execute(count_query, count_params)
             cur.fetchone()[0]
@@ -356,6 +385,9 @@ def ci_aggregate(
             for row in cur.fetchall():
                 rendered = [str(row[idx]) for idx in range(len(columns))]
                 rows.append(rendered)
+    finally:
+        connection.close()
+
     query_str = query.strip()
     return CIAggregateResult(
         columns=columns,
@@ -385,7 +417,10 @@ def ci_list_preview(
     query_template = _load_query("ci_list_preview.sql")
     query = query_template.format(where_clause=where_clause)
     params.extend([sanitized_limit, sanitized_offset])
-    with get_pg_connection() as conn:
+
+    connection = _get_connection()
+    try:
+        conn = connection.connection if hasattr(connection, 'connection') else connection
         with conn.cursor() as cur:
             cur.execute(total_query, total_params)
             total = cur.fetchone()[0]
@@ -404,6 +439,9 @@ def ci_list_preview(
                 }
                 for row in cur.fetchall()
             ]
+    finally:
+        connection.close()
+
     return CIListResult(
         rows=rows,
         total=total,

@@ -74,9 +74,8 @@ export default function JsonEditor() {
         value={jsonText}
         onChange={e => handleJsonChange(e.target.value)}
         placeholder="Enter screen schema JSON here..."
-        className={`flex-1 font-mono text-xs bg-slate-800 border-slate-700 resize-none ${
-          hasJsonErrors ? "border-red-600" : ""
-        }`}
+        className={`flex-1 font-mono text-xs bg-slate-800 border-slate-700 resize-none ${hasJsonErrors ? "border-red-600" : ""
+          }`}
         data-testid="json-textarea"
       />
 
@@ -86,6 +85,7 @@ export default function JsonEditor() {
           onClick={handleFormat}
           variant="outline"
           size="sm"
+          className="bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
           data-testid="btn-format-json"
         >
           Format
@@ -95,7 +95,7 @@ export default function JsonEditor() {
           onClick={handleApplyJson}
           disabled={localErrors.length > 0}
           size="sm"
-          className="bg-sky-600 hover:bg-sky-700"
+          className={`text-white ${localErrors.length > 0 ? "bg-sky-900/50 opacity-50 cursor-not-allowed" : "bg-sky-600 hover:bg-sky-700"}`}
           data-testid="btn-apply-json"
         >
           Apply to Visual

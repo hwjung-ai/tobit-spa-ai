@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 import sqlalchemy as sa
 from sqlalchemy import JSON, Column, Text
 from sqlalchemy.dialects import postgresql
 from sqlmodel import Field, SQLModel
+
+
+def _now_kst() -> datetime:
+    """Get current time in KST (UTC+9)."""
+    return datetime.now(timezone(timedelta(hours=9)))
 
 
 class QueryHistory(SQLModel, table=True):
@@ -44,7 +49,7 @@ class QueryHistory(SQLModel, table=True):
         sa_column=Column("metadata", JSON, nullable=True),
     )
     created_at: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=_now_kst,
         sa_column=Column(
             postgresql.TIMESTAMP(timezone=True),
             nullable=False,

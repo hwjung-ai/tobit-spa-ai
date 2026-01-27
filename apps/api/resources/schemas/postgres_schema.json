@@ -1,0 +1,3937 @@
+{
+  "tables": [
+    {
+      "schema": "information_schema",
+      "table_name": "sql_features",
+      "columns": [
+        {
+          "name": "feature_id",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "feature_name",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "sub_feature_id",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "sub_feature_name",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_supported",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 3,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_verified_by",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "comments",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "information_schema",
+      "table_name": "sql_implementation_info",
+      "columns": [
+        {
+          "name": "implementation_info_id",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "implementation_info_name",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "integer_value",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "character_value",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "comments",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "information_schema",
+      "table_name": "sql_sizing",
+      "columns": [
+        {
+          "name": "sizing_id",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "sizing_name",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "supported_value",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "comments",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "alembic_version",
+      "columns": [
+        {
+          "name": "version_num",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "api_definitions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "scope",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": "'custom'::apiscope",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "method",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 16,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "path",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 512,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tags",
+          "type": "json",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "mode",
+          "type": "USER-DEFINED",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "logic",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_enabled",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "assets",
+      "columns": [
+        {
+          "name": "id",
+          "type": "integer",
+          "nullable": false,
+          "default": "nextval('assets_id_seq'::regclass)",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "asset_type",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 100,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "attributes",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "chat_history",
+      "columns": [
+        {
+          "name": "message_id",
+          "type": "integer",
+          "nullable": false,
+          "default": "nextval('chat_history_message_id_seq'::regclass)",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "session_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "timestamp",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "role",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 50,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "chat_message",
+      "columns": [
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "thread_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "role",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 16,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "content",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "token_in",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "token_out",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "chat_thread",
+      "columns": [
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "title",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 64,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "user_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 64,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "title_finalized",
+          "type": "boolean",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "builder",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 100,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "ci",
+      "columns": [
+        {
+          "name": "ci_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'t1'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_type",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_subtype",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_code",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_category",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": "'active'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "criticality",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "location",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "owner",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "ci_ext",
+      "columns": [
+        {
+          "name": "ci_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "attributes",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tags",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "document_chunks",
+      "columns": [
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "document_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "chunk_index",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "page",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "text",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "embedding",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "chunk_version",
+          "type": "integer",
+          "nullable": true,
+          "default": "1",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "chunk_type",
+          "type": "character varying",
+          "nullable": true,
+          "default": "'text'::character varying",
+          "max_length": 50,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "position_in_doc",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "page_number",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "slide_number",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "table_data",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "source_hash",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 64,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "relevance_score",
+          "type": "double precision",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 53,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "documents",
+      "columns": [
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 64,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "user_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 64,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "filename",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "content_type",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 128,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "size",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "status",
+          "type": "character varying",
+          "nullable": false,
+          "default": "'queued'::character varying",
+          "max_length": 32,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "deleted_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "format",
+          "type": "character varying",
+          "nullable": true,
+          "default": "'pdf'::character varying",
+          "max_length": 20,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "processing_progress",
+          "type": "integer",
+          "nullable": true,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "total_chunks",
+          "type": "integer",
+          "nullable": true,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "error_details",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "doc_metadata",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_by",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "event_log",
+      "columns": [
+        {
+          "name": "time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'t1'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "event_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "severity",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "source",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "message",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "attributes",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "events",
+      "columns": [
+        {
+          "name": "event_time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "asset_id",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "severity",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 50,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "event_type",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 100,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "maintenance_history",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'t1'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "maint_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "detail",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "start_time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "end_time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "duration_min",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "performer",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "result",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "metric_def",
+      "columns": [
+        {
+          "name": "metric_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "metric_name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "unit",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "value_type",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": "'gauge'::metric_value_type",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "metric_value",
+      "columns": [
+        {
+          "name": "time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'t1'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "metric_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "value",
+          "type": "double precision",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 53,
+          "scale": null
+        },
+        {
+          "name": "quality",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tags",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "metrics",
+      "columns": [
+        {
+          "name": "ts",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "asset_id",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "metric",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 100,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "value",
+          "type": "double precision",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 53,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "query_history",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'default'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "user_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'default'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "feature",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "question",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": "'ok'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "response",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_api_exec_step_log",
+      "columns": [
+        {
+          "name": "exec_step_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "exec_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "node_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "node_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "duration_ms",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "row_count",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "references",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_api_key",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "name",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 100,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "key_prefix",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 8,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "key_hash",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "scope",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "last_used_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_by_trace_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_asset_registry",
+      "columns": [
+        {
+          "name": "asset_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "asset_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false,
+          "default": "1",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": "'draft'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "scope",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "engine",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "template",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "input_schema",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "output_contract",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "mapping_type",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "content",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "policy_type",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "limits",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "query_sql",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "query_params",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "query_metadata",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "screen_id",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "schema_json",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tags",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "published_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "query_cypher",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "query_http",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_asset_version_history",
+      "columns": [
+        {
+          "name": "history_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "asset_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "version",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "snapshot",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "published_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "rollback_from_version",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_audit_log",
+      "columns": [
+        {
+          "name": "audit_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "trace_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "parent_trace_id",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "resource_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "resource_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "action",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "actor",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "changes",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "old_values",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "new_values",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_cep_exec_log",
+      "columns": [
+        {
+          "name": "exec_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "rule_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "triggered_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "error_message",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "references",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "duration_ms",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_cep_metric_poll_snapshot",
+      "columns": [
+        {
+          "name": "snapshot_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "instance_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_leader",
+          "type": "boolean",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tick_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tick_duration_ms",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "rule_count",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "evaluated_count",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "matched_count",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "skipped_count",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "fail_count",
+          "type": "integer",
+          "nullable": false,
+          "default": "0",
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "last_error",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "recent_matches",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "recent_failures",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'[]'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_cep_notification",
+      "columns": [
+        {
+          "name": "notification_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "channel",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "webhook_url",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "headers",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "trigger",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "policy",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "rule_id",
+          "type": "uuid",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_cep_notification_log",
+      "columns": [
+        {
+          "name": "log_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "notification_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "fired_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "response_status",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "response_body",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "dedup_key",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ack",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ack_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ack_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_cep_rule",
+      "columns": [
+        {
+          "name": "rule_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "rule_name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "trigger_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "trigger_spec",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "action_spec",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_cep_scheduler_state",
+      "columns": [
+        {
+          "name": "state_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "instance_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_leader",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "last_heartbeat_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_execution_trace",
+      "columns": [
+        {
+          "name": "trace_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "parent_trace_id",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "feature",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "endpoint",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "method",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ops_mode",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "question",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": false,
+          "default": "'success'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "duration_ms",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "request_payload",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "applied_assets",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "asset_versions",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "fallbacks",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "plan_raw",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "plan_validated",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "execution_steps",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "references",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "answer",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ui_render",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "audit_links",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "flow_spans",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "replan_events",
+          "type": "jsonb",
+          "nullable": true,
+          "default": "'[]'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "route",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "stage_inputs",
+          "type": "jsonb",
+          "nullable": true,
+          "default": "'[]'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "stage_outputs",
+          "type": "jsonb",
+          "nullable": true,
+          "default": "'[]'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_golden_query",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "query_text",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ops_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "options",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "enabled",
+          "type": "text",
+          "nullable": false,
+          "default": "true",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_operation_settings",
+      "columns": [
+        {
+          "name": "setting_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "setting_key",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "setting_value",
+          "type": "jsonb",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "nullable": false,
+          "default": "'published'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "env_override",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "restart_required",
+          "type": "boolean",
+          "nullable": false,
+          "default": "false",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "published_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_refresh_token",
+      "columns": [
+        {
+          "name": "user_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "token_hash",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "expires_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "revoked_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_regression_baseline",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "golden_query_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "baseline_trace_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "baseline_status",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "asset_versions",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_regression_run",
+      "columns": [
+        {
+          "name": "id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "golden_query_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "baseline_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "candidate_trace_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "baseline_trace_id",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "judgment",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "verdict_reason",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "diff_summary",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "triggered_by",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "trigger_info",
+          "type": "jsonb",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "execution_duration_ms",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_role_permission",
+      "columns": [
+        {
+          "name": "role",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "permission",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_granted",
+          "type": "boolean",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_ui_def",
+      "columns": [
+        {
+          "name": "ui_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ui_name",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ui_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "schema",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tags",
+          "type": "jsonb",
+          "nullable": false,
+          "default": "'{}'::jsonb",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "default": "true",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "tb_user",
+      "columns": [
+        {
+          "name": "username",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 100,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "password_hash",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 255,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "role",
+          "type": "USER-DEFINED",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 64,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "last_login_at",
+          "type": "timestamp without time zone",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "email_encrypted",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 512,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "phone_encrypted",
+          "type": "character varying",
+          "nullable": true,
+          "default": null,
+          "max_length": 512,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "id",
+          "type": "character varying",
+          "nullable": false,
+          "default": null,
+          "max_length": 36,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp without time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "uploads",
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "nullable": false,
+          "default": "nextval('uploads_id_seq'::regclass)",
+          "max_length": null,
+          "precision": 64,
+          "scale": 0
+        },
+        {
+          "name": "title",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "owner",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "total_files",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": true,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    },
+    {
+      "schema": "public",
+      "table_name": "work_history",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "tenant_id",
+          "type": "text",
+          "nullable": false,
+          "default": "'t1'::text",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "ci_id",
+          "type": "uuid",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "work_type",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "summary",
+          "type": "text",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "detail",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "requested_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "approved_by",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "impact_level",
+          "type": "integer",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "start_time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "end_time",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "duration_min",
+          "type": "integer",
+          "nullable": false,
+          "default": null,
+          "max_length": null,
+          "precision": 32,
+          "scale": 0
+        },
+        {
+          "name": "result",
+          "type": "text",
+          "nullable": true,
+          "default": null,
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "nullable": false,
+          "default": "now()",
+          "max_length": null,
+          "precision": null,
+          "scale": null
+        }
+      ]
+    }
+  ]
+}
