@@ -11,6 +11,7 @@ interface ToolAsset {
     version: number;
     status: string;
     tool_type: string;
+    tool_catalog_ref?: string | null;
     tool_config: Record<string, unknown>;
     tool_input_schema: Record<string, unknown>;
     tool_output_schema: Record<string, unknown> | null;
@@ -247,6 +248,18 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                                 <span className="text-slate-200 text-sm font-mono">{tool.tool_type}</span>
                             </div>
                         </div>
+
+                        {tool.tool_catalog_ref && (
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">
+                                    🗄️ Linked Catalog
+                                </label>
+                                <div className="px-3 py-2 bg-sky-950/30 border border-sky-800/50 rounded-lg">
+                                    <span className="text-sky-300 text-sm font-mono">{tool.tool_catalog_ref}</span>
+                                </div>
+                                <p className="text-[9px] text-slate-500 mt-1">This Tool references a database schema catalog for accurate SQL generation</p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">

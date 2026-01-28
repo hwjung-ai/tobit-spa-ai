@@ -17,6 +17,7 @@ export interface ToolAsset {
     version: number;
     status: string;
     tool_type: string;
+    tool_catalog_ref?: string | null;
     tool_config: Record<string, unknown>;
     tool_input_schema: Record<string, unknown>;
     tool_output_schema: Record<string, unknown> | null;

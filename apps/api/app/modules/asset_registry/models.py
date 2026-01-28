@@ -78,6 +78,7 @@ class TbAssetRegistry(SQLModel, table=True):
 
     # Tool fields
     tool_type: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    tool_catalog_ref: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     tool_config: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSONB, nullable=True)
     )

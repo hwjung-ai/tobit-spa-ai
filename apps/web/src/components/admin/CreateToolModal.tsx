@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
 
@@ -33,10 +34,20 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const [toolType, setToolType] = useState<string>("database_query");
+    const [catalogRef, setCatalogRef] = useState<string>("");
     const [toolConfig, setToolConfig] = useState(JSON.stringify(DEFAULT_TOOL_CONFIG, null, 2));
     const [inputSchema, setInputSchema] = useState(JSON.stringify(DEFAULT_INPUT_SCHEMA, null, 2));
     const [isCreating, setIsCreating] = useState(false);
     const [errors, setErrors] = useState<string[]>([]);
+
+    // Fetch available catalogs
+    const { data: catalogsData } = useQuery({
+        queryKey: ["admin-catalogs-for-tool"],
+        queryFn: async () => {
+            const response = await fetchApi("/asset-registry/catalogs?status=published");
+            return response.data?.assets || [];
+        },
+    });
 
     const handleCreate = async () => {
         const validationErrors: string[] = [];
@@ -73,17 +84,24 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
         setErrors([]);
 
         try {
+            const payload: any = {
+                name,
+                description,
+                tool_type: toolType,
+                tool_config: parsedConfig!,
+                tool_input_schema: parsedInputSchema!,
+                tool_output_schema: null,
+                created_by: "admin",
+            };
+
+            // Add catalog reference if selected
+            if (catalogRef.trim()) {
+                payload.tool_catalog_ref = catalogRef;
+            }
+
             const response = await fetchApi<{ asset: { asset_id: string } }>("/asset-registry/tools", {
                 method: "POST",
-                body: JSON.stringify({
-                    name,
-                    description,
-                    tool_type: toolType,
-                    tool_config: parsedConfig!,
-                    tool_input_schema: parsedInputSchema!,
-                    tool_output_schema: null,
-                    created_by: "admin",
-                }),
+                body: JSON.stringify(payload),
             });
 
             // API returns { data: { asset: { asset_id, ... } } }
@@ -183,6 +201,28 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 rows={3}
                                 className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none"
                             />
+                        </div>
+
+                        {/* Catalog Reference (Optional) */}
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                                Database Catalog (Optional)
+                            </label>
+                            <select
+                                value={catalogRef}
+                                onChange={(e) => setCatalogRef(e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-sky-500 transition-all"
+                            >
+                                <option value="">-- No Catalog Selected --</option>
+                                {catalogsData?.map((catalog: any) => (
+                                    <option key={catalog.asset_id} value={catalog.name}>
+                                        {catalog.name} (Tables: {catalog.content?.catalog?.tables?.length || 0})
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-slate-600 text-xs mt-1 ml-1">
+                                💡 Select a catalog to provide database schema information to LLM for accurate SQL generation
+                            </p>
                         </div>
 
                         {/* Tool Config */}
