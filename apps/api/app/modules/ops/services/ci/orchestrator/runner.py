@@ -59,20 +59,23 @@ from app.modules.ops.services.ci.tools import (
     ToolType,
     get_tool_executor,
 )
-from app.modules.ops.services.ci.tools import cep as cep_tools
-from app.modules.ops.services.ci.tools import ci as ci_tools
-from app.modules.ops.services.ci.tools import graph as graph_tools
-from app.modules.ops.services.ci.tools import history as history_tools
-from app.modules.ops.services.ci.tools import metric as metric_tools
 from app.modules.ops.services.ci.tools.cache import ToolResultCache
-from app.modules.ops.services.ci.tools.ci import FilterSpec
 from app.modules.ops.services.ci.tools.observability import ExecutionTracer
+
+# NOTE: Built-in tools (ci, graph, metric, history, cep) have been removed for
+# generic orchestration. All tool functionality should be implemented as Tool Assets
+# in the Asset Registry and executed via DynamicTools.
 
 
 @dataclass
 class RerunContext:
     selected_ci_id: str | None = None
     selected_secondary_ci_id: str | None = None
+
+
+# FilterSpec was previously imported from ci.py tool
+# Now defined locally as a type alias for filter specifications
+FilterSpec = Dict[str, Any]
 
 
 AUTO_METRIC_PREFERENCES = [
@@ -514,17 +517,14 @@ class CIOrchestratorRunner:
                 meta["row_count"] = len(result_data)
                 result_records = result_data
             except Exception as e:
-                self.logger.warning(f"CI search via registry failed, falling back: {e}")
-                result = ci_tools.ci_search(
-                    self.tenant_id,
-                    keywords=keywords_tuple,
-                    filters=filters_tuple,
-                    limit=limit,
-                    sort=sort,
-                )
-                meta["row_count"] = len(result.records)
-                meta["fallback"] = True
-                result_records = [r.dict() for r in result.records]
+                # NOTE: Built-in ci_tools.ci_search fallback removed for generic orchestration.
+                # This functionality should be implemented as a 'ci_search' Tool Asset.
+                self.logger.warning(f"CI search via registry failed: {e}")
+                self.logger.error("Tool fallback 'ci_search' is no longer available. Please implement as Tool Asset.")
+                meta["row_count"] = 0
+                meta["fallback"] = False
+                meta["error"] = f"CI search tool not available: {str(e)}"
+                result_records = []
 
         if not result_records and not self._ci_search_recovery:
             recovered = self._recover_ci_identifiers()
@@ -586,15 +586,12 @@ class CIOrchestratorRunner:
             limit=limit,
             sort_column=None,
         ) as meta:
-            result = ci_tools.ci_search_broad_or(
-                self.tenant_id,
-                keywords=tuple(deduped),
-                filters=tuple(filters or ()),
-                limit=limit,
-                sort=None,
-            )
-            meta["row_count"] = len(result.records)
-        return [r.model_dump() for r in result.records]
+            # NOTE: Built-in ci_tools.ci_search_broad_or removed for generic orchestration.
+            # This functionality should be implemented as a 'ci_search_broad' Tool Asset.
+            self.logger.error("Tool fallback 'ci_search_broad_or' is no longer available. Please implement as Tool Asset.")
+            meta["row_count"] = 0
+            result = type('Result', (), {'records': []})()
+        return [r.model_dump() if hasattr(r, 'model_dump') else r for r in result.records]
 
     def _recover_ci_identifiers(self) -> tuple[str, ...] | None:
         if not self.question:
@@ -734,10 +731,13 @@ class CIOrchestratorRunner:
                 detail = await self._ci_get_via_registry_async(ci_id)
                 meta["found"] = bool(detail)
             except Exception as e:
-                self.logger.warning(f"CI get via registry failed, falling back: {e}")
-                detail = ci_tools.ci_get(self.tenant_id, ci_id)
-                meta["found"] = bool(detail)
-                meta["fallback"] = True
+                # NOTE: Built-in ci_tools.ci_get fallback removed for generic orchestration.
+                self.logger.warning(f"CI get via registry failed: {e}")
+                self.logger.error("Tool fallback 'ci_get' is no longer available. Please implement as Tool Asset.")
+                detail = None
+                meta["found"] = False
+                meta["fallback"] = False
+                meta["error"] = f"CI get tool not available: {str(e)}"
         return detail.dict() if (detail and hasattr(detail, "dict")) else detail
 
     def _ci_get_by_code(self, ci_code: str) -> Dict[str, Any] | None:
@@ -751,12 +751,13 @@ class CIOrchestratorRunner:
                 detail = await self._ci_get_by_code_via_registry_async(ci_code)
                 meta["found"] = bool(detail)
             except Exception as e:
-                self.logger.warning(
-                    f"CI get_by_code via registry failed, falling back: {e}"
-                )
-                detail = ci_tools.ci_get_by_code(self.tenant_id, ci_code)
-                meta["found"] = bool(detail)
-                meta["fallback"] = True
+                # NOTE: Built-in ci_tools.ci_get_by_code fallback removed for generic orchestration.
+                self.logger.warning(f"CI get_by_code via registry failed: {e}")
+                self.logger.error("Tool fallback 'ci_get_by_code' is no longer available. Please implement as Tool Asset.")
+                detail = None
+                meta["found"] = False
+                meta["fallback"] = False
+                meta["error"] = f"CI get_by_code tool not available: {str(e)}"
         return detail.dict() if (detail and hasattr(detail, "dict")) else detail
 
     def _ci_aggregate(
@@ -809,20 +810,13 @@ class CIOrchestratorRunner:
                 )
                 meta["row_count"] = len(result.get("rows", []))
             except Exception as e:
-                self.logger.warning(
-                    f"CI aggregate via registry failed, falling back: {e}"
-                )
-                result_obj = ci_tools.ci_aggregate(
-                    self.tenant_id,
-                    group_by,
-                    metrics,
-                    filters=filters,
-                    ci_ids=ci_ids,
-                    top_n=top_n,
-                )
-                meta["row_count"] = len(result_obj.rows)
-                meta["fallback"] = True
-                result = result_obj.dict()
+                # NOTE: Built-in ci_tools.ci_aggregate fallback removed for generic orchestration.
+                self.logger.warning(f"CI aggregate via registry failed: {e}")
+                self.logger.error("Tool fallback 'ci_aggregate' is no longer available. Please implement as Tool Asset.")
+                meta["row_count"] = 0
+                meta["fallback"] = False
+                meta["error"] = f"CI aggregate tool not available: {str(e)}"
+                result = {"rows": [], "column_names": []}
         return result
 
     def _ci_list_preview(
@@ -858,15 +852,13 @@ class CIOrchestratorRunner:
                 )
                 meta["row_count"] = len(result.get("rows", []))
             except Exception as e:
-                self.logger.warning(
-                    f"CI list_preview via registry failed, falling back: {e}"
-                )
-                result_obj = ci_tools.ci_list_preview(
-                    self.tenant_id, limit, offset, filters
-                )
-                meta["row_count"] = len(result_obj.rows)
-                meta["fallback"] = True
-                result = result_obj.dict()
+                # NOTE: Built-in ci_tools.ci_list_preview fallback removed for generic orchestration.
+                self.logger.warning(f"CI list_preview via registry failed: {e}")
+                self.logger.error("Tool fallback 'ci_list_preview' is no longer available. Please implement as Tool Asset.")
+                meta["row_count"] = 0
+                meta["fallback"] = False
+                meta["error"] = f"CI list_preview tool not available: {str(e)}"
+                result = {"rows": [], "column_names": [], "total_count": 0}
         return result
 
     def _graph_expand(
@@ -891,13 +883,12 @@ class CIOrchestratorRunner:
                     ci_id=ci_id, view=view, depth=depth, limits=limits
                 )
             except Exception as e:
-                self.logger.warning(
-                    f"Graph expand via registry failed, falling back: {e}"
-                )
-                raw_payload = graph_tools.graph_expand(
-                    self.tenant_id, ci_id, view, depth=depth, limits=limits
-                )
-                meta["fallback"] = True
+                # NOTE: Built-in graph_tools.graph_expand fallback removed for generic orchestration.
+                self.logger.warning(f"Graph expand via registry failed: {e}")
+                self.logger.error("Tool fallback 'graph_expand' is no longer available. Please implement as Tool Asset.")
+                raw_payload = None
+                meta["fallback"] = False
+                meta["error"] = f"Graph expand tool not available: {str(e)}"
             payload_type = (
                 type(raw_payload).__name__ if raw_payload is not None else "NoneType"
             )
@@ -983,13 +974,12 @@ class CIOrchestratorRunner:
                     source_id=source_id, target_id=target_id, hops=hops
                 )
             except Exception as e:
-                self.logger.warning(
-                    f"Graph path via registry failed, falling back: {e}"
-                )
-                payload = graph_tools.graph_path(
-                    self.tenant_id, source_id, target_id, hops
-                )
-                meta["fallback"] = True
+                # NOTE: Built-in graph_tools.graph_path fallback removed for generic orchestration.
+                self.logger.warning(f"Graph path via registry failed: {e}")
+                self.logger.error("Tool fallback 'graph_path' is no longer available. Please implement as Tool Asset.")
+                payload = {"nodes": [], "edges": [], "hop_count": 0}
+                meta["fallback"] = False
+                meta["error"] = f"Graph path tool not available: {str(e)}"
             meta["node_count"] = len(payload.get("nodes", []))
             meta["edge_count"] = len(payload.get("edges", []))
             meta["hop_count"] = payload.get("hop_count")
@@ -1042,21 +1032,14 @@ class CIOrchestratorRunner:
                 meta["value_present"] = result.get("value") is not None
                 meta["ci_count_used"] = result.get("ci_count_used")
             except Exception as e:
-                self.logger.warning(
-                    f"Metric aggregate via registry failed, falling back: {e}"
-                )
-                result_obj = metric_tools.metric_aggregate(
-                    self.tenant_id,
-                    metric_name,
-                    time_range,
-                    agg,
-                    ci_id=ci_id,
-                    ci_ids=ci_ids_tuple or None,
-                )
-                meta["value_present"] = result_obj.value is not None
-                meta["ci_count_used"] = result_obj.ci_count_used
-                meta["fallback"] = True
-                result = result_obj.dict()
+                # NOTE: Built-in metric_tools.metric_aggregate fallback removed for generic orchestration.
+                self.logger.warning(f"Metric aggregate via registry failed: {e}")
+                self.logger.error("Tool fallback 'metric_aggregate' is no longer available. Please implement as Tool Asset.")
+                meta["value_present"] = False
+                meta["ci_count_used"] = 0
+                meta["fallback"] = False
+                meta["error"] = f"Metric aggregate tool not available: {str(e)}"
+                result = {"value": None, "unit": None, "ci_count_used": 0}
         return result
 
     def _metric_series_table(
@@ -1099,15 +1082,13 @@ class CIOrchestratorRunner:
                 )
                 meta["rows_count"] = len(result.get("rows", []))
             except Exception as e:
-                self.logger.warning(
-                    f"Metric series via registry failed, falling back: {e}"
-                )
-                result_obj = metric_tools.metric_series_table(
-                    self.tenant_id, ci_id, metric_name, time_range, limit
-                )
-                meta["rows_count"] = len(result_obj.rows)
-                meta["fallback"] = True
-                result = result_obj.dict()
+                # NOTE: Built-in metric_tools.metric_series_table fallback removed for generic orchestration.
+                self.logger.warning(f"Metric series via registry failed: {e}")
+                self.logger.error("Tool fallback 'metric_series_table' is no longer available. Please implement as Tool Asset.")
+                meta["rows_count"] = 0
+                meta["fallback"] = False
+                meta["error"] = f"Metric series tool not available: {str(e)}"
+                result = {"rows": [], "column_names": []}
         return result
 
     def _history_recent(
@@ -1163,19 +1144,16 @@ class CIOrchestratorRunner:
                 meta["available"] = result.get("available")
             except Exception as e:
                 self.logger.warning(
-                    f"History recent via registry failed, falling back: {e}"
+                    f"History recent via registry failed: {e}"
                 )
-                result = history_tools.event_log_recent(
-                    self.tenant_id,
-                    ci_context,
-                    final_time_range,
-                    final_limit,
-                    ci_ids=ci_ids,
-                )
-                meta["row_count"] = len(result.get("rows", []))
-                meta["warnings_count"] = len(result.get("warnings", []))
-                meta["available"] = result.get("available")
-                meta["fallback"] = True
+                # NOTE: Built-in history_tools.event_log_recent fallback removed for generic orchestration.
+                self.logger.error("Tool fallback 'event_log_recent' is no longer available. Please implement as Tool Asset.")
+                result = {"rows": [], "warnings": [], "available": False}
+                meta["row_count"] = 0
+                meta["warnings_count"] = 0
+                meta["available"] = False
+                meta["fallback"] = False
+                meta["error"] = f"History tool not available: {str(e)}"
         return result
 
     def _cep_simulate(
@@ -1217,19 +1195,14 @@ class CIOrchestratorRunner:
                 meta["success"] = bool(result.get("success"))
                 meta["exec_log_present"] = bool(result.get("exec_log_id"))
             except Exception as e:
-                self.logger.warning(
-                    f"CEP simulate via registry failed, falling back: {e}"
-                )
-                result = cep_tools.cep_simulate(
-                    self.tenant_id,
-                    rule_id or "",
-                    ci_context,
-                    metric_context=metric_context,
-                    history_context=history_context,
-                )
-                meta["success"] = bool(result.get("success"))
-                meta["exec_log_present"] = bool(result.get("exec_log_id"))
-                meta["fallback"] = True
+                # NOTE: Built-in cep_tools.cep_simulate fallback removed for generic orchestration.
+                self.logger.warning(f"CEP simulate via registry failed: {e}")
+                self.logger.error("Tool fallback 'cep_simulate' is no longer available. Please implement as Tool Asset.")
+                result = {"success": False, "exec_log_id": None}
+                meta["success"] = False
+                meta["exec_log_present"] = False
+                meta["fallback"] = False
+                meta["error"] = f"CEP tool not available: {str(e)}"
         return result
 
     def run(self, plan_output: PlanOutput | None = None) -> Dict[str, Any]:
@@ -2037,7 +2010,9 @@ class CIOrchestratorRunner:
         highlights: List[Dict[str, Any]] = []
         for metric_name, agg in AUTO_METRIC_PREFERENCES:
             entry: Dict[str, Any] = {"metric": metric_name}
-            if not metric_tools.metric_exists(self.tenant_id, metric_name):
+            # NOTE: metric_tools.metric_exists removed for generic orchestration
+            # Metric availability should be determined from Tool Assets
+            if not False:  # Treat as unavailable until Tool Assets are created
                 entry["available"] = False
                 candidates.append(entry)
                 continue
@@ -2208,32 +2183,35 @@ class CIOrchestratorRunner:
             entries: List[Dict[str, Any]] = []
             for metric_name, agg in AUTO_METRIC_PREFERENCES:
                 entry: Dict[str, Any] = {"metric": metric_name}
-                if not metric_tools.metric_exists(self.tenant_id, metric_name):
-                    entry["available"] = False
-                    entries.append(entry)
-                    continue
-                try:
-                    aggregate = await self._metric_aggregate_async(
-                        metric_name,
-                        agg,
-                        "last_24h",
-                        ci_ids=ci_ids,
-                    )
-                    value = aggregate.get("value")
-                    rows.append(
-                        [
-                            aggregate["metric_name"],
-                            aggregate["agg"],
-                            str(value if value is not None else "<null>"),
-                            aggregate["time_range"],
-                            str(aggregate.get("ci_count_used")),
-                        ]
-                    )
-                    entries.append({"metric": metric_name, "status": "ok"})
-                except Exception as exc:
-                    entries.append(
-                        {"metric": metric_name, "status": "error", "error": str(exc)}
-                    )
+                # NOTE: metric_tools.metric_exists removed for generic orchestration
+                # Metric availability should be determined from Tool Assets
+                # Treat as unavailable until Tool Assets are created
+                entry["available"] = False
+                entries.append(entry)
+                continue
+                # Commented out: metric collection now requires Tool Assets
+                # try:
+                #     aggregate = await self._metric_aggregate_async(
+                #         metric_name,
+                #         agg,
+                #         "last_24h",
+                #         ci_ids=ci_ids,
+                #     )
+                #     value = aggregate.get("value")
+                #     rows.append(
+                #         [
+                #             aggregate["metric_name"],
+                #             aggregate["agg"],
+                #             str(value if value is not None else "<null>"),
+                #             aggregate["time_range"],
+                #             str(aggregate.get("ci_count_used")),
+                #         ]
+                #     )
+                #     entries.append({"metric": metric_name, "status": "ok"})
+                # except Exception as exc:
+                #     entries.append(
+                #         {"metric": metric_name, "status": "error", "error": str(exc)}
+                #     )
             if rows:
                 metric_blocks.append(
                     table_block(
@@ -2845,11 +2823,14 @@ class CIOrchestratorRunner:
         if not any(keyword in text for keyword in HISTORY_FALLBACK_KEYWORDS):
             return None
         try:
-            history = history_tools.recent_work_and_maintenance(
-                self.tenant_id,
-                "last_7d",
-                limit=50,
-            )
+            # NOTE: history_tools.recent_work_and_maintenance removed for generic orchestration
+            self.logger.error("Tool fallback 'recent_work_and_maintenance' is no longer available. Please implement as Tool Asset.")
+            return [
+                text_block(
+                    "이력 조회 기능이 준비중입니다. 이력 탭을 이용해주세요.",
+                    title="History fallback",
+                )
+            ], "History tool not available"
         except Exception as exc:
             self.logger.debug("ci.runner.history_fallback_failed", exc_info=exc)
             return [
@@ -2858,9 +2839,10 @@ class CIOrchestratorRunner:
                     title="History fallback",
                 )
             ], "History fallback failed"
-        work_records = [r for r in history.records if r.event_type == "work"]
-        maint_records = [r for r in history.records if r.event_type == "maintenance"]
-        types = history_tools.detect_history_sections(self.question)
+        work_records = []  # Empty since tool is not available
+        maint_records = []  # Empty since tool is not available
+        # NOTE: history_tools.detect_history_sections removed for generic orchestration
+        types = []  # Should be detected from Tool Assets instead
         fallback_blocks: List[Dict[str, Any]] = [
             text_block("CI 없이 전체 이력을 가져왔습니다.", title="History fallback")
         ]
@@ -3013,9 +2995,11 @@ class CIOrchestratorRunner:
         if not metric_spec:
             return []
         metric_trace = self.plan_trace.setdefault("metric", {})
-        if not metric_tools.metric_exists(self.tenant_id, metric_spec.metric_name):
+        # NOTE: metric_tools.metric_exists removed for generic orchestration
+        if True:  # Treat metrics as unavailable until Tool Assets are created
             metric_trace.update({"status": "missing", "requested": metric_spec.dict()})
-            candidates = metric_tools.list_metric_names(self.tenant_id)
+            # NOTE: metric_tools.list_metric_names removed for generic orchestration
+            candidates = []  # Should retrieve from Tool Assets instead
             rows = [[name] for name in candidates]
             blocks = [
                 text_block(
@@ -3733,9 +3717,11 @@ class CIOrchestratorRunner:
         if not metric_spec:
             return []
         metric_trace = self.plan_trace.setdefault("metric", {})
-        if not metric_tools.metric_exists(self.tenant_id, metric_spec.metric_name):
+        # NOTE: metric_tools.metric_exists removed for generic orchestration
+        if True:  # Treat metrics as unavailable until Tool Assets are created
             metric_trace.update({"status": "missing", "requested": metric_spec.dict()})
-            candidates = metric_tools.list_metric_names(self.tenant_id)
+            # NOTE: metric_tools.list_metric_names removed for generic orchestration
+            candidates = []  # Should retrieve from Tool Assets instead
             rows = [[name] for name in candidates]
             blocks = [
                 text_block(
