@@ -11,6 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import type { ColDef, RowClickedEvent } from "ag-grid-community";
+import { buildApiUrl } from "../../../lib/adminUtils";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 
@@ -272,9 +273,6 @@ const TabsButton = ({
 );
 
 export default function ExplorerPage() {
-  const apiBaseUrl = normalizeBaseUrl(
-    process.env.NEXT_PUBLIC_API_BASE_URL
-  );
   const enableDataExplorer =
     process.env.NEXT_PUBLIC_ENABLE_DATA_EXPLORER === "true";
 
@@ -351,7 +349,7 @@ export default function ExplorerPage() {
   const tablesQuery = useQuery({
     queryKey: ["data", "postgres", "tables"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/data/postgres/tables`);
+      const response = await fetch(buildApiUrl("/data/postgres/tables"));
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body.message ?? "Failed to load tables");
@@ -364,7 +362,7 @@ export default function ExplorerPage() {
   const labelsQuery = useQuery({
     queryKey: ["data", "neo4j", "labels"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/data/neo4j/labels`);
+      const response = await fetch(buildApiUrl("/data/neo4j/labels"));
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body.message ?? "Failed to load labels");
@@ -384,7 +382,7 @@ export default function ExplorerPage() {
         count: "50",
       });
       const response = await fetch(
-        `${apiBaseUrl}/data/redis/scan?${params}`
+        buildApiUrl(`/data/redis/scan?${params.toString()}`)
       );
       const body = await response.json();
       if (!response.ok) {
@@ -402,7 +400,7 @@ export default function ExplorerPage() {
         limit: String(MAX_ROWS),
       });
       const response = await fetch(
-        `${apiBaseUrl}/data/postgres/preview?${params.toString()}`
+        buildApiUrl(`/data/postgres/preview?${params.toString()}`)
       );
       const body = await response.json();
       if (!response.ok) {
@@ -424,7 +422,7 @@ export default function ExplorerPage() {
   const runQueryMutation = useMutation({
     mutationFn: async (statement: string) => {
       if (sourceTab === "postgres") {
-        const response = await fetch(`${apiBaseUrl}/data/postgres/query`, {
+        const response = await fetch(buildApiUrl("/data/postgres/query"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sql: statement }),
@@ -438,7 +436,7 @@ export default function ExplorerPage() {
         return body.data as { columns: string[]; rows: GridRow[] };
       }
       if (sourceTab === "neo4j") {
-        const response = await fetch(`${apiBaseUrl}/data/neo4j/query`, {
+        const response = await fetch(buildApiUrl("/data/neo4j/query"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cypher: statement }),
@@ -451,7 +449,7 @@ export default function ExplorerPage() {
         }
         return body.data as { columns: string[]; rows: GridRow[] };
       }
-      const response = await fetch(`${apiBaseUrl}/data/redis/command`, {
+      const response = await fetch(buildApiUrl("/data/redis/command"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ command: statement }),
@@ -511,7 +509,7 @@ export default function ExplorerPage() {
   const redisKeyMutation = useMutation({
     mutationFn: async (key: string) => {
       const params = new URLSearchParams({ key });
-      const response = await fetch(`${apiBaseUrl}/data/redis/key?${params}`);
+      const response = await fetch(buildApiUrl(`/data/redis/key?${params}`));
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(
