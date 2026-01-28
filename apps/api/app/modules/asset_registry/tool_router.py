@@ -7,7 +7,7 @@ Provides CRUD endpoints for Tool Assets and tool testing functionality.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -119,10 +119,20 @@ def list_tools(
 
         # Combine and sort all tools
         all_tools = db_tools + builtin_tools
+
         # Sort by updated_at or created_at, with None values sorted to the end
-        all_tools.sort(key=lambda x: (
-            x.get("updated_at") or x.get("created_at") or datetime.min
-        ), reverse=True)
+        # Use offset-aware datetime.min for comparison to handle both naive and aware datetimes
+        def sort_key(x):
+            timestamp = x.get("updated_at") or x.get("created_at")
+            if timestamp is None:
+                # Return a very old datetime (offset-aware to match DB datetimes)
+                return datetime.min.replace(tzinfo=timezone.utc)
+            # If timestamp is naive, make it aware for consistent comparison
+            if isinstance(timestamp, datetime) and timestamp.tzinfo is None:
+                return timestamp.replace(tzinfo=timezone.utc)
+            return timestamp
+
+        all_tools.sort(key=sort_key, reverse=True)
 
         # Apply pagination
         total = len(all_tools)
