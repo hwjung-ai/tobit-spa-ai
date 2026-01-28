@@ -4,11 +4,11 @@ import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface SchemaScanPanelProps {
-  schema: any;
+  catalog: any;
   onScanComplete: () => void;
 }
 
-export default function SchemaScanPanel({ schema, onScanComplete }: SchemaScanPanelProps) {
+export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanPanelProps) {
   const [scanning, setScanning] = useState(false);
   const [schemaNames, setSchemaNames] = useState("public");
   const [includeRowCounts, setIncludeRowCounts] = useState(false);
@@ -22,7 +22,7 @@ export default function SchemaScanPanel({ schema, onScanComplete }: SchemaScanPa
         .filter((s) => s);
 
       const response = await fetchApi(
-        `/asset-registry/schemas/${schema.asset_id}/scan`,
+        `/asset-registry/catalogs/${schema.asset_id}/scan`,
         {
           method: "POST",
           body: JSON.stringify({

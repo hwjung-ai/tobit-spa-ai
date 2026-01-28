@@ -516,24 +516,24 @@ def load_source_asset(name: str, version: int | None = None) -> dict[str, Any] |
     return None
 
 
-def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
+def load_catalog_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
     """
-    Load schema asset with fallback priority:
+    Load catalog asset with fallback priority:
     1. Specific version from DB (if version specified) or Published asset from DB
-    2. Config file from config/schemas/
+    2. Config file from config/catalogs/
 
     Args:
-        name: Name of schema asset
+        name: Name of catalog asset
         version: Specific version to load (None for published)
 
     Returns:
-        Dictionary containing schema catalog information
+        Dictionary containing database catalog information
     """
     with get_session_context() as session:
         # Try DB first
         query = (
             select(TbAssetRegistry)
-            .where(TbAssetRegistry.asset_type == "schema")
+            .where(TbAssetRegistry.asset_type == "catalog")
             .where(TbAssetRegistry.name == name)
         )
 
@@ -545,7 +545,7 @@ def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] |
         asset = session.exec(query).first()
 
         if asset:
-            logger.info(f"Loaded schema from asset registry: {name} (v{asset.version})")
+            logger.info(f"Loaded catalog from asset registry: {name} (v{asset.version})")
             content = asset.content or {}
             schema_json = asset.schema_json or {}
 
@@ -576,23 +576,23 @@ def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] |
             return payload
 
     # Fallback to config file
-    config_file = f"schemas/{name}.yaml"
-    schema_config = config_loader.load_yaml(config_file)
+    config_file = f"catalogs/{name}.yaml"
+    catalog_config = config_loader.load_yaml(config_file)
 
-    if schema_config:
+    if catalog_config:
         # Fallback to file (only in test/dev mode)
         if _is_real_mode():
             raise ValueError(
-                f"[REAL MODE] Schema asset not found in Asset Registry: {name}. "
+                f"[REAL MODE] Catalog asset not found in Asset Registry: {name}. "
                 f"Asset must be published to Asset Registry (DB) in real mode. "
                 f"Please create and publish the asset in Admin → Assets."
             )
 
-        logger.warning(f"Using config file for schema '{name}': {config_file}")
-        schema_data = dict(schema_config)
-        schema_data["source"] = "file_fallback"
-        schema_data["asset_id"] = None
-        schema_data["version"] = None
+        logger.warning(f"Using config file for catalog '{name}': {config_file}")
+        catalog_data = dict(catalog_config)
+        catalog_data["source"] = "file_fallback"
+        catalog_data["asset_id"] = None
+        catalog_data["version"] = None
         track_schema_asset(
             {
                 "asset_id": None,
@@ -601,10 +601,17 @@ def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] |
                 "source": "file_fallback",
             }
         )
-        return schema_data
+        return catalog_data
 
-    logger.warning(f"Schema asset not found: {name}")
+    logger.warning(f"Catalog asset not found: {name}")
     return None
+
+
+# Backward compatibility alias
+def load_schema_asset(name: str, version: int | None = None) -> dict[str, Any] | None:
+    """Deprecated: Use load_catalog_asset instead."""
+    logger.warning(f"load_schema_asset is deprecated, use load_catalog_asset instead")
+    return load_catalog_asset(name, version)
 
 
 def load_resolver_asset(name: str, version: int | None = None) -> dict[str, Any] | None:

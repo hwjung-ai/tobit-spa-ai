@@ -106,7 +106,7 @@ async def init_schemas_from_db():
         with get_session_context() as session:
             # Check if primary_postgres_schema already exists
             existing = session.query(TbAssetRegistry).filter(
-                TbAssetRegistry.asset_type == "schema",
+                TbAssetRegistry.asset_type == "catalog",
                 TbAssetRegistry.name == "primary_postgres_schema",
             ).first()
 

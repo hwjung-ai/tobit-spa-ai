@@ -54,7 +54,7 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
         },
       };
 
-      const response = await fetchApi("/asset-registry/schemas", {
+      const response = await fetchApi("/asset-registry/catalogs", {
         method: "POST",
         body: JSON.stringify(payload),
       });

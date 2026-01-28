@@ -81,7 +81,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
 
   const scanMutation = useMutation({
     mutationFn: async ({ source_ref, options }: { source_ref: string; options: unknown }) => {
-      const response = await fetchApi<ScanResult>(`/asset-registry/schemas/${source_ref}/scan`, {
+      const response = await fetchApi<ScanResult>(`/asset-registry/catalogs/${source_ref}/scan`, {
         method: "POST",
         body: JSON.stringify({ source_ref, ...(options as Record<string, unknown>) }),
       });

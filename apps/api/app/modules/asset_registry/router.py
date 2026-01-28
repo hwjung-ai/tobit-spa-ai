@@ -348,11 +348,11 @@ def _serialize_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "updated_at": asset.updated_at,
     }
     
-    # Add type-specific fields for Source, Schema, Resolver assets
+    # Add type-specific fields for Source, Catalog, Resolver assets
     if asset.asset_type == "source":
         result["source_type"] = content.get("source_type")
         result["connection"] = content.get("connection", {})
-    elif asset.asset_type == "schema":
+    elif asset.asset_type == "catalog":
         result["catalog"] = content.get("catalog", {})
     elif asset.asset_type == "resolver":
         result["config"] = content.get("config", {})
@@ -998,21 +998,21 @@ def test_source(
         return ResponseEnvelope.success(data=result.model_dump())
 
 
-# Schema Asset Endpoints
-@router.get("/schemas", response_model=ResponseEnvelope)
-def list_schemas(
+# Catalog Asset Endpoints
+@router.get("/catalogs", response_model=ResponseEnvelope)
+def list_catalogs(
     asset_type: str | None = None,
     status: str | None = None,
     page: int = 1,
     page_size: int = 20,
     current_user: TbUser = Depends(get_current_user),
 ):
-    """List schema assets"""
+    """List catalog assets (database schema catalogs)"""
     with get_session_context() as session:
-        if asset_type and asset_type != "schema":
-            raise HTTPException(status_code=400, detail="asset_type must be 'schema'")
+        if asset_type and asset_type != "catalog":
+            raise HTTPException(status_code=400, detail="asset_type must be 'catalog'")
 
-        assets = list_registry_assets(session, asset_type="schema", status=status)
+        assets = list_registry_assets(session, asset_type="catalog", status=status)
 
         # Convert to response format
         schema_assets = []
@@ -1046,12 +1046,12 @@ def list_schemas(
         )
 
 
-@router.post("/schemas", response_model=ResponseEnvelope)
-def create_schema(
+@router.post("/catalogs", response_model=ResponseEnvelope)
+def create_catalog(
     payload: SchemaAssetCreate,
     current_user: TbUser = Depends(get_current_user),
 ):
-    """Create a new schema asset"""
+    """Create a new catalog asset (database schema catalog)"""
     with get_session_context() as session:
         asset = create_schema_asset(session, payload, created_by=current_user.id)
         return ResponseEnvelope.success(
@@ -1074,12 +1074,12 @@ def create_schema(
         )
 
 
-@router.get("/schemas/{asset_id}", response_model=ResponseEnvelope)
-def get_schema(
+@router.get("/catalogs/{asset_id}", response_model=ResponseEnvelope)
+def get_catalog(
     asset_id: str,
     current_user: TbUser = Depends(get_current_user),
 ):
-    """Get a schema asset by ID"""
+    """Get a catalog asset by ID"""
     with get_session_context() as session:
         asset = get_schema_asset(session, asset_id)
         if not asset:
@@ -1105,13 +1105,13 @@ def get_schema(
         )
 
 
-@router.put("/schemas/{asset_id}", response_model=ResponseEnvelope)
-def update_schema(
+@router.put("/catalogs/{asset_id}", response_model=ResponseEnvelope)
+def update_catalog(
     asset_id: str,
     payload: SchemaAssetUpdate,
     current_user: TbUser = Depends(get_current_user),
 ):
-    """Update a schema asset"""
+    """Update a catalog asset"""
     with get_session_context() as session:
         asset = update_schema_asset(
             session, asset_id, payload, updated_by=current_user.id
@@ -1136,29 +1136,29 @@ def update_schema(
         )
 
 
-@router.delete("/schemas/{asset_id}")
-def delete_schema(
+@router.delete("/catalogs/{asset_id}")
+def delete_catalog(
     asset_id: str,
     current_user: TbUser = Depends(get_current_user),
 ):
-    """Delete a schema asset"""
+    """Delete a catalog asset"""
     with get_session_context() as session:
         delete_schema_asset(session, asset_id)
         return ResponseEnvelope.success(message="Schema asset deleted")
 
 
-@router.post("/schemas/{asset_id}/scan", response_model=ResponseEnvelope)
-async def scan_schema_endpoint(
+@router.post("/catalogs/{asset_id}/scan", response_model=ResponseEnvelope)
+async def scan_catalog_endpoint(
     asset_id: str,
     schema_names: list[str] | None = None,
     include_row_counts: bool = False,
     current_user: TbUser = Depends(get_current_user),
 ):
     """
-    Scan database schema and populate schema asset metadata.
+    Scan database schema and populate catalog asset metadata.
 
     Args:
-        asset_id: Schema asset ID
+        asset_id: Catalog asset ID
         schema_names: List of schema names to scan (e.g., ["public"] for PostgreSQL)
         include_row_counts: Whether to count table rows (can be slow for large tables)
     """
@@ -1171,10 +1171,10 @@ async def scan_schema_endpoint(
         asset = session.get(TbAssetRegistry, asset_id)
 
         if not asset:
-            raise HTTPException(status_code=404, detail="Schema asset not found")
+            raise HTTPException(status_code=404, detail="Catalog asset not found")
 
-        if asset.asset_type != "schema":
-            raise HTTPException(status_code=400, detail="Asset is not a schema asset")
+        if asset.asset_type != "catalog":
+            raise HTTPException(status_code=400, detail="Asset is not a catalog asset")
 
         try:
             updated_asset = await scan_schema_asset(
@@ -1202,7 +1202,7 @@ async def scan_schema_endpoint(
             )
 
 
-@router.post("/schemas/{asset_id}/tables/{table_name}/toggle", response_model=ResponseEnvelope)
+@router.post("/catalogs/{asset_id}/tables/{table_name}/toggle", response_model=ResponseEnvelope)
 def toggle_table_enabled(
     asset_id: str,
     table_name: str,
@@ -1213,7 +1213,7 @@ def toggle_table_enabled(
     with get_session_context() as session:
         asset = session.get(TbAssetRegistry, asset_id)
 
-        if not asset or asset.asset_type != "schema":
+        if not asset or asset.asset_type != "catalog":
             raise HTTPException(status_code=404, detail="Schema asset not found")
 
         content = asset.content or {}

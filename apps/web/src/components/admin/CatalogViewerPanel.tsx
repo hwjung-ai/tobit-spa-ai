@@ -4,11 +4,11 @@ import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface SchemaViewerPanelProps {
-  schema: any;
+  catalog: any;
   onRefresh: () => void;
 }
 
-export default function SchemaViewerPanel({ schema, onRefresh }: SchemaViewerPanelProps) {
+export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPanelProps) {
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
   const [togglingTable, setTogglingTable] = useState<string | null>(null);
 
@@ -29,7 +29,7 @@ export default function SchemaViewerPanel({ schema, onRefresh }: SchemaViewerPan
     setTogglingTable(tableName);
     try {
       const response = await fetchApi(
-        `/asset-registry/schemas/${schema.asset_id}/tables/${tableName}/toggle`,
+        `/asset-registry/catalogs/${schema.asset_id}/tables/${tableName}/toggle`,
         {
           method: "POST",
           body: JSON.stringify({ enabled: !currentEnabled }),

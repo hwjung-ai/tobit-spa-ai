@@ -1,8 +1,8 @@
-name: primary_postgres_schema
-description: "Schema catalog placeholder for primary_postgres (env fallback)"
+name: primary_postgres_catalog
+description: "Catalog placeholder for primary_postgres (env fallback)"
 source_ref: primary_postgres
 catalog:
-  name: primary_postgres_schema
+  name: primary_postgres_catalog
   description: "Placeholder catalog; run scan to populate"
   source_ref: primary_postgres
   tables: []

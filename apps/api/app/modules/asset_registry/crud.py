@@ -762,7 +762,7 @@ def create_schema_asset(
     asset = create_asset(
         session=session,
         name=schema_data.name,
-        asset_type="schema",
+        asset_type="catalog",
         description=schema_data.description,
         scope=schema_data.scope,
         tags=schema_data.tags,
@@ -805,7 +805,7 @@ def create_schema_asset(
 def get_schema_asset(session: Session, asset_id: str) -> SchemaAsset | None:
     """Get schema asset by ID"""
     asset = get_asset(session, asset_id)
-    if not asset or asset.asset_type != "schema":
+    if not asset or asset.asset_type != "catalog":
         return None
 
     # Extract schema data from content

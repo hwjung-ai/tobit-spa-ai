@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
-interface SchemaAsset {
+interface CatalogAsset {
   asset_id: string;
   name: string;
   description?: string;
@@ -14,14 +14,14 @@ interface SchemaAsset {
   updated_at?: string;
 }
 
-interface SchemaTableProps {
-  schemas: SchemaAsset[];
+interface CatalogTableProps {
+  catalogs: SchemaAsset[];
   selectedSchema?: SchemaAsset | null;
-  onSelect: (schema: SchemaAsset) => void;
+  onSelect: (catalog: SchemaAsset) => void;
   onRefresh: () => void;
 }
 
-export default function SchemaTable({
+export default function CatalogTable({
   schemas,
   selectedSchema,
   onSelect,
@@ -36,22 +36,22 @@ export default function SchemaTable({
 
     setDeleting(schemaId);
     try {
-      await fetchApi(`/asset-registry/schemas/${schemaId}`, {
+      await fetchApi(`/asset-registry/catalogs/${schemaId}`, {
         method: "DELETE",
       });
       onRefresh();
     } catch (error) {
-      alert(`Failed to delete schema: ${error}`);
+      alert(`Failed to delete catalog: ${error}`);
     } finally {
       setDeleting(null);
     }
   };
 
-  const getScanStatus = (schema: SchemaAsset) => {
+  const getScanStatus = (catalog: SchemaAsset) => {
     return schema.content?.catalog?.scan_status || "pending";
   };
 
-  const getTableCount = (schema: SchemaAsset) => {
+  const getTableCount = (catalog: SchemaAsset) => {
     return schema.content?.catalog?.tables?.length || 0;
   };
 
