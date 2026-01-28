@@ -51,21 +51,21 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
   const scanError = catalog.scan_error;
 
   const statusColor = {
-    completed: "bg-green-100 text-green-800",
-    scanning: "bg-yellow-100 text-yellow-800",
-    failed: "bg-red-100 text-red-800",
-    pending: "bg-gray-100 text-gray-800",
+    completed: "bg-green-900/30 text-green-400",
+    scanning: "bg-yellow-900/30 text-yellow-400",
+    failed: "bg-red-900/30 text-red-400",
+    pending: "bg-slate-800/50 text-slate-400",
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
-      <h3 className="font-semibold text-lg mb-4">Schema Discovery</h3>
+    <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-4">
+      <h3 className="font-semibold text-lg mb-4 text-slate-100">Schema Discovery</h3>
 
       {/* Status */}
-      <div className="mb-4 p-3 bg-gray-50 rounded">
+      <div className="mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-semibold text-sm">Status:</span>
+            <span className="font-semibold text-sm text-slate-300">Status:</span>
             <span
               className={`ml-2 inline-block px-3 py-1 rounded text-xs font-medium ${
                 statusColor[scanStatus as keyof typeof statusColor] || statusColor.pending
@@ -76,12 +76,12 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
           </div>
         </div>
         {lastScanned && (
-          <div className="text-sm text-gray-600 mt-2">
+          <div className="text-sm text-slate-400 mt-2">
             Last scanned: {new Date(lastScanned).toLocaleString()}
           </div>
         )}
         {scanError && (
-          <div className="text-sm text-red-600 mt-2">
+          <div className="text-sm text-red-400 mt-2">
             Error: {scanError}
           </div>
         )}
@@ -90,18 +90,18 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
       {/* Configuration */}
       <div className="space-y-3 mb-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
             Schema Names (comma-separated)
           </label>
           <input
             type="text"
             value={schemaNames}
             onChange={(e) => setSchemaNames(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
             placeholder="public, schema2, schema3"
             disabled={scanning}
           />
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-2 text-xs text-slate-500">
             For PostgreSQL, typically "public". For MySQL, use database name. For Oracle, use owner name.
           </p>
         </div>
@@ -113,9 +113,9 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
             checked={includeRowCounts}
             onChange={(e) => setIncludeRowCounts(e.target.checked)}
             disabled={scanning}
-            className="rounded border-gray-300"
+            className="rounded border-slate-600"
           />
-          <label htmlFor="rowCounts" className="ml-2 text-sm text-gray-700">
+          <label htmlFor="rowCounts" className="ml-2 text-sm text-slate-300">
             Include row counts (slower for large tables)
           </label>
         </div>
@@ -125,17 +125,17 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
       <button
         onClick={handleScan}
         disabled={scanning || !schema.content?.source_ref}
-        className={`w-full px-4 py-2 rounded-md font-medium text-white transition-colors ${
+        className={`w-full px-4 py-3 rounded-lg font-medium text-white transition-all ${
           scanning || !schema.content?.source_ref
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
+            ? "bg-slate-800 text-slate-600 cursor-not-allowed"
+            : "bg-sky-600 hover:bg-sky-500"
         }`}
       >
         {scanning ? "Scanning..." : "Scan Database Schema"}
       </button>
 
       {!schema.content?.source_ref && (
-        <p className="mt-2 text-sm text-red-600">
+        <p className="mt-2 text-sm text-red-400">
           ⚠️ Schema asset must have a source_ref configured before scanning
         </p>
       )}

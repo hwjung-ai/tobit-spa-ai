@@ -73,92 +73,93 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Create Schema Asset</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name <span className="text-red-600">*</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., factory_schema"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Schema description"
-                rows={3}
-              />
-            </div>
-
-            {/* Source */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Source <span className="text-red-600">*</span>
-              </label>
-              <select
-                value={sourceRef}
-                onChange={(e) => setSourceRef(e.target.value)}
-                disabled={loading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select a source...</option>
-                {sourcesData?.map((source: any) => (
-                  <option key={source.asset_id} value={source.name}>
-                    {source.name}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500">
-                Source must be published before creating schema asset
-              </p>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded">
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loading ? "Creating..." : "Create"}
-              </button>
-            </div>
-          </form>
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4">
+        <div className="p-6 border-b border-slate-800">
+          <h2 className="text-xl font-bold text-slate-100 mb-1">Create Catalog Asset</h2>
+          <p className="text-xs text-slate-400">Scan database schema and store metadata</p>
         </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Catalog Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              placeholder="e.g., factory_postgres"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={loading}
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              placeholder="Describe this catalog..."
+              rows={3}
+            />
+          </div>
+
+          {/* Source */}
+          <div>
+            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Database Source <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={sourceRef}
+              onChange={(e) => setSourceRef(e.target.value)}
+              disabled={loading}
+              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+            >
+              <option value="" className="bg-slate-950">Select a source...</option>
+              {sourcesData?.map((source: any) => (
+                <option key={source.asset_id} value={source.name} className="bg-slate-950">
+                  {source.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-slate-500">
+              💡 Source must be published before creating catalog
+            </p>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="p-3 bg-red-900/30 border border-red-800/50 rounded-lg">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4 border-t border-slate-800">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-4 py-3 text-slate-400 hover:text-slate-200 rounded-lg transition-colors font-medium text-sm disabled:opacity-50 uppercase tracking-wide"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-3 bg-sky-600 hover:bg-sky-500 disabled:bg-slate-800 text-white rounded-lg shadow-lg font-medium text-sm disabled:opacity-50 uppercase tracking-wide transition-all"
+            >
+              {loading ? "Creating..." : "Create"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -58,7 +58,7 @@ export default function CatalogTable({
   return (
     <div className="space-y-2">
       {catalogs.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
+        <div className="text-center py-8 text-slate-500 bg-slate-900/40 border border-slate-800 rounded-lg">
           No catalogs created yet
         </div>
       ) : (
@@ -68,25 +68,25 @@ export default function CatalogTable({
             onClick={() => onSelect(catalog)}
             className={`p-3 rounded-lg cursor-pointer transition-colors border ${
               selectedCatalog?.asset_id === catalog.asset_id
-                ? "bg-blue-50 border-blue-300"
-                : "bg-white border-gray-200 hover:bg-gray-50"
+                ? "bg-sky-900/40 border-sky-500/50"
+                : "bg-slate-900/40 border-slate-800 hover:bg-slate-900/60"
             }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{catalog.name}</h4>
+                <h4 className="font-medium text-sm truncate text-slate-100">{catalog.name}</h4>
                 {catalog.description && (
-                  <p className="text-xs text-gray-600 truncate mt-1">{catalog.description}</p>
+                  <p className="text-xs text-slate-400 truncate mt-1">{catalog.description}</p>
                 )}
-                <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
                   <span>Tables: {getTableCount(catalog)}</span>
                   <span>•</span>
                   <span className={`px-2 py-0.5 rounded ${
                     getScanStatus(catalog) === "completed"
-                      ? "bg-green-100 text-green-700"
+                      ? "bg-green-900/50 text-green-400"
                       : getScanStatus(catalog) === "scanning"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-gray-100 text-gray-700"
+                      ? "bg-yellow-900/50 text-yellow-400"
+                      : "bg-slate-800/50 text-slate-400"
                   }`}>
                     {getScanStatus(catalog)}
                   </span>
@@ -98,7 +98,7 @@ export default function CatalogTable({
                   handleDelete(catalog.asset_id);
                 }}
                 disabled={deleting === catalog.asset_id}
-                className="ml-2 text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                className="ml-2 text-xs px-2 py-1 text-red-400 hover:bg-red-900/30 rounded transition-colors disabled:opacity-50"
               >
                 {deleting === catalog.asset_id ? "Deleting..." : "Delete"}
               </button>

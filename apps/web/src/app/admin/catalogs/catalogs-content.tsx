@@ -41,25 +41,83 @@ export default function CatalogsContent() {
 
   const catalogs = catalogsData || [];
 
+  // Demo data - 실제 환경에서는 제거
+  const demoMode = catalogs.length === 0;
+  const demoCatalogs: CatalogAsset[] = demoMode ? [
+    {
+      asset_id: "demo-postgres-schema",
+      name: "PostgreSQL DB Schema",
+      description: "Main PostgreSQL database table definitions and relationships",
+      status: "published",
+      version: 1,
+      content: {
+        source_ref: "primary_postgres",
+        catalog: {
+          tables: [
+            { name: "users", columns: 8 },
+            { name: "orders", columns: 6 },
+            { name: "products", columns: 10 },
+          ],
+          scan_status: "completed",
+          last_scanned_at: new Date().toISOString(),
+        },
+      },
+      created_at: new Date().toISOString(),
+    },
+    {
+      asset_id: "demo-neo4j-schema",
+      name: "Neo4j Graph Schema",
+      description: "Graph database nodes and relationships for knowledge graph",
+      status: "published",
+      version: 1,
+      content: {
+        source_ref: "primary_neo4j",
+        catalog: {
+          tables: [
+            { name: "Equipment", columns: 5 },
+            { name: "Maintenance", columns: 4 },
+            { name: "Technician", columns: 6 },
+          ],
+          scan_status: "completed",
+          last_scanned_at: new Date().toISOString(),
+        },
+      },
+      created_at: new Date().toISOString(),
+    },
+  ] : [];
+
+  const displayCatalogs = demoMode ? demoCatalogs : catalogs;
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="space-y-4">
+      {/* Info Banner */}
+      <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-4">
+        <h3 className="font-semibold text-slate-200 mb-2">📊 Database Catalogs</h3>
+        <p className="text-sm text-slate-400">
+          Database schema 정보를 자동으로 스캔하고 저장합니다.
+          Tool이 SQL 쿼리를 생성할 때 schema 정보를 참고하여 정확한 테이블/컬럼명을 사용합니다.
+          {demoMode && " (데모 데이터 표시 중)"}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Side: Catalog List */}
       <div className="lg:col-span-1">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Catalogs</h2>
+          <h2 className="text-lg font-semibold text-slate-200">Catalogs</h2>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+            className="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-sm rounded-lg transition-colors font-medium"
           >
             + New Catalog
           </button>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-4 text-gray-500">Loading...</div>
+          <div className="text-center py-4 text-slate-500">Loading...</div>
         ) : (
           <CatalogTable
-            catalogs={catalogs}
+            catalogs={displayCatalogs}
             selectedCatalog={selectedCatalog}
             onSelect={setSelectedCatalog}
             onRefresh={refetch}
@@ -72,28 +130,28 @@ export default function CatalogsContent() {
         {selectedCatalog ? (
           <>
             {/* Catalog Info */}
-            <div className="bg-white rounded-lg shadow p-4">
-              <h3 className="font-semibold text-lg mb-3">{selectedCatalog.name}</h3>
+            <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-4">
+              <h3 className="font-semibold text-lg mb-3 text-slate-200">{selectedCatalog.name}</h3>
               {selectedCatalog.description && (
-                <p className="text-sm text-gray-600 mb-2">{selectedCatalog.description}</p>
+                <p className="text-sm text-slate-400 mb-2">{selectedCatalog.description}</p>
               )}
-              <div className="text-sm text-gray-500 space-y-1">
+              <div className="text-sm text-slate-400 space-y-1">
                 <div>
-                  <span className="font-medium">ID:</span> {selectedCatalog.asset_id}
+                  <span className="font-medium text-slate-300">ID:</span> <span className="text-slate-500 font-mono">{selectedCatalog.asset_id}</span>
                 </div>
                 <div>
-                  <span className="font-medium">Status:</span>{" "}
+                  <span className="font-medium text-slate-300">Status:</span>{" "}
                   <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                     selectedCatalog.status === "published"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
+                      ? "bg-green-900/50 text-green-300 border border-green-800"
+                      : "bg-slate-800/50 text-slate-300 border border-slate-700"
                   }`}>
                     {selectedCatalog.status}
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium">Source:</span>{" "}
-                  {selectedCatalog.content?.source_ref || "Not configured"}
+                  <span className="font-medium text-slate-300">Source:</span>{" "}
+                  <span className="text-slate-400">{selectedCatalog.content?.source_ref || "Not configured"}</span>
                 </div>
               </div>
             </div>
@@ -105,10 +163,11 @@ export default function CatalogsContent() {
             <CatalogViewerPanel schema={selectedCatalog} onRefresh={refetch} />
           </>
         ) : (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500">Select a catalog to view details</p>
+          <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-8 text-center">
+            <p className="text-slate-400">Select a catalog to view details</p>
           </div>
         )}
+      </div>
       </div>
 
       {/* Create Modal */}
