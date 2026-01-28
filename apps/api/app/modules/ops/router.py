@@ -16,10 +16,10 @@ from schemas import ResponseEnvelope
 from sqlmodel import Session
 
 from app.modules.asset_registry.loader import (
+    load_catalog_asset,
     load_mapping_asset,
     load_policy_asset,
     load_resolver_asset,
-    load_schema_asset,
     load_source_asset,
 )
 from app.modules.inspector.service import persist_execution_trace
@@ -543,7 +543,7 @@ def ask_ci(
             load_resolver_asset(resolver_asset_name) if resolver_asset_name else None
         )
         schema_payload = (
-            load_schema_asset(schema_asset_name) if schema_asset_name else None
+            load_catalog_asset(schema_asset_name) if schema_asset_name else None
         )
         source_payload = (
             load_source_asset(source_asset_name) if source_asset_name else None

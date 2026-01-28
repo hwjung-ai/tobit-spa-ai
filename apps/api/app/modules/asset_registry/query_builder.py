@@ -12,7 +12,7 @@ from sqlalchemy import text
 from core.db import get_session_context
 from sqlmodel import select
 
-from app.modules.asset_registry.loader import load_schema_asset
+from app.modules.asset_registry.loader import load_catalog_asset
 from app.modules.asset_registry.models import TbAssetRegistry
 
 logger = logging.getLogger(__name__)
@@ -27,9 +27,9 @@ class SchemaQueryBuilder:
         self._table_schemas: dict[str, dict[str, Any]] = {}
 
     def _load_schema(self) -> dict[str, Any]:
-        """Load schema asset"""
+        """Load schema asset (catalog)"""
         if self._schema is None:
-            schema_payload = load_schema_asset(self.schema_asset_name)
+            schema_payload = load_catalog_asset(self.schema_asset_name)
             if not schema_payload:
                 raise ValueError(f"Schema asset not found: {self.schema_asset_name}")
 

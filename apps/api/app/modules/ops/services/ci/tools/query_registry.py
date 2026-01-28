@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 from core.db import get_session_context
 from sqlmodel import select
 
-from app.modules.asset_registry.loader import load_query_asset, load_schema_asset, load_source_asset
+from app.modules.asset_registry.loader import load_query_asset, load_source_asset
 from app.modules.asset_registry.models import TbAssetRegistry
 from app.modules.asset_registry.query_builder import SchemaQueryBuilder, get_query_builder
 from app.modules.ops.services.connections import ConnectionFactory

@@ -15,12 +15,8 @@ def validate_asset(asset: TbAssetRegistry) -> None:
         validate_policy_asset(asset)
     elif asset.asset_type == "query":
         validate_query_asset(asset)
-    elif asset.asset_type == "screen":
-        validate_screen_asset(asset)
     elif asset.asset_type == "source":
         validate_source_asset(asset)
-    elif asset.asset_type == "schema":
-        validate_schema_asset(asset)
     elif asset.asset_type == "resolver":
         validate_resolver_asset(asset)
     else:
@@ -300,18 +296,6 @@ def validate_source_asset(asset: TbAssetRegistry) -> None:
         raise ValueError("Source asset connection must include username")
 
 
-def validate_schema_asset(asset: TbAssetRegistry) -> None:
-    """Validate schema asset fields"""
-    content = asset.content or {}
-    source_ref = content.get("source_ref")
-    catalog = content.get("catalog", {})
-
-    if not source_ref:
-        raise ValueError("Schema asset must include source_ref in content")
-    if catalog is not None and not isinstance(catalog, dict):
-        raise ValueError("Schema asset catalog must be a dictionary")
-
-
 def validate_resolver_asset(asset: TbAssetRegistry) -> None:
     """Validate resolver asset fields"""
     content = asset.content or {}
@@ -324,151 +308,3 @@ def validate_resolver_asset(asset: TbAssetRegistry) -> None:
         raise ValueError("Resolver asset default_namespace must be a string")
 
 
-def _validate_layout_width(width: dict[str, Any]) -> None:
-    if "type" not in width:
-        raise ValueError("layout.width must include a type")
-    width_type = width["type"]
-    if width_type == "auto":
-        return
-    if width_type == "percent":
-        value = width.get("value")
-        if (
-            value is None
-            or not isinstance(value, (int, float))
-            or not (0 < value <= 100)
-        ):
-            raise ValueError(
-                "layout.width percent value must be numeric between 0 (exclusive) and 100"
-            )
-        return
-    if width_type == "ratio":
-        ratio = width.get("value")
-        if (
-            not isinstance(ratio, (list, tuple))
-            or len(ratio) != 2
-            or not all(isinstance(n, (int, float)) and n > 0 for n in ratio)
-        ):
-            raise ValueError(
-                "layout.width ratio must be a two-element list of positive numbers"
-            )
-        return
-    raise ValueError(f"Unknown layout.width type '{width_type}'")
-
-
-def _validate_layout_children(node: dict[str, Any], component_ids: set[str]) -> None:
-    direction = node.get("direction")
-    if direction is not None and direction not in {"horizontal", "vertical"}:
-        raise ValueError("layout.direction must be 'horizontal' or 'vertical'")
-
-    width = node.get("width")
-    if width is not None:
-        if not isinstance(width, dict):
-            raise ValueError("layout.width must be an object")
-        _validate_layout_width(width)
-
-    children = node.get("children")
-    if children is None:
-        return
-    if not isinstance(children, list):
-        raise ValueError("layout.children must be an array")
-    for idx, child in enumerate(children):
-        if not isinstance(child, dict):
-            raise ValueError(f"layout.children[{idx}] must be an object")
-        component_id = child.get("component_id")
-        if component_id and component_id not in component_ids:
-            raise ValueError(
-                f"layout child component_id '{component_id}' does not match any component"
-            )
-        _validate_layout_children(child, component_ids)
-
-
-def validate_screen_asset(asset: TbAssetRegistry) -> None:
-    """Validate screen asset fields - comprehensive schema and binding validation"""
-    import re
-
-    if not asset.screen_id or not str(asset.screen_id).strip():
-        raise ValueError("Screen asset must have non-empty screen_id")
-    if asset.screen_schema is None:
-        raise ValueError("Screen asset must include schema_json")
-
-    schema = asset.screen_schema
-    if not isinstance(schema, dict):
-        raise ValueError("schema_json must be a dictionary")
-
-    # Validate required top-level fields
-    required_fields = ["screen_id", "layout", "components"]
-    for field in required_fields:
-        if field not in schema:
-            raise ValueError(f"Screen schema must have '{field}' field")
-
-    # Validate screen_id matches
-    if schema.get("screen_id") != asset.screen_id:
-        raise ValueError(
-            f"Screen schema screen_id '{schema.get('screen_id')}' must match asset screen_id '{asset.screen_id}'"
-        )
-
-    # Validate layout
-    layout = schema.get("layout", {})
-    if not isinstance(layout, dict):
-        raise ValueError("layout must be a dictionary")
-    if "type" not in layout:
-        raise ValueError("layout must have 'type' field")
-
-    valid_layout_types = ["grid", "form", "modal", "list", "dashboard"]
-    if layout["type"] not in valid_layout_types:
-        raise ValueError(f"layout.type must be one of {valid_layout_types}")
-
-    component_ids = {
-        comp.get("id")
-        for comp in schema.get("components", [])
-        if isinstance(comp, dict) and "id" in comp
-    }
-    _validate_layout_children(layout, component_ids)
-
-    # Validate components array
-    components = schema.get("components", [])
-    if not isinstance(components, list):
-        raise ValueError("components must be an array")
-
-    # Validate binding expressions in component props ({{...}} format)
-    def validate_binding_expressions(obj: Any, path: str = ""):
-        if isinstance(obj, str):
-            # Find all {{...}} patterns
-            binding_exprs = re.findall(r"{{([^}]+)}}", obj)
-            for expr in binding_exprs:
-                expr_clean = expr.strip()
-                # Validate: must be state.x, inputs.x, context.x, or trace_id
-                if expr_clean != "trace_id" and not re.match(
-                    r"^(state|inputs|context)\.[a-zA-Z0-9_\.]+$", expr_clean
-                ):
-                    raise ValueError(
-                        f"Invalid binding expression '{{{{' + '{expr_clean}' + '}}}}' at {path}: must use dot-path format"
-                    )
-        elif isinstance(obj, dict):
-            for key, value in obj.items():
-                validate_binding_expressions(value, f"{path}.{key}" if path else key)
-        elif isinstance(obj, list):
-            for idx, item in enumerate(obj):
-                validate_binding_expressions(item, f"{path}[{idx}]")
-
-    # Validate binding expressions in all components and actions
-    for idx, comp in enumerate(components):
-        if "props" in comp:
-            validate_binding_expressions(comp["props"], f"components[{idx}].props")
-
-        if "actions" in comp and isinstance(comp["actions"], list):
-            for aidx, action in enumerate(comp["actions"]):
-                if isinstance(action, dict) and "payload_template" in action:
-                    validate_binding_expressions(
-                        action["payload_template"],
-                        f"components[{idx}].actions[{aidx}].payload_template",
-                    )
-
-    # Validate top-level actions if present
-    actions = schema.get("actions", [])
-    if actions and isinstance(actions, list):
-        for aidx, action in enumerate(actions):
-            if isinstance(action, dict) and "payload_template" in action:
-                validate_binding_expressions(
-                    action["payload_template"], f"actions[{aidx}].payload_template"
-                )

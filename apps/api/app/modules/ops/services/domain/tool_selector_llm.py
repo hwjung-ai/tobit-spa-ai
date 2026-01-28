@@ -108,7 +108,7 @@ JSON 응답:"""
     def _get_schema_info_for_tool(self, tool_name: str) -> str | None:
         """Get schema information for a tool if available."""
         try:
-            from app.modules.asset_registry.loader import load_tool_asset, load_schema_asset
+            from app.modules.asset_registry.loader import load_tool_asset, load_catalog_asset
 
             tool_asset = load_tool_asset(tool_name)
             if not tool_asset:
@@ -120,8 +120,8 @@ JSON 응답:"""
             if not schema_ref:
                 return None
 
-            # Load schema asset
-            schema_asset = load_schema_asset(schema_ref)
+            # Load catalog asset (formerly schema asset)
+            schema_asset = load_catalog_asset(schema_ref)
             if not schema_asset:
                 return None
 
