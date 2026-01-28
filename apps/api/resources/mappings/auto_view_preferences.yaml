@@ -1,0 +1,119 @@
+asset_type: mapping
+name: auto_view_preferences
+scope: planner
+description: Automatic view preference selection rules based on question keywords
+version: 1
+status: published
+
+content:
+  # Rule-based automatic view selection
+  preferences:
+    # Path/connectivity questions
+    - keywords:
+        - "경로"
+        - "path"
+        - "연결"
+        - "연동"
+        - "연결_경로"
+        - "route"
+        - "어떻게_연결"
+        - "연결되어있는"
+      views: ["PATH"]
+      confidence: 0.95
+
+    # Dependency/hierarchy questions
+    - keywords:
+        - "의존"
+        - "dependency"
+        - "상위"
+        - "상위_시스템"
+        - "의존성"
+        - "영향_받는"
+        - "어떤_것의_영향"
+      views: ["DEPENDENCY"]
+      confidence: 0.90
+
+    # Impact/downstream questions
+    - keywords:
+        - "영향"
+        - "impact"
+        - "영향_받는"
+        - "영향_주는"
+        - "downstream"
+        - "어떤_것에_영향"
+        - "파급"
+        - "파급_효과"
+      views: ["IMPACT"]
+      confidence: 0.90
+
+    # Topology/structure questions
+    - keywords:
+        - "토폴로지"
+        - "topology"
+        - "구조"
+        - "관계도"
+        - "아키텍처"
+        - "architecture"
+        - "전체_구조"
+        - "시스템_구성"
+      views: ["TOPOLOGY"]
+      confidence: 0.85
+
+    # Neighbor/related questions
+    - keywords:
+        - "주변"
+        - "neighbors"
+        - "인접"
+        - "관련"
+        - "함께"
+        - "같이"
+        - "비슷한"
+        - "유사한"
+      views: ["NEIGHBORS"]
+      confidence: 0.80
+
+    # Multi-view questions (multiple keywords)
+    - keywords:
+        - "전체_영향"
+        - "전체_구조"
+        - "상세_분석"
+        - "복합_분석"
+      views: ["TOPOLOGY", "DEPENDENCY", "IMPACT"]
+      confidence: 0.75
+
+  # Default view if no keywords match
+  default_view: "DEPENDENCY"
+
+  # Conflicting keyword handling
+  conflict_resolution:
+    strategy: "highest_confidence"  # or "multi_view", "ask_user"
+    allow_multiple_views: true
+    max_views: 3
+
+  # View combination rules
+  compatible_views:
+    - ["DEPENDENCY", "IMPACT"]
+    - ["DEPENDENCY", "NEIGHBORS"]
+    - ["IMPACT", "NEIGHBORS"]
+    - ["PATH", "DEPENDENCY"]
+    - ["TOPOLOGY", "DEPENDENCY"]
+    - ["TOPOLOGY", "IMPACT"]
+
+  incompatible_views:
+    - ["PATH", "IMPACT"]  # usually not combined
+
+  # Depth adjustment by view
+  depth_adjustments:
+    PATH: 0  # no adjustment
+    DEPENDENCY: 0
+    IMPACT: 0
+    NEIGHBORS: -1  # typically need less depth
+    TOPOLOGY: 1  # typically need more depth
+
+  # Output type suggestions by view
+  suggested_output_types:
+    PATH: ["network", "table", "markdown"]
+    DEPENDENCY: ["network", "table", "text"]
+    IMPACT: ["network", "chart", "text"]
+    NEIGHBORS: ["table", "text"]
+    TOPOLOGY: ["network", "chart"]

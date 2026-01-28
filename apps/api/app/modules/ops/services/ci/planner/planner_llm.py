@@ -50,7 +50,10 @@ ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 DEPTH_PATTERN = re.compile(r"(?:depth|깊이)\s+(\d+)", re.IGNORECASE)
 
 
-# Mapping Asset 로딩 함수들
+# =============================================
+# Mapping Asset 로딩 함수들 (Phase 0)
+# =============================================
+
 def _get_metric_aliases():
     """metric_aliases mapping asset 로드 (캐싱 적용)"""
     global _METRIC_ALIASES_CACHE
@@ -278,8 +281,136 @@ def _get_filterable_fields():
     }
 
 
-# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
-# (아래의 determine_output_types 함수에서 _get_*() 함수를 호출)
+def _get_ci_code_patterns():
+    """CI code patterns mapping asset 로드"""
+    mapping, _ = load_mapping_asset("ci_code_patterns")
+    if mapping and "content" in mapping:
+        content = mapping["content"]
+        patterns = content.get("patterns", [])
+        if patterns:
+            # 첫 번째 패턴 사용
+            return re.compile(patterns[0], re.IGNORECASE)
+
+    # Fallback
+    return re.compile(r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE)
+
+
+def _get_graph_view_keyword_map():
+    """Graph view keywords mapping asset 로드"""
+    mapping, _ = load_mapping_asset("graph_view_keywords")
+    if mapping and "content" in mapping:
+        content = mapping["content"]
+        keyword_map = content.get("view_keyword_map", {})
+        if keyword_map:
+            # String view names를 View enum으로 변환
+            view_map = {}
+            for keyword, view_name in keyword_map.items():
+                try:
+                    view_map[keyword] = View[view_name]
+                except (KeyError, TypeError):
+                    pass
+            if view_map:
+                return view_map
+
+    # Fallback
+    return {
+        "의존": View.DEPENDENCY,
+        "dependency": View.DEPENDENCY,
+        "주변": View.NEIGHBORS,
+        "연관": View.NEIGHBORS,
+        "관련": View.NEIGHBORS,
+        "neighbors": View.NEIGHBORS,
+        "영향": View.IMPACT,
+        "impact": View.IMPACT,
+        "영향권": View.IMPACT,
+    }
+
+
+def _get_graph_view_default_depth():
+    """Graph view default depths mapping asset 로드"""
+    mapping, _ = load_mapping_asset("graph_view_keywords")
+    if mapping and "content" in mapping:
+        content = mapping["content"]
+        depths = content.get("default_depths", {})
+        if depths:
+            # String view names를 View enum으로 변환
+            depth_map = {}
+            for view_name, depth in depths.items():
+                try:
+                    depth_map[View[view_name]] = depth
+                except (KeyError, TypeError):
+                    pass
+            if depth_map:
+                return depth_map
+
+    # Fallback
+    return {
+        View.DEPENDENCY: 2,
+        View.NEIGHBORS: 1,
+        View.IMPACT: 2,
+    }
+
+
+def _get_auto_view_preferences():
+    """Auto view preferences mapping asset 로드"""
+    mapping, _ = load_mapping_asset("auto_view_preferences")
+    if mapping and "content" in mapping:
+        content = mapping["content"]
+        preferences = content.get("preferences", [])
+        if preferences:
+            result = []
+            for pref in preferences:
+                keywords = pref.get("keywords", [])
+                views = pref.get("views", [])
+                # String view names를 View enum으로 변환
+                view_enums = []
+                for view_name in views:
+                    try:
+                        view_enums.append(View[view_name])
+                    except (KeyError, TypeError):
+                        pass
+                if keywords and view_enums:
+                    result.append((keywords, view_enums))
+            if result:
+                return result
+
+    # Fallback
+    return [
+        (["path", "경로", "연결"], [View.PATH]),
+        (["의존", "dependency", "depends"], [View.DEPENDENCY]),
+        (["영향", "impact", "영향권", "downstream"], [View.IMPACT]),
+        (["구성", "component", "composition"], [View.COMPOSITION]),
+        (["주변", "neighbor", "연관", "관련"], [View.NEIGHBORS]),
+    ]
+
+
+def _get_output_type_priorities():
+    """Output type priorities mapping asset 로드"""
+    mapping, _ = load_mapping_asset("output_type_priorities")
+    if mapping and "content" in mapping:
+        content = mapping["content"]
+        priorities = content.get("global_priorities", [])
+        if priorities:
+            return priorities
+
+    # Fallback
+    return ["chart", "table", "number", "network", "text"]
+
+
+def _get_graph_scope_views():
+    """Graph scope views mapping asset 로드"""
+    mapping, _ = load_mapping_asset("graph_view_keywords")
+    if mapping and "content" in mapping:
+        content = mapping["content"]
+        force_keywords = content.get("force_keywords", [])
+        if force_keywords:
+            return set(force_keywords)
+
+    # Fallback
+    return {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
+
+
+# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체 완료
 
 
 def determine_output_types(text: str) -> Set[str]:
@@ -316,12 +447,10 @@ def determine_output_types(text: str) -> Set[str]:
     return output_types
 
 
-OUTPUT_TYPE_PRIORITIES = ["chart", "table", "number", "network", "text"]
-
-
 def _build_output_updates(output_types: Set[str]) -> dict[str, list[str] | str]:
+    priorities = _get_output_type_priorities()
     blocks: list[str] = [
-        otype for otype in OUTPUT_TYPE_PRIORITIES if otype in output_types
+        otype for otype in priorities if otype in output_types
     ]
     if not blocks:
         blocks = ["text"]
@@ -508,62 +637,27 @@ def is_metric_requested(text: str) -> bool:
     return any(keyword in normalized for keyword in metric_keywords)
 
 
-# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
-CI_CODE_PATTERN = re.compile(
-    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
-)
-
-NUMBER_KEYWORDS = {
-    "얼마나",
-    "숫자",
-    "수치",
-    "크다",
-    "얼마나",
-    "얼마",
-    "몇",
-    "count",
-    "total",
-}
+# =============================================
+# 필수 정규식 패턴 (코드 구조상 유지)
+# =============================================
 UUID_PATTERN = re.compile(
     r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
 )
-GRAPH_VIEW_KEYWORD_MAP = {
-    "의존": View.DEPENDENCY,
-    "dependency": View.DEPENDENCY,
-    "주변": View.NEIGHBORS,
-    "연관": View.NEIGHBORS,
-    "관련": View.NEIGHBORS,
-    "neighbors": View.NEIGHBORS,
-    "영향": View.IMPACT,
-    "impact": View.IMPACT,
-    "영향권": View.IMPACT,
-}
-GRAPH_VIEW_DEFAULT_DEPTH = {
-    View.DEPENDENCY: 2,
-    View.NEIGHBORS: 1,
-    View.IMPACT: 2,
-}
 GRAPH_DEPTH_PATTERN = re.compile(r"(\d+)\s*(?:단계|depth|깊이)")
-
-# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
-AUTO_VIEW_PREFERENCES = [
-    (["path", "경로", "연결"], [View.PATH]),
-    (["의존", "dependency", "depends", "전원", "네트워크"], [View.DEPENDENCY]),
-    (["영향", "impact", "영향권", "downstream"], [View.IMPACT]),
-    (["구성", "component", "composition", "부품"], [View.COMPOSITION]),
-    (["주변", "neighbor", "연관", "관련", "near"], [View.NEIGHBORS]),
-]
-
-CI_CODE_PATTERN = re.compile(
-    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE
-)
-# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
-GRAPH_SCOPE_VIEWS = {View.DEPENDENCY, View.IMPACT}
-# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체
 LIST_LIMIT_PATTERN = re.compile(r"(\d{1,3})\s*(?:개|건|items?|rows?)")
-SERVER_FILTER_KEYWORDS = {"서버", "server"}
 CI_IDENTIFIER_PATTERN = re.compile(r"(?<![a-zA-Z0-9_-])[a-z0-9_]+(?:-[a-z0-9_]+)+(?![a-zA-Z0-9_-])", re.IGNORECASE)
-GRAPH_FORCE_KEYWORDS = {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
+
+# =============================================
+# Mapping Asset 로드 함수로 대체 (동적 로딩)
+# =============================================
+# _get_ci_code_patterns() - CI 코드 패턴
+# _get_graph_view_keyword_map() - 그래프 뷰 키워드
+# _get_graph_view_default_depth() - 기본 깊이
+# _get_auto_view_preferences() - 자동 뷰 선택
+# _get_output_type_priorities() - 출력 타입 우선순위
+# _get_graph_scope_views() - 그래프 범위 뷰
+
+# Prompt 설정 (환경 변수)
 OUTPUT_PARSER_MODEL = os.environ.get(
     "OPS_CI_OUTPUT_PARSER_MODEL", os.environ.get("CHAT_MODEL", "gpt-4o-mini")
 )
@@ -983,7 +1077,8 @@ def _determine_list_spec(text: str) -> ListSpec | None:
 
 def _determine_type_aggregation(text: str) -> bool:
     normalized = text.lower()
-    if not any(keyword in normalized for keyword in TYPE_AGG_KEYWORDS):
+    type_keywords = {"종류", "타입", "type", "category", "분류"}
+    if not any(keyword in normalized for keyword in type_keywords):
         return False
     list_keywords = _get_list_keywords()
     if any(keyword in normalized for keyword in list_keywords):
@@ -1013,7 +1108,8 @@ def _apply_ci_type_aggregation(plan: Plan, text: str) -> Plan:
 
 def _determine_graph_view(text: str) -> View:
     normalized = text.lower()
-    for keyword, view in GRAPH_VIEW_KEYWORD_MAP.items():
+    keyword_map = _get_graph_view_keyword_map()
+    for keyword, view in keyword_map.items():
         if keyword in normalized:
             return view
     return View.DEPENDENCY
@@ -1023,8 +1119,9 @@ def _determine_graph_depth(text: str, view: View) -> int:
     match = GRAPH_DEPTH_PATTERN.search(text)
     if match:
         return max(1, int(match.group(1)))
-    return GRAPH_VIEW_DEFAULT_DEPTH.get(
-        view, GRAPH_VIEW_DEFAULT_DEPTH.get(View.DEPENDENCY, 2)
+    default_depths = _get_graph_view_default_depth()
+    return default_depths.get(
+        view, default_depths.get(View.DEPENDENCY, 2)
     )
 
 
@@ -1036,7 +1133,8 @@ def _has_graph_scope_keyword(text: str) -> bool:
 
 def _is_graph_force_query(text: str) -> bool:
     normalized = text.lower()
-    if any(keyword in normalized for keyword in GRAPH_FORCE_KEYWORDS):
+    force_keywords = _get_graph_scope_views()
+    if any(keyword in normalized for keyword in force_keywords):
         return True
     if GRAPH_DEPTH_PATTERN.search(text):
         return True
@@ -1115,7 +1213,8 @@ def _apply_graph_history_scope(plan: Plan, text: str) -> Plan:
 def _determine_auto_views(text: str) -> List[View]:
     normalized = text.lower()
     selected: List[View] = []
-    for keywords, view_candidates in AUTO_VIEW_PREFERENCES:
+    auto_preferences = _get_auto_view_preferences()
+    for keywords, view_candidates in auto_preferences:
         if any(keyword in normalized for keyword in keywords):
             for view in view_candidates:
                 if view not in selected:

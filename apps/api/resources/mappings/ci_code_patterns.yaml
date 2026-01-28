@@ -1,0 +1,54 @@
+asset_type: mapping
+name: ci_code_patterns
+scope: planner
+description: CI code patterns and related keywords for identifying infrastructure items
+version: 1
+status: published
+
+content:
+  # Regular expression patterns for CI code matching
+  patterns:
+    - "(?:sys|srv|app|was|storage|sec|db)[-\\w]+"
+    - "\\b[A-Z]{2,}[-\\w]*\\d+\\b"
+    - "^[a-z]+-[a-z0-9-]+$"
+
+  # Keywords for detecting CI type/category questions
+  type_keywords:
+    - "종류"
+    - "타입"
+    - "type"
+    - "category"
+    - "분류"
+    - "class"
+
+  # Keywords for detecting numeric count/quantity questions
+  number_keywords:
+    - "얼마나"
+    - "몇"
+    - "개수"
+    - "숫자"
+    - "count"
+    - "total"
+    - "number"
+    - "많이"
+    - "몇개"
+
+  # Keywords for CI server/host filtering
+  server_filter_keywords:
+    - "서버"
+    - "호스트"
+    - "server"
+    - "host"
+    - "machine"
+
+  # CI code extraction pattern (for detailed parsing)
+  ci_code_extract_pattern: "(?:sys|srv|app|was|storage|sec|db)[-\\w]+"
+
+  # Case sensitivity settings
+  case_sensitive: false
+
+  # Pattern priority (higher = more specific)
+  pattern_priorities:
+    exact_match: 100
+    code_pattern: 80
+    name_pattern: 60
