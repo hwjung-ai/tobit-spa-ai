@@ -420,39 +420,45 @@ class CIOrchestratorRunner:
             title = tool_name
         return {"kind": "row", "title": title, "payload": payload}
 
-    def _resolve_applied_assets(self) -> Dict[str, str]:
-        """Resolve applied assets with user-friendly display format.
+    def _format_asset_display(self, info: Dict[str, Any]) -> str:
+        """Format asset info for user-friendly display.
 
-        Returns Dict[str, str] where:
-        - Key: asset_type (e.g., "prompt", "schema", "mapping")
-        - Value: User-friendly display name like "asset_name (v1)" or "fallback"
+        Returns a clean string like "asset_name (v1)" or "fallback".
         """
-        assets = get_stage_assets()
+        name = info.get("name") or info.get("screen_id") or "unknown"
+        version = info.get("version")
+        source = info.get("source", "asset_registry")
+
+        # For non-asset registry sources, show source info
+        if source != "asset_registry":
+            return f"{name} (fallback)"
+
+        # For asset registry assets, show name with version
+        if version is not None:
+            return f"{name} (v{version})"
+        return name
+
+    def _resolve_applied_assets_from_assets(self, assets: Dict[str, Any]) -> Dict[str, str]:
+        """Resolve applied assets from pre-computed assets dictionary.
+
+        This is similar to _resolve_applied_assets() but takes assets as input
+        instead of reading from stage context. Used for stage-specific asset tracking.
+
+        Args:
+            assets: Dictionary with keys like 'prompt', 'queries', 'screens', etc.
+
+        Returns:
+            Dict[str, str] where:
+            - Key: asset_type (e.g., "prompt", "schema", "mapping", "query:name", "screen:id")
+            - Value: User-friendly display name like "asset_name (v1)" or "fallback"
+        """
         applied: Dict[str, str] = {}
-
-        def format_asset_display(info: Dict[str, Any]) -> str:
-            """Format asset info for user-friendly display.
-
-            Returns a clean string like "asset_name (v1)" or "fallback".
-            """
-            name = info.get("name") or info.get("screen_id") or "unknown"
-            version = info.get("version")
-            source = info.get("source", "asset_registry")
-
-            # For non-asset registry sources, show source info
-            if source != "asset_registry":
-                return f"{name} (fallback)"
-
-            # For asset registry assets, show name with version
-            if version is not None:
-                return f"{name} (v{version})"
-            return name
 
         for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
             info = assets.get(key)
             if not info:
                 continue
-            applied[key] = format_asset_display(info)
+            applied[key] = self._format_asset_display(info)
             override_key = f"{key}:{info.get('name')}"
             override = self.asset_overrides.get(override_key)
             if override:
@@ -491,6 +497,16 @@ class CIOrchestratorRunner:
                 applied[f"screen:{screen_id}"] = str(override)
 
         return applied
+
+    def _resolve_applied_assets(self) -> Dict[str, str]:
+        """Resolve applied assets with user-friendly display format.
+
+        Returns Dict[str, str] where:
+        - Key: asset_type (e.g., "prompt", "schema", "mapping")
+        - Value: User-friendly display name like "asset_name (v1)" or "fallback"
+        """
+        assets = get_stage_assets()
+        return self._resolve_applied_assets_from_assets(assets)
 
     def _log_metric_blocks_return(self, blocks: List[Block]) -> None:
         types = [
@@ -5008,7 +5024,15 @@ class CIOrchestratorRunner:
             # route_plan stage
             begin_stage_asset_tracking()
             route_start = perf_counter()
-            route_input = self._build_stage_input("route_plan", plan_output)
+
+            # Route stage doesn't use assets, capture empty assets
+            route_assets = end_stage_asset_tracking()
+
+            route_input = self._build_stage_input(
+                "route_plan",
+                plan_output,
+                stage_assets=route_assets,
+            )
             route_result = {
                 "route": plan_output.kind.value,
                 "plan_output": plan_output.model_dump(),
@@ -5023,10 +5047,14 @@ class CIOrchestratorRunner:
             record_stage("route_plan", route_input, route_output)
 
             if plan_output.kind == PlanOutputKind.DIRECT:
-                # validate stage
+                # validate stage (DIRECT path - skipped)
                 begin_stage_asset_tracking()
+                validate_assets = end_stage_asset_tracking()
                 validate_input = self._build_stage_input(
-                    "validate", plan_output, route_output.model_dump()
+                    "validate",
+                    plan_output,
+                    route_output.model_dump(),
+                    stage_assets=validate_assets,
                 )
                 validate_output = StageOutput(
                     stage="validate",
@@ -5039,10 +5067,14 @@ class CIOrchestratorRunner:
                 )
                 record_stage("validate", validate_input, validate_output)
 
-                # execute stage (DIRECT path)
+                # execute stage (DIRECT path - skipped)
                 begin_stage_asset_tracking()
+                execute_assets = end_stage_asset_tracking()
                 execute_input = self._build_stage_input(
-                    "execute", plan_output, validate_output.model_dump()
+                    "execute",
+                    plan_output,
+                    validate_output.model_dump(),
+                    stage_assets=execute_assets,
                 )
                 execute_output = StageOutput(
                     stage="execute",
@@ -5055,10 +5087,14 @@ class CIOrchestratorRunner:
                 )
                 record_stage("execute", execute_input, execute_output)
 
-                # compose stage (DIRECT path)
+                # compose stage (DIRECT path - skipped)
                 begin_stage_asset_tracking()
+                compose_assets = end_stage_asset_tracking()
                 compose_input = self._build_stage_input(
-                    "compose", plan_output, execute_output.model_dump()
+                    "compose",
+                    plan_output,
+                    execute_output.model_dump(),
+                    stage_assets=compose_assets,
                 )
                 compose_output = StageOutput(
                     stage="compose",
@@ -5074,14 +5110,21 @@ class CIOrchestratorRunner:
                 # present stage (DIRECT path)
                 begin_stage_asset_tracking()
                 present_start = perf_counter()
-                present_input = self._build_stage_input(
-                    "present", plan_output, compose_output.model_dump()
-                )
                 present_result = await self._present_stage_async(plan_output)
                 blocks = present_result.get("blocks", [])
                 answer = present_result.get("summary", "Direct answer")
                 if present_result.get("references"):
                     self.references.extend(present_result.get("references") or [])
+
+                # Capture assets used during present stage execution
+                present_assets = end_stage_asset_tracking()
+
+                present_input = self._build_stage_input(
+                    "present",
+                    plan_output,
+                    compose_output.model_dump(),
+                    stage_assets=present_assets,
+                )
                 present_output = StageOutput(
                     stage="present",
                     result={"summary": answer, "blocks": blocks},
@@ -5092,10 +5135,14 @@ class CIOrchestratorRunner:
                 record_stage("present", present_input, present_output)
 
             elif plan_output.kind == PlanOutputKind.REJECT:
-                # validate stage (REJECT path)
+                # validate stage (REJECT path - skipped)
                 begin_stage_asset_tracking()
+                validate_assets = end_stage_asset_tracking()
                 validate_input = self._build_stage_input(
-                    "validate", plan_output, route_output.model_dump()
+                    "validate",
+                    plan_output,
+                    route_output.model_dump(),
+                    stage_assets=validate_assets,
                 )
                 validate_output = StageOutput(
                     stage="validate",
@@ -5108,10 +5155,14 @@ class CIOrchestratorRunner:
                 )
                 record_stage("validate", validate_input, validate_output)
 
-                # execute stage (REJECT path)
+                # execute stage (REJECT path - skipped)
                 begin_stage_asset_tracking()
+                execute_assets = end_stage_asset_tracking()
                 execute_input = self._build_stage_input(
-                    "execute", plan_output, validate_output.model_dump()
+                    "execute",
+                    plan_output,
+                    validate_output.model_dump(),
+                    stage_assets=execute_assets,
                 )
                 execute_output = StageOutput(
                     stage="execute",
@@ -5124,10 +5175,14 @@ class CIOrchestratorRunner:
                 )
                 record_stage("execute", execute_input, execute_output)
 
-                # compose stage (REJECT path)
+                # compose stage (REJECT path - skipped)
                 begin_stage_asset_tracking()
+                compose_assets = end_stage_asset_tracking()
                 compose_input = self._build_stage_input(
-                    "compose", plan_output, execute_output.model_dump()
+                    "compose",
+                    plan_output,
+                    execute_output.model_dump(),
+                    stage_assets=compose_assets,
                 )
                 compose_output = StageOutput(
                     stage="compose",
@@ -5143,9 +5198,6 @@ class CIOrchestratorRunner:
                 # present stage (REJECT path)
                 begin_stage_asset_tracking()
                 present_start = perf_counter()
-                present_input = self._build_stage_input(
-                    "present", plan_output, compose_output.model_dump()
-                )
                 reject_reason = (
                     plan_output.reject_payload.reason
                     if plan_output.reject_payload
@@ -5153,6 +5205,16 @@ class CIOrchestratorRunner:
                 )
                 blocks = [text_block(f"Query rejected: {reject_reason}")]
                 answer = f"Query rejected: {reject_reason}"
+
+                # Capture assets used during present stage execution
+                present_assets = end_stage_asset_tracking()
+
+                present_input = self._build_stage_input(
+                    "present",
+                    plan_output,
+                    compose_output.model_dump(),
+                    stage_assets=present_assets,
+                )
                 present_output = StageOutput(
                     stage="present",
                     result={"summary": answer, "blocks": blocks},
@@ -5166,8 +5228,15 @@ class CIOrchestratorRunner:
                 # validate stage (PLAN path)
                 begin_stage_asset_tracking()
                 validate_start = perf_counter()
+
+                # Validate stage doesn't use assets, capture empty assets
+                validate_assets = end_stage_asset_tracking()
+
                 validate_input = self._build_stage_input(
-                    "validate", plan_output, route_output.model_dump()
+                    "validate",
+                    plan_output,
+                    route_output.model_dump(),
+                    stage_assets=validate_assets,
                 )
                 validate_result = {
                     "plan_validated": self.plan.model_dump(),
@@ -5189,6 +5258,10 @@ class CIOrchestratorRunner:
                 base_result = await self._run_async()
                 blocks = base_result.get("blocks", [])
                 answer = base_result.get("answer", answer)
+
+                # Capture assets used during execute stage execution
+                execute_assets = end_stage_asset_tracking()
+
                 execute_output = StageOutput(
                     stage="execute",
                     result={
@@ -5211,32 +5284,70 @@ class CIOrchestratorRunner:
                     "execute",
                     plan_output,
                     validate_output.model_dump(),
+                    stage_assets=execute_assets,
                 )
                 record_stage("execute", execute_input, execute_output)
 
                 # compose stage (PLAN path)
                 begin_stage_asset_tracking()
                 compose_start = perf_counter()
-                compose_input = self._build_stage_input(
-                    "compose", plan_output, execute_output.model_dump()
+
+                # Create temporary input for stage executor (assets will be captured during execution)
+                temp_compose_input = StageInput(
+                    stage="compose",
+                    applied_assets={},
+                    params={
+                        "plan_output": plan_output.model_dump(),
+                        "question": self.question
+                    },
+                    prev_output=execute_output.model_dump(),
+                    trace_id=trace_id,
                 )
-                # Add question to params for LLM summary
-                compose_input.params["question"] = self.question
-                # Use StageExecutor for compose stage
-                compose_output = await self._stage_executor.execute_stage(compose_input)
+
+                # Use StageExecutor for compose stage (assets tracked during execution)
+                compose_output = await self._stage_executor.execute_stage(temp_compose_input)
+
+                # Capture assets used during compose stage execution
+                compose_assets = end_stage_asset_tracking()
+
+                # Now build the final input with actual captured assets
+                compose_input = self._build_stage_input(
+                    "compose",
+                    plan_output,
+                    execute_output.model_dump(),
+                    stage_assets=compose_assets,
+                )
                 record_stage("compose", compose_input, compose_output)
 
                 # present stage (PLAN path)
                 begin_stage_asset_tracking()
                 present_start = perf_counter()
-                # Build present_input with both compose_output and base_result
-                present_input = self._build_stage_input(
-                    "present", plan_output, compose_output.model_dump()
+
+                # Create temporary input for stage executor (assets will be captured during execution)
+                temp_present_input = StageInput(
+                    stage="present",
+                    applied_assets={},
+                    params={
+                        "plan_output": plan_output.model_dump(),
+                        "base_result": base_result
+                    },
+                    prev_output=compose_output.model_dump(),
+                    trace_id=trace_id,
                 )
-                # Add base_result to params so StageExecutor can access runner's blocks
-                present_input.params["base_result"] = base_result
-                # Use StageExecutor for present stage to include LLM summary
-                present_output = await self._stage_executor.execute_stage(present_input)
+
+                # Use StageExecutor for present stage (assets tracked during execution)
+                present_output = await self._stage_executor.execute_stage(temp_present_input)
+
+                # Capture assets used during present stage execution
+                present_assets = end_stage_asset_tracking()
+
+                # Now build the final input with actual captured assets
+                present_input = self._build_stage_input(
+                    "present",
+                    plan_output,
+                    compose_output.model_dump(),
+                    stage_assets=present_assets,
+                )
                 record_stage("present", present_input, present_output)
 
                 # Update blocks and answer from present_output
@@ -5314,13 +5425,34 @@ class CIOrchestratorRunner:
         stage: str,
         plan_output: PlanOutput,
         prev_output: Optional[Dict[str, Any]] = None,
+        stage_assets: Optional[Dict[str, Any]] = None,
     ) -> StageInput:
-        """Build StageInput from plan output and previous output."""
+        """Build StageInput from plan output and previous output.
+
+        Args:
+            stage: Stage name (e.g., "execute", "compose")
+            plan_output: Plan output from planner
+            prev_output: Previous stage output (optional)
+            stage_assets: Pre-captured stage-specific assets (optional).
+                         If provided, these assets are used instead of getting from stage context.
+                         This is used to ensure assets captured during stage execution
+                         are properly reflected in the stage input.
+
+        Returns:
+            StageInput with applied_assets properly populated.
+        """
         context = get_request_context()
         trace_id = context.get("trace_id") or context.get("request_id")
+
+        # Use provided stage_assets if available, otherwise get from stage context
+        if stage_assets is not None:
+            applied_assets = self._resolve_applied_assets_from_assets(stage_assets)
+        else:
+            applied_assets = self._resolve_applied_assets()
+
         return StageInput(
             stage=stage,
-            applied_assets=self._resolve_applied_assets(),
+            applied_assets=applied_assets,
             params={"plan_output": plan_output.model_dump()},
             prev_output=prev_output,
             trace_id=trace_id,
