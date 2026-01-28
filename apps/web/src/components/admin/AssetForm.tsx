@@ -301,7 +301,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                     <SourceAssetForm asset={asset as SourceAssetResponse} onSave={onSave} />
                 )}
 
-                {asset.asset_type === "schema" && isSchemaAsset(asset) && (
+                {asset.asset_type === "catalog" && isSchemaAsset(asset) && (
                     <SchemaAssetForm asset={asset as SchemaAssetResponse} onSave={onSave} />
                 )}
 

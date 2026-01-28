@@ -166,7 +166,7 @@ export default function AssetDetailPage() {
                             href={
                                 asset.asset_type === "source"
                                     ? `/data/sources?asset_id=${asset.asset_id}`
-                                    : asset.asset_type === "schema"
+                                    : asset.asset_type === "catalog"
                                         ? `/data/catalog?asset_id=${asset.asset_id}`
                                         : `/data/resolvers?asset_id=${asset.asset_id}`
                             }

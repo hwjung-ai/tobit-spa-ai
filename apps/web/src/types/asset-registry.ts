@@ -119,7 +119,7 @@ export interface SchemaCatalog {
 }
 
 export interface SchemaAsset {
-  asset_type: "schema";
+  asset_type: "catalog";
   name: string;
   description?: string | null;
   version: number;
@@ -279,7 +279,7 @@ export const isSourceAsset = (asset: unknown): asset is SourceAssetResponse => {
 };
 
 export const isSchemaAsset = (asset: unknown): asset is SchemaAssetResponse => {
-  return asset !== null && typeof asset === "object" && "asset_type" in asset && asset.asset_type === "schema";
+  return asset !== null && typeof asset === "object" && "asset_type" in asset && asset.asset_type === "catalog";
 };
 
 export const isResolverAsset = (asset: unknown): asset is ResolverAssetResponse => {
@@ -287,7 +287,7 @@ export const isResolverAsset = (asset: unknown): asset is ResolverAssetResponse 
 };
 
 // Utility types
-export type AssetType = "source" | "schema" | "resolver" | "query";
+export type AssetType = "source" | "catalog" | "resolver" | "query";
 
 export type AssetResponse =
   | SourceAssetResponse
