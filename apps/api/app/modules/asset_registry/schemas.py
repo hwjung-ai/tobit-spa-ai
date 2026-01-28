@@ -137,3 +137,47 @@ class ScreenAssetUpdate(BaseModel):
     description: str | None = None
     screen_schema: dict[str, Any] | None = Field(default=None, alias="schema_json")
     tags: dict[str, Any] | None = None
+
+
+class ToolAssetCreate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    asset_type: str = "tool"
+    name: str
+    description: str
+    tool_type: str
+    tool_config: dict[str, Any]
+    tool_input_schema: dict[str, Any]
+    tool_output_schema: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None
+    created_by: str | None = None
+
+
+class ToolAssetRead(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    asset_id: str
+    asset_type: str
+    tool_type: str
+    name: str
+    description: str
+    version: int
+    status: str
+    tool_config: dict[str, Any]
+    tool_input_schema: dict[str, Any]
+    tool_output_schema: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None
+    created_by: str | None = None
+    published_by: str | None = None
+    published_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ToolAssetUpdate(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    name: str | None = None
+    description: str | None = None
+    tool_type: str | None = None
+    tool_config: dict[str, Any] | None = None
+    tool_input_schema: dict[str, Any] | None = None
+    tool_output_schema: dict[str, Any] | None = None
+    tags: dict[str, Any] | None = None

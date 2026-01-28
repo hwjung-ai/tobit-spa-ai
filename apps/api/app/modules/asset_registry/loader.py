@@ -131,12 +131,15 @@ def load_mapping_asset(
     """
     Load mapping asset with fallback priority:
     1. Specific version from DB (if version specified) or Published asset from DB
-    2. Seed file from resources/
+    2. File from resources/
     3. Legacy file (current location)
 
     Args:
         mapping_type: Mapping type identifier
         version: Specific version to load (None for published)
+
+    Returns:
+        Mapping asset content dict, or None if not found
     """
     with get_session_context() as session:
         # Query by name instead of mapping_type since mapping_type may be NULL
@@ -335,7 +338,7 @@ def load_policy_asset(
 
 def load_query_asset(
     scope: str, name: str, version: int | None = None
-) -> tuple[dict[str, Any] | None, str | None]:
+) -> dict[str, Any] | None:
     """
     Load query asset with fallback priority:
     1. Specific version from DB (if version specified) or Published asset from DB
@@ -347,8 +350,7 @@ def load_query_asset(
         version: Specific version to load (None for published)
 
     Returns:
-        Tuple of (asset_data, asset_id_version_str)
-        asset_id_version_str format: "{asset_id}:v{version}" for tracking
+        Query asset content dict, or None if not found
     """
     with get_session_context() as session:
         # Try DB first

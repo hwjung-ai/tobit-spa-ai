@@ -55,7 +55,9 @@ class TbAssetRegistry(SQLModel, table=True):
 
     # Query fields
     query_sql: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    query_cypher: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    query_cypher: str | None = Field(
+        default=None, sa_column=Column(Text, nullable=True)
+    )
     query_http: dict[str, Any] | None = Field(
         default=None, sa_column=Column(JSONB, nullable=True)
     )
@@ -73,6 +75,18 @@ class TbAssetRegistry(SQLModel, table=True):
 
     # Screen fields
     screen_id: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+
+    # Tool fields
+    tool_type: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    tool_config: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+    tool_input_schema: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
+    tool_output_schema: dict[str, Any] | None = Field(
+        default=None, sa_column=Column(JSONB, nullable=True)
+    )
 
     # Common fields
     tags: dict[str, Any] | None = Field(

@@ -1,0 +1,19 @@
+name: history_keywords
+description: History and event log related keywords
+mapping_type: history_keywords
+scope: ci
+content:
+  keywords:
+    - 이벤트
+    - 알람
+    - 로그
+    - event
+  time_map:
+    24시간: last_24h
+    하루: last_24h
+    오늘: last_24h
+    7일: last_7d
+    일주일: last_7d
+    지난주: last_7d
+    30일: last_30d
+    한달: last_30d

@@ -1,0 +1,27 @@
+name: metric_aliases
+description: Metric name aliases and keywords for normalization
+mapping_type: metric_aliases
+scope: ci
+content:
+  aliases:
+    cpu: cpu_usage
+    cpu_usage: cpu_usage
+    memory: memory_usage
+    memory_usage: memory_usage
+    disk: disk_io
+    disk_io: disk_io
+    network: network_in
+    network_in: network_in
+    temperature: temperature
+    latency: cpu_usage
+    응답시간: cpu_usage
+    response: cpu_usage
+    rps: network_in
+    error: error
+    사용량: cpu_usage
+    usage: cpu_usage
+  keywords:
+    - 지표
+    - 지수
+    - 메트릭
+    - metric

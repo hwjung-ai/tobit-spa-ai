@@ -1148,18 +1148,104 @@ def delete_schema(
 
 
 @router.post("/schemas/{asset_id}/scan", response_model=ResponseEnvelope)
-def scan_schema_endpoint(
+async def scan_schema_endpoint(
     asset_id: str,
-    scan_request: ScanRequest,
+    schema_names: list[str] | None = None,
+    include_row_counts: bool = False,
     current_user: TbUser = Depends(get_current_user),
 ):
-    """Scan schema from source"""
-    with get_session_context() as session:
-        # Update the scan request with the asset_id
-        scan_request.source_ref = asset_id
+    """
+    Scan database schema and populate schema asset metadata.
 
-        result = scan_schema(session, asset_id)
-        return ResponseEnvelope.success(data=result.model_dump())
+    Args:
+        asset_id: Schema asset ID
+        schema_names: List of schema names to scan (e.g., ["public"] for PostgreSQL)
+        include_row_counts: Whether to count table rows (can be slow for large tables)
+    """
+    from app.modules.asset_registry.crud import scan_schema_asset
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, asset_id)
+
+        if not asset:
+            raise HTTPException(status_code=404, detail="Schema asset not found")
+
+        if asset.asset_type != "schema":
+            raise HTTPException(status_code=400, detail="Asset is not a schema asset")
+
+        try:
+            updated_asset = await scan_schema_asset(
+                session,
+                asset,
+                schema_names=schema_names,
+                include_row_counts=include_row_counts,
+            )
+
+            # Return updated asset
+            return ResponseEnvelope.success(
+                data={
+                    "asset_id": str(updated_asset.asset_id),
+                    "name": updated_asset.name,
+                    "status": updated_asset.status,
+                    "content": updated_asset.content,
+                    "message": "Schema scan completed successfully",
+                }
+            )
+        except Exception as e:
+            logger.error(f"Schema scan failed for {asset_id}: {e}")
+            return ResponseEnvelope.error(
+                message=f"Schema scan failed: {str(e)}",
+                data=None,
+            )
+
+
+@router.post("/schemas/{asset_id}/tables/{table_name}/toggle", response_model=ResponseEnvelope)
+def toggle_table_enabled(
+    asset_id: str,
+    table_name: str,
+    enabled: bool,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Toggle whether a table is enabled for Tool usage"""
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, asset_id)
+
+        if not asset or asset.asset_type != "schema":
+            raise HTTPException(status_code=404, detail="Schema asset not found")
+
+        content = asset.content or {}
+        catalog = content.get("catalog", {})
+        tables = catalog.get("tables", [])
+
+        # Find and update table
+        found = False
+        for table in tables:
+            if table.get("name") == table_name:
+                table["enabled"] = enabled
+                found = True
+                break
+
+        if not found:
+            raise HTTPException(status_code=404, detail=f"Table '{table_name}' not found")
+
+        # Save changes
+        catalog["tables"] = tables
+        content["catalog"] = catalog
+        asset.content = content
+        asset.updated_at = datetime.now()
+        session.add(asset)
+        session.commit()
+
+        return ResponseEnvelope.success(
+            data={
+                "table_name": table_name,
+                "enabled": enabled,
+                "message": f"Table '{table_name}' {'enabled' if enabled else 'disabled'}",
+            }
+        )
 
 
 # Resolver Asset Endpoints

@@ -80,6 +80,10 @@ def create_asset(
     query_metadata: dict[str, Any] | None = None,
     screen_id: str | None = None,
     screen_schema: dict[str, Any] | None = None,
+    tool_type: str | None = None,
+    tool_config: dict[str, Any] | None = None,
+    tool_input_schema: dict[str, Any] | None = None,
+    tool_output_schema: dict[str, Any] | None = None,
     tags: dict[str, Any] | None = None,
     created_by: str | None = None,
 ) -> TbAssetRegistry:
@@ -109,6 +113,11 @@ def create_asset(
         # Screen fields
         screen_id=screen_id,
         screen_schema=screen_schema,
+        # Tool fields
+        tool_type=tool_type,
+        tool_config=tool_config,
+        tool_input_schema=tool_input_schema,
+        tool_output_schema=tool_output_schema,
         # Common fields
         tags=tags,
         # Metadata
@@ -254,6 +263,50 @@ def publish_asset(
     session.commit()
 
     return asset
+
+
+def create_tool_asset(
+    session: Session,
+    name: str,
+    description: str,
+    tool_type: str,
+    tool_config: dict[str, Any],
+    tool_input_schema: dict[str, Any],
+    tool_output_schema: dict[str, Any] | None = None,
+    tags: dict[str, Any] | None = None,
+    created_by: str | None = None,
+) -> TbAssetRegistry:
+    """Create new tool asset in draft status"""
+    asset = TbAssetRegistry(
+        asset_type="tool",
+        name=name,
+        description=description,
+        status="draft",
+        version=1,
+        tool_type=tool_type,
+        tool_config=tool_config,
+        tool_input_schema=tool_input_schema,
+        tool_output_schema=tool_output_schema,
+        tags=tags,
+        created_by=created_by,
+        created_at=datetime.now(),
+        updated_at=datetime.now(),
+    )
+    session.add(asset)
+    session.commit()
+    session.refresh(asset)
+    return asset
+
+
+def get_tool_asset(
+    session: Session,
+    asset_id: str,
+) -> TbAssetRegistry | None:
+    """Get tool asset by ID"""
+    try:
+        return session.get(TbAssetRegistry, uuid.UUID(asset_id))
+    except (ValueError, TypeError):
+        return None
 
 
 def rollback_asset(
@@ -598,7 +651,10 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
             from neo4j import GraphDatabase
 
             # Build URI from host and port
-            uri = asset.connection.uri or f"bolt://{asset.connection.host}:{asset.connection.port}"
+            uri = (
+                asset.connection.uri
+                or f"bolt://{asset.connection.host}:{asset.connection.port}"
+            )
 
             driver = GraphDatabase.driver(
                 uri,
@@ -607,7 +663,7 @@ def test_source_connection(session: Session, asset_id: str) -> ConnectionTestRes
                     asset.connection.password
                     or asset.connection.password_encrypted
                     or resolve_secret(asset.connection.secret_key_ref)
-                    or ""
+                    or "",
                 ),
             )
             driver.verify_connectivity()
@@ -874,6 +930,102 @@ def scan_schema(session: Session, asset_id: str) -> ScanResult:
         )
 
 
+async def scan_schema_asset(
+    session: Session,
+    asset: TbAssetRegistry,
+    schema_names: list[str] | None = None,
+    include_row_counts: bool = False,
+) -> TbAssetRegistry:
+    """
+    Scan source database and populate schema asset with metadata.
+
+    Args:
+        session: Database session
+        asset: Schema asset to populate
+        schema_names: List of schema names to scan (None = default schema)
+        include_row_counts: Whether to count rows (can be slow)
+
+    Returns:
+        Updated schema asset
+    """
+    import asyncio
+    from app.modules.ops.services.ci.discovery.catalog_factory import CatalogFactory
+    from core.logging import get_logger
+
+    logger = get_logger(__name__)
+
+    # Update status to scanning
+    content = asset.content or {}
+    source_ref = content.get("source_ref")
+
+    if not source_ref:
+        raise ValueError("Schema asset must have source_ref in content")
+
+    # Load source asset
+    source_asset = load_source_asset(source_ref)
+
+    # Update scan status
+    catalog_data = content.get("catalog", {})
+    catalog_data["scan_status"] = "scanning"
+    content["catalog"] = catalog_data
+    asset.content = content
+    session.add(asset)
+    session.commit()
+
+    try:
+        # Create appropriate catalog
+        catalog = CatalogFactory.create(source_asset)
+
+        # Build catalog
+        catalog_result = await catalog.build_catalog(schema_names)
+
+        # Update asset with scanned data
+        from datetime import datetime
+
+        catalog_data = {
+            "name": asset.name,
+            "description": asset.description,
+            "source_ref": source_ref,
+            "tables": catalog_result["tables"],
+            "database_type": catalog_result["database_type"],
+            "last_scanned_at": datetime.now().isoformat(),
+            "scan_status": "completed",
+            "scan_metadata": {
+                "schema_names": schema_names,
+                "include_row_counts": include_row_counts,
+                "table_count": len(catalog_result["tables"]),
+                "total_columns": sum(len(t.get("columns", [])) for t in catalog_result["tables"]),
+            },
+        }
+
+        content["catalog"] = catalog_data
+        asset.content = content
+        session.add(asset)
+        session.commit()
+
+        logger.info(f"Schema scan completed: {asset.name} ({len(catalog_result['tables'])} tables)")
+
+        await catalog.close()
+
+        return asset
+
+    except Exception as e:
+        logger.error(f"Schema scan failed: {asset.name}: {e}")
+
+        # Update status to failed
+        from datetime import datetime
+
+        catalog_data["scan_status"] = "failed"
+        catalog_data["scan_error"] = str(e)
+        catalog_data["last_scanned_at"] = datetime.now().isoformat()
+        content["catalog"] = catalog_data
+        asset.content = content
+        session.add(asset)
+        session.commit()
+
+        raise
+
+
 # Resolver Asset CRUD operations
 def create_resolver_asset(
     session: Session,
@@ -1137,7 +1289,9 @@ def create_query_asset(
     )
 
 
-def get_query_asset(session: Session, asset_id: str) -> Any | None:  # QueryAssetResponse | None
+def get_query_asset(
+    session: Session, asset_id: str
+) -> Any | None:  # QueryAssetResponse | None
     """Get query asset by ID"""
     asset = get_asset(session, asset_id)
     if not asset or asset.asset_type != "query":

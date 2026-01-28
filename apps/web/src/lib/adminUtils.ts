@@ -200,7 +200,8 @@ export async function fetchApi<T = unknown>(
     let rawText = "";
     try {
       rawText = await response.text();
-      console.log("[API] Raw response text:", rawText);
+      console.log("[API] Raw response text (first 1000 chars):", rawText.substring(0, 1000));
+      console.log("[API] Full raw response text:", rawText);
       console.log("[API] Response status:", response.status);
       console.log("[API] Response headers:", {
         contentType: response.headers.get("content-type"),
@@ -212,7 +213,13 @@ export async function fetchApi<T = unknown>(
           errorData = JSON.parse(rawText);
         } catch (parseErr) {
           console.error("[API] JSON parse error:", parseErr);
-          errorData = { message: rawText };
+          console.error("[API] Tried to parse as JSON but failed. Raw text:", rawText.substring(0, 200));
+          // Check if it looks like HTML (error page)
+          if (rawText.includes("<html") || rawText.includes("<HTML") || rawText.includes("<!DOCTYPE")) {
+            errorData = { message: `Server returned HTML error page: ${response.status} ${response.statusText}` };
+          } else {
+            errorData = { message: rawText };
+          }
         }
       } else {
         console.warn("[API] Response body is empty!");
