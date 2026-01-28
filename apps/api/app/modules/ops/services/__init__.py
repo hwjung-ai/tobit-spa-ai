@@ -37,32 +37,32 @@ from .resolvers import resolve_ci, resolve_time_range
 
 
 # Stub implementations for removed executors
-async def run_config_executor(question: str, **kwargs) -> tuple[Any, list[str]]:
+def run_config_executor(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
     """Removed executor - config_executor.py has been deleted for generic orchestration."""
     logger = logging.getLogger(__name__)
     logger.error("Executor 'config_executor' is no longer available. Please implement as Tool Asset.")
-    return (AnswerEnvelope(blocks=[]), [])
+    return ([], [])
 
 
-async def run_graph(question: str, **kwargs) -> tuple[Any, list[str]]:
+def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
     """Removed executor - graph_executor.py has been deleted for generic orchestration."""
     logger = logging.getLogger(__name__)
     logger.error("Executor 'graph_executor' is no longer available. Please implement as Tool Asset.")
-    return (AnswerEnvelope(blocks=[]), [])
+    return ([], [])
 
 
-async def run_hist(question: str, **kwargs) -> tuple[Any, list[str]]:
+def run_hist(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
     """Removed executor - hist_executor.py has been deleted for generic orchestration."""
     logger = logging.getLogger(__name__)
     logger.error("Executor 'hist_executor' is no longer available. Please implement as Tool Asset.")
-    return (AnswerEnvelope(blocks=[]), [])
+    return ([], [])
 
 
-async def run_metric(question: str, **kwargs) -> tuple[Any, list[str]]:
+def run_metric(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
     """Removed executor - metric_executor.py has been deleted for generic orchestration."""
     logger = logging.getLogger(__name__)
     logger.error("Executor 'metric_executor' is no longer available. Please implement as Tool Asset.")
-    return (AnswerEnvelope(blocks=[]), [])
+    return ([], [])
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
