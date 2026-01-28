@@ -14,6 +14,7 @@ export default function AdminLayout({
         { label: "Assets", href: "/admin/assets" },
         { label: "Tools", href: "/admin/tools" },
         { label: "Catalogs", href: "/admin/catalogs" },
+        { label: "Schemas", href: "/admin/schemas" },
         { label: "Screens", href: "/admin/screens" },
         { label: "Explorer", href: "/admin/explorer" },
         { label: "Settings", href: "/admin/settings" },
