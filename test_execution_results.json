@@ -1,0 +1,1913 @@
+{
+  "execution": {
+    "timestamp": "2026-01-29T08:54:14.864527",
+    "total_duration_ms": 153128,
+    "total_tests": 20,
+    "passed": 0,
+    "failed": 20,
+    "errors": 0,
+    "api_base_url": "http://localhost:8000"
+  },
+  "tests": [
+    {
+      "test_id": 1,
+      "question": "What is the current system status?",
+      "category": "System Status",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 9332,
+        "trace_id": "bc6acb81-c07f-414f-b3c3-3862bebb4c2c",
+        "answer": "\ud604\uc7ac \uc2dc\uc2a4\ud15c \uc0c1\ud0dc \uc870\ud68c \uacb0\uacfc \ud56d\ubaa9\uc740 **0**\uac74\uc73c\ub85c \ud655\uc778\ub418\uc5b4 \uc0c1\ud0dc\ub97c \ud310\ub2e8\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.  \nPRIMARY \ubc0f UNKNOWN \uacb0\uacfc\uc5d0 \ub300\ud55c \uc0c1\uc138 \uc815\ubcf4\ub3c4 \uc81c\uacf5\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.  \n\ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uc73c\ubbc0\ub85c \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \uc0c1\ud0dc\uc640 \ucffc\ub9ac \uc2e4\ud589 \uc5ec\ubd80\ub97c \uc810\uac80\ud574 \uc8fc\uc2ed\uc2dc\uc624.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ud604\uc7ac \uc2dc\uc2a4\ud15c \uc0c1\ud0dc \uc870\ud68c \uacb0\uacfc \ud56d\ubaa9\uc740 **0**\uac74\uc73c\ub85c \ud655\uc778\ub418\uc5b4 \uc0c1\ud0dc\ub97c \ud310\ub2e8\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.  \nPRIMARY \ubc0f UNKNOWN \uacb0\uacfc\uc5d0 \ub300\ud55c \uc0c1\uc138 \uc815\ubcf4\ub3c4 \uc81c\uacf5\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.  \n\ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uc73c\ubbc0\ub85c \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \uc0c1\ud0dc\uc640 \ucffc\ub9ac \uc2e4\ud589 \uc5ec\ubd80\ub97c \uc810\uac80\ud574 \uc8fc\uc2ed\uc2dc\uc624.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 7590,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 2,
+      "question": "Show me the system information",
+      "category": "System Status",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 6311,
+        "trace_id": "ad9831b6-e56b-4141-b0f8-b9e5e95cb535",
+        "answer": "\uc2dc\uc2a4\ud15c \uc815\ubcf4 \uc870\ud68c \uacb0\uacfc\ub294 **0\uac74**\uc73c\ub85c \ud655\uc778\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc989, \ud604\uc7ac \uc870\ud68c\ub41c \uc2dc\uc2a4\ud15c \uc815\ubcf4\uac00 \uc874\uc7ac\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud544\uc694 \uc2dc \uac80\uc0c9 \uc870\uac74\uc744 \uc7ac\ud655\uc778\ud558\uc2dc\uace0 \ubc94\uc704\ub098 \ud544\ud130\ub97c \uc870\uc815\ud574 \uc7ac\uac80\uc0c9\ud574 \uc8fc\uc2ed\uc2dc\uc624. \ub610\ud55c \ub2e4\ub978 \ub370\uc774\ud130 \uc18c\uc2a4\uc5d0\uc11c \uc815\ubcf4\ub97c \ud655\uc778\ud558\ub294 \uac83\ub3c4 \uad8c\uc7a5\ub4dc\ub9bd\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc2dc\uc2a4\ud15c \uc815\ubcf4 \uc870\ud68c \uacb0\uacfc\ub294 **0\uac74**\uc73c\ub85c \ud655\uc778\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc989, \ud604\uc7ac \uc870\ud68c\ub41c \uc2dc\uc2a4\ud15c \uc815\ubcf4\uac00 \uc874\uc7ac\ud558\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4. \ud544\uc694 \uc2dc \uac80\uc0c9 \uc870\uac74\uc744 \uc7ac\ud655\uc778\ud558\uc2dc\uace0 \ubc94\uc704\ub098 \ud544\ud130\ub97c \uc870\uc815\ud574 \uc7ac\uac80\uc0c9\ud574 \uc8fc\uc2ed\uc2dc\uc624. \ub610\ud55c \ub2e4\ub978 \ub370\uc774\ud130 \uc18c\uc2a4\uc5d0\uc11c \uc815\ubcf4\ub97c \ud655\uc778\ud558\ub294 \uac83\ub3c4 \uad8c\uc7a5\ub4dc\ub9bd\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 6032,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 3,
+      "question": "What services are currently running?",
+      "category": "System Status",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 4516,
+        "trace_id": "22d833c5-bbac-4305-b7b6-d44a2c814fd2",
+        "answer": "\ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4:\n\n- \ud604\uc7ac \uc2e4\ud589 \uc911\uc778 \uc11c\ube44\uc2a4\ub294 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n- \uc870\ud68c \uacb0\uacfc\uc5d0\uc11c \ud56d\ubaa9\uc740 **0\uac1c**\ub85c \ud45c\uc2dc\ub418\ubbc0\ub85c, \ud604\uc7ac \uc2e4\ud589 \uc911\uc778 \uc11c\ube44\uc2a4 \ubaa9\ub85d\uc740 \ube44\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n- \ud544\uc694 \uc2dc \ub2e4\ub978 \ubc94\uc704\ub098 \ud544\ud130\ub85c \uc7ac\ud655\uc778\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ub2e4\uc74c\uacfc \uac19\uc2b5\ub2c8\ub2e4:\n\n- \ud604\uc7ac \uc2e4\ud589 \uc911\uc778 \uc11c\ube44\uc2a4\ub294 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n- \uc870\ud68c \uacb0\uacfc\uc5d0\uc11c \ud56d\ubaa9\uc740 **0\uac1c**\ub85c \ud45c\uc2dc\ub418\ubbc0\ub85c, \ud604\uc7ac \uc2e4\ud589 \uc911\uc778 \uc11c\ube44\uc2a4 \ubaa9\ub85d\uc740 \ube44\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n- \ud544\uc694 \uc2dc \ub2e4\ub978 \ubc94\uc704\ub098 \ud544\ud130\ub85c \uc7ac\ud655\uc778\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 4254,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 4,
+      "question": "What are the key performance metrics?",
+      "category": "Metrics",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 9822,
+        "trace_id": "d1ef62ba-ebea-4147-8862-2fdc15a7a2c4",
+        "answer": "\uc774\ubc88 \uc870\ud68c\uc5d0\uc11c \ud575\uc2ec \uc131\ub2a5 \uc9c0\ud45c\ub97c \ub3c4\ucd9c\ud560 \uc218 \uc788\ub294 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uacb0\uacfc \uc694\uc57d: **0**\uac1c \ud56d\ubaa9 \ubc1c\uacac. PRIMARY \ubc0f UNKNOWN \uacb0\uacfc \ubaa8\ub450 \ud56d\ubaa9\uc774 \uc5c6\uc74c\uc73c\ub85c \ud45c\uc2dc\ub418\uc5b4 \ub370\uc774\ud130 \ubd80\uc7ac\ub85c \uc9c0\ud45c\ub97c \uc81c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130 \uc6d0\ucc9c\uc744 \ud655\uc778\ud558\uace0 \uc870\ud68c \uc870\uac74\uc744 \ud655\uc7a5\ud558\uac70\ub098 \uc0d8\ud50c \ub370\uc774\ud130\ub97c \ud655\ubcf4\ud558\ub294 \uac83\uc744 \uad8c\uc7a5\ub4dc\ub9bd\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc774\ubc88 \uc870\ud68c\uc5d0\uc11c \ud575\uc2ec \uc131\ub2a5 \uc9c0\ud45c\ub97c \ub3c4\ucd9c\ud560 \uc218 \uc788\ub294 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uacb0\uacfc \uc694\uc57d: **0**\uac1c \ud56d\ubaa9 \ubc1c\uacac. PRIMARY \ubc0f UNKNOWN \uacb0\uacfc \ubaa8\ub450 \ud56d\ubaa9\uc774 \uc5c6\uc74c\uc73c\ub85c \ud45c\uc2dc\ub418\uc5b4 \ub370\uc774\ud130 \ubd80\uc7ac\ub85c \uc9c0\ud45c\ub97c \uc81c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130 \uc6d0\ucc9c\uc744 \ud655\uc778\ud558\uace0 \uc870\ud68c \uc870\uac74\uc744 \ud655\uc7a5\ud558\uac70\ub098 \uc0d8\ud50c \ub370\uc774\ud130\ub97c \ud655\ubcf4\ud558\ub294 \uac83\uc744 \uad8c\uc7a5\ub4dc\ub9bd\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 9520,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 5,
+      "question": "Show me the last 24 hours of system metrics",
+      "category": "Metrics",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 10025,
+        "trace_id": "9869f0c5-0134-4a5e-a3ed-97d48a4b9e27",
+        "answer": "\ub2e4\uc74c\uacfc \uac19\uc774 \uc694\uc57d\ub429\ub2c8\ub2e4:\n\n- \uc9c0\ub09c 24\uc2dc\uac04 \ub3d9\uc548 \uc2dc\uc2a4\ud15c \uba54\ud2b8\ub9ad\uc740 **0\uac1c \ud56d\ubaa9**\uc73c\ub85c \ubc1c\uacac\ub418\uc5b4 \ube44\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n- \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\ub294 \uac00\ub2a5\uc131\uc740 \uba54\ud2b8\ub9ad \uc218\uc9d1 \uc2e4\ud328, \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \ubb38\uc81c, \ub610\ub294 \uc2dc\uac04 \ubc94\uc704 \uc124\uc815 \uc624\ub958 \ub4f1\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n- \ub370\uc774\ud130 \uc218\uc9d1 \uc11c\ube44\uc2a4 \uc0c1\ud0dc\uc640 \ub85c\uadf8\ub97c \uc810\uac80\ud558\uace0 \ud544\uc694 \uc2dc \uc7ac\uc2dc\uc791\ud558\uac70\ub098 \ucffc\ub9ac \ubc94\uc704\ub97c \ub2e4\uc2dc \ud655\uc778\ud574 \uc8fc\uc138\uc694.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ub2e4\uc74c\uacfc \uac19\uc774 \uc694\uc57d\ub429\ub2c8\ub2e4:\n\n- \uc9c0\ub09c 24\uc2dc\uac04 \ub3d9\uc548 \uc2dc\uc2a4\ud15c \uba54\ud2b8\ub9ad\uc740 **0\uac1c \ud56d\ubaa9**\uc73c\ub85c \ubc1c\uacac\ub418\uc5b4 \ube44\uc5b4 \uc788\uc2b5\ub2c8\ub2e4.\n- \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\ub294 \uac00\ub2a5\uc131\uc740 \uba54\ud2b8\ub9ad \uc218\uc9d1 \uc2e4\ud328, \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \ubb38\uc81c, \ub610\ub294 \uc2dc\uac04 \ubc94\uc704 \uc124\uc815 \uc624\ub958 \ub4f1\uc774 \uc788\uc2b5\ub2c8\ub2e4.\n- \ub370\uc774\ud130 \uc218\uc9d1 \uc11c\ube44\uc2a4 \uc0c1\ud0dc\uc640 \ub85c\uadf8\ub97c \uc810\uac80\ud558\uace0 \ud544\uc694 \uc2dc \uc7ac\uc2dc\uc791\ud558\uac70\ub098 \ucffc\ub9ac \ubc94\uc704\ub97c \ub2e4\uc2dc \ud655\uc778\ud574 \uc8fc\uc138\uc694.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 8283,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 6,
+      "question": "What is the current resource usage?",
+      "category": "Metrics",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 5328,
+        "trace_id": "9ab8bacb-cc74-454f-9c48-0aaf1f4dbf44",
+        "answer": "\ud604\uc7ac \ub9ac\uc18c\uc2a4 \uc0ac\uc6a9\ub7c9\uc5d0 \ub300\ud55c \ud56d\ubaa9\uc774 \uc870\ud68c \uacb0\uacfc\uc5d0\uc11c **0\uac74** \ubc1c\uacac\ub418\uc5b4, \ud604\uc7ac \uc0ac\uc6a9\ub7c9\uc744 \ud655\uc778\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130 \uc18c\uc2a4\ub098 \uc870\ud68c \ubc94\uc704\ub97c \ud655\uc778\ud574 \uc8fc\uc2dc\uae38 \ubc14\ub78d\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ud604\uc7ac \ub9ac\uc18c\uc2a4 \uc0ac\uc6a9\ub7c9\uc5d0 \ub300\ud55c \ud56d\ubaa9\uc774 \uc870\ud68c \uacb0\uacfc\uc5d0\uc11c **0\uac74** \ubc1c\uacac\ub418\uc5b4, \ud604\uc7ac \uc0ac\uc6a9\ub7c9\uc744 \ud655\uc778\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130 \uc18c\uc2a4\ub098 \uc870\ud68c \ubc94\uc704\ub97c \ud655\uc778\ud574 \uc8fc\uc2dc\uae38 \ubc14\ub78d\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 5030,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 7,
+      "question": "How many records were processed today?",
+      "category": "Metrics",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 5943,
+        "trace_id": "3c7d1c6c-9f02-4b00-b8a8-db5e15f53a27",
+        "answer": "\uc624\ub298 \ucc98\ub9ac\ub41c \ub808\ucf54\ub4dc \uc218\ub294 **0\uac74**\uc785\ub2c8\ub2e4. \uc2e4\ud589 \uacb0\uacfc\uc5d0 \ub530\ub974\uba74 \uc624\ub298 \ucc98\ub9ac\ub41c \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc73c\uba70, \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\ub294 \uc0c1\ud0dc\ub85c \ubcf4\uc785\ub2c8\ub2e4. \ud544\uc694 \uc2dc \ub0a0\uc9dc \ubc94\uc704\ub098 \ub370\uc774\ud130 \uc18c\uc2a4 \uc218\uc9d1 \uc5ec\ubd80\ub97c \uc7ac\ud655\uc778\ud574 \uc8fc\uc138\uc694.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc624\ub298 \ucc98\ub9ac\ub41c \ub808\ucf54\ub4dc \uc218\ub294 **0\uac74**\uc785\ub2c8\ub2e4. \uc2e4\ud589 \uacb0\uacfc\uc5d0 \ub530\ub974\uba74 \uc624\ub298 \ucc98\ub9ac\ub41c \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc73c\uba70, \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\ub294 \uc0c1\ud0dc\ub85c \ubcf4\uc785\ub2c8\ub2e4. \ud544\uc694 \uc2dc \ub0a0\uc9dc \ubc94\uc704\ub098 \ub370\uc774\ud130 \uc18c\uc2a4 \uc218\uc9d1 \uc5ec\ubd80\ub97c \uc7ac\ud655\uc778\ud574 \uc8fc\uc138\uc694.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 5681,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 8,
+      "question": "What is the average response time?",
+      "category": "Metrics",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 7040,
+        "trace_id": "cae9b9b5-2738-4f7d-8bf3-6021d28c5cda",
+        "answer": "\ud604\uc7ac \uc2e4\ud589 \uacb0\uacfc\uc5d0\ub294 \ud3c9\uade0 \uc751\ub2f5 \uc2dc\uac04\uc744 \uacc4\uc0b0\ud560 \uc218 \uc788\uc744 \ub9cc\ud07c\uc758 \uc218\uce58 \ub370\uc774\ud130\uac00 \uc81c\uacf5\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. **PRIMARY Result**\uc640 **UNKNOWN Result** \uc601\uc5ed\uc5d0 \uc218\uce58\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ub204\ub77d\ub41c \uc0c1\ud0dc\uc785\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \uc900\ube44\ub418\uba74 \ub2e4\uc2dc \uc2e4\ud589\ud574 \uc8fc\uc2dc\uac70\ub098, \ud2b9\uc815 \uae30\uac04\uc758 \uc751\ub2f5 \uc2dc\uac04 \uc0d8\ud50c\uc744 \uacf5\uc720\ud574 \uc8fc\uc2dc\uba74 \ud3c9\uade0 \uc751\ub2f5 \uc2dc\uac04\uc744 \uc0b0\ucd9c\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ud604\uc7ac \uc2e4\ud589 \uacb0\uacfc\uc5d0\ub294 \ud3c9\uade0 \uc751\ub2f5 \uc2dc\uac04\uc744 \uacc4\uc0b0\ud560 \uc218 \uc788\uc744 \ub9cc\ud07c\uc758 \uc218\uce58 \ub370\uc774\ud130\uac00 \uc81c\uacf5\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. **PRIMARY Result**\uc640 **UNKNOWN Result** \uc601\uc5ed\uc5d0 \uc218\uce58\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ub204\ub77d\ub41c \uc0c1\ud0dc\uc785\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \uc900\ube44\ub418\uba74 \ub2e4\uc2dc \uc2e4\ud589\ud574 \uc8fc\uc2dc\uac70\ub098, \ud2b9\uc815 \uae30\uac04\uc758 \uc751\ub2f5 \uc2dc\uac04 \uc0d8\ud50c\uc744 \uacf5\uc720\ud574 \uc8fc\uc2dc\uba74 \ud3c9\uade0 \uc751\ub2f5 \uc2dc\uac04\uc744 \uc0b0\ucd9c\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 6757,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 9,
+      "question": "Show me the data dependencies",
+      "category": "Relationships",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 8961,
+        "trace_id": "926c4d3b-448c-4010-be5e-308fb1ee9ecc",
+        "answer": "\ub370\uc774\ud130 \uc758\uc874\uc131 \uc870\ud68c \uacb0\uacfc, \uc758\uc874\uc131 \ud56d\ubaa9\uc740 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ucd1d **0\uac1c** \ud56d\ubaa9\uc774 \ud655\uc778\ub418\uc5c8\uc73c\uba70, **PRIMARY** \ubc0f **UNKNOWN** \uacb0\uacfc \ubaa8\ub450\uc5d0\uc11c \ud56d\ubaa9\uc774 \uc5c6\uc74c\uc73c\ub85c \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc758\uc874\uc131\uc774 \ud544\uc694\ud558\ub2e4\uba74 \uc870\ud68c \uc870\uac74\uc774\ub098 \ub370\uc774\ud130 \uc18c\uc2a4 \uad6c\uc131\uc744 \uc7ac\ud655\uc778\ud574 \uc8fc\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ub370\uc774\ud130 \uc758\uc874\uc131 \uc870\ud68c \uacb0\uacfc, \uc758\uc874\uc131 \ud56d\ubaa9\uc740 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ucd1d **0\uac1c** \ud56d\ubaa9\uc774 \ud655\uc778\ub418\uc5c8\uc73c\uba70, **PRIMARY** \ubc0f **UNKNOWN** \uacb0\uacfc \ubaa8\ub450\uc5d0\uc11c \ud56d\ubaa9\uc774 \uc5c6\uc74c\uc73c\ub85c \uae30\ub85d\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc758\uc874\uc131\uc774 \ud544\uc694\ud558\ub2e4\uba74 \uc870\ud68c \uc870\uac74\uc774\ub098 \ub370\uc774\ud130 \uc18c\uc2a4 \uad6c\uc131\uc744 \uc7ac\ud655\uc778\ud574 \uc8fc\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 8712,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 10,
+      "question": "What entities are related to users?",
+      "category": "Relationships",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 8463,
+        "trace_id": "7c38b2e0-0a8e-40e9-8758-39e5c93eb3bd",
+        "answer": "\uc694\uccad\ud558\uc2e0 \u2018\uc0ac\uc6a9\uc790\uc640 \uad00\ub828\ub41c \uc5d4\ud2f0\ud2f0\u2019\uc5d0 \ub300\ud574 \uc2e4\ud589 \uacb0\uacfc\ub97c \ud655\uc778\ud588\uc2b5\ub2c8\ub2e4. \uacb0\uacfc \uc694\uc57d: \uad00\ub828 \uc5d4\ud2f0\ud2f0\uac00 **0\uac1c** \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc989, \ud604\uc7ac \ub370\uc774\ud130\uc5d0\uc11c \uc0ac\uc6a9\uc790\uac00 \uad00\ub828 \uc5d4\ud2f0\ud2f0\ub97c \uac16\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \ud544\uc694 \uc2dc \ub370\uc774\ud130 \uc18c\uc2a4\ub098 \ucffc\ub9ac \uc870\uac74\uc744 \uc7ac\uac80\ud1a0\ud574 \uc8fc\uc138\uc694.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc694\uccad\ud558\uc2e0 \u2018\uc0ac\uc6a9\uc790\uc640 \uad00\ub828\ub41c \uc5d4\ud2f0\ud2f0\u2019\uc5d0 \ub300\ud574 \uc2e4\ud589 \uacb0\uacfc\ub97c \ud655\uc778\ud588\uc2b5\ub2c8\ub2e4. \uacb0\uacfc \uc694\uc57d: \uad00\ub828 \uc5d4\ud2f0\ud2f0\uac00 **0\uac1c** \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc989, \ud604\uc7ac \ub370\uc774\ud130\uc5d0\uc11c \uc0ac\uc6a9\uc790\uac00 \uad00\ub828 \uc5d4\ud2f0\ud2f0\ub97c \uac16\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc2b5\ub2c8\ub2e4. \ud544\uc694 \uc2dc \ub370\uc774\ud130 \uc18c\uc2a4\ub098 \ucffc\ub9ac \uc870\uac74\uc744 \uc7ac\uac80\ud1a0\ud574 \uc8fc\uc138\uc694.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 6890,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 11,
+      "question": "Display the system architecture diagram",
+      "category": "Relationships",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 8467,
+        "trace_id": "91aedf2c-c635-4ccb-856b-e7fd67ea815c",
+        "answer": "\uc870\ud68c \uacb0\uacfc\ub97c \ubc14\ud0d5\uc73c\ub85c \uc2dc\uc2a4\ud15c \uc544\ud0a4\ud14d\ucc98 \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc744 \ud45c\uc2dc\ud558\ub824 \ud588\uc73c\ub098 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc544 \ud45c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \uac80\uc0c9\uc5d0\uc11c \ud56d\ubaa9 \uc218\ub294 **0**\uac1c\uc785\ub2c8\ub2e4. \ub2e4\uc774\uc5b4\uadf8\ub7a8 \ubd80\uc7ac\uc758 \uc6d0\uc778\uc740 \ub370\uc774\ud130 \uc18c\uc7a5 \uc5ec\ubd80 \ubd80\uc871 \ub610\ub294 \uc870\ud68c \uc870\uac74\uc758 \ubd80\uc815\ud655\uc131\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc774 \uc788\ub294 \uc704\uce58\ub97c \uc54c\ub824\uc8fc\uc2dc\uac70\ub098 \uad6c\uc131 \uc694\uc18c\ub97c \uc81c\uacf5\ud574 \uc8fc\uc2dc\uba74 \uc7ac\uc870\ud68c\ud558\uac70\ub098 \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc744 \uc0dd\uc131\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc870\ud68c \uacb0\uacfc\ub97c \ubc14\ud0d5\uc73c\ub85c \uc2dc\uc2a4\ud15c \uc544\ud0a4\ud14d\ucc98 \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc744 \ud45c\uc2dc\ud558\ub824 \ud588\uc73c\ub098 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc544 \ud45c\uc2dc\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \uac80\uc0c9\uc5d0\uc11c \ud56d\ubaa9 \uc218\ub294 **0**\uac1c\uc785\ub2c8\ub2e4. \ub2e4\uc774\uc5b4\uadf8\ub7a8 \ubd80\uc7ac\uc758 \uc6d0\uc778\uc740 \ub370\uc774\ud130 \uc18c\uc7a5 \uc5ec\ubd80 \ubd80\uc871 \ub610\ub294 \uc870\ud68c \uc870\uac74\uc758 \ubd80\uc815\ud655\uc131\uc77c \uc218 \uc788\uc2b5\ub2c8\ub2e4. \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc774 \uc788\ub294 \uc704\uce58\ub97c \uc54c\ub824\uc8fc\uc2dc\uac70\ub098 \uad6c\uc131 \uc694\uc18c\ub97c \uc81c\uacf5\ud574 \uc8fc\uc2dc\uba74 \uc7ac\uc870\ud68c\ud558\uac70\ub098 \ub2e4\uc774\uc5b4\uadf8\ub7a8\uc744 \uc0dd\uc131\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 8189,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 12,
+      "question": "What are the data flow relationships?",
+      "category": "Relationships",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 6423,
+        "trace_id": "ded82e70-e0db-406a-a33b-ec26f894f585",
+        "answer": "\ub370\uc774\ud130 \ud750\ub984 \uad00\uacc4\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc774\ubc88 \uc870\ud68c\uc5d0\uc11c \ud56d\ubaa9\uc740 **0\uac1c**\ub85c \ud655\uc778\ub418\uc5c8\uc73c\uba70, **PRIMARY** \ubc0f **UNKNOWN** \uacb0\uacfc\ub3c4 \uc218\uc9d1\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ub530\ub77c\uc11c \ud604\uc7ac \ub370\uc774\ud130 \ud750\ub984 \uad00\uacc4\ub294 \uc2dd\ubcc4\ub418\uc9c0 \uc54a\uc73c\uba70, \ud544\uc694 \uc2dc \uac80\uc0c9 \uc870\uac74 \uc7ac\ud655\uc778\uc774\ub098 \ucd94\uac00 \ub370\uc774\ud130 \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ub370\uc774\ud130 \ud750\ub984 \uad00\uacc4\ub97c \ucc3e\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \uc774\ubc88 \uc870\ud68c\uc5d0\uc11c \ud56d\ubaa9\uc740 **0\uac1c**\ub85c \ud655\uc778\ub418\uc5c8\uc73c\uba70, **PRIMARY** \ubc0f **UNKNOWN** \uacb0\uacfc\ub3c4 \uc218\uc9d1\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \ub530\ub77c\uc11c \ud604\uc7ac \ub370\uc774\ud130 \ud750\ub984 \uad00\uacc4\ub294 \uc2dd\ubcc4\ub418\uc9c0 \uc54a\uc73c\uba70, \ud544\uc694 \uc2dc \uac80\uc0c9 \uc870\uac74 \uc7ac\ud655\uc778\uc774\ub098 \ucd94\uac00 \ub370\uc774\ud130 \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 6159,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 13,
+      "question": "Show me the recent changes",
+      "category": "History",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 5571,
+        "trace_id": "67eed0af-02a6-4f95-8718-65b651561f73",
+        "answer": "\ucd5c\uadfc \ubcc0\uacbd\uc0ac\ud56d\uc744 \uc870\ud68c\ud588\uc73c\ub098 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uacb0\uacfc\uc801\uc73c\ub85c **0\uac74**\uc758 \ubcc0\uacbd\uc0ac\ud56d\uc774 \ud655\uc778\ub429\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\ub294 \uc0c1\ud0dc\uc774\ubbc0\ub85c, \ud544\uc694\ud558\uc2dc\uba74 \uae30\uac04\uc774\ub098 \ub300\uc0c1 \ud544\ud130\ub97c \ub2e4\uc2dc \uc124\uc815\ud574 \uc7ac\uac80\uc0c9\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ucd5c\uadfc \ubcc0\uacbd\uc0ac\ud56d\uc744 \uc870\ud68c\ud588\uc73c\ub098 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uacb0\uacfc\uc801\uc73c\ub85c **0\uac74**\uc758 \ubcc0\uacbd\uc0ac\ud56d\uc774 \ud655\uc778\ub429\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\ub294 \uc0c1\ud0dc\uc774\ubbc0\ub85c, \ud544\uc694\ud558\uc2dc\uba74 \uae30\uac04\uc774\ub098 \ub300\uc0c1 \ud544\ud130\ub97c \ub2e4\uc2dc \uc124\uc815\ud574 \uc7ac\uac80\uc0c9\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 5310,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 14,
+      "question": "What happened yesterday?",
+      "category": "History",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 9200,
+        "trace_id": "925a4b99-12ae-45ed-9b41-a561b33e8542",
+        "answer": "- \uc5b4\uc81c\uc5d0 \ub300\ud55c \uc870\ud68c \uacb0\uacfc\uc5d0\uc11c **0\uac1c**\uc758 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4.\n- \uc989, \uc5b4\uc81c\uc5d0 \ubc1c\uc0dd\ud55c \uc0ac\uac74\uc774\ub098 \ubcc0\uacbd \ub0b4\uc5ed\uc740 \ud655\uc778\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n- \ub370\uc774\ud130\uac00 \ube44\uc5c8\uac70\ub098 \ud574\ub2f9 \uae30\uac04\uc5d0 \uc774\ubca4\ud2b8\uac00 \uc5c6\uc5c8\uc744 \uc218 \uc788\uc73c\uba70, \ud544\uc694 \uc2dc \uae30\uac04 \ubc94\uc704\ub098 \ub370\uc774\ud130 \uc18c\uc2a4 \uc124\uc815\uc744 \uc7ac\ud655\uc778\ud558\uc2dc\uae38 \uad8c\uc7a5\ud569\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "- \uc5b4\uc81c\uc5d0 \ub300\ud55c \uc870\ud68c \uacb0\uacfc\uc5d0\uc11c **0\uac1c**\uc758 \ud56d\ubaa9\uc774 \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4.\n- \uc989, \uc5b4\uc81c\uc5d0 \ubc1c\uc0dd\ud55c \uc0ac\uac74\uc774\ub098 \ubcc0\uacbd \ub0b4\uc5ed\uc740 \ud655\uc778\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.\n- \ub370\uc774\ud130\uac00 \ube44\uc5c8\uac70\ub098 \ud574\ub2f9 \uae30\uac04\uc5d0 \uc774\ubca4\ud2b8\uac00 \uc5c6\uc5c8\uc744 \uc218 \uc788\uc73c\uba70, \ud544\uc694 \uc2dc \uae30\uac04 \ubc94\uc704\ub098 \ub370\uc774\ud130 \uc18c\uc2a4 \uc124\uc815\uc744 \uc7ac\ud655\uc778\ud558\uc2dc\uae38 \uad8c\uc7a5\ud569\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 7606,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 15,
+      "question": "Show me the audit trail for last week",
+      "category": "History",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 5889,
+        "trace_id": "767240b6-5ee0-4383-add9-db08809b44df",
+        "answer": "\ucd5c\uadfc \uc8fc\uc5d0 \ub300\ud55c \uac10\uc0ac \uc774\ub825 \uc870\ud68c \uacb0\uacfc, \ud56d\ubaa9\uc774 **0\uac74**\uc73c\ub85c \ud655\uc778\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc2e4\ud589 \uacb0\uacfc\uc758 PRIMARY \ubc0f UNKNOWN \ud56d\ubaa9 \ubaa8\ub450 \ud56d\ubaa9\uc774 \uc5c6\uc5c8\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ud574\ub2f9 \uae30\uac04\uc5d0 \uac10\uc0ac \uc774\ub825\uc774 \uc5c6\uc5c8\uc74c\uc744 \uc758\ubbf8\ud569\ub2c8\ub2e4. \ud544\uc694\ud558\uc2dc\uba74 \uc870\ud68c \uae30\uac04\uc744 \uc7ac\uc124\uc815\ud558\uac70\ub098 \ud544\ud130\ub97c \uc870\uc815\ud574 \ub2e4\uc2dc \uac80\uc0c9\ud574 \ubcf4\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\ucd5c\uadfc \uc8fc\uc5d0 \ub300\ud55c \uac10\uc0ac \uc774\ub825 \uc870\ud68c \uacb0\uacfc, \ud56d\ubaa9\uc774 **0\uac74**\uc73c\ub85c \ud655\uc778\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc2e4\ud589 \uacb0\uacfc\uc758 PRIMARY \ubc0f UNKNOWN \ud56d\ubaa9 \ubaa8\ub450 \ud56d\ubaa9\uc774 \uc5c6\uc5c8\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ud574\ub2f9 \uae30\uac04\uc5d0 \uac10\uc0ac \uc774\ub825\uc774 \uc5c6\uc5c8\uc74c\uc744 \uc758\ubbf8\ud569\ub2c8\ub2e4. \ud544\uc694\ud558\uc2dc\uba74 \uc870\ud68c \uae30\uac04\uc744 \uc7ac\uc124\uc815\ud558\uac70\ub098 \ud544\ud130\ub97c \uc870\uc815\ud574 \ub2e4\uc2dc \uac80\uc0c9\ud574 \ubcf4\uc2dc\uae30 \ubc14\ub78d\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 5608,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 16,
+      "question": "What was the system state 7 days ago?",
+      "category": "History",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 7506,
+        "trace_id": "fcdfc88e-951b-4edc-a931-68b5e53f5290",
+        "answer": "7\uc77c \uc804\uc758 \uc2dc\uc2a4\ud15c \uc0c1\ud0dc\ub97c \uc870\ud68c\ud55c \uacb0\uacfc, \ud56d\ubaa9\uc740 **0\uac74**\uc73c\ub85c \ub098\ud0c0\ub0ac\uc2b5\ub2c8\ub2e4. \uc774\ub85c \uc778\ud574 \ud574\ub2f9 \uc2dc\uc810\uc758 \uc0c1\ud0dc\ub97c \ud310\ub2e8\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ucffc\ub9ac \uc870\uac74\uc5d0 \ubd80\ud569\ud558\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc5c8\uc744 \uac00\ub2a5\uc131\uc774 \uc788\uc2b5\ub2c8\ub2e4. \ud544\uc694\ud558\uc2dc\uba74 \uae30\uac04 \ubc94\uc704\ub098 \ud544\ud130\ub97c \uc870\uc815\ud574 \uc7ac\uc870\ud68c\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "7\uc77c \uc804\uc758 \uc2dc\uc2a4\ud15c \uc0c1\ud0dc\ub97c \uc870\ud68c\ud55c \uacb0\uacfc, \ud56d\ubaa9\uc740 **0\uac74**\uc73c\ub85c \ub098\ud0c0\ub0ac\uc2b5\ub2c8\ub2e4. \uc774\ub85c \uc778\ud574 \ud574\ub2f9 \uc2dc\uc810\uc758 \uc0c1\ud0dc\ub97c \ud310\ub2e8\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ucffc\ub9ac \uc870\uac74\uc5d0 \ubd80\ud569\ud558\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc5c8\uc744 \uac00\ub2a5\uc131\uc774 \uc788\uc2b5\ub2c8\ub2e4. \ud544\uc694\ud558\uc2dc\uba74 \uae30\uac04 \ubc94\uc704\ub098 \ud544\ud130\ub97c \uc870\uc815\ud574 \uc7ac\uc870\ud68c\ud574 \ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 7225,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 17,
+      "question": "Compare the performance metrics across different time periods",
+      "category": "Advanced",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 7201,
+        "trace_id": "5418437f-ae97-439f-8095-a390d4ae8326",
+        "answer": "\uc694\uccad\ud558\uc2e0 \uc2dc\uac04\ub300\ubcc4 \uc131\ub2a5 \uc9c0\ud45c \ube44\uad50\ub97c \uc218\ud589\ud588\uc73c\ub098 \ub370\uc774\ud130 \ud56d\ubaa9\uc774 **0\uac74**\uc73c\ub85c \ubc18\ud658\ub418\uc5b4 \ube44\uad50\ub97c \uc9c4\ud589\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ucffc\ub9ac \uc870\uac74\uc5d0 \ud574\ub2f9\ud558\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc6d0\uc778 \ud655\uc778\uc744 \uc704\ud55c \uc870\uce58\ub85c\ub294 \ub370\uc774\ud130 \uc218\uc9d1 \uc5ec\ubd80, \uc2dc\uac04 \ubc94\uc704 \uc124\uc815, \uc9c0\ud45c \uc815\uc758 \ubc0f \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \uc0c1\ud0dc\ub97c \uc810\uac80\ud558\uace0, \ud544\uc694 \uc2dc \uc2dc\uac04 \ubc94\uc704\ub97c \ud655\uc7a5\ud558\uac70\ub098 \ucffc\ub9ac \uc870\uac74\uc744 \uc7ac\uac80\ud1a0\ud558\ub294 \uac83\uc744 \uad8c\ud569\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc694\uccad\ud558\uc2e0 \uc2dc\uac04\ub300\ubcc4 \uc131\ub2a5 \uc9c0\ud45c \ube44\uad50\ub97c \uc218\ud589\ud588\uc73c\ub098 \ub370\uc774\ud130 \ud56d\ubaa9\uc774 **0\uac74**\uc73c\ub85c \ubc18\ud658\ub418\uc5b4 \ube44\uad50\ub97c \uc9c4\ud589\ud560 \uc218 \uc5c6\uc2b5\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ucffc\ub9ac \uc870\uac74\uc5d0 \ud574\ub2f9\ud558\ub294 \ud56d\ubaa9\uc774 \uc5c6\uc744 \uc218 \uc788\uc2b5\ub2c8\ub2e4. \uc6d0\uc778 \ud655\uc778\uc744 \uc704\ud55c \uc870\uce58\ub85c\ub294 \ub370\uc774\ud130 \uc218\uc9d1 \uc5ec\ubd80, \uc2dc\uac04 \ubc94\uc704 \uc124\uc815, \uc9c0\ud45c \uc815\uc758 \ubc0f \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \uc0c1\ud0dc\ub97c \uc810\uac80\ud558\uace0, \ud544\uc694 \uc2dc \uc2dc\uac04 \ubc94\uc704\ub97c \ud655\uc7a5\ud558\uac70\ub098 \ucffc\ub9ac \uc870\uac74\uc744 \uc7ac\uac80\ud1a0\ud558\ub294 \uac83\uc744 \uad8c\ud569\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 6884,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 18,
+      "question": "Generate a comprehensive system report",
+      "category": "Advanced",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 12712,
+        "trace_id": "6593e1cb-3875-454c-a747-65ce73edc3c3",
+        "answer": "\uc2dc\uc2a4\ud15c \ubcf4\uace0\uc11c \uc2e4\ud589 \uacb0\uacfc \ud56d\ubaa9\uc740 **0\uac74**\uc73c\ub85c \ud655\uc778\ub418\uc5c8\uc2b5\ub2c8\ub2e4. PRIMARY Result\uc640 UNKNOWN Result \ubaa8\ub450 \uac12\uc774 \uc5c6\uc5b4 \ud604\uc7ac \ub370\uc774\ud130 \uc18c\uc2a4\uc5d0 \ub9e4\uce6d\ub418\ub294 \ub370\uc774\ud130\uac00 \uc5c6\uc74c\uc744 \uc2dc\uc0ac\ud569\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ud655\ubcf4\ub418\ub824\uba74 \ucffc\ub9ac \ud30c\ub77c\ubbf8\ud130\ub97c \uc7ac\ud655\uc778\ud558\uace0 \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \ubc0f \uc218\uc9d1 \ud30c\uc774\ud504\ub77c\uc778\uc758 \uc0c1\ud0dc\ub97c \uc810\uac80\ud55c \ud6c4 \ud544\uc694 \uc2dc \uc7ac\uc2e4\ud589\ud574 \uc8fc\uc2ed\uc2dc\uc624.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "\uc2dc\uc2a4\ud15c \ubcf4\uace0\uc11c \uc2e4\ud589 \uacb0\uacfc \ud56d\ubaa9\uc740 **0\uac74**\uc73c\ub85c \ud655\uc778\ub418\uc5c8\uc2b5\ub2c8\ub2e4. PRIMARY Result\uc640 UNKNOWN Result \ubaa8\ub450 \uac12\uc774 \uc5c6\uc5b4 \ud604\uc7ac \ub370\uc774\ud130 \uc18c\uc2a4\uc5d0 \ub9e4\uce6d\ub418\ub294 \ub370\uc774\ud130\uac00 \uc5c6\uc74c\uc744 \uc2dc\uc0ac\ud569\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ud655\ubcf4\ub418\ub824\uba74 \ucffc\ub9ac \ud30c\ub77c\ubbf8\ud130\ub97c \uc7ac\ud655\uc778\ud558\uace0 \ub370\uc774\ud130 \uc18c\uc2a4 \uc5f0\uacb0 \ubc0f \uc218\uc9d1 \ud30c\uc774\ud504\ub77c\uc778\uc758 \uc0c1\ud0dc\ub97c \uc810\uac80\ud55c \ud6c4 \ud544\uc694 \uc2dc \uc7ac\uc2e4\ud589\ud574 \uc8fc\uc2ed\uc2dc\uc624.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 11003,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 19,
+      "question": "Analyze trends and provide insights",
+      "category": "Advanced",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 1164,
+        "trace_id": "b9380942-d157-4fd2-852b-1d33aa0154fb",
+        "answer": "Execution completed successfully",
+        "blocks": [
+          {
+            "type": "table",
+            "columns": [],
+            "rows": [],
+            "title": "Aggregation results"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 915,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_planner_output_parser",
+            "scope": "ci",
+            "engine": "planner",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "6b3e95c3-a979-4303-afe0-c925ed169980",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    },
+    {
+      "test_id": 20,
+      "question": "What are the recommendations for system optimization?",
+      "category": "Advanced",
+      "api_response": {
+        "status_code": 200,
+        "response_time_ms": 10016,
+        "trace_id": "018fa84f-d135-483c-a9b4-093f479c2063",
+        "answer": "LOOKUP \uc2e4\ud589 \uacb0\uacfc\uc5d0\uc11c \uc2dc\uc2a4\ud15c \ucd5c\uc801\ud654\uc5d0 \ub300\ud55c \uad8c\uace0 \ud56d\ubaa9\uc740 **0\uac74**\uc73c\ub85c \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc774\ub294 \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ub9e4\uce6d \ud56d\ubaa9\uc774 \uc5c6\uc5b4 \ucd94\ucc9c\uc744 \ub3c4\ucd9c\ud558\uc9c0 \ubabb\ud588\ub2e4\ub294 \uc758\ubbf8\uc785\ub2c8\ub2e4. \uc6d0\uc778\uc744 \ud30c\uc545\ud558\ub824\uba74 \ub370\uc774\ud130 \uc18c\uc2a4\uc640 \ucffc\ub9ac \uc870\uac74\uc744 \uc7ac\ud655\uc778\ud558\uace0, \ud544\uc694 \uc2dc \ubc94\uc704\ub97c \ud655\uc7a5\ud558\uac70\ub098 \ucd94\uac00 \ub85c\uadf8/\uba54\ud2b8\ub9ad \uc218\uc9d1 \ud6c4 \uc7ac\uc2e4\ud589\uc744 \uad8c\ud569\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ubcf4\uac15\ub418\uba74 \uad6c\uccb4\uc801 \ucd5c\uc801\ud654 \uad8c\uace0\ub97c \uc81c\uacf5\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+        "blocks": [
+          {
+            "type": "markdown",
+            "content": "LOOKUP \uc2e4\ud589 \uacb0\uacfc\uc5d0\uc11c \uc2dc\uc2a4\ud15c \ucd5c\uc801\ud654\uc5d0 \ub300\ud55c \uad8c\uace0 \ud56d\ubaa9\uc740 **0\uac74**\uc73c\ub85c \ubc1c\uacac\ub418\uc5c8\uc2b5\ub2c8\ub2e4. \uc774\ub294 \ub370\uc774\ud130\uac00 \ube44\uc5b4 \uc788\uac70\ub098 \ub9e4\uce6d \ud56d\ubaa9\uc774 \uc5c6\uc5b4 \ucd94\ucc9c\uc744 \ub3c4\ucd9c\ud558\uc9c0 \ubabb\ud588\ub2e4\ub294 \uc758\ubbf8\uc785\ub2c8\ub2e4. \uc6d0\uc778\uc744 \ud30c\uc545\ud558\ub824\uba74 \ub370\uc774\ud130 \uc18c\uc2a4\uc640 \ucffc\ub9ac \uc870\uac74\uc744 \uc7ac\ud655\uc778\ud558\uace0, \ud544\uc694 \uc2dc \ubc94\uc704\ub97c \ud655\uc7a5\ud558\uac70\ub098 \ucd94\uac00 \ub85c\uadf8/\uba54\ud2b8\ub9ad \uc218\uc9d1 \ud6c4 \uc7ac\uc2e4\ud589\uc744 \uad8c\ud569\ub2c8\ub2e4. \ub370\uc774\ud130\uac00 \ubcf4\uac15\ub418\uba74 \uad6c\uccb4\uc801 \ucd5c\uc801\ud654 \uad8c\uace0\ub97c \uc81c\uacf5\ub4dc\ub9ac\uaca0\uc2b5\ub2c8\ub2e4.",
+            "metadata": {
+              "generated_by": "llm_compose"
+            }
+          },
+          {
+            "type": "text",
+            "text": "No CI matches found.",
+            "title": "Lookup"
+          }
+        ]
+      },
+      "trace_analysis": {
+        "total_duration_ms": 9738,
+        "stage_breakdown": {},
+        "stage_inputs_count": 5,
+        "applied_assets": {
+          "policy": {
+            "name": "view_depth_policies",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "8f1edfe2-7950-4d5b-808b-cc1762c25209",
+            "policy_type": "view_depth",
+            "mapping_type": null
+          },
+          "prompt": {
+            "name": "ci_compose_summary",
+            "scope": "ci",
+            "engine": "compose",
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "347ce84d-a155-4b0e-aeab-489da9f5d625",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "schema": null,
+          "source": {
+            "name": "primary_postgres",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3a729a28-d7bb-4daf-8254-e3243fb22da2",
+            "policy_type": null,
+            "mapping_type": null
+          },
+          "mapping": {
+            "name": "output_type_priorities",
+            "scope": null,
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+            "policy_type": null,
+            "mapping_type": "output_type_priorities"
+          },
+          "queries": [],
+          "screens": [],
+          "resolver": {
+            "name": "default_resolver",
+            "scope": "default",
+            "engine": null,
+            "source": "asset_registry",
+            "version": 1,
+            "asset_id": "92406ef9-a12f-419c-9b9e-56bf7e08b63e",
+            "policy_type": null,
+            "mapping_type": null
+          }
+        }
+      },
+      "validation": {
+        "answer_generated": true,
+        "trace_complete": false,
+        "all_stages_executed": false,
+        "assets_populated": true
+      },
+      "result": "FAIL"
+    }
+  ],
+  "by_category": {
+    "System Status": {
+      "pass": 0,
+      "fail": 3,
+      "total": 3,
+      "tests": [
+        1,
+        2,
+        3
+      ]
+    },
+    "Metrics": {
+      "pass": 0,
+      "fail": 5,
+      "total": 5,
+      "tests": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ]
+    },
+    "Relationships": {
+      "pass": 0,
+      "fail": 4,
+      "total": 4,
+      "tests": [
+        9,
+        10,
+        11,
+        12
+      ]
+    },
+    "History": {
+      "pass": 0,
+      "fail": 4,
+      "total": 4,
+      "tests": [
+        13,
+        14,
+        15,
+        16
+      ]
+    },
+    "Advanced": {
+      "pass": 0,
+      "fail": 4,
+      "total": 4,
+      "tests": [
+        17,
+        18,
+        19,
+        20
+      ]
+    }
+  },
+  "statistics": {
+    "response_times": {
+      "average_ms": 7494.5,
+      "median_ms": 7353.5,
+      "min_ms": 1164,
+      "max_ms": 12712,
+      "stdev_ms": 2522.3959057339034
+    }
+  }
+}

@@ -458,6 +458,8 @@ def ask_ci(
     duration_ms: int | None = None
     trace_payload: dict[str, Any] | None = None
     flow_spans: list[Dict[str, Any]] = []
+    active_trace_id: str | None = None
+    parent_trace_id: str | None = None
 
     # Initialize span tracking for this trace
     clear_spans()

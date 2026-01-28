@@ -4990,6 +4990,15 @@ class CIOrchestratorRunner:
         stage_outputs: List[Dict[str, Any]] = []
         stages: List[Dict[str, Any]] = []
 
+        # Initialize trace_id early so it's available for stage input building
+        context = get_request_context()
+        trace_id = context.get("trace_id")
+        if not trace_id or trace_id == "-":
+            trace_id = context.get("request_id") or str(uuid.uuid4())
+        parent_trace_id = context.get("parent_trace_id")
+        if parent_trace_id == "-":
+            parent_trace_id = None
+
         self.logger.info(
             "ci.runner.stages.start",
             extra={
@@ -5361,14 +5370,6 @@ class CIOrchestratorRunner:
             self.logger.error("ci.runner.stages.error", extra={"error": str(exc)})
             blocks = [text_block(f"Error during execution: {str(exc)}")]
             answer = f"Error during execution: {str(exc)}"
-
-        context = get_request_context()
-        trace_id = context.get("trace_id")
-        if not trace_id or trace_id == "-":
-            trace_id = context.get("request_id") or str(uuid.uuid4())
-        parent_trace_id = context.get("parent_trace_id")
-        if parent_trace_id == "-":
-            parent_trace_id = None
 
         route_kind = (
             "orch"
