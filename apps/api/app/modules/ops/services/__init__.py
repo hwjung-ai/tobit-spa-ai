@@ -30,13 +30,39 @@ from schemas.tool_contracts import ExecutorResult
 
 from app.modules.inspector.service import persist_execution_trace
 
-# Legacy executors
-from .executors.config_executor import run_config as run_config_executor
-from .executors.graph_executor import run_graph
-from .executors.hist_executor import run_hist
-from .executors.metric_executor import run_metric
+# Legacy executors removed for generic orchestration
+# All executor functionality should be implemented as Tool Assets
 from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
+
+
+# Stub implementations for removed executors
+async def run_config_executor(question: str, **kwargs) -> tuple[Any, list[str]]:
+    """Removed executor - config_executor.py has been deleted for generic orchestration."""
+    logger = logging.getLogger(__name__)
+    logger.error("Executor 'config_executor' is no longer available. Please implement as Tool Asset.")
+    return (AnswerEnvelope(blocks=[]), [])
+
+
+async def run_graph(question: str, **kwargs) -> tuple[Any, list[str]]:
+    """Removed executor - graph_executor.py has been deleted for generic orchestration."""
+    logger = logging.getLogger(__name__)
+    logger.error("Executor 'graph_executor' is no longer available. Please implement as Tool Asset.")
+    return (AnswerEnvelope(blocks=[]), [])
+
+
+async def run_hist(question: str, **kwargs) -> tuple[Any, list[str]]:
+    """Removed executor - hist_executor.py has been deleted for generic orchestration."""
+    logger = logging.getLogger(__name__)
+    logger.error("Executor 'hist_executor' is no longer available. Please implement as Tool Asset.")
+    return (AnswerEnvelope(blocks=[]), [])
+
+
+async def run_metric(question: str, **kwargs) -> tuple[Any, list[str]]:
+    """Removed executor - metric_executor.py has been deleted for generic orchestration."""
+    logger = logging.getLogger(__name__)
+    logger.error("Executor 'metric_executor' is no longer available. Please implement as Tool Asset.")
+    return (AnswerEnvelope(blocks=[]), [])
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 

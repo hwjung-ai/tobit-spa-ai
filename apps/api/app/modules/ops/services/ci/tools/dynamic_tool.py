@@ -11,8 +11,7 @@ from typing import Any
 from core.logging import get_logger
 
 from .base import BaseTool, ToolContext, ToolResult
-from ...asset_registry.loader import load_source_asset
-from ...asset_registry.schemas import ToolAssetRead
+from app.modules.asset_registry.loader import load_source_asset
 
 logger = get_logger(__name__)
 
@@ -20,17 +19,28 @@ logger = get_logger(__name__)
 class DynamicTool(BaseTool):
     """Tool that executes based on Tool Asset configuration."""
 
-    def __init__(
-        self,
-        asset_id: str,
-        asset_data: ToolAssetRead,
-    ):
-        self.asset_id = asset_id
-        self.asset_data = asset_data
-        self.tool_type = asset_data.tool_type
-        self.tool_config = asset_data.tool_config
-        self.input_schema = asset_data.tool_input_schema
-        self.output_schema = asset_data.tool_output_schema
+    def __init__(self, tool_asset: dict[str, Any]):
+        """
+        Initialize DynamicTool from a tool asset dictionary.
+
+        Args:
+            tool_asset: Dictionary containing tool configuration with keys:
+                - name: Tool name
+                - asset_id: Asset ID (optional)
+                - tool_type: Type of tool (database_query, http_api, graph_query, custom)
+                - tool_config: Tool configuration dict
+                - tool_input_schema: Input schema dict
+                - tool_output_schema: Output schema dict (optional)
+                - description: Tool description (optional)
+        """
+        self.asset_id = tool_asset.get("asset_id")
+        self.asset_data = tool_asset
+        self.name = tool_asset.get("name", "unknown")
+        self.description = tool_asset.get("description", "")
+        self.tool_type = tool_asset.get("tool_type", "custom")
+        self.tool_config = tool_asset.get("tool_config", {})
+        self.input_schema = tool_asset.get("tool_input_schema", {})
+        self.output_schema = tool_asset.get("tool_output_schema", {})
 
     async def execute(
         self, context: ToolContext, input_data: dict[str, Any]

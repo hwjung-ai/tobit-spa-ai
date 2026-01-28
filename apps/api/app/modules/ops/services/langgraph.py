@@ -10,9 +10,25 @@ from schemas import AnswerBlock, MarkdownBlock
 from app.llm.client import get_llm_client
 from app.shared import config_loader
 
-from .executors.graph_executor import run_graph
-from .executors.hist_executor import run_hist
-from .executors.metric_executor import run_metric
+# Executor imports removed for generic orchestration
+# These functions are stubbed as they use deleted executor files
+# They will be properly implemented via Tool Assets
+async def run_metric(question: str, **kwargs):
+    """Stub: metric executor removed"""
+    from schemas import AnswerEnvelope
+    return AnswerEnvelope(blocks=[]), []
+
+
+async def run_hist(question: str, **kwargs):
+    """Stub: hist executor removed"""
+    from schemas import AnswerEnvelope
+    return AnswerEnvelope(blocks=[]), []
+
+
+async def run_graph(question: str, **kwargs):
+    """Stub: graph executor removed"""
+    from schemas import AnswerEnvelope
+    return AnswerEnvelope(blocks=[]), []
 
 
 class LangGraphPlan(BaseModel):

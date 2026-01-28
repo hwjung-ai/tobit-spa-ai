@@ -1,5 +1,4 @@
-from .graph_executor import run_graph
-from .hist_executor import run_hist
-from .metric_executor import run_metric
+# Executors removed for generic orchestration
+# All executor functionality should be implemented as Tool Assets
 
-__all__ = ["run_metric", "run_hist", "run_graph"]
+__all__ = []
