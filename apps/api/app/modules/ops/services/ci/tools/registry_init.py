@@ -1,42 +1,56 @@
 """
 Tool registry initialization module.
 
-This module automatically registers all tools when imported, ensuring they are
-available through the global ToolRegistry for use by the orchestrator.
+This module initializes the tool registry from Asset Registry (database).
+All tools are now defined as Tool Assets and dynamically loaded at runtime.
 
-Import this module early in your application startup to initialize all tools.
+Import this module early in your application startup to initialize tools.
 """
 
 from __future__ import annotations
 
-from app.modules.ops.services.ci.tools.base import (
-    CommonToolTypes,
-    register_tool,
-)
-from app.modules.ops.services.ci.tools.cep import CEPTool
+import logging
 
-# Import tool classes to trigger their instantiation and registration
-from app.modules.ops.services.ci.tools.ci import CITool
-from app.modules.ops.services.ci.tools.graph import GraphTool
-from app.modules.ops.services.ci.tools.history import HistoryTool
-from app.modules.ops.services.ci.tools.metric import MetricTool
+logger = logging.getLogger(__name__)
 
 
 def initialize_tools() -> None:
     """
-    Initialize and register all available tools.
+    Initialize and register all tools from Asset Registry.
 
-    This function registers all tool classes with the global ToolRegistry,
-    making them available for dynamic selection and execution by the orchestrator.
+    This function loads all published Tool Assets from the database and
+    registers them as DynamicTools with the global ToolRegistry.
 
     Should be called once during application startup.
     """
-    # Register each tool type with its implementation class
-    register_tool(CommonToolTypes.CI, CITool)
-    register_tool(CommonToolTypes.GRAPH, GraphTool)
-    register_tool(CommonToolTypes.METRIC, MetricTool)
-    register_tool(CommonToolTypes.HISTORY, HistoryTool)
-    register_tool(CommonToolTypes.CEP, CEPTool)
+    try:
+        from app.modules.asset_registry.loader import load_all_published_tools
+        from app.modules.ops.services.ci.tools.base import get_tool_registry
+        from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
+
+        registry = get_tool_registry()
+
+        try:
+            tool_assets = load_all_published_tools()
+        except Exception as e:
+            logger.warning(f"Could not load tools from Asset Registry: {e}")
+            logger.info("Continuing with empty tool registry (tools can be added via Admin UI)")
+            return
+
+        for tool_asset in tool_assets:
+            try:
+                tool = DynamicTool(tool_asset)
+                registry.register_dynamic(tool)
+                logger.info(f"Loaded tool from Asset Registry: {tool_asset['name']}")
+            except Exception as e:
+                logger.warning(
+                    f"Failed to load tool '{tool_asset.get('name', 'unknown')}' from Asset Registry: {e}"
+                )
+
+        logger.info(f"Successfully loaded {len(tool_assets)} tools from Asset Registry")
+
+    except Exception as e:
+        logger.error(f"Failed to initialize tools from Asset Registry: {e}")
 
 
 # Auto-initialize tools when this module is imported

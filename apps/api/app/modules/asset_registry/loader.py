@@ -776,3 +776,37 @@ def load_screen_asset(
 
     logger.warning(f"Screen asset not found: {name}")
     return None
+
+
+def load_all_published_tools() -> list[dict[str, Any]]:
+    """
+    Load all published Tool Assets from Asset Registry.
+
+    Returns:
+        List of tool asset dictionaries
+    """
+    with get_session_context() as session:
+        query = (
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "tool")
+            .where(TbAssetRegistry.status == "published")
+        )
+        tools = session.exec(query).all()
+
+        result = []
+        for asset in tools:
+            tool_asset = {
+                "asset_id": str(asset.asset_id),
+                "name": asset.name,
+                "description": asset.description,
+                "tool_type": asset.tool_type,
+                "tool_config": asset.tool_config or {},
+                "tool_input_schema": asset.tool_input_schema or {},
+                "tool_output_schema": asset.tool_output_schema or {},
+                "version": asset.version,
+                "source": "asset_registry",
+            }
+            result.append(tool_asset)
+
+        logger.info(f"Loaded {len(result)} tool assets from Asset Registry")
+        return result
