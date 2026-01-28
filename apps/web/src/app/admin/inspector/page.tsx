@@ -209,13 +209,22 @@ function InspectorContent() {
       setSelectedTraceId(response.data.trace.trace_id);
       } catch (err: unknown) {
         console.error("[Inspector] Error fetching trace detail:", err);
-        const errorObj = err as Error | { message: string; details?: unknown };
+        const errorObj = err as Error | { message: string; statusCode?: number; details?: unknown };
         console.error("[Inspector] Error message:", errorObj.message);
         if ('stack' in errorObj) {
           console.error("[Inspector] Error stack:", (errorObj as Error).stack);
         }
         const placeholder = createPlaceholderTraceDetail(traceId);
-        setDetailError(errorObj.message || "실행 증거를 불러오지 못했습니다.");
+
+        // Provide specific error message for 404 Not Found
+        let errorMessage = "실행 증거를 불러오지 못했습니다.";
+        if ((errorObj as any).statusCode === 404 || errorObj.message?.includes("404")) {
+          errorMessage = `'${traceId}' 실행 증거를 찾을 수 없습니다. 올바른 trace_id를 입력해주세요.`;
+        } else {
+          errorMessage = errorObj.message || errorMessage;
+        }
+
+        setDetailError(errorMessage);
         setTraceDetail(placeholder);
         setTraceAuditLogs([]);
     } finally {

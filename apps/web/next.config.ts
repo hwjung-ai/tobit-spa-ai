@@ -91,6 +91,11 @@ const nextConfig: NextConfig = {
         source: "/threads/:path*",
         destination: `${API_BASE_URL}/threads/:path*`,
       },
+      // Proxy data routes (for Explorer - postgres, neo4j, redis)
+      {
+        source: "/data/:path*",
+        destination: `${API_BASE_URL}/data/:path*`,
+      },
       // Proxy documents routes
       {
         source: "/documents",
