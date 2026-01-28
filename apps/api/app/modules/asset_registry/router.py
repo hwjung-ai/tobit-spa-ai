@@ -1463,7 +1463,7 @@ def create_tool(
             tool_output_schema=payload.get("tool_output_schema"),
             tool_catalog_ref=payload.get("tool_catalog_ref"),
             tags=payload.get("tags"),
-            created_by=current_user.user_id if current_user else "admin",
+            created_by=current_user.id if current_user else "admin",
         )
 
         return ResponseEnvelope.success(
@@ -1559,7 +1559,7 @@ def publish_tool(
             raise HTTPException(status_code=404, detail="Tool not found")
 
         asset.status = "published"
-        asset.published_by = current_user.user_id if current_user else "admin"
+        asset.published_by = current_user.id if current_user else "admin"
         asset.published_at = datetime.now()
         asset.updated_at = datetime.now()
         session.add(asset)
