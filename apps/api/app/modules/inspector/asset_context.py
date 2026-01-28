@@ -9,6 +9,9 @@ AssetInfo = Dict[str, Any]
 _ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar(
     "inspector_asset_context", default=None
 )
+_STAGE_ASSET_CONTEXT: ContextVar[Dict[str, Any] | None] = ContextVar(
+    "inspector_stage_asset_context", default=None
+)
 
 
 def _initial_context() -> Dict[str, Any]:
@@ -102,3 +105,149 @@ def track_screen_asset(info: AssetInfo) -> None:
     screens.append(info)
     context["screens"] = screens
     _ASSET_CONTEXT.set(context)
+
+
+def begin_stage_asset_tracking() -> None:
+    """Reset asset tracking for a new stage.
+
+    This should be called at the beginning of each stage to ensure
+    only assets used in this stage are tracked.
+    """
+    _STAGE_ASSET_CONTEXT.set(_initial_context())
+
+
+def end_stage_asset_tracking() -> Dict[str, Any]:
+    """Capture stage-specific assets and reset stage context.
+
+    Returns the assets tracked during this stage.
+    """
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+
+    # Copy stage assets to return
+    stage_assets = {
+        "prompt": stage_context.get("prompt"),
+        "policy": stage_context.get("policy"),
+        "mapping": stage_context.get("mapping"),
+        "source": stage_context.get("source"),
+        "schema": stage_context.get("schema"),
+        "resolver": stage_context.get("resolver"),
+        "queries": list(stage_context.get("queries", [])),
+        "screens": list(stage_context.get("screens", [])),
+    }
+
+    # Reset stage context
+    _STAGE_ASSET_CONTEXT.set(_initial_context())
+    return stage_assets
+
+
+def get_stage_assets() -> Dict[str, Any]:
+    """Return assets tracked for the current stage only."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+        _STAGE_ASSET_CONTEXT.set(stage_context)
+
+    return {
+        "prompt": stage_context.get("prompt"),
+        "policy": stage_context.get("policy"),
+        "mapping": stage_context.get("mapping"),
+        "source": stage_context.get("source"),
+        "schema": stage_context.get("schema"),
+        "resolver": stage_context.get("resolver"),
+        "queries": list(stage_context.get("queries", [])),
+        "screens": list(stage_context.get("screens", [])),
+    }
+
+
+def track_prompt_asset_to_stage(info: AssetInfo) -> None:
+    """Track prompt asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["prompt"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_prompt_asset(info)
+
+
+def track_policy_asset_to_stage(info: AssetInfo) -> None:
+    """Track policy asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["policy"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_policy_asset(info)
+
+
+def track_mapping_asset_to_stage(info: AssetInfo) -> None:
+    """Track mapping asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["mapping"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_mapping_asset(info)
+
+
+def track_source_asset_to_stage(info: AssetInfo) -> None:
+    """Track source asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["source"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_source_asset(info)
+
+
+def track_schema_asset_to_stage(info: AssetInfo) -> None:
+    """Track schema asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["schema"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_schema_asset(info)
+
+
+def track_resolver_asset_to_stage(info: AssetInfo) -> None:
+    """Track resolver asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    stage_context["resolver"] = info
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_resolver_asset(info)
+
+
+def track_query_asset_to_stage(info: AssetInfo) -> None:
+    """Track query asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    queries = list(stage_context.get("queries", []))
+    queries.append(info)
+    stage_context["queries"] = queries
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_query_asset(info)
+
+
+def track_screen_asset_to_stage(info: AssetInfo) -> None:
+    """Track screen asset to stage context (in addition to global context)."""
+    stage_context = _STAGE_ASSET_CONTEXT.get()
+    if stage_context is None:
+        stage_context = _initial_context()
+    screens = list(stage_context.get("screens", []))
+    screens.append(info)
+    stage_context["screens"] = screens
+    _STAGE_ASSET_CONTEXT.set(stage_context)
+    # Also track globally
+    track_screen_asset(info)

@@ -14,7 +14,12 @@ from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
 from core.logging import get_logger, get_request_context
 from schemas.tool_contracts import ToolCall
 
-from app.modules.inspector.asset_context import get_tracked_assets
+from app.modules.inspector.asset_context import (
+    begin_stage_asset_tracking,
+    end_stage_asset_tracking,
+    get_stage_assets,
+    get_tracked_assets,
+)
 from app.modules.inspector.span_tracker import end_span, start_span
 from app.modules.ops.schemas import (
     ExecutionContext,
@@ -416,51 +421,74 @@ class CIOrchestratorRunner:
         return {"kind": "row", "title": title, "payload": payload}
 
     def _resolve_applied_assets(self) -> Dict[str, str]:
-        assets = get_tracked_assets()
+        """Resolve applied assets with user-friendly display format.
+
+        Returns Dict[str, str] where:
+        - Key: asset_type (e.g., "prompt", "schema", "mapping")
+        - Value: User-friendly display name like "asset_name (v1)" or "fallback"
+        """
+        assets = get_stage_assets()
         applied: Dict[str, str] = {}
 
-        def normalize_ref(info: Dict[str, Any]) -> str:
-            asset_id = info.get("asset_id")
-            version = info.get("version")
+        def format_asset_display(info: Dict[str, Any]) -> str:
+            """Format asset info for user-friendly display.
+
+            Returns a clean string like "asset_name (v1)" or "fallback".
+            """
             name = info.get("name") or info.get("screen_id") or "unknown"
-            if asset_id and version is not None:
-                return f"{asset_id}:v{version}"
-            if asset_id:
-                return str(asset_id)
-            source = info.get("source") or "unknown"
-            return f"{name}@{source}"
+            version = info.get("version")
+            source = info.get("source", "asset_registry")
+
+            # For non-asset registry sources, show source info
+            if source != "asset_registry":
+                return f"{name} (fallback)"
+
+            # For asset registry assets, show name with version
+            if version is not None:
+                return f"{name} (v{version})"
+            return name
 
         for key in ("prompt", "policy", "mapping", "source", "schema", "resolver"):
             info = assets.get(key)
             if not info:
                 continue
-            applied[key] = normalize_ref(info)
+            applied[key] = format_asset_display(info)
             override_key = f"{key}:{info.get('name')}"
             override = self.asset_overrides.get(override_key)
             if override:
-                applied[key] = override
+                # Override can be a direct string value
+                applied[key] = str(override)
 
         for entry in assets.get("queries", []) or []:
             if not entry:
                 continue
             name = entry.get("name") or entry.get("asset_id") or "query"
+            version = entry.get("version")
+            if version is not None:
+                display_name = f"{name} (v{version})"
+            else:
+                display_name = name
+            applied[f"query:{name}"] = display_name
             override_key = f"query:{name}"
-            applied_key = f"query:{name}"
-            applied[applied_key] = normalize_ref(entry)
             override = self.asset_overrides.get(override_key)
             if override:
-                applied[applied_key] = override
+                applied[f"query:{name}"] = str(override)
 
         for entry in assets.get("screens", []) or []:
             if not entry:
                 continue
             screen_id = entry.get("screen_id") or entry.get("asset_id") or "screen"
+            name = entry.get("screen_id") or entry.get("name") or screen_id
+            version = entry.get("version")
+            if version is not None:
+                display_name = f"{name} (v{version})"
+            else:
+                display_name = name
+            applied[f"screen:{screen_id}"] = display_name
             override_key = f"screen:{screen_id}"
-            applied_key = f"screen:{screen_id}"
-            applied[applied_key] = normalize_ref(entry)
             override = self.asset_overrides.get(override_key)
             if override:
-                applied[applied_key] = override
+                applied[f"screen:{screen_id}"] = str(override)
 
         return applied
 
@@ -4977,6 +5005,8 @@ class CIOrchestratorRunner:
             )
 
         try:
+            # route_plan stage
+            begin_stage_asset_tracking()
             route_start = perf_counter()
             route_input = self._build_stage_input("route_plan", plan_output)
             route_result = {
@@ -4993,6 +5023,8 @@ class CIOrchestratorRunner:
             record_stage("route_plan", route_input, route_output)
 
             if plan_output.kind == PlanOutputKind.DIRECT:
+                # validate stage
+                begin_stage_asset_tracking()
                 validate_input = self._build_stage_input(
                     "validate", plan_output, route_output.model_dump()
                 )
@@ -5007,6 +5039,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("validate", validate_input, validate_output)
 
+                # execute stage (DIRECT path)
+                begin_stage_asset_tracking()
                 execute_input = self._build_stage_input(
                     "execute", plan_output, validate_output.model_dump()
                 )
@@ -5021,6 +5055,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("execute", execute_input, execute_output)
 
+                # compose stage (DIRECT path)
+                begin_stage_asset_tracking()
                 compose_input = self._build_stage_input(
                     "compose", plan_output, execute_output.model_dump()
                 )
@@ -5035,6 +5071,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("compose", compose_input, compose_output)
 
+                # present stage (DIRECT path)
+                begin_stage_asset_tracking()
                 present_start = perf_counter()
                 present_input = self._build_stage_input(
                     "present", plan_output, compose_output.model_dump()
@@ -5054,6 +5092,8 @@ class CIOrchestratorRunner:
                 record_stage("present", present_input, present_output)
 
             elif plan_output.kind == PlanOutputKind.REJECT:
+                # validate stage (REJECT path)
+                begin_stage_asset_tracking()
                 validate_input = self._build_stage_input(
                     "validate", plan_output, route_output.model_dump()
                 )
@@ -5068,6 +5108,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("validate", validate_input, validate_output)
 
+                # execute stage (REJECT path)
+                begin_stage_asset_tracking()
                 execute_input = self._build_stage_input(
                     "execute", plan_output, validate_output.model_dump()
                 )
@@ -5082,6 +5124,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("execute", execute_input, execute_output)
 
+                # compose stage (REJECT path)
+                begin_stage_asset_tracking()
                 compose_input = self._build_stage_input(
                     "compose", plan_output, execute_output.model_dump()
                 )
@@ -5096,6 +5140,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("compose", compose_input, compose_output)
 
+                # present stage (REJECT path)
+                begin_stage_asset_tracking()
                 present_start = perf_counter()
                 present_input = self._build_stage_input(
                     "present", plan_output, compose_output.model_dump()
@@ -5117,6 +5163,8 @@ class CIOrchestratorRunner:
                 record_stage("present", present_input, present_output)
 
             else:
+                # validate stage (PLAN path)
+                begin_stage_asset_tracking()
                 validate_start = perf_counter()
                 validate_input = self._build_stage_input(
                     "validate", plan_output, route_output.model_dump()
@@ -5135,6 +5183,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("validate", validate_input, validate_output)
 
+                # execute stage (PLAN path)
+                begin_stage_asset_tracking()
                 execute_start = perf_counter()
                 base_result = await self._run_async()
                 blocks = base_result.get("blocks", [])
@@ -5164,6 +5214,8 @@ class CIOrchestratorRunner:
                 )
                 record_stage("execute", execute_input, execute_output)
 
+                # compose stage (PLAN path)
+                begin_stage_asset_tracking()
                 compose_start = perf_counter()
                 compose_input = self._build_stage_input(
                     "compose", plan_output, execute_output.model_dump()
@@ -5174,6 +5226,8 @@ class CIOrchestratorRunner:
                 compose_output = await self._stage_executor.execute_stage(compose_input)
                 record_stage("compose", compose_input, compose_output)
 
+                # present stage (PLAN path)
+                begin_stage_asset_tracking()
                 present_start = perf_counter()
                 # Build present_input with both compose_output and base_result
                 present_input = self._build_stage_input(

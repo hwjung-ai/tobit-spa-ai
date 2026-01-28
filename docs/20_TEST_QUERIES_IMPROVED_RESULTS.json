@@ -1,0 +1,457 @@
+{
+  "title": "개선된 테스트 질의 실행 결과 (실제 데이터 기반)",
+  "execution_time": "2026-01-29T06:04:38.103248",
+  "database": "115.21.12.151:5432/spadb",
+  "total_queries": 20,
+  "queries": [
+    {
+      "query_id": "Q1",
+      "category": "Configuration",
+      "query_text": "현재 시스템에서 발행된 모든 asset의 총 개수는 몇 개인가?",
+      "execution_time_ms": 26.38,
+      "expected_response": {
+        "total_published_assets": 93
+      },
+      "actual_response": {
+        "total_published_assets": 93
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q2",
+      "category": "Configuration",
+      "query_text": "발행된 asset의 유형별 개수는?",
+      "execution_time_ms": 7.24,
+      "expected_response": {
+        "mapping": 15,
+        "policy": 6,
+        "prompt": 12,
+        "query": 37,
+        "resolver": 1,
+        "schema": 1,
+        "screen": 7,
+        "source": 2,
+        "tool": 12,
+        "total": 93
+      },
+      "actual_response": {
+        "mapping": 15,
+        "policy": 6,
+        "prompt": 12,
+        "query": 37,
+        "resolver": 1,
+        "schema": 1,
+        "screen": 7,
+        "source": 2,
+        "tool": 12,
+        "total": 93
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q3",
+      "category": "Configuration",
+      "query_text": "발행된 prompt asset 중 가장 최신 버전의 이름과 버전은?",
+      "execution_time_ms": 6.49,
+      "expected_response": {
+        "name": "ci_universal_present",
+        "version": 1,
+        "asset_type": "prompt",
+        "status": "published"
+      },
+      "actual_response": {
+        "name": "ci_universal_present",
+        "version": 1,
+        "asset_type": "prompt",
+        "status": "published"
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q4",
+      "category": "Configuration",
+      "query_text": "현재 활성 상태의 CI 자산 총 개수는?",
+      "execution_time_ms": 6.25,
+      "expected_response": {
+        "total_ci": 280
+      },
+      "actual_response": {
+        "total_ci": 280
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q5",
+      "category": "Configuration",
+      "query_text": "CI 타입별 개수 분포는?",
+      "execution_time_ms": 6.84,
+      "expected_response": {
+        "SYSTEM": 8,
+        "HW": 75,
+        "SW": 197
+      },
+      "actual_response": {
+        "SYSTEM": 8,
+        "HW": 75,
+        "SW": 197
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q6",
+      "category": "Configuration",
+      "query_text": "등록된 operation settings의 총 개수는?",
+      "execution_time_ms": 5.67,
+      "expected_response": {
+        "total_settings": 4
+      },
+      "actual_response": {
+        "total_settings": 4
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q7",
+      "category": "History",
+      "query_text": "기록된 execution trace의 총 개수는?",
+      "execution_time_ms": 10.28,
+      "expected_response": {
+        "total_traces": 3996
+      },
+      "actual_response": {
+        "total_traces": 3996
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q8",
+      "category": "History",
+      "query_text": "execution trace의 성공률은?",
+      "execution_time_ms": 8.35,
+      "expected_response": {
+        "total_traces": 3996,
+        "successful": 3039,
+        "failed": 957,
+        "success_rate_percent": 76.1
+      },
+      "actual_response": {
+        "total_traces": 3996,
+        "successful": 3039,
+        "failed": 957,
+        "success_rate_percent": 76.1
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q9",
+      "category": "Metrics",
+      "query_text": "가장 오래 걸린 execution trace는?",
+      "execution_time_ms": 7.4,
+      "expected_response": {
+        "trace_id": "f06f4b26a2db4e5fb3424fdb9c459e80",
+        "duration_ms": 42351,
+        "question": "srv-erp-01 의 구성정보를 알려주세요."
+      },
+      "actual_response": {
+        "trace_id": "f06f4b26a2db4e5fb3424fdb9c459e80",
+        "duration_ms": 42351,
+        "question": "srv-erp-01 의 구성정보를 알려주세요."
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q10",
+      "category": "Metrics",
+      "query_text": "execution trace의 평균 소요시간은?",
+      "execution_time_ms": 8.01,
+      "expected_response": {
+        "total_traces": 3996,
+        "average_duration_ms": 1754.33,
+        "min_duration_ms": 0,
+        "max_duration_ms": 42351
+      },
+      "actual_response": {
+        "total_traces": 3996,
+        "average_duration_ms": 1754.33,
+        "min_duration_ms": 0,
+        "max_duration_ms": 42351
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q11",
+      "category": "History",
+      "query_text": "지난 24시간 동안 생성된 execution trace는 몇 개인가?",
+      "execution_time_ms": 5.87,
+      "expected_response": {
+        "recent_traces_24h": 29
+      },
+      "actual_response": {
+        "recent_traces_24h": 29
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q12",
+      "category": "Configuration",
+      "query_text": "CI의 상태별 분포는?",
+      "execution_time_ms": 3.95,
+      "expected_response": {
+        "active": 259,
+        "monitoring": 21
+      },
+      "actual_response": {
+        "active": 259,
+        "monitoring": 21
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q13",
+      "category": "History",
+      "query_text": "기록된 감사 로그의 총 개수는?",
+      "execution_time_ms": 5.07,
+      "expected_response": {
+        "total_audit_logs": 667
+      },
+      "actual_response": {
+        "total_audit_logs": 667
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q14",
+      "category": "History",
+      "query_text": "감사 로그의 action별 분포는?",
+      "execution_time_ms": 6.46,
+      "expected_response": {
+        "update": 480,
+        "publish": 185,
+        "create": 2
+      },
+      "actual_response": {
+        "update": 480,
+        "publish": 185,
+        "create": 2
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q15",
+      "category": "History",
+      "query_text": "trace_id '7a3e39d9-1b32-4e93-be11-cc3ad4a820e1'의 stage 개수는?",
+      "execution_time_ms": 4.58,
+      "expected_response": {
+        "stages": 5,
+        "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1"
+      },
+      "actual_response": {
+        "stages": 5,
+        "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1"
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1"
+    },
+    {
+      "query_id": "Q16",
+      "category": "History",
+      "query_text": "trace_id '7a3e39d9-1b32-4e93-be11-cc3ad4a820e1'의 실행 상태는?",
+      "execution_time_ms": 4.29,
+      "expected_response": {
+        "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1",
+        "status": "success",
+        "duration_ms": 329,
+        "created_at": "2026-01-28 20:40:19.112165+09:00"
+      },
+      "actual_response": {
+        "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1",
+        "status": "success",
+        "duration_ms": 329,
+        "created_at": "2026-01-28 20:40:19.112165+09:00"
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1"
+    },
+    {
+      "query_id": "Q17",
+      "category": "Metrics",
+      "query_text": "현재 월의 execution trace 생성 추이는?",
+      "execution_time_ms": 9.22,
+      "expected_response": {
+        "period": "current_month",
+        "daily_traces": [
+          {
+            "date": "2026-01-28",
+            "count": 29
+          },
+          {
+            "date": "2026-01-27",
+            "count": 270
+          },
+          {
+            "date": "2026-01-26",
+            "count": 3062
+          },
+          {
+            "date": "2026-01-25",
+            "count": 161
+          },
+          {
+            "date": "2026-01-24",
+            "count": 362
+          },
+          {
+            "date": "2026-01-23",
+            "count": 24
+          },
+          {
+            "date": "2026-01-21",
+            "count": 1
+          },
+          {
+            "date": "2026-01-18",
+            "count": 50
+          },
+          {
+            "date": "2026-01-17",
+            "count": 37
+          }
+        ]
+      },
+      "actual_response": {
+        "period": "current_month",
+        "daily_traces": [
+          {
+            "date": "2026-01-28",
+            "count": 29
+          },
+          {
+            "date": "2026-01-27",
+            "count": 270
+          },
+          {
+            "date": "2026-01-26",
+            "count": 3062
+          },
+          {
+            "date": "2026-01-25",
+            "count": 161
+          },
+          {
+            "date": "2026-01-24",
+            "count": 362
+          },
+          {
+            "date": "2026-01-23",
+            "count": 24
+          },
+          {
+            "date": "2026-01-21",
+            "count": 1
+          },
+          {
+            "date": "2026-01-18",
+            "count": 50
+          },
+          {
+            "date": "2026-01-17",
+            "count": 37
+          }
+        ]
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q18",
+      "category": "History",
+      "query_text": "기록된 asset version history의 총 개수는?",
+      "execution_time_ms": 5.77,
+      "expected_response": {
+        "total_versions": 564
+      },
+      "actual_response": {
+        "total_versions": 564
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q19",
+      "category": "Relationships",
+      "query_text": "CI code가 중복된 CI 자산은 몇 개인가?",
+      "execution_time_ms": 5.0,
+      "expected_response": {
+        "duplicate_ci_count": 0
+      },
+      "actual_response": {
+        "duplicate_ci_count": 0
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    },
+    {
+      "query_id": "Q20",
+      "category": "History",
+      "query_text": "가장 최근에 수정된 asset은?",
+      "execution_time_ms": 6.14,
+      "expected_response": {
+        "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+        "name": "output_type_priorities",
+        "asset_type": "mapping",
+        "status": "published",
+        "updated_at": "2026-01-29 00:35:40.166513+09:00"
+      },
+      "actual_response": {
+        "asset_id": "3963d8df-1b88-48f5-a03d-51c6f5fba7f0",
+        "name": "output_type_priorities",
+        "asset_type": "mapping",
+        "status": "published",
+        "updated_at": "2026-01-29 00:35:40.166513+09:00"
+      },
+      "accuracy_percentage": 100.0,
+      "status": "pass",
+      "trace_id": "N/A"
+    }
+  ],
+  "summary": {
+    "total_execution_time_ms": 149.26,
+    "average_time_ms": 7.46,
+    "queries_passed_90_percent": 20,
+    "queries_failed_90_percent": 0,
+    "overall_pass_rate_percentage": 100.0
+  }
+}

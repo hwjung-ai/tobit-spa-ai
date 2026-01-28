@@ -64,6 +64,34 @@ def run_metric(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
     logger.error("Executor 'metric_executor' is no longer available. Please implement as Tool Asset.")
     return ([], [])
 
+
+def execute_universal(
+    question: str, mode: str, tenant_id: str
+) -> ExecutorResult:
+    """Universal executor for relation, metric, history, and hist modes.
+
+    This is a stub implementation that returns empty results.
+    The actual functionality should be implemented as Tool Assets.
+    """
+    logger = logging.getLogger(__name__)
+    logger.error(
+        f"Executor for mode '{mode}' is not yet implemented. "
+        "Please implement as Tool Asset."
+    )
+
+    # Return empty ExecutorResult to prevent crashes
+    return ExecutorResult(
+        blocks=[],
+        used_tools=[],
+        tool_calls=[],
+        references=[],
+        summary={
+            "status": "not_implemented",
+            "message": f"Executor for mode '{mode}' is not yet available",
+        },
+    )
+
+
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
 
 

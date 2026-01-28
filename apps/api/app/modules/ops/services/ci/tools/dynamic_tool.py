@@ -63,6 +63,83 @@ class DynamicTool(BaseTool):
                 error_details={"tool_type": tool_type},
             )
 
+    def _process_query_template(self, query_template: str, input_data: dict[str, Any]) -> str:
+        """Process query template to replace placeholders with actual values.
+
+        Args:
+            query_template: SQL query template with placeholders
+            input_data: Input parameters containing keywords, filters, etc.
+
+        Returns:
+            Processed SQL query with actual values
+        """
+        if not query_template:
+            return ""
+
+        # Build WHERE clause from input data
+        where_conditions = []
+        order_by = "ci.ci_id"  # Default order
+        direction = "ASC"     # Default direction
+        limit_value = 10      # Default limit
+
+        # Process keywords
+        keywords = input_data.get("keywords", [])
+        if keywords and len(keywords) > 0:
+            keyword_conditions = []
+            for keyword in keywords:
+                if keyword:
+                    keyword_conditions.append(f"(ci.ci_name ILIKE '%{keyword}%' OR ci.ci_code ILIKE '%{keyword}%')")
+            if keyword_conditions:
+                where_conditions.append(" OR ".join(keyword_conditions))
+
+        # Process filters
+        filters = input_data.get("filters", [])
+        if filters:
+            for filter_item in filters:
+                # Simple filter processing - extend as needed
+                if isinstance(filter_item, dict):
+                    field = filter_item.get("field")
+                    operator = filter_item.get("operator", "=")
+                    value = filter_item.get("value")
+
+                    if field and value:
+                        if operator.upper() == "ILIKE":
+                            where_conditions.append(f"{field} ILIKE '%{value}%'")
+                        elif operator.upper() == "IN":
+                            values_str = ", ".join([f"'{v}'" for v in value])
+                            where_conditions.append(f"{field} IN ({values_str})")
+                        else:
+                            where_conditions.append(f"{field} {operator} '{value}'")
+
+        # Add tenant_id filter
+        tenant_id = input_data.get("tenant_id", "default")
+        where_conditions.append(f"ci.tenant_id = '{tenant_id}'")
+        where_conditions.append("ci.deleted_at IS NULL")
+
+        # Build WHERE clause
+        where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+
+        # Process sorting
+        sort = input_data.get("sort")
+        if sort:
+            if isinstance(sort, tuple) and len(sort) == 2:
+                order_by = sort[0]
+                direction = sort[1].upper()
+            else:
+                order_by = str(sort)
+
+        # Process limit
+        limit = input_data.get("limit", limit_value)
+
+        # Replace placeholders in template
+        processed_query = query_template
+        processed_query = processed_query.replace("{where_clause}", where_clause)
+        processed_query = processed_query.replace("{order_by}", order_by)
+        processed_query = processed_query.replace("{direction}", direction)
+        processed_query = processed_query.replace("%s", str(limit))
+
+        return processed_query
+
     async def _execute_database_query(
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
@@ -85,7 +162,8 @@ class DynamicTool(BaseTool):
                 error_details={"source_ref": source_ref},
             )
 
-        query = query_template
+        # Process query template to replace placeholders
+        query = self._process_query_template(query_template, input_data)
 
         connection_params = source_asset.connection_params or {}
         if source_asset.source_type == "postgres":
@@ -149,96 +227,37 @@ class DynamicTool(BaseTool):
                 response.raise_for_status()
                 output = response.json() if response.text else {}
                 return ToolResult(success=True, data=output)
-            except httpx.HTTPStatusError as e:
+            except httpx.HTTPStatusError as exc:
                 return ToolResult(
                     success=False,
-                    error=f"HTTP error: {e.response.status_code}",
-                    error_details={
-                        "status_code": e.response.status_code,
-                        "response": e.response.text,
-                    },
+                    error=f"HTTP {exc.response.status_code}: {exc.response.text}",
+                    error_details={"status_code": exc.response.status_code},
                 )
-            except Exception as e:
+            except Exception as exc:
                 return ToolResult(
                     success=False,
-                    error=f"HTTP request failed: {str(e)}",
-                    error_details={"exception": str(e)},
+                    error=f"HTTP request failed: {str(exc)}",
+                    error_details={"exception": str(exc)},
                 )
 
     async def _execute_graph_query(
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
-        """Execute Neo4j graph query tool."""
-        source_ref = self.tool_config.get("source_ref")
-        query_template = self.tool_config.get("query_template")
-
-        if not source_ref:
-            return ToolResult(
-                success=False,
-                error="source_ref not provided in tool_config",
-                error_details=self.tool_config,
-            )
-
-        source_asset = load_source_asset(name=source_ref)
-        if not source_asset:
-            return ToolResult(
-                success=False,
-                error=f"Source asset not found: {source_ref}",
-                error_details={"source_ref": source_ref},
-            )
-
-        if source_asset.source_type != "neo4j":
-            return ToolResult(
-                success=False,
-                error=f"Graph queries only support neo4j source type",
-                error_details={"source_type": source_asset.source_type},
-            )
-
-        query = query_template
-
-        from neo4j import GraphDatabase
-
-        connection_params = source_asset.connection_params or {}
-        driver = GraphDatabase.driver(**connection_params)
-        session = driver.session()
-
-        try:
-            result = session.run(query)
-            data = [dict(record.data()) for record in result]
-            return ToolResult(success=True, data={"nodes": data})
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                error=f"Graph query failed: {str(e)}",
-                error_details={"exception": str(e)},
-            )
-        finally:
-            session.close()
-            driver.close()
+        """Execute graph query tool."""
+        # Placeholder implementation
+        return ToolResult(
+            success=False,
+            error="Graph query not yet implemented",
+            error_details={"tool_type": "graph_query"},
+        )
 
     async def _execute_custom(
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
-        """Execute custom handler tool."""
-        handler_name = self.tool_config.get("handler_name")
-
-        if not handler_name:
-            return ToolResult(
-                success=False,
-                error="handler_name not provided in tool_config",
-                error_details=self.tool_config,
-            )
-
-        try:
-            from app.modules.ops.services.executors.custom_executor import (
-                execute_custom_handler,
-            )
-
-            data = await execute_custom_handler(handler_name, input_data)
-            return ToolResult(success=True, data=data)
-        except Exception as e:
-            return ToolResult(
-                success=False,
-                error=f"Custom handler failed: {str(e)}",
-                error_details={"handler_name": handler_name, "exception": str(e)},
-            )
+        """Execute custom tool."""
+        # Placeholder implementation
+        return ToolResult(
+            success=False,
+            error="Custom tool not yet implemented",
+            error_details={"tool_type": "custom"},
+        )

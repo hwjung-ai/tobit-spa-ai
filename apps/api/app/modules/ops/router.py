@@ -122,7 +122,7 @@ def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
     # history를 DB에 저장하고 ID 생성
     history_id = None
     try:
-        with get_session() as session:
+        with get_session_context() as session:
             session.add(history_entry)
             session.commit()
             session.refresh(history_entry)
@@ -142,7 +142,7 @@ def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
     status = "ok"
     if history_id:
         try:
-            with get_session() as session:
+            with get_session_context() as session:
                 history_entry = session.get(QueryHistory, history_id)
                 if history_entry:
                     history_entry.status = status
@@ -310,12 +310,9 @@ def rca_analyze_regression(
 
 
 def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
+    # Use default tenant_id if not provided in header
     if not x_tenant_id:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail="X-Tenant-Id header is required"
-        )
+        x_tenant_id = "default"
     return x_tenant_id
 
 
@@ -437,7 +434,7 @@ def ask_ci(
 
     # history를 DB에 저장하고 ID 생성
     try:
-        with get_session() as session:
+        with get_session_context() as session:
             session.add(history_entry)
             session.commit()
             session.refresh(history_entry)
@@ -1113,7 +1110,7 @@ def ask_ci(
         # 응답 완료 시 history 업데이트
         if history_id:
             try:
-                with get_session() as session:
+                with get_session_context() as session:
                     history_entry = session.get(QueryHistory, history_id)
                     if history_entry:
                         history_entry.status = status
@@ -1151,7 +1148,7 @@ def ask_ci(
         # 에러 발생 시 history도 업데이트
         if history_id:
             try:
-                with get_session() as session:
+                with get_session_context() as session:
                     history_entry = session.get(QueryHistory, history_id)
                     if history_entry:
                         history_entry.status = "error"
@@ -1231,7 +1228,7 @@ async def execute_ui_action(
             raise ValueError("Mock mode not allowed in OPS_MODE=real")
 
         # Execute action deterministically
-        with get_session() as session:
+        with get_session_context() as session:
             executor_result = await execute_action_deterministic(
                 action_id=payload.action_id,
                 inputs=payload.inputs,
@@ -1246,7 +1243,7 @@ async def execute_ui_action(
         duration_ms = int((time.time() - ts_start) * 1000)
         all_spans = get_all_spans()
 
-        with get_session() as session:
+        with get_session_context() as session:
             persist_execution_trace(
                 session=session,
                 trace_id=trace_id,
@@ -1322,7 +1319,7 @@ async def execute_ui_action(
             }
         ]
 
-        with get_session() as session:
+        with get_session_context() as session:
             persist_execution_trace(
                 session=session,
                 trace_id=trace_id,

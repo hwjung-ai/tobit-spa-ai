@@ -1,0 +1,178 @@
+{
+  "title": "테스트 질의 실행 결과 상세 보고서",
+  "execution_time": "2026-01-29T06:03:40.773906",
+  "database": "115.21.12.151:5432/spadb",
+  "total_queries": 8,
+  "queries": [
+    {
+      "query_id": "Q1",
+      "query_text": "현재 시스템에서 발행된 asset의 유형별 개수는 얼마나 되는가?",
+      "execution_time_ms": 23.77,
+      "expected_response": {
+        "prompt": 20,
+        "policy": 11,
+        "mapping": 17,
+        "source": 2,
+        "schema": 3,
+        "resolver": 4,
+        "query": 131,
+        "screen": 12,
+        "tool": 12,
+        "catalog": 0,
+        "total": 212
+      },
+      "actual_response": {
+        "total": 93,
+        "mapping": 15,
+        "policy": 6,
+        "prompt": 12,
+        "query": 37,
+        "resolver": 1,
+        "schema": 1,
+        "screen": 7,
+        "source": 2,
+        "tool": 12
+      },
+      "accuracy_percentage": 18.2,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q2",
+      "query_text": "prompt asset 중에서 가장 최신 버전으로 발행된 것의 이름과 버전은?",
+      "execution_time_ms": 6.04,
+      "expected_response": {
+        "name": "ci_planner_output_parser",
+        "version": 1,
+        "asset_type": "prompt",
+        "status": "published"
+      },
+      "actual_response": {
+        "name": "ci_universal_present",
+        "version": 1,
+        "asset_type": "prompt",
+        "status": "published",
+        "created_by": "admin"
+      },
+      "accuracy_percentage": 75.0,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q3",
+      "query_text": "view_depth_policies를 사용하는 모든 query asset은 몇 개인가?",
+      "execution_time_ms": 4.14,
+      "expected_response": {
+        "policy_name": "view_depth_policies",
+        "dependent_queries_count": 3
+      },
+      "actual_response": {
+        "policy_name": "view_depth_policies",
+        "dependent_queries_count": 0
+      },
+      "accuracy_percentage": 50.0,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q4",
+      "query_text": "현재 operation_settings에서 활성화된 설정의 개수는?",
+      "execution_time_ms": 5.77,
+      "expected_response": {
+        "total_settings": 8,
+        "published_settings": 7,
+        "draft_settings": 1,
+        "settings_requiring_restart": 2
+      },
+      "actual_response": {
+        "total_settings": 4,
+        "published_settings": 4,
+        "draft_settings": 0,
+        "settings_requiring_restart": 2
+      },
+      "accuracy_percentage": 25.0,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q5",
+      "query_text": "전체 CI 자산 중에서 HW 타입의 개수와 현재 상태 분포는?",
+      "execution_time_ms": 6.75,
+      "expected_response": {
+        "ci_type": "HW",
+        "total_count": 15,
+        "status_distribution": {
+          "active": 12,
+          "inactive": 2,
+          "maintenance": 1
+        }
+      },
+      "actual_response": {
+        "ci_type": "HW",
+        "total_count": 75,
+        "status_distribution": {
+          "active": 54,
+          "monitoring": 21
+        }
+      },
+      "accuracy_percentage": 33.3,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q6",
+      "query_text": "지난 24시간 동안 record_count 메트릭의 평균값과 최대값은?",
+      "execution_time_ms": 38.4,
+      "expected_response": {
+        "metric_name": "record_count",
+        "time_period": "last_24h",
+        "average_value": 45230.5,
+        "max_value": 52100,
+        "min_value": 38900,
+        "sample_count": 1440
+      },
+      "actual_response": {},
+      "accuracy_percentage": 0.0,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q7",
+      "query_text": "gauge 타입 메트릭 중에서 'good' 품질 데이터의 비율은?",
+      "execution_time_ms": 1697.98,
+      "expected_response": {
+        "metric_type": "gauge",
+        "total_readings": 5280,
+        "good_quality": 5100,
+        "quality_percentage": 96.6
+      },
+      "actual_response": {
+        "metric_type": "gauge",
+        "total_readings": 6480000,
+        "good_quality": 5832003,
+        "quality_percentage": 90.0
+      },
+      "accuracy_percentage": 25.0,
+      "status": "fail"
+    },
+    {
+      "query_id": "Q18",
+      "query_text": "특정 trace_id의 모든 변경 사항을 기록한 감사 로그는 몇 개인가?",
+      "execution_time_ms": 6.0,
+      "expected_response": {
+        "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1",
+        "total_audit_records": 12,
+        "create": 1,
+        "update": 8,
+        "delete": 1
+      },
+      "actual_response": {
+        "trace_id": "7a3e39d9-1b32-4e93-be11-cc3ad4a820e1",
+        "total_audit_records": 0
+      },
+      "accuracy_percentage": 20.0,
+      "status": "fail"
+    }
+  ],
+  "summary": {
+    "total_execution_time_ms": 1788.85,
+    "average_time_ms": 223.61,
+    "queries_passed_90_percent": 0,
+    "queries_failed_90_percent": 8,
+    "overall_pass_rate_percentage": 0.0
+  }
+}

@@ -44,6 +44,21 @@ _GRAPH_SCOPE_KEYWORDS_CACHE = None
 _AUTO_KEYWORDS_CACHE = None
 _FILTERABLE_FIELDS_CACHE = None
 
+# CI code pattern for extracting CI identifiers like sys-xxx, srv-yyy, etc
+CI_CODE_PATTERN = re.compile(
+    r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b",
+    re.IGNORECASE
+)
+
+# Views that represent graph-based scope analysis
+GRAPH_SCOPE_VIEWS = {View.COMPOSITION, View.DEPENDENCY, View.IMPACT, View.PATH}
+
+# Server filter keywords - used to detect when user is asking about servers specifically
+SERVER_FILTER_KEYWORDS = {
+    "서버", "server", "servers", "호스트", "host", "hosts",
+    "머신", "machine", "노드", "node", "nodes", "인스턴스", "instance"
+}
+
 # 정규식 패턴 (코드 구조상 필수적, 유지)
 ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 # Depth 파싱: "depth 10", "깊이 10" 등
