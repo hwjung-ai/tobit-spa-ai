@@ -190,43 +190,50 @@ function InspectorContent() {
     console.log("[Inspector] fetchTraceDetail called with traceId:", traceId);
     setDetailLoading(true);
     setDetailError(null);
+    setStatusMessage(null);
+
+    const token = localStorage.getItem("access_token");
+    const url = `/inspector/traces/${encodeURIComponent(traceId)}`;
+
     try {
-      console.log("[Inspector] Calling fetchApi for trace:", traceId);
-      const response = await fetchApi<TraceDetailResponse>(`/inspector/traces/${encodeURIComponent(traceId)}`);
-      console.log("[Inspector] fetchApi response received:", response);
-      if (!response.data.trace) {
-        console.warn("[Inspector] No trace in response data");
-        const placeholder = createPlaceholderTraceDetail(traceId);
-        setDetailError("Trace not found or invalid response");
-        setTraceDetail(placeholder);
-        setTraceAuditLogs([]);
-        setSelectedTraceId(traceId);
+      const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (response.status === 404) {
+        // trace_id not found - show toast only, don't open drawer
+        const errorMessage = `"${traceId}" trace_id를 찾을 수 없습니다.`;
+        setStatusMessage(errorMessage);
+        setDetailLoading(false);
         return;
       }
-      console.log("[Inspector] Setting trace detail:", response.data.trace.trace_id);
-      setTraceDetail(response.data.trace);
-      setTraceAuditLogs(response.data.audit_logs || []);
-      setSelectedTraceId(response.data.trace.trace_id);
-      } catch (err: unknown) {
-        console.error("[Inspector] Error fetching trace detail:", err);
-        const errorObj = err as Error | { message: string; statusCode?: number; details?: unknown };
-        console.error("[Inspector] Error message:", errorObj.message);
-        if ('stack' in errorObj) {
-          console.error("[Inspector] Error stack:", (errorObj as Error).stack);
-        }
-        const placeholder = createPlaceholderTraceDetail(traceId);
 
-        // Provide specific error message for 404 Not Found
-        let errorMessage = "실행 증거를 불러오지 못했습니다.";
-        if ((errorObj as any).statusCode === 404 || errorObj.message?.includes("404")) {
-          errorMessage = `'${traceId}' 실행 증거를 찾을 수 없습니다. 올바른 trace_id를 입력해주세요.`;
-        } else {
-          errorMessage = errorObj.message || errorMessage;
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
-        setDetailError(errorMessage);
-        setTraceDetail(placeholder);
-        setTraceAuditLogs([]);
+      const data = await response.json() as TraceDetailResponse;
+      console.log("[Inspector] fetch response received:", data);
+
+      if (!data.data?.trace) {
+        console.warn("[Inspector] No trace in response data");
+        setStatusMessage(`"${traceId}" trace_id를 찾을 수 없습니다.`);
+        setDetailLoading(false);
+        return;
+      }
+
+      console.log("[Inspector] Setting trace detail:", data.data.trace.trace_id);
+      setTraceDetail(data.data.trace);
+      setTraceAuditLogs(data.data.audit_logs || []);
+      setSelectedTraceId(data.data.trace.trace_id);
+      setStatusMessage(null); // Clear any error message
+    } catch (err: unknown) {
+      console.error("[Inspector] Error fetching trace detail:", err);
+      const errorMessage = err instanceof Error ? err.message : "실행 증거를 불러오지 못했습니다.";
+      setStatusMessage(errorMessage);
     } finally {
       setDetailLoading(false);
     }
@@ -314,10 +321,15 @@ function InspectorContent() {
 
   const handleLookup = () => {
     if (!lookupTraceId.trim()) {
-      setDetailError("Trace ID를 입력하세요.");
+      const msg = "Trace ID를 입력하세요.";
+      setDetailError(msg);
+      setStatusMessage(msg);
       return;
     }
-    fetchTraceDetail(lookupTraceId.trim());
+
+    // No format validation - let server check if trace_id exists
+    const traceId = lookupTraceId.trim();
+    fetchTraceDetail(traceId);
   };
 
   const handleCopyTraceId = useCallback(() => {
@@ -1746,8 +1758,9 @@ function InspectorContent() {
 
       <Toast
         message={statusMessage ?? ""}
-        type="info"
+        type={detailError ? "error" : "info"}
         onDismiss={() => setStatusMessage(null)}
+        duration={0}
       />
     </div>
   );

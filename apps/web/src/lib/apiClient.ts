@@ -136,7 +136,7 @@ export async function fetchApi<T = unknown>(
     let errorMessage = `HTTP ${response.status}`;
     try {
       const json = JSON.parse(text);
-      errorMessage = json.message || errorMessage;
+      errorMessage = json.message || json.detail || errorMessage;
     } catch {
       errorMessage = text || errorMessage;
     }

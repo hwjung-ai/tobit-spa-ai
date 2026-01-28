@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  skipTrailingSlashRedirect: true,  // Disable automatic trailing slash redirect
   async rewrites() {
     // Validate API_BASE_URL
     try {
@@ -22,7 +23,26 @@ const nextConfig: NextConfig = {
     }
 
     return [
-      // Proxy all API requests to backend
+      // Fix trailing slash for /api/documents (must come before /api/:path*)
+      {
+        source: "/api/documents",
+        destination: `${API_BASE_URL}/api/documents/`,
+      },
+      {
+        source: "/api/documents/:path*/",  // add trailing slash for sub-paths
+        destination: `${API_BASE_URL}/api/documents/:path*`,  // but backend expects no trailing slash for :id
+      },
+      // Fix: also handle /api/documents/ directly
+      {
+        source: "/api/documents/",
+        destination: `${API_BASE_URL}/api/documents/`,
+      },
+      // Proxy /api/settings to /settings (must come before /api/:path*)
+      {
+        source: "/api/settings/:path*",
+        destination: `${API_BASE_URL}/settings/:path*`,
+      },
+      // Proxy all other API requests to backend
       {
         source: "/api/:path*",
         destination: `${API_BASE_URL}/api/:path*`,
@@ -37,10 +57,10 @@ const nextConfig: NextConfig = {
         source: "/health",
         destination: `${API_BASE_URL}/health`,
       },
-      // Proxy history endpoint
+      // Proxy history endpoint (add trailing slash for FastAPI compatibility)
       {
         source: "/history",
-        destination: `${API_BASE_URL}/history`,
+        destination: `${API_BASE_URL}/history/`,
       },
       {
         source: "/history/:path*",
@@ -51,11 +71,7 @@ const nextConfig: NextConfig = {
         source: "/ops/:path*",
         destination: `${API_BASE_URL}/ops/:path*`,
       },
-      // Proxy admin/module routes
-      {
-        source: "/admin/:path*",
-        destination: `${API_BASE_URL}/admin/:path*`,
-      },
+      // NOTE: /admin routes are NOT proxied - they are Next.js pages that call specific APIs
       // Proxy asset registry
       {
         source: "/asset-registry/:path*",
@@ -86,7 +102,11 @@ const nextConfig: NextConfig = {
         source: "/ui-builder/:path*",
         destination: `${API_BASE_URL}/ui-builder/:path*`,
       },
-      // Proxy threads routes
+      // Proxy threads routes (add trailing slash only for list endpoint)
+      {
+        source: "/threads",
+        destination: `${API_BASE_URL}/threads/`,
+      },
       {
         source: "/threads/:path*",
         destination: `${API_BASE_URL}/threads/:path*`,
@@ -129,6 +149,11 @@ const nextConfig: NextConfig = {
       {
         source: "/api-keys/:path*",
         destination: `${API_BASE_URL}/api-keys/:path*`,
+      },
+      // Proxy /api/settings to /settings (avoid conflict with /admin/settings page)
+      {
+        source: "/api/settings/:path*",
+        destination: `${API_BASE_URL}/settings/:path*`,
       },
     ];
   },

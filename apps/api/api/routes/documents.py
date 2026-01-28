@@ -37,7 +37,7 @@ from workers.queue import enqueue_parse_document
 
 from api.routes.chat import _resolve_identity  # reuse identity resolver
 
-router = APIRouter(prefix="/documents", tags=["documents"])
+router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
 def _document_payload(document: Document) -> DocumentItem:

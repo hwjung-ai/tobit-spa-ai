@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 interface ToastProps {
     message: string;
@@ -12,6 +13,7 @@ interface ToastProps {
 export default function Toast({ message, type = "success", onDismiss, duration = 3000 }: ToastProps) {
     useEffect(() => {
         if (!message) return;
+        if (duration === 0) return; // Don't auto-dismiss if duration is 0
         const timer = setTimeout(() => {
             onDismiss?.();
         }, duration);
@@ -66,9 +68,18 @@ export default function Toast({ message, type = "success", onDismiss, duration =
         onDismiss?.();
     };
 
-    return (
-        <div className="fixed bottom-6 right-6 z-50 flex w-full max-w-xs flex-col gap-3">
-            <div className={`animate-slide-in rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
+    const toastContent = (
+        <div
+            style={{
+                position: "fixed",
+                bottom: "24px",
+                right: "24px",
+                zIndex: 99999,
+                maxWidth: "320px",
+                width: "100%"
+            }}
+        >
+            <div className={`rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
                 <div className="flex items-start gap-3">
                     <div className={`${textColor} mt-1`}>{icon}</div>
                     <p className={`text-sm font-medium leading-snug ${textColor}`}>{message}</p>
@@ -85,4 +96,11 @@ export default function Toast({ message, type = "success", onDismiss, duration =
             </div>
         </div>
     );
+
+    // Use Portal to render at document.body level
+    if (typeof window !== "undefined") {
+        return createPortal(toastContent, document.body);
+    }
+
+    return toastContent;
 }

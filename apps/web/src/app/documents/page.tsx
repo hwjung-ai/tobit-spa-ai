@@ -248,7 +248,7 @@ export default function DocumentsPage() {
 
   const fetchDocumentDetail = useCallback(
     async (documentId: string) => {
-      const payload = await authenticatedFetch(`/documents/${documentId}`) as { data?: { document: DocumentDetail } };
+      const payload = await authenticatedFetch(`/api/documents/${documentId}`) as { data?: { document: DocumentDetail } };
       setSelectedDocument(payload?.data?.document || null);
     },
     []
@@ -258,8 +258,11 @@ export default function DocumentsPage() {
     setLoadingDocuments(true);
     setDocumentsError(null);
     try {
-      const payload = await authenticatedFetch("/documents") as { data?: { documents: DocumentItem[] } };
-      setDocuments(payload?.data?.documents ?? []);
+      // Backend has /api/documents/ endpoint
+      const payload = await authenticatedFetch("/api/documents/") as { data?: { documents: DocumentItem[] } };
+      // Handle ResponseEnvelope format
+      const docs = payload?.data?.documents ?? [];
+      setDocuments(docs);
       const selectedId = selectedDocumentRef.current?.id;
       if (selectedId) {
         try {
@@ -408,8 +411,8 @@ export default function DocumentsPage() {
       const token = localStorage.getItem("access_token");
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
       const url = baseUrl
-        ? `${baseUrl}/documents/${selectedDocument.id}/query/stream`
-        : `/documents/${selectedDocument.id}/query/stream`;
+        ? `${baseUrl}/api/documents/${selectedDocument.id}/query/stream`
+        : `/api/documents/${selectedDocument.id}/query/stream`;
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -568,7 +571,7 @@ export default function DocumentsPage() {
     try {
       const token = localStorage.getItem("access_token");
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-      const url = baseUrl ? `${baseUrl}/documents/upload` : "/documents/upload";
+      const url = baseUrl ? `${baseUrl}/api/documents/upload` : "/api/documents/upload";
       const response = await fetch(url, {
         method: "POST",
         body: formData,
@@ -594,7 +597,7 @@ export default function DocumentsPage() {
 
   const deleteDocument = async (documentId: string) => {
     try {
-      await authenticatedFetch(`/documents/${documentId}`, {
+      await authenticatedFetch(`/api/documents/${documentId}`, {
         method: "DELETE",
       });
       setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
