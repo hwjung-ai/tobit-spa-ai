@@ -135,7 +135,7 @@ async def init_schemas_from_db():
                 # Create new schema asset
                 asset = TbAssetRegistry(
                     asset_id=str(uuid4()),
-                    asset_type="schema",
+                    asset_type="catalog",
                     name="primary_postgres_schema",
                     description="Primary PostgreSQL database schema - auto-discovered from database",
                     status="published",

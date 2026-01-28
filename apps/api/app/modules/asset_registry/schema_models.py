@@ -70,7 +70,7 @@ class SchemaAsset(SQLModel):
     """Asset for storing schema information"""
 
     # Asset metadata
-    asset_type: str = Field(default="schema")
+    asset_type: str = Field(default="catalog")
     name: str = Field(min_length=1)
     description: Optional[str] = None
     version: int = Field(default=1)

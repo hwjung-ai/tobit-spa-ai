@@ -103,7 +103,7 @@ def _seed_schema(session, name: str, force: bool) -> bool:
 
     existing = session.exec(
         select(TbAssetRegistry)
-        .where(TbAssetRegistry.asset_type == "schema")
+        .where(TbAssetRegistry.asset_type == "catalog")
         .where(TbAssetRegistry.name == name)
         .where(TbAssetRegistry.status == "published")
     ).first()
@@ -124,7 +124,7 @@ def _seed_schema(session, name: str, force: bool) -> bool:
     asset = create_asset(
         session=session,
         name=schema_data.name,
-        asset_type="schema",
+        asset_type="catalog",
         description=schema_data.description,
         scope=schema_data.scope,
         tags=schema_data.tags,
@@ -480,7 +480,7 @@ def _export_sources(session) -> int:
 def _export_schemas(session) -> int:
     assets = session.exec(
         select(TbAssetRegistry)
-        .where(TbAssetRegistry.asset_type == "schema")
+        .where(TbAssetRegistry.asset_type == "catalog")
         .where(TbAssetRegistry.status == "published")
     ).all()
     count = 0

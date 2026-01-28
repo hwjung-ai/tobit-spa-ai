@@ -112,7 +112,7 @@ def main():
         
         schema = session.exec(
             select(TbAssetRegistry)
-            .where(TbAssetRegistry.asset_type == "schema")
+            .where(TbAssetRegistry.asset_type == "catalog")
             .where(TbAssetRegistry.name == "primary_postgres_schema")
             .where(TbAssetRegistry.status == "published")
         ).first()
