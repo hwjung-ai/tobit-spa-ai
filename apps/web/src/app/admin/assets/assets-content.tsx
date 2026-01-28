@@ -8,7 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 // Define types for select options
-type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "screen" | "source" | "catalog" | "resolver";
+type AssetType = "all" | "prompt" | "mapping" | "policy" | "query" | "source" | "resolver";
 type AssetStatus = "all" | "draft" | "published";
 
 export default function AssetsPageContent() {
@@ -24,7 +24,7 @@ export default function AssetsPageContent() {
         const typeParam = searchParams.get("type") as AssetType | null;
         const statusParam = searchParams.get("status") as AssetStatus | null;
 
-        if (typeParam && ["all", "prompt", "mapping", "policy", "query", "screen", "source", "catalog", "resolver"].includes(typeParam)) {
+        if (typeParam && ["all", "prompt", "mapping", "policy", "query", "source", "resolver"].includes(typeParam)) {
             setTypeFilter(typeParam);
         }
 
@@ -78,8 +78,8 @@ export default function AssetsPageContent() {
                             onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === "all" || value === "prompt" || value === "mapping" ||
-                                    value === "policy" || value === "query" || value === "screen" ||
-                                    value === "source" || value === "catalog" || value === "resolver") {
+                                    value === "policy" || value === "query" ||
+                                    value === "source" || value === "resolver") {
                                     handleTypeFilterChange(value as AssetType);
                                 }
                             }}
@@ -90,9 +90,7 @@ export default function AssetsPageContent() {
                             <option value="mapping">Mappings</option>
                             <option value="policy">Policies</option>
                             <option value="query">Queries</option>
-                            <option value="screen">Screens</option>
                             <option value="source">Sources</option>
-                            <option value="catalog">Catalogs</option>
                             <option value="resolver">Resolvers</option>
                         </select>
                     </div>

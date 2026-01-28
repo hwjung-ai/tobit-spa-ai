@@ -9,7 +9,7 @@ export interface ResponseEnvelope<T = unknown> {
 
 export interface Asset {
   asset_id: string;
-  asset_type: "prompt" | "mapping" | "policy" | "query" | "screen" | "source" | "catalog" | "resolver";
+  asset_type: "prompt" | "mapping" | "policy" | "query" | "source" | "resolver";
   name: string;
   description: string | null;
   version: number;
