@@ -29,3 +29,4 @@ croniter
 watchdog
 passlib[bcrypt]
 python-jose[cryptography]
+psutil

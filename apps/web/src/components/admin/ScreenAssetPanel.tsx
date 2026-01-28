@@ -152,6 +152,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           description: newScreenData.description || null,
           tags: parsedTags,
           schema_json: schema,
+          created_by: "admin", // Default to admin user
         }),
       });
 

@@ -59,8 +59,8 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
     setLoading(true);
     try {
       const [userRes, auditRes] = await Promise.all([
-        fetch(`/api/admin/users/${userId}`),
-        fetch(`/api/admin/users/${userId}/audit-log`),
+        fetch(`/admin/users/${userId}`),
+        fetch(`/admin/users/${userId}/audit-log`),
       ]);
 
       if (userRes.ok) {
@@ -90,7 +90,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
     if (!newPermission || !userId) return;
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}/permissions/grant`, {
+      const response = await fetch(`/admin/users/${userId}/permissions/grant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -113,7 +113,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
     if (!userId) return;
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}/permissions/revoke`, {
+      const response = await fetch(`/admin/users/${userId}/permissions/revoke`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

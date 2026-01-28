@@ -11,7 +11,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import type { ColDef, RowClickedEvent } from "ag-grid-community";
-import { buildApiUrl } from "../../../lib/adminUtils";
+import { buildApiUrl, fetchApi } from "../../../lib/adminUtils";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 
@@ -349,12 +349,11 @@ export default function ExplorerPage() {
   const tablesQuery = useQuery({
     queryKey: ["data", "postgres", "tables"],
     queryFn: async () => {
-      const response = await fetch(buildApiUrl("/data/postgres/tables"));
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to load tables");
-      }
-      return body.data?.tables as PostgresTable[];
+      const response = await fetchApi<{ tables: PostgresTable[] }>("/data/postgres/tables");
+      // ResponseEnvelope.data is extracted by fetchApi, so response.data is already the inner data
+      // But the API returns ResponseEnvelope.success(data={tables: [...]})
+      // So response.data.tables should exist
+      return (response.data as { tables: PostgresTable[] })?.tables || [];
     },
     enabled: enableDataExplorer && sourceTab === "postgres",
   });
@@ -362,12 +361,8 @@ export default function ExplorerPage() {
   const labelsQuery = useQuery({
     queryKey: ["data", "neo4j", "labels"],
     queryFn: async () => {
-      const response = await fetch(buildApiUrl("/data/neo4j/labels"));
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to load labels");
-      }
-      return body.data?.labels as string[];
+      const response = await fetchApi<{ labels: string[] }>("/data/neo4j/labels");
+      return (response.data as { labels: string[] })?.labels || [];
     },
     enabled: enableDataExplorer && sourceTab === "neo4j",
   });
@@ -381,14 +376,10 @@ export default function ExplorerPage() {
         cursor: String(redisCursor),
         count: "50",
       });
-      const response = await fetch(
-        buildApiUrl(`/data/redis/scan?${params.toString()}`)
+      const response = await fetchApi<{ cursor: number; keys: string[] }>(
+        `/data/redis/scan?${params.toString()}`
       );
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Failed to scan keys");
-      }
-      return body.data as { cursor: number; keys: string[] };
+      return response.data as { cursor: number; keys: string[] };
     },
     enabled: enableDataExplorer && sourceTab === "redis" && modeTab === "browse",
   });
@@ -399,14 +390,10 @@ export default function ExplorerPage() {
         table: tableName,
         limit: String(MAX_ROWS),
       });
-      const response = await fetch(
-        buildApiUrl(`/data/postgres/preview?${params.toString()}`)
+      const response = await fetchApi<{ columns: string[]; rows: GridRow[] }>(
+        `/data/postgres/preview?${params.toString()}`
       );
-      const body = await response.json();
-      if (!response.ok) {
-        throw new Error(body.message ?? "Preview failed");
-      }
-      return body.data as { columns: string[]; rows: GridRow[] };
+      return response.data as { columns: string[]; rows: GridRow[] };
     },
     onSuccess: (data) => {
       setGridColumns(data.columns);
@@ -422,45 +409,33 @@ export default function ExplorerPage() {
   const runQueryMutation = useMutation({
     mutationFn: async (statement: string) => {
       if (sourceTab === "postgres") {
-        const response = await fetch(buildApiUrl("/data/postgres/query"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sql: statement }),
-        });
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(
-            body.message ?? body.detail ?? "Query failed. See server logs for details."
-          );
-        }
-        return body.data as { columns: string[]; rows: GridRow[] };
+        const response = await fetchApi<{ columns: string[]; rows: GridRow[] }>(
+          "/data/postgres/query",
+          {
+            method: "POST",
+            body: JSON.stringify({ sql: statement }),
+          }
+        );
+        return response.data as { columns: string[]; rows: GridRow[] };
       }
       if (sourceTab === "neo4j") {
-        const response = await fetch(buildApiUrl("/data/neo4j/query"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cypher: statement }),
-        });
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(
-            body.message ?? body.detail ?? "Query failed. See server logs for details."
-          );
-        }
-        return body.data as { columns: string[]; rows: GridRow[] };
-      }
-      const response = await fetch(buildApiUrl("/data/redis/command"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command: statement }),
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          body.message ?? body.detail ?? "Command failed. See server logs for details."
+        const response = await fetchApi<{ columns: string[]; rows: GridRow[] }>(
+          "/data/neo4j/query",
+          {
+            method: "POST",
+            body: JSON.stringify({ cypher: statement }),
+          }
         );
+        return response.data as { columns: string[]; rows: GridRow[] };
       }
-      return { columns: ["result"], rows: [{ result: body.data?.result }] };
+      const response = await fetchApi<{ result: unknown }>(
+        "/data/redis/command",
+        {
+          method: "POST",
+          body: JSON.stringify({ command: statement }),
+        }
+      );
+      return { columns: ["result"], rows: [{ result: response.data?.result }] };
     },
     onSuccess: (data) => {
       setGridColumns(data.columns);
@@ -509,14 +484,8 @@ export default function ExplorerPage() {
   const redisKeyMutation = useMutation({
     mutationFn: async (key: string) => {
       const params = new URLSearchParams({ key });
-      const response = await fetch(buildApiUrl(`/data/redis/key?${params}`));
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          body.message ?? body.detail ?? "Failed to fetch key. See server logs for details."
-        );
-      }
-      return body.data as RedisKeyResult;
+      const response = await fetchApi<RedisKeyResult>(`/data/redis/key?${params}`);
+      return response.data as RedisKeyResult;
     },
     onSuccess: (data) => {
       setGridColumns(["value"]);
@@ -622,7 +591,12 @@ export default function ExplorerPage() {
             className="w-full rounded-full border border-slate-700 bg-transparent px-4 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none"
           />
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
-
+            {tablesQuery.isLoading && (
+              <div className="flex items-center gap-2 py-4 text-slate-400">
+                <div className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-sky-400 animate-spin" />
+                <span className="text-xs">Loading tables...</span>
+              </div>
+            )}
             {tablesQuery.isError && (
               <div className="text-xs text-rose-300">
                 {formatError(tablesQuery.error)}
@@ -667,7 +641,12 @@ export default function ExplorerPage() {
             Labels
           </div>
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
-
+            {labelsQuery.isLoading && (
+              <div className="flex items-center gap-2 py-4 text-slate-400">
+                <div className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-sky-400 animate-spin" />
+                <span className="text-xs">Loading labels...</span>
+              </div>
+            )}
             {labelsQuery.isError && (
               <div className="text-xs text-rose-300">
                 {formatError(labelsQuery.error)}
@@ -726,7 +705,12 @@ export default function ExplorerPage() {
           <span>cursor: {redisScanQuery.data?.cursor ?? 0}</span>
         </div>
         <div className="custom-scrollbar max-h-[320px] space-y-2 overflow-auto pr-1">
-
+          {redisScanQuery.isLoading && (
+            <div className="flex items-center gap-2 py-4 text-slate-400">
+              <div className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-sky-400 animate-spin" />
+              <span className="text-xs">Scanning keys...</span>
+            </div>
+          )}
           {redisScanQuery.isError && (
             <div className="text-xs text-rose-300">
               {formatError(redisScanQuery.error)}

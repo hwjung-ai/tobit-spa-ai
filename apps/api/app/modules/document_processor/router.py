@@ -1,4 +1,4 @@
-"""Document processor routes for multi-format document handling"""
+from __future__ import annotations
 
 import logging
 from typing import List, Optional
@@ -6,6 +6,7 @@ from typing import List, Optional
 from core.auth import get_current_user
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
+from schemas.common import ResponseEnvelope
 
 from .services import (
     ChunkingStrategy,
@@ -17,7 +18,7 @@ from .services import (
 )
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/documents", tags=["documents"])
+router = APIRouter(prefix="/api/documents", tags=["documents"])
 
 
 class DocumentUploadRequest(BaseModel):
@@ -148,6 +149,41 @@ async def upload_document(
     except Exception as e:
         logger.error(f"Upload failed: {str(e)}")
         raise HTTPException(500, f"Upload failed: {str(e)}")
+
+
+@router.get("/list")
+async def list_documents(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    sort_by: str = Query("created_at"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    List all documents for current user
+
+    Returns:
+    - Document metadata
+    - Processing status
+    - Number of chunks
+    - Created date
+    """
+
+    try:
+        (page - 1) * per_page
+
+        # In real implementation: db.query(Document).filter(...)
+        # For now, return placeholder
+
+        return ResponseEnvelope.success(data={
+            "page": page,
+            "per_page": per_page,
+            "total": 0,
+            "documents": [],
+        })
+
+    except Exception as e:
+        logger.error(f"List failed: {str(e)}")
+        raise HTTPException(500, str(e))
 
 
 @router.get("/{document_id}", response_model=DocumentResponse)
@@ -375,40 +411,4 @@ async def delete_document(
 
     except Exception as e:
         logger.error(f"Delete failed: {str(e)}")
-        raise HTTPException(500, str(e))
-
-
-@router.get("/list", response_model=dict)
-async def list_documents(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
-    sort_by: str = Query("created_at"),
-    current_user: dict = Depends(get_current_user),
-):
-    """
-    List all documents for current user
-
-    Returns:
-    - Document metadata
-    - Processing status
-    - Number of chunks
-    - Created date
-    """
-
-    try:
-        (page - 1) * per_page
-
-        # In real implementation: db.query(Document).filter(...)
-        # For now, return placeholder
-
-        return {
-            "status": "ok",
-            "page": page,
-            "per_page": per_page,
-            "total": 0,
-            "documents": [],
-        }
-
-    except Exception as e:
-        logger.error(f"List failed: {str(e)}")
         raise HTTPException(500, str(e))

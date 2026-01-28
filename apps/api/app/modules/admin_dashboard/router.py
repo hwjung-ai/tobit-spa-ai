@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 from core.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+from schemas.common import ResponseEnvelope
 
 from .settings_service import AdminSettingsService
 from .system_monitor import SystemMonitor
@@ -56,7 +57,7 @@ class SettingsBatchUpdateRequest(BaseModel):
     reason: Optional[str] = None
 
 
-@router.get("/users", response_model=dict)
+@router.get("/users")
 async def list_users(
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
@@ -85,17 +86,14 @@ async def list_users(
             search=search,
         )
 
-        return {
-            "status": "ok",
-            **result,
-        }
+        return ResponseEnvelope.success(data=result)
 
     except Exception as e:
         logger.error(f"Failed to list users: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/users/{user_id}", response_model=dict)
+@router.get("/users/{user_id}")
 async def get_user(user_id: str, current_user: dict = Depends(get_current_user)):
     """Get user details and permissions"""
 
@@ -108,11 +106,10 @@ async def get_user(user_id: str, current_user: dict = Depends(get_current_user))
 
         permissions = user_service.get_user_permissions(user_id)
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "user": user.to_dict(),
             "permissions": permissions,
-        }
+        })
 
     except HTTPException:
         raise
@@ -121,7 +118,7 @@ async def get_user(user_id: str, current_user: dict = Depends(get_current_user))
         raise HTTPException(500, str(e))
 
 
-@router.patch("/users/{user_id}/status", response_model=dict)
+@router.patch("/users/{user_id}/status")
 async def update_user_status(
     user_id: str,
     request: UserStatusUpdateRequest,
@@ -136,11 +133,10 @@ async def update_user_status(
         if not user:
             raise HTTPException(404, f"User not found: {user_id}")
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "message": f"User {user_id} {'activated' if request.is_active else 'deactivated'}",
             "user": user.to_dict(),
-        }
+        })
 
     except HTTPException:
         raise
@@ -149,7 +145,7 @@ async def update_user_status(
         raise HTTPException(500, str(e))
 
 
-@router.post("/users/{user_id}/permissions/grant", response_model=dict)
+@router.post("/users/{user_id}/permissions/grant")
 async def grant_permission(
     user_id: str,
     request: PermissionRequest,
@@ -171,23 +167,21 @@ async def grant_permission(
         )
 
         if not success:
-            return {
-                "status": "ok",
+            return ResponseEnvelope.success(data={
                 "message": f"User already has permission: {request.permission}",
-            }
+            })
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "message": f"Permission '{request.permission}' granted to user {user_id}",
             "permissions": user_service.get_user_permissions(user_id),
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to grant permission: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.post("/users/{user_id}/permissions/revoke", response_model=dict)
+@router.post("/users/{user_id}/permissions/revoke")
 async def revoke_permission(
     user_id: str,
     request: PermissionRequest,
@@ -209,23 +203,21 @@ async def revoke_permission(
         )
 
         if not success:
-            return {
-                "status": "ok",
+            return ResponseEnvelope.success(data={
                 "message": f"User doesn't have permission: {request.permission}",
-            }
+            })
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "message": f"Permission '{request.permission}' revoked from user {user_id}",
             "permissions": user_service.get_user_permissions(user_id),
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to revoke permission: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/users/{user_id}/audit-log", response_model=dict)
+@router.get("/users/{user_id}/audit-log")
 async def get_user_audit_log(
     user_id: str,
     limit: int = Query(50, ge=1, le=500),
@@ -238,19 +230,18 @@ async def get_user_audit_log(
 
         logs = user_service.get_permission_audit_log(user_id=user_id, limit=limit)
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "user_id": user_id,
             "log_count": len(logs),
             "logs": logs,
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to get audit log: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/users/activity-summary", response_model=dict)
+@router.get("/users/activity-summary")
 async def get_user_activity_summary(current_user: dict = Depends(get_current_user)):
     """Get user activity summary"""
 
@@ -259,17 +250,14 @@ async def get_user_activity_summary(current_user: dict = Depends(get_current_use
 
         summary = user_service.get_user_activity_summary()
 
-        return {
-            "status": "ok",
-            "summary": summary,
-        }
+        return ResponseEnvelope.success(data={"summary": summary})
 
     except Exception as e:
         logger.error(f"Failed to get activity summary: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/system/health", response_model=dict)
+@router.get("/system/health")
 async def get_system_health(current_user: dict = Depends(get_current_user)):
     """Get current system health status"""
 
@@ -281,17 +269,14 @@ async def get_system_health(current_user: dict = Depends(get_current_user)):
 
         status = system_monitor.get_current_status()
 
-        return {
-            "status": "ok",
-            "health": status,
-        }
+        return ResponseEnvelope.success(data={"health": status})
 
     except Exception as e:
         logger.error(f"Failed to get system health: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/system/metrics", response_model=dict)
+@router.get("/system/metrics")
 async def get_system_metrics(
     limit: int = Query(288, ge=1, le=1000),
     current_user: dict = Depends(get_current_user),
@@ -303,17 +288,14 @@ async def get_system_metrics(
 
         metrics = system_monitor.get_metrics_history(limit=limit)
 
-        return {
-            "status": "ok",
-            "metrics": metrics,
-        }
+        return ResponseEnvelope.success(data={"metrics": metrics})
 
     except Exception as e:
         logger.error(f"Failed to get system metrics: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/system/alerts", response_model=dict)
+@router.get("/system/alerts")
 async def get_system_alerts(
     severity: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
@@ -326,18 +308,17 @@ async def get_system_alerts(
 
         alerts = system_monitor.get_alerts(severity=severity, limit=limit)
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "alert_count": len(alerts),
             "alerts": alerts,
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to get alerts: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/settings", response_model=dict)
+@router.get("/settings")
 async def get_settings(
     keys: Optional[List[str]] = Query(None),
     current_user: dict = Depends(get_current_user),
@@ -349,17 +330,14 @@ async def get_settings(
 
         settings = settings_service.get_settings(keys=keys)
 
-        return {
-            "status": "ok",
-            "settings": settings,
-        }
+        return ResponseEnvelope.success(data={"settings": settings})
 
     except Exception as e:
         logger.error(f"Failed to get settings: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.patch("/settings/{key}", response_model=dict)
+@router.patch("/settings/{key}")
 async def update_setting(
     key: str,
     request: SettingUpdateRequest,
@@ -380,12 +358,11 @@ async def update_setting(
         if not success:
             raise HTTPException(400, f"Failed to update setting: {key}")
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "key": key,
             "value": request.value,
             "message": "Setting updated successfully",
-        }
+        })
 
     except HTTPException:
         raise
@@ -394,7 +371,7 @@ async def update_setting(
         raise HTTPException(500, str(e))
 
 
-@router.patch("/settings", response_model=dict)
+@router.patch("/settings")
 async def update_settings_batch(
     request: SettingsBatchUpdateRequest, current_user: dict = Depends(get_current_user)
 ):
@@ -411,20 +388,19 @@ async def update_settings_batch(
 
         successful = sum(1 for v in results.values() if v)
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "total": len(results),
             "successful": successful,
             "failed": len(results) - successful,
             "results": results,
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to update settings: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.post("/settings/reset-defaults", response_model=dict)
+@router.post("/settings/reset-defaults")
 async def reset_settings_to_defaults(current_user: dict = Depends(get_current_user)):
     """Reset all settings to defaults"""
 
@@ -436,18 +412,17 @@ async def reset_settings_to_defaults(current_user: dict = Depends(get_current_us
             reason="Admin reset to defaults",
         )
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "message": f"Reset {count} settings to defaults",
             "reset_count": count,
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to reset settings: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/settings/categories", response_model=dict)
+@router.get("/settings/categories")
 async def get_settings_by_category(current_user: dict = Depends(get_current_user)):
     """Get settings grouped by category"""
 
@@ -456,17 +431,14 @@ async def get_settings_by_category(current_user: dict = Depends(get_current_user
 
         categories = settings_service.get_settings_by_category()
 
-        return {
-            "status": "ok",
-            "categories": categories,
-        }
+        return ResponseEnvelope.success(data={"categories": categories})
 
     except Exception as e:
         logger.error(f"Failed to get settings by category: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/settings/audit-log", response_model=dict)
+@router.get("/settings/audit-log")
 async def get_settings_audit_log(
     key: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
@@ -479,11 +451,10 @@ async def get_settings_audit_log(
 
         logs = settings_service.get_settings_audit_log(key=key, limit=limit)
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "log_count": len(logs),
             "logs": logs,
-        }
+        })
 
     except Exception as e:
         logger.error(f"Failed to get audit log: {str(e)}")

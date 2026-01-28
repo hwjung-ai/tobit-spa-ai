@@ -89,19 +89,26 @@ export const API_BASE_URL = (() => {
 
 // Build URL for API requests - empty string means use relative paths (Next.js rewrites proxy)
 export const buildApiUrl = (endpoint: string): string => {
+  // Ensure endpoint starts with / for absolute path (avoid relative path issues)
+  const normalizedEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   if (!API_BASE_URL) {
-    return endpoint;
+    return normalizedEndpoint;
   }
-  return `${API_BASE_URL}${endpoint}`;
+  return `${API_BASE_URL}${normalizedEndpoint}`;
 };
 
 const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
 
+export interface FetchApiOptions extends RequestInit {
+  timeout?: number; // Timeout in milliseconds
+}
+
 export async function fetchApi<T = unknown>(
   endpoint: string,
-  options?: RequestInit
+  options?: FetchApiOptions
 ): Promise<ResponseEnvelope<T>> {
   const url = buildApiUrl(endpoint);
+  const timeout = options?.timeout || 30000; // Default 30 seconds
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
@@ -125,6 +132,10 @@ export async function fetchApi<T = unknown>(
 
   console.log("[API] Fetching:", endpoint, "with method:", options?.method || "GET", "URL:", url);
 
+  // Create an AbortController for timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
   let response: Response;
 
   try {
@@ -132,9 +143,21 @@ export async function fetchApi<T = unknown>(
       ...options,
       headers,
       credentials: "same-origin",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     console.log("[API] Fetch successful, status:", response.status);
   } catch (fetchError) {
+    clearTimeout(timeoutId);
+
+    // Handle AbortError (timeout)
+    if (fetchError instanceof Error && fetchError.name === "AbortError") {
+      const error: Error & { statusCode?: number } = new Error(
+        `요청 시간이 초과되었습니다 (${timeout / 1000}초). 서버가 응답하지 않습니다.`
+      );
+      error.statusCode = 408; // Request Timeout
+      throw error;
+    }
     const error = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
     const errorMsg = error.message;
     const errorName = error.name;

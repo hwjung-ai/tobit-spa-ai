@@ -32,6 +32,7 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
           name,
           asset_type: assetType,
           description: description || null,
+          created_by: "admin", // Default to admin user
         }),
       });
 

@@ -22,16 +22,18 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
     const searchParams = useSearchParams();
     
     // Build detail URL with preserved filter parameters
-    const buildDetailUrl = (assetId: string) => {
+    const buildDetailUrl = (assetId: string, assetType?: string) => {
         const params = new URLSearchParams();
         const type = searchParams?.get("type");
         const status = searchParams?.get("status");
-        
+
         if (type) params.append("type", type);
         if (status) params.append("status", status);
-        
+
         const queryString = params.toString();
-        return `/admin/assets/${assetId}${queryString ? `?${queryString}` : ""}`;
+        // Screen assets have their own dedicated editor page
+        const basePath = assetType === "screen" ? "/admin/screens" : "/admin/assets";
+        return `${basePath}/${assetId}${queryString ? `?${queryString}` : ""}`;
     };
     const colDefs = useMemo<ColDef<Asset>[]>(() => [
         {
@@ -43,7 +45,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                 if (!params.data) return null;
                 return (
                     <Link
-                        href={buildDetailUrl(params.data.asset_id)}
+                        href={buildDetailUrl(params.data.asset_id, params.data.asset_type)}
                         className="text-sky-400 hover:text-sky-300 font-medium transition-colors"
                     >
                         {params.value}
@@ -119,7 +121,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             cellRenderer: (params: ICellRendererParams<Asset>) => (
                 <div className="flex justify-end w-full pr-2">
                     <Link
-                        href={buildDetailUrl(params.value)}
+                        href={buildDetailUrl(params.data?.asset_id ?? params.value, params.data?.asset_type)}
                         className="text-slate-500 hover:text-sky-400 transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

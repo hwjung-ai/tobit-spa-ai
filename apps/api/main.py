@@ -13,6 +13,7 @@ from api.routes.health import router as health_router
 from api.routes.hello import router as hello_router
 from api.routes.history import router as history_router
 from api.routes.threads import router as thread_router
+from app.modules.admin_dashboard.router import router as admin_dashboard_router
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
@@ -52,7 +53,7 @@ from apps.api.core.security_middleware import add_security_middleware
 settings = get_settings()
 configure_logging(settings.log_level)
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=False)
 app.add_middleware(RequestIDMiddleware)
 add_security_middleware(app, settings)
 
@@ -64,6 +65,7 @@ app.add_middleware(
 )
 app.include_router(health_router)
 app.include_router(hello_router)
+app.include_router(admin_dashboard_router)
 app.include_router(auth_router)
 app.include_router(api_keys_router)
 app.include_router(permissions_router)

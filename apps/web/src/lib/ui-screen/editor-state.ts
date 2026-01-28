@@ -360,8 +360,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
       // Load from asset-registry endpoint (source of truth)
       console.log("[EDITOR] Attempting to load screen from /asset-registry:", assetId);
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
-      const responseData = response.data as unknown;
-      const asset = (responseData as { asset?: { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } } | null)?.asset as { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } | null;
+      // fetchApi returns ResponseEnvelope, so access response.data.asset
+      const asset = (response as { data?: { asset?: { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } } } | null)?.data?.asset as { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } | null;
       const rawSchema = (asset?.schema_json || asset?.screen_schema) as Record<string, unknown>;
       const status = (asset?.status || "draft") as "draft" | "published";
 

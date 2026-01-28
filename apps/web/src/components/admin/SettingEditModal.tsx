@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { OperationSetting, fetchApi, AuditLog } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
-import AuditLogTable from "./AuditLogTable";
+import AuditLogTable, { AuditLogDetailsModal } from "./AuditLogTable";
 
 interface SettingEditModalProps {
     setting: OperationSetting;
@@ -21,6 +21,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
     const [errors, setErrors] = useState<string[]>([]);
     const [history, setHistory] = useState<AuditLog[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
     const loadHistory = useCallback(async () => {
         setIsLoadingHistory(true);
@@ -75,7 +76,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-            <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-5xl w-full max-h-[80vh] overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between p-4 border-b border-slate-800">
                     <h2 className="text-lg font-semibold text-white">Edit Setting: {setting.key}</h2>
                     <button
@@ -175,7 +176,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                                 <div className="text-center py-4 text-slate-500 text-xs">Loading history...</div>
                             ) : (
                                 <div className="bg-slate-950 rounded border border-slate-800 overflow-hidden">
-                                    <AuditLogTable logs={history} />
+                                    <AuditLogTable logs={history} onViewDetails={setSelectedLog} />
                                 </div>
                             )}
                         </div>
@@ -198,6 +199,9 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                     </button>
                 </div>
             </div>
+            {selectedLog && (
+                <AuditLogDetailsModal log={selectedLog} onClose={() => setSelectedLog(null)} />
+            )}
         </div>
     );
 }

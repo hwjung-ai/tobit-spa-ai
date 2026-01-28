@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class AppSettings(BaseSettings):
     app_env: str = "dev"
     api_port: int = 8000
-    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     log_level: str = "info"
     ops_mode: Literal["mock", "real"] = "mock"
     ops_enable_langgraph: bool = False
@@ -50,7 +50,7 @@ class AppSettings(BaseSettings):
     ops_enable_cep_scheduler: bool = False
 
     embed_model: Optional[str] = None
-    chat_model: str = "gpt-4o-mini"
+    chat_model: str = "gpt-5-nano"
     openai_api_key: Optional[str] = None
     embedding_dimension: int = 1536
     document_storage_root: Optional[Path] = Field(

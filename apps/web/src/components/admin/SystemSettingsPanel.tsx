@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Save, RotateCcw, Eye, EyeOff } from 'lucide-react';
+import { fetchApi } from '../../lib/adminUtils';
 
 interface Setting {
   key: string;
@@ -17,7 +18,7 @@ interface SystemSettingsPanelProps {
 }
 
 const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) => {
-  const [, setSettings] = useState<Record<string, unknown>>({});
+  const [settings, setSettings] = useState<Record<string, unknown>>({});
   const [categories, setCategories] = useState<Record<string, Setting[]>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('api');
   const [loading, setLoading] = useState(false);
@@ -32,20 +33,13 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const [settingsRes, categoriesRes] = await Promise.all([
-        fetch('/api/admin/settings'),
-        fetch('/api/admin/settings/categories'),
-      ]);
+      // fetchApi returns ResponseEnvelope, so access .data for the actual payload
+      // Backend returns ResponseEnvelope.success(data={settings: {...}})
+      const settingsData = await fetchApi<{ settings: Record<string, unknown> }>('/admin/settings');
+      const categoriesData = await fetchApi<{ categories: Record<string, Setting[]> }>('/admin/settings/categories');
 
-      if (settingsRes.ok) {
-        const data = await settingsRes.json();
-        setSettings(data.settings || {});
-      }
-
-      if (categoriesRes.ok) {
-        const data = await categoriesRes.json();
-        setCategories(data.categories || {});
-      }
+      setSettings(settingsData.data?.settings || {});
+      setCategories(categoriesData.data?.categories || {});
     } catch (error) {
       console.error('Failed to fetch settings:', error);
     } finally {
@@ -67,24 +61,19 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
 
     setSaveStatus('saving');
     try {
-      const response = await fetch('/api/admin/settings', {
+      await fetchApi('/admin/settings', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           settings: changes,
           reason: 'Updated via admin dashboard',
         }),
       });
 
-      if (response.ok) {
-        setSaveStatus('success');
-        setChanges({});
-        await fetchSettings();
-        onUpdate?.(changes);
-        setTimeout(() => setSaveStatus('idle'), 2000);
-      } else {
-        setSaveStatus('error');
-      }
+      setSaveStatus('success');
+      setChanges({});
+      await fetchSettings();
+      onUpdate?.(changes);
+      setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
       console.error('Failed to save settings:', error);
       setSaveStatus('error');
@@ -97,14 +86,12 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
     }
 
     try {
-      const response = await fetch('/api/admin/settings/reset-defaults', {
+      await fetchApi('/admin/settings/reset-defaults', {
         method: 'POST',
       });
 
-      if (response.ok) {
-        setChanges({});
-        await fetchSettings();
-      }
+      setChanges({});
+      await fetchSettings();
     } catch (error) {
       console.error('Failed to reset settings:', error);
     }

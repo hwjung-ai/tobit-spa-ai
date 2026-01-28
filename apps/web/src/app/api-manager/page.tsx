@@ -117,7 +117,16 @@ const SCOPE_LABELS: Record<ScopeType, string> = {
 
 const normalizeBaseUrl = (value: string | undefined) => {
   const url = value?.replace(/\/+$/, "");
-  return url && url.length > 0 ? url : "http://localhost:8000";
+  // Return empty string to use Next.js rewrites proxy instead of direct API calls
+  return url && url.length > 0 ? url : "";
+};
+
+// Helper to build API URL - uses relative path when baseUrl is empty
+const buildApiUrl = (endpoint: string, baseUrl: string) => {
+  if (baseUrl) {
+    return `${baseUrl}${endpoint}`;
+  }
+  return endpoint; // Use relative path for Next.js rewrites
 };
 
 const formatTimestamp = (value: string) => {
@@ -987,9 +996,7 @@ export default function ApiManagerPage() {
         setSystemFetchStatus("idle");
         setSystemFetchAt(new Date().toISOString());
         try {
-          const url = new URL(`${apiBaseUrl}/api-manager/apis`);
-          url.searchParams.set("scope", "system");
-          const response = await fetch(url.toString());
+          const response = await fetch(buildApiUrl("/api-manager/apis?scope=system", apiBaseUrl));
           if (!response.ok) {
             throw new Error("Failed to load system APIs");
           }
@@ -1045,11 +1052,12 @@ export default function ApiManagerPage() {
         return;
       }
       try {
-        const url = new URL(`${apiBaseUrl}/api-manager/apis`);
+        const params = new URLSearchParams();
         if (scope) {
-          url.searchParams.set("scope", scope);
+          params.set("scope", scope);
         }
-        const response = await fetch(url.toString());
+        const queryString = params.toString();
+        const response = await fetch(buildApiUrl(`/api-manager/apis${queryString ? `?${queryString}` : ""}`, apiBaseUrl));
         if (!response.ok) {
           throw new Error("Failed to load API definitions");
         }
@@ -1166,7 +1174,7 @@ export default function ApiManagerPage() {
     }
     setLogsLoading(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api-manager/apis/${selectedId}/execution-logs?limit=20`);
+      const response = await fetch(buildApiUrl(`/api-manager/apis/${selectedId}/execution-logs?limit=20`, apiBaseUrl));
       if (!response.ok) {
         throw new Error("Failed to load execution logs");
       }
@@ -1483,7 +1491,7 @@ export default function ApiManagerPage() {
         ? draftApi.logic.query
         : JSON.stringify(draftApi.logic.spec);
 
-      const response = await fetch(`${apiBaseUrl}/api-manager/dry-run`, {
+      const response = await fetch(buildApiUrl("/api-manager/dry-run", apiBaseUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1756,7 +1764,7 @@ export default function ApiManagerPage() {
       if (selectedApi.logic_type === "workflow") {
         bodyPayload.input = parsedInput;
       }
-      const response = await fetch(`${apiBaseUrl}/api-manager/apis/${selectedId}/execute`, {
+      const response = await fetch(buildApiUrl(`/api-manager/apis/${selectedId}/execute`, apiBaseUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyPayload),
@@ -1803,7 +1811,7 @@ export default function ApiManagerPage() {
         runtime_policy: safeParseJson(runtimePolicyText),
       };
 
-      const response = await fetch(`${apiBaseUrl}/api-manager/dry-run`, {
+      const response = await fetch(buildApiUrl("/api-manager/dry-run", apiBaseUrl), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dryPayload),

@@ -85,9 +85,9 @@ const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       const [healthRes, metricsRes, alertsRes] = await Promise.all([
-        fetch('/api/admin/system/health'),
-        fetch('/api/admin/system/metrics'),
-        fetch('/api/admin/system/alerts'),
+        fetch('/admin/system/health'),
+        fetch('/admin/system/metrics'),
+        fetch('/admin/system/alerts'),
       ]);
 
       if (healthRes.ok) {
@@ -284,7 +284,7 @@ const UserManagementPanel: React.FC = () => {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/users?page=${page}&per_page=20`);
+      const response = await fetch(`/admin/users?page=${page}&per_page=20`);
       if (response.ok) {
         const data = await response.json() as { users: User[] };
         setUsers(data.users || []);

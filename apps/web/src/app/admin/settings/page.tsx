@@ -14,12 +14,22 @@ export default function SettingsPage() {
     const { data: settings = [], isLoading, error, refetch } = useQuery({
         queryKey: ["settings"],
         queryFn: async () => {
-            const response = await fetchApi<{ settings: Record<string, Omit<OperationSetting, "key">> }>("/settings/operations");
-            const settingsData = response.data.settings;
-            return Object.entries(settingsData).map(([key, setting]) => ({
-                key,
-                ...setting,
-            })) as OperationSetting[];
+            try {
+                const response = await fetchApi<{ settings: Record<string, Omit<OperationSetting, "key">> }>("/api/settings/operations");
+                // ResponseEnvelope.success(data={settings: {...}})
+                const settingsData = response.data?.settings;
+                if (!settingsData || typeof settingsData !== "object") {
+                    console.warn("[Settings] Invalid response data:", response);
+                    return [];
+                }
+                return Object.entries(settingsData).map(([key, setting]) => ({
+                    key,
+                    ...setting,
+                })) as OperationSetting[];
+            } catch (err) {
+                console.error("[Settings] Failed to fetch:", err);
+                throw err;
+            }
         }
     });
 

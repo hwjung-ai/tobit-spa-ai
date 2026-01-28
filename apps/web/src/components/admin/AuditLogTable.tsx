@@ -22,7 +22,7 @@ export default function AuditLogTable({ logs, onViewDetails }: AuditLogTableProp
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-slate-800">
-                        <th className="text-left py-3 px-4 text-slate-500 font-medium">Time</th>
+                        <th className="text-left py-3 px-4 text-slate-500 font-medium min-w-[180px]">Time</th>
                         <th className="text-left py-3 px-4 text-slate-500 font-medium">Resource</th>
                         <th className="text-left py-3 px-4 text-slate-500 font-medium">Action</th>
                         <th className="text-left py-3 px-4 text-slate-500 font-medium">Actor</th>
@@ -36,7 +36,7 @@ export default function AuditLogTable({ logs, onViewDetails }: AuditLogTableProp
                             key={log.audit_id}
                             className="border-b border-slate-800 hover:bg-slate-900/50 transition-colors"
                         >
-                            <td className="py-3 px-4 text-slate-300">
+                            <td className="py-3 px-4 text-slate-300 whitespace-nowrap min-w-[180px]">
                                 {formatTimestamp(log.created_at)}
                             </td>
                             <td className="py-3 px-4 text-slate-300">
