@@ -93,6 +93,10 @@ const nextConfig: NextConfig = {
       },
       // Proxy documents routes
       {
+        source: "/documents",
+        destination: `${API_BASE_URL}/documents`,
+      },
+      {
         source: "/documents/:path*",
         destination: `${API_BASE_URL}/documents/:path*`,
       },
