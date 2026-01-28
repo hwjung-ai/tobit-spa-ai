@@ -15,28 +15,28 @@ interface CatalogAsset {
 }
 
 interface CatalogTableProps {
-  catalogs: SchemaAsset[];
-  selectedSchema?: SchemaAsset | null;
-  onSelect: (catalog: SchemaAsset) => void;
+  catalogs: CatalogAsset[];
+  selectedCatalog?: CatalogAsset | null;
+  onSelect: (catalog: CatalogAsset) => void;
   onRefresh: () => void;
 }
 
 export default function CatalogTable({
-  schemas,
-  selectedSchema,
+  catalogs,
+  selectedCatalog,
   onSelect,
   onRefresh,
-}: SchemaTableProps) {
+}: CatalogTableProps) {
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  const handleDelete = async (schemaId: string) => {
-    if (!confirm("Are you sure you want to delete this schema?")) {
+  const handleDelete = async (catalogId: string) => {
+    if (!confirm("Are you sure you want to delete this catalog?")) {
       return;
     }
 
-    setDeleting(schemaId);
+    setDeleting(catalogId);
     try {
-      await fetchApi(`/asset-registry/catalogs/${schemaId}`, {
+      await fetchApi(`/asset-registry/catalogs/${catalogId}`, {
         method: "DELETE",
       });
       onRefresh();
@@ -47,60 +47,60 @@ export default function CatalogTable({
     }
   };
 
-  const getScanStatus = (catalog: SchemaAsset) => {
-    return schema.content?.catalog?.scan_status || "pending";
+  const getScanStatus = (catalog: CatalogAsset) => {
+    return catalog.content?.catalog?.scan_status || "pending";
   };
 
-  const getTableCount = (catalog: SchemaAsset) => {
-    return schema.content?.catalog?.tables?.length || 0;
+  const getTableCount = (catalog: CatalogAsset) => {
+    return catalog.content?.catalog?.tables?.length || 0;
   };
 
   return (
     <div className="space-y-2">
-      {schemas.length === 0 ? (
+      {catalogs.length === 0 ? (
         <div className="text-center py-8 text-gray-500 bg-white rounded-lg">
-          No schemas created yet
+          No catalogs created yet
         </div>
       ) : (
-        schemas.map((schema) => (
+        catalogs.map((catalog) => (
           <div
-            key={schema.asset_id}
-            onClick={() => onSelect(schema)}
+            key={catalog.asset_id}
+            onClick={() => onSelect(catalog)}
             className={`p-3 rounded-lg cursor-pointer transition-colors border ${
-              selectedSchema?.asset_id === schema.asset_id
+              selectedCatalog?.asset_id === catalog.asset_id
                 ? "bg-blue-50 border-blue-300"
                 : "bg-white border-gray-200 hover:bg-gray-50"
             }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate">{schema.name}</h4>
-                {schema.description && (
-                  <p className="text-xs text-gray-600 truncate mt-1">{schema.description}</p>
+                <h4 className="font-medium text-sm truncate">{catalog.name}</h4>
+                {catalog.description && (
+                  <p className="text-xs text-gray-600 truncate mt-1">{catalog.description}</p>
                 )}
                 <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                  <span>Tables: {getTableCount(schema)}</span>
+                  <span>Tables: {getTableCount(catalog)}</span>
                   <span>•</span>
                   <span className={`px-2 py-0.5 rounded ${
-                    getScanStatus(schema) === "completed"
+                    getScanStatus(catalog) === "completed"
                       ? "bg-green-100 text-green-700"
-                      : getScanStatus(schema) === "scanning"
+                      : getScanStatus(catalog) === "scanning"
                       ? "bg-yellow-100 text-yellow-700"
                       : "bg-gray-100 text-gray-700"
                   }`}>
-                    {getScanStatus(schema)}
+                    {getScanStatus(catalog)}
                   </span>
                 </div>
               </div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete(schema.asset_id);
+                  handleDelete(catalog.asset_id);
                 }}
-                disabled={deleting === schema.asset_id}
+                disabled={deleting === catalog.asset_id}
                 className="ml-2 text-xs px-2 py-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
               >
-                {deleting === schema.asset_id ? "Deleting..." : "Delete"}
+                {deleting === catalog.asset_id ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
