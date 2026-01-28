@@ -273,6 +273,7 @@ def create_tool_asset(
     tool_config: dict[str, Any],
     tool_input_schema: dict[str, Any],
     tool_output_schema: dict[str, Any] | None = None,
+    tool_catalog_ref: str | None = None,
     tags: dict[str, Any] | None = None,
     created_by: str | None = None,
 ) -> TbAssetRegistry:
@@ -284,6 +285,7 @@ def create_tool_asset(
         status="draft",
         version=1,
         tool_type=tool_type,
+        tool_catalog_ref=tool_catalog_ref,
         tool_config=tool_config,
         tool_input_schema=tool_input_schema,
         tool_output_schema=tool_output_schema,

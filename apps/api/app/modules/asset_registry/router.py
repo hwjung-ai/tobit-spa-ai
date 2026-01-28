@@ -18,6 +18,7 @@ from app.modules.asset_registry.crud import (
     create_resolver_asset,
     create_schema_asset,
     create_source_asset,
+    create_tool_asset,
     build_schema_catalog,
     delete_resolver_asset,
     delete_schema_asset,
@@ -1415,3 +1416,204 @@ def simulate_resolver(
     with get_session_context() as session:
         result = simulate_resolver_configuration(session, asset_id, test_entities)
         return ResponseEnvelope.success(data=result)
+
+
+# ============= Tools Endpoints =============
+
+@router.get("/tools", response_model=ResponseEnvelope)
+def list_tools(
+    status: str | None = Query(None),
+    tool_type: str | None = Query(None),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """List tools with optional filtering by status or tool type"""
+    with get_session_context() as session:
+        query = select(TbAssetRegistry).where(TbAssetRegistry.asset_type == "tool")
+
+        if status:
+            query = query.where(TbAssetRegistry.status == status)
+        if tool_type:
+            query = query.where(TbAssetRegistry.tool_type == tool_type)
+
+        tools = session.exec(query).all()
+        return ResponseEnvelope.success(
+            data={
+                "assets": [_to_tool_dict(t) for t in tools],
+                "total": len(tools),
+                "page": 1,
+                "page_size": len(tools),
+            }
+        )
+
+
+@router.post("/tools", response_model=ResponseEnvelope)
+def create_tool(
+    payload: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Create new tool asset"""
+    with get_session_context() as session:
+        asset = create_tool_asset(
+            session,
+            name=payload.get("name", ""),
+            description=payload.get("description", ""),
+            tool_type=payload.get("tool_type", "database_query"),
+            tool_config=payload.get("tool_config", {}),
+            tool_input_schema=payload.get("tool_input_schema", {}),
+            tool_output_schema=payload.get("tool_output_schema"),
+            tool_catalog_ref=payload.get("tool_catalog_ref"),
+            tags=payload.get("tags"),
+            created_by=current_user.user_id if current_user else "admin",
+        )
+
+        return ResponseEnvelope.success(
+            data={"asset": _to_tool_dict(asset)},
+            message="Tool asset created successfully",
+        )
+
+
+@router.get("/tools/{asset_id}", response_model=ResponseEnvelope)
+def get_tool(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Get tool asset by ID"""
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+        if not asset or asset.asset_type != "tool":
+            raise HTTPException(status_code=404, detail="Tool not found")
+
+        return ResponseEnvelope.success(data=_to_tool_dict(asset))
+
+
+@router.put("/tools/{asset_id}", response_model=ResponseEnvelope)
+def update_tool(
+    asset_id: str,
+    payload: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Update tool asset"""
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+        if not asset or asset.asset_type != "tool":
+            raise HTTPException(status_code=404, detail="Tool not found")
+
+        # Only allow updates if in draft status
+        if asset.status != "draft":
+            raise HTTPException(status_code=400, detail="Can only update draft tools")
+
+        if "name" in payload:
+            asset.name = payload["name"]
+        if "description" in payload:
+            asset.description = payload["description"]
+        if "tool_type" in payload:
+            asset.tool_type = payload["tool_type"]
+        if "tool_catalog_ref" in payload:
+            asset.tool_catalog_ref = payload["tool_catalog_ref"]
+        if "tool_config" in payload:
+            asset.tool_config = payload["tool_config"]
+        if "tool_input_schema" in payload:
+            asset.tool_input_schema = payload["tool_input_schema"]
+        if "tool_output_schema" in payload:
+            asset.tool_output_schema = payload["tool_output_schema"]
+        if "tags" in payload:
+            asset.tags = payload["tags"]
+
+        asset.updated_at = datetime.now()
+        session.add(asset)
+        session.commit()
+        session.refresh(asset)
+
+        return ResponseEnvelope.success(
+            data=_to_tool_dict(asset),
+            message="Tool asset updated successfully",
+        )
+
+
+@router.delete("/tools/{asset_id}")
+def delete_tool(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Delete tool asset"""
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+        if not asset or asset.asset_type != "tool":
+            raise HTTPException(status_code=404, detail="Tool not found")
+
+        session.delete(asset)
+        session.commit()
+
+        return ResponseEnvelope.success(message="Tool asset deleted successfully")
+
+
+@router.post("/tools/{asset_id}/publish", response_model=ResponseEnvelope)
+def publish_tool(
+    asset_id: str,
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Publish tool asset"""
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+        if not asset or asset.asset_type != "tool":
+            raise HTTPException(status_code=404, detail="Tool not found")
+
+        asset.status = "published"
+        asset.published_by = current_user.user_id if current_user else "admin"
+        asset.published_at = datetime.now()
+        asset.updated_at = datetime.now()
+        session.add(asset)
+        session.commit()
+        session.refresh(asset)
+
+        return ResponseEnvelope.success(
+            data=_to_tool_dict(asset),
+            message="Tool asset published successfully",
+        )
+
+
+@router.post("/tools/{asset_id}/test", response_model=ResponseEnvelope)
+def test_tool(
+    asset_id: str,
+    payload: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Test tool execution with given input"""
+    with get_session_context() as session:
+        asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+        if not asset or asset.asset_type != "tool":
+            raise HTTPException(status_code=404, detail="Tool not found")
+
+        # For now, return success with echo of input
+        # In production, this would actually execute the tool
+        return ResponseEnvelope.success(
+            data={
+                "success": True,
+                "data": payload,
+                "error": None,
+                "error_details": None,
+            }
+        )
+
+
+def _to_tool_dict(asset: TbAssetRegistry) -> dict[str, Any]:
+    """Convert tool asset to dict"""
+    return {
+        "asset_id": str(asset.asset_id),
+        "asset_type": asset.asset_type,
+        "name": asset.name,
+        "description": asset.description,
+        "version": asset.version,
+        "status": asset.status,
+        "tool_type": asset.tool_type,
+        "tool_catalog_ref": asset.tool_catalog_ref,
+        "tool_config": asset.tool_config,
+        "tool_input_schema": asset.tool_input_schema,
+        "tool_output_schema": asset.tool_output_schema,
+        "tags": asset.tags,
+        "created_by": asset.created_by,
+        "published_by": asset.published_by,
+        "published_at": asset.published_at.isoformat() if asset.published_at else None,
+        "created_at": asset.created_at.isoformat() if asset.created_at else None,
+        "updated_at": asset.updated_at.isoformat() if asset.updated_at else None,
+    }

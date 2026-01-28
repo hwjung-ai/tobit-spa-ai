@@ -106,7 +106,7 @@ JSON 응답:"""
         return self._prompt_template
 
     def _get_schema_info_for_tool(self, tool_name: str) -> str | None:
-        """Get schema information for a tool if available."""
+        """Get schema information for a tool if available via catalog_ref."""
         try:
             from app.modules.asset_registry.loader import load_tool_asset, load_catalog_asset
 
@@ -114,18 +114,23 @@ JSON 응답:"""
             if not tool_asset:
                 return None
 
-            tool_config = tool_asset.get("tool_config", {})
-            schema_ref = tool_config.get("schema_ref")
+            # First try tool_catalog_ref (newly connected catalogs)
+            catalog_ref = tool_asset.get("tool_catalog_ref")
 
-            if not schema_ref:
+            # Fallback to old schema_ref in tool_config for backward compatibility
+            if not catalog_ref:
+                tool_config = tool_asset.get("tool_config", {})
+                catalog_ref = tool_config.get("schema_ref")
+
+            if not catalog_ref:
                 return None
 
-            # Load catalog asset (formerly schema asset)
-            schema_asset = load_catalog_asset(schema_ref)
-            if not schema_asset:
+            # Load catalog asset by name
+            catalog_asset = load_catalog_asset(catalog_ref)
+            if not catalog_asset:
                 return None
 
-            catalog = schema_asset.get("catalog", {})
+            catalog = catalog_asset.get("catalog", {})
             tables = catalog.get("tables", [])
 
             # Build schema summary (only enabled tables)
