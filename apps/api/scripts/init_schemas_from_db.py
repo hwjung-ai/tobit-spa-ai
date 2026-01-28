@@ -65,6 +65,24 @@ async def init_schemas_from_db():
     print(f"[DEBUG] Environment - PG_HOST: {pg_host}, PG_PORT: {pg_port}, PG_USER: {pg_user}, PG_DB: {pg_db}")
     logger.info(f"Connecting to {pg_host}:{pg_port}/{pg_db} as {pg_user}")
 
+    # Tables to exclude (tobit-spa-ai system tables)
+    EXCLUDE_PATTERNS = [
+        "tb_",  # System tables
+        "alembic_",  # Migrations
+        "api_",  # API management
+        "chat_",  # Chat system
+        "document",  # Document system
+        "query_history",  # Query history
+        "assets",  # Asset management
+    ]
+
+    def should_include_table(table_name: str) -> bool:
+        """Check if table should be included in schema"""
+        for pattern in EXCLUDE_PATTERNS:
+            if table_name.lower().startswith(pattern.lower()):
+                return False
+        return True
+
     try:
         # Create catalog and scan
         print(f"[DEBUG] Creating catalog with source_asset: {source_asset}")
@@ -75,7 +93,15 @@ async def init_schemas_from_db():
         # Scan default schema (public)
         catalog_data = await catalog.build_catalog(schema_names=["public"])
 
-        logger.info(f"Found {len(catalog_data['tables'])} tables in public schema")
+        # Filter out system tables
+        original_count = len(catalog_data['tables'])
+        catalog_data['tables'] = [
+            table for table in catalog_data['tables']
+            if should_include_table(table['name'])
+        ]
+        filtered_count = len(catalog_data['tables'])
+
+        logger.info(f"Found {original_count} tables, keeping {filtered_count} domain tables (excluded {original_count - filtered_count} system tables)")
 
         with get_session_context() as session:
             # Check if primary_postgres_schema already exists
