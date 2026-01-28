@@ -41,7 +41,7 @@ interface CepDraft {
 
 type DraftStatus = "idle" | "draft_ready" | "previewing" | "testing" | "applied" | "saved" | "outdated" | "error";
 
-const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
 const parseJsonObject = (value: string) => {
   const trimmed = value.trim();

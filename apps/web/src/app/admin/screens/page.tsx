@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import ScreenAssetPanel from "@/components/admin/ScreenAssetPanel";
 
-export default function ScreensPage() {
+function ScreensPageContent() {
   const pathname = usePathname();
 
   return (
@@ -13,5 +13,18 @@ export default function ScreensPage() {
       <p className="text-slate-400">Manage UI Screen assets - create, edit, publish, and rollback screen definitions</p>
       <ScreenAssetPanel key={pathname} />
     </div>
+  );
+}
+
+export default function ScreensPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-4">
+        <div className="h-10 w-96 bg-slate-800 rounded animate-pulse" />
+        <div className="h-6 w-full bg-slate-800 rounded animate-pulse" />
+      </div>
+    }>
+      <ScreensPageContent />
+    </Suspense>
   );
 }

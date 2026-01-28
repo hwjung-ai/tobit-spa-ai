@@ -3,7 +3,16 @@
  * Automatically adds Bearer token to requests and handles token refresh.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+// Build URL for API requests - empty string means use relative paths (Next.js rewrites proxy)
+const buildUrl = (endpoint: string): string => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  // If baseUrl is empty, just use endpoint (relative path for Next.js rewrites)
+  // If baseUrl is set, concatenate properly
+  if (!baseUrl) {
+    return endpoint;
+  }
+  return `${baseUrl.replace(/\/+$/, "")}${endpoint}`;
+};
 
 export interface FetchOptions extends RequestInit {
   headers?: HeadersInit;
@@ -28,7 +37,8 @@ export async function authenticatedFetch<T = unknown>(
   const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const url = buildUrl(endpoint);
+    const response = await fetch(url, {
       ...options,
       signal: controller.signal,
       headers: {
@@ -44,7 +54,8 @@ export async function authenticatedFetch<T = unknown>(
       const refreshToken = localStorage.getItem("refresh_token");
       if (refreshToken) {
         try {
-          const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          const refreshUrl = buildUrl("/auth/refresh");
+          const refreshResponse = await fetch(refreshUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refresh_token: refreshToken }),
@@ -111,7 +122,8 @@ export async function fetchApi<T = unknown>(
   endpoint: string,
   options?: FetchOptions
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const url = buildUrl(endpoint);
+  const response = await fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",

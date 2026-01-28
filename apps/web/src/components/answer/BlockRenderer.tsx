@@ -243,7 +243,7 @@ const BLOCK_COMPONENT_NAMES: Record<string, string> = {
   ui_screen: "UIScreenRenderer",
 };
 
-const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "";
 
 export default function BlockRenderer({ blocks, nextActions, onAction, traceId }: BlockRendererProps) {
   const [fullscreenGraph, setFullscreenGraph] = useState<GraphBlock | null>(null);
@@ -296,9 +296,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
     }
     lastPayloadKeyRef.current = payloadKey;
 
-    const endpoint = `${normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL)}/inspector/traces/${encodeURIComponent(
-      traceId
-    )}/ui-render`;
+    const baseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+    const endpoint = baseUrl
+      ? `${baseUrl}/inspector/traces/${encodeURIComponent(traceId)}/ui-render`
+      : `/inspector/traces/${encodeURIComponent(traceId)}/ui-render`;
 
     void (async () => {
       try {

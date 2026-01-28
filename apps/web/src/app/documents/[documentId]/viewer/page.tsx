@@ -8,7 +8,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Document, Page, pdfjs } from "react-pdf";
 pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
-const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
 interface ChunkInfo {
   chunk_id: string;

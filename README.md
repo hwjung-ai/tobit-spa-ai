@@ -89,6 +89,47 @@
 
 ## 7. 트러블슈팅
 
-- **프론트엔드 API 호출 실패**: `apps/web/.env.local` 파일에 `NEXT_PUBLIC_API_BASE_URL` 환경변수가 올바르게 설정되었는지 확인하세요.
+### 방화벽 문제 (8000번 포트 접속 불가)
+
+서버 환경에서 웹브라우저는 3000번 포트로 접속하지만, 백엔드 API(8000번 포트)에 대한 방화벽이 있는 경우 연결이 실패할 수 있습니다. 이 경우 아래 설정을 확인하세요.
+
+#### 해결 방법
+
+**프론트엔드 환경 변수 설정 (`apps/web/.env.local`)**:
+
+```bash
+# 클라이언트용: 비워두면 Next.js rewrites 프록시 사용 (권장)
+NEXT_PUBLIC_API_BASE_URL=
+
+# 서버용: 백엔드 서버 주소를 명시적으로 지정
+# 로컬 개발 환경:
+API_BASE_URL=http://localhost:8000
+
+# 서버 배포 환경 (백엔드가 다른 서버에 있는 경우):
+API_BASE_URL=http://backend-server-ip:8000
+# 또는
+API_BASE_URL=http://backend-server-hostname:8000
+
+# Docker/DNS 사용 시:
+API_BASE_URL=http://api-server:8000
+```
+
+#### SSE (Server-Sent Events) 연결
+
+실시간 기능(채팅, CEP 이벤트 알림)은 SSE 연결을 사용합니다. SSE 연결은 브라우저에서 직접 백엔드에 연결하므로 Next.js API Routes를 통해 프록시됩니다.
+
+- **프록시 경로**: `/api/proxy-sse/*` → 백엔드 SSE 엔드포인트
+- **자동 처리**: `NEXT_PUBLIC_API_BASE_URL`가 비어있으면 자동으로 프록시 사용
+- **수동 설정**: `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`로 설정하면 직접 연결
+
+#### 확인 사항
+
+1. **백엔드 CORS 설정**: `apps/api/core/cors_config.py`에서 `localhost:3000`이 허용되어 있는지 확인
+2. **백엔드 실행 상태**: `http://localhost:8000/health`에 접속하여 백엔드가 실행 중인지 확인
+3. **환경 변수 확인**: `apps/web/.env.local`에 `API_BASE_URL`이 올바르게 설정되었는지 확인
+
+### 일반적인 문제
+
+- **프론트엔드 API 호출 실패**: `apps/web/.env.local` 파일에 환경변수가 올바르게 설정되었는지 확인하세요.
 - **DB 테이블 없음 오류**: `make api-migrate`를 실행하여 데이터베이스 스키마를 최신 상태로 업데이트했는지 확인하세요.
 - **Python 패키지 오류**: `pip install -r apps/api/requirements.txt`를 다시 실행하여 모든 의존성이 설치되었는지 확인하세요.

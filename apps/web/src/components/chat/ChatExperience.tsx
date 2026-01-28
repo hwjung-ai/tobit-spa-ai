@@ -23,7 +23,10 @@ interface ChatExperienceProps {
   inputPlaceholder?: string;
 }
 
-const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+const normalizeBaseUrl = (value: string | undefined) => {
+  const baseUrl = value?.replace(/\/+$/, "") ?? "";
+  return baseUrl;
+};
 
 export default function ChatExperience({
   builderSlug = "api-manager",
@@ -87,12 +90,23 @@ export default function ChatExperience({
       ? `${instructionPrompt}\n\nUser Query: ${prompt}`
       : prompt;
 
-    const url = new URL(`${apiBaseUrl}/chat/stream`);
-    url.searchParams.set("message", finalPrompt);
-    url.searchParams.set("builder", builderSlug);
+    // Build SSE URL - use Next.js API proxy for SSE to avoid firewall issues
+    let streamUrl: string;
+    if (!apiBaseUrl) {
+      const params = new URLSearchParams({
+        message: finalPrompt,
+        builder: builderSlug,
+      });
+      streamUrl = `/api/proxy-sse/chat/stream?${params.toString()}`;
+    } else {
+      const url = new URL(`${apiBaseUrl}/chat/stream`);
+      url.searchParams.set("message", finalPrompt);
+      url.searchParams.set("builder", builderSlug);
+      streamUrl = url.toString();
+    }
 
-    console.log("[Chat] Opening SSE stream:", url.toString());
-    const es = new EventSource(url.toString());
+    console.log("[Chat] Opening SSE stream:", streamUrl);
+    const es = new EventSource(streamUrl);
     eventSourceRef.current = es;
 
     es.onopen = () => {
@@ -175,12 +189,12 @@ export default function ChatExperience({
 
   const panelClass = inline
     ? "flex flex-col gap-3"
-    : "fixed bottom-6 right-6 z-50 flex w-80 flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/90 p-5 shadow-2xl backdrop-blur-xl";
+    : "fixed bottom-1 right-6 z-50 flex w-80 flex-col gap-2 rounded-3xl border border-slate-800 bg-slate-900/90 p-3 shadow-2xl backdrop-blur-xl max-h-[calc(100vh-0.5rem)] overflow-y-auto";
 
   return (
     <div className={panelClass}>
-      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">AI Copilot</p>
-      <div className="max-h-[440px] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-[12px] text-slate-100 custom-scrollbar">
+      <p className="text-xs uppercase tracking-[0.3em] text-slate-500 shrink-0">AI Copilot</p>
+      <div className="max-h-[min(440px,calc(100vh-14rem))] overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-[12px] text-slate-100 custom-scrollbar min-h-0">
         {messages.length === 0 ? (
           <p className="text-xs text-slate-500">질문을 입력하면 AI가 응답합니다.</p>
         ) : (
@@ -217,15 +231,15 @@ export default function ChatExperience({
           ))
         )}
       </div>
-      <form onSubmit={handleSubmit} className="space-y-2">
+      <form onSubmit={handleSubmit} className="space-y-1.5 shrink-0">
         <textarea
-          rows={3}
+          rows={2}
           value={inputValue}
           onChange={(event) => setInputValue(event.target.value)}
           className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
           placeholder={inputPlaceholder}
         />
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-400">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-400 pt-1">
           <span className={status === "streaming" ? "animate-pulse text-sky-400 font-bold" : ""}>
             {status === "streaming" ? "Streaming…" : status === "error" ? "Error" : "Ready"}
           </span>

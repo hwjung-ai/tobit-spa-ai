@@ -81,10 +81,19 @@ export interface AuditLog {
   created_at: string;
 }
 
-export const API_BASE_URL =
-  typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000")
-    : "http://localhost:8000";
+export const API_BASE_URL = (() => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  // Remove trailing slashes for consistency
+  return baseUrl.replace(/\/+$/, "");
+})();
+
+// Build URL for API requests - empty string means use relative paths (Next.js rewrites proxy)
+export const buildApiUrl = (endpoint: string): string => {
+  if (!API_BASE_URL) {
+    return endpoint;
+  }
+  return `${API_BASE_URL}${endpoint}`;
+};
 
 const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
 
@@ -92,7 +101,7 @@ export async function fetchApi<T = unknown>(
   endpoint: string,
   options?: RequestInit
 ): Promise<ResponseEnvelope<T>> {
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = buildApiUrl(endpoint);
 
   const token =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
@@ -143,9 +152,10 @@ export async function fetchApi<T = unknown>(
     const isFetchError = errorMsg.includes("fetch") || errorMsg.includes("Failed to fetch");
     const isCORSError = errorMsg.includes("CORS");
 
-    let userMessage = "Network error: Failed to fetch. Check if backend is running at http://localhost:8000";
+    const backendUrl = API_BASE_URL || "http://localhost:3000 (via Next.js rewrites)";
+    let userMessage = `Network error: Failed to fetch. Check if backend is running.`;
     if (isFetchError || isCORSError) {
-      userMessage = `Network error: Failed to connect to backend at ${API_BASE_URL}. Please check if backend is running.`;
+      userMessage = `Network error: Failed to connect to backend (${backendUrl}). Please check if backend is running.`;
     } else if (isTypeError) {
       userMessage = `Network error: ${errorMsg}`;
     }

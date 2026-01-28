@@ -406,8 +406,11 @@ export default function DocumentsPage() {
 
     try {
       const token = localStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-      const response = await fetch(`${baseUrl}/documents/${selectedDocument.id}/query/stream`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const url = baseUrl
+        ? `${baseUrl}/documents/${selectedDocument.id}/query/stream`
+        : `/documents/${selectedDocument.id}/query/stream`;
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           Accept: "text/event-stream",
@@ -564,8 +567,9 @@ export default function DocumentsPage() {
     formData.append("file", file);
     try {
       const token = localStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-      const response = await fetch(`${baseUrl}/documents/upload`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const url = baseUrl ? `${baseUrl}/documents/upload` : "/documents/upload";
+      const response = await fetch(url, {
         method: "POST",
         body: formData,
         headers: {

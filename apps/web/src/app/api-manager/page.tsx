@@ -115,7 +115,7 @@ const SCOPE_LABELS: Record<ScopeType, string> = {
   system: "system",
 };
 
-const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
 const formatTimestamp = (value: string) => {
   if (!value) return "";

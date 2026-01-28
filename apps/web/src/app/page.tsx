@@ -57,7 +57,7 @@ const badgeStyles: Record<ChunkType, string> = {
   error: "bg-rose-50 text-rose-800 border-rose-200",
 };
 
-const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "http://localhost:8000";
+const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
 const formatTimestamp = (value: string) => {
   try {
@@ -195,9 +195,16 @@ export default function Home() {
     }
     const threadParam = `&thread_id=${thread.id}`;
     const token = localStorage.getItem("access_token");
-    const source = new EventSource(
-      `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`
-    );
+
+    // Build SSE URL - use Next.js API proxy for SSE to avoid firewall issues
+    let streamUrl: string;
+    if (!apiBaseUrl) {
+      streamUrl = `/api/proxy-sse/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
+    } else {
+      streamUrl = `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
+    }
+
+    const source = new EventSource(streamUrl);
     eventSourceRef.current = source;
 
     source.addEventListener("message", (event) => {

@@ -21,7 +21,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+// Build URL for API requests - empty string means use relative paths (Next.js rewrites proxy)
+const buildAuthUrl = (endpoint: string): string => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  if (!baseUrl) {
+    return endpoint;
+  }
+  return `${baseUrl.replace(/\/+$/, "")}${endpoint}`;
+};
+
 const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
 
 // Default debug user for development mode
@@ -56,7 +64,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function fetchCurrentUser() {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      const url = buildAuthUrl("/auth/me");
+      const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -87,7 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const url = buildAuthUrl("/auth/login");
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -106,7 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      const url = buildAuthUrl("/auth/logout");
+      await fetch(url, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -125,7 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const refresh_token = localStorage.getItem("refresh_token");
     if (!refresh_token) throw new Error("No refresh token");
 
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    const url = buildAuthUrl("/auth/refresh");
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token }),

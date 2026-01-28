@@ -15,6 +15,8 @@ engine = create_engine(
     settings.postgres_dsn,
     echo=settings.log_level.lower() == "debug",
     future=True,
+    pool_pre_ping=True,  # Verify connections before using them
+    pool_recycle=3600,  # Recycle connections after 1 hour
 )
 
 SessionLocal = sessionmaker(

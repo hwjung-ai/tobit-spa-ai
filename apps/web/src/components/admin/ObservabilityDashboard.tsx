@@ -15,6 +15,8 @@ import {
   Cell,
 } from "recharts";
 
+const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "";
+
 type RegressionTrendRow = {
   date: string;
   PASS: number;
@@ -54,13 +56,14 @@ export default function ObservabilityDashboard() {
 
     const loadKpis = async () => {
       try {
-        // Use absolute URL to API server
-        let res = await fetch("http://localhost:8000/ops/observability/kpis");
+        const apiBaseUrl = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+        // Use API base URL from environment (empty = use Next.js rewrites proxy)
+        let res = await fetch(`${apiBaseUrl}/ops/observability/kpis`);
 
         // If that fails, try alternative path
         if (res.status === 404) {
           console.warn("Trying alternative API path...");
-          res = await fetch("http://localhost:8000/api/ops/observability/kpis");
+          res = await fetch(`${apiBaseUrl}/api/ops/observability/kpis`);
         }
 
         if (!res.ok) {

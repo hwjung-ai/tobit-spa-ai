@@ -340,7 +340,8 @@ function CepEventBrowserContent() {
   }, [leftWidth]);
 
   useEffect(() => {
-    const eventSource = new EventSource(`${apiBaseUrl}/cep/events/stream`);
+    // Use Next.js API proxy for SSE to avoid firewall issues
+    const eventSource = new EventSource(!apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`);
     const handleSummary = (event: MessageEvent) => {
       const data = JSON.parse(event.data) as SummaryResponse;
       queryClient.setQueryData(["cep-events-summary"], data);
