@@ -580,7 +580,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                     </div>
                 )}
 
-                {!["prompt", "mapping", "policy", "query", "screen", "source", "schema", "resolver"].includes(asset.asset_type) && (
+                {!["prompt", "mapping", "policy", "query", "screen", "source", "catalog", "resolver"].includes(asset.asset_type) && (
                     <div className="space-y-3 text-sm text-slate-400">
                         <p>
                             이 Asset 타입은 현재 Admin Assets 화면에서 편집을 지원하지 않습니다.

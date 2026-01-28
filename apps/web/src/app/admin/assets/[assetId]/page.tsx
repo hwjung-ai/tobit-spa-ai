@@ -39,7 +39,7 @@ export default function AssetDetailPage() {
         enabled: !!assetId
     });
 
-    const shouldLoadTraces = ["source", "schema", "resolver"].includes(asset?.asset_type ?? "");
+    const shouldLoadTraces = ["source", "catalog", "resolver"].includes(asset?.asset_type ?? "");
     const {
         data: traceData,
         isLoading: tracesLoading,
@@ -161,7 +161,7 @@ export default function AssetDetailPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {["source", "schema", "resolver"].includes(asset.asset_type) && (
+                    {["source", "catalog", "resolver"].includes(asset.asset_type) && (
                         <Link
                             href={
                                 asset.asset_type === "source"
