@@ -248,8 +248,8 @@ export default function DocumentsPage() {
 
   const fetchDocumentDetail = useCallback(
     async (documentId: string) => {
-      const payload = await authenticatedFetch(`/documents/${documentId}`) as { data: { document: DocumentDetail } };
-      setSelectedDocument(payload.data.document);
+      const payload = await authenticatedFetch(`/documents/${documentId}`) as { data?: { document: DocumentDetail } };
+      setSelectedDocument(payload?.data?.document || null);
     },
     []
   );
@@ -258,8 +258,8 @@ export default function DocumentsPage() {
     setLoadingDocuments(true);
     setDocumentsError(null);
     try {
-      const payload = await authenticatedFetch("/documents") as { data: { documents: DocumentItem[] } };
-      setDocuments(payload.data.documents ?? []);
+      const payload = await authenticatedFetch("/documents") as { data?: { documents: DocumentItem[] } };
+      setDocuments(payload?.data?.documents ?? []);
       const selectedId = selectedDocumentRef.current?.id;
       if (selectedId) {
         try {
@@ -406,7 +406,7 @@ export default function DocumentsPage() {
 
     try {
       const token = localStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
       const url = baseUrl
         ? `${baseUrl}/documents/${selectedDocument.id}/query/stream`
         : `/documents/${selectedDocument.id}/query/stream`;
@@ -567,7 +567,7 @@ export default function DocumentsPage() {
     formData.append("file", file);
     try {
       const token = localStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
       const url = baseUrl ? `${baseUrl}/documents/upload` : "/documents/upload";
       const response = await fetch(url, {
         method: "POST",
