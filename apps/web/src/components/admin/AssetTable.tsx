@@ -66,7 +66,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                     type === "query" ? "bg-orange-950/50 text-orange-300 border-orange-800/50" :
                     type === "screen" ? "bg-cyan-950/50 text-cyan-300 border-cyan-800/50" :
                     type === "source" ? "bg-slate-900/60 text-slate-200 border-slate-700/60" :
-                    type === "schema" ? "bg-fuchsia-950/40 text-fuchsia-300 border-fuchsia-800/40" :
+                    type === "catalog" ? "bg-fuchsia-950/40 text-fuchsia-300 border-fuchsia-800/40" :
                     type === "resolver" ? "bg-amber-950/40 text-amber-200 border-amber-800/40" :
                         "bg-slate-950/50 text-slate-300 border-slate-800/50";
                 return (
