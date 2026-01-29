@@ -18,14 +18,7 @@
 
 ```
 docs/
-├── README.md                              ← 이 파일
-├── TRACE_ASSET_FIX_PLAN.md               ← 초기 문제 분석 및 개선 계획
-├── 20_TEST_QUERIES.md                    ← 20개 테스트 질의 정의
-├── 20_TEST_QUERIES_IMPROVED_RESULTS.json ← 최종 테스트 결과 (100% 통과)
-├── SYSTEM_TEST_ANALYSIS_REPORT.md        ← 테스트 분석 보고서
-└── DETAILED_SYSTEM_ANALYSIS.md           ← 상세 시스템 분석 보고서
-```
-
+├── README.md
 ---
 
 ## 🔍 주요 발견사항
