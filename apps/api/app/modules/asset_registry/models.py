@@ -76,18 +76,8 @@ class TbAssetRegistry(SQLModel, table=True):
     # Screen fields
     screen_id: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
 
-    # Tool fields (commented out until migrations 0030-0041 are applied to database)
-    # tool_type: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    # tool_catalog_ref: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
-    # tool_config: dict[str, Any] | None = Field(
-    #     default=None, sa_column=Column(JSONB, nullable=True)
-    # )
-    # tool_input_schema: dict[str, Any] | None = Field(
-    #     default=None, sa_column=Column(JSONB, nullable=True)
-    # )
-    # tool_output_schema: dict[str, Any] | None = Field(
-    #     default=None, sa_column=Column(JSONB, nullable=True)
-    # )
+    # Tool fields (only tool_type exists in current database schema)
+    tool_type: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
 
     # Common fields
     tags: dict[str, Any] | None = Field(

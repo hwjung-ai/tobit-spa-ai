@@ -33,15 +33,43 @@ class DynamicTool(BaseTool):
                 - tool_output_schema: Output schema dict (optional)
                 - description: Tool description (optional)
         """
+        super().__init__()
         self.asset_id = tool_asset.get("asset_id")
         self.asset_data = tool_asset
         self.name = tool_asset.get("name", "unknown")
-        self.tool_name = self.name  # Alias for compatibility with registry
         self.description = tool_asset.get("description", "")
-        self.tool_type = tool_asset.get("tool_type", "custom")
+        self._tool_type = tool_asset.get("tool_type", "custom")
         self.tool_config = tool_asset.get("tool_config", {})
         self.input_schema = tool_asset.get("tool_input_schema", {})
         self.output_schema = tool_asset.get("tool_output_schema", {})
+
+    @property
+    def tool_type(self) -> str:
+        """Return the type of this tool."""
+        return self._tool_type
+
+    @property
+    def tool_name(self) -> str:
+        """Return the name of this tool."""
+        return self.name
+
+    async def should_execute(
+        self, context: ToolContext, params: dict[str, Any]
+    ) -> bool:
+        """
+        Determine if this tool should execute given the parameters.
+
+        For DynamicTools, we accept all parameters since configuration
+        determines behavior.
+
+        Args:
+            context: Execution context
+            params: Tool-specific parameters
+
+        Returns:
+            True (always execute for DynamicTools)
+        """
+        return True
 
     async def execute(
         self, context: ToolContext, input_data: dict[str, Any]

@@ -721,9 +721,9 @@ def load_all_published_tools() -> list[dict[str, Any]]:
                 "name": asset.name,
                 "description": asset.description,
                 "tool_type": asset.tool_type,
-                "tool_config": asset.tool_config or {},
-                "tool_input_schema": asset.tool_input_schema or {},
-                "tool_output_schema": asset.tool_output_schema or {},
+                "tool_config": getattr(asset, 'tool_config', None) or {},
+                "tool_input_schema": getattr(asset, 'tool_input_schema', None) or {},
+                "tool_output_schema": getattr(asset, 'tool_output_schema', None) or {},
                 "version": asset.version,
                 "source": "asset_registry",
             }
