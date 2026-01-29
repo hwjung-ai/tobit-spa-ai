@@ -58,20 +58,32 @@ class PrimarySpec(BaseModel):
     keywords: List[str] = Field(default_factory=lambda: [])
     filters: List[FilterSpec] = Field(default_factory=lambda: [])
     limit: int = 5
+    tool_type: str = Field(
+        default="ci_lookup",
+        description="Tool to use for primary query execution"
+    )
 
 
 class SecondarySpec(BaseModel):
     keywords: List[str] = Field(default_factory=lambda: [])
     filters: List[FilterSpec] = Field(default_factory=lambda: [])
     limit: int = 5
+    tool_type: str = Field(
+        default="ci_lookup",
+        description="Tool to use for secondary query execution"
+    )
 
 
 class AggregateSpec(BaseModel):
     group_by: List[str] = Field(default_factory=lambda: [])
     metrics: List[str] = Field(default_factory=lambda: [])
     filters: List[FilterSpec] = Field(default_factory=lambda: [])
-    scope: Literal["ci", "graph"] = "ci"
+    scope: Literal["ci", "graph", "event"] = "ci"
     top_n: int = 10
+    tool_type: str = Field(
+        default="metric_query",
+        description="Tool to use for aggregate query execution"
+    )
 
 
 class GraphLimits(BaseModel):
@@ -85,6 +97,10 @@ class GraphSpec(BaseModel):
     user_requested_depth: int | None = None  # 사용자가 질의에서 명시한 depth
     limits: GraphLimits = Field(default_factory=lambda: GraphLimits())
     view: View | None = None
+    tool_type: str = Field(
+        default="graph_analysis",
+        description="Tool to use for graph analysis execution"
+    )
 
 
 class OutputSpec(BaseModel):
@@ -100,6 +116,10 @@ class MetricSpec(BaseModel):
     time_range: str
     mode: Literal["aggregate", "series"] = "aggregate"
     scope: Literal["ci", "graph"] = "ci"
+    tool_type: str = Field(
+        default="metric_query",
+        description="Tool to use for metric query execution"
+    )
 
 
 class HistorySpec(BaseModel):
@@ -109,6 +129,10 @@ class HistorySpec(BaseModel):
     mode: Literal["recent"] = "recent"
     time_range: Literal["last_24h", "last_7d", "last_30d"] = "last_7d"
     limit: int = 50
+    tool_type: str = Field(
+        default="history_query",
+        description="Tool to use for history query execution"
+    )
 
 
 class ListSpec(BaseModel):
@@ -121,6 +145,10 @@ class CepSpec(BaseModel):
     mode: Literal["simulate"] = "simulate"
     rule_id: str | None = None
     dry_run: bool = True
+    tool_type: str = Field(
+        default="cep_query",
+        description="Tool to use for CEP query execution"
+    )
 
 
 class AutoPathSpec(BaseModel):
@@ -143,6 +171,10 @@ class AutoSpec(BaseModel):
     path: AutoPathSpec = Field(default_factory=lambda: AutoPathSpec())
     graph_scope: AutoGraphScopeSpec = Field(
         default_factory=lambda: AutoGraphScopeSpec()
+    )
+    tool_type: str = Field(
+        default="auto_analyzer",
+        description="Tool to use for auto analysis execution"
     )
 
 
