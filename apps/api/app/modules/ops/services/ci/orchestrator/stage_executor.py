@@ -58,6 +58,7 @@ class StageExecutor:
         self.stage_inputs: List[StageInput] = []
         self.stage_outputs: List[StageOutput] = []
         self._llm = None  # Lazy-loaded LLM client
+        self._query_asset_results: List[Dict[str, Any]] = []  # Cache Query Asset results per execution
 
     def _resolve_asset(self, asset_type: str, default_key: str) -> str:
         """
@@ -95,6 +96,9 @@ class StageExecutor:
         """
         start_time = time.time()
         stage_name = stage_input.stage
+
+        # Initialize Query Asset cache at the start of each execution
+        self._query_asset_results = []
 
         self.logger.info(
             "stage_executor.start",
@@ -291,6 +295,63 @@ class StageExecutor:
             from app.modules.ops.services.ci.planner.plan_schema import Plan
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
 
+            # Check if orchestration should be used
+            use_orchestration = stage_input.params.get("enable_orchestration", False) or (
+                hasattr(plan, "execution_strategy") and plan.execution_strategy is not None
+            )
+
+            if use_orchestration:
+                # NEW: Use orchestration layer for tool execution
+                from app.modules.ops.services.ci.orchestrator.tool_orchestration import ToolOrchestrator
+
+                self.logger.info(
+                    "execute_stage.orchestration_enabled",
+                    extra={
+                        "strategy": getattr(plan, "execution_strategy", "serial").value if hasattr(plan, "execution_strategy") else "serial",
+                    }
+                )
+
+                try:
+                    orchestrator = ToolOrchestrator(plan=plan, context=tool_context)
+                    orchestrated_results = await orchestrator.execute()
+
+                    # Convert orchestrated results to execution results format
+                    for tool_id, result in orchestrated_results.items():
+                        if isinstance(result, dict) and result.get("success"):
+                            results.append(result)
+                            references.extend(result.get("references", []))
+
+                    self.logger.info(
+                        "execute_stage.orchestration_completed",
+                        extra={
+                            "tool_count": len(orchestrated_results),
+                            "execution_results_count": len(results),
+                        }
+                    )
+
+                    return {
+                        "execution_results": results,
+                        "references": references,
+                        "plan_output": plan_output_dict,
+                        "executed_at": time.time(),
+                    }
+                except Exception as e:
+                    self.logger.error(
+                        "execute_stage.orchestration_failed",
+                        extra={"error": str(e)},
+                    )
+                    # Fall back to legacy execution
+                    self.logger.info("Falling back to legacy sequential execution")
+
+            # Fix scope based on question keywords
+            # This is a workaround for planner not correctly detecting event scope
+            question = stage_input.params.get("original_question") or stage_input.params.get("question", "")
+            if question and "event" in question.lower():
+                if plan.aggregate and plan.aggregate.scope == "ci":
+                    # Force event scope for event-related questions
+                    plan.aggregate.scope = "event"
+                    self.logger.info(f"Auto-corrected aggregate scope to 'event' for question containing 'event' keyword")
+
             self.logger.info(
                 "execute_stage.plan_created",
                 extra={
@@ -373,13 +434,21 @@ class StageExecutor:
                     self.logger.error(f"Failed to execute metric aggregate query: {str(e)}")
             elif plan.aggregate and (plan.aggregate.group_by or plan.aggregate.metrics or plan.aggregate.filters):
                 try:
+                    # Select tool based on aggregate scope
+                    aggregate_scope = plan.aggregate.scope or "ci"
+                    if aggregate_scope == "event":
+                        tool_type = "event_aggregate"
+                    else:
+                        tool_type = "ci_aggregate"
+
                     aggregate_result = await self.tool_executor.execute_tool(
-                        tool_type="ci_aggregate",
+                        tool_type=tool_type,
                         params={
                             "group_by": plan.aggregate.group_by,
                             "metrics": plan.aggregate.metrics,
                             "filters": plan.aggregate.filters,
                             "top_n": plan.aggregate.top_n,
+                            "scope": aggregate_scope,
                         },
                         context=tool_context,
                     )
@@ -411,7 +480,7 @@ class StageExecutor:
         return {
             "execution_results": results,
             "references": references,
-            "plan_output": plan_output,
+            "plan_output": plan_output_dict,
             "executed_at": time.time(),
         }
 
@@ -420,6 +489,15 @@ class StageExecutor:
         stage_output = stage_input.prev_output
         if not stage_output:
             raise ValueError("Previous stage output is required for compose stage")
+
+        # ===== NEW: Execute Query Assets to get REAL data =====
+        real_data_results = await self._execute_query_assets_for_real_data(stage_input)
+
+        self.logger.info(
+            "compose_stage.real_data",
+            extra={"real_data_results_count": len(real_data_results)},
+        )
+        # ===== END NEW =====
 
         # Debug logging
         self.logger.info(
@@ -443,15 +521,30 @@ class StageExecutor:
 
         execution_results = self._convert_tool_calls_to_execution_results(tool_calls)
 
-        # Fallback to execution_results if tool_calls is empty
+        # ===== PRIORITY: Tool execution results FIRST, Query Asset as fallback =====
+        # Generic orchestration: Tools are primary, Query Assets supplement
         if not execution_results:
-            execution_results = stage_output.get("execution_results", [])
-            if not execution_results:
-                execution_results = stage_output.get("result", {}).get("execution_results", [])
+            # Only use Query Asset if tools returned no results
+            if real_data_results:
+                execution_results = real_data_results
+                self.logger.info(
+                    f"📊 [COMPOSE] Using Query Asset data (no tool results): {len(real_data_results)} results"
+                )
+            else:
+                # Final fallback to legacy execution_results
+                execution_results = stage_output.get("execution_results", [])
+                if not execution_results:
+                    execution_results = stage_output.get("result", {}).get("execution_results", [])
+        else:
+            # Tools returned results, optionally supplement with Query Asset data
+            if real_data_results:
+                self.logger.info(
+                    f"📊 [COMPOSE] Tool results ({len(execution_results)}) take priority over Query Asset ({len(real_data_results)})"
+                )
 
-        # Fallback: extract from base_result if no tool_calls or execution_results
-        # This handles the case where runner doesn't use run_tool() for execution
-        if not execution_results:
+        # ===== ONLY use base_result if we have NO Query Asset data =====
+        # This prevents base_result from overriding Query Asset results
+        if not execution_results and not real_data_results:
             base_result = stage_output.get("result", {}).get("base_result", {})
             self.logger.info(
                 "compose_stage.base_result_fallback",
@@ -537,6 +630,14 @@ class StageExecutor:
                     path_results
                 )
 
+            # ===== NEW: Handle query_asset results =====
+            query_asset_results = [r for r in execution_results if r.get("mode") == "query_asset"]
+            if query_asset_results:
+                composed_result["query_asset_result"] = query_asset_results[0]
+                composed_result["results_summary"] = self._summarize_query_asset_results(
+                    query_asset_results
+                )
+
         # Merge all references
         all_references = []
         for result in execution_results:
@@ -590,6 +691,60 @@ class StageExecutor:
                 )
 
         elif plan_kind == "plan":
+            # ===== NEW: Execute Query Assets to get REAL data =====
+            real_data_results = await self._execute_query_assets_for_real_data(stage_input)
+
+            # If we have real data from Query Assets, create answer from it
+            if real_data_results:
+                self.logger.info(f"📊 [PRESENT] Using Query Asset data: {len(real_data_results)} results")
+
+                # Build answer from real data - ALWAYS create blocks
+                for result in real_data_results:
+                    data = result.get("data", {})
+                    first_value = data.get("first_value")
+                    rows_count = data.get("count", 0)
+
+                    self.logger.info(f"📊 [PRESENT] Processing Query Asset result: {result.get('asset_name')}, count: {rows_count}, first_value: {first_value}")
+
+                    # Create a block with the data
+                    if first_value is not None:
+                        summary_text = f"Based on the database query, there are {first_value} items."
+                        blocks.append({
+                            "type": "markdown",
+                            "content": summary_text,
+                            "metadata": {"generated_by": "query_asset"},
+                        })
+                    else:
+                        # No value but query executed
+                        summary_text = f"Query executed successfully but returned no results."
+                        blocks.append({
+                            "type": "text",
+                            "text": summary_text,
+                            "metadata": {"generated_by": "query_asset"},
+                        })
+
+                # Skip adding runner blocks if we have Query Asset results
+                # to avoid "No CI matches found" overriding real data
+                if real_data_results:
+                    # Extract actual data value from Query Asset for summary
+                    summary_value = "Query executed successfully"
+                    for result in real_data_results:
+                        data = result.get("data", {})
+                        first_value = data.get("first_value")
+                        if first_value is not None:
+                            summary_value = str(first_value)
+                            break
+
+                    # Create result with our real data blocks
+                    result = {
+                        "blocks": blocks,
+                        "references": [],
+                        "summary": summary_value,
+                        "presented_at": time.time(),
+                    }
+                    return result
+            # ===== END NEW =====
+
             # Add LLM summary as the first block if available
             llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
             if llm_summary:
@@ -707,6 +862,43 @@ class StageExecutor:
             summary.append(f"Found {path_count} paths")
         return summary
 
+    def _summarize_query_asset_results(self, results: List[Dict[str, Any]]) -> List[str]:
+        """Summarize Query Asset results for LLM context."""
+        summary = []
+
+        for result in results:
+            asset_name = result.get("asset_name", "unknown")
+            data = result.get("data", {})
+            rows = data.get("rows", [])
+            rows_count = data.get("count", len(rows))
+
+            if rows_count > 0 and rows:
+                # For count-based queries, extract the value
+                first_row = rows[0]
+                if isinstance(first_row, (tuple, list)) and len(first_row) > 0:
+                    value = first_row[0]
+                    summary.append(
+                        f"Database query '{asset_name}' returned {rows_count} result(s). "
+                        f"The primary value is: {value}."
+                    )
+                elif isinstance(first_row, dict):
+                    # For row-based queries, show first value
+                    value = list(first_row.values())[0] if first_row else "N/A"
+                    summary.append(
+                        f"Database query '{asset_name}' found {rows_count} result(s). "
+                        f"First result contains: {value}."
+                    )
+                else:
+                    summary.append(
+                        f"Database query '{asset_name}' executed successfully with {rows_count} result(s)."
+                    )
+            else:
+                summary.append(
+                    f"Database query '{asset_name}' executed but found no results (0 rows)."
+                )
+
+        return summary
+
     def _generate_summary(self, result: Dict[str, Any]) -> str:
         """Generate a summary of the results."""
         if "primary_result" in result:
@@ -808,6 +1000,37 @@ class StageExecutor:
         for i, result in enumerate(execution_results, 1):
             mode = result.get("mode", "unknown")
             lines.append(f"\n{i}. {mode.upper()} Result:")
+
+            # Handle Query Asset results (mode == "query_asset")
+            if mode == "query_asset":
+                data = result.get("data", {})
+                rows = data.get("rows", [])
+                rows_count = data.get("count", len(rows))
+
+                lines.append(f"   - Source: Query Asset '{result.get('asset_name', 'unknown')}'")
+                lines.append(f"   - Count: {rows_count}")
+
+                if rows_count > 0:
+                    # Show first few rows as samples
+                    sample_count = min(3, rows_count)
+                    lines.append(f"   - Sample Data ({sample_count} rows):")
+                    for j, row in enumerate(rows[:sample_count], 1):
+                        if isinstance(row, (tuple, list)):
+                            # Convert tuple to string representation
+                            row_str = ", ".join(str(v) for v in row)
+                            lines.append(f"     {j}. [{row_str}]")
+                        elif isinstance(row, dict):
+                            # Convert dict to key=value format
+                            row_str = ", ".join(f"{k}={v}" for k, v in list(row.items())[:3])
+                            lines.append(f"     {j}. {row_str}")
+
+                # Show SQL if available
+                query_asset = result.get("query_asset", {})
+                if query_asset and query_asset.get("sql"):
+                    sql_preview = query_asset["sql"][:100]
+                    lines.append(f"   - SQL: {sql_preview}...")
+
+                continue
 
             # Add count info
             count = result.get("count", 0)
@@ -1087,3 +1310,220 @@ class StageExecutor:
 
         execution_results.append(primary_result)
         return execution_results
+
+    async def _execute_query_assets_for_real_data(
+        self, stage_input: StageInput
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute Query Assets to get REAL data from database.
+
+        This bypasses the legacy graph-based system and executes actual SQL
+        queries defined in Query Assets.
+
+        Args:
+            stage_input: Stage input with params containing the question
+
+        Returns:
+            List of execution results with real data
+        """
+        # ===== CACHE: Return cached results if available =====
+        if self._query_asset_results:
+            self.logger.info(f"📋 [QUERY ASSET] Using cached results: {len(self._query_asset_results)} results")
+            return self._query_asset_results
+        # ===== END CACHE =====
+
+        results = []
+
+        try:
+            # Get the original question from context first (most reliable)
+            question = getattr(self.context, 'question', None)
+
+            # If not in context, try to get from params
+            if not question:
+                params = stage_input.params or {}
+                question = params.get("question", "")
+
+            # If still not found, try to extract from plan
+            if not question:
+                plan_output = params.get("plan_output", {})
+                plan = plan_output.get("plan") if isinstance(plan_output, dict) else None
+
+                if plan:
+                    # Extract keywords from plan
+                    primary = plan.get("primary") if isinstance(plan, dict) else None
+                    if primary:
+                        keywords = primary.get("keywords") if isinstance(primary, dict) else []
+                        if keywords:
+                            question = " ".join(keywords)
+
+            if not question:
+                self.logger.info("No question found for Query Asset execution")
+                return results
+
+            self.logger.info(f"🔍 [QUERY ASSET] Executing Query Assets for question: {question[:100]}")
+
+            # Load Query Assets from database
+            with get_session_context() as session:
+                from sqlmodel import select
+                from app.modules.asset_registry.models import TbAssetRegistry
+
+                query = select(TbAssetRegistry).where(
+                    TbAssetRegistry.asset_type == "query",
+                    TbAssetRegistry.status == "published"
+                )
+                query_assets = session.exec(query).all()
+
+            self.logger.info(f"🔍 [QUERY ASSET] Found {len(query_assets)} Query Assets in database")
+
+            if not query_assets:
+                self.logger.warning("No Query Assets found in database")
+                return results
+
+            # Score all Query Assets and sort by score
+            scored_assets = []
+            question_lower = question.lower()
+
+            for asset in query_assets:
+                if not asset.schema_json:
+                    continue
+
+                schema = asset.schema_json
+                asset_keywords = schema.get("keywords", [])
+                sql = schema.get("sql", "")
+
+                # Score based on keyword matching
+                score = 0.0
+                if asset_keywords:
+                    matched = sum(
+                        1 for kw in asset_keywords
+                        if kw.lower() in question_lower
+                    )
+                    score = matched / max(len(asset_keywords), 1)
+
+                # Also check asset name for matching
+                asset_name_lower = asset.name.lower()
+                name_score = 0.0
+                if asset_name_lower:
+                    name_match = sum(
+                        1 for word in question_lower.split()
+                        if word in asset_name_lower
+                    )
+                    name_score = name_match / max(len(question_lower.split()), 1) if question_lower else 0
+
+                # NEW: Check SQL table names for matching
+                # Map question words to SQL table names
+                table_mapping = {
+                    "event": "event_log",
+                    "ci": "ci",
+                    "metric": "metric",
+                    "audit": "tb_audit_log"
+                }
+                sql_score = 0.0
+                if sql:
+                    for word, table in table_mapping.items():
+                        if word in question_lower and table in sql:
+                            sql_score += 1  # Bonus for table match
+                            # Additional bonus if multiple words match
+                            if word in question_lower.split():
+                                sql_score += 0.5
+
+                    # Penalty for date filters (prefer general queries over specific date ranges)
+                    if "WHERE" in sql.upper() and ("DATE(" in sql or "INTERVAL" in sql or "CURRENT_DATE" in sql):
+                        sql_score -= 2.0  # Significant penalty for date filters
+
+                    # Penalty for using created_at column (doesn't exist in event_log)
+                    if "created_at" in sql.lower():
+                        sql_score -= 5.0  # Huge penalty for known bad column
+
+                # Combine scores (keywords 50%, name 20%, SQL tables 30%)
+                total_score = score * 0.5 + name_score * 0.2 + sql_score * 0.3
+
+                scored_assets.append((total_score, asset))
+
+            # Sort by score (descending)
+            scored_assets.sort(key=lambda x: x[0], reverse=True)
+
+            self.logger.info(f"🔍 [QUERY ASSET] Scored {len(scored_assets)} assets, trying top matches...")
+
+            # Try each Query Asset in score order until one succeeds
+            for total_score, asset in scored_assets[:5]:  # Try top 5 matches
+                if total_score < 0:
+                    continue  # Skip negative scores
+
+                schema = asset.schema_json
+                sql = schema.get("sql", "")
+
+                if not sql:
+                    self.logger.warning(f"Query Asset {asset.name} has no SQL, skipping")
+                    continue
+
+                self.logger.info(f"🔍 [QUERY ASSET] Trying: {asset.name} (score: {total_score:.2f})")
+                self.logger.info(f"🔍 [QUERY ASSET] SQL: {sql[:200]}")
+
+                # Execute SQL directly with error handling
+                from sqlalchemy import text
+
+                try:
+                    with get_session_context() as session:
+                        query_result = session.exec(text(sql))
+                        rows = query_result.fetchall()
+
+                    self.logger.info(f"✅ [QUERY ASSET] Executed successfully: {asset.name}, {len(rows)} rows")
+
+                    # Extract first value for summary (avoid serialization issues)
+                    first_value = None
+                    if rows and len(rows) > 0:
+                        first_row = rows[0]
+                        # Try different ways to access the first value
+                        try:
+                            if hasattr(first_row, '__iter__') and not isinstance(first_row, (str, dict)):
+                                # SQLAlchemy Row objects are iterable
+                                first_value = list(first_row)[0] if first_row else None
+                            elif isinstance(first_row, dict):
+                                first_value = list(first_row.values())[0] if first_row else None
+                            else:
+                                first_value = first_row
+                        except Exception as e:
+                            self.logger.warning(f"Failed to extract first value: {e}")
+                            first_value = None
+
+                    # Format result as execution_result (only store summary data, not raw rows)
+                    result = {
+                        "mode": "query_asset",
+                        "tool": "direct_query",
+                        "asset_name": asset.name,
+                        "summary": f"Executed {asset.name}: {len(rows)} rows",
+                        "rows_count": len(rows),
+                        "data": {
+                            "first_value": first_value,
+                            "count": len(rows)
+                        },
+                        "query_asset": {
+                            "name": asset.name,
+                            "keywords": schema.get("keywords", []),
+                            "sql": sql
+                        }
+                    }
+
+                    results.append(result)
+                    break  # Success! Stop trying other assets
+
+                except Exception as e:
+                    self.logger.warning(f"⚠️ [QUERY ASSET] {asset.name} failed: {str(e)}, trying next...")
+                    continue  # Try next asset
+
+            if not results:
+                self.logger.info(f"❌ [QUERY ASSET] No Query Asset succeeded")
+
+        except Exception as e:
+            self.logger.error(f"❌ [QUERY ASSET] Failed: {str(e)}")
+            import traceback
+            traceback.print_exc()
+
+        # ===== CACHE: Store results for reuse in present stage =====
+        if results:
+            self._query_asset_results = results
+            self.logger.info(f"💾 [QUERY ASSET] Cached {len(results)} results for present stage")
+        # ===== END CACHE =====
+
+        return results

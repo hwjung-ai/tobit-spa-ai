@@ -23,6 +23,7 @@ import StageDiffView from "../../../components/admin/StageDiffView";
 import InspectorStagePipeline, { type StageStatus } from "../../../components/ops/InspectorStagePipeline";
 import ReplanTimeline from "../../../components/ops/ReplanTimeline";
 import AssetOverrideModal from "../../../components/ops/AssetOverrideModal";
+import { OrchestrationSection } from "../../../components/ops/OrchestrationSection";
 import { generateNodes, generateEdges, filterToolSpans } from "../../../lib/flowGraphUtils";
 import { cn } from "@/lib/utils";
 import {
@@ -1643,6 +1644,11 @@ function InspectorContent() {
                         </div>
                       )}
                     </section>
+                  )}
+
+                  {/* Orchestration Section */}
+                  {traceDetail && (
+                    <OrchestrationSection stageOutput={traceDetail} />
                   )}
 
                   <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">

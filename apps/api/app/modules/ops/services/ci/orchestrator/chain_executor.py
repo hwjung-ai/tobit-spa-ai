@@ -90,7 +90,7 @@ class ToolChainExecutor:
         self._registry = get_tool_registry()
 
     async def execute_chain(
-        self, chain: ToolChain, context: ToolContext
+        self, chain: ToolChain, context: ToolContext, execution_plan_trace: dict[str, Any] | None = None
     ) -> ChainExecutionResult:
         """
         Execute a tool chain.
@@ -98,6 +98,7 @@ class ToolChainExecutor:
         Args:
             chain: Chain to execute
             context: Execution context
+            execution_plan_trace: Optional execution plan metadata for trace integration
 
         Returns:
             ChainExecutionResult
@@ -106,11 +107,11 @@ class ToolChainExecutor:
         logger.info(f"Executing chain {chain.chain_id} with {len(chain.steps)} steps")
 
         if chain.execution_mode == "parallel":
-            result = await self._execute_parallel(chain, context)
+            result = await self._execute_parallel(chain, context, execution_plan_trace)
         elif chain.execution_mode == "dag":
-            result = await self._execute_dag(chain, context)
+            result = await self._execute_dag(chain, context, execution_plan_trace)
         else:  # sequential
-            result = await self._execute_sequential(chain, context)
+            result = await self._execute_sequential(chain, context, execution_plan_trace)
 
         result.total_execution_time_ms = int((time.time() - start_time) * 1000)
 
@@ -122,18 +123,23 @@ class ToolChainExecutor:
         return result
 
     async def _execute_sequential(
-        self, chain: ToolChain, context: ToolContext
+        self, chain: ToolChain, context: ToolContext, execution_plan_trace: dict[str, Any] | None = None
     ) -> ChainExecutionResult:
         """Execute steps sequentially."""
         step_results: dict[str, StepResult] = {}
         failed_steps: list[str] = []
 
-        for step in chain.steps:
+        for group_index, step in enumerate(chain.steps):
             # Merge parameters with previous results
             params = self._merge_params(step, step_results)
 
-            # Execute step
-            step_result = await self._execute_step(step, params, context)
+            # Execute step with orchestration metadata
+            step_result = await self._execute_step(
+                step, params, context,
+                execution_plan_trace=execution_plan_trace,
+                group_index=group_index,
+                execution_order=group_index
+            )
             step_results[step.step_id] = step_result
 
             if not step_result.success:
@@ -157,13 +163,18 @@ class ToolChainExecutor:
         )
 
     async def _execute_parallel(
-        self, chain: ToolChain, context: ToolContext
+        self, chain: ToolChain, context: ToolContext, execution_plan_trace: dict[str, Any] | None = None
     ) -> ChainExecutionResult:
         """Execute steps in parallel."""
         tasks = []
-        for step in chain.steps:
+        for group_index, step in enumerate(chain.steps):
             params = self._merge_params(step, {})  # No previous results in parallel
-            task = self._execute_step(step, params, context)
+            task = self._execute_step(
+                step, params, context,
+                execution_plan_trace=execution_plan_trace,
+                group_index=0,  # All in same group for parallel
+                execution_order=group_index
+            )
             tasks.append((step.step_id, task))
 
         # Run all tasks in parallel
@@ -204,7 +215,7 @@ class ToolChainExecutor:
         )
 
     async def _execute_dag(
-        self, chain: ToolChain, context: ToolContext
+        self, chain: ToolChain, context: ToolContext, execution_plan_trace: dict[str, Any] | None = None
     ) -> ChainExecutionResult:
         """Execute steps based on DAG dependencies."""
         step_results: dict[str, StepResult] = {}
@@ -213,6 +224,7 @@ class ToolChainExecutor:
 
         # Build step map
         step_map = {s.step_id: s for s in chain.steps}
+        group_index = 0
 
         while len(completed) < len(chain.steps):
             # Find ready steps (all dependencies completed)
@@ -231,9 +243,14 @@ class ToolChainExecutor:
 
             # Execute ready steps in parallel
             tasks = []
-            for step in ready_steps:
+            for execution_order, step in enumerate(ready_steps):
                 params = self._merge_params(step, step_results)
-                task = self._execute_step(step, params, context)
+                task = self._execute_step(
+                    step, params, context,
+                    execution_plan_trace=execution_plan_trace,
+                    group_index=group_index,
+                    execution_order=execution_order
+                )
                 tasks.append((step.step_id, task))
 
             results = await asyncio.gather(
@@ -255,6 +272,8 @@ class ToolChainExecutor:
                         failed_steps.append(step_id)
                 completed.add(step_id)
 
+            group_index += 1
+
         # Final output from last step
         final_output = None
         if chain.steps:
@@ -271,9 +290,21 @@ class ToolChainExecutor:
         )
 
     async def _execute_step(
-        self, step: ToolChainStep, params: dict[str, Any], context: ToolContext
+        self, step: ToolChainStep, params: dict[str, Any], context: ToolContext,
+        execution_plan_trace: dict[str, Any] | None = None,
+        group_index: int = 0,
+        execution_order: int = 0
     ) -> StepResult:
-        """Execute a single step."""
+        """Execute a single step.
+
+        Args:
+            step: Tool chain step to execute
+            params: Merged parameters for the step
+            context: Execution context
+            execution_plan_trace: Optional execution plan metadata for trace integration
+            group_index: Index of execution group (for DAG execution)
+            execution_order: Order within execution group
+        """
         start_time = time.time()
 
         # Get tool from registry
@@ -292,6 +323,18 @@ class ToolChainExecutor:
                 tool.safe_execute(context, params),
                 timeout=step.timeout_ms / 1000,
             )
+
+            # Add orchestration metadata to result if available
+            if execution_plan_trace and isinstance(result.data, dict):
+                orchestration_metadata = {
+                    "group_index": group_index,
+                    "execution_order": execution_order,
+                    "tool_id": step.step_id,
+                    "depends_on": step.depends_on,
+                    "output_mapping": step.output_mapping,
+                }
+                if "orchestration" not in result.data:
+                    result.data["orchestration"] = orchestration_metadata
 
             return StepResult(
                 step_id=step.step_id,

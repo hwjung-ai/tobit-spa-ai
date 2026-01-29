@@ -655,7 +655,7 @@ class CIOrchestratorRunner:
 
     def _sanitize_ci_keywords(self, keywords: Sequence[str]) -> List[str]:
         # Import functions locally to avoid circular dependency
-        from app.modules.ops.services.ci.planner.planner_llm import (
+        from app.modules.ops.services.ci.mappings.compat import (
             _get_agg_keywords,
             _get_history_keywords,
             _get_list_keywords,
@@ -1248,6 +1248,161 @@ class CIOrchestratorRunner:
                 meta["fallback"] = False
                 meta["error"] = f"CEP tool not available: {str(e)}"
         return result
+
+    async def _try_execute_query_assets(self) -> Dict[str, Any] | None:
+        """
+        Try to execute Query Assets before falling back to CI graph execution.
+
+        Returns:
+            Dict with blocks/answer if Query Asset matched and executed, None otherwise
+        """
+        from core.db import get_session_context
+        from sqlmodel import select
+        from sqlalchemy import text
+        from app.modules.asset_registry.models import TbAssetRegistry
+
+        question = self.question.lower() if self.question else ""
+
+        # Load Query Assets from database
+        try:
+            with get_session_context() as session:
+                query = select(TbAssetRegistry).where(
+                    TbAssetRegistry.asset_type == "query",
+                    TbAssetRegistry.status == "published"
+                )
+                query_assets = session.exec(query).all()
+            self.logger.info(f"[QUERY ASSET RUNNER] Loaded {len(query_assets)} Query Assets")
+        except Exception as e:
+            self.logger.warning(f"Failed to load Query Assets: {e}")
+            return None
+
+        if not query_assets:
+            self.logger.warning("[QUERY ASSET RUNNER] No Query Assets found in database")
+            return None
+
+        # Score assets based on keywords, name, and SQL table matching
+        best_asset = None
+        best_score = 0.0
+
+        for asset in query_assets:
+            schema = asset.schema_json or {}
+            asset_name = (asset.name or "").lower()
+            asset_keywords = schema.get("keywords", [])
+            sql = schema.get("sql", "")
+
+            score = 0.0
+
+            # Keyword matching (70% weight)
+            # Support flexible matching: keyword can be contained in question OR question can contain keyword parts
+            if asset_keywords:
+                matched = 0
+                for kw in asset_keywords:
+                    kw_lower = kw.lower()
+                    # Exact match: keyword is in question
+                    if kw_lower in question:
+                        matched += 1
+                    else:
+                        # Partial match: any part of keyword is in question
+                        # E.g., "system_report" can match "system" or "report" in question
+                        kw_parts = kw_lower.split("_")
+                        if any(part in question and len(part) > 2 for part in kw_parts):
+                            matched += 1
+                keyword_score = matched / max(len(asset_keywords), 1)
+                score += keyword_score * 0.7
+
+            # Name matching (20% weight)
+            # Support flexible matching: asset name parts in question
+            if asset_name:
+                name_parts = asset_name.replace("_", " ").split()
+                name_match = sum(1 for part in name_parts if part in question and len(part) > 2)
+                name_score = name_match / max(len(name_parts), 1)
+                score += name_score * 0.2
+
+            # SQL table matching (10% weight)
+            # Check if question contains event/ci/metric/audit keywords
+            # and SQL contains the corresponding table
+            question_words = set(question.split())
+            has_event_keyword = any(w in question_words for w in ["event", "events"])
+            has_ci_keyword = any(w in question_words for w in ["ci", "configuration"])
+            has_metric_keyword = any(w in question_words for w in ["metric", "metrics", "measurement", "measurements"])
+            has_audit_keyword = any(w in question_words for w in ["audit", "log", "audit_log"])
+
+            sql_score = 0.0
+            if sql:
+                if has_event_keyword and "event_log" in sql:
+                    sql_score += 1
+                if has_ci_keyword and " ci" in f" {sql} ":
+                    sql_score += 1
+                if has_metric_keyword and "metric" in sql:
+                    sql_score += 1
+                if has_audit_keyword and "tb_audit_log" in sql:
+                    sql_score += 1
+
+                # Penalty for date filters (prefer general queries over specific date ranges)
+                if "WHERE" in sql.upper() and ("DATE(" in sql or "INTERVAL" in sql or "CURRENT_DATE" in sql):
+                    sql_score -= 0.5  # Penalize queries with date filters
+
+            score += min(sql_score * 0.1, 0.1)  # Cap at 0.1
+
+            if score > best_score:
+                best_score = score
+                best_asset = asset
+
+        # Only use Query Asset if score is significant
+        if best_score < 0.3:
+            self.logger.info(f"[QUERY ASSET RUNNER] No Query Asset matched (best score: {best_score:.2f}, question: {self.question})")
+            return None
+
+        self.logger.info(f"[QUERY ASSET RUNNER] Selected Query Asset: {best_asset.name} (score: {best_score:.2f})")
+
+        # Execute SQL
+        schema = best_asset.schema_json or {}
+        sql = schema.get("sql", "")
+
+        try:
+            with get_session_context() as session:
+                query_result = session.exec(text(sql))
+                rows = query_result.fetchall()
+        except Exception as e:
+            self.logger.warning(f"Query Asset SQL execution failed: {e}")
+            return None
+
+        # Extract value for answer
+        answer_value = "Query executed"
+        if rows and len(rows) > 0:
+            first_row = rows[0]
+            if isinstance(first_row, (tuple, list)) and len(first_row) > 0:
+                answer_value = str(first_row[0])
+            elif isinstance(first_row, dict):
+                answer_value = str(list(first_row.values())[0] if first_row else "N/A")
+
+        # Create blocks
+        blocks = [
+            {
+                "type": "text",
+                "text": f"Query Asset: {best_asset.name}",
+                "title": "Source"
+            },
+            {
+                "type": "markdown",
+                "content": f"Based on the database query, the result is: **{answer_value}**.",
+                "metadata": {"generated_by": "query_asset"}
+            }
+        ]
+
+        self.logger.info(
+            f"Query Asset executed: {best_asset.name}, score: {best_score:.2f}, rows: {len(rows)}"
+        )
+
+        return {
+            "blocks": blocks,
+            "answer": answer_value,
+            "results": [],
+            "meta": {
+                "used_tools": ["query_asset"],
+                "query_asset_name": best_asset.name
+            }
+        }
 
     def run(self, plan_output: PlanOutput | None = None) -> Dict[str, Any]:
         if plan_output is None:
@@ -2581,12 +2736,39 @@ class CIOrchestratorRunner:
 
     async def _handle_aggregate_async(self) -> tuple[List[Block], str]:
         agg_filters = [filter.dict() for filter in self.plan.aggregate.filters]
-        agg = await self._ci_aggregate_async(
-            self.plan.aggregate.group_by,
-            self.plan.aggregate.metrics,
-            filters=agg_filters or None,
-            top_n=self.plan.aggregate.top_n,
-        )
+
+        # ===== GENERIC ORCHESTRATION: Check scope for appropriate tool =====
+        aggregate_scope = self.plan.aggregate.scope or "ci"
+
+        if aggregate_scope == "event":
+            # Use event_aggregate tool
+            agg = await self._execute_tool_with_tracing(
+                "event_aggregate",
+                "aggregate",
+                group_by=list(self.plan.aggregate.group_by) if self.plan.aggregate.group_by else [],
+                metrics=list(self.plan.aggregate.metrics) if self.plan.aggregate.metrics else [],
+                filters=agg_filters or None,
+                top_n=self.plan.aggregate.top_n,
+            )
+        elif aggregate_scope == "metric":
+            # Use metric tool
+            agg = await self._execute_tool_with_tracing(
+                "metric",
+                "aggregate",
+                group_by=list(self.plan.aggregate.group_by) if self.plan.aggregate.group_by else [],
+                metrics=list(self.plan.aggregate.metrics) if self.plan.aggregate.metrics else [],
+                filters=agg_filters or None,
+                top_n=self.plan.aggregate.top_n,
+            )
+        else:
+            # Use ci_aggregate
+            agg = await self._ci_aggregate_async(
+                self.plan.aggregate.group_by,
+                self.plan.aggregate.metrics,
+                filters=agg_filters or None,
+                top_n=self.plan.aggregate.top_n,
+            )
+        # ===== END GENERIC ORCHESTRATION =====
         blocks: List[Block] = []
         total_count = agg.get("total_count")
         if isinstance(total_count, int):
@@ -4503,8 +4685,11 @@ class CIOrchestratorRunner:
             trace_id=get_request_context().get("trace_id"),
         )
 
+        # Handle string tool_type (for generic orchestration)
+        tool_type_str = tool_type if isinstance(tool_type, str) else tool_type.value
+
         params_with_op = {"operation": operation, **params}
-        result = self._tool_executor.execute(tool_type, context, params_with_op)
+        result = self._tool_executor.execute(tool_type_str, context, params_with_op)
 
         if not result.success:
             raise ValueError(result.error or "Unknown tool error")
@@ -4517,6 +4702,9 @@ class CIOrchestratorRunner:
         """
         Execute a tool asynchronously through the registry.
         """
+        # Handle string tool_type (for generic orchestration)
+        tool_type_str = tool_type if isinstance(tool_type, str) else tool_type.value
+
         context = ToolContext(
             tenant_id=self.tenant_id,
             request_id=get_request_context().get("request_id"),
@@ -4524,13 +4712,15 @@ class CIOrchestratorRunner:
         )
         params_with_op = {"operation": operation, **params}
         return await self._tool_executor.execute_async(
-            tool_type, context, params_with_op
+            tool_type_str, context, params_with_op
         )
 
     async def _execute_tool_with_tracing(
         self, tool_type: ToolType, operation: str, **params
     ) -> Dict[str, Any]:
-        trace_id = self._tracer.start_trace(tool_type.value, operation, params)
+        # Handle string tool_type (for generic orchestration)
+        tool_type_str = tool_type if isinstance(tool_type, str) else tool_type.value
+        trace_id = self._tracer.start_trace(tool_type_str, operation, params)
         try:
             result = await self._execute_tool_async(tool_type, operation, **params)
             records = result.get("records") if isinstance(result, dict) else None
@@ -5264,9 +5454,54 @@ class CIOrchestratorRunner:
                 # execute stage (PLAN path)
                 begin_stage_asset_tracking()
                 execute_start = perf_counter()
-                base_result = await self._run_async()
-                blocks = base_result.get("blocks", [])
-                answer = base_result.get("answer", answer)
+
+                # DEBUG: Log that we're in the execute stage
+                self.logger.info(f"[DEBUG] EXECUTE STAGE (PLAN path) - Question: {self.question}")
+
+                # ===== GENERIC ORCHESTRATION: Use stage_executor for tool execution =====
+                # This replaces Query Asset fallback and legacy _run_async()
+                # Tools are executed first, Query Assets are used only as fallback
+                try:
+                    from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor, ExecutionContext
+
+                    # Create execution context
+                    exec_context = ExecutionContext(
+                        trace_id=trace_id,
+                        test_mode=False,
+                        asset_overrides=self.asset_overrides or {},
+                    )
+
+                    # Create stage executor
+                    stage_executor = StageExecutor(context=exec_context)
+
+                    # Build execute stage input
+                    execute_input = self._build_stage_input(
+                        "execute",
+                        plan_output,
+                        route_output.model_dump(),
+                    )
+
+                    # Execute stage - this will run tools first
+                    execute_result = await stage_executor.execute_stage(execute_input)
+
+                    # Get base_result from execute stage
+                    base_result = execute_result.get("result", {})
+                    blocks = base_result.get("base_result", {}).get("blocks", [])
+                    answer = base_result.get("base_result", {}).get("answer", answer)
+
+                    # Capture tool_calls for compose stage
+                    if "tool_calls" not in base_result and self.tool_calls:
+                        base_result["tool_calls"] = [call.model_dump() for call in self.tool_calls]
+
+                    self.logger.info(f"[GENERIC ORCHESTRATION] Execute stage completed, blocks: {len(blocks)}")
+
+                except Exception as e:
+                    self.logger.error(f"[GENERIC ORCHESTRATION] Exception: {e}")
+                    # Fallback to legacy execution
+                    base_result = await self._run_async()
+                    blocks = base_result.get("blocks", [])
+                    answer = base_result.get("answer", answer)
+                # ===== END GENERIC ORCHESTRATION =====
 
                 # Capture assets used during execute stage execution
                 execute_assets = end_stage_asset_tracking()
@@ -5457,7 +5692,10 @@ class CIOrchestratorRunner:
         return StageInput(
             stage=stage,
             applied_assets=applied_assets,
-            params={"plan_output": plan_output.model_dump()},
+            params={
+                "plan_output": plan_output.model_dump(),
+                "original_question": self.question,  # Add original question for scope correction
+            },
             prev_output=prev_output,
             trace_id=trace_id,
         )

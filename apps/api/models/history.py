@@ -48,6 +48,10 @@ class QueryHistory(SQLModel, table=True):
         alias="metadata",
         sa_column=Column("metadata", JSON, nullable=True),
     )
+    trace_id: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+    )
     created_at: datetime = Field(
         default_factory=_now_kst,
         sa_column=Column(

@@ -193,6 +193,22 @@ class BudgetSpec(BaseModel):
     timeout_seconds: int | None = None
 
 
+# NEW: Orchestration support classes
+class ExecutionStrategy(str, Enum):
+    """Execution strategy for orchestration"""
+    SERIAL = "serial"      # Execute tools sequentially
+    PARALLEL = "parallel"  # Execute independent tools in parallel
+    DAG = "dag"            # Execute based on dependency graph
+
+
+class ToolDependency(BaseModel):
+    """Tool dependency specification for orchestration"""
+    tool_id: str
+    depends_on: List[str] = Field(default_factory=list)
+    output_mapping: Dict[str, str] = Field(default_factory=dict)
+    condition: Optional[str] = None
+
+
 class StepCondition(BaseModel):
     """Condition to determine step execution or branching"""
 
@@ -266,13 +282,15 @@ class Plan(BaseModel):
     steps: List[PlanStep] = Field(default_factory=lambda: [])
     branches: List[PlanBranch] = Field(default_factory=lambda: [])
     loops: List[PlanLoop] = Field(default_factory=lambda: [])
-    budget: BudgetSpec = Field(
-        default_factory=lambda: __import__(
-            "app.modules.ops.services.ci.planner.validator",
-            fromlist=["get_default_budget"]
-        ).get_default_budget()
-    )
+    budget: BudgetSpec = Field(default_factory=lambda: BudgetSpec())
     enable_multistep: bool = False
+    # NEW: Orchestration fields
+    execution_strategy: ExecutionStrategy = ExecutionStrategy.SERIAL
+    tool_dependencies: List[ToolDependency] = Field(
+        default_factory=list,
+        description="Tool dependency graph for orchestration"
+    )
+    enable_intermediate_llm: bool = False
 
     @field_validator("view", mode="before")
     @classmethod

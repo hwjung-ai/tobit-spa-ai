@@ -9,7 +9,25 @@ from typing import Any, Iterable, List, Set, Tuple
 from core.logging import get_logger
 
 from app.llm.client import get_llm_client
-from app.modules.asset_registry.loader import load_prompt_asset, load_mapping_asset
+from app.modules.asset_registry.loader import load_prompt_asset
+from app.modules.ops.services.ci.mappings.compat import (
+    _get_metric_aliases,
+    _get_agg_keywords,
+    _get_series_keywords,
+    _get_history_keywords,
+    _get_list_keywords,
+    _get_table_hints,
+    _get_cep_keywords,
+    _get_graph_scope_keywords,
+    _get_auto_keywords,
+    _get_filterable_fields,
+    _get_ci_code_patterns,
+    _get_graph_view_keyword_map,
+    _get_graph_view_default_depth,
+    _get_auto_view_preferences,
+    _get_output_type_priorities,
+    _get_graph_scope_views,
+)
 from app.modules.ops.services.ci.planner.plan_schema import (
     AutoGraphScopeSpec,
     AutoPathSpec,
@@ -27,22 +45,17 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     PlanOutputKind,
     RejectPayload,
     View,
+    # NEW: Orchestration fields
+    ToolDependency,
+    ExecutionStrategy,
+    SecondarySpec,
+    GraphLimits,
+    GraphSpec,
+    AggregateSpec,
 )
 
 logger = get_logger(__name__)
 
-
-# 캐싱을 위한 전역 변수
-_METRIC_ALIASES_CACHE = None
-_AGG_KEYWORDS_CACHE = None
-_SERIES_KEYWORDS_CACHE = None
-_HISTORY_KEYWORDS_CACHE = None
-_LIST_KEYWORDS_CACHE = None
-_TABLE_HINTS_CACHE = None
-_CEP_KEYWORDS_CACHE = None
-_GRAPH_SCOPE_KEYWORDS_CACHE = None
-_AUTO_KEYWORDS_CACHE = None
-_FILTERABLE_FIELDS_CACHE = None
 
 # CI code pattern for extracting CI identifiers like sys-xxx, srv-yyy, etc
 CI_CODE_PATTERN = re.compile(
@@ -65,367 +78,6 @@ ISO_DATE_PATTERN = re.compile(r"(\d{4})[-년/\\.](\d{1,2})[-월/\\.](\d{1,2})")
 DEPTH_PATTERN = re.compile(r"(?:depth|깊이)\s+(\d+)", re.IGNORECASE)
 
 
-# =============================================
-# Mapping Asset 로딩 함수들 (Phase 0)
-# =============================================
-
-def _get_metric_aliases():
-    """metric_aliases mapping asset 로드 (캐싱 적용)"""
-    global _METRIC_ALIASES_CACHE
-    if _METRIC_ALIASES_CACHE is not None:
-        return _METRIC_ALIASES_CACHE
-
-    mapping, _ = load_mapping_asset("metric_aliases")
-    if mapping:
-        # DB content structure: {"aliases": {...}, "keywords": [...]}
-        _METRIC_ALIASES_CACHE = mapping
-        return _METRIC_ALIASES_CACHE
-
-    # Fallback
-    return {
-        "aliases": {
-            "cpu": "cpu_usage",
-            "cpu_usage": "cpu_usage",
-            "memory": "memory_usage",
-            "memory_usage": "memory_usage",
-            "disk": "disk_io",
-            "disk_io": "disk_io",
-            "network": "network_in",
-            "network_in": "network_in",
-            "temperature": "temperature",
-            "latency": "cpu_usage",
-            "응답시간": "cpu_usage",
-            "response": "cpu_usage",
-            "rps": "network_in",
-            "error": "error",
-            "사용량": "cpu_usage",
-            "usage": "cpu_usage",
-        },
-        "keywords": ["지표", "지수", "메트릭", "metric"]
-    }
-
-
-def _get_agg_keywords():
-    """agg_keywords mapping asset 로드 (캐싱 적용)"""
-    global _AGG_KEYWORDS_CACHE
-    if _AGG_KEYWORDS_CACHE is not None:
-        return _AGG_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("agg_keywords")
-    if mapping:
-        # DB content structure: {"mappings": {...}}
-        _AGG_KEYWORDS_CACHE = mapping.get("mappings", {})
-        return _AGG_KEYWORDS_CACHE
-
-    # Fallback
-    return {
-        "최대": "max", "maximum": "max", "max": "max",
-        "최소": "min", "minimum": "min", "min": "min",
-        "평균": "avg", "average": "avg", "avg": "avg",
-        "count": "count", "건수": "count",
-        "높은": "max", "상위": "max", "top": "max", "가장": "max",
-    }
-
-
-def _get_series_keywords():
-    """series_keywords mapping asset 로드 (캐싱 적용)"""
-    global _SERIES_KEYWORDS_CACHE
-    if _SERIES_KEYWORDS_CACHE is not None:
-        return _SERIES_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("series_keywords")
-    if mapping:
-        # DB content structure: {"keywords": [...]}
-        _SERIES_KEYWORDS_CACHE = set(mapping.get("keywords", []))
-        return _SERIES_KEYWORDS_CACHE
-
-    # Fallback
-    return {"추이", "시계열", "그래프", "trend", "series", "line", "chart"}
-
-
-def _get_history_keywords():
-    """history_keywords mapping asset 로드 (캐싱 적용)"""
-    global _HISTORY_KEYWORDS_CACHE
-    if _HISTORY_KEYWORDS_CACHE is not None:
-        return _HISTORY_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("history_keywords")
-    if mapping:
-        # DB content structure: {"keywords": [...], "time_map": {...}}
-        _HISTORY_KEYWORDS_CACHE = {
-            "keywords": set(mapping.get("keywords", [])),
-            "time_map": mapping.get("time_map", {}),
-        }
-        return _HISTORY_KEYWORDS_CACHE
-
-    # Fallback
-    return {
-        "keywords": {"이벤트", "알람", "로그", "event"},
-        "time_map": {
-            "24시간": "last_24h", "하루": "last_24h", "오늘": "last_24h",
-            "7일": "last_7d", "일주일": "last_7d", "지난주": "last_7d",
-            "30일": "last_30d", "한달": "last_30d",
-        }
-    }
-
-
-def _get_list_keywords():
-    """list_keywords mapping asset 로드 (캐싱 적용)"""
-    global _LIST_KEYWORDS_CACHE
-    if _LIST_KEYWORDS_CACHE is not None:
-        return _LIST_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("list_keywords")
-    if mapping:
-        # DB content structure: {"keywords": [...]}
-        _LIST_KEYWORDS_CACHE = set(mapping.get("keywords", []))
-        return _LIST_KEYWORDS_CACHE
-
-    # Fallback
-    return {
-        "목록", "리스트", "list", "전체 목록",
-        "나열", "목록으로", "리스트로",
-    }
-
-
-def _get_table_hints():
-    """table_hints mapping asset 로드 (캐싱 적용)"""
-    global _TABLE_HINTS_CACHE
-    if _TABLE_HINTS_CACHE is not None:
-        return _TABLE_HINTS_CACHE
-
-    mapping, _ = load_mapping_asset("table_hints")
-    if mapping:
-        # DB content structure: {"keywords": [...]}
-        _TABLE_HINTS_CACHE = set(mapping.get("keywords", []))
-        return _TABLE_HINTS_CACHE
-
-    # Fallback
-    return {
-        "표", "테이블", "table", "표로", "테이블로",
-        "보여줘", "표로 보여줘", "테이블로 보여줘",
-        "정리", "정리해서", "추출", "가져와",
-        "뽑아", "뽑아줘", "출력",
-    }
-
-
-def _get_cep_keywords():
-    """cep_keywords mapping asset 로드 (캐싱 적용)"""
-    global _CEP_KEYWORDS_CACHE
-    if _CEP_KEYWORDS_CACHE is not None:
-        return _CEP_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("cep_keywords")
-    if mapping:
-        # DB content structure: {"keywords": [...]}
-        _CEP_KEYWORDS_CACHE = set(mapping.get("keywords", []))
-        return _CEP_KEYWORDS_CACHE
-
-    # Fallback
-    return {"simulate", "시뮬", "시뮬레이션", "규칙", "rule", "cep"}
-
-
-def _get_graph_scope_keywords():
-    """graph_scope_keywords mapping asset 로드 (캐싱 적용)"""
-    global _GRAPH_SCOPE_KEYWORDS_CACHE
-    if _GRAPH_SCOPE_KEYWORDS_CACHE is not None:
-        return _GRAPH_SCOPE_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("graph_scope_keywords")
-    if mapping:
-        # DB content structure: {"scope_keywords": [...], "metric_keywords": [...]}
-        _GRAPH_SCOPE_KEYWORDS_CACHE = {
-            "scope_keywords": set(mapping.get("scope_keywords", [])),
-            "metric_keywords": set(mapping.get("metric_keywords", [])),
-        }
-        return _GRAPH_SCOPE_KEYWORDS_CACHE
-
-    # Fallback
-    return {
-        "scope_keywords": {
-            "범위", "영향", "영향권", "주변", "연관", "관련",
-            "의존", "dependency", "impact", "neighbors",
-        },
-        "metric_keywords": {
-            "cpu", "latency", "error", "성능", "rps",
-            "response", "응답", "performance",
-        },
-    }
-
-
-def _get_auto_keywords():
-    """auto_keywords mapping asset 로드 (캐싱 적용)"""
-    global _AUTO_KEYWORDS_CACHE
-    if _AUTO_KEYWORDS_CACHE is not None:
-        return _AUTO_KEYWORDS_CACHE
-
-    mapping, _ = load_mapping_asset("auto_keywords")
-    if mapping:
-        # DB content structure: {"keywords": [...]}
-        _AUTO_KEYWORDS_CACHE = set(mapping.get("keywords", []))
-        return _AUTO_KEYWORDS_CACHE
-
-    # Fallback
-    return {"점검", "상태", "요약", "진단", "health", "overview", "status"}
-
-
-def _get_filterable_fields():
-    """filterable_fields mapping asset 로드 (캐싱 적용)"""
-    global _FILTERABLE_FIELDS_CACHE
-    if _FILTERABLE_FIELDS_CACHE is not None:
-        return _FILTERABLE_FIELDS_CACHE
-
-    mapping, _ = load_mapping_asset("filterable_fields")
-    if mapping:
-        # DB content structure: {"tag_filter_keys": [...], "attr_filter_keys": [...]}
-        _FILTERABLE_FIELDS_CACHE = {
-            "tag_keys": set(mapping.get("tag_filter_keys", [])),
-            "attr_keys": set(mapping.get("attr_filter_keys", [])),
-        }
-        return _FILTERABLE_FIELDS_CACHE
-
-    # Fallback
-    return {
-        "tag_keys": {
-            "system", "role", "runs_on", "host_server",
-            "ci_subtype", "connected_servers",
-        },
-        "attr_keys": {
-            "engine", "version", "zone", "ip", "cpu_cores", "memory_gb"
-        },
-    }
-
-
-def _get_ci_code_patterns():
-    """CI code patterns mapping asset 로드"""
-    mapping, _ = load_mapping_asset("ci_code_patterns")
-    if mapping and "content" in mapping:
-        content = mapping["content"]
-        patterns = content.get("patterns", [])
-        if patterns:
-            # 첫 번째 패턴 사용
-            return re.compile(patterns[0], re.IGNORECASE)
-
-    # Fallback
-    return re.compile(r"\b(?:sys|srv|app|was|storage|sec|db)[-\w]+\b", re.IGNORECASE)
-
-
-def _get_graph_view_keyword_map():
-    """Graph view keywords mapping asset 로드"""
-    mapping, _ = load_mapping_asset("graph_view_keywords")
-    if mapping and "content" in mapping:
-        content = mapping["content"]
-        keyword_map = content.get("view_keyword_map", {})
-        if keyword_map:
-            # String view names를 View enum으로 변환
-            view_map = {}
-            for keyword, view_name in keyword_map.items():
-                try:
-                    view_map[keyword] = View[view_name]
-                except (KeyError, TypeError):
-                    pass
-            if view_map:
-                return view_map
-
-    # Fallback
-    return {
-        "의존": View.DEPENDENCY,
-        "dependency": View.DEPENDENCY,
-        "주변": View.NEIGHBORS,
-        "연관": View.NEIGHBORS,
-        "관련": View.NEIGHBORS,
-        "neighbors": View.NEIGHBORS,
-        "영향": View.IMPACT,
-        "impact": View.IMPACT,
-        "영향권": View.IMPACT,
-    }
-
-
-def _get_graph_view_default_depth():
-    """Graph view default depths mapping asset 로드"""
-    mapping, _ = load_mapping_asset("graph_view_keywords")
-    if mapping and "content" in mapping:
-        content = mapping["content"]
-        depths = content.get("default_depths", {})
-        if depths:
-            # String view names를 View enum으로 변환
-            depth_map = {}
-            for view_name, depth in depths.items():
-                try:
-                    depth_map[View[view_name]] = depth
-                except (KeyError, TypeError):
-                    pass
-            if depth_map:
-                return depth_map
-
-    # Fallback
-    return {
-        View.DEPENDENCY: 2,
-        View.NEIGHBORS: 1,
-        View.IMPACT: 2,
-    }
-
-
-def _get_auto_view_preferences():
-    """Auto view preferences mapping asset 로드"""
-    mapping, _ = load_mapping_asset("auto_view_preferences")
-    if mapping and "content" in mapping:
-        content = mapping["content"]
-        preferences = content.get("preferences", [])
-        if preferences:
-            result = []
-            for pref in preferences:
-                keywords = pref.get("keywords", [])
-                views = pref.get("views", [])
-                # String view names를 View enum으로 변환
-                view_enums = []
-                for view_name in views:
-                    try:
-                        view_enums.append(View[view_name])
-                    except (KeyError, TypeError):
-                        pass
-                if keywords and view_enums:
-                    result.append((keywords, view_enums))
-            if result:
-                return result
-
-    # Fallback
-    return [
-        (["path", "경로", "연결"], [View.PATH]),
-        (["의존", "dependency", "depends"], [View.DEPENDENCY]),
-        (["영향", "impact", "영향권", "downstream"], [View.IMPACT]),
-        (["구성", "component", "composition"], [View.COMPOSITION]),
-        (["주변", "neighbor", "연관", "관련"], [View.NEIGHBORS]),
-    ]
-
-
-def _get_output_type_priorities():
-    """Output type priorities mapping asset 로드"""
-    mapping, _ = load_mapping_asset("output_type_priorities")
-    if mapping and "content" in mapping:
-        content = mapping["content"]
-        priorities = content.get("global_priorities", [])
-        if priorities:
-            return priorities
-
-    # Fallback
-    return ["chart", "table", "number", "network", "text"]
-
-
-def _get_graph_scope_views():
-    """Graph scope views mapping asset 로드"""
-    mapping, _ = load_mapping_asset("graph_view_keywords")
-    if mapping and "content" in mapping:
-        content = mapping["content"]
-        force_keywords = content.get("force_keywords", [])
-        if force_keywords:
-            return set(force_keywords)
-
-    # Fallback
-    return {"의존", "dependency", "관계", "그래프", "토폴로지", "topology"}
-
-
-# 하드코딩된 상수 제거 - Mapping Asset 로드로 대체 완료
 
 
 def determine_output_types(text: str) -> Set[str]:
@@ -822,7 +474,7 @@ def create_plan(
             "has_source": bool(source_context),
         },
     )
-    plan = Plan()
+    plan = Plan.model_construct()
     plan.mode = _determine_mode(normalized)
     llm_payload = None
     graph_force = _is_graph_force_query(normalized)
@@ -944,8 +596,22 @@ def create_plan(
     if plan.intent == Intent.AGGREGATE:
         should_group = _determine_type_aggregation(normalized) and not aggregate_filters
         group_by = ["ci_type"] if should_group else []
+
+        # Auto-detect scope from question keywords for generic orchestration
+        # This ensures event questions use event scope, metric questions use metric scope, etc.
+        aggregate_scope = "ci"  # default
+        if "event" in normalized and any(kw in normalized for kw in ["event", "alarm", "alert", "log", "audit"]):
+            aggregate_scope = "event"
+            # For event scope, group by event_type instead of ci_type
+            if should_group:
+                group_by = ["event_type"]
+        elif "metric" in normalized and any(kw in normalized for kw in ["metric", "measurement", "value"]):
+            aggregate_scope = "metric"
+            if should_group:
+                group_by = ["metric_name"]
+
         plan.aggregate = plan.aggregate.model_copy(
-            update={"group_by": group_by, "metrics": ["count"], "top_n": 10}
+            update={"group_by": group_by, "metrics": ["count"], "top_n": 10, "scope": aggregate_scope}
         )
     # Depth 요청 추출 (사용자 질의에서 depth 명시)
     requested_depth = 1  # 기본값
@@ -1013,6 +679,25 @@ def create_plan(
         )
     else:
         logger.info("ci.planner.llm.skipped", extra={"reason": "heuristic"})
+
+    # ===== FINAL SCOPE CORRECTION =====
+    # This is a safety net to ensure scope is correctly set based on question keywords
+    # This overrides any LLM or heuristic decisions with explicit keyword detection
+    if plan.intent == Intent.AGGREGATE:
+        normalized_lower = normalized.lower()
+        # Detect event scope
+        if any(kw in normalized_lower for kw in ["event", "alarm", "alert", "log", "audit", "incident"]):
+            if plan.aggregate.scope != "event":
+                plan.aggregate = plan.aggregate.model_copy(update={"scope": "event"})
+                # Also update group_by for event scope
+                if plan.aggregate.group_by == ["ci_type"] or not plan.aggregate.group_by:
+                    plan.aggregate = plan.aggregate.model_copy(update={"group_by": ["event_type"]})
+        # Detect metric scope
+        elif "metric" in normalized_lower and any(kw in normalized_lower for kw in ["metric", "measurement", "value"]):
+            if plan.aggregate.scope != "metric":
+                plan.aggregate = plan.aggregate.model_copy(update={"scope": "metric"})
+    # ===== END FINAL SCOPE CORRECTION =====
+
     elapsed_ms = int((perf_counter() - start) * 1000)
     logger.info(
         "ci.planner.done",
@@ -1193,7 +878,8 @@ def _has_list_hint(text: str) -> bool:
     normalized = text.lower()
     if LIST_LIMIT_PATTERN.search(normalized):
         return True
-    return any(keyword in normalized for keyword in LIST_KEYWORDS)
+    list_keywords = _get_list_keywords()
+    return any(keyword in normalized for keyword in list_keywords)
 
 
 def _apply_graph_scope(plan: Plan, text: str) -> Plan:
@@ -1542,3 +1228,324 @@ def _generate_direct_answer(text: str) -> str:
         return "This is the IT Operations Assistant. I can help you with queries about your infrastructure, services, and operational data."
 
     return "I understand you're asking about something simple. Could you please clarify what you'd like to know?"
+
+
+async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
+    """Generate execution plan from question using LLM with enhanced context."""
+    normalized = question.strip()
+    start = perf_counter()
+    logger.info(
+        "ci.planner.plan_llm_query.start",
+        extra={
+            "query_len": len(normalized),
+            "has_source": bool(source_ref),
+        },
+    )
+
+    # NEW: Load tool registry info
+    from app.modules.ops.services.ci.tools.base import get_tool_registry
+    tool_registry = get_tool_registry()
+    tools_info = tool_registry.get_all_tools_info()
+
+    # NEW: Load catalog info if source provided
+    catalog_info = None
+    if source_ref:
+        from app.modules.asset_registry.loader import load_catalog_for_llm
+        catalog_info = load_catalog_for_llm(
+            source_ref=source_ref,
+            max_tables=10,
+            max_columns_per_table=15,
+            max_sample_rows=3
+        )
+
+    # Build enhanced prompt with tool and catalog info
+    prompt = _build_enhanced_planner_prompt(
+        question=normalized,
+        tools_info=tools_info,
+        catalog_info=catalog_info
+    )
+
+    # Call LLM
+    llm = get_llm_client()
+    response = await llm.chat_completion(
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"User Question: {normalized}"}
+        ],
+        model=OUTPUT_PARSER_MODEL,
+        temperature=0,
+    )
+
+    elapsed = int((perf_counter() - start) * 1000)
+    logger.info("ci.planner.llm_call", extra={
+        "model": OUTPUT_PARSER_MODEL,
+        "elapsed_ms": elapsed,
+        "status": "ok",
+    })
+
+    # Parse LLM response
+    content = response.get("content", "")
+    json_text = _extract_json_block(content)
+    if not json_text:
+        raise ValueError(f"LLM response missing JSON block: {content[:400]!r}")
+
+    try:
+        llm_payload = json.loads(json_text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"LLM JSON parse error: {exc} | raw={json_text[:400]}"
+        ) from exc
+
+    # Create Plan from LLM response
+    plan = Plan.model_construct()
+    plan.mode = _determine_mode(normalized)
+
+    # Extract and validate tool_type values
+    valid_tool_types = {tool['type'] for tool in tools_info}
+
+    # Validate Plan
+    validation_errors = _validate_plan(plan, tools_info)
+    if validation_errors:
+        logger.warning(f"Plan validation failed: {validation_errors}")
+        # Continue with plan but log errors - in production we might want to
+        # regenerate the plan or fallback to defaults
+
+    # Primary spec
+    if llm_payload.get("primary"):
+        primary_spec = llm_payload["primary"]
+        plan.primary = PrimarySpec(
+            keywords=primary_spec.get("keywords", []),
+            filters=[FilterSpec(**f) for f in primary_spec.get("filters", [])],
+            limit=primary_spec.get("limit", 5),
+            tool_type=primary_spec.get("tool_type", "ci_lookup")  # Use tool_type
+        )
+        # Validate tool_type
+        if plan.primary.tool_type not in valid_tool_types:
+            logger.warning(f"Invalid primary tool_type: {plan.primary.tool_type}")
+
+    # Secondary spec
+    if llm_payload.get("secondary"):
+        secondary_spec = llm_payload["secondary"]
+        plan.secondary = SecondarySpec(
+            keywords=secondary_spec.get("keywords", []),
+            filters=[FilterSpec(**f) for f in secondary_spec.get("filters", [])],
+            limit=secondary_spec.get("limit", 5),
+            tool_type=secondary_spec.get("tool_type", "ci_lookup")  # Use tool_type
+        )
+        # Validate tool_type
+        if plan.secondary.tool_type not in valid_tool_types:
+            logger.warning(f"Invalid secondary tool_type: {plan.secondary.tool_type}")
+
+    # Aggregate spec
+    if llm_payload.get("aggregate"):
+        aggregate_spec = llm_payload["aggregate"]
+        plan.aggregate = AggregateSpec(
+            group_by=aggregate_spec.get("group_by", []),
+            metrics=aggregate_spec.get("metrics", []),
+            filters=[FilterSpec(**f) for f in aggregate_spec.get("filters", [])],
+            top_n=aggregate_spec.get("top_n", 10),
+            scope=aggregate_spec.get("scope", "ci"),
+            tool_type=aggregate_spec.get("tool_type", "ci_aggregate")  # Use tool_type
+        )
+        # Validate tool_type
+        if plan.aggregate.tool_type not in valid_tool_types:
+            logger.warning(f"Invalid aggregate tool_type: {plan.aggregate.tool_type}")
+
+    # Graph spec
+    if llm_payload.get("graph"):
+        graph_spec = llm_payload["graph"]
+        plan.graph = GraphSpec(
+            depth=graph_spec.get("depth", 2),
+            view=graph_spec.get("view", View.SUMMARY),
+            limits=GraphLimits(
+                rows=graph_spec.get("rows", 100),
+                nodes=graph_spec.get("nodes", 100),
+                relationships=graph_spec.get("relationships", 200),
+            ),
+            user_requested_depth=graph_spec.get("user_requested_depth", 2),
+            tool_type=graph_spec.get("tool_type", "ci_graph")  # Use tool_type
+        )
+        # Validate tool_type
+        if plan.graph.tool_type not in valid_tool_types:
+            logger.warning(f"Invalid graph tool_type: {plan.graph.tool_type}")
+
+    # Metric spec
+    if llm_payload.get("metric"):
+        metric_spec = llm_payload["metric"]
+        plan.metric = MetricSpec(
+            metric_name=metric_spec.get("metric_name"),
+            agg=metric_spec.get("agg", "avg"),
+            time_range=metric_spec.get("time_range"),
+            tool_type=metric_spec.get("tool_type", "metric_query")  # Use tool_type
+        )
+        # Validate tool_type
+        if plan.metric.tool_type not in valid_tool_types:
+            logger.warning(f"Invalid metric tool_type: {plan.metric.tool_type}")
+
+    # NEW: Set orchestration fields
+    plan.execution_strategy = llm_payload.get("execution_strategy", "serial")
+    if llm_payload.get("tool_dependencies"):
+        plan.tool_dependencies = [
+            ToolDependency(**dep) for dep in llm_payload.get("tool_dependencies", [])
+        ]
+    plan.enable_intermediate_llm = llm_payload.get("enable_intermediate_llm", False)
+
+    logger.info("ci.planner.plan_llm_query.plan_created", extra={"elapsed_ms": elapsed})
+
+    return PlanOutput(
+        kind=PlanOutputKind.PLAN,
+        plan=plan,
+        confidence=1.0,
+        reasoning="Enhanced orchestration plan created with tool and catalog context",
+        metadata={"elapsed_ms": elapsed},
+    )
+
+
+def _validate_plan(plan: Plan, tools_info: List[Dict[str, Any]]) -> List[str]:
+    """Validate that Plan uses valid tool_type values."""
+    errors = []
+    valid_tool_types = {tool['type'] for tool in tools_info}
+
+    # Check primary tool_type
+    if plan.primary and plan.primary.tool_type not in valid_tool_types:
+        errors.append(f"Invalid primary tool_type: {plan.primary.tool_type}")
+
+    # Check secondary tool_type
+    if plan.secondary and plan.secondary.tool_type not in valid_tool_types:
+        errors.append(f"Invalid secondary tool_type: {plan.secondary.tool_type}")
+
+    # Check metric tool_type
+    if plan.metric and plan.metric.tool_type not in valid_tool_types:
+        errors.append(f"Invalid metric tool_type: {plan.metric.tool_type}")
+
+    # Check aggregate tool_type
+    if plan.aggregate and plan.aggregate.tool_type not in valid_tool_types:
+        errors.append(f"Invalid aggregate tool_type: {plan.aggregate.tool_type}")
+
+    # Check graph tool_type
+    if plan.graph and plan.graph.tool_type not in valid_tool_types:
+        errors.append(f"Invalid graph tool_type: {plan.graph.tool_type}")
+
+    # Check auto tool_type
+    if plan.auto and plan.auto.tool_type not in valid_tool_types:
+        errors.append(f"Invalid auto tool_type: {plan.auto.tool_type}")
+
+    # Check history tool_type
+    if plan.history and plan.history.tool_type not in valid_tool_types:
+        errors.append(f"Invalid history tool_type: {plan.history.tool_type}")
+
+    # Check cep tool_type
+    if plan.cep and plan.cep.tool_type not in valid_tool_types:
+        errors.append(f"Invalid cep tool_type: {plan.cep.tool_type}")
+
+    return errors
+
+
+def _build_enhanced_planner_prompt(
+    question: str,
+    tools_info: List[Dict[str, Any]] = None,
+    catalog_info: Dict[str, Any] = None,
+) -> str:
+    """Build enhanced planner prompt with tool and catalog context."""
+
+    prompt_parts = []
+
+    # Base instruction
+    prompt_parts.append("""
+You are an intelligent query planner for a CI/OPS system.
+Your task is to analyze the user's question and create an execution plan.
+""")
+
+    # NEW: Tool Registry Section
+    if tools_info:
+        prompt_parts.append("\n## Available Tools\n")
+        for tool in tools_info:
+            prompt_parts.append(f"\n### {tool['name']} ({tool['type']})")
+            if tool.get('input_schema'):
+                prompt_parts.append(f"Input Schema: {json.dumps(tool['input_schema'], indent=2)}")
+            if tool.get('output_schema'):
+                prompt_parts.append(f"Output Schema: {json.dumps(tool['output_schema'], indent=2)}")
+
+    # NEW: Catalog Section
+    if catalog_info:
+        prompt_parts.append("\n## Database Schema (Catalog)\n")
+        prompt_parts.append(f"Source: {catalog_info['source_ref']}\n")
+        prompt_parts.append(f"Tables: {len(catalog_info.get('tables', []))}\n")
+
+        for table in catalog_info.get('tables', [])[:5]:  # Top 5 tables
+            prompt_parts.append(f"\n### Table: {table['name']}")
+            prompt_parts.append(f"Rows: {table.get('row_count', 'unknown')}")
+            prompt_parts.append("Columns:")
+            for col in table.get('columns', [])[:10]:  # Top 10 columns
+                col_info = f"  - {col['name']} ({col['type']})"
+                if col.get('samples'):
+                    col_info += f" Examples: {col['samples'][:3]}"
+                prompt_parts.append(col_info)
+
+    # Existing instruction sections
+    prompt_parts.append("\n## Instructions\n")
+    prompt_parts.append("""
+1. Identify the user's intent (LOOKUP, AGGREGATE, PATH, etc.)
+2. Select appropriate tool(s) from the Available Tools section
+3. Define tool parameters based on the Database Schema
+4. Specify tool dependencies if one tool needs output from another
+5. Return a Plan JSON with tool_type for each operation
+6. Choose execution_strategy: "serial", "parallel", or "dag"
+""")
+
+    # User question
+    prompt_parts.append(f"\n## User Question\n{question}\n")
+
+    # Plan schema
+    prompt_parts.append("\n## Plan Schema\n")
+    prompt_parts.append("""
+{
+  "intent": "LOOKUP|AGGREGATE|PATH|EXPAND",
+  "view": "SUMMARY|COMPOSITION|DEPENDENCY|IMPACT|PATH",
+  "primary": {
+    "keywords": ["string"],
+    "filters": [{"field": "string", "op": "string", "value": "any"}],
+    "limit": 5,
+    "tool_type": "string"
+  },
+  "secondary": {
+    "keywords": ["string"],
+    "filters": [{"field": "string", "op": "string", "value": "any"}],
+    "limit": 5,
+    "tool_type": "string"
+  },
+  "aggregate": {
+    "group_by": ["string"],
+    "metrics": ["string"],
+    "filters": [{"field": "string", "op": "string", "value": "any"}],
+    "top_n": 10,
+    "scope": "ci|event",
+    "tool_type": "string"
+  },
+  "graph": {
+    "depth": 2,
+    "view": "SUMMARY|COMPOSITION|DEPENDENCY|IMPACT|PATH",
+    "limits": {"rows": 100, "nodes": 100, "relationships": 200},
+    "user_requested_depth": 2,
+    "tool_type": "string"
+  },
+  "metric": {
+    "metric_name": "string",
+    "agg": "avg|sum|count|min|max",
+    "time_range": null,
+    "tool_type": "string"
+  },
+  "execution_strategy": "serial|parallel|dag",
+  "tool_dependencies": [
+    {
+      "tool_id": "string",
+      "depends_on": ["string"],
+      "output_mapping": {"string": "string"},
+      "condition": "string"
+    }
+  ],
+  "enable_intermediate_llm": false
+}
+""")
+
+    return "\n".join(prompt_parts)

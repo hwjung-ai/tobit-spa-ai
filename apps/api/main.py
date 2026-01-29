@@ -32,6 +32,9 @@ from app.modules.ops.router import router as ops_router
 from app.modules.ops.services.ci.tools.registry_init import (
     initialize_tools,  # noqa: E402
 )
+from app.modules.ops.services.ci.mappings.registry_init import (
+    initialize_mappings,  # noqa: E402
+)
 from app.modules.ops.services.domain.registry_init import (
     initialize_domain_planners,  # noqa: E402
 )
@@ -101,6 +104,11 @@ async def on_startup() -> None:
     logger.info("Startup: Initializing OPS tools...")
     initialize_tools()
     logger.info("Startup: OPS tools initialized.")
+
+    # Initialize OPS mapping registry
+    logger.info("Startup: Initializing OPS mappings...")
+    initialize_mappings()
+    logger.info("Startup: OPS mappings initialized.")
 
     # Load .env file into os.environ for secret resolution
     from dotenv import load_dotenv

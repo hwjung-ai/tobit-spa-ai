@@ -118,6 +118,15 @@ class LlmClient:
             return response.get("output_text") or ""
         return ""
 
+    async def chat_completion(self, messages: List[Dict[str, str]], model: str = None, temperature: float = 0.5, **kwargs) -> Dict[str, Any]:
+        """
+        Chat completion interface (wrapper around acreate_response).
+        """
+        model = model or self.default_model
+        input_data = "\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])
+        response = await self.acreate_response(input=input_data, model=model, **kwargs)
+        return {"content": self.get_output_text(response)}
+
     @staticmethod
     def get_output_items(response: Any) -> List[Dict[str, Any]]:
         """

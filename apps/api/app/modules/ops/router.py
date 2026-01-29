@@ -709,6 +709,18 @@ def ask_ci(
         if parent_trace_id == "-":
             parent_trace_id = None
 
+        # Update history entry with trace_id
+        if history_id:
+            try:
+                with get_session_context() as session:
+                    history_entry = session.get(QueryHistory, history_id)
+                    if history_entry:
+                        history_entry.trace_id = active_trace_id
+                        session.add(history_entry)
+                        session.commit()
+            except Exception as exc:
+                logger.warning(f"Failed to update trace_id in history: {exc}")
+
         if plan_output.kind in (PlanOutputKind.DIRECT, PlanOutputKind.REJECT):
             stage_inputs: list[dict[str, Any]] = []
             stage_outputs: list[dict[str, Any]] = []
