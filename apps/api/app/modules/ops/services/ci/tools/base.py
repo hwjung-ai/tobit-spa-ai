@@ -140,6 +140,26 @@ class BaseTool(ABC):
         """Return a human-readable name for this tool."""
         return self.tool_type
 
+    @property
+    def input_schema(self) -> Optional[Dict[str, Any]]:
+        """
+        Return the input schema for this tool.
+
+        Returns:
+            JSON schema describing the expected input parameters, or None if not defined
+        """
+        return None
+
+    @property
+    def output_schema(self) -> Optional[Dict[str, Any]]:
+        """
+        Return the output schema for this tool.
+
+        Returns:
+            JSON schema describing the output format, or None if not defined
+        """
+        return None
+
     @abstractmethod
     async def should_execute(
         self, context: ToolContext, params: Dict[str, Any]
@@ -280,26 +300,30 @@ class ToolRegistry:
         This method supports registering tool instances (e.g., DynamicTool)
         that are already instantiated, rather than registering classes.
 
+        Tools are registered by their NAME (not by type) to allow multiple
+        tools of the same type (e.g., multiple database_query tools).
+
         Args:
             tool_instance: An instance of BaseTool to register
 
         Raises:
-            ValueError: If tool_instance doesn't have tool_type or tool_name
+            ValueError: If tool_instance doesn't have tool_name
         """
-        if not hasattr(tool_instance, 'tool_type'):
-            raise ValueError("Tool instance must have a 'tool_type' attribute")
+        if not hasattr(tool_instance, 'tool_name'):
+            raise ValueError("Tool instance must have a 'tool_name' attribute")
 
-        tool_type = tool_instance.tool_type
-        tool_name = getattr(tool_instance, 'tool_name', tool_type)
+        tool_name = tool_instance.tool_name
+        tool_type = getattr(tool_instance, 'tool_type', 'unknown')
 
-        if tool_type in self._instances:
+        if tool_name in self._instances:
             logger.warning(
-                f"Tool type '{tool_type}' already registered; skipping re-registration"
+                f"Tool '{tool_name}' already registered; skipping re-registration"
             )
             return
 
-        # Register the instance directly
-        self._instances[tool_type] = tool_instance
+        # Register the instance by NAME, not by type
+        # This allows multiple tools of the same type
+        self._instances[tool_name] = tool_instance
         logger.info(f"Registered dynamic tool: {tool_name} (type={tool_type})")
 
     def get_tool(self, tool_type: str) -> BaseTool:
@@ -330,6 +354,54 @@ class ToolRegistry:
     def list_tool_types(self) -> list[str]:
         """List all registered tool type strings."""
         return list(self._instances.keys())
+
+    def get_tool_info(self, tool_type: str) -> Optional[Dict[str, Any]]:
+        """
+        Get information about a registered tool.
+
+        Args:
+            tool_type: The tool type to retrieve information for
+
+        Returns:
+            Dictionary with tool name, description, input_schema, and output_schema,
+            or None if tool is not registered
+        """
+        if tool_type not in self._instances:
+            return None
+
+        tool = self._instances[tool_type]
+        return {
+            "name": tool.tool_name,
+            "type": tool.tool_type,
+            "input_schema": tool.input_schema,
+            "output_schema": tool.output_schema,
+        }
+
+    def get_all_tools_info(self) -> list[Dict[str, Any]]:
+        """
+        Get information about all registered tools.
+
+        Returns:
+            List of dictionaries, each containing tool information
+        """
+        tools_info = []
+        for tool_type in self._instances.keys():
+            info = self.get_tool_info(tool_type)
+            if info:
+                tools_info.append(info)
+        return tools_info
+
+    def validate_tool_type(self, tool_type: str) -> bool:
+        """
+        Validate if a tool_type is registered.
+
+        Args:
+            tool_type: The tool type to validate
+
+        Returns:
+            True if tool_type is registered, False otherwise
+        """
+        return tool_type in self._instances
 
     def __repr__(self) -> str:
         tools_str = ", ".join(self._instances.keys())

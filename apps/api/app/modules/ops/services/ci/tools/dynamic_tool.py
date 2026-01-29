@@ -40,8 +40,8 @@ class DynamicTool(BaseTool):
         self.description = tool_asset.get("description", "")
         self._tool_type = tool_asset.get("tool_type", "custom")
         self.tool_config = tool_asset.get("tool_config", {})
-        self.input_schema = tool_asset.get("tool_input_schema", {})
-        self.output_schema = tool_asset.get("tool_output_schema", {})
+        self._input_schema = tool_asset.get("tool_input_schema", {})
+        self._output_schema = tool_asset.get("tool_output_schema", {})
 
     @property
     def tool_type(self) -> str:
@@ -52,6 +52,16 @@ class DynamicTool(BaseTool):
     def tool_name(self) -> str:
         """Return the name of this tool."""
         return self.name
+
+    @property
+    def input_schema(self) -> dict[str, Any]:
+        """Return the input schema for this tool."""
+        return self._input_schema
+
+    @property
+    def output_schema(self) -> dict[str, Any]:
+        """Return the output schema for this tool."""
+        return self._output_schema
 
     async def should_execute(
         self, context: ToolContext, params: dict[str, Any]
@@ -95,6 +105,10 @@ class DynamicTool(BaseTool):
     def _process_query_template(self, query_template: str, input_data: dict[str, Any]) -> str:
         """Process query template to replace placeholders with actual values.
 
+        Supports two modes:
+        1. CI lookup mode (legacy): {where_clause}, {order_by}, {direction}, %s
+        2. Generic mode: Direct placeholder replacement from input_data
+
         Args:
             query_template: SQL query template with placeholders
             input_data: Input parameters containing keywords, filters, etc.
@@ -105,67 +119,126 @@ class DynamicTool(BaseTool):
         if not query_template:
             return ""
 
-        # Build WHERE clause from input data
-        where_conditions = []
-        order_by = "ci.ci_id"  # Default order
-        direction = "ASC"     # Default direction
-        limit_value = 10      # Default limit
-
-        # Process keywords
-        keywords = input_data.get("keywords", [])
-        if keywords and len(keywords) > 0:
-            keyword_conditions = []
-            for keyword in keywords:
-                if keyword:
-                    keyword_conditions.append(f"(ci.ci_name ILIKE '%{keyword}%' OR ci.ci_code ILIKE '%{keyword}%')")
-            if keyword_conditions:
-                where_conditions.append(" OR ".join(keyword_conditions))
-
-        # Process filters
-        filters = input_data.get("filters", [])
-        if filters:
-            for filter_item in filters:
-                # Simple filter processing - extend as needed
-                if isinstance(filter_item, dict):
-                    field = filter_item.get("field")
-                    operator = filter_item.get("operator", "=")
-                    value = filter_item.get("value")
-
-                    if field and value:
-                        if operator.upper() == "ILIKE":
-                            where_conditions.append(f"{field} ILIKE '%{value}%'")
-                        elif operator.upper() == "IN":
-                            values_str = ", ".join([f"'{v}'" for v in value])
-                            where_conditions.append(f"{field} IN ({values_str})")
-                        else:
-                            where_conditions.append(f"{field} {operator} '{value}'")
-
-        # Add tenant_id filter
-        tenant_id = input_data.get("tenant_id", "default")
-        where_conditions.append(f"ci.tenant_id = '{tenant_id}'")
-        where_conditions.append("ci.deleted_at IS NULL")
-
-        # Build WHERE clause
-        where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
-
-        # Process sorting
-        sort = input_data.get("sort")
-        if sort:
-            if isinstance(sort, tuple) and len(sort) == 2:
-                order_by = sort[0]
-                direction = sort[1].upper()
-            else:
-                order_by = str(sort)
-
-        # Process limit
-        limit = input_data.get("limit", limit_value)
-
-        # Replace placeholders in template
         processed_query = query_template
-        processed_query = processed_query.replace("{where_clause}", where_clause)
-        processed_query = processed_query.replace("{order_by}", order_by)
-        processed_query = processed_query.replace("{direction}", direction)
-        processed_query = processed_query.replace("%s", str(limit))
+
+        # Check if this is CI lookup mode (has where_clause placeholder)
+        if "{where_clause}" in query_template:
+            # Legacy CI lookup mode - build complex WHERE clause
+            where_conditions = []
+            order_by = "ci.ci_id"  # Default order
+            direction = "ASC"     # Default direction
+            limit_value = 10      # Default limit
+
+            # Process keywords
+            keywords = input_data.get("keywords", [])
+            if keywords and len(keywords) > 0:
+                keyword_conditions = []
+                for keyword in keywords:
+                    if keyword:
+                        keyword_conditions.append(f"(ci.ci_name ILIKE '%{keyword}%' OR ci.ci_code ILIKE '%{keyword}%')")
+                if keyword_conditions:
+                    where_conditions.append(" OR ".join(keyword_conditions))
+
+            # Process filters
+            filters = input_data.get("filters", [])
+            if filters:
+                for filter_item in filters:
+                    if isinstance(filter_item, dict):
+                        field = filter_item.get("field")
+                        operator = filter_item.get("operator", "=")
+                        value = filter_item.get("value")
+
+                        if field and value:
+                            if operator.upper() == "ILIKE":
+                                where_conditions.append(f"{field} ILIKE '%{value}%'")
+                            elif operator.upper() == "IN":
+                                values_str = ", ".join([f"'{v}'" for v in value])
+                                where_conditions.append(f"{field} IN ({values_str})")
+                            else:
+                                where_conditions.append(f"{field} {operator} '{value}'")
+
+            # Add tenant_id filter
+            tenant_id = input_data.get("tenant_id", "default")
+            where_conditions.append(f"ci.tenant_id = '{tenant_id}'")
+            where_conditions.append("ci.deleted_at IS NULL")
+
+            # Build WHERE clause
+            where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
+
+            # Process sorting
+            sort = input_data.get("sort")
+            if sort:
+                if isinstance(sort, tuple) and len(sort) == 2:
+                    order_by = sort[0]
+                    direction = sort[1].upper()
+                else:
+                    order_by = str(sort)
+
+            # Process limit
+            limit = input_data.get("limit", limit_value)
+
+            # Replace placeholders in template
+            processed_query = processed_query.replace("{where_clause}", where_clause)
+            processed_query = processed_query.replace("{order_by}", order_by)
+            processed_query = processed_query.replace("{direction}", direction)
+            processed_query = processed_query.replace("%s", str(limit))
+            processed_query = processed_query.replace("{limit}", str(limit))
+
+        else:
+            # Generic mode - direct placeholder replacement
+            # First handle special aggregate-specific placeholders
+            group_by = input_data.get("group_by", [])
+            if group_by and isinstance(group_by, list):
+                # Handle {select_field} for single field GROUP BY
+                if "{select_field}" in processed_query:
+                    select_field = group_by[0] if group_by else "ci_type"
+                    processed_query = processed_query.replace("{select_field}", select_field)
+                # Handle {group_clause} for multi-field GROUP BY
+                if "{group_clause}" in processed_query:
+                    group_clause = ", ".join(group_by) if group_by else "ci_type"
+                    processed_query = processed_query.replace("{group_clause}", group_clause)
+                # Handle {group_field} for single field
+                if "{group_field}" in processed_query:
+                    group_field = group_by[0] if group_by else "event_type"
+                    processed_query = processed_query.replace("{group_field}", group_field)
+
+            # Handle time_filter for event queries
+            if "{time_filter}" in processed_query:
+                time_range = input_data.get("time_range", "")
+                if time_range:
+                    # Simple time range placeholder - could be enhanced
+                    processed_query = processed_query.replace("{time_filter}", f"AND time > NOW() - INTERVAL '{time_range}'")
+                else:
+                    processed_query = processed_query.replace("{time_filter}", "")
+
+            # Replace all other {key} placeholders with values from input_data
+            for key, value in input_data.items():
+                placeholder = f"{{{key}}}"
+                if placeholder in processed_query:
+                    if value is None:
+                        processed_query = processed_query.replace(placeholder, "NULL")
+                    elif isinstance(value, list):
+                        # For lists in generic mode, skip if already handled above
+                        if key not in ("group_by",):
+                            # Convert list to SQL array format
+                            escaped_values = [str(v).replace("'", "''") for v in value]
+                            array_values = "', '".join(escaped_values)
+                            array_str = f"ARRAY['{array_values}']"
+                            processed_query = processed_query.replace(placeholder, array_str)
+                    elif isinstance(value, dict):
+                        processed_query = processed_query.replace(placeholder, str(value))
+                    else:
+                        escaped_value = str(value).replace("'", "''")
+                        processed_query = processed_query.replace(placeholder, f"'{escaped_value}'")
+
+            # Handle special placeholders that might not be in input_data
+            if "{tenant_id}" in processed_query:
+                tenant_id = input_data.get("tenant_id", "default")
+                processed_query = processed_query.replace("{tenant_id}", f"'{tenant_id}'")
+
+            if "{limit}" in processed_query:
+                limit = input_data.get("limit", 10)
+                processed_query = processed_query.replace("{limit}", str(limit))
 
         return processed_query
 
