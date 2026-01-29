@@ -731,3 +731,152 @@ def load_all_published_tools() -> list[dict[str, Any]]:
 
         logger.info(f"Loaded {len(result)} tool assets from Asset Registry")
         return result
+
+
+def load_all_published_mappings() -> dict[str, Any]:
+    """
+    Load all published Mapping Assets from Asset Registry.
+
+    Returns:
+        Dictionary mapping mapping_name -> content_dict
+    """
+    with get_session_context() as session:
+        query = (
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "mapping")
+            .where(TbAssetRegistry.status == "published")
+        )
+        mappings = session.exec(query).all()
+
+        result = {}
+        for asset in mappings:
+            mapping_name = asset.name
+            content = dict(asset.content or {})
+            result[mapping_name] = content
+            logger.debug(
+                f"Loaded mapping '{mapping_name}' (v{asset.version}) "
+                f"from Asset Registry"
+            )
+
+        logger.info(
+            f"Loaded {len(result)} mapping assets from Asset Registry"
+        )
+        return result
+
+
+def load_catalog_for_source(source_ref: str) -> dict[str, Any] | None:
+    """
+    Load catalog information for a specific data source from Asset Registry.
+
+    Args:
+        source_ref: Reference to the data source (e.g., 'postgres_prod', 'primary_postgres')
+
+    Returns:
+        Full catalog data with tables, columns, and metadata, or None if not found
+    """
+    from app.modules.asset_registry.schema_models import SchemaCatalog
+
+    with get_session_context() as session:
+        query = (
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "catalog")
+            .where(TbAssetRegistry.status == "published")
+        )
+        assets = session.exec(query).all()
+
+        for asset in assets:
+            content = asset.content or {}
+            catalog_data = content.get("catalog")
+
+            if catalog_data and catalog_data.get("source_ref") == source_ref:
+                logger.info(f"Loaded catalog for source: {source_ref}")
+                return catalog_data
+
+    logger.warning(f"Catalog not found for source: {source_ref}")
+    return None
+
+
+def load_catalog_for_llm(
+    source_ref: str,
+    max_tables: int = 10,
+    max_columns_per_table: int = 15,
+    max_sample_rows: int = 3
+) -> dict[str, Any] | None:
+    """
+    Load catalog and convert to LLM-friendly format.
+
+    This function loads the full catalog and simplifies it for use in LLM prompts:
+    - Includes table names, schemas, descriptions
+    - Includes column names, types, sizes, descriptions
+    - Includes sample data and statistics
+    - Limits output size for token efficiency
+
+    Args:
+        source_ref: Reference to the data source
+        max_tables: Maximum number of tables to include
+        max_columns_per_table: Maximum columns per table
+        max_sample_rows: Maximum sample rows per table
+
+    Returns:
+        Simplified catalog dictionary suitable for LLM prompts, or None if not found
+    """
+    from app.modules.asset_registry.schema_models import SchemaCatalog
+
+    catalog_data = load_catalog_for_source(source_ref)
+    if not catalog_data:
+        return None
+
+    try:
+        # Convert dict to SchemaCatalog object
+        catalog = SchemaCatalog(**catalog_data)
+
+        # Convert to LLM format
+        llm_format = catalog.to_llm_format(
+            max_tables=max_tables,
+            max_columns_per_table=max_columns_per_table,
+            max_sample_rows=max_sample_rows
+        )
+
+        logger.info(
+            f"Converted catalog for source {source_ref} to LLM format "
+            f"({len(llm_format['tables'])} tables)"
+        )
+
+        return llm_format
+
+    except Exception as e:
+        logger.error(f"Failed to convert catalog to LLM format: {e}")
+        return None
+
+
+def get_catalog_summary(source_ref: str) -> dict[str, Any] | None:
+    """
+    Get a quick summary of catalog structure (table and column counts only).
+
+    Useful for quickly checking if catalog exists without loading full data.
+
+    Args:
+        source_ref: Reference to the data source
+
+    Returns:
+        Dictionary with name, table_count, column_count, or None if not found
+    """
+    from app.modules.asset_registry.schema_models import SchemaCatalog
+
+    catalog_data = load_catalog_for_source(source_ref)
+    if not catalog_data:
+        return None
+
+    try:
+        catalog = SchemaCatalog(**catalog_data)
+        return {
+            "name": catalog.name,
+            "source_ref": catalog.source_ref,
+            "table_count": catalog.table_count,
+            "column_count": catalog.column_count,
+            "last_scanned": catalog.last_scanned_at,
+            "scan_status": catalog.scan_status,
+        }
+    except Exception as e:
+        logger.error(f"Failed to get catalog summary: {e}")
+        return None

@@ -19,6 +19,22 @@ class SchemaColumn(SQLModel):
     default_value: Optional[str] = None
     description: Optional[str] = None
     constraints: Dict[str, Any] | None = Field(default_factory=dict)
+    # Column size/length information
+    column_size: Optional[int] = None  # VARCHAR(255) -> 255
+    numeric_precision: Optional[int] = None  # NUMERIC(10,2) -> 10
+    numeric_scale: Optional[int] = None  # NUMERIC(10,2) -> 2
+    # Column statistics and samples
+    data_samples: List[Any] | None = Field(default=None, description="Sample values from the column")
+    distinct_count: Optional[int] = None  # Number of distinct values
+    null_count: Optional[int] = None  # Number of NULL values
+    min_value: Optional[str] = None  # Min value (for numeric/date types)
+    max_value: Optional[str] = None  # Max value (for numeric/date types)
+    avg_value: Optional[str] = None  # Average value (for numeric types)
+    # Additional column properties
+    is_indexed: bool = Field(default=False)
+    is_unique: bool = Field(default=False)
+    character_maximum_length: Optional[int] = None  # Alternative length specification
+    ordinal_position: Optional[int] = None  # Column position in table
 
 
 class SchemaTable(SQLModel):
@@ -31,6 +47,15 @@ class SchemaTable(SQLModel):
     indexes: Dict[str, Any] | None = Field(default_factory=dict)
     constraints: Dict[str, Any] | None = Field(default_factory=dict)
     tags: Dict[str, Any] | None = Field(default_factory=dict)
+    # Table statistics
+    row_count: Optional[int] = None  # Number of rows in table
+    size_bytes: Optional[int] = None  # Table size in bytes
+    last_modified: Optional[datetime] = None  # When table was last modified
+    # Sample data from table
+    sample_rows: List[Dict[str, Any]] | None = Field(
+        default=None,
+        description="Sample rows from the table for LLM context"
+    )
 
 
 class SchemaCatalog(SQLModel):
@@ -64,6 +89,102 @@ class SchemaCatalog(SQLModel):
         if table:
             return next((c for c in table.columns if c.name == column_name), None)
         return None
+
+    def to_llm_format(self, max_tables: int = 10, max_columns_per_table: int = 15, max_sample_rows: int = 3) -> Dict[str, Any]:
+        """
+        Convert catalog to simplified format suitable for LLM prompts.
+
+        Includes:
+        - Table names and descriptions
+        - Column names, types, sizes, and descriptions
+        - Sample data from tables
+        - Column statistics (distinct count, null count, min/max values)
+
+        Args:
+            max_tables: Maximum number of tables to include
+            max_columns_per_table: Maximum columns per table
+            max_sample_rows: Maximum sample rows per table
+
+        Returns:
+            Simplified catalog dictionary for LLM
+        """
+        simplified_tables = []
+
+        for table in self.tables[:max_tables]:
+            simplified_columns = []
+
+            for col in table.columns[:max_columns_per_table]:
+                col_info = {
+                    "name": col.name,
+                    "type": col.data_type,
+                    "nullable": col.is_nullable,
+                    "description": col.description or "",
+                }
+
+                # Add size information
+                if col.column_size:
+                    col_info["size"] = col.column_size
+                elif col.character_maximum_length:
+                    col_info["size"] = col.character_maximum_length
+                elif col.numeric_precision:
+                    col_info["precision"] = col.numeric_precision
+                    if col.numeric_scale:
+                        col_info["scale"] = col.numeric_scale
+
+                # Add key constraints
+                if col.is_primary_key:
+                    col_info["primary_key"] = True
+                if col.is_foreign_key:
+                    col_info["foreign_key"] = f"{col.foreign_key_table}.{col.foreign_key_column}"
+                if col.is_indexed:
+                    col_info["indexed"] = True
+                if col.is_unique:
+                    col_info["unique"] = True
+
+                # Add statistics if available
+                if col.distinct_count is not None:
+                    col_info["distinct_count"] = col.distinct_count
+                if col.null_count is not None:
+                    col_info["null_count"] = col.null_count
+                if col.min_value is not None:
+                    col_info["min"] = col.min_value
+                if col.max_value is not None:
+                    col_info["max"] = col.max_value
+                if col.avg_value is not None:
+                    col_info["avg"] = col.avg_value
+
+                # Add sample values
+                if col.data_samples and len(col.data_samples) > 0:
+                    col_info["samples"] = col.data_samples[:3]  # Limit to 3 samples
+
+                simplified_columns.append(col_info)
+
+            table_info = {
+                "name": table.name,
+                "schema": table.schema_name,
+                "description": table.description or "",
+                "columns": simplified_columns,
+            }
+
+            # Add table statistics
+            if table.row_count is not None:
+                table_info["row_count"] = table.row_count
+            if table.size_bytes is not None:
+                table_info["size_bytes"] = table.size_bytes
+
+            # Add sample rows
+            if table.sample_rows and len(table.sample_rows) > 0:
+                table_info["sample_rows"] = table.sample_rows[:max_sample_rows]
+
+            simplified_tables.append(table_info)
+
+        return {
+            "source_ref": self.source_ref,
+            "name": self.name,
+            "description": self.description or "",
+            "tables": simplified_tables,
+            "last_scanned": self.last_scanned_at.isoformat() if self.last_scanned_at else None,
+        }
 
 
 class SchemaAsset(SQLModel):
