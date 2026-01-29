@@ -5449,7 +5449,10 @@ class CIOrchestratorRunner:
         if stage_assets is not None:
             applied_assets = self._resolve_applied_assets_from_assets(stage_assets)
         else:
-            applied_assets = self._resolve_applied_assets()
+            # Stage-specific asset distribution
+            # Based on typical usage patterns across stages
+            all_assets = self._resolve_applied_assets()
+            applied_assets = self._distribute_stage_assets(stage, all_assets)
 
         return StageInput(
             stage=stage,
@@ -5458,6 +5461,35 @@ class CIOrchestratorRunner:
             prev_output=prev_output,
             trace_id=trace_id,
         )
+
+    def _distribute_stage_assets(self, stage: str, all_assets: Dict[str, str]) -> Dict[str, str]:
+        """Distribute global assets to stage-specific assets based on usage patterns.
+
+        Each stage typically uses specific asset types:
+        - route_plan: {} (no assets, just planning)
+        - validate: policy, prompt (validation)
+        - execute: queries, source, schema (data retrieval)
+        - compose: prompt, mapping, resolver (result composition)
+        - present: prompt (final presentation)
+        """
+        stage_asset_map = {
+            "route_plan": [],  # routing doesn't use assets
+            "validate": ["policy", "prompt"],  # validation uses policy and prompt
+            "execute": ["queries", "source", "schema"],  # execution uses data sources
+            "compose": ["prompt", "mapping", "resolver"],  # composition uses prompt and resolver
+            "present": ["prompt"],  # presentation uses prompt
+        }
+
+        # Get the relevant asset types for this stage
+        relevant_types = stage_asset_map.get(stage, [])
+
+        # Filter all_assets to only include relevant types
+        stage_assets = {}
+        for asset_type in relevant_types:
+            if asset_type in all_assets:
+                stage_assets[asset_type] = all_assets[asset_type]
+
+        return stage_assets
 
     async def _present_stage_async(self, plan_output: PlanOutput) -> Dict[str, Any]:
         """Handle present stage for direct answers."""

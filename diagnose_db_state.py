@@ -15,38 +15,69 @@ conn = psycopg2.connect(
     password="WeMB1!"
 )
 
-cur = conn.cursor()
-
 print("=" * 80)
 print("데이터베이스 진단 보고서")
 print("=" * 80)
 print(f"실행 시간: {datetime.now().isoformat()}\n")
+
+# Step 1: 모든 테이블 확인
+print("\n[Step 0] 사용 가능한 테이블 확인")
+print("-" * 80)
+
+cur = conn.cursor()
+try:
+    cur.execute("""
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_schema = 'public'
+        ORDER BY table_name
+    """)
+
+    tables = [row[0] for row in cur.fetchall()]
+    print(f"✓ 총 {len(tables)}개의 테이블이 있습니다:\n")
+
+    for table in sorted(tables):
+        print(f"  - {table}")
+except Exception as e:
+    print(f"  ERROR: {str(e)}")
+
+cur.close()
 
 # Step 1: 실제 데이터가 있는지 확인
 print("\n[Step 1] 테이블별 데이터 개수 확인")
 print("-" * 80)
 
 tables_to_check = [
-    ("tb_ci", "CI 데이터"),
-    ("tb_query", "Query 데이터"),
-    ("tb_metric", "Metric 데이터"),
-    ("tb_asset_registry", "Asset Registry"),
-    ("tb_execution_trace", "Execution Trace"),
-    ("tb_stage_input", "Stage Input"),
+    "tb_ci",
+    "tb_query",
+    "tb_metric",
+    "tb_asset_registry",
+    "tb_execution_trace",
+    "tb_stage_input",
+    "tb_cep_event",
+    "tb_api_log",
+    "ci",
+    "event_log"
 ]
 
-for table_name, description in tables_to_check:
+for table_name in tables_to_check:
+    cur = conn.cursor()
     try:
         cur.execute(f"SELECT COUNT(*) FROM {table_name}")
         count = cur.fetchone()[0]
-        print(f"✓ {description:20s} ({table_name:25s}): {count:,} 건")
+        print(f"✓ {table_name:30s}: {count:,} 건")
+    except psycopg2.errors.UndefinedTable:
+        print(f"✗ {table_name:30s}: 테이블 없음")
     except Exception as e:
-        print(f"✗ {description:20s} ({table_name:25s}): ERROR - {str(e)[:50]}")
+        print(f"✗ {table_name:30s}: ERROR - {str(e)[:40]}")
+    finally:
+        cur.close()
 
 # Step 2: Asset Registry 현황
 print("\n[Step 2] Asset Registry 현황 (published 상태)")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
     cur.execute("""
         SELECT asset_type, COUNT(*) as count
@@ -64,11 +95,14 @@ try:
         print("  Published 상태의 asset이 없습니다")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
 # Step 3: 문제 asset 확인
 print("\n[Step 3] 주요 Asset 목록 (query, mapping, prompt, policy)")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
     cur.execute("""
         SELECT asset_type, name, version, status
@@ -85,11 +119,14 @@ try:
         print("  해당 asset이 없습니다")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
 # Step 4: 최근 Trace 확인
 print("\n[Step 4] 최근 10개 Execution Trace")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
     cur.execute("""
         SELECT
@@ -112,11 +149,14 @@ try:
         print("  Trace 데이터가 없습니다")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
 # Step 5: Stage Input 현황
 print("\n[Step 5] Stage Input 현황")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
     cur.execute("""
         SELECT
@@ -137,13 +177,15 @@ try:
         print("  Stage Input 데이터가 없습니다")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
 # Step 6: 기본 데이터 소스 확인
-print("\n[Step 6] 기본 데이터 소스 확인")
+print("\n[Step 6] 기본 데이터 소스 확인 (primary_postgres)")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
-    # primary_postgres source가 있는지 확인
     cur.execute("""
         SELECT name, asset_type, status, config
         FROM tb_asset_registry
@@ -157,18 +199,26 @@ try:
         if config:
             try:
                 config_dict = json.loads(config) if isinstance(config, str) else config
-                print(f"  설정: {json.dumps(config_dict, indent=4)}")
+                print(f"  설정:")
+                for key, value in config_dict.items():
+                    if key != 'password':
+                        print(f"    {key}: {value}")
+                    else:
+                        print(f"    {key}: ****")
             except:
                 print(f"  설정: {config}")
     else:
-        print("✗ Primary Postgres Source not found")
+        print("✗ Primary Postgres Source not found or not published")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
 # Step 7: 현재 사용 가능한 모든 published asset
 print("\n[Step 7] 모든 Published Assets")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
     cur.execute("""
         SELECT asset_type, COUNT(*) as count
@@ -190,75 +240,70 @@ try:
         print("  Published asset이 없습니다")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
-# Step 8: CI/Query 데이터 샘플 확인
-print("\n[Step 8] CI 데이터 샘플 (최대 5개)")
+# Step 8: CI 데이터 샘플 확인
+print("\n[Step 8] CI 데이터 확인")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
-    # tb_ci 테이블 구조 확인
+    # ci 테이블 확인
     cur.execute("""
-        SELECT column_name, data_type
-        FROM information_schema.columns
-        WHERE table_name = 'tb_ci'
-        ORDER BY ordinal_position
+        SELECT COUNT(*) FROM ci
     """)
 
-    columns = cur.fetchall()
-    if columns:
-        # 데이터 확인
-        cur.execute("SELECT * FROM tb_ci LIMIT 5")
+    count = cur.fetchone()[0]
+    print(f"  ci 테이블: {count:,} 건")
+
+    if count > 0:
+        # 샘플 데이터 확인
+        cur.execute("SELECT * FROM ci LIMIT 3")
         rows = cur.fetchall()
 
-        if rows:
-            print(f"  총 컬럼: {len(columns)}개")
-            print(f"  데이터 샘플: {len(rows)}개 행")
-            print(f"  컬럼: {', '.join([col[0] for col in columns])}")
-        else:
-            print("  tb_ci 테이블이 존재하지만 데이터가 없습니다")
-    else:
-        print("  tb_ci 테이블이 없거나 접근할 수 없습니다")
+        # 컬럼 정보 확인
+        col_names = [desc[0] for desc in cur.description]
+        print(f"  컬럼 ({len(col_names)}개): {', '.join(col_names[:5])}...")
+
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
-# Step 9: Query 데이터 샘플
-print("\n[Step 9] Query 데이터 샘플 (최대 5개)")
+# Step 9: CI_ext 데이터 확인
+print("\n[Step 9] CI_ext 데이터 확인")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
     cur.execute("""
-        SELECT column_name, data_type
-        FROM information_schema.columns
-        WHERE table_name = 'tb_query'
-        ORDER BY ordinal_position
+        SELECT COUNT(*) FROM ci_ext
     """)
 
-    columns = cur.fetchall()
-    if columns:
-        cur.execute("SELECT * FROM tb_query LIMIT 5")
-        rows = cur.fetchall()
+    count = cur.fetchone()[0]
+    print(f"  ci_ext 테이블: {count:,} 건")
 
-        if rows:
-            print(f"  총 컬럼: {len(columns)}개")
-            print(f"  데이터 샘플: {len(rows)}개 행")
-        else:
-            print("  tb_query 테이블이 존재하지만 데이터가 없습니다")
-    else:
-        print("  tb_query 테이블이 없거나 접근할 수 없습니다")
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
 # Step 10: 진단 요약
 print("\n[Step 10] 진단 요약")
 print("-" * 80)
 
+cur = conn.cursor()
 try:
-    cur.execute("SELECT COUNT(*) FROM tb_ci")
+    # CI 데이터 확인
+    cur.execute("SELECT COUNT(*) FROM ci")
     ci_count = cur.fetchone()[0]
 
+    # Asset 확인
     cur.execute("SELECT COUNT(*) FROM tb_asset_registry WHERE status = 'published'")
     asset_count = cur.fetchone()[0]
 
+    # Trace 확인
     cur.execute("SELECT COUNT(*) FROM tb_execution_trace")
     trace_count = cur.fetchone()[0]
 
@@ -267,15 +312,30 @@ try:
     print(f"✓ Published Assets: {asset_count:,} 개")
     print(f"✓ Execution Traces: {trace_count:,} 건")
 
+    print("\n[진단 결과]")
     if ci_count == 0:
-        print("\n⚠ 경고: CI 데이터가 없습니다 - 이것이 테스트 실패의 원인일 수 있습니다")
+        print("⚠ 경고 #1: CI 데이터가 없습니다")
+        print("  → 이것이 테스트 실패의 주요 원인입니다")
+        print("  → API는 'No CI matches found' 응답을 반환합니다")
+    else:
+        print(f"✓ CI 데이터가 {ci_count:,}건 있습니다 - 정상")
+
     if asset_count == 0:
-        print("⚠ 경고: Published asset이 없습니다 - 시스템이 제대로 동작하지 않을 수 있습니다")
+        print("⚠ 경고 #2: Published asset이 없습니다")
+        print("  → 시스템이 제대로 동작하지 않을 수 있습니다")
+    else:
+        print(f"✓ Published asset이 {asset_count:,}개 있습니다 - 정상")
+
+    if trace_count == 0:
+        print("⚠ 경고 #3: 실행 trace 데이터가 없습니다")
+    else:
+        print(f"✓ 실행 trace가 {trace_count:,}개 있습니다 - 정상")
 
 except Exception as e:
     print(f"  ERROR: {str(e)}")
+finally:
+    cur.close()
 
-cur.close()
 conn.close()
 
 print("\n" + "=" * 80)
