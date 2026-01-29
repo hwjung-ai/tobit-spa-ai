@@ -189,6 +189,71 @@ class ToolExecutor:
 
         return result.data
 
+    async def execute_tool(
+        self,
+        tool_type: str,
+        context: ToolContext,
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Execute a tool operation asynchronously.
+
+        This method provides an alias to execute_async for compatibility with
+        stage_executor code that calls execute_tool().
+
+        Args:
+            tool_type: Type of tool to execute
+            context: Execution context
+            params: Operation parameters
+
+        Returns:
+            Dict with tool execution results (success, data, references, etc.)
+
+        Raises:
+            ValueError: If tool type is not registered or execution fails
+        """
+        if not self.registry.is_registered(tool_type):
+            self.logger.warning(
+                f"Tool type '{str(tool_type)}' is not registered",
+                extra={"available_tools": list(self.registry.get_available_tools().keys())}
+            )
+            return {
+                "success": False,
+                "error": f"Tool type '{str(tool_type)}' is not registered",
+                "data": [],
+                "references": []
+            }
+
+        try:
+            tool = self.registry.get_tool(tool_type)
+            result = await tool.safe_execute(context, params)
+
+            # Return result.data wrapped in a compatible format
+            if isinstance(result.data, dict):
+                return result.data
+            else:
+                return {
+                    "success": result.success,
+                    "data": result.data,
+                    "references": result.metadata.get("references", []),
+                    "error": result.error
+                }
+        except Exception as exc:
+            self.logger.error(
+                f"Tool execution failed for {str(tool_type)}",
+                extra={
+                    "error": str(exc),
+                    "tool_type": str(tool_type),
+                    "tenant_id": context.tenant_id,
+                },
+            )
+            return {
+                "success": False,
+                "error": str(exc),
+                "data": [],
+                "references": []
+            }
+
     def set_cache(self, cache: ToolResultCache) -> None:
         """Attach or replace the cache instance used by this executor."""
         self._cache = cache

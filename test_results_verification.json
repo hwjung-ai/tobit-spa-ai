@@ -1,0 +1,162 @@
+[
+  {
+    "query": "What is the current system status?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 12.250405073165894,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Show me the system information",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 9.980995655059814,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "What services are running?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 6.695664167404175,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Key performance metrics?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 11.179667472839355,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Last 24 hours metrics?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 7.344074964523315,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Resource usage information?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 7.429798603057861,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Daily records count?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 1.1517245769500732,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Average response time?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 9.249329328536987,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Data dependencies?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 7.302778005599976,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Related entities?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 4.67114782333374,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Architecture diagram?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 7.617023229598999,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Dataflow relations?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 8.251178503036499,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Recent changes?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 8.31183671951294,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Yesterday's events?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 6.608661651611328,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Weekly audit trail?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 7.252706527709961,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "System state 7 days ago?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 10.152316808700562,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Performance comparison?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 9.649152278900146,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Trends analysis?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 1.1922454833984375,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "System report?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 8.385880708694458,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  },
+  {
+    "query": "Optimization recommendations?",
+    "status": "\u2705 DATA FOUND",
+    "trace_id": "NO TRACE",
+    "time": 9.873862504959106,
+    "answer": "NO ANSWER",
+    "contains_zero": false
+  }
+]

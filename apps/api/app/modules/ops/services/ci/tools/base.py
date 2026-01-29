@@ -273,6 +273,35 @@ class ToolRegistry:
         self._instances[tool_type] = tool_class()
         logger.info(f"Registered tool: {tool_type}")
 
+    def register_dynamic(self, tool_instance: BaseTool) -> None:
+        """
+        Register a tool instance directly with the registry.
+
+        This method supports registering tool instances (e.g., DynamicTool)
+        that are already instantiated, rather than registering classes.
+
+        Args:
+            tool_instance: An instance of BaseTool to register
+
+        Raises:
+            ValueError: If tool_instance doesn't have tool_type or tool_name
+        """
+        if not hasattr(tool_instance, 'tool_type'):
+            raise ValueError("Tool instance must have a 'tool_type' attribute")
+
+        tool_type = tool_instance.tool_type
+        tool_name = getattr(tool_instance, 'tool_name', tool_type)
+
+        if tool_type in self._instances:
+            logger.warning(
+                f"Tool type '{tool_type}' already registered; skipping re-registration"
+            )
+            return
+
+        # Register the instance directly
+        self._instances[tool_type] = tool_instance
+        logger.info(f"Registered dynamic tool: {tool_name} (type={tool_type})")
+
     def get_tool(self, tool_type: str) -> BaseTool:
         """
         Get an instance of a registered tool.

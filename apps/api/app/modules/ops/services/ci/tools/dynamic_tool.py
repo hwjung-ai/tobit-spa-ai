@@ -36,6 +36,7 @@ class DynamicTool(BaseTool):
         self.asset_id = tool_asset.get("asset_id")
         self.asset_data = tool_asset
         self.name = tool_asset.get("name", "unknown")
+        self.tool_name = self.name  # Alias for compatibility with registry
         self.description = tool_asset.get("description", "")
         self.tool_type = tool_asset.get("tool_type", "custom")
         self.tool_config = tool_asset.get("tool_config", {})
