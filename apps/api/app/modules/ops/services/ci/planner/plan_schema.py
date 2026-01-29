@@ -286,10 +286,7 @@ class Plan(BaseModel):
     enable_multistep: bool = False
     # NEW: Orchestration fields
     execution_strategy: ExecutionStrategy = ExecutionStrategy.SERIAL
-    tool_dependencies: List[ToolDependency] = Field(
-        default_factory=list,
-        description="Tool dependency graph for orchestration"
-    )
+    tool_dependencies: List[ToolDependency] = []
     enable_intermediate_llm: bool = False
 
     @field_validator("view", mode="before")

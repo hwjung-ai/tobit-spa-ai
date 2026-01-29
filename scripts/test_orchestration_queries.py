@@ -77,22 +77,19 @@ def send_query(query_data: Dict[str, Any]) -> Dict[str, Any]:
         if response.status_code == 200:
             result = response.json()
 
-            # Extract trace_id
+            # Extract trace_id from the response
             trace_id = None
-            if "data" in result:
-                trace_id = result["data"].get("trace_id")
-            if not trace_id and "meta" in result:
-                trace_id = result["meta"].get("trace_id")
+            if "data" in result and "meta" in result["data"]:
+                trace_id = result["data"]["meta"].get("trace_id")
 
             # Check for orchestration trace
             orchestration_trace = None
             if "data" in result:
-                orchestration_trace = result["data"].get("orchestration_trace")
-            if not orchestration_trace and "trace" in result:
-                # Look for orchestration info in trace
-                trace_data = result.get("trace", {})
-                if isinstance(trace_data, dict):
-                    orchestration_trace = trace_data.get("orchestration_trace")
+                # Look for orchestration trace in data.trace
+                if "trace" in result["data"]:
+                    trace_data = result["data"]["trace"]
+                    if isinstance(trace_data, dict) and "orchestration_trace" in trace_data:
+                        orchestration_trace = trace_data["orchestration_trace"]
 
             result_summary = {
                 "query_id": query_data["id"],
@@ -171,12 +168,16 @@ def main():
     for result in results:
         query_id = result.get("query_id", "N/A")
         status = result.get("status", "N/A")
-        trace_id = result.get("trace_id", "N/A")[:36] if result.get("trace_id") else "N/A"
-        strategy = result.get("orchestration_strategy", "N/A")
-        groups = result.get("execution_groups", "N/A")
-        tools = result.get("total_tools", "N/A")
+        trace_id = result.get("trace_id", "N/A")
+        if trace_id and trace_id != "N/A":
+            trace_id = trace_id[:36]
+        else:
+            trace_id = "N/A"
+        strategy = result.get("orchestration_strategy") or "N/A"
+        groups = str(result.get("execution_groups", "N/A"))
+        tools = str(result.get("total_tools", "N/A"))
 
-        print(f"{query_id:<20} {status:<10} {trace_id:<40} {strategy:<15} {groups:<8} {tools:<8}")
+        print(f"{query_id:<20} {status:<10} {trace_id:<40} {str(strategy):<15} {groups:<8} {tools:<8}")
 
     # Save results to file
     output_file = "/tmp/orchestration_test_results.json"
