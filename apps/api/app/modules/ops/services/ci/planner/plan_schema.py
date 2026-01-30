@@ -81,7 +81,7 @@ class AggregateSpec(BaseModel):
     scope: Literal["s1", "ci", "graph", "event"] = "s1"
     top_n: int = 10
     tool_type: str = Field(
-        default="metric_query",
+        default="ci_aggregate",
         description="Tool to use for aggregate query execution"
     )
 
@@ -98,7 +98,7 @@ class GraphSpec(BaseModel):
     limits: GraphLimits = Field(default_factory=lambda: GraphLimits())
     view: View | None = None
     tool_type: str = Field(
-        default="graph_analysis",
+        default="ci_graph",
         description="Tool to use for graph analysis execution"
     )
 
@@ -117,7 +117,7 @@ class MetricSpec(BaseModel):
     mode: Literal["aggregate", "series"] = "aggregate"
     scope: Literal["s1", "ci", "graph"] = "s1"
     tool_type: str = Field(
-        default="metric_query",
+        default="metric",
         description="Tool to use for metric query execution"
     )
 
@@ -130,7 +130,7 @@ class HistorySpec(BaseModel):
     time_range: Literal["last_24h", "last_7d", "last_30d"] = "last_7d"
     limit: int = 50
     tool_type: str = Field(
-        default="history_query",
+        default="history",
         description="Tool to use for history query execution"
     )
 
