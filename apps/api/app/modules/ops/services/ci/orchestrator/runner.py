@@ -4779,7 +4779,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _ci_search.
         """
         result = self._execute_tool(
-            ToolType.CI,
+            "ci",
             "search",
             keywords=keywords,
             filters=filters,
@@ -4794,7 +4794,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _ci_get.
         """
         try:
-            result = self._execute_tool(ToolType.CI, "get", ci_id=ci_id)
+            result = self._execute_tool("ci", "get", ci_id=ci_id)
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
             return None
@@ -4805,7 +4805,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _ci_get_by_code.
         """
         try:
-            result = self._execute_tool(ToolType.CI, "get_by_code", ci_code=ci_code)
+            result = self._execute_tool("ci", "get_by_code", ci_code=ci_code)
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
             return None
@@ -4823,7 +4823,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _ci_aggregate.
         """
         result = self._execute_tool(
-            ToolType.CI,
+            "ci",
             "aggregate",
             group_by=group_by,
             metrics=metrics,
@@ -4844,7 +4844,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _ci_list_preview.
         """
         result = self._execute_tool(
-            ToolType.CI,
+            "ci",
             "list_preview",
             limit=limit,
             offset=offset,
@@ -4866,7 +4866,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _metric_aggregate.
         """
         result = self._execute_tool(
-            ToolType.METRIC,
+            "metric",
             "aggregate",
             metric_name=metric_name,
             agg=agg,
@@ -4888,7 +4888,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _metric_series_table.
         """
         result = self._execute_tool(
-            ToolType.METRIC,
+            "metric",
             "series",
             ci_id=ci_id,
             metric_name=metric_name,
@@ -4910,7 +4910,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _graph_expand.
         """
         result = self._execute_tool(
-            ToolType.GRAPH,
+            "graph",
             "expand",
             ci_id=ci_id,
             view=view,
@@ -4930,7 +4930,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _graph_path.
         """
         result = self._execute_tool(
-            ToolType.GRAPH,
+            "graph",
             "path",
             ci_id=source_id,
             target_ci_id=target_id,
@@ -4957,7 +4957,7 @@ class CIOrchestratorRunner:
         final_limit = limit or getattr(history_spec, "limit", None) or 50
 
         result = self._execute_tool(
-            ToolType.HISTORY,
+            "history",
             "event_log",
             ci=ci_context,
             time_range=final_time_range,
@@ -4979,7 +4979,7 @@ class CIOrchestratorRunner:
         Returns same format as primary _cep_simulate.
         """
         result = self._execute_tool(
-            ToolType.CEP,
+            "cep",
             "simulate",
             rule_id=rule_id or "",
             ci_context=ci_context,
@@ -4996,7 +4996,7 @@ class CIOrchestratorRunner:
         sort: tuple[str, Literal["ASC", "DESC"]] | None = None,
     ) -> List[Dict[str, Any]]:
         result = await self._execute_tool_with_tracing(
-            ToolType.CI,
+            "ci",
             "search",
             keywords=keywords,
             filters=filters,
@@ -5008,7 +5008,7 @@ class CIOrchestratorRunner:
     async def _ci_get_via_registry_async(self, ci_id: str) -> Dict[str, Any] | None:
         try:
             result = await self._execute_tool_with_tracing(
-                ToolType.CI, "get", ci_id=ci_id
+                "ci", "get", ci_id=ci_id
             )
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
@@ -5019,7 +5019,7 @@ class CIOrchestratorRunner:
     ) -> Dict[str, Any] | None:
         try:
             result = await self._execute_tool_with_tracing(
-                ToolType.CI, "get_by_code", ci_code=ci_code
+                "ci", "get_by_code", ci_code=ci_code
             )
             return result.dict() if hasattr(result, "dict") else result
         except ValueError:
@@ -5034,7 +5034,7 @@ class CIOrchestratorRunner:
         top_n: int | None = None,
     ) -> Dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.CI,
+            "ci",
             "aggregate",
             group_by=group_by,
             metrics=metrics,
@@ -5051,7 +5051,7 @@ class CIOrchestratorRunner:
         filters: Iterable[FilterSpec] | None = None,
     ) -> Dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.CI,
+            "ci",
             "list_preview",
             limit=limit,
             offset=offset,
@@ -5068,7 +5068,7 @@ class CIOrchestratorRunner:
         ci_ids: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.METRIC,
+            "metric",
             "aggregate",
             metric_name=metric_name,
             agg=agg,
@@ -5086,7 +5086,7 @@ class CIOrchestratorRunner:
         limit: int | None = None,
     ) -> dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.METRIC,
+            "metric",
             "series",
             ci_id=ci_id,
             metric_name=metric_name,
@@ -5103,7 +5103,7 @@ class CIOrchestratorRunner:
         limits: dict[str, int],
     ) -> Dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.GRAPH,
+            "graph",
             "expand",
             ci_id=ci_id,
             view=view,
@@ -5119,7 +5119,7 @@ class CIOrchestratorRunner:
         hops: int,
     ) -> Dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.GRAPH,
+            "graph",
             "path",
             ci_id=source_id,
             target_ci_id=target_id,
@@ -5141,7 +5141,7 @@ class CIOrchestratorRunner:
         final_limit = limit or getattr(history_spec, "limit", None) or 50
 
         result = await self._execute_tool_with_tracing(
-            ToolType.HISTORY,
+            "history",
             "event_log",
             ci=ci_context,
             time_range=final_time_range,
@@ -5158,7 +5158,7 @@ class CIOrchestratorRunner:
         history_context: Dict[str, Any] | None,
     ) -> Dict[str, Any]:
         result = await self._execute_tool_with_tracing(
-            ToolType.CEP,
+            "cep",
             "simulate",
             rule_id=rule_id or "",
             ci_context=ci_context,
