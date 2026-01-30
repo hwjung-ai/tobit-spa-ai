@@ -105,6 +105,15 @@ def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
             detail="X-Tenant-Id header is required"
         )
 
+    # Set request context for tenant_id to be available throughout the request
+    from core.logging import set_request_context
+    request_id = str(uuid.uuid4())
+    set_request_context(
+        request_id=request_id,
+        tenant_id=tenant_id,
+        mode="ops"
+    )
+
     history_entry = QueryHistory(
         tenant_id=tenant_id,
         user_id=user_id,

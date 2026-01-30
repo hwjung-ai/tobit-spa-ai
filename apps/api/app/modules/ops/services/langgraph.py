@@ -13,22 +13,19 @@ from app.shared import config_loader
 # Executor imports removed for generic orchestration
 # These functions are stubbed as they use deleted executor files
 # They will be properly implemented via Tool Assets
-async def run_metric(question: str, **kwargs):
+def run_metric(question: str, **kwargs):
     """Stub: metric executor removed"""
-    from schemas import AnswerEnvelope
-    return AnswerEnvelope(blocks=[]), []
+    return [], []
 
 
-async def run_hist(question: str, **kwargs):
+def run_hist(question: str, **kwargs):
     """Stub: hist executor removed"""
-    from schemas import AnswerEnvelope
-    return AnswerEnvelope(blocks=[]), []
+    return [], []
 
 
-async def run_graph(question: str, **kwargs):
+def run_graph(question: str, **kwargs):
     """Stub: graph executor removed"""
-    from schemas import AnswerEnvelope
-    return AnswerEnvelope(blocks=[]), []
+    return [], []
 
 
 class LangGraphPlan(BaseModel):

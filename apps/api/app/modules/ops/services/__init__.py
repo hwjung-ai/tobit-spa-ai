@@ -96,11 +96,19 @@ OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "gra
 
 
 def _get_required_tenant_id(settings: Any) -> str:
-    """Get tenant_id from settings, raise error if missing."""
+    """Get tenant_id from settings or request context, raise error if missing."""
+    # First try to get from settings
     tenant_id = getattr(settings, "tenant_id", None)
+
+    # If not in settings, try to get from request context
     if not tenant_id:
+        context = get_request_context()
+        tenant_id = context.get("tenant_id")
+
+    # Strip whitespace and validate
+    if not tenant_id or tenant_id == "-":
         raise ValueError(
-            "tenant_id is required in settings. "
+            "tenant_id is required in settings or request context. "
             "Please ensure tenant_id is set in the request settings."
         )
     return tenant_id
