@@ -11,22 +11,23 @@ into executable tool chains with support for:
 
 from __future__ import annotations
 
-import asyncio
-import json
-from typing import Any, Dict, List, Optional, Set, Tuple
 from time import perf_counter
+from typing import Any, Dict, List, Optional, Set
 
 from core.logging import get_logger
 
-from app.modules.ops.services.ci.planner.plan_schema import (
-    Plan, ToolDependency, ExecutionStrategy,
-    PrimarySpec, SecondarySpec, AggregateSpec, GraphSpec, MetricSpec
-)
+from app.llm.client import get_llm_client
 from app.modules.ops.services.ci.orchestrator.chain_executor import (
-    ToolChain, ToolChainStep, ToolChainExecutor
+    ToolChain,
+    ToolChainExecutor,
+    ToolChainStep,
+)
+from app.modules.ops.services.ci.planner.plan_schema import (
+    ExecutionStrategy,
+    Plan,
+    ToolDependency,
 )
 from app.modules.ops.services.ci.tools.base import ToolContext
-from app.llm.client import get_llm_client
 
 logger = get_logger(__name__)
 
@@ -535,25 +536,35 @@ class ToolOrchestrator:
         Returns:
             Dict with tool_type and params, or None if not found
         """
-        if tool_id == "primary" and self.plan.primary:
-            return self._extract_tool_spec("primary", self.plan.primary)
+        # Map tool_id to Plan spec attributes
+        spec_map = {
+            "primary": self.plan.primary,
+            "secondary": self.plan.secondary,
+            "aggregate": self.plan.aggregate,
+            "graph": self.plan.graph,
+            "metric": self.plan.metric,
+        }
 
-        if tool_id == "secondary" and self.plan.secondary:
-            return self._extract_tool_spec("secondary", self.plan.secondary)
-
-        if tool_id == "aggregate" and self.plan.aggregate:
-            return self._extract_tool_spec("aggregate", self.plan.aggregate)
-
-        if tool_id == "graph" and self.plan.graph:
-            return self._extract_tool_spec("graph", self.plan.graph)
-
-        if tool_id == "metric" and self.plan.metric:
-            return self._extract_tool_spec("metric", self.plan.metric)
+        spec_obj = spec_map.get(tool_id)
+        if spec_obj:
+            return self._extract_tool_spec(tool_id, spec_obj)
 
         return None
 
     def _extract_tool_spec(self, tool_id: str, spec_obj: Any) -> Dict[str, Any]:
-        """Extract tool specification from spec object."""
+        """Extract tool specification from spec object.
+
+        Extracts tool_type and relevant parameters based on the spec type.
+        The tool_type is now dynamically retrieved from the Plan spec object,
+        allowing for flexible tool selection at runtime instead of hardcoding.
+
+        Args:
+            tool_id: Identifier of the tool (primary, secondary, aggregate, graph, metric)
+            spec_obj: The spec object from the Plan containing tool_type and parameters
+
+        Returns:
+            Dict with tool_type and params, or None if tool_id not recognized
+        """
         tool_type = getattr(spec_obj, 'tool_type', 'unknown')
 
         if tool_id == "primary":

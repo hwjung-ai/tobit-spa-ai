@@ -302,7 +302,9 @@ class StageExecutor:
 
             if use_orchestration:
                 # NEW: Use orchestration layer for tool execution
-                from app.modules.ops.services.ci.orchestrator.tool_orchestration import ToolOrchestrator
+                from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
+                    ToolOrchestrator,
+                )
 
                 self.logger.info(
                     "execute_stage.orchestration_enabled",
@@ -350,7 +352,7 @@ class StageExecutor:
                 if plan.aggregate and plan.aggregate.scope == "ci":
                     # Force event scope for event-related questions
                     plan.aggregate.scope = "event"
-                    self.logger.info(f"Auto-corrected aggregate scope to 'event' for question containing 'event' keyword")
+                    self.logger.info("Auto-corrected aggregate scope to 'event' for question containing 'event' keyword")
 
             self.logger.info(
                 "execute_stage.plan_created",
@@ -365,7 +367,7 @@ class StageExecutor:
             if plan.primary and plan.primary.keywords:
                 try:
                     primary_result = await self.tool_executor.execute_tool(
-                        tool_type="ci_lookup",
+                        tool_type=plan.primary.tool_type,
                         params={
                             "keywords": plan.primary.keywords,
                             "filters": plan.primary.filters,
@@ -383,7 +385,7 @@ class StageExecutor:
             if plan.secondary and plan.secondary.keywords:
                 try:
                     secondary_result = await self.tool_executor.execute_tool(
-                        tool_type="ci_lookup",
+                        tool_type=plan.secondary.tool_type,
                         params={
                             "keywords": plan.secondary.keywords,
                             "filters": plan.secondary.filters,
@@ -417,7 +419,7 @@ class StageExecutor:
                         },
                     )
                     metric_aggregate_result = await self.tool_executor.execute_tool(
-                        tool_type="metric",
+                        tool_type=plan.metric.tool_type,
                         params={
                             "operation": "aggregate_by_ci",
                             "metric_name": plan.metric.metric_name,
@@ -434,15 +436,9 @@ class StageExecutor:
                     self.logger.error(f"Failed to execute metric aggregate query: {str(e)}")
             elif plan.aggregate and (plan.aggregate.group_by or plan.aggregate.metrics or plan.aggregate.filters):
                 try:
-                    # Select tool based on aggregate scope
                     aggregate_scope = plan.aggregate.scope or "ci"
-                    if aggregate_scope == "event":
-                        tool_type = "event_aggregate"
-                    else:
-                        tool_type = "ci_aggregate"
-
                     aggregate_result = await self.tool_executor.execute_tool(
-                        tool_type=tool_type,
+                        tool_type=plan.aggregate.tool_type,
                         params={
                             "group_by": plan.aggregate.group_by,
                             "metrics": plan.aggregate.metrics,
@@ -461,7 +457,7 @@ class StageExecutor:
             if plan.graph and (plan.graph.depth > 0 or plan.graph.view):
                 try:
                     graph_result = await self.tool_executor.execute_tool(
-                        tool_type="ci_graph",
+                        tool_type=plan.graph.tool_type,
                         params={
                             "depth": plan.graph.depth,
                             "view": plan.graph.view,
@@ -716,7 +712,7 @@ class StageExecutor:
                         })
                     else:
                         # No value but query executed
-                        summary_text = f"Query executed successfully but returned no results."
+                        summary_text = "Query executed successfully but returned no results."
                         blocks.append({
                             "type": "text",
                             "text": summary_text,
@@ -984,7 +980,7 @@ class StageExecutor:
             summary = self._call_llm_for_summary(prompt, system_prompt)
             if summary:
                 return summary.strip()
-        except Exception as exc:
+        except Exception:
             logging.exception("LLM compose summary failed, using fallback")
 
         return self._generate_summary(composed_result)
@@ -1365,6 +1361,7 @@ class StageExecutor:
             # Load Query Assets from database
             with get_session_context() as session:
                 from sqlmodel import select
+
                 from app.modules.asset_registry.models import TbAssetRegistry
 
                 query = select(TbAssetRegistry).where(
@@ -1513,7 +1510,7 @@ class StageExecutor:
                     continue  # Try next asset
 
             if not results:
-                self.logger.info(f"❌ [QUERY ASSET] No Query Asset succeeded")
+                self.logger.info("❌ [QUERY ASSET] No Query Asset succeeded")
 
         except Exception as e:
             self.logger.error(f"❌ [QUERY ASSET] Failed: {str(e)}")
