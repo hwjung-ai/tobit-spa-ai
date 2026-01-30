@@ -274,6 +274,11 @@ const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | n
   }
   const uiMode = (metadata?.uiMode ?? metadata?.ui_mode ?? "ci") as UiMode;
   const status = entry.status === "error" ? "error" : "ok";
+
+  // Extract trace_id from metadata or response
+  const traceId = metadata?.trace_id || metadata?.trace?.trace_id || envelope?.meta?.trace_id;
+  const trace = metadata?.trace ? { ...metadata.trace, trace_id: traceId } : { trace_id: traceId };
+
   return {
     id: entry.id,
     createdAt: entry.created_at,
@@ -284,7 +289,7 @@ const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | n
     status,
     summary: (entry.summary ?? extractSummary(envelope as AnswerEnvelope, entry.question)) ?? "",
     errorDetails: metadata?.errorDetails ?? metadata?.error_details,
-    trace: metadata?.trace,
+    trace,
     nextActions: metadata?.nextActions ?? metadata?.next_actions,
     next_actions: metadata?.nextActions ?? metadata?.next_actions,
   };
@@ -335,6 +340,9 @@ export default function OpsPage() {
   const persistHistoryEntry = useCallback(
     async (entry: LocalOpsHistoryEntry) => {
       try {
+        // Extract trace_id from response
+        const traceId = entry.response?.meta?.trace_id || entry.trace?.trace_id;
+
         await authenticatedFetch(`/history`, {
           method: "POST",
           body: JSON.stringify({
@@ -347,6 +355,7 @@ export default function OpsPage() {
               uiMode: entry.uiMode,
               backendMode: entry.backendMode,
               trace: entry.trace,
+              trace_id: traceId,
               nextActions: entry.nextActions,
               errorDetails: entry.errorDetails,
             },
@@ -783,6 +792,13 @@ export default function OpsPage() {
                           >
                             {entry.summary}
                           </p>
+                          {entry.trace?.trace_id && (
+                            <p className="mt-1 text-[10px] text-slate-500 font-mono overflow-hidden"
+                              style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
+                            >
+                              Trace: {entry.trace.trace_id}
+                            </p>
+                          )}
                         </button>
                         <button
                           onClick={(event) => {
