@@ -279,12 +279,13 @@ class StageExecutor:
 
         # Tool execution context
         tool_context = ToolContext(
+            tenant_id=self.context.tenant_id,
+            user_id=self.context.user_id,
             trace_id=self.context.trace_id,
-            applied_assets=applied_assets,
-            params=stage_input.params,
-            asset_overrides=self.context.asset_overrides
-            if self.context.test_mode
-            else {},
+            metadata={
+                "applied_assets": applied_assets,
+                "asset_overrides": self.context.asset_overrides if self.context.test_mode else {},
+            }
         )
 
         results = []
