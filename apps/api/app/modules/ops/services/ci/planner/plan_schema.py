@@ -78,7 +78,7 @@ class AggregateSpec(BaseModel):
     group_by: List[str] = Field(default_factory=lambda: [])
     metrics: List[str] = Field(default_factory=lambda: [])
     filters: List[FilterSpec] = Field(default_factory=lambda: [])
-    scope: Literal["ci", "graph", "event"] = "ci"
+    scope: Literal["s1", "ci", "graph", "event"] = "s1"
     top_n: int = 10
     tool_type: str = Field(
         default="metric_query",
@@ -115,7 +115,7 @@ class MetricSpec(BaseModel):
     agg: Literal["count", "max", "min", "avg"]
     time_range: str
     mode: Literal["aggregate", "series"] = "aggregate"
-    scope: Literal["ci", "graph"] = "ci"
+    scope: Literal["s1", "ci", "graph"] = "s1"
     tool_type: str = Field(
         default="metric_query",
         description="Tool to use for metric query execution"
@@ -125,7 +125,7 @@ class MetricSpec(BaseModel):
 class HistorySpec(BaseModel):
     enabled: bool = False
     source: Literal["event_log"] = "event_log"
-    scope: Literal["ci", "graph"] = "ci"
+    scope: Literal["s1", "ci", "graph"] = "s1"
     mode: Literal["recent"] = "recent"
     time_range: Literal["last_24h", "last_7d", "last_30d"] = "last_7d"
     limit: int = 50

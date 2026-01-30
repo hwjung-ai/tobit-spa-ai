@@ -345,15 +345,6 @@ class StageExecutor:
                     # Fall back to legacy execution
                     self.logger.info("Falling back to legacy sequential execution")
 
-            # Fix scope based on question keywords
-            # This is a workaround for planner not correctly detecting event scope
-            question = stage_input.params.get("original_question") or stage_input.params.get("question", "")
-            if question and "event" in question.lower():
-                if plan.aggregate and plan.aggregate.scope == "ci":
-                    # Force event scope for event-related questions
-                    plan.aggregate.scope = "event"
-                    self.logger.info("Auto-corrected aggregate scope to 'event' for question containing 'event' keyword")
-
             self.logger.info(
                 "execute_stage.plan_created",
                 extra={
@@ -436,7 +427,6 @@ class StageExecutor:
                     self.logger.error(f"Failed to execute metric aggregate query: {str(e)}")
             elif plan.aggregate and (plan.aggregate.group_by or plan.aggregate.metrics or plan.aggregate.filters):
                 try:
-                    aggregate_scope = plan.aggregate.scope or "ci"
                     aggregate_result = await self.tool_executor.execute_tool(
                         tool_type=plan.aggregate.tool_type,
                         params={
@@ -444,7 +434,7 @@ class StageExecutor:
                             "metrics": plan.aggregate.metrics,
                             "filters": plan.aggregate.filters,
                             "top_n": plan.aggregate.top_n,
-                            "scope": aggregate_scope,
+                            "scope": plan.aggregate.scope,
                         },
                         context=tool_context,
                     )
