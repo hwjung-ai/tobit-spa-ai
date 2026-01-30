@@ -1,0 +1,32 @@
+name: event_history
+description: 'Query OPS: Retrieve event history logs'
+scope: ops
+category: ops_event_history
+tags:
+  - ops
+  - event_history
+  - logs
+parameters:
+  - name: where_clause
+    type: string
+    required: true
+    description: SQL WHERE clause for event filtering
+output_schema:
+  type: object
+  properties:
+    event_id:
+      type: integer
+    event_type:
+      type: string
+    event_source:
+      type: string
+    event_target:
+      type: string
+    event_timestamp:
+      type: string
+    severity:
+      type: string
+    event_status:
+      type: string
+    description:
+      type: string

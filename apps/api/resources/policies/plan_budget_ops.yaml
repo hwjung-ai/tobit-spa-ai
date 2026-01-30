@@ -1,0 +1,15 @@
+name: plan_budget_ops
+description: "Budget constraints for OPS plan execution"
+policy_type: plan_budget
+scope: ops
+limits:
+  max_steps: 15
+  timeout_ms: 180000
+  max_depth: 8
+  max_branches: 5
+  max_iterations: 200
+metadata:
+  source: "ops_planner_config"
+  created_for: "OPS query execution"
+  references:
+    - "apps/api/app/modules/ops/services/planner/ops_planner.py"

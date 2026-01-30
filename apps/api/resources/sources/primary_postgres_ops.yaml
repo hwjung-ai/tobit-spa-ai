@@ -1,0 +1,16 @@
+name: primary_postgres_ops
+description: "Primary PostgreSQL source for OPS queries (env-driven fallback)"
+source_type: postgresql
+connection:
+  host: ${PG_HOST}
+  port: ${PG_PORT}
+  username: ${PG_USER}
+  database: ${PG_DB}
+  secret_key_ref: "env:PG_PASSWORD"
+  timeout: 30
+  ssl_mode: verify-full
+  connection_params: {}
+scope: ops
+tags:
+  env_fallback: true
+  ops_primary: true

@@ -126,7 +126,7 @@ def load_prompt_asset(
 
 
 def load_mapping_asset(
-    mapping_type: str = "graph_relation", version: int | None = None
+    mapping_type: str = "graph_relation", version: int | None = None, scope: str | None = None
 ) -> dict[str, Any] | None:
     """
     Load mapping asset with fallback priority:
@@ -137,6 +137,7 @@ def load_mapping_asset(
     Args:
         mapping_type: Mapping type identifier
         version: Specific version to load (None for published)
+        scope: Scope to filter by (e.g., "ops", "ci"). If None, searches all scopes.
 
     Returns:
         Mapping asset content dict, or None if not found
@@ -149,6 +150,10 @@ def load_mapping_asset(
             .where(TbAssetRegistry.asset_type == "mapping")
             .where(TbAssetRegistry.name == mapping_type)
         )
+
+        # Add scope filter if provided
+        if scope:
+            query = query.where(TbAssetRegistry.scope == scope)
 
         if version is not None:
             query = query.where(TbAssetRegistry.version == version)
@@ -224,7 +229,7 @@ def load_mapping_asset(
 
 
 def load_policy_asset(
-    policy_type: str = "plan_budget", version: int | None = None
+    policy_type: str = "plan_budget", version: int | None = None, scope: str | None = None
 ) -> dict[str, Any] | None:
     """
     Load policy asset with fallback priority:
@@ -235,6 +240,7 @@ def load_policy_asset(
     Args:
         policy_type: Policy type identifier
         version: Specific version to load (None for published)
+        scope: Scope to filter by (e.g., "ops", "ci"). If None, searches all scopes.
     """
     with get_session_context() as session:
         query = (
@@ -242,6 +248,10 @@ def load_policy_asset(
             .where(TbAssetRegistry.asset_type == "policy")
             .where(TbAssetRegistry.policy_type == policy_type)
         )
+
+        # Add scope filter if provided
+        if scope:
+            query = query.where(TbAssetRegistry.scope == scope)
 
         if version is not None:
             query = query.where(TbAssetRegistry.version == version)

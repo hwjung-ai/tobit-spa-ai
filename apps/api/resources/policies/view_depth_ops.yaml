@@ -1,0 +1,36 @@
+name: view_depth_ops
+description: "Depth constraints for OPS graph views"
+policy_type: view_depth
+scope: ops
+limits:
+  views:
+    SUMMARY:
+      default_depth: 2
+      max_depth: 2
+      direction_default: "both"
+    COMPOSITION:
+      default_depth: 3
+      max_depth: 4
+      direction_default: "out"
+    DEPENDENCY:
+      default_depth: 3
+      max_depth: 4
+      direction_default: "both"
+    IMPACT:
+      default_depth: 2
+      max_depth: 3
+      direction_default: "out"
+    PATH:
+      default_depth: 4
+      max_depth: 8
+      direction_default: "both"
+      max_hops: 8
+    NEIGHBORS:
+      default_depth: 2
+      max_depth: 3
+      direction_default: "both"
+metadata:
+  source: "ops_view_registry"
+  created_for: "OPS service operations"
+  references:
+    - "apps/api/app/modules/ops/services/graph_service.py"

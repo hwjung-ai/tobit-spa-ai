@@ -1,0 +1,32 @@
+name: graph_expand
+description: 'Query OPS: Expand graph relationships'
+scope: ops
+category: ops_graph_expand
+tags:
+  - ops
+  - graph_expand
+  - graph_relations
+parameters:
+  - name: source_ci_id
+    type: integer
+    required: true
+    description: Starting CI ID for graph expansion
+  - name: initial_depth
+    type: integer
+    required: true
+    description: Initial depth for traversal
+  - name: max_depth
+    type: integer
+    required: true
+    description: Maximum depth to traverse
+output_schema:
+  type: object
+  properties:
+    source_ci_id:
+      type: integer
+    target_ci_id:
+      type: integer
+    relation_type:
+      type: string
+    depth:
+      type: integer

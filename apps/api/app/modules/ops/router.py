@@ -557,9 +557,9 @@ def ask_ci(
             load_source_asset(source_asset_name) if source_asset_name else None
         )
         # Load mapping asset to ensure tracking
-        mapping_payload, _ = load_mapping_asset("graph_relation")
+        mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
         # Load policy asset to ensure tracking (for all routes including reject)
-        policy_payload = load_policy_asset("plan_budget")
+        policy_payload = load_policy_asset("plan_budget", scope="ops")
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload
