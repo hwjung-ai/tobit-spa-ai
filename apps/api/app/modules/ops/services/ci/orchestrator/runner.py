@@ -5466,6 +5466,8 @@ class CIOrchestratorRunner:
 
                     # Create execution context
                     exec_context = ExecutionContext(
+                        tenant_id=self.tenant_id,
+                        question=self.question,
                         trace_id=trace_id,
                         test_mode=False,
                         asset_overrides=self.asset_overrides or {},
@@ -5484,8 +5486,8 @@ class CIOrchestratorRunner:
                     # Execute stage - this will run tools first
                     execute_result = await stage_executor.execute_stage(execute_input)
 
-                    # Get base_result from execute stage
-                    base_result = execute_result.get("result", {})
+                    # Get base_result from execute stage (StageOutput object)
+                    base_result = execute_result.result if hasattr(execute_result, 'result') else execute_result
                     blocks = base_result.get("base_result", {}).get("blocks", [])
                     answer = base_result.get("base_result", {}).get("answer", answer)
 
