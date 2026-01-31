@@ -302,6 +302,16 @@ class StageExecutor:
                 hasattr(plan, "execution_strategy") and plan.execution_strategy is not None
             )
 
+            self.logger.info(
+                "execute_stage.orchestration_check",
+                extra={
+                    "use_orchestration": use_orchestration,
+                    "enable_orchestration_param": stage_input.params.get("enable_orchestration"),
+                    "has_execution_strategy": hasattr(plan, "execution_strategy"),
+                    "execution_strategy_value": getattr(plan, "execution_strategy", None),
+                }
+            )
+
             if use_orchestration:
                 # NEW: Use orchestration layer for tool execution
                 from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
@@ -317,19 +327,34 @@ class StageExecutor:
 
                 try:
                     orchestrator = ToolOrchestrator(plan=plan, context=tool_context)
-                    orchestrated_results = await orchestrator.execute()
+                    chain_result = await orchestrator.execute()
 
-                    # Convert orchestrated results to execution results format
-                    for tool_id, result in orchestrated_results.items():
-                        if isinstance(result, dict) and result.get("success"):
-                            results.append(result)
-                            references.extend(result.get("references", []))
+                    # Convert ChainExecutionResult to execution results format
+                    # chain_result.step_results is dict[step_id, StepResult]
+                    for step_id, step_result in chain_result.step_results.items():
+                        # Format each result with tool_name, success, and data fields
+                        formatted_result = {
+                            "tool_name": step_id,  # step_id is the tool identifier (metric, history, etc)
+                            "success": step_result.success,
+                            "data": step_result.data if step_result.success else None,
+                        }
+
+                        if not step_result.success and step_result.error:
+                            formatted_result["error"] = step_result.error
+
+                        results.append(formatted_result)
+
+                        # Extract references from step data if available
+                        if step_result.success and isinstance(step_result.data, dict):
+                            if "references" in step_result.data:
+                                references.extend(step_result.data.get("references", []))
 
                     self.logger.info(
                         "execute_stage.orchestration_completed",
                         extra={
-                            "tool_count": len(orchestrated_results),
+                            "tool_count": len(chain_result.step_results),
                             "execution_results_count": len(results),
+                            "success": chain_result.success,
                         }
                     )
 

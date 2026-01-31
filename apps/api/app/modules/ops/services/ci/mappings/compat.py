@@ -151,11 +151,15 @@ def _get_auto_keywords():
     if _AUTO_KEYWORDS_CACHE is not None:
         return _AUTO_KEYWORDS_CACHE
 
-    from .registry import get_mapping_registry
-    registry = get_mapping_registry()
-    active_name = registry.get_active_mapping_name("auto_keywords")
-    mapping = get_mapping(active_name)
-    _AUTO_KEYWORDS_CACHE = set(mapping.get("keywords", []))
+    try:
+        from .registry import get_mapping_registry
+        registry = get_mapping_registry()
+        active_name = registry.get_active_mapping_name("auto_keywords")
+        mapping = get_mapping(active_name)
+        _AUTO_KEYWORDS_CACHE = set(mapping.get("keywords", []))
+    except (ValueError, KeyError, Exception) as e:
+        # If auto_keywords mapping is not found, use default keywords
+        _AUTO_KEYWORDS_CACHE = {"점검", "상태", "요약", "진단", "health", "overview", "status"}
     return _AUTO_KEYWORDS_CACHE
 
 

@@ -465,13 +465,33 @@ def ask_ci(
     response_payload: ResponseEnvelope | None = None
     error_response: JSONResponse | None = None
     duration_ms: int | None = None
-    trace_payload: dict[str, Any] | None = None
+    trace_payload: dict[str, Any] = {}
+    meta: dict[str, Any] | None = None
+    envelope_blocks: list[dict[str, Any]] = []
+    next_actions: list[dict[str, Any]] = []
     flow_spans: list[Dict[str, Any]] = []
     active_trace_id: str | None = None
     parent_trace_id: str | None = None
+    result: dict[str, Any] | None = None
+    trace_status: str = "success"
 
     # Initialize span tracking for this trace
     clear_spans()
+
+    # Set trace_id EARLY before any errors occur
+    context = get_request_context()
+    # request.state에서 먼저 확인 (middleware에서 설정한 값)
+    active_trace_id = getattr(request.state, "trace_id", None) or context.get("trace_id")
+    request_id = getattr(request.state, "request_id", None) or context.get("request_id")
+    logger.info(
+        f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}"
+    )
+    if not active_trace_id or active_trace_id == "-" or active_trace_id == "None":
+        active_trace_id = str(uuid.uuid4())
+        logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
+    parent_trace_id = context.get("parent_trace_id")
+    if parent_trace_id == "-":
+        parent_trace_id = None
 
     def _apply_resolver_rules(
         question: str, resolver_payload: Dict[str, Any] | None
@@ -703,20 +723,6 @@ def ask_ci(
 
         if plan_output is None:
             raise ValueError("Planner output missing")
-
-        context = get_request_context()
-        # request.state에서 먼저 확인 (middleware에서 설정한 값)
-        active_trace_id = getattr(request.state, "trace_id", None) or context.get("trace_id")
-        request_id = getattr(request.state, "request_id", None) or context.get("request_id")
-        logger.info(
-            f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}"
-        )
-        if not active_trace_id or active_trace_id == "-" or active_trace_id == "None":
-            active_trace_id = str(uuid.uuid4())
-            logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
-        parent_trace_id = context.get("parent_trace_id")
-        if parent_trace_id == "-":
-            parent_trace_id = None
 
         # Update history entry with trace_id
         if history_id:
@@ -1102,53 +1108,6 @@ def ask_ci(
             "question": payload.question,
             "rerun": payload.rerun.dict(exclude_none=True) if payload.rerun else None,
         }
-        # Capture flow spans before trace persistence
-        flow_spans = get_all_spans()
-
-        try:
-            with get_session_context() as session:
-                persist_execution_trace(
-                    session=session,
-                    trace_id=active_trace_id,
-                    parent_trace_id=parent_trace_id,
-                    feature="ops",
-                    endpoint="/ops/ci/ask",
-                    method="POST",
-                    ops_mode=get_settings().ops_mode,
-                    question=payload.question,
-                    status=trace_status,
-                    duration_ms=duration_ms,
-                    request_payload=request_payload,
-                    plan_raw=trace_payload.get("plan_raw"),
-                    plan_validated=trace_payload.get("plan_validated"),
-                    trace_payload=trace_payload,
-                    answer_meta=meta,
-                    blocks=envelope_blocks,
-                    flow_spans=flow_spans if flow_spans else None,
-                )
-        except Exception as exc:
-            logger.exception("ci.trace.persist_failed", exc_info=exc)
-        status = "error" if trace_status == "error" else "ok"
-
-        # 응답 완료 시 history 업데이트
-        if history_id:
-            try:
-                with get_session_context() as session:
-                    history_entry = session.get(QueryHistory, history_id)
-                    if history_entry:
-                        history_entry.status = status
-                        history_entry.response = response_payload.model_dump() if response_payload else None
-                        history_entry.summary = result.get("meta", {}).get("summary") or result.get("meta", {}).get("answer", "")[:200]
-                        history_entry.metadata_info = {
-                            "uiMode": "ci",
-                            "backendMode": "ci",
-                            "trace": trace_payload,
-                            "nextActions": next_actions,
-                        }
-                        session.add(history_entry)
-                        session.commit()
-            except Exception as exc:
-                logger.exception("ci.history.update_failed", exc_info=exc)
 
         # Inject trace_id into result meta before creating response
         if result.get("meta") is None:
@@ -1167,6 +1126,8 @@ def ask_ci(
         logger.exception("ci.ask.error", exc_info=exc)
         error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
         error_response = JSONResponse(status_code=500, content=error_body)
+        response_payload = None
+        result = None
 
         # 에러 발생 시 history도 업데이트
         if history_id:
@@ -1187,6 +1148,60 @@ def ask_ci(
             if duration_ms is not None
             else int((time.perf_counter() - start) * 1000)
         )
+
+        # Persist trace to database ALWAYS (even on error)
+        request_payload = {
+            "question": payload.question,
+            "rerun": payload.rerun.dict(exclude_none=True) if payload.rerun else None,
+        }
+        flow_spans = get_all_spans()
+
+        try:
+            with get_session_context() as session:
+                persist_execution_trace(
+                    session=session,
+                    trace_id=active_trace_id,
+                    parent_trace_id=parent_trace_id,
+                    feature="ops",
+                    endpoint="/ops/ci/ask",
+                    method="POST",
+                    ops_mode=get_settings().ops_mode,
+                    question=payload.question,
+                    status=trace_status,
+                    duration_ms=elapsed_ms,
+                    request_payload=request_payload,
+                    plan_raw=trace_payload.get("plan_raw") if trace_payload else None,
+                    plan_validated=trace_payload.get("plan_validated") if trace_payload else None,
+                    trace_payload=trace_payload if trace_payload else {},
+                    answer_meta=meta if meta else None,
+                    blocks=envelope_blocks if envelope_blocks else None,
+                    flow_spans=flow_spans if flow_spans else None,
+                )
+                logger.info(f"✅ Trace persisted successfully: {active_trace_id}")
+        except Exception as exc:
+            logger.exception("ci.trace.persist_failed", exc_info=exc)
+
+        # Update history entry with final status
+        if history_id:
+            try:
+                with get_session_context() as session:
+                    history_entry = session.get(QueryHistory, history_id)
+                    if history_entry:
+                        history_entry.status = status
+                        history_entry.response = response_payload.model_dump() if response_payload else None
+                        if result:
+                            history_entry.summary = result.get("meta", {}).get("summary") or result.get("meta", {}).get("answer", "")[:200]
+                            history_entry.metadata_info = {
+                                "uiMode": "ci",
+                                "backendMode": "ci",
+                                "trace": trace_payload,
+                                "nextActions": next_actions,
+                            }
+                        session.add(history_entry)
+                        session.commit()
+            except Exception as exc:
+                logger.exception("ci.history.update_failed", exc_info=exc)
+
         block_types: list[str] = []
         if envelope_blocks:
             for block in envelope_blocks:

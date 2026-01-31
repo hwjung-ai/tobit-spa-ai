@@ -85,7 +85,9 @@ class MappingRegistry:
             self._cache[mapping_name] = data
             return data
 
-        raise ValueError(f"Mapping not found: {mapping_name}")
+        # Return empty dict instead of raising error (graceful fallback)
+        logger.warning(f"Mapping not found, returning empty dict: {mapping_name}")
+        return {}
 
     def register_fallback(
         self, mapping_name: str, fallback_data: Any

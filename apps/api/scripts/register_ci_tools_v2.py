@@ -102,19 +102,23 @@ def register_metric_tool(session):
     tool = TbAssetRegistry(
         asset_type="tool",
         name="metric",  # Must match tool_type in stage_executor
-        description="Aggregate and query metric values (AVG, MAX, MIN, SUM, COUNT)",
+        description="Aggregate and query metric values (AVG, MAX, MIN, SUM, COUNT), grouped by CI",
         tool_type="database_query",
         tool_config={
             "source_ref": "default_postgres",
             "query_template": """
-SELECT {function}(mv.value) AS value
+SELECT ci.ci_id, ci.ci_name, {function}(mv.value) AS metric_value
 FROM metric_value mv
 JOIN metric_def md ON mv.metric_id = md.metric_id
+JOIN ci ON mv.ci_id = ci.ci_id
 WHERE mv.tenant_id = '{tenant_id}'
   AND md.metric_name = '{metric_name}'
   AND mv.ci_id = ANY(ARRAY{ci_ids})
   AND mv.time >= '{start_time}'
   AND mv.time < '{end_time}'
+GROUP BY ci.ci_id, ci.ci_name
+ORDER BY metric_value DESC
+LIMIT {limit}
 """,
         },
         tool_input_schema={

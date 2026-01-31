@@ -385,6 +385,7 @@ class ToolChainExecutor:
         Resolve a path expression to a value.
 
         Example: "step1.data.records[0].ci_id"
+        Special syntax: "step1.data.rows.*.ci_id" extracts ci_id from all rows
         """
         parts = path.split(".")
         if not parts:
@@ -396,9 +397,28 @@ class ToolChainExecutor:
 
         current: Any = results[step_id]
 
-        for part in parts[1:]:
+        for i, part in enumerate(parts[1:], 1):
             if current is None:
                 return None
+
+            # Handle wildcard (e.g., rows.*.ci_id) to extract from all array elements
+            if part == "*":
+                # Get remaining path after wildcard
+                remaining_path = ".".join(parts[i+1:]) if i < len(parts) - 1 else None
+
+                if isinstance(current, list):
+                    result_list = []
+                    for item in current:
+                        if remaining_path:
+                            # Recursively resolve remaining path for each item
+                            value = self._resolve_value_from_object(item, remaining_path)
+                            if value is not None:
+                                result_list.append(value)
+                        else:
+                            result_list.append(item)
+                    return result_list if result_list else None
+                else:
+                    return None
 
             # Handle array index (e.g., records[0])
             match = re.match(r"(\w+)\[(\d+)\]", part)
@@ -423,6 +443,27 @@ class ToolChainExecutor:
                     current = current.get(part)
                 else:
                     return None
+
+        return current
+
+    def _resolve_value_from_object(self, obj: Any, path: str) -> Any:
+        """
+        Resolve a path within a single object.
+        Used internally for wildcard path resolution.
+        """
+        parts = path.split(".")
+        current = obj
+
+        for part in parts:
+            if current is None:
+                return None
+
+            if hasattr(current, part):
+                current = getattr(current, part)
+            elif isinstance(current, dict):
+                current = current.get(part)
+            else:
+                return None
 
         return current
 

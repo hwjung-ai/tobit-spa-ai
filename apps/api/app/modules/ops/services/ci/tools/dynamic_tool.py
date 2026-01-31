@@ -6,6 +6,7 @@ This module implements dynamic tool execution based on Tool Asset configuration.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from core.logging import get_logger
@@ -205,8 +206,13 @@ class DynamicTool(BaseTool):
                     array_str = "['" + "', '".join(escaped_ids) + "']::uuid[]"
                     processed_query = processed_query.replace("{ci_ids}", array_str)
                 else:
-                    # Empty array - use uuid[] type to match ci_id column type
-                    processed_query = processed_query.replace("{ci_ids}", "[]::uuid[]")
+                    # Empty array - remove the ci_id filter entirely to query all CIs
+                    # Find and remove the "AND mv.ci_id = ANY(ARRAY{ci_ids})" clause
+                    processed_query = re.sub(
+                        r"\s+AND\s+mv\.ci_id\s*=\s*ANY\s*\(\s*ARRAY\{ci_ids\}\s*\)",
+                        "",
+                        processed_query
+                    )
 
             # First handle special aggregate-specific placeholders
             group_by = input_data.get("group_by", [])

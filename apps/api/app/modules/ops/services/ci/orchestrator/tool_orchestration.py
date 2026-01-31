@@ -103,18 +103,38 @@ class DependencyAnalyzer:
             deps.append(ToolDependency(
                 tool_id="metric",
                 depends_on=metric_deps,
+                output_mapping={
+                    "ci_ids": "aggregate.data.rows.*.ci_id"
+                } if plan.aggregate else {}
             ))
 
-        # History depends on primary (needs ci_id from primary results)
+        # History depends on primary or metric (needs ci_id from results)
+        # If both metric and primary exist, prefer metric as it's more specific
         if plan.history and plan.history.enabled:
-            primary_deps = ["primary"] if plan.primary else []
-            deps.append(ToolDependency(
-                tool_id="history",
-                depends_on=primary_deps,
-                output_mapping={
-                    "ci_id": "{primary.data.rows[0].ci_id}"
-                } if plan.primary else {}
-            ))
+            if plan.metric:
+                # History depends on metric results
+                deps.append(ToolDependency(
+                    tool_id="history",
+                    depends_on=["metric"],
+                    output_mapping={
+                        "ci_id": "{metric.data.rows[0].ci_id}"
+                    }
+                ))
+            elif plan.primary:
+                # History depends on primary results
+                deps.append(ToolDependency(
+                    tool_id="history",
+                    depends_on=["primary"],
+                    output_mapping={
+                        "ci_id": "{primary.data.rows[0].ci_id}"
+                    }
+                ))
+            else:
+                # History is independent
+                deps.append(ToolDependency(
+                    tool_id="history",
+                    depends_on=[],
+                ))
 
         return deps
 
@@ -475,7 +495,7 @@ class ToolOrchestrator:
             )
 
             # Step 4: Execute with ToolChainExecutor
-            results = await self.chain_executor.execute_chain(
+            chain_result = await self.chain_executor.execute_chain(
                 tool_chain, self.context, execution_plan_trace=execution_plan_trace
             )
 
@@ -484,12 +504,13 @@ class ToolOrchestrator:
                 "orchestration.execution_completed",
                 extra={
                     "elapsed_ms": elapsed,
-                    "tool_count": len(results),
+                    "tool_count": len(chain_result.step_results),
+                    "success": chain_result.success,
                     "trace_id": self.context.trace_id
                 }
             )
 
-            return results
+            return chain_result
 
         except Exception as e:
             elapsed = int((perf_counter() - self.start_time) * 1000)
@@ -641,6 +662,7 @@ class ToolOrchestrator:
                     "mode": getattr(spec_obj, 'mode', 'aggregate'),
                     "tenant_id": self.context.tenant_id,
                     "ci_ids": [],  # Will be populated from dependencies
+                    "limit": 10,  # Return top 10 CIs by metric value
                 }
             }
         elif tool_id == "history":
