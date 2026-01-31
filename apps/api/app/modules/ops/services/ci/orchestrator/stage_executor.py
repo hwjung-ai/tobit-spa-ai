@@ -512,17 +512,17 @@ class StageExecutor:
         # ===== PRIORITY: Tool execution results FIRST, Query Asset as fallback =====
         # Generic orchestration: Tools are primary, Query Assets supplement
         if not execution_results:
-            # Only use Query Asset if tools returned no results
-            if real_data_results:
+            # First try to get execution_results from stage_output (new orchestration)
+            execution_results = stage_output.get("execution_results", [])
+            if not execution_results:
+                execution_results = stage_output.get("result", {}).get("execution_results", [])
+
+            # If still no results, use Query Asset
+            if not execution_results and real_data_results:
                 execution_results = real_data_results
                 self.logger.info(
-                    f"📊 [COMPOSE] Using Query Asset data (no tool results): {len(real_data_results)} results"
+                    f"📊 [COMPOSE] Using Query Asset data (no execution results): {len(real_data_results)} results"
                 )
-            else:
-                # Final fallback to legacy execution_results
-                execution_results = stage_output.get("execution_results", [])
-                if not execution_results:
-                    execution_results = stage_output.get("result", {}).get("execution_results", [])
         else:
             # Tools returned results, optionally supplement with Query Asset data
             if real_data_results:

@@ -5486,16 +5486,21 @@ class CIOrchestratorRunner:
                     # Execute stage - this will run tools first
                     execute_result = await stage_executor.execute_stage(execute_input)
 
-                    # Get base_result from execute stage (StageOutput object)
-                    base_result = execute_result.result if hasattr(execute_result, 'result') else execute_result
-                    blocks = base_result.get("base_result", {}).get("blocks", [])
-                    answer = base_result.get("base_result", {}).get("answer", answer)
+                    # Get execution results from execute stage (StageOutput object)
+                    # In new orchestration: execute returns execution_results, compose creates blocks
+                    execute_stage_result = execute_result.result if hasattr(execute_result, 'result') else execute_result
+                    execution_results = execute_stage_result.get("execution_results", [])
 
-                    # Capture tool_calls for compose stage
-                    if "tool_calls" not in base_result and self.tool_calls:
-                        base_result["tool_calls"] = [call.model_dump() for call in self.tool_calls]
+                    # base_result will be populated after compose stage, not here
+                    base_result = {
+                        "execution_results": execution_results,
+                        "tool_calls": [call.model_dump() for call in self.tool_calls],
+                        "results": execution_results,  # Legacy field name
+                    }
+                    blocks = []  # Blocks will be created by compose stage
+                    answer = answer  # Keep existing answer
 
-                    self.logger.info(f"[GENERIC ORCHESTRATION] Execute stage completed, blocks: {len(blocks)}")
+                    self.logger.info(f"[GENERIC ORCHESTRATION] Execute stage completed, execution_results: {len(execution_results)}")
 
                 except Exception as e:
                     self.logger.error(f"[GENERIC ORCHESTRATION] Exception: {e}")
@@ -5512,8 +5517,8 @@ class CIOrchestratorRunner:
                     stage="execute",
                     result={
                         "base_result": base_result,  # Include base_result for compose stage
-                        "tool_calls": [call.model_dump() for call in self.tool_calls],  # Serialize tool_calls for compose stage
-                        "execution_results": base_result.get("results", []),  # Include execution_results for compose stage
+                        "tool_calls": base_result.get("tool_calls", []),  # Use tool_calls from base_result
+                        "execution_results": base_result.get("execution_results", []),  # Pass execution_results from new orchestration
                         "used_tools": base_result.get("meta", {}).get("used_tools", []),
                         "blocks_count": len(blocks),
                         "errors": self.errors,
@@ -5552,6 +5557,12 @@ class CIOrchestratorRunner:
 
                 # Use StageExecutor for compose stage (assets tracked during execution)
                 compose_output = await self._stage_executor.execute_stage(temp_compose_input)
+
+                # Compose stage creates composed_result, not blocks
+                # Blocks will be created by present stage
+                compose_result = compose_output.result if hasattr(compose_output, 'result') else compose_output
+
+                self.logger.info(f"[GENERIC ORCHESTRATION] Compose stage completed, composed_result keys: {list(compose_result.keys()) if compose_result else []}")
 
                 # Capture assets used during compose stage execution
                 compose_assets = end_stage_asset_tracking()
@@ -5597,10 +5608,16 @@ class CIOrchestratorRunner:
                 record_stage("present", present_input, present_output)
 
                 # Update blocks and answer from present_output
-                present_result = present_output.result
+                present_result = present_output.result if hasattr(present_output, 'result') else present_output
                 if present_result:
-                    blocks = present_result.get("blocks", blocks)
+                    blocks = present_result.get("blocks", [])
                     answer = present_result.get("summary", answer)
+                    base_result.update({
+                        "blocks": blocks,
+                        "answer": answer,
+                    })
+
+                self.logger.info(f"[GENERIC ORCHESTRATION] Present stage completed, blocks: {len(blocks)}")
 
         except Exception as exc:
             self.errors.append(str(exc))
@@ -5616,6 +5633,44 @@ class CIOrchestratorRunner:
         self.logger.info(
             f"Trace creation: route={route_kind}, stage_inputs={len(stage_inputs)}, stage_outputs={len(stage_outputs)}"
         )
+        # Build execution_steps from stage outputs (new orchestration)
+        execution_steps = []
+        self.logger.info(f"[DEBUG] Building execution_steps from {len(stage_outputs)} stage_outputs")
+
+        for stage_out in stage_outputs:
+            stage_name = stage_out.get("stage")
+            if stage_name == "execute":
+                # Extract execution_results from execute stage
+                execute_result = stage_out.get("result", {})
+                execution_results = execute_result.get("execution_results", [])
+
+                self.logger.info(f"[DEBUG] Found execute stage with {len(execution_results)} execution_results")
+
+                # Convert execution_results to execution_steps format
+                for result in execution_results:
+                    step = {
+                        "tool_name": result.get("tool_name", "unknown"),
+                        "success": result.get("success", False),
+                        "duration_ms": result.get("duration_ms", 0),
+                    }
+                    if not result.get("success"):
+                        step["error"] = result.get("error", "")
+                    execution_steps.append(step)
+                break
+
+        self.logger.info(f"[DEBUG] Built {len(execution_steps)} execution_steps")
+
+        # Fallback to legacy tool_calls if no execution_steps
+        if not execution_steps and self.tool_calls:
+            execution_steps = [
+                {
+                    "tool_name": call.tool,
+                    "success": True,
+                    "duration_ms": 0,
+                }
+                for call in self.tool_calls
+            ]
+
         trace = {
             "route": route_kind,
             "plan_raw": plan_output.plan.model_dump() if plan_output.plan else None,
@@ -5627,6 +5682,7 @@ class CIOrchestratorRunner:
             "stage_outputs": stage_outputs,
             "stages": stages,
             "replan_events": [],
+            "execution_steps": execution_steps,
             "tool_calls": [call.model_dump() for call in self.tool_calls],
             "references": self.references,
             "errors": self.errors,
