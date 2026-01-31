@@ -297,7 +297,8 @@ class StageExecutor:
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
 
             # Check if orchestration should be used
-            use_orchestration = stage_input.params.get("enable_orchestration", False) or (
+            # IMPORTANT: Default to True to use new orchestration layer with Tool Registry
+            use_orchestration = stage_input.params.get("enable_orchestration", True) or (
                 hasattr(plan, "execution_strategy") and plan.execution_strategy is not None
             )
 
