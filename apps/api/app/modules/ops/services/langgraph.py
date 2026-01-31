@@ -216,10 +216,17 @@ class LangGraphAllRunner:
         return content.strip()
 
     def _load_prompt_templates(self) -> dict[str, str]:
-        prompt_data = config_loader.load_yaml("prompts/ops/langgraph.yaml")
+        from app.modules.asset_registry.loader import load_prompt_asset
+
+        # Try to load from asset registry first with ops scope
+        prompt_data = load_prompt_asset(scope="ops", engine="langgraph", name="ops_langgraph")
+        if not prompt_data:
+            # Fallback to config file
+            prompt_data = config_loader.load_yaml("prompts/ops/langgraph.yaml")
+
         if not prompt_data or "templates" not in prompt_data:
             raise RuntimeError("LangGraph prompt templates not found")
-        templates = prompt_data["templates"]
+        templates = prompt_data.get("templates") or prompt_data.get("output_contract", {}).get("templates") or {}
         if not isinstance(templates, dict):
             raise RuntimeError("LangGraph prompt templates invalid")
         return templates
