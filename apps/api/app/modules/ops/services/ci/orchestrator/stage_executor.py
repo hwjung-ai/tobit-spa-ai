@@ -678,92 +678,49 @@ class StageExecutor:
                 )
 
         elif plan_kind == "plan":
-            # ===== NEW: Execute Query Assets to get REAL data =====
-            real_data_results = await self._execute_query_assets_for_real_data(stage_input)
+            # Check if we have LLM summary from compose stage
+            llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
 
-            # If we have real data from Query Assets, create answer from it
-            if real_data_results:
-                self.logger.info(f"📊 [PRESENT] Using Query Asset data: {len(real_data_results)} results")
+            # ===== NEW: Use LLM-composed answer from compose stage =====
+            if llm_summary:
+                self.logger.info(f"📊 [PRESENT] Using LLM-composed answer from compose stage")
 
-                # Build answer from real data - ALWAYS create blocks
-                summary_value = "Query executed successfully"
-                for result in real_data_results:
-                    data = result.get("data", {})
-                    rows = data.get("rows", [])
-                    rows_count = data.get("count", 0)
-                    asset_name = result.get("asset_name", "Query")
+                # Add LLM summary as the first block
+                blocks.append({
+                    "type": "markdown",
+                    "content": llm_summary,
+                    "metadata": {"generated_by": "llm_compose"},
+                })
 
-                    self.logger.info(f"📊 [PRESENT] Processing Query Asset result: {asset_name}, count: {rows_count}, rows: {len(rows)}")
+                # Get additional blocks from composed_result if available
+                if isinstance(composed_result, dict):
+                    query_asset_result = composed_result.get("query_asset_result", {})
+                    if query_asset_result:
+                        data = query_asset_result.get("data", {})
+                        rows = data.get("rows", [])
+                        asset_name = query_asset_result.get("asset_name", "Query")
 
-                    # Format query results properly
-                    if rows:
-                        # Multiple rows - create a table or formatted output
-                        if len(rows) == 1:
-                            # Single result - format as key-value pairs
-                            row = rows[0]
-                            content_lines = [f"**{asset_name} Result:**\n"]
-                            if isinstance(row, dict):
-                                for key, value in row.items():
-                                    content_lines.append(f"- **{key}**: {value}")
-                            else:
-                                content_lines.append(f"Result: {row}")
-                            summary_text = "\n".join(content_lines)
-                        else:
-                            # Multiple rows - create a formatted list or table-like output
-                            content_lines = [f"**{asset_name} Results ({len(rows)} items):**\n"]
-
-                            # Get column names from first row
+                        # Add raw data as reference blocks
+                        if rows and len(rows) <= 20:
                             if isinstance(rows[0], dict):
                                 columns = list(rows[0].keys())
-                                # Add header
+                                content_lines = [f"**{asset_name} Data ({len(rows)} rows):**\n"]
                                 content_lines.append("| " + " | ".join(columns) + " |")
                                 content_lines.append("|" + "|".join(["---"] * len(columns)) + "|")
-                                # Add rows
-                                for row in rows[:20]:  # Limit to first 20 rows for display
+                                for row in rows:
                                     values = [str(row.get(col, "")) for col in columns]
                                     content_lines.append("| " + " | ".join(values) + " |")
-                                if len(rows) > 20:
-                                    content_lines.append(f"\n... and {len(rows) - 20} more results")
-                            else:
-                                for i, row in enumerate(rows[:20], 1):
-                                    content_lines.append(f"{i}. {row}")
-                                if len(rows) > 20:
-                                    content_lines.append(f"\n... and {len(rows) - 20} more results")
-                            summary_text = "\n".join(content_lines)
+                                blocks.append({
+                                    "type": "markdown",
+                                    "content": "\n".join(content_lines),
+                                    "metadata": {"generated_by": "query_asset_reference"},
+                                })
 
-                        blocks.append({
-                            "type": "markdown",
-                            "content": summary_text,
-                            "metadata": {"generated_by": "query_asset", "row_count": len(rows)},
-                        })
-
-                        # Update summary with actual data count
-                        summary_value = f"Found {len(rows)} results"
-                    else:
-                        # No rows returned
-                        summary_text = f"{asset_name} executed successfully but returned no results."
-                        blocks.append({
-                            "type": "text",
-                            "text": summary_text,
-                            "metadata": {"generated_by": "query_asset"},
-                        })
-
-                # Add LLM summary as the answer (from compose stage)
-                llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
-                if llm_summary:
-                    # Use LLM summary as the answer, add blocks for reference
-                    summary_value = llm_summary
-                    blocks.insert(0, {
-                        "type": "markdown",
-                        "content": llm_summary,
-                        "metadata": {"generated_by": "llm_compose"},
-                    })
-
-                # Create result with our real data blocks
+                # Create result with LLM summary as answer
                 result = {
                     "blocks": blocks,
                     "references": [],
-                    "summary": summary_value,
+                    "summary": llm_summary,
                     "presented_at": time.time(),
                 }
                 return result
