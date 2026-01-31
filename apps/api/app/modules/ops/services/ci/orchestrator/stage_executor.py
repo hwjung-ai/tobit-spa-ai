@@ -686,50 +686,76 @@ class StageExecutor:
                 self.logger.info(f"📊 [PRESENT] Using Query Asset data: {len(real_data_results)} results")
 
                 # Build answer from real data - ALWAYS create blocks
+                summary_value = "Query executed successfully"
                 for result in real_data_results:
                     data = result.get("data", {})
-                    first_value = data.get("first_value")
+                    rows = data.get("rows", [])
                     rows_count = data.get("count", 0)
+                    asset_name = result.get("asset_name", "Query")
 
-                    self.logger.info(f"📊 [PRESENT] Processing Query Asset result: {result.get('asset_name')}, count: {rows_count}, first_value: {first_value}")
+                    self.logger.info(f"📊 [PRESENT] Processing Query Asset result: {asset_name}, count: {rows_count}, rows: {len(rows)}")
 
-                    # Create a block with the data
-                    if first_value is not None:
-                        summary_text = f"Based on the database query, there are {first_value} items."
+                    # Format query results properly
+                    if rows:
+                        # Multiple rows - create a table or formatted output
+                        if len(rows) == 1:
+                            # Single result - format as key-value pairs
+                            row = rows[0]
+                            content_lines = [f"**{asset_name} Result:**\n"]
+                            if isinstance(row, dict):
+                                for key, value in row.items():
+                                    content_lines.append(f"- **{key}**: {value}")
+                            else:
+                                content_lines.append(f"Result: {row}")
+                            summary_text = "\n".join(content_lines)
+                        else:
+                            # Multiple rows - create a formatted list or table-like output
+                            content_lines = [f"**{asset_name} Results ({len(rows)} items):**\n"]
+
+                            # Get column names from first row
+                            if isinstance(rows[0], dict):
+                                columns = list(rows[0].keys())
+                                # Add header
+                                content_lines.append("| " + " | ".join(columns) + " |")
+                                content_lines.append("|" + "|".join(["---"] * len(columns)) + "|")
+                                # Add rows
+                                for row in rows[:20]:  # Limit to first 20 rows for display
+                                    values = [str(row.get(col, "")) for col in columns]
+                                    content_lines.append("| " + " | ".join(values) + " |")
+                                if len(rows) > 20:
+                                    content_lines.append(f"\n... and {len(rows) - 20} more results")
+                            else:
+                                for i, row in enumerate(rows[:20], 1):
+                                    content_lines.append(f"{i}. {row}")
+                                if len(rows) > 20:
+                                    content_lines.append(f"\n... and {len(rows) - 20} more results")
+                            summary_text = "\n".join(content_lines)
+
                         blocks.append({
                             "type": "markdown",
                             "content": summary_text,
-                            "metadata": {"generated_by": "query_asset"},
+                            "metadata": {"generated_by": "query_asset", "row_count": len(rows)},
                         })
+
+                        # Update summary with actual data count
+                        summary_value = f"Found {len(rows)} results"
                     else:
-                        # No value but query executed
-                        summary_text = "Query executed successfully but returned no results."
+                        # No rows returned
+                        summary_text = f"{asset_name} executed successfully but returned no results."
                         blocks.append({
                             "type": "text",
                             "text": summary_text,
                             "metadata": {"generated_by": "query_asset"},
                         })
 
-                # Skip adding runner blocks if we have Query Asset results
-                # to avoid "No CI matches found" overriding real data
-                if real_data_results:
-                    # Extract actual data value from Query Asset for summary
-                    summary_value = "Query executed successfully"
-                    for result in real_data_results:
-                        data = result.get("data", {})
-                        first_value = data.get("first_value")
-                        if first_value is not None:
-                            summary_value = str(first_value)
-                            break
-
-                    # Create result with our real data blocks
-                    result = {
-                        "blocks": blocks,
-                        "references": [],
-                        "summary": summary_value,
-                        "presented_at": time.time(),
-                    }
-                    return result
+                # Create result with our real data blocks
+                result = {
+                    "blocks": blocks,
+                    "references": [],
+                    "summary": summary_value,
+                    "presented_at": time.time(),
+                }
+                return result
             # ===== END NEW =====
 
             # Add LLM summary as the first block if available
@@ -860,25 +886,24 @@ class StageExecutor:
             rows_count = data.get("count", len(rows))
 
             if rows_count > 0 and rows:
-                # For count-based queries, extract the value
-                first_row = rows[0]
-                if isinstance(first_row, (tuple, list)) and len(first_row) > 0:
-                    value = first_row[0]
-                    summary.append(
-                        f"Database query '{asset_name}' returned {rows_count} result(s). "
-                        f"The primary value is: {value}."
-                    )
-                elif isinstance(first_row, dict):
-                    # For row-based queries, show first value
-                    value = list(first_row.values())[0] if first_row else "N/A"
-                    summary.append(
-                        f"Database query '{asset_name}' found {rows_count} result(s). "
-                        f"First result contains: {value}."
-                    )
-                else:
-                    summary.append(
-                        f"Database query '{asset_name}' executed successfully with {rows_count} result(s)."
-                    )
+                # Format all rows for LLM context - not just first value
+                summary_lines = [f"Database query '{asset_name}' found {rows_count} result(s):"]
+
+                # Show full row data to LLM
+                for i, row in enumerate(rows[:10]):  # Limit to first 10 rows for summary
+                    if isinstance(row, dict):
+                        row_str = ", ".join([f"{k}: {v}" for k, v in row.items()])
+                        summary_lines.append(f"  Result {i+1}: {row_str}")
+                    elif isinstance(row, (tuple, list)):
+                        row_str = ", ".join([str(v) for v in row])
+                        summary_lines.append(f"  Result {i+1}: {row_str}")
+                    else:
+                        summary_lines.append(f"  Result {i+1}: {row}")
+
+                if len(rows) > 10:
+                    summary_lines.append(f"  ... and {len(rows) - 10} more results")
+
+                summary.append("\n".join(summary_lines))
             else:
                 summary.append(
                     f"Database query '{asset_name}' executed but found no results (0 rows)."
@@ -1459,23 +1484,36 @@ class StageExecutor:
                     self.logger.info(f"✅ [QUERY ASSET] Executed successfully: {asset.name}, {len(rows)} rows")
 
                     # Extract first value for summary (avoid serialization issues)
-                    first_value = None
-                    if rows and len(rows) > 0:
-                        first_row = rows[0]
-                        # Try different ways to access the first value
-                        try:
-                            if hasattr(first_row, '__iter__') and not isinstance(first_row, (str, dict)):
-                                # SQLAlchemy Row objects are iterable
-                                first_value = list(first_row)[0] if first_row else None
-                            elif isinstance(first_row, dict):
-                                first_value = list(first_row.values())[0] if first_row else None
+                    # Convert SQLAlchemy rows to dictionaries for proper serialization
+                    formatted_rows = []
+                    if rows:
+                        for row in rows:
+                            if hasattr(row, '__iter__') and not isinstance(row, (str, dict)):
+                                # SQLAlchemy Row objects - convert to dict
+                                try:
+                                    row_dict = dict(row._mapping) if hasattr(row, '_mapping') else {}
+                                    if not row_dict:
+                                        # Fallback: convert to list and map to column names if available
+                                        row_dict = {"value": list(row)[0] if list(row) else None}
+                                    formatted_rows.append(row_dict)
+                                except Exception as e:
+                                    self.logger.warning(f"Failed to convert row to dict: {e}")
+                                    formatted_rows.append({"value": str(row)})
+                            elif isinstance(row, dict):
+                                formatted_rows.append(row)
                             else:
-                                first_value = first_row
-                        except Exception as e:
-                            self.logger.warning(f"Failed to extract first value: {e}")
-                            first_value = None
+                                formatted_rows.append({"value": row})
 
-                    # Format result as execution_result (only store summary data, not raw rows)
+                    # Extract first value for backward compatibility
+                    first_value = None
+                    if formatted_rows:
+                        first_row = formatted_rows[0]
+                        if isinstance(first_row, dict):
+                            first_value = list(first_row.values())[0] if first_row else None
+                        else:
+                            first_value = first_row
+
+                    # Format result as execution_result - include full rows for proper composition
                     result = {
                         "mode": "query_asset",
                         "tool": "direct_query",
@@ -1484,7 +1522,8 @@ class StageExecutor:
                         "rows_count": len(rows),
                         "data": {
                             "first_value": first_value,
-                            "count": len(rows)
+                            "count": len(rows),
+                            "rows": formatted_rows  # Include all rows for proper composition
                         },
                         "query_asset": {
                             "name": asset.name,
