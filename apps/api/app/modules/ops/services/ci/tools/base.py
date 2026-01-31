@@ -213,10 +213,13 @@ class BaseTool(ABC):
             ToolResult with failure status and error information
         """
         error_msg = str(error)
+        # Handle both enum and string tool_type
+        tool_type_str = self.tool_type.value if hasattr(self.tool_type, 'value') else str(self.tool_type)
+
         self.logger.error(
             f"Tool {self.tool_name} failed",
             extra={
-                "tool_type": self.tool_type.value,
+                "tool_type": tool_type_str,
                 "error": error_msg,
                 "request_id": context.request_id,
                 "tenant_id": context.tenant_id,
@@ -228,7 +231,7 @@ class BaseTool(ABC):
             error=error_msg,
             error_details={
                 "exception_type": type(error).__name__,
-                "tool_type": self.tool_type.value,
+                "tool_type": tool_type_str,
             },
         )
 

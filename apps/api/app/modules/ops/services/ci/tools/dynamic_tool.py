@@ -267,13 +267,17 @@ class DynamicTool(BaseTool):
         # Process query template to replace placeholders
         query = self._process_query_template(query_template, input_data)
 
-        connection_params = source_asset.connection_params or {}
-        if source_asset.source_type == "postgres":
-            from core.db import get_engine
+        # source_asset is a dict, not an object
+        connection_params = source_asset.get("connection", {})
+        source_type = source_asset.get("source_type")
 
-            engine = get_engine()
-            async with engine.begin() as conn:
-                result = await conn.execute(query, connection_params)
+        if source_type == "postgres":
+            from core.db import engine
+            from sqlalchemy import text
+
+            # Use synchronous execution (engine is not async)
+            with engine.connect() as conn:
+                result = conn.execute(text(query))
                 rows = result.fetchall()
                 columns = result.keys()
                 output = [dict(zip(columns, row)) for row in rows]
@@ -281,8 +285,8 @@ class DynamicTool(BaseTool):
         else:
             return ToolResult(
                 success=False,
-                error=f"Unsupported database type: {source_asset.source_type}",
-                error_details={"source_type": source_asset.source_type},
+                error=f"Unsupported database type: {source_type}",
+                error_details={"source_type": source_type},
             )
 
     async def _execute_http_api(
