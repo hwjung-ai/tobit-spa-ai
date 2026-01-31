@@ -186,6 +186,28 @@ class DynamicTool(BaseTool):
 
         else:
             # Generic mode - direct placeholder replacement
+
+            # Handle metric tool specific mappings
+            if "{function}" in processed_query:
+                # Map 'agg' to 'function' for metric aggregation
+                agg = input_data.get("agg", "AVG")
+                if isinstance(agg, str):
+                    agg = agg.upper()
+                processed_query = processed_query.replace("{function}", agg)
+
+            # Handle ci_ids array placeholder
+            if "{ci_ids}" in processed_query:
+                ci_ids = input_data.get("ci_ids", [])
+                if ci_ids and isinstance(ci_ids, list):
+                    # Format as PostgreSQL array values: ['id1', 'id2']
+                    # Template should have ARRAY{ci_ids}, so we just provide the bracket part
+                    escaped_ids = [str(cid).replace("'", "''") for cid in ci_ids]
+                    array_str = "['" + "', '".join(escaped_ids) + "']::uuid[]"
+                    processed_query = processed_query.replace("{ci_ids}", array_str)
+                else:
+                    # Empty array - use uuid[] type to match ci_id column type
+                    processed_query = processed_query.replace("{ci_ids}", "[]::uuid[]")
+
             # First handle special aggregate-specific placeholders
             group_by = input_data.get("group_by", [])
             if group_by and isinstance(group_by, list):
@@ -212,33 +234,30 @@ class DynamicTool(BaseTool):
                     processed_query = processed_query.replace("{time_filter}", "")
 
             # Replace all other {key} placeholders with values from input_data
+            # Skip keys that were already processed above
+            skip_keys = {"group_by", "ci_ids", "agg"}
+
             for key, value in input_data.items():
+                if key in skip_keys:
+                    continue
+
                 placeholder = f"{{{key}}}"
                 if placeholder in processed_query:
                     if value is None:
                         processed_query = processed_query.replace(placeholder, "NULL")
                     elif isinstance(value, list):
-                        # For lists in generic mode, skip if already handled above
-                        if key not in ("group_by",):
-                            # Convert list to SQL array format
-                            escaped_values = [str(v).replace("'", "''") for v in value]
-                            array_values = "', '".join(escaped_values)
-                            array_str = f"ARRAY['{array_values}']"
-                            processed_query = processed_query.replace(placeholder, array_str)
+                        # Convert list to SQL array format
+                        escaped_values = [str(v).replace("'", "''") for v in value]
+                        array_values = "', '".join(escaped_values)
+                        array_str = f"ARRAY['{array_values}']"
+                        processed_query = processed_query.replace(placeholder, array_str)
                     elif isinstance(value, dict):
                         processed_query = processed_query.replace(placeholder, str(value))
                     else:
+                        # Replace placeholder with value directly
+                        # Query templates should include quotes if needed (e.g., '{metric_name}' not {metric_name})
                         escaped_value = str(value).replace("'", "''")
-                        processed_query = processed_query.replace(placeholder, f"'{escaped_value}'")
-
-            # Handle special placeholders that might not be in input_data
-            if "{tenant_id}" in processed_query:
-                tenant_id = input_data.get("tenant_id", "default")
-                processed_query = processed_query.replace("{tenant_id}", f"'{tenant_id}'")
-
-            if "{limit}" in processed_query:
-                limit = input_data.get("limit", 10)
-                processed_query = processed_query.replace("{limit}", str(limit))
+                        processed_query = processed_query.replace(placeholder, escaped_value)
 
         return processed_query
 

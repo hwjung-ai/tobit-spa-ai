@@ -105,6 +105,17 @@ class DependencyAnalyzer:
                 depends_on=metric_deps,
             ))
 
+        # History depends on primary (needs ci_id from primary results)
+        if plan.history and plan.history.enabled:
+            primary_deps = ["primary"] if plan.primary else []
+            deps.append(ToolDependency(
+                tool_id="history",
+                depends_on=primary_deps,
+                output_mapping={
+                    "ci_id": "{primary.data.rows[0].ci_id}"
+                } if plan.primary else {}
+            ))
+
         return deps
 
     def build_dependency_graph(self, dependencies: List[ToolDependency]) -> Dict[str, Set[str]]:
@@ -606,13 +617,58 @@ class ToolOrchestrator:
                 }
             }
         elif tool_id == "metric":
+            # Convert time_range to start_time and end_time
+            from datetime import datetime, timedelta
+            end_time = datetime.utcnow()
+            time_range = spec_obj.time_range
+            if time_range == "last_24h":
+                start_time = end_time - timedelta(hours=24)
+            elif time_range == "last_7d":
+                start_time = end_time - timedelta(days=7)
+            elif time_range == "last_30d":
+                start_time = end_time - timedelta(days=30)
+            else:
+                start_time = end_time - timedelta(hours=24)
+
             return {
                 "tool_type": tool_type,
                 "params": {
                     "metric_name": spec_obj.metric_name,
                     "agg": spec_obj.agg,
                     "time_range": spec_obj.time_range,
+                    "start_time": start_time.isoformat(),
+                    "end_time": end_time.isoformat(),
                     "mode": getattr(spec_obj, 'mode', 'aggregate'),
+                    "tenant_id": self.context.tenant_id,
+                    "ci_ids": [],  # Will be populated from dependencies
+                }
+            }
+        elif tool_id == "history":
+            # Convert time_range to start_time and end_time
+            from datetime import datetime, timedelta
+            end_time = datetime.utcnow()
+            time_range = spec_obj.time_range
+            if time_range == "last_24h":
+                start_time = end_time - timedelta(hours=24)
+            elif time_range == "last_7d":
+                start_time = end_time - timedelta(days=7)
+            elif time_range == "last_30d":
+                start_time = end_time - timedelta(days=30)
+            else:
+                start_time = end_time - timedelta(days=7)  # default for history
+
+            return {
+                "tool_type": tool_type,
+                "params": {
+                    "source": spec_obj.source,
+                    "scope": spec_obj.scope,
+                    "mode": spec_obj.mode,
+                    "time_range": spec_obj.time_range,
+                    "start_time": start_time.isoformat(),
+                    "end_time": end_time.isoformat(),
+                    "limit": spec_obj.limit,
+                    "tenant_id": self.context.tenant_id,
+                    "ci_id": None,  # Will be populated from dependencies
                 }
             }
 

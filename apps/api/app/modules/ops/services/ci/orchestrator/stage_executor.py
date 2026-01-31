@@ -411,6 +411,24 @@ class StageExecutor:
                             "time_range": plan.metric.time_range,
                         },
                     )
+                    # Convert time_range to actual start_time and end_time
+                    from datetime import datetime, timedelta
+                    end_time = datetime.utcnow()
+                    time_range = plan.metric.time_range
+                    if time_range == "last_24h":
+                        start_time = end_time - timedelta(hours=24)
+                    elif time_range == "last_7d":
+                        start_time = end_time - timedelta(days=7)
+                    elif time_range == "last_30d":
+                        start_time = end_time - timedelta(days=30)
+                    else:
+                        start_time = end_time - timedelta(hours=24)
+
+                    # Get CI IDs from s1 results if available
+                    ci_ids = []
+                    if s1_results:
+                        ci_ids = [r.get("ci_id") for r in s1_results if r.get("ci_id")]
+
                     metric_aggregate_result = await self.tool_executor.execute_tool(
                         tool_type=plan.metric.tool_type,
                         params={
@@ -418,6 +436,10 @@ class StageExecutor:
                             "metric_name": plan.metric.metric_name,
                             "agg": plan.metric.agg,
                             "time_range": plan.metric.time_range,
+                            "start_time": start_time.isoformat(),
+                            "end_time": end_time.isoformat(),
+                            "ci_ids": ci_ids,
+                            "tenant_id": tool_context.tenant_id,
                             "filters": plan.aggregate.filters,
                             "top_n": plan.aggregate.top_n,
                         },
