@@ -748,6 +748,17 @@ class StageExecutor:
                             "metadata": {"generated_by": "query_asset"},
                         })
 
+                # Add LLM summary as the answer (from compose stage)
+                llm_summary = composed_result.get("llm_summary") if isinstance(composed_result, dict) else None
+                if llm_summary:
+                    # Use LLM summary as the answer, add blocks for reference
+                    summary_value = llm_summary
+                    blocks.insert(0, {
+                        "type": "markdown",
+                        "content": llm_summary,
+                        "metadata": {"generated_by": "llm_compose"},
+                    })
+
                 # Create result with our real data blocks
                 result = {
                     "blocks": blocks,
