@@ -370,7 +370,52 @@ def _evaluate_metric_trigger(
 
 def execute_action(
     action_spec: Dict[str, Any],
+    session: Session | None = None,
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Execute action based on action_type.
+
+    Supported action types:
+    - "webhook": HTTP webhook call (existing behavior)
+    - "api_script": Execute API Manager script
+    - "trigger_rule": Trigger another CEP rule
+
+    Args:
+        action_spec: Action specification with type, endpoint, params, etc.
+        session: Database session (required for api_script and trigger_rule)
+
+    Returns:
+        Tuple of (result_payload, references)
+    """
+    action_type = str(action_spec.get("type", "webhook")).lower()
+
+    if action_type == "webhook":
+        return _execute_webhook_action(action_spec)
+    elif action_type == "api_script":
+        if not session:
+            raise HTTPException(
+                status_code=400,
+                detail="Database session required for api_script action"
+            )
+        return _execute_api_script_action(action_spec, session)
+    elif action_type == "trigger_rule":
+        if not session:
+            raise HTTPException(
+                status_code=400,
+                detail="Database session required for trigger_rule action"
+            )
+        return _execute_trigger_rule_action(action_spec, session)
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported action type: {action_type}"
+        )
+
+
+def _execute_webhook_action(
+    action_spec: Dict[str, Any],
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Execute HTTP webhook action (backward compatible)."""
     endpoint = action_spec.get("endpoint")
     if not endpoint:
         raise HTTPException(status_code=400, detail="Action endpoint is required")
@@ -396,6 +441,7 @@ def execute_action(
             status_code=502, detail=f"Action response error: {exc.response.status_code}"
         ) from exc
     references = {
+        "action_type": "webhook",
         "endpoint": endpoint,
         "method": method,
         "params": params,
@@ -405,6 +451,147 @@ def execute_action(
         payload = response.json()
     except ValueError:
         payload = {"text": response.text}
+    return payload, references
+
+
+def _execute_api_script_action(
+    action_spec: Dict[str, Any],
+    session: Session,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Execute API Manager script action.
+
+    Action spec should contain:
+    {
+        "type": "api_script",
+        "api_id": "api-uuid",
+        "params": {...},
+        "input": {...}  # optional
+    }
+    """
+    from app.modules.api_manager.crud import get_api_definition
+    from app.modules.api_manager.script_executor import execute_script_api
+
+    api_id = action_spec.get("api_id")
+    if not api_id:
+        raise HTTPException(
+            status_code=400,
+            detail="api_id is required for api_script action"
+        )
+
+    # Fetch API definition
+    api_def = get_api_definition(session, api_id)
+    if not api_def:
+        raise HTTPException(
+            status_code=404,
+            detail=f"API definition not found: {api_id}"
+        )
+
+    if api_def.logic_type != "script":
+        raise HTTPException(
+            status_code=400,
+            detail=f"API {api_id} is not a script type API"
+        )
+
+    # Prepare execution params
+    params = action_spec.get("params") or {}
+    input_payload = action_spec.get("input")
+    runtime_policy = api_def.runtime_policy or {}
+
+    # Execute script
+    result = execute_script_api(
+        session=session,
+        api_id=api_id,
+        logic_body=api_def.logic_body,
+        params=params,
+        input_payload=input_payload,
+        executed_by="cep-action",
+        runtime_policy=runtime_policy,
+    )
+
+    references = {
+        "action_type": "api_script",
+        "api_id": api_id,
+        "api_name": api_def.api_name,
+        "duration_ms": result.duration_ms,
+        "params_passed": list(params.keys()),
+        "references": result.references,
+        "logs_count": len(result.logs),
+    }
+
+    # Return output with result details
+    payload = {
+        "output": result.output,
+        "logs": result.logs,
+        "references": result.references,
+    }
+
+    return payload, references
+
+
+def _execute_trigger_rule_action(
+    action_spec: Dict[str, Any],
+    session: Session,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Trigger another CEP rule.
+
+    Action spec should contain:
+    {
+        "type": "trigger_rule",
+        "rule_id": "target-rule-id",
+        "payload": {...}  # event payload to pass to target rule
+    }
+    """
+    from .models import TbCepRule
+
+    target_rule_id = action_spec.get("rule_id")
+    if not target_rule_id:
+        raise HTTPException(
+            status_code=400,
+            detail="rule_id is required for trigger_rule action"
+        )
+
+    # Fetch target rule
+    target_rule = session.query(TbCepRule).filter(
+        TbCepRule.rule_id == UUID(target_rule_id)
+    ).first()
+
+    if not target_rule:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Target rule not found: {target_rule_id}"
+        )
+
+    if not target_rule.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Target rule is not active: {target_rule_id}"
+        )
+
+    # Trigger the target rule
+    trigger_payload = action_spec.get("payload")
+
+    # Call manual_trigger recursively (with same session)
+    result = manual_trigger(
+        rule=target_rule,
+        payload=trigger_payload,
+        executed_by="cep-trigger"
+    )
+
+    references = {
+        "action_type": "trigger_rule",
+        "target_rule_id": target_rule_id,
+        "target_rule_name": target_rule.rule_name,
+        "trigger_status": result.get("status"),
+        "trigger_condition_met": result.get("condition_met"),
+        "trigger_duration_ms": result.get("duration_ms"),
+    }
+
+    payload = {
+        "trigger_result": result,
+    }
+
     return payload, references
 
 
@@ -438,7 +625,20 @@ def manual_trigger(
     rule: TbCepRule,
     payload: Dict[str, Any] | None = None,
     executed_by: str = "cep-builder",
+    session: Session | None = None,
 ) -> Dict[str, Any]:
+    """
+    Manually trigger a CEP rule execution.
+
+    Args:
+        rule: The CEP rule to execute
+        payload: Event payload to evaluate against the rule
+        executed_by: Who triggered this execution
+        session: Optional database session (created if not provided)
+
+    Returns:
+        Execution result with status, condition_met, result, references, etc.
+    """
     start = time.perf_counter()
     condition, trigger_refs = evaluate_trigger(
         rule.trigger_type, rule.trigger_spec, payload
@@ -448,15 +648,17 @@ def manual_trigger(
     status = "dry_run"
     result: Dict[str, Any] | None = None
     error_message: str | None = None
+    local_session = False
+
     if not lock_conn:
         skipped_refs = {
             "skipped_reason": "rule already running",
             "trigger": trigger_refs,
         }
         duration_ms = int((time.perf_counter() - start) * 1000)
-        with get_session_context() as session:
+        with get_session_context() as db_session:
             record_exec_log(
-                session=session,
+                session=db_session,
                 rule_id=str(rule.rule_id),
                 status="skipped",
                 duration_ms=duration_ms,
@@ -472,10 +674,17 @@ def manual_trigger(
             "error_message": "rule already running",
             "duration_ms": duration_ms,
         }
+
+    # Create session if not provided
+    if session is None:
+        session = get_session_context().__enter__()
+        local_session = True
+
     try:
         if condition:
             status = "success"
-            action_result, action_refs = execute_action(rule.action_spec)
+            action_result, action_refs = execute_action(rule.action_spec, session)
+            result = action_result
             references["action"] = action_refs
     except HTTPException as exc:
         status = "fail"
@@ -486,7 +695,7 @@ def manual_trigger(
         duration_ms = int((time.perf_counter() - start) * 1000)
         if payload is None:
             payload = {}
-        with get_session_context() as session:
+        try:
             record_exec_log(
                 session=session,
                 rule_id=str(rule.rule_id),
@@ -496,7 +705,11 @@ def manual_trigger(
                 executed_by=executed_by,
                 error_message=error_message,
             )
-        _release_rule_lock(lock_conn, rule.rule_id)
+        finally:
+            _release_rule_lock(lock_conn, rule.rule_id)
+            if local_session:
+                session.close()
+
     return {
         "status": status,
         "condition_met": condition,

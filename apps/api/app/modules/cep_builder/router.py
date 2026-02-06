@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from typing import Any
 
 from core.db import get_session
+
+logger = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from starlette.requests import Request
 from schemas.common import ResponseEnvelope
@@ -543,67 +546,93 @@ async def event_stream(
     session: Session = Depends(get_session)
 ) -> EventSourceResponse:
     """
-    이벤트 실시간 스트림 (SSE)
+    이벤트 실시간 스트림 (SSE: Server-Sent Events)
 
-    클라이언트 연결 시 최근 1시간 이벤트를 먼저 전송하고,
-    이후 새로운 이벤트를 실시간으로 전송합니다.
+    클라이언트가 연결하면:
+    1. 초기 요약(summary) 전송: 현재 미승인/심각도별 이벤트 수
+    2. 최근 1시간 히스토리컬 이벤트 전송 (재연결 시 손실 복구)
+    3. 라이브 구독: 새 이벤트/ACK/요약 변경 실시간 전송
+    4. 매 초마다 ping 전송 (연결 유지)
+
+    이벤트 타입:
+    - summary: 이벤트 요약 (unacked_count, by_severity)
+    - new_event: 새로운 이벤트 발생
+    - ack_event: 이벤트 승인됨
+    - ping: 연결 유지 신호
+    - shutdown: 서버 종료 신호
+
+    Redis가 활성화된 경우:
+    - 분산 환경에서 여러 서버의 이벤트 통합
+    - Pub/Sub을 통한 실시간 전파
+
+    폴링 방식 대비 장점:
+    - 서버 부하 감소 (pull → push)
+    - 네트워크 트래픽 감소
+    - 낮은 지연시간 (<100ms)
     """
+    # Redis 리스너 확인 및 시작
+    await event_broadcaster.ensure_redis_listener()
+
     summary = summarize_events(session)
 
     async def event_generator():
-        # 1. 초기 요약 전송
-        yield {"event": "summary", "data": json.dumps(summary)}
-
-        # 2. 최근 1시간 이벤트 로드백 (클라이언트 재연결 시 손실 복구)
-        LOOKBACK_MINUTES = 60
-        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=LOOKBACK_MINUTES)
-        recent_events = session.exec(
-            select(TbCepNotificationLog)
-            .where(TbCepNotificationLog.fired_at >= cutoff_time)
-            .order_by(TbCepNotificationLog.fired_at.asc())
-            .limit(100)
-        ).all()
-
-        # 과거 이벤트 전송
-        for event_log in recent_events:
-            try:
-                yield {
-                    "event": "historical",
-                    "data": json.dumps({
-                        "event_id": str(event_log.log_id),
-                        "fired_at": event_log.fired_at.isoformat(),
-                        "status": event_log.status,
-                    })
-                }
-            except Exception:
-                continue
-
-        # 3. 라이브 구독 시작
-        queue = event_broadcaster.subscribe()
         try:
-            while True:
-                # Check if client disconnected or server is shutting down
-                if await request.is_disconnected():
-                    break
+            # 1. 초기 요약 전송
+            yield {"event": "summary", "data": json.dumps(summary)}
 
+            # 2. 최근 1시간 이벤트 로드백 (클라이언트 재연결 시 손실 복구)
+            LOOKBACK_MINUTES = 60
+            cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=LOOKBACK_MINUTES)
+            recent_events = session.exec(
+                select(TbCepNotificationLog)
+                .where(TbCepNotificationLog.fired_at >= cutoff_time)
+                .order_by(TbCepNotificationLog.fired_at.asc())
+                .limit(100)
+            ).all()
+
+            # 과거 이벤트 전송
+            for event_log in recent_events:
                 try:
-                    # Use shorter timeout (1s) to allow faster shutdown detection
-                    message = await asyncio.wait_for(queue.get(), timeout=1.0)
                     yield {
-                        "event": message["type"],
-                        "data": json.dumps(message["data"]),
+                        "event": "historical",
+                        "data": json.dumps({
+                            "event_id": str(event_log.log_id),
+                            "fired_at": event_log.fired_at.isoformat(),
+                            "status": event_log.status,
+                        })
                     }
-                except asyncio.TimeoutError:
-                    # Check disconnect again on timeout
+                except Exception:
+                    continue
+
+            # 3. 라이브 구독 시작
+            queue = event_broadcaster.subscribe()
+            try:
+                while True:
+                    # Check if client disconnected or server is shutting down
                     if await request.is_disconnected():
                         break
-                    yield {"event": "ping", "data": "{}"}
-        except (asyncio.CancelledError, GeneratorExit):
-            # Gracefully handle shutdown request
-            yield {"event": "shutdown", "data": "{}"}
-            raise
-        finally:
-            event_broadcaster.unsubscribe(queue)
+
+                    try:
+                        # Use shorter timeout (1s) to allow faster shutdown detection
+                        message = await asyncio.wait_for(queue.get(), timeout=1.0)
+                        yield {
+                            "event": message["type"],
+                            "data": json.dumps(message["data"]),
+                        }
+                    except asyncio.TimeoutError:
+                        # Check disconnect again on timeout
+                        if await request.is_disconnected():
+                            break
+                        yield {"event": "ping", "data": "{}"}
+            except (asyncio.CancelledError, GeneratorExit):
+                # Gracefully handle shutdown request
+                yield {"event": "shutdown", "data": "{}"}
+                raise
+            finally:
+                event_broadcaster.unsubscribe(queue)
+        except Exception as e:
+            logger.error(f"Event stream error: {e}", exc_info=True)
+            yield {"event": "error", "data": json.dumps({"message": str(e)})}
 
     return EventSourceResponse(event_generator())
 
@@ -1167,3 +1196,301 @@ def get_channel_types() -> ResponseEnvelope:
     }
 
     return ResponseEnvelope.success(data={"channel_types": channel_types})
+
+
+# ============================================================================
+# Monitoring Dashboard Endpoints
+# ============================================================================
+
+
+@router.get("/channels/status")
+def get_channels_status(session: Session = Depends(get_session)) -> ResponseEnvelope:
+    """
+    Get notification channels status with statistics
+
+    Returns:
+        - Each channel's status (active/inactive)
+        - Recent send statistics
+        - Failure rate and retry status
+        - Last connection time
+    """
+    from datetime import timedelta
+
+    notifications = list_notifications(session, active_only=False)
+
+    channels_status = {}
+    now = datetime.now(timezone.utc)
+    lookback_hours = 24
+    lookback = now - timedelta(hours=lookback_hours)
+
+    for notification in notifications:
+        channel_type = notification.channel
+
+        if channel_type not in channels_status:
+            channels_status[channel_type] = {
+                "type": channel_type,
+                "display_name": {
+                    "slack": "Slack",
+                    "email": "Email",
+                    "sms": "SMS",
+                    "webhook": "Webhook",
+                    "pagerduty": "PagerDuty",
+                }.get(channel_type, channel_type),
+                "active": 0,
+                "inactive": 0,
+                "total_sent": 0,
+                "total_failed": 0,
+                "recent_logs": [],
+                "last_sent_at": None,
+            }
+
+        if notification.is_active:
+            channels_status[channel_type]["active"] += 1
+        else:
+            channels_status[channel_type]["inactive"] += 1
+
+        # Get recent logs for this notification
+        logs = list_notification_logs(session, str(notification.notification_id), limit=100)
+
+        for log in logs:
+            if log.fired_at >= lookback:
+                channels_status[channel_type]["total_sent"] += 1
+                if log.status != "success":
+                    channels_status[channel_type]["total_failed"] += 1
+
+                if not channels_status[channel_type]["last_sent_at"] or log.fired_at > channels_status[channel_type]["last_sent_at"]:
+                    channels_status[channel_type]["last_sent_at"] = log.fired_at
+
+                channels_status[channel_type]["recent_logs"].append({
+                    "log_id": str(log.log_id),
+                    "fired_at": log.fired_at.isoformat(),
+                    "status": log.status,
+                    "response_status": log.response_status,
+                })
+
+    # Calculate failure rate and add to each channel
+    for channel_data in channels_status.values():
+        if channel_data["total_sent"] > 0:
+            channel_data["failure_rate"] = channel_data["total_failed"] / channel_data["total_sent"]
+        else:
+            channel_data["failure_rate"] = 0
+
+        # Keep only last 10 logs
+        channel_data["recent_logs"] = channel_data["recent_logs"][-10:]
+
+    return ResponseEnvelope.success(
+        data={
+            "channels": list(channels_status.values()),
+            "period_hours": lookback_hours,
+        }
+    )
+
+
+@router.get("/stats/summary")
+def get_stats_summary(session: Session = Depends(get_session)) -> ResponseEnvelope:
+    """
+    Get overall CEP statistics summary
+
+    Returns:
+        - Total rule count
+        - Today's execution count
+        - Average execution time
+        - Error rate
+    """
+    from datetime import timedelta
+
+    # Total rules
+    all_rules = list_rules(session)
+    total_rules = len(all_rules)
+    active_rules = sum(1 for rule in all_rules if rule.is_active)
+
+    # Today's stats
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    today_logs_query = select(TbCepExecLog).where(
+        TbCepExecLog.triggered_at >= today_start
+    )
+    today_logs = session.exec(today_logs_query).all()
+
+    today_execution_count = len(today_logs)
+    today_errors = sum(1 for log in today_logs if log.status == "fail")
+
+    # Average execution time
+    if today_logs:
+        avg_duration = sum(log.duration_ms for log in today_logs) / len(today_logs)
+        error_rate = today_errors / len(today_logs)
+    else:
+        avg_duration = 0
+        error_rate = 0
+
+    # Last 24 hours stats
+    last_24h = now - timedelta(hours=24)
+    logs_24h_query = select(TbCepExecLog).where(
+        TbCepExecLog.triggered_at >= last_24h
+    )
+    logs_24h = session.exec(logs_24h_query).all()
+
+    return ResponseEnvelope.success(
+        data={
+            "stats": {
+                "total_rules": total_rules,
+                "active_rules": active_rules,
+                "inactive_rules": total_rules - active_rules,
+                "today_execution_count": today_execution_count,
+                "today_error_count": today_errors,
+                "today_error_rate": error_rate,
+                "today_avg_duration_ms": round(avg_duration, 2),
+                "last_24h_execution_count": len(logs_24h),
+                "timestamp": now.isoformat(),
+            }
+        }
+    )
+
+
+@router.get("/errors/timeline")
+def get_errors_timeline(
+    period: str = Query("24h"),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    Get error timeline with hourly distribution
+
+    Args:
+        period: Time period to look back (1h, 6h, 24h, 7d)
+
+    Returns:
+        - Hourly error counts
+        - Error type distribution
+        - Recent error list
+    """
+    from datetime import timedelta
+
+    period_mapping = {
+        "1h": timedelta(hours=1),
+        "6h": timedelta(hours=6),
+        "24h": timedelta(hours=24),
+        "7d": timedelta(days=7),
+    }
+
+    lookback = period_mapping.get(period, timedelta(hours=24))
+    now = datetime.now(timezone.utc)
+    cutoff_time = now - lookback
+
+    # Get all error logs in period
+    error_logs_query = select(TbCepExecLog).where(
+        (TbCepExecLog.triggered_at >= cutoff_time) &
+        (TbCepExecLog.status == "fail")
+    ).order_by(TbCepExecLog.triggered_at.desc())
+
+    error_logs = session.exec(error_logs_query).all()
+
+    # Create hourly timeline
+    timeline = {}
+    current = cutoff_time.replace(minute=0, second=0, microsecond=0)
+    while current <= now:
+        timeline[current.isoformat()] = 0
+        current += timedelta(hours=1)
+
+    # Count errors by hour
+    error_types = {}
+    for log in error_logs:
+        hour_key = log.triggered_at.replace(minute=0, second=0, microsecond=0).isoformat()
+        if hour_key in timeline:
+            timeline[hour_key] += 1
+
+        # Categorize error type
+        error_type = "unknown"
+        if log.error_message:
+            if "timeout" in log.error_message.lower():
+                error_type = "timeout"
+            elif "connection" in log.error_message.lower():
+                error_type = "connection"
+            elif "validation" in log.error_message.lower():
+                error_type = "validation"
+            elif "authentication" in log.error_message.lower():
+                error_type = "authentication"
+            else:
+                error_type = "other"
+
+        error_types[error_type] = error_types.get(error_type, 0) + 1
+
+    # Get recent errors (last 10)
+    recent_errors = []
+    for log in error_logs[:10]:
+        rule = get_rule(session, str(log.rule_id))
+        recent_errors.append({
+            "exec_id": str(log.exec_id),
+            "rule_id": str(log.rule_id),
+            "rule_name": rule.rule_name if rule else "Unknown",
+            "triggered_at": log.triggered_at.isoformat(),
+            "error_message": log.error_message,
+            "duration_ms": log.duration_ms,
+        })
+
+    return ResponseEnvelope.success(
+        data={
+            "timeline": [
+                {"timestamp": k, "error_count": v}
+                for k, v in sorted(timeline.items())
+            ],
+            "error_distribution": error_types,
+            "recent_errors": recent_errors,
+            "period": period,
+            "total_errors": len(error_logs),
+        }
+    )
+
+
+@router.get("/rules/performance")
+def get_rules_performance(
+    limit: int = Query(10, ge=1, le=50),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    Get performance metrics for all rules
+
+    Returns:
+        - Rules sorted by execution frequency
+        - Execution count, error count, avg duration for each rule
+    """
+    from datetime import timedelta
+
+    all_rules = list_rules(session)
+    now = datetime.now(timezone.utc)
+    last_7d = now - timedelta(days=7)
+
+    rules_perf = []
+    for rule in all_rules:
+        # Get execution logs for last 7 days
+        rule_logs_query = select(TbCepExecLog).where(
+            (TbCepExecLog.rule_id == rule.rule_id) &
+            (TbCepExecLog.triggered_at >= last_7d)
+        )
+        rule_logs = session.exec(rule_logs_query).all()
+
+        if rule_logs:
+            exec_count = len(rule_logs)
+            error_count = sum(1 for log in rule_logs if log.status == "fail")
+            avg_duration = sum(log.duration_ms for log in rule_logs) / exec_count
+
+            rules_perf.append({
+                "rule_id": str(rule.rule_id),
+                "rule_name": rule.rule_name,
+                "is_active": rule.is_active,
+                "execution_count": exec_count,
+                "error_count": error_count,
+                "error_rate": error_count / exec_count,
+                "avg_duration_ms": round(avg_duration, 2),
+            })
+
+    # Sort by execution count (descending)
+    rules_perf.sort(key=lambda x: x["execution_count"], reverse=True)
+
+    return ResponseEnvelope.success(
+        data={
+            "rules": rules_perf[:limit],
+            "total_rules": len(all_rules),
+            "period_days": 7,
+        }
+    )
