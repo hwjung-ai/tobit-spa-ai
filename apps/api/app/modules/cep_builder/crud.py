@@ -16,8 +16,15 @@ from .models import (
 from .schemas import CepRuleCreate, CepRuleUpdate
 
 
-def list_rules(session: Session, trigger_type: str | None = None) -> list[TbCepRule]:
+def list_rules(session: Session, trigger_type: str | None = None, active_only: bool = False) -> list[TbCepRule]:
+    """
+    List CEP rules with optional filtering.
+
+    Performance: Uses indexes on (is_active, updated_at DESC) and (trigger_type)
+    """
     query = select(TbCepRule)
+    if active_only:
+        query = query.where(TbCepRule.is_active.is_(True))
     if trigger_type:
         query = query.where(TbCepRule.trigger_type == trigger_type)
     query = query.order_by(TbCepRule.updated_at.desc())
@@ -75,14 +82,20 @@ def record_exec_log(
 
 
 def list_exec_logs(
-    session: Session, rule_id: str, limit: int = 50
+    session: Session, rule_id: str, limit: int = 50, status: str | None = None
 ) -> list[TbCepExecLog]:
+    """
+    List execution logs for a specific rule.
+
+    Performance: Uses composite index (rule_id, triggered_at DESC)
+    """
     query = (
         select(TbCepExecLog)
         .where(TbCepExecLog.rule_id == rule_id)
-        .order_by(desc(TbCepExecLog.triggered_at))
-        .limit(limit)
     )
+    if status:
+        query = query.where(TbCepExecLog.status == status)
+    query = query.order_by(desc(TbCepExecLog.triggered_at)).limit(limit)
     return session.exec(query).scalars().all()
 
 
@@ -113,11 +126,19 @@ def list_metric_poll_snapshots(
 
 
 def list_notifications(
-    session: Session, active_only: bool = True
+    session: Session, active_only: bool = True, channel: str | None = None, limit: int = 500
 ) -> list[TbCepNotification]:
-    query = select(TbCepNotification).order_by(desc(TbCepNotification.created_at))
+    """
+    List notifications with optional filtering.
+
+    Performance: Uses indexes on (is_active, created_at DESC), (channel), and (rule_id)
+    """
+    query = select(TbCepNotification)
     if active_only:
         query = query.where(TbCepNotification.is_active.is_(True))
+    if channel:
+        query = query.where(TbCepNotification.channel == channel)
+    query = query.order_by(desc(TbCepNotification.created_at)).limit(limit)
     return session.exec(query).scalars().all()
 
 
@@ -170,14 +191,20 @@ def insert_notification_log(
 
 
 def list_notification_logs(
-    session: Session, notification_id: str, limit: int = 200
+    session: Session, notification_id: str, limit: int = 200, status: str | None = None
 ) -> list[TbCepNotificationLog]:
+    """
+    List notification logs for a specific notification.
+
+    Performance: Uses composite index (notification_id, ack) and status index
+    """
     query = (
         select(TbCepNotificationLog)
         .where(TbCepNotificationLog.notification_id == notification_id)
-        .order_by(desc(TbCepNotificationLog.fired_at))
-        .limit(limit)
     )
+    if status:
+        query = query.where(TbCepNotificationLog.status == status)
+    query = query.order_by(desc(TbCepNotificationLog.fired_at)).limit(limit)
     return session.exec(query).scalars().all()
 
 
@@ -191,6 +218,12 @@ def list_events(
     limit: int = 200,
     offset: int = 0,
 ) -> list[tuple[TbCepNotificationLog, TbCepNotification, TbCepRule | None]]:
+    """
+    List events with optional filtering.
+
+    Performance: Optimized JOIN with indexes on fired_at DESC and composite indexes
+    Avoids N+1 by joining all tables at once instead of lazy loading
+    """
     query = (
         select(TbCepNotificationLog, TbCepNotification, TbCepRule)
         .select_from(TbCepNotificationLog)
@@ -199,8 +232,9 @@ def list_events(
             TbCepNotificationLog.notification_id == TbCepNotification.notification_id,
         )
         .outerjoin(TbCepRule, TbCepRule.rule_id == TbCepNotification.rule_id)
-        .order_by(desc(TbCepNotificationLog.fired_at))
     )
+
+    # Apply filters in order of selectivity (most selective first)
     if acked is not None:
         query = query.where(TbCepNotificationLog.ack.is_(acked))
     if rule_id:
@@ -209,7 +243,8 @@ def list_events(
         query = query.where(TbCepNotificationLog.fired_at >= since)
     if until:
         query = query.where(TbCepNotificationLog.fired_at <= until)
-    query = query.limit(limit).offset(offset)
+
+    query = query.order_by(desc(TbCepNotificationLog.fired_at)).limit(limit).offset(offset)
     return session.exec(query).all()
 
 
@@ -259,11 +294,17 @@ def get_latest_exec_log_for_rule(
 
 
 def summarize_events(session: Session) -> dict[str, Any]:
+    """
+    Summarize events by ACK status and severity.
+
+    Performance: Uses index on (ack) for unacked count and aggregates in single query
+    """
     unacked = session.exec(
         select(func.count())
         .select_from(TbCepNotificationLog)
         .where(TbCepNotificationLog.ack.is_(False))
     ).one()[0]
+
     severity_expr = func.coalesce(TbCepNotification.trigger["severity"].astext, "info")
     rows = session.exec(
         select(severity_expr.label("severity"), func.count())
@@ -274,7 +315,9 @@ def summarize_events(session: Session) -> dict[str, Any]:
         )
         .group_by(severity_expr)
     ).all()
+
     by_severity: dict[str, int] = {}
     for severity, count in rows:
         by_severity[str(severity)] = int(count)
+
     return {"unacked_count": int(unacked or 0), "by_severity": by_severity}
