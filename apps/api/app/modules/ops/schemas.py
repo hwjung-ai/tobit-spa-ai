@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel
 
-OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
+OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph", "document"]
 
 from app.modules.ops.services.ci.planner.plan_schema import Plan, View
 
