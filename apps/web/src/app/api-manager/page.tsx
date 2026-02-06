@@ -5,6 +5,13 @@ import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveApiWithFallback } from "../../lib/apiManagerSave";
 import Editor from "@monaco-editor/react";
+import {
+  FormSection,
+  FormFieldGroup,
+  ErrorBanner,
+  HttpFormBuilder,
+  type HttpSpec,
+} from "../../components/api-manager";
 
 type ScopeType = "system" | "custom";
 type CenterTab = "definition" | "logic" | "test";
@@ -1989,27 +1996,49 @@ export default function ApiManagerPage() {
   const definitionLogicContent = (
     <div className="space-y-4">
       {activeTab === "definition" && (
-        <div className="space-y-3">
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            API Name
-            <input
-              value={definitionDraft.api_name}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
-              }
-              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              disabled={isSystemScope}
-            />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs uppercase tracking-normal text-slate-500">
-              Method
+        <div className="space-y-4">
+          <ErrorBanner
+            title="API Definition Errors"
+            errors={lastSaveError ? [lastSaveError] : []}
+            warnings={statusMessage && statusMessage.includes("Warning") ? [statusMessage] : []}
+            onDismiss={() => setLastSaveError(null)}
+            autoDismissMs={0}
+          />
+
+          <FormSection
+            title="API Metadata"
+            description="Define the basic information about your API"
+            columns={1}
+          >
+            <FormFieldGroup
+              label="API Name"
+              required
+              help="Use a descriptive name for your API"
+            >
+              <input
+                value={definitionDraft.api_name}
+                onChange={(event) =>
+                  setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
+                }
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                disabled={isSystemScope}
+                placeholder="e.g., User Management API"
+              />
+            </FormFieldGroup>
+          </FormSection>
+
+          <FormSection
+            title="Endpoint Configuration"
+            description="Set the HTTP method and endpoint path"
+            columns={2}
+          >
+            <FormFieldGroup label="HTTP Method" required>
               <select
                 value={definitionDraft.method}
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, method: event.target.value as ApiDraft["method"] }))
                 }
-                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
                 disabled={isSystemScope}
               >
                 <option value="GET">GET</option>
@@ -2017,30 +2046,33 @@ export default function ApiManagerPage() {
                 <option value="PUT">PUT</option>
                 <option value="DELETE">DELETE</option>
               </select>
-            </label>
-            <label className="text-xs uppercase tracking-normal text-slate-500">
-              Endpoint
+            </FormFieldGroup>
+            <FormFieldGroup label="Endpoint Path" required help="/api/users/{id}">
               <input
                 value={definitionDraft.endpoint}
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
                 }
-                className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
                 disabled={isSystemScope}
+                placeholder="/api/endpoint"
               />
-            </label>
-          </div>
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            Description
-            <textarea
-              value={definitionDraft.description ?? ""}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
-              }
-              className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-              disabled={isSystemScope}
-            />
-          </label>
+            </FormFieldGroup>
+          </FormSection>
+
+          <FormSection title="Description" columns={1}>
+            <FormFieldGroup label="API Description" help="Explain what this API does and its purpose">
+              <textarea
+                value={definitionDraft.description ?? ""}
+                onChange={(event) =>
+                  setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
+                }
+                className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                disabled={isSystemScope}
+                placeholder="Describe your API..."
+              />
+            </FormFieldGroup>
+          </FormSection>
           {selectedDiscovered ? (
             <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-200">
               <p className="text-[10px] uppercase tracking-normal text-slate-500">Supported actions / constraints</p>
@@ -2060,67 +2092,89 @@ export default function ApiManagerPage() {
               </button>
             </div>
           ) : null}
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            Tags (comma separated)
-            <input
-              value={definitionDraft.tags}
-              onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
-              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              disabled={isSystemScope}
-            />
-          </label>
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <label className="text-xs uppercase tracking-normal text-slate-500">
-              Param Schema (JSON)
+
+          <FormSection title="Organization" columns={1}>
+            <FormFieldGroup
+              label="Tags"
+              help="Comma-separated tags for organizing APIs (e.g., user-management, analytics)"
+            >
+              <input
+                value={definitionDraft.tags}
+                onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                disabled={isSystemScope}
+                placeholder="user, analytics, reporting"
+              />
+            </FormFieldGroup>
+          </FormSection>
+
+          <FormSection
+            title="Validation & Policy"
+            description="Define parameter schema and runtime policies"
+            columns={2}
+          >
+            <FormFieldGroup
+              label="Param Schema (JSON)"
+              help="JSON Schema for validating request parameters"
+            >
               <textarea
                 value={paramSchemaText}
                 onChange={(event) => setParamSchemaText(event.target.value)}
-                className="mt-2 h-[11rem] w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                className="h-40 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
                 disabled={isSystemScope && systemView !== "registered"}
+                placeholder='{"type": "object", "properties": {...}}'
               />
-            </label>
-            <div className="flex flex-col">
-              <span className="text-xs uppercase tracking-normal text-slate-500">Runtime Policy (JSON)</span>
-              <div className="mt-2 h-[11rem]">
-                {!isSystemScope || systemView === "registered" ? (
-                  <textarea
-                    value={runtimePolicyText}
-                    onChange={(event) => setRuntimePolicyText(event.target.value)}
-                    className="h-full w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
-                    disabled={isSystemScope && systemView !== "registered"}
-                  />
-                ) : (
-                  <div className="flex h-full flex-col justify-center rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-400">
-                    Runtime Policy editing is available only for System {'>'} Registered or Custom APIs.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          <label className="text-xs uppercase tracking-normal text-slate-500 flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={definitionDraft.is_active}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
-              }
-              className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
-              disabled={isSystemScope}
-            />
-            Active
-          </label>
-          <label className="text-xs uppercase tracking-normal text-slate-500">
-            Created by
-            <input
-              value={definitionDraft.created_by}
-              onChange={(event) =>
-                setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
-              }
-              className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
-              placeholder="ops-builder"
-              disabled={isSystemScope}
-            />
-          </label>
+            </FormFieldGroup>
+            <FormFieldGroup
+              label="Runtime Policy (JSON)"
+              help="Policy rules for API execution"
+            >
+              {!isSystemScope || systemView === "registered" ? (
+                <textarea
+                  value={runtimePolicyText}
+                  onChange={(event) => setRuntimePolicyText(event.target.value)}
+                  className="h-40 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                  disabled={isSystemScope && systemView !== "registered"}
+                  placeholder='{"timeout": 30000}'
+                />
+              ) : (
+                <div className="flex h-40 flex-col justify-center rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-400">
+                  Runtime Policy editing is available only for System {'>'} Registered or Custom APIs.
+                </div>
+              )}
+            </FormFieldGroup>
+          </FormSection>
+
+          <FormSection title="Status & Metadata" columns={2}>
+            <FormFieldGroup label="Active Status">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={definitionDraft.is_active}
+                  onChange={(event) =>
+                    setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
+                  }
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
+                  disabled={isSystemScope}
+                />
+                <span className="text-sm text-slate-300">Enable this API</span>
+              </label>
+            </FormFieldGroup>
+            <FormFieldGroup
+              label="Created By"
+              help="Username or service name that created this API"
+            >
+              <input
+                value={definitionDraft.created_by}
+                onChange={(event) =>
+                  setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
+                }
+                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                placeholder="ops-builder"
+                disabled={isSystemScope}
+              />
+            </FormFieldGroup>
+          </FormSection>
         </div>
       )}
       {activeTab === "logic" && (
@@ -2164,71 +2218,16 @@ export default function ApiManagerPage() {
           ) : null}
           <div
             className={`builder-json-shell rounded-2xl border border-slate-800 bg-slate-950/60 transition-all ${
-              logicType === "http" ? "h-auto max-h-[500px] overflow-y-auto" : "h-64 overflow-hidden"
+              logicType === "http" ? "h-auto max-h-[600px] overflow-y-auto" : "h-64 overflow-hidden"
             }`}
           >
             {logicType === "http" ? (
-              <div className="space-y-4 p-4 text-sm">
-                {isSystemScope ? (
-                  <p className="text-[11px] text-slate-400">
-                    HTTP spec is read-only for system APIs.
-                  </p>
-                ) : null}
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
-                    Method
-                    <select
-                      value={httpSpec.method}
-                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, method: e.target.value }))}
-                      disabled={isSystemScope}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      <option>GET</option>
-                      <option>POST</option>
-                      <option>PUT</option>
-                      <option>DELETE</option>
-                    </select>
-                  </label>
-                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
-                    URL
-                    <input
-                      value={httpSpec.url}
-                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, url: e.target.value }))}
-                      disabled={isSystemScope}
-                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
-                      placeholder="https://api.example.com/data"
-                    />
-                  </label>
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
-                    Headers (JSON)
-                    <textarea
-                      value={httpSpec.headers}
-                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, headers: e.target.value }))}
-                      disabled={isSystemScope}
-                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500">
-                    Params (JSON)
-                    <textarea
-                      value={httpSpec.params}
-                      onChange={(e) => setHttpSpec((prev) => ({ ...prev, params: e.target.value }))}
-                      disabled={isSystemScope}
-                      className="h-28 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
-                    />
-                  </label>
-                </div>
-                <label className="flex flex-col gap-1.5 text-xs uppercase tracking-normal text-slate-500 pb-2">
-                  Body (JSON)
-                  <textarea
-                    value={httpSpec.body}
-                    onChange={(e) => setHttpSpec((prev) => ({ ...prev, body: e.target.value }))}
-                    disabled={isSystemScope}
-                    className="h-32 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-                </label>
+              <div className="p-4">
+                <HttpFormBuilder
+                  value={httpSpec}
+                  onChange={setHttpSpec}
+                  isReadOnly={isSystemScope}
+                />
               </div>
             ) : (
               <Editor
