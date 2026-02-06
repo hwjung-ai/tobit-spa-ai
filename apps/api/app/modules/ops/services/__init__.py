@@ -38,17 +38,23 @@ from .resolvers import resolve_ci, resolve_time_range
 
 # Stub implementations for removed executors
 def run_config_executor(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Removed executor - config_executor.py has been deleted for generic orchestration."""
-    logger = logging.getLogger(__name__)
-    logger.error("Executor 'config_executor' is no longer available. Please implement as Tool Asset.")
-    return ([], [])
+    """Run config executor using execute_universal."""
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "config", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Removed executor - graph_executor.py has been deleted for generic orchestration."""
-    logger = logging.getLogger(__name__)
-    logger.error("Executor 'graph_executor' is no longer available. Please implement as Tool Asset.")
-    return ([], [])
+    """Run graph executor using execute_universal."""
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "graph", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def run_hist(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
