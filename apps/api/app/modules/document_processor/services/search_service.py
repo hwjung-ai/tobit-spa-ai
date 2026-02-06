@@ -102,40 +102,87 @@ class DocumentSearchService:
         self, query: str, filters: SearchFilters, top_k: int
     ) -> List[SearchResult]:
         """
-        Full-text search using BM25
+        Full-text search using BM25 (PostgreSQL tsvector)
 
-        In production, this would use PostgreSQL full-text search:
-        SELECT chunk_id, document_id, text, ts_rank(...)
-        FROM document_chunks
-        WHERE to_tsvector(text) @@ plainto_tsquery($1)
+        Uses PostgreSQL's built-in full-text search with ts_rank for ranking.
         """
 
-        # Placeholder implementation - would be replaced with actual DB query
         results = []
 
-        # Simulate searching through documents
-        if self.db:
-            try:
-                # This would be actual SQL query:
-                # query_sql = """
-                # SELECT dc.id, dc.document_id, d.filename, dc.text,
-                #        dc.page_number, dc.chunk_type,
-                #        ts_rank(to_tsvector(dc.text), plainto_tsquery($1)) as rank
-                # FROM document_chunks dc
-                # JOIN documents d ON d.id = dc.document_id
-                # WHERE d.tenant_id = $2
-                # AND to_tsvector(dc.text) @@ plainto_tsquery($1)
-                # ORDER BY rank DESC
-                # LIMIT $3
-                # """
+        if not self.db:
+            return results
 
-                self.logger.debug(f"Performing text search for: {query}")
+        try:
+            from sqlalchemy import text
 
-                # Mock results for now
-                pass
+            # Build WHERE clauses
+            where_clauses = [
+                "d.tenant_id = :tenant_id",
+                "d.deleted_at IS NULL",
+                "to_tsvector('english', dc.text) @@ plainto_tsquery('english', :query)"
+            ]
 
-            except Exception as e:
-                self.logger.error(f"Text search error: {str(e)}")
+            # Add date filters
+            if filters.date_from:
+                where_clauses.append("dc.created_at >= :date_from")
+            if filters.date_to:
+                where_clauses.append("dc.created_at <= :date_to")
+
+            # Add document type filter
+            if filters.document_types:
+                where_clauses.append("dc.chunk_type = ANY(:doc_types)")
+
+            where_clause = " AND ".join(where_clauses)
+
+            # BM25 full-text search query
+            query_sql = f"""
+            SELECT dc.id, dc.document_id, d.filename, dc.text,
+                   dc.page_number, dc.chunk_type,
+                   ts_rank(to_tsvector('english', dc.text),
+                           plainto_tsquery('english', :query)) as score
+            FROM document_chunks dc
+            JOIN documents d ON d.id = dc.document_id
+            WHERE {where_clause}
+            ORDER BY score DESC
+            LIMIT :top_k
+            """
+
+            # Build parameters
+            params = {
+                "tenant_id": filters.tenant_id,
+                "query": query,
+                "top_k": top_k,
+            }
+
+            if filters.date_from:
+                params["date_from"] = filters.date_from
+            if filters.date_to:
+                params["date_to"] = filters.date_to
+            if filters.document_types:
+                params["doc_types"] = filters.document_types
+
+            # Execute query
+            statement = text(query_sql)
+            rows = self.db.execute(statement, params).fetchall()
+
+            # Map results
+            for row in rows:
+                result = SearchResult(
+                    chunk_id=row[0],
+                    document_id=row[1],
+                    document_name=row[2],
+                    chunk_text=row[3],
+                    page_number=row[4],
+                    chunk_type=row[5],
+                    relevance_score=float(row[6]) if row[6] else 0.0,
+                    created_at=None,
+                )
+                results.append(result)
+
+            self.logger.debug(f"Text search found {len(results)} results for: {query}")
+
+        except Exception as e:
+            self.logger.error(f"Text search error: {str(e)}")
 
         return results
 
@@ -158,28 +205,84 @@ class DocumentSearchService:
 
             query_embedding = await self.embedding_service.embed(query)
 
-            # 2. Vector search (would be actual pgvector query)
-            # query_sql = """
-            # SELECT dc.id, dc.document_id, d.filename, dc.text,
-            #        dc.page_number, dc.chunk_type,
-            #        1 - (dc.embedding <=> $1) as similarity
-            # FROM document_chunks dc
-            # JOIN documents d ON d.id = dc.document_id
-            # WHERE d.tenant_id = $2
-            # AND 1 - (dc.embedding <=> $1) > $3
-            # ORDER BY similarity DESC
-            # LIMIT $4
-            # """
+            if not self.db:
+                return results
+
+            from sqlalchemy import text
+            import json
+
+            # Build WHERE clauses
+            where_clauses = [
+                "d.tenant_id = :tenant_id",
+                "d.deleted_at IS NULL",
+                "1 - (dc.embedding <=> :embedding) > :min_similarity",
+            ]
+
+            # Add date filters
+            if filters.date_from:
+                where_clauses.append("dc.created_at >= :date_from")
+            if filters.date_to:
+                where_clauses.append("dc.created_at <= :date_to")
+
+            # Add document type filter
+            if filters.document_types:
+                where_clauses.append("dc.chunk_type = ANY(:doc_types)")
+
+            where_clause = " AND ".join(where_clauses)
+
+            # pgvector similarity search query
+            query_sql = f"""
+            SELECT dc.id, dc.document_id, d.filename, dc.text,
+                   dc.page_number, dc.chunk_type,
+                   1 - (dc.embedding <=> :embedding::vector) as similarity
+            FROM document_chunks dc
+            JOIN documents d ON d.id = dc.document_id
+            WHERE {where_clause}
+            ORDER BY similarity DESC
+            LIMIT :top_k
+            """
+
+            # Build parameters
+            params = {
+                "tenant_id": filters.tenant_id,
+                "embedding": json.dumps(query_embedding),
+                "min_similarity": 1 - 0.75,  # Convert to distance (lower is better)
+                "top_k": top_k,
+            }
+
+            if filters.date_from:
+                params["date_from"] = filters.date_from
+            if filters.date_to:
+                params["date_to"] = filters.date_to
+            if filters.document_types:
+                params["doc_types"] = filters.document_types
+
+            # Execute query
+            statement = text(query_sql)
+            rows = self.db.execute(statement, params).fetchall()
+
+            # Map results
+            for row in rows:
+                result = SearchResult(
+                    chunk_id=row[0],
+                    document_id=row[1],
+                    document_name=row[2],
+                    chunk_text=row[3],
+                    page_number=row[4],
+                    chunk_type=row[5],
+                    relevance_score=float(row[6]) if row[6] else 0.0,
+                    created_at=None,
+                )
+                results.append(result)
 
             self.logger.debug(
-                f"Performing vector search with {len(query_embedding)} dimensions"
+                f"Vector search found {len(results)} results with {len(query_embedding)} dimensions"
             )
-
-            # Mock results for now
-            pass
 
         except Exception as e:
             self.logger.error(f"Vector search error: {str(e)}")
+            # Fallback: return empty results, BM25 will be used
+            results = []
 
         return results
 
@@ -231,21 +334,42 @@ class DocumentSearchService:
         results_count: int,
         execution_time_ms: int,
     ) -> None:
-        """Log search query for analytics"""
+        """Log search query for analytics and suggestions"""
 
         try:
             if self.db:
-                # Insert into document_search_log table
-                # sql = """
-                # INSERT INTO document_search_log
-                # (search_id, user_id, tenant_id, query, search_type, results_count, execution_time_ms)
-                # VALUES ($1, $2, $3, $4, $5, $6, $7)
-                # """
+                from sqlalchemy import text
+                import uuid
 
-                self.logger.debug(
-                    f"Search completed: query={query[:50]}, "
-                    f"results={results_count}, time={execution_time_ms}ms"
-                )
+                # Check if document_search_log table exists
+                # If not, just log to logger
+                try:
+                    insert_sql = """
+                    INSERT INTO document_search_log
+                    (search_id, tenant_id, query, results_count, execution_time_ms, created_at)
+                    VALUES (:search_id, :tenant_id, :query, :results_count, :execution_time_ms, NOW())
+                    """
+
+                    params = {
+                        "search_id": str(uuid.uuid4()),
+                        "tenant_id": filters.tenant_id,
+                        "query": query,
+                        "results_count": results_count,
+                        "execution_time_ms": execution_time_ms,
+                    }
+
+                    statement = text(insert_sql)
+                    self.db.execute(statement, params)
+                    self.db.commit()
+
+                except Exception as table_error:
+                    # Table may not exist, just log to logger
+                    self.logger.warning(f"Could not log to DB: {str(table_error)}")
+
+            self.logger.info(
+                f"Search completed: query={query[:50]}, "
+                f"results={results_count}, time={execution_time_ms}ms"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to log search: {str(e)}")

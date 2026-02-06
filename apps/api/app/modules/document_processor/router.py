@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import logging
+import time
+from datetime import datetime
 from typing import List, Optional
 
 from core.auth import get_current_user
+from core.db import get_session
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 from schemas.common import ResponseEnvelope
+from sqlmodel import Session
 
 from .services import (
     ChunkingStrategy,
@@ -219,9 +223,11 @@ async def get_document(
         raise HTTPException(500, str(e))
 
 
-@router.post("/search", response_model=dict)
+@router.post("/search", response_model=ResponseEnvelope)
 async def search_documents(
-    request: SearchRequest, current_user: dict = Depends(get_current_user)
+    request: SearchRequest,
+    current_user: dict = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """
     Advanced document search with multiple strategies
@@ -244,36 +250,111 @@ async def search_documents(
             f"type={request.search_type}, top_k={request.top_k}"
         )
 
+        # Get tenant_id from current_user
+        tenant_id = getattr(current_user, 'tenant_id', None)
+        if not tenant_id:
+            tenant_id = current_user.get("tenant_id", "t1") if isinstance(current_user, dict) else "t1"
+
+        # Parse dates if provided
+        date_from = None
+        date_to = None
+        try:
+            if request.date_from:
+                date_from = datetime.fromisoformat(request.date_from)
+            if request.date_to:
+                date_to = datetime.fromisoformat(request.date_to)
+        except ValueError as e:
+            raise HTTPException(400, f"Invalid date format: {str(e)}")
+
         # Create filters
-        SearchFilters(
-            tenant_id=current_user.get("tenant_id", ""),
-            date_from=None,  # Parse from request if provided
-            date_to=None,
+        filters = SearchFilters(
+            tenant_id=tenant_id,
+            date_from=date_from,
+            date_to=date_to,
             document_types=request.document_types or [],
             min_relevance=request.min_relevance,
         )
 
-        # Perform search (placeholder - would be actual DB query)
-        results = []
-        # results = await search_service.search(
-        #     query=request.query,
-        #     filters=filters,
-        #     top_k=request.top_k,
-        #     search_type=request.search_type
-        # )
+        # Initialize search service with session
+        search_svc = DocumentSearchService(db_session=session, embedding_service=None)
 
-        return {
-            "status": "ok",
-            "query": request.query,
-            "search_type": request.search_type,
-            "results_count": len(results),
-            "results": results,
-        }
+        # Perform search
+        start_time = time.time()
+        results = await search_svc.search(
+            query=request.query,
+            filters=filters,
+            top_k=min(request.top_k, 100),  # Cap at 100
+            search_type=request.search_type,
+        )
+        execution_time_ms = int((time.time() - start_time) * 1000)
+
+        # Convert results to response format
+        result_list = [
+            SearchResultResponse(
+                chunk_id=r.chunk_id,
+                document_id=r.document_id,
+                document_name=r.document_name,
+                chunk_text=r.chunk_text,
+                page_number=r.page_number,
+                relevance_score=r.relevance_score,
+                chunk_type=r.chunk_type,
+            )
+            for r in results
+        ]
+
+        return ResponseEnvelope.success(
+            data={
+                "query": request.query,
+                "search_type": request.search_type,
+                "total_count": len(result_list),
+                "execution_time_ms": execution_time_ms,
+                "results": [r.model_dump() for r in result_list],
+            }
+        )
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Search failed: {str(e)}")
+        logger.error(f"Search failed: {str(e)}", exc_info=True)
+        raise HTTPException(500, f"Search failed: {str(e)}")
+
+
+@router.get("/search/suggestions", response_model=ResponseEnvelope)
+async def search_suggestions(
+    prefix: str = Query("", min_length=1),
+    limit: int = Query(5, ge=1, le=20),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get search suggestions based on previous queries
+
+    Returns a list of suggested search terms matching the prefix
+    """
+
+    try:
+        if not prefix or len(prefix.strip()) < 1:
+            return ResponseEnvelope.success(data={"suggestions": []})
+
+        # Get tenant_id
+        tenant_id = getattr(current_user, 'tenant_id', None)
+        if not tenant_id:
+            tenant_id = current_user.get("tenant_id", "t1") if isinstance(current_user, dict) else "t1"
+
+        # Get search service
+        search_svc = DocumentSearchService()
+
+        # Get suggestions (currently uses placeholder implementation)
+        suggestions = search_svc.get_search_suggestions(prefix, limit)
+
+        return ResponseEnvelope.success(
+            data={
+                "prefix": prefix,
+                "suggestions": suggestions,
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Suggestions failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
