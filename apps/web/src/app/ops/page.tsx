@@ -31,15 +31,15 @@ type BackendMode = "config" | "all" | "metric" | "hist" | "graph" | "document";
 type UiMode = "ci" | "metric" | "history" | "relation" | "document" | "all";
 
 const UI_MODES: { id: UiMode; label: string; backend: BackendMode }[] = [
+  { id: "all", label: "전체", backend: "all", endpoint: "/ops/ask" },
   { id: "ci", label: "구성", backend: "config" },
   { id: "metric", label: "수치", backend: "metric" },
   { id: "history", label: "이력", backend: "hist" },
   { id: "relation", label: "연결", backend: "graph" },
   { id: "document", label: "문서", backend: "document" },
-  { id: "all", label: "전체", backend: "all", endpoint: "/ops/ask" },
 ];
 
-const MODE_STORAGE_KEY = "ops:mode";
+const MODE_STORAGE_KEY = "ops:mode:v2"; // v2: default changed to "all"
 const HISTORY_LIMIT = 40;
 
 const formatTimestamp = (value: string) => {
