@@ -38,16 +38,23 @@ from .resolvers import resolve_ci, resolve_time_range
 
 # Stub implementations for removed executors
 def run_config_executor(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run config executor - returns placeholder until Tool Asset is implemented."""
-    settings = kwargs.get("settings") or get_settings()
-    placeholder = _build_config_placeholder(question, settings)
-    return (placeholder, ["placeholder"])
+    """Run config executor using execute_universal with CI lookup and aggregation."""
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "config", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run graph executor - returns mock data until Tool Asset is implemented."""
-    blocks = _build_mock_blocks("relation", question)
-    return (blocks, ["mock"])
+    """Run graph executor using execute_universal with CI relationship analysis."""
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "graph", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def run_hist(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
@@ -233,56 +240,104 @@ def _create_simple_plan(mode: str) -> Any:
     """Create a simple plan based on mode."""
     from app.modules.ops.services.ci.planner.plan_schema import (
         Plan,
-        AggregateStage,
-        MetricStage,
-        HistoryStage,
-        OutputStage,
+        Intent,
+        View,
+        PlanMode,
+        PrimarySpec,
+        AggregateSpec,
+        GraphSpec,
+        MetricSpec,
+        HistorySpec,
+        OutputSpec,
+        ExecutionStrategy,
     )
-    from app.modules.ops.services.ci.planner.plan_schema import ExecutionStrategy
 
-    # Build stages based on mode
-    stages = []
-    aggregate = None
+    # Base configuration
+    intent = Intent.LOOKUP
+    view = View.SUMMARY
+    plan_mode = PlanMode.CI
+
+    # Initialize specs
+    primary = PrimarySpec(limit=10)
+    aggregate = AggregateSpec()
+    graph = GraphSpec()
     metric = None
-    history = None
+    history = HistorySpec()
+    output = OutputSpec()
 
-    if mode in ("metric", "all", "hist"):
-        # Add aggregate stage for CI grouping
-        aggregate = AggregateStage(
-            enabled=True,
+    # Configure based on mode
+    if mode == "config":
+        # Config mode: Lookup CI with aggregation
+        intent = Intent.LOOKUP
+        view = View.SUMMARY
+        aggregate = AggregateSpec(
+            group_by=["ci_type"],
+            metrics=["ci_name", "ci_code"],
+            filters=[],
+            top_n=20,
+        )
+        primary = PrimarySpec(
+            limit=10,
+            tool_type="ci_lookup"
+        )
+
+    elif mode == "graph":
+        # Graph mode: Analyze CI relationships
+        intent = Intent.EXPAND
+        view = View.NEIGHBORS
+        graph = GraphSpec(
+            depth=2,
+            view=View.NEIGHBORS,
+            tool_type="ci_graph"
+        )
+        primary = PrimarySpec(
+            limit=5,
+            tool_type="ci_lookup"
+        )
+
+    elif mode in ("metric", "all"):
+        # Metric mode
+        intent = Intent.AGGREGATE
+        aggregate = AggregateSpec(
             group_by=["ci_type"],
             metrics=["ci_name"],
             filters=[],
             top_n=10,
         )
-
-    if mode in ("metric", "all"):
-        # Add metric stage
-        metric = MetricStage(
-            enabled=True,
-            primary="cpu_usage",
-            agg="MAX",
+        metric = MetricSpec(
+            metric_name="cpu_usage",
+            agg="max",
             time_range="last_24h",
+            mode="aggregate",
         )
 
-    if mode in ("history", "all", "hist"):
-        # Add history stage
-        history = HistoryStage(
+    elif mode in ("hist", "history"):
+        # History mode
+        intent = Intent.LIST
+        aggregate = AggregateSpec(
+            group_by=["ci_type"],
+            metrics=["ci_name"],
+            filters=[],
+            top_n=10,
+        )
+        history = HistorySpec(
             enabled=True,
-            event_types=[],
-            limit=10,
+            source="event_log",
+            time_range="last_7d",
+            limit=20,
         )
 
     return Plan(
-        graph=None,
+        intent=intent,
+        view=view,
+        mode=plan_mode,
+        primary=primary,
         aggregate=aggregate,
+        graph=graph,
         metric=metric,
         history=history,
-        list=None,
-        auto=None,
-        output=OutputStage(enabled=True),
-        execution_strategy=ExecutionStrategy.ORCHESTRATION,
-        policy=None,
+        output=output,
+        execution_strategy=ExecutionStrategy.SERIAL,
     )
 
 
@@ -296,6 +351,43 @@ def _convert_result_to_blocks(result: dict, mode: str) -> list:
     for tool_id, tool_result in execution_results.items():
         if isinstance(tool_result, dict) and tool_result.get("success"):
             data = tool_result.get("data", {})
+
+            # Check if this is graph data
+            if mode == "graph" and isinstance(data, dict):
+                nodes = data.get("nodes", [])
+                edges = data.get("edges", [])
+
+                if nodes or edges:
+                    # Convert to GraphBlock format
+                    graph_nodes = []
+                    for node in nodes:
+                        if isinstance(node, dict):
+                            graph_nodes.append(GraphNode(
+                                id=str(node.get("id", node.get("ci_code", f"n{len(graph_nodes)}"))),
+                                data={"label": str(node.get("label", node.get("ci_name", "Unknown")))},
+                                position={"x": 0.0, "y": 0.0}  # Let frontend handle layout
+                            ))
+
+                    graph_edges = []
+                    for edge in edges:
+                        if isinstance(edge, dict):
+                            graph_edges.append(GraphEdge(
+                                id=str(edge.get("id", f"e{len(graph_edges)}")),
+                                source=str(edge.get("source", edge.get("from", ""))),
+                                target=str(edge.get("target", edge.get("to", ""))),
+                                label=str(edge.get("label", edge.get("relation", "")))
+                            ))
+
+                    if graph_nodes:
+                        blocks.append(GraphBlock(
+                            type="graph",
+                            title=f"{tool_id} Graph",
+                            nodes=graph_nodes,
+                            edges=graph_edges
+                        ))
+                        continue
+
+            # Otherwise handle as table data
             rows = data.get("rows", []) if isinstance(data, dict) else []
             columns = data.get("columns") if isinstance(data, dict) else None
 
@@ -331,6 +423,14 @@ def _convert_result_to_blocks(result: dict, mode: str) -> list:
                 columns=table_columns,
                 rows=table_rows,
             ))
+
+    # If no blocks generated, add a message block
+    if not blocks:
+        blocks.append(MarkdownBlock(
+            type="markdown",
+            title="No Results",
+            content=f"No data found for {mode} mode query. The query executed successfully but returned no results."
+        ))
 
     return blocks
 
