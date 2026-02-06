@@ -537,24 +537,8 @@ export default function OpsPage() {
     let trace: unknown;
     let nextActions: NextAction[] | undefined;
     try {
-      if (requestedMode.id === "ci") {
-        const response = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ci/ask`, {
-          method: "POST",
-          body: JSON.stringify({ question: question.trim() }),
-        });
-        const ciPayload = response?.data;
-        if (!ciPayload || !Array.isArray(ciPayload.blocks)) {
-          throw new Error("Invalid CI response format");
-        }
-        const meta = normalizeAnswerMeta(ciPayload.meta, ciPayload.answer);
-        envelope = {
-          meta: meta as unknown as AnswerEnvelope["meta"],
-          blocks: ciPayload.blocks,
-        };
-        trace = ciPayload.trace;
-        nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
-      } else if (requestedMode.id === "all") {
-        // "all" mode uses /ops/ask endpoint
+      if (requestedMode.id === "all") {
+        // "all" mode uses /ops/ask endpoint for orchestration
         const response = await authenticatedFetch<ResponseEnvelope<CiAnswerPayload>>(`/ops/ask`, {
           method: "POST",
           body: JSON.stringify({ question: question.trim() }),
@@ -571,6 +555,7 @@ export default function OpsPage() {
         trace = ciPayload.trace;
         nextActions = ciPayload.next_actions ?? ciPayload.nextActions;
       } else {
+        // All other modes (ci/config, metric, history, relation, document) use /ops/query
         const data = await authenticatedFetch<ResponseEnvelope<{ answer?: AnswerEnvelope; trace?: unknown }>>(`/ops/query`, {
           method: "POST",
           body: JSON.stringify(payload),
