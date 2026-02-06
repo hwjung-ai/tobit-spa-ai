@@ -5,8 +5,19 @@ import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveCepWithFallback } from "../../lib/cepBuilderSave";
 import Editor from "@monaco-editor/react";
+import {
+  BasicInfoSection,
+  TriggerSection,
+  ConditionsSection,
+  WindowingSection,
+  AggregationSection,
+  EnrichmentSection,
+  ActionsSection,
+  SimulationPanel,
+  JsonPreview,
+} from "../../components/cep-form-builder";
 
-type CenterTab = "definition" | "test" | "logs";
+type CenterTab = "definition" | "definition-form" | "test" | "logs";
 type TriggerType = "metric" | "event" | "schedule";
 
 interface CepRule {
@@ -150,7 +161,8 @@ const parseCepDraft = (text: string) => {
 };
 
 const tabOptions: { id: CenterTab; label: string }[] = [
-  { id: "definition", label: "Definition" },
+  { id: "definition", label: "JSON Editor" },
+  { id: "definition-form", label: "Form Builder" },
   { id: "test", label: "Test" },
   { id: "logs", label: "Logs" },
 ];
@@ -206,6 +218,30 @@ export default function CepBuilderPage() {
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
   const [formBaselineSnapshot, setFormBaselineSnapshot] = useState<string | null>(null);
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
+
+  // Form mode states
+  interface Condition {
+    id: string;
+    field: string;
+    op: string;
+    value: string;
+  }
+  interface Action {
+    id: string;
+    type: "webhook" | "notify" | "trigger" | "store";
+    endpoint?: string;
+    method?: "GET" | "POST" | "PUT" | "DELETE";
+    channels?: string[];
+    message?: string;
+  }
+  const [formConditions, setFormConditions] = useState<Condition[]>([]);
+  const [formConditionLogic, setFormConditionLogic] = useState<"AND" | "OR" | "NOT">("AND");
+  const [formActions, setFormActions] = useState<Action[]>([]);
+  const [formWindowConfig, setFormWindowConfig] = useState<Record<string, any>>({});
+  const [formAggregations, setFormAggregations] = useState<any[]>([]);
+  const [formGroupByFields, setFormGroupByFields] = useState<string[]>([]);
+  const [formEnrichments, setFormEnrichments] = useState<any[]>([]);
+
   const draftStorageId = selectedId ?? "new";
   const finalStorageId = selectedId ?? (ruleName.trim() || "new");
 
@@ -790,6 +826,108 @@ export default function CepBuilderPage() {
     </div>
   );
 
+  const formDefinitionContent = (
+    <div className="max-h-[600px] overflow-y-auto space-y-4">
+      <BasicInfoSection
+        ruleName={ruleName}
+        description={ruleDescription}
+        isActive={isActive}
+        onRuleNameChange={setRuleName}
+        onDescriptionChange={setRuleDescription}
+        onActiveChange={setIsActive}
+      />
+
+      <TriggerSection
+        triggerType={triggerType as any}
+        triggerSpec={parseJsonObject(triggerSpecText)}
+        onTriggerTypeChange={(type) => {
+          setTriggerType(type);
+          setTriggerSpecText("{}");
+        }}
+        onTriggerSpecChange={(spec) => setTriggerSpecText(JSON.stringify(spec, null, 2))}
+      />
+
+      <ConditionsSection
+        conditions={formConditions}
+        logic={formConditionLogic}
+        onConditionsChange={setFormConditions}
+        onLogicChange={setFormConditionLogic}
+      />
+
+      <WindowingSection
+        windowConfig={formWindowConfig}
+        onWindowConfigChange={setFormWindowConfig}
+      />
+
+      <AggregationSection
+        aggregations={formAggregations}
+        groupByFields={formGroupByFields}
+        onAggregationsChange={setFormAggregations}
+        onGroupByChange={setFormGroupByFields}
+      />
+
+      <EnrichmentSection
+        enrichments={formEnrichments}
+        onEnrichmentsChange={setFormEnrichments}
+      />
+
+      <ActionsSection
+        actions={formActions}
+        onActionsChange={setFormActions}
+      />
+
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+        <div className="flex items-center justify-between cursor-pointer hover:bg-slate-900/40 p-2 rounded-lg">
+          <h3 className="text-sm font-semibold text-white">JSON 미리보기</h3>
+        </div>
+        <div className="mt-3">
+          <JsonPreview
+            data={{
+              rule_name: ruleName,
+              description: ruleDescription,
+              is_active: isActive,
+              trigger_type: triggerType,
+              trigger_spec: parseJsonObject(triggerSpecText),
+              ...(formConditions.length > 0 && {
+                composite_condition: {
+                  conditions: formConditions.map((c) => ({
+                    field: c.field,
+                    op: c.op,
+                    value: c.value,
+                  })),
+                  logic: formConditionLogic,
+                },
+              }),
+              ...(Object.keys(formWindowConfig).length > 0 && {
+                window_config: formWindowConfig,
+              }),
+              actions: formActions.map((a) => ({
+                type: a.type,
+                endpoint: a.endpoint,
+                method: a.method,
+                channels: a.channels,
+                message: a.message,
+              })),
+            }}
+            title="생성되는 규칙 JSON"
+            copyable={true}
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          onClick={handleSave}
+          disabled={isSaving || !ruleName.trim() || formActions.length === 0}
+          className="flex-1 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isSaving ? "저장 중..." : selectedRule ? "규칙 수정" : "규칙 생성"}
+        </button>
+      </div>
+      {statusError ? <p className="text-xs text-rose-400">{statusError}</p> : null}
+    </div>
+  );
+
   const testContent = (
     <div className="space-y-4">
       <p className="text-[11px] uppercase tracking-wider text-slate-500">
@@ -879,15 +1017,17 @@ export default function CepBuilderPage() {
       </div>
       {activeTab === "definition"
         ? definitionContent
-        : activeTab === "test"
-          ? testContent
-          : logsContent}
+        : activeTab === "definition-form"
+          ? formDefinitionContent
+          : activeTab === "test"
+            ? testContent
+            : logsContent}
     </div>
   );
 
   const centerBottom = (
     <div className="space-y-3">
-      {activeTab === "definition" ? (
+      {activeTab === "definition" || activeTab === "definition-form" ? (
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200">
           <p className="text-[11px] uppercase tracking-wider text-slate-500">Metadata</p>
           {selectedRule ? (
