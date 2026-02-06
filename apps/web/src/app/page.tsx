@@ -199,7 +199,8 @@ export default function Home() {
     // Build SSE URL - use Next.js API proxy for SSE to avoid firewall issues
     let streamUrl: string;
     if (!apiBaseUrl) {
-      streamUrl = `/api/proxy-sse/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
+      streamUrl = `/sse-proxy/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
+
     } else {
       streamUrl = `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
     }
@@ -395,9 +396,8 @@ export default function Home() {
                   </span>
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-[0.3em] ${
-                    status === "streaming" ? "animate-pulse" : ""
-                  } ${status === "error" ? "text-rose-400" : "text-slate-500"}`}
+                  className={`text-xs uppercase tracking-[0.3em] ${status === "streaming" ? "animate-pulse" : ""
+                    } ${status === "error" ? "text-rose-400" : "text-slate-500"}`}
                 >
                   {status === "streaming" ? "SSE live" : status === "idle" ? "Ready" : "Error"}
                 </span>

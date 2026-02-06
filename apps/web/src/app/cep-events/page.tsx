@@ -346,7 +346,8 @@ function CepEventBrowserContent() {
     // - 자동 재연결 (기본값: 3초)
 
     // Use Next.js API proxy for SSE to avoid firewall issues
-    const streamUrl = !apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+    const streamUrl = !apiBaseUrl ? `/sse-proxy/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+
     let eventSource: EventSource | null = null;
     let reconnectTimeout: NodeJS.Timeout | null = null;
     let isClosing = false;

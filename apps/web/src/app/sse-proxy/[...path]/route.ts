@@ -11,14 +11,18 @@ const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:8000";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the original URL path after /api/proxy-sse
+    // Get the original URL path after /sse-proxy
     const { searchParams } = new URL(request.url);
-    const pathname = request.nextUrl.pathname.replace(/^\/api\/proxy-sse/, "");
+    const pathname = request.nextUrl.pathname.replace(/^\/sse-proxy/, "");
+
     const queryString = searchParams.toString();
-    
+
     // Build the target backend URL
-    const targetUrl = new URL(`${pathname}${queryString ? `?${queryString}` : ""}`, API_BASE_URL);
-    
+    const targetUrl = new URL(
+      `${pathname}${queryString ? `?${queryString}` : ""}`,
+      API_BASE_URL
+    );
+
     console.log(`[SSE Proxy] Forwarding to: ${targetUrl.toString()}`);
 
     // Prepare headers to forward (exclude hop-by-hop headers)
@@ -37,11 +41,14 @@ export async function GET(request: NextRequest) {
       headers.set(key, value);
     });
 
-    // Forward the request to the backend
+    // Forward the request to the backend with caching disabled
     const response = await fetch(targetUrl.toString(), {
       method: request.method,
       headers,
+      cache: 'no-store', // Crucial for SSE to avoid buffering/caching
     });
+
+    console.log(`[SSE Proxy] Backend responded with status: ${response.status}`);
 
     // Create a readable stream from the backend response
     const reader = response.body?.getReader();

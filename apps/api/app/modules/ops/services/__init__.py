@@ -71,6 +71,107 @@ def run_metric(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
     return result.blocks, result.used_tools
 
 
+def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
+    """Run document search executor."""
+    import asyncio
+    from app.modules.document_processor.services.search_service import DocumentSearchService, SearchFilters
+    from core.db import get_session_context
+
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Executing document search for question: {question[:100]}")
+
+    try:
+        with get_session_context() as session:
+            search_service = DocumentSearchService(session, embedding_service=None)
+
+            filters = SearchFilters(
+                tenant_id=tenant_id,
+                date_from=None,
+                date_to=None,
+                document_types=[],
+                min_relevance=0.5
+            )
+
+            # Run async search
+            loop = asyncio.get_event_loop()
+            search_results = loop.run_until_complete(
+                search_service.search(
+                    query=question,
+                    filters=filters,
+                    top_k=10,
+                    search_type="hybrid"
+                )
+            )
+
+            # Convert search results to blocks
+            if not search_results:
+                markdown_block = MarkdownBlock(
+                    type="markdown",
+                    title="Document Search Results",
+                    content="No documents found matching your query."
+                )
+                return [markdown_block], ["document_search"]
+
+            # Create table block with results
+            columns = ["Document", "Content", "Score"]
+            rows = []
+            for result in search_results:
+                score_str = f"{result.relevance_score:.2%}" if hasattr(result, 'relevance_score') else "N/A"
+                rows.append([
+                    result.document_name if hasattr(result, 'document_name') else "Unknown",
+                    (result.chunk_text[:100] + "...") if hasattr(result, 'chunk_text') and len(result.chunk_text) > 100 else result.chunk_text if hasattr(result, 'chunk_text') else "",
+                    score_str
+                ])
+
+            table_block = TableBlock(
+                type="table",
+                title="Document Search Results",
+                columns=columns,
+                rows=rows
+            )
+
+            # Create references block with detailed results
+            items = []
+            for i, result in enumerate(search_results, 1):
+                doc_name = result.document_name if hasattr(result, 'document_name') else "Unknown"
+                chunk_text = result.chunk_text if hasattr(result, 'chunk_text') else ""
+                page = result.page_number if hasattr(result, 'page_number') else None
+
+                items.append(ReferenceItem(
+                    kind="document",
+                    title=f"{i}. {doc_name}",
+                    payload={
+                        "chunk_id": result.chunk_id if hasattr(result, 'chunk_id') else "",
+                        "document_id": result.document_id if hasattr(result, 'document_id') else "",
+                        "content": chunk_text,
+                        "page": page,
+                        "relevance": result.relevance_score if hasattr(result, 'relevance_score') else 0,
+                    }
+                ))
+
+            references_block = ReferencesBlock(
+                type="references",
+                title="Detailed Document Matches",
+                items=items
+            )
+
+            return [table_block, references_block], ["document_search"]
+
+    except Exception as exc:
+        logger.exception(f"Document search executor failed: {exc}")
+        error_block = MarkdownBlock(
+            type="markdown",
+            title="Document Search Error",
+            content=f"Error performing document search: {str(exc)}"
+        )
+        return [error_block], ["document_search"]
+
+
 def execute_universal(
     question: str, mode: str, tenant_id: str
 ) -> ExecutorResult:
@@ -235,7 +336,7 @@ def _convert_result_to_blocks(result: dict, mode: str) -> list:
     return blocks
 
 
-OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]
+OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph", "document"]
 
 
 def _get_required_tenant_id(settings: Any) -> str:
@@ -426,6 +527,11 @@ def _execute_real_mode(
         tenant_id = _get_required_tenant_id(settings)
         result = execute_universal(question, mode, tenant_id)
         return result.blocks, result.used_tools
+
+    # Document search executor
+    if mode == "document":
+        tenant_id = _get_required_tenant_id(settings)
+        return run_document(question, tenant_id=tenant_id, settings=settings)
 
     # Legacy executors for other modes
     executor = {
@@ -706,6 +812,8 @@ def _build_mock_blocks(mode: OpsMode, question: str) -> list[AnswerBlock]:
         blocks.append(_mock_timeseries())
     if mode in {"relation", "all"}:
         blocks.append(_mock_graph())
+    if mode == "document":
+        blocks.append(_mock_document_results())
     blocks.append(
         ReferencesBlock(
             type="references",
@@ -774,6 +882,19 @@ def _mock_graph() -> GraphBlock:
         GraphEdge(id="e2", source="n2", target="n3", label="writes"),
     ]
     return GraphBlock(type="graph", title="Dependency graph", nodes=nodes, edges=edges)
+
+
+def _mock_document_results() -> TableBlock:
+    return TableBlock(
+        type="table",
+        title="Document Search Results",
+        columns=["Document", "Content Preview", "Relevance"],
+        rows=[
+            ["system_architecture.pdf", "System architecture overview with component...", "92%"],
+            ["deployment_guide.md", "Step-by-step deployment instructions for...", "87%"],
+            ["troubleshooting.md", "Common troubleshooting steps and solutions...", "78%"],
+        ],
+    )
 
 
 def _timeseries_point(

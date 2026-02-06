@@ -64,7 +64,8 @@ export default function CepEventBell() {
       if (isClosing) return;
 
       try {
-        const streamUrl = !apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+        const streamUrl = !apiBaseUrl ? `/sse-proxy/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+
         eventSource = new EventSource(streamUrl);
 
         const handleSummary = (event: MessageEvent) => {
@@ -83,7 +84,12 @@ export default function CepEventBell() {
         };
 
         const handleError = (error: Event) => {
-          console.error("SSE connection error:", error);
+          console.error("SSE connection error (bell):", {
+            url: streamUrl,
+            readyState: eventSource?.readyState,
+            error
+          });
+
           if (eventSource?.readyState === EventSource.CLOSED) {
             // 자동 재연결 (3초 후)
             if (!isClosing && !reconnectTimeout) {
@@ -144,9 +150,8 @@ export default function CepEventBell() {
       </svg>
       {count > 0 ? (
         <span
-          className={`absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white ${
-            pulse ? "animate-pulse" : ""
-          }`}
+          className={`absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white ${pulse ? "animate-pulse" : ""
+            }`}
         >
           {count}
         </span>

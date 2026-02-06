@@ -97,7 +97,8 @@ export default function ChatExperience({
         message: finalPrompt,
         builder: builderSlug,
       });
-      streamUrl = `/api/proxy-sse/chat/stream?${params.toString()}`;
+      streamUrl = `/sse-proxy/chat/stream?${params.toString()}`;
+
     } else {
       const url = new URL(`${apiBaseUrl}/chat/stream`);
       url.searchParams.set("message", finalPrompt);

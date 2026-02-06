@@ -53,10 +53,10 @@ class ApiExecutionLog(SQLModel, table=True):
     # Performance metrics
     rows_affected: int | None = Field(default=None, description="Number of rows affected (for SQL)")
     
-    # Additional metadata
-    metadata: dict[str, Any] | None = Field(
+    # Additional metadata (avoid reserved attribute name in SQLAlchemy Declarative API)
+    exec_metadata: dict[str, Any] | None = Field(
         default=None,
-        sa_column=Column(JSON),
+        sa_column=Column("metadata", JSON),
         description="Additional execution metadata"
     )
     
