@@ -1043,3 +1043,127 @@ def get_event_stats(
     }
 
     return ResponseEnvelope.success(data={"stats": stats})
+
+
+# ============================================================================
+# Notification Channel Management
+# ============================================================================
+
+
+@router.post("/channels/test")
+async def test_notification_channel(
+    channel_type: str,
+    config: dict = None,
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    Test a notification channel with sample data
+
+    Args:
+        channel_type: Type of channel (slack, email, sms, webhook, pagerduty)
+        config: Channel configuration dict
+
+    Returns:
+        Test result with success status and message
+    """
+    if not config:
+        raise HTTPException(status_code=400, detail="Config is required")
+
+    try:
+        from .notification_channels import NotificationChannelFactory, NotificationMessage
+
+        channel = NotificationChannelFactory.create(channel_type, config)
+        if not channel:
+            raise HTTPException(
+                status_code=400, detail=f"Unknown channel type: {channel_type}"
+            )
+
+        # Validate configuration
+        if not channel.validate_config():
+            raise HTTPException(
+                status_code=400, detail="Invalid channel configuration"
+            )
+
+        # Create test message
+        test_message = NotificationMessage(
+            title="Test Notification from Tobit CEP",
+            body="This is a test alert to verify your notification channel is working correctly.",
+            recipients=config.get("recipients", []),
+            metadata={
+                "test": "true",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+        )
+
+        # Send test notification
+        result = await channel.send(test_message)
+
+        return ResponseEnvelope.success(
+            data={
+                "success": result,
+                "message": "Test notification sent successfully!"
+                if result
+                else "Failed to send test notification. Check configuration.",
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Error testing channel: {str(e)}"
+        )
+
+
+@router.get("/channels/types")
+def get_channel_types() -> ResponseEnvelope:
+    """
+    Get available notification channel types and their configurations
+
+    Returns:
+        List of available channel types with required fields
+    """
+    channel_types = {
+        "slack": {
+            "display_name": "Slack",
+            "description": "Send alerts to Slack channels via webhook",
+            "icon": "📱",
+            "required_fields": ["webhook_url"],
+            "optional_fields": [],
+        },
+        "email": {
+            "display_name": "Email",
+            "description": "Send alerts via SMTP",
+            "icon": "📧",
+            "required_fields": [
+                "smtp_host",
+                "smtp_port",
+                "from_email",
+                "password",
+            ],
+            "optional_fields": ["use_tls"],
+        },
+        "sms": {
+            "display_name": "SMS",
+            "description": "Send alerts via Twilio",
+            "icon": "📲",
+            "required_fields": ["account_sid", "auth_token", "from_number"],
+            "optional_fields": [],
+        },
+        "webhook": {
+            "display_name": "Webhook",
+            "description": "Send alerts to HTTP endpoints",
+            "icon": "🔗",
+            "required_fields": ["url"],
+            "optional_fields": ["headers"],
+        },
+        "pagerduty": {
+            "display_name": "PagerDuty",
+            "description": "Create incidents in PagerDuty",
+            "icon": "⚠️",
+            "required_fields": ["integration_key"],
+            "optional_fields": ["default_severity"],
+        },
+    }
+
+    return ResponseEnvelope.success(data={"channel_types": channel_types})

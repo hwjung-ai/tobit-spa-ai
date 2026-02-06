@@ -312,6 +312,70 @@ class WebhookNotificationChannel(NotificationChannel):
             return False
 
 
+class PagerDutyNotificationChannel(NotificationChannel):
+    """Send notifications to PagerDuty as incidents"""
+
+    def __init__(
+        self,
+        integration_key: str,
+        default_severity: str = "critical",
+    ):
+        self.integration_key = integration_key
+        self.default_severity = default_severity
+
+    def validate_config(self) -> bool:
+        """Validate PagerDuty configuration"""
+        return bool(self.integration_key and len(self.integration_key) > 20)
+
+    async def send(self, message: NotificationMessage) -> bool:
+        """Send incident to PagerDuty"""
+        if not self.validate_config():
+            logger.error("Invalid PagerDuty configuration")
+            return False
+
+        try:
+            # Map severity (critical, error, warning, info)
+            severity = self.default_severity
+            if "critical" in message.body.lower() or "error" in message.body.lower():
+                severity = "critical"
+            elif "warn" in message.body.lower():
+                severity = "warning"
+
+            payload = {
+                "routing_key": self.integration_key,
+                "event_action": "trigger",
+                "dedup_key": f"tobit-cep-{message.created_at.timestamp()}",
+                "payload": {
+                    "summary": message.title,
+                    "severity": severity,
+                    "source": "Tobit CEP",
+                    "component": "monitoring",
+                    "custom_details": message.metadata,
+                },
+            }
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(
+                    "https://events.pagerduty.com/v2/enqueue",
+                    json=payload,
+                )
+
+                success = response.status_code in [200, 202]
+
+                if success:
+                    logger.info("PagerDuty incident created successfully")
+                else:
+                    logger.error(
+                        f"PagerDuty incident failed: {response.status_code} {response.text}"
+                    )
+
+                return success
+
+        except Exception as e:
+            logger.error(f"PagerDuty notification error: {str(e)}")
+            return False
+
+
 class NotificationChannelFactory:
     """Factory for creating notification channels"""
 
@@ -347,6 +411,12 @@ class NotificationChannelFactory:
                 return WebhookNotificationChannel(
                     url=config.get("url", ""),
                     headers=config.get("headers"),
+                )
+
+            elif channel_type == "pagerduty":
+                return PagerDutyNotificationChannel(
+                    integration_key=config.get("integration_key", ""),
+                    default_severity=config.get("default_severity", "critical"),
                 )
 
             else:
