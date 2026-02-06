@@ -1230,6 +1230,33 @@ def ask_ci(
     return response_payload or error_response
 
 
+@router.post("/ask")
+def ask_all(
+    payload: CiAskRequest,
+    request: Request,
+    tenant_id: str = Depends(_tenant_id),
+):
+    """
+    Handle OPS "all" mode queries.
+
+    This endpoint is used by the frontend "all" (전체) mode in the OPS menu.
+    It delegates to the existing /ops/ci/ask implementation with the same
+    orchestration logic.
+
+    Args:
+        payload: Question and optional rerun context
+        request: HTTP request
+        tenant_id: Tenant ID from header
+
+    Returns:
+        ResponseEnvelope with blocks and trace data
+    """
+    # Delegate to ask_ci logic - "all" mode uses the same orchestration
+    # This allows the frontend to call /ops/ask for the "all" mode
+    # instead of /ops/ci/ask, maintaining clear separation between modes
+    return ask_ci(payload, request, tenant_id)
+
+
 # --- UI Actions (Deterministic Interactive UI) ---
 
 
