@@ -115,6 +115,8 @@ class StructuredFormatter(logging.Formatter):
 
 class RequestLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg: Any, kwargs: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
+        from app.modules.ops.security import SecurityUtils
+
         extra = kwargs.get("extra", {}).copy()
         context = get_request_context()
         extra.setdefault("request_id", context["request_id"])
@@ -122,6 +124,12 @@ class RequestLoggerAdapter(logging.LoggerAdapter):
         extra.setdefault("trace_id", context["trace_id"])
         extra.setdefault("parent_trace_id", context["parent_trace_id"])
         extra.setdefault("mode", context["mode"])
+
+        # Sanitize sensitive data in extra fields
+        for key, value in list(extra.items()):
+            if SecurityUtils._is_sensitive(key):
+                extra[key] = SecurityUtils.mask_value(value, key)
+
         kwargs["extra"] = extra
         return msg, kwargs
 
