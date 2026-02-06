@@ -5,7 +5,7 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "0036_enhance_document_tables"
-down_revision = "0035_add_ci_management_tables"
+down_revision = "0035_add_permission_tables"
 branch_labels = None
 depends_on = None
 

@@ -4,7 +4,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "0032_add_api_keys_table"
-down_revision = "0031_add_auth_tables"
+down_revision = "0031_add_regression_rule_config"
 branch_labels = None
 depends_on = None
 

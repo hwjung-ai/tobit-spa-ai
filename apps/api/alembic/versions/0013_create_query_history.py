@@ -1,7 +1,7 @@
 """create query history table
 
-Revision ID: 0011_create_query_history
-Revises: 0010_create_tb_api_def
+Revision ID: 0013
+Revises: 0012
 Create Date: 2026-01-03 00:00:00.000000
 """
 
@@ -10,8 +10,8 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = "0011_create_query_history"
-down_revision = "0010_create_tb_api_def"
+revision = "0013_create_query_history"
+down_revision = "0012_add_api_spec_fields"
 branch_labels = None
 depends_on = None
 

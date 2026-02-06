@@ -3,8 +3,8 @@
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0035_add_ci_management_tables"
-down_revision = "0034_add_encryption_fields"
+revision = "0037_add_ci_management_tables"
+down_revision = "0036_enhance_document_tables"
 branch_labels = None
 depends_on = None
 

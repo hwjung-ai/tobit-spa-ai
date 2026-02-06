@@ -3,8 +3,8 @@
 import sqlalchemy as sa
 from alembic import op
 
-revision = "0031_add_auth_tables"
-down_revision = "0030_1_merge_branches"
+revision = "0034_add_auth_tables"
+down_revision = "0033_add_permission_tables"
 branch_labels = None
 depends_on = None
 
