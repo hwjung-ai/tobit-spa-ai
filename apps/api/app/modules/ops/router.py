@@ -187,6 +187,20 @@ def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvel
         )
 
 
+@router.get("/summary/stats", response_model=ResponseEnvelope)
+def ops_summary_stats(session: Session = Depends(get_session)) -> ResponseEnvelope:
+    try:
+        from .services.observability_service import collect_ops_summary_stats
+
+        payload = collect_ops_summary_stats(session)
+        return ResponseEnvelope.success(data=payload)
+    except Exception as e:
+        logger.error(f"Failed to collect OPS summary stats: {e}", exc_info=True)
+        return ResponseEnvelope.error(
+            code=500, message=f"Failed to collect summary stats: {str(e)}"
+        )
+
+
 # --- RCA (Root Cause Analysis) ---
 
 

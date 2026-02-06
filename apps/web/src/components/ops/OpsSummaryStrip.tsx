@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { type OpsSummaryData, type OpsHistoryEntry } from "./types/opsTypes";
 import { cn } from "@/lib/utils";
+import { authenticatedFetch } from "@/lib/apiClient/index";
 
 interface OpsSummaryStripProps {
   className?: string;
@@ -47,36 +48,50 @@ export default function OpsSummaryStrip({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [healthStatus, setHealthStatus] = useState<Record<string, string>>({
+    service: "ok",
+    database: "ok",
+    network: "ok"
+  });
 
-  // Mock function to aggregate metrics - in real implementation, this would fetch from API
+  // Function to aggregate metrics from the real API
   const aggregateMetrics = useCallback(async () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call to get aggregated metrics
-      // In real implementation, this would be:
-      // const response = await authenticatedFetch("/ops/summary/stats");
+      const response = await authenticatedFetch<{
+        totalQueries: number;
+        successfulQueries: number;
+        failedQueries: number;
+        avgResponseTime: number;
+        recentActivity: AggregatedMetrics["recentActivity"];
+        health: Record<string, string>;
+      }>("/ops/summary/stats");
 
-      const mockData: AggregatedMetrics = {
-        totalQueries: 156,
-        successfulQueries: 142,
-        failedQueries: 14,
-        avgResponseTime: 342,
-        recentActivity: [
-          { timestamp: new Date().toISOString(), type: "ci", status: "ok" },
-          { timestamp: new Date(Date.now() - 5 * 60000).toISOString(), type: "metric", status: "ok" },
-          { timestamp: new Date(Date.now() - 10 * 60000).toISOString(), type: "history", status: "error" },
-          { timestamp: new Date(Date.now() - 15 * 60000).toISOString(), type: "relation", status: "ok" },
-          { timestamp: new Date(Date.now() - 20 * 60000).toISOString(), type: "all", status: "ok" },
-        ],
-      };
+      // ResponseEnvelope logic: the actual data is in (response as any).data
+      const data = (response as any).data;
 
-      setMetrics(mockData);
+      if (!data) {
+        throw new Error("No data received from stats endpoint");
+      }
+
+      setMetrics({
+        totalQueries: data.totalQueries,
+        successfulQueries: data.successfulQueries,
+        failedQueries: data.failedQueries,
+        avgResponseTime: data.avgResponseTime,
+        recentActivity: data.recentActivity,
+      });
+
+      if (data.health) {
+        setHealthStatus(data.health);
+      }
+
       onUpdateData?.({
-        totalQueries: mockData.totalQueries,
-        successRate: (mockData.successfulQueries / mockData.totalQueries) * 100,
-        avgResponseTime: mockData.avgResponseTime,
-        recentActivity: mockData.recentActivity,
+        totalQueries: data.totalQueries,
+        successRate: data.totalQueries > 0 ? (data.successfulQueries / data.totalQueries) * 100 : 0,
+        avgResponseTime: data.avgResponseTime,
+        recentActivity: data.recentActivity,
       });
     } catch (error) {
       console.error("Failed to load OPS summary metrics:", error);
@@ -114,6 +129,14 @@ export default function OpsSummaryStrip({
       all: "전체",
     };
     return labels[type] || type;
+  };
+
+  const getHealthColor = (status: string) => {
+    return status === "ok" ? "text-green-400" : "text-rose-400";
+  };
+
+  const getHealthText = (status: string) => {
+    return status === "ok" ? "정상" : "장애";
   };
 
   return (
@@ -170,9 +193,9 @@ export default function OpsSummaryStrip({
       {/* Recent Activity */}
       <div className="flex items-center gap-2 border-l border-slate-700 pl-4">
         <div className="flex -space-x-1">
-          {metrics.recentActivity.slice(0, 4).reverse().map((activity, index) => (
+          {metrics.recentActivity.slice(0, 5).reverse().map((activity, index) => (
             <div
-              key={index}
+              key={`${activity.timestamp}-${index}`}
               className={cn(
                 "w-2 h-2 rounded-full border border-slate-900",
                 activity.status === "ok"
@@ -202,20 +225,20 @@ export default function OpsSummaryStrip({
       <div className="flex items-center gap-3 border-l border-slate-700 pl-4">
         <Tooltip content="서비스 상태">
           <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Server className="h-3 w-3 text-green-400" />
-            <span className="text-green-400">정상</span>
+            <Server className={cn("h-3 w-3", getHealthColor(healthStatus.service))} />
+            <span className={getHealthColor(healthStatus.service)}>{getHealthText(healthStatus.service)}</span>
           </div>
         </Tooltip>
         <Tooltip content="데이터베이스">
           <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Database className="h-3 w-3 text-blue-400" />
-            <span className="text-blue-400">정상</span>
+            <Database className={cn("h-3 w-3", getHealthColor(healthStatus.database))} />
+            <span className={getHealthColor(healthStatus.database)}>{getHealthText(healthStatus.database)}</span>
           </div>
         </Tooltip>
         <Tooltip content="네트워크">
           <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Network className="h-3 w-3 text-purple-400" />
-            <span className="text-purple-400">정상</span>
+            <Network className={cn("h-3 w-3", getHealthColor(healthStatus.network))} />
+            <span className={getHealthColor(healthStatus.network)}>{getHealthText(healthStatus.network)}</span>
           </div>
         </Tooltip>
       </div>

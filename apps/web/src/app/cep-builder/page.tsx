@@ -46,6 +46,7 @@ interface CepDraft {
   description?: string;
   trigger: Record<string, unknown>;
   conditions?: Record<string, unknown>[];
+  enrichments?: Record<string, unknown>[];
   actions?: Record<string, unknown>[];
   references?: Record<string, unknown>;
 }
@@ -466,8 +467,18 @@ export default function CepBuilderPage() {
     }
     setTriggerSpecText(JSON.stringify(triggerPayload ?? {}, null, 2));
     const actionPayload = {
-      actions: draft.actions ?? [],
-      conditions: draft.conditions ?? [],
+      actions: (draft.actions ?? []).map((a: any) => ({
+        ...a,
+        id: a.id || `action-${Math.random().toString(36).substr(2, 9)}`,
+      })),
+      conditions: (draft.conditions ?? []).map((c: any) => ({
+        ...c,
+        id: c.id || `cond-${Math.random().toString(36).substr(2, 9)}`,
+      })),
+      enrichments: (draft.enrichments ?? []).map((e: any) => ({
+        ...e,
+        id: e.id || `enrich-${Math.random().toString(36).substr(2, 9)}`,
+      })),
       references: draft.references ?? {},
       description: draft.description ?? "",
     };
@@ -507,6 +518,7 @@ export default function CepBuilderPage() {
 
     if (triggerSpec.conditions && Array.isArray(triggerSpec.conditions)) {
       const conditions = triggerSpec.conditions.map((c: any) => ({
+        id: c.id || `cond-${Math.random().toString(36).substr(2, 9)}`,
         field: c.field || "",
         op: c.op || "==",
         value: c.value,
@@ -527,14 +539,20 @@ export default function CepBuilderPage() {
 
     // 집계 설정 추출
     if (triggerSpec.aggregation) {
-      setFormAggregations([triggerSpec.aggregation]);
+      setFormAggregations([{
+        ...triggerSpec.aggregation,
+        id: triggerSpec.aggregation.id || `agg-${Math.random().toString(36).substr(2, 9)}`
+      }]);
     } else {
       setFormAggregations([]);
     }
 
     // 보강 설정 추출
     if (triggerSpec.enrichments && Array.isArray(triggerSpec.enrichments)) {
-      setFormEnrichments(triggerSpec.enrichments);
+      setFormEnrichments(triggerSpec.enrichments.map((e: any) => ({
+        ...e,
+        id: e.id || `enrich-${Math.random().toString(36).substr(2, 9)}`
+      })));
     } else {
       setFormEnrichments([]);
     }
@@ -542,9 +560,15 @@ export default function CepBuilderPage() {
     // 액션 설정 추출
     const actionSpec = selectedRule.action_spec as Record<string, any>;
     if (actionSpec.type === "multi_action" && Array.isArray(actionSpec.actions)) {
-      setFormActions(actionSpec.actions);
-    } else if (actionSpec) {
-      setFormActions([actionSpec]);
+      setFormActions(actionSpec.actions.map((a: any) => ({
+        ...a,
+        id: a.id || `action-${Math.random().toString(36).substr(2, 9)}`
+      })));
+    } else if (actionSpec && Object.keys(actionSpec).length > 0) {
+      setFormActions([{
+        ...actionSpec,
+        id: actionSpec.id || `action-${Math.random().toString(36).substr(2, 9)}`
+      } as any]);
     } else {
       setFormActions([]);
     }
@@ -631,13 +655,13 @@ export default function CepBuilderPage() {
       composite_condition:
         formConditions.length > 0
           ? {
-              conditions: formConditions.map((c) => ({
-                field: c.field || "",
-                op: c.op || "==",
-                value: c.value,
-              })),
-              logic: formConditionLogic,
-            }
+            conditions: formConditions.map((c) => ({
+              field: c.field || "",
+              op: c.op || "==",
+              value: c.value,
+            })),
+            logic: formConditionLogic,
+          }
           : null,
 
       window_config:
@@ -855,7 +879,7 @@ export default function CepBuilderPage() {
         setDraftApi(null);
         setDraftStatus("saved");
         setDraftTestOk(null);
-          setFormBaselineSnapshot(buildFormSnapshot());
+        setFormBaselineSnapshot(buildFormSnapshot());
         setAppliedDraftSnapshot(null);
         const draftKey = `${DRAFT_STORAGE_PREFIX}${draftStorageId}`;
         window.localStorage.removeItem(draftKey);

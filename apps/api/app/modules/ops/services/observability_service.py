@@ -122,3 +122,55 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
         ],
         "no_data_ratio": round(no_data_ratio, 3),
     }
+
+
+def collect_ops_summary_stats(session: Session) -> Dict[str, Any]:
+    """Collect specific metrics for the OPS summary strip in the frontend."""
+    # Total counts (lifetime for now, or we could limit to recent)
+    total_queries = session.exec(select(func.count(TbExecutionTrace.trace_id))).scalar_one()
+    successful_queries = session.exec(
+        select(func.count(TbExecutionTrace.trace_id)).where(TbExecutionTrace.status == "success")
+    ).scalar_one()
+    failed_queries = total_queries - successful_queries
+
+    # Average response time
+    avg_latency = session.exec(select(func.avg(TbExecutionTrace.duration_ms))).scalar() or 0
+
+    # Recent activity (last 5)
+    recent_traces = session.exec(
+        select(TbExecutionTrace.created_at, TbExecutionTrace.ops_mode, TbExecutionTrace.status)
+        .order_by(TbExecutionTrace.created_at.desc())
+        .limit(5)
+    ).all()
+
+    recent_activity = []
+    for created_at, ops_mode, status in recent_traces:
+        # Map ops_mode to frontend types
+        mode_map = {
+            "config": "ci",
+            "metric": "metric",
+            "hist": "history",
+            "graph": "relation",
+            "all": "all"
+        }
+        recent_activity.append({
+            "timestamp": created_at.isoformat(),
+            "type": mode_map.get(ops_mode, "all"),
+            "status": "ok" if status == "success" else "error"
+        })
+
+    # Reverse to match frontend expectation (reverse internally or just send)
+    # The frontend does .reverse() so we send in DESC order.
+
+    return {
+        "totalQueries": int(total_queries),
+        "successfulQueries": int(successful_queries),
+        "failedQueries": int(failed_queries),
+        "avgResponseTime": int(avg_latency),
+        "recentActivity": recent_activity,
+        "health": {
+            "service": "ok",
+            "database": "ok",
+            "network": "ok"
+        }
+    }

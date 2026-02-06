@@ -658,14 +658,16 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
         summary = f"Real mode response for {mode}"
 
     # Ensure blocks is never empty - add fallback if needed
+    logger = logging.getLogger(__name__)
     if not blocks:
-        logger = logging.getLogger(__name__)
         logger.warning(f"Empty blocks returned for {mode} mode, using fallback mock blocks")
         blocks = _build_mock_blocks(mode, question)
         used_tools = ["fallback_mock"]
         fallback = True
         if not summary:
             summary = f"Fallback mock data for {mode}"
+    else:
+        logger.info(f"Successfully generated {len(blocks)} blocks for {mode} mode (ops_mode={settings.ops_mode})")
 
     meta = AnswerMeta(
         route=mode,
