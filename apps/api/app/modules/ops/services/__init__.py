@@ -15,13 +15,18 @@ from schemas import (
     AnswerBlock,
     AnswerEnvelope,
     AnswerMeta,
+    ChartBlock,
     GraphBlock,
     GraphEdge,
     GraphNode,
     MarkdownBlock,
+    NetworkBlock,
+    NumberBlock,
+    PathBlock,
     ReferenceItem,
     ReferencesBlock,
     TableBlock,
+    TextBlock,
     TimeSeriesBlock,
     TimeSeriesPoint,
     TimeSeriesSeries,
@@ -292,36 +297,97 @@ def execute_universal(
     """
     from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
     from app.modules.ops.services.ci.planner.plan_schema import Plan
+    # Ensure tools are initialized (no-op if already done)
+    import app.modules.ops.services.ci.tools.registry_init  # noqa: F401
     import asyncio
 
     logger = logging.getLogger(__name__)
     logger.info(f"Executing universal mode '{mode}' for question: {question[:100]}")
 
     try:
-        # Create runner with tenant_id
-        runner = CIOrchestratorRunner(
-            question=question,
-            tenant_id=tenant_id,
-        )
-
-        # Create a simple plan based on mode
+        # Create plan for the mode
         plan = _create_simple_plan(mode)
-        logger.debug(f"Created plan for {mode} mode: {plan}")
+        policy_trace = {
+            "mode": mode,
+            "source": "execute_universal",
+            "policies_applied": [],
+        }
+
+        # Create runner with required arguments
+        runner = CIOrchestratorRunner(
+            plan=plan,
+            plan_raw=plan,
+            tenant_id=tenant_id,
+            question=question,
+            policy_trace=policy_trace,
+        )
 
         # Run the orchestrator
         logger.info(f"Running orchestrator for {mode} mode with question: {question[:80]}")
         result = runner.run(plan_output=None)
-        logger.info(f"Orchestrator returned result type: {type(result)}, keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}")
+        logger.info(
+            f"Orchestrator returned result type: {type(result)}, "
+            f"keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}"
+        )
 
-        # Convert result to ExecutorResult
-        blocks = _convert_result_to_blocks(result, mode)
-        logger.info(f"Converted to {len(blocks)} blocks for {mode} mode")
-        used_tools = result.get("used_tools", [])
+        # The runner returns {"answer", "blocks", "trace", "next_actions", "meta"}
+        # Use the blocks directly from the runner output first
+        blocks = []
+        if isinstance(result, dict):
+            # 1) Try runner's pre-built blocks
+            runner_blocks = result.get("blocks", [])
+            if runner_blocks:
+                blocks = _convert_runner_blocks(runner_blocks, mode)
+                logger.info(f"Used {len(blocks)} blocks from runner output")
 
+            # 2) Fallback: try execution_results in trace
+            if not blocks:
+                trace = result.get("trace", {})
+                execution_results = trace.get("execution_results", {})
+                if not execution_results:
+                    # Try nested in stage_outputs
+                    for stage_out in (trace.get("stage_outputs") or []):
+                        if isinstance(stage_out, dict):
+                            sr = stage_out.get("result", {})
+                            if isinstance(sr, dict) and "execution_results" in sr:
+                                execution_results = sr["execution_results"]
+                                break
+
+                if execution_results:
+                    blocks = _convert_result_to_blocks(
+                        {"execution_results": execution_results}, mode
+                    )
+                    logger.info(f"Used {len(blocks)} blocks from execution_results")
+
+            # 3) Fallback: use answer text as markdown
+            if not blocks and result.get("answer"):
+                blocks = [MarkdownBlock(
+                    type="markdown",
+                    title=f"{mode.capitalize()} Result",
+                    content=str(result["answer"]),
+                )]
+                logger.info("Used answer text as markdown fallback")
+
+        logger.info(f"Final: {len(blocks)} blocks for {mode} mode")
+        meta = result.get("meta", {}) if isinstance(result, dict) else {}
+        used_tools = meta.get("used_tools", result.get("used_tools", []) if isinstance(result, dict) else [])
+
+        # Convert AnswerBlock pydantic models to dicts for ExecutorResult
+        blocks_as_dicts = []
+        for b in blocks:
+            if isinstance(b, dict):
+                blocks_as_dicts.append(b)
+            elif hasattr(b, "model_dump"):
+                blocks_as_dicts.append(b.model_dump())
+            else:
+                blocks_as_dicts.append({"type": "text", "text": str(b)})
+
+        trace = result.get("trace", {}) if isinstance(result, dict) else {}
+        tool_calls_raw = trace.get("tool_calls", result.get("tool_calls", []) if isinstance(result, dict) else [])
         return ExecutorResult(
-            blocks=blocks,
-            used_tools=used_tools,
-            tool_calls=result.get("tool_calls", []),
+            blocks=blocks_as_dicts,
+            used_tools=used_tools if isinstance(used_tools, list) else [],
+            tool_calls=tool_calls_raw if isinstance(tool_calls_raw, list) else [],
             references=[],
             summary={
                 "status": "success",
@@ -452,8 +518,110 @@ def _create_simple_plan(mode: str) -> Any:
     )
 
 
+def _convert_runner_blocks(runner_blocks: list, mode: str) -> list[AnswerBlock]:
+    """Convert runner output blocks (plain dicts) to AnswerBlock pydantic models."""
+    _log = logging.getLogger(__name__)
+    blocks: list[AnswerBlock] = []
+
+    for blk in runner_blocks:
+        if not isinstance(blk, dict):
+            # Already a pydantic model
+            blocks.append(blk)
+            continue
+
+        btype = blk.get("type", "")
+        try:
+            if btype == "text":
+                blocks.append(TextBlock(type="text", text=blk.get("text", ""), title=blk.get("title")))
+            elif btype == "markdown":
+                blocks.append(MarkdownBlock(type="markdown", content=blk.get("content", ""), title=blk.get("title")))
+            elif btype == "table":
+                blocks.append(TableBlock(
+                    type="table",
+                    title=blk.get("title"),
+                    columns=blk.get("columns", []),
+                    rows=blk.get("rows", []),
+                ))
+            elif btype == "number":
+                blocks.append(NumberBlock(
+                    type="number",
+                    title=blk.get("title"),
+                    value=float(blk.get("value", 0)),
+                    unit=blk.get("unit"),
+                ))
+            elif btype == "network":
+                blocks.append(NetworkBlock(
+                    type="network",
+                    title=blk.get("title"),
+                    nodes=blk.get("nodes", []),
+                    edges=blk.get("edges", []),
+                    meta=blk.get("meta", {}),
+                ))
+            elif btype == "path":
+                blocks.append(PathBlock(
+                    type="path",
+                    title=blk.get("title"),
+                    nodes=blk.get("nodes", []),
+                    edges=blk.get("edges", []),
+                    hop_count=blk.get("hop_count", 0),
+                ))
+            elif btype == "chart":
+                blocks.append(ChartBlock(
+                    type="chart",
+                    chart_type=blk.get("chart_type", "line"),
+                    title=blk.get("title"),
+                    x=blk.get("x", ""),
+                    series=blk.get("series", []),
+                    meta=blk.get("meta", {}),
+                ))
+            elif btype == "graph":
+                nodes = [
+                    GraphNode(
+                        id=str(n.get("id", "")),
+                        data=n.get("data", {"label": ""}),
+                        position=n.get("position", {"x": 0.0, "y": 0.0}),
+                    )
+                    for n in blk.get("nodes", [])
+                    if isinstance(n, dict)
+                ]
+                edges = [
+                    GraphEdge(
+                        id=str(e.get("id", "")),
+                        source=str(e.get("source", "")),
+                        target=str(e.get("target", "")),
+                        label=e.get("label"),
+                    )
+                    for e in blk.get("edges", [])
+                    if isinstance(e, dict)
+                ]
+                blocks.append(GraphBlock(type="graph", title=blk.get("title"), nodes=nodes, edges=edges))
+            elif btype == "timeseries":
+                series_list = []
+                for s in blk.get("series", []):
+                    points = [TimeSeriesPoint(timestamp=p["timestamp"], value=p["value"]) for p in s.get("data", [])]
+                    series_list.append(TimeSeriesSeries(name=s.get("name"), data=points))
+                blocks.append(TimeSeriesBlock(type="timeseries", title=blk.get("title"), series=series_list))
+            else:
+                # Unknown type: wrap as markdown
+                _log.warning(f"Unknown runner block type '{btype}', wrapping as markdown")
+                blocks.append(MarkdownBlock(
+                    type="markdown",
+                    title=blk.get("title"),
+                    content=str(blk.get("text") or blk.get("content") or blk),
+                ))
+        except Exception as exc:
+            _log.warning(f"Failed to convert runner block type={btype}: {exc}")
+            blocks.append(MarkdownBlock(
+                type="markdown",
+                title="Data",
+                content=str(blk),
+            ))
+
+    return blocks
+
+
 def _convert_result_to_blocks(result: dict, mode: str) -> list:
-    """Convert orchestrator result to answer blocks."""
+    """Convert orchestrator execution_results dict to answer blocks."""
     blocks = []
 
     # Try to extract data from result
@@ -657,9 +825,8 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
             if status and status != "success":
                 fallback = True
                 if not error:
-                    error = _fallback_error_message(status)
-                blocks = _build_mock_blocks(mode, question)
-                used_tools = ["mock"]
+                    error = _fallback_error_message(status) or executor_result.summary.get("error", "Unknown error")
+                # In real mode, do NOT replace with mock blocks
         route_reason = "OPS real mode"
         summary = f"Real mode response for {mode}"
 
@@ -756,8 +923,8 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
 def _execute_real_mode(
     mode: OpsMode, question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str]]:
-    # Universal executor for relation, metric, history modes
-    if mode in ("relation", "metric", "history", "hist"):
+    # Universal executor for all orchestrator-based modes
+    if mode in ("relation", "metric", "history", "hist", "config", "graph"):
         tenant_id = _get_required_tenant_id(settings)
         result = execute_universal(question, mode, tenant_id)
         return result.blocks, result.used_tools
@@ -767,15 +934,11 @@ def _execute_real_mode(
         tenant_id = _get_required_tenant_id(settings)
         return run_document(question, tenant_id=tenant_id, settings=settings)
 
-    # Legacy executors for other modes
-    executor = {
-        "config": _run_config,
-        "graph": _run_graph,
-        "all": _run_all,
-    }.get(mode)
-    if executor is None:
-        raise NotImplementedError(f"No executor for mode {mode}")
-    return executor(question, settings)
+    # All mode (orchestration)
+    if mode == "all":
+        return _run_all(question, settings)
+
+    raise NotImplementedError(f"No executor for mode {mode}")
 
 
 def _normalize_real_result(

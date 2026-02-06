@@ -257,7 +257,16 @@ class DynamicTool(BaseTool):
                 placeholder = f"{{{key}}}"
                 if placeholder in processed_query:
                     if value is None:
-                        processed_query = processed_query.replace(placeholder, "NULL")
+                        # Handle NULL: remove the entire AND clause containing this placeholder
+                        # to avoid comparing UUID columns against string 'NULL'
+                        null_pattern = rf"\s+AND\s+\w+(?:\.\w+)?\s*=\s*'{placeholder}'"
+                        cleaned = re.sub(null_pattern, "", processed_query)
+                        if cleaned != processed_query:
+                            processed_query = cleaned
+                        else:
+                            # Fallback: replace with SQL NULL (no quotes)
+                            processed_query = processed_query.replace(f"'{placeholder}'", "NULL")
+                            processed_query = processed_query.replace(placeholder, "NULL")
                     elif isinstance(value, list):
                         # Convert list to SQL array format
                         escaped_values = [str(v).replace("'", "''") for v in value]
@@ -276,8 +285,7 @@ class DynamicTool(BaseTool):
             if self.name in ["ci_aggregate", "metric"]:
                 import sys
                 print(f"[DEBUG FORCED {self.name}] Processed query (first 300 chars): {processed_query[:300]}", file=sys.stderr, flush=True)
-                # Check for remaining placeholders
-                import re
+                # Check for remaining placeholders (re already imported at module level)
                 remaining = re.findall(r'\{[^}]+\}', processed_query)
                 if remaining:
                     print(f"[DEBUG FORCED {self.name}] WARNING: Remaining placeholders: {set(remaining)}", file=sys.stderr, flush=True)
