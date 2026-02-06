@@ -74,6 +74,10 @@ from .schemas import (
     FieldInfo,
     ConditionTemplate,
 )
+from .form_converter import (
+    convert_form_to_trigger_spec,
+    convert_form_to_action_spec,
+)
 
 router = APIRouter(prefix="/cep", tags=["cep-builder"])
 
@@ -169,6 +173,45 @@ def create_rule_endpoint(
     payload: CepRuleCreate, session: Session = Depends(get_session)
 ) -> ResponseEnvelope:
     rule = create_rule(session, payload)
+    return ResponseEnvelope.success(
+        data={"rule": CepRuleRead.from_orm(rule).model_dump()}
+    )
+
+
+@router.post("/rules/form")
+def create_rule_from_form(
+    form_data: CepRuleFormData, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
+    """
+    Create CEP rule from form-based data
+
+    Converts form data to legacy trigger_spec and action_spec format,
+    then creates the rule using standard create_rule endpoint.
+
+    Args:
+        form_data: Form-based rule data with composite conditions, windowing, etc.
+        session: Database session
+
+    Returns:
+        ResponseEnvelope with created rule
+    """
+    # 폼 데이터 → Legacy 형식 변환
+    trigger_spec = convert_form_to_trigger_spec(form_data)
+    action_spec = convert_form_to_action_spec(form_data)
+
+    # 기존 CepRuleCreate 형식으로 변환
+    rule_create = CepRuleCreate(
+        rule_name=form_data.rule_name,
+        trigger_type=form_data.trigger_type,
+        trigger_spec=trigger_spec,
+        action_spec=action_spec,
+        is_active=form_data.is_active,
+        created_by="cep-form-builder",
+    )
+
+    # 기존 create_rule 함수로 저장
+    rule = create_rule(session, rule_create)
+
     return ResponseEnvelope.success(
         data={"rule": CepRuleRead.from_orm(rule).model_dump()}
     )

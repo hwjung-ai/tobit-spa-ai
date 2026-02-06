@@ -551,6 +551,80 @@ export default function CepBuilderPage() {
     }
   };
 
+  const handleSaveFromForm = async () => {
+    setStatusError(null);
+
+    if (!ruleName.trim()) {
+      setStatusError("Rule name is required.");
+      return;
+    }
+
+    if (formActions.length === 0) {
+      setStatusError("At least one action is required.");
+      return;
+    }
+
+    // 폼 데이터 구성
+    const formData = {
+      rule_name: ruleName.trim(),
+      description: ruleDescription || null,
+      is_active: isActive,
+      trigger_type: triggerType,
+      trigger_spec: parseJsonObject(triggerSpecText),
+
+      // Form Builder 데이터
+      composite_condition:
+        formConditions.length > 0
+          ? {
+              conditions: formConditions.map((c) => ({
+                field: c.field || "",
+                op: c.op || "==",
+                value: c.value,
+              })),
+              logic: formConditionLogic,
+            }
+          : null,
+
+      window_config:
+        Object.keys(formWindowConfig).length > 0 ? formWindowConfig : null,
+      aggregation: formAggregations.length > 0 ? formAggregations[0] : null,
+      enrichments: formEnrichments,
+      actions: formActions.map((a) => ({
+        type: a.type,
+        endpoint: a.endpoint,
+        method: a.method,
+        channels: a.channels,
+        message: a.message,
+      })),
+    };
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${apiBaseUrl}/cep/rules/form`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail ?? "Unable to save rule");
+      }
+
+      const saved: CepRule = data.data.rule;
+      setSelectedId(saved.rule_id);
+      setStatusMessage("Rule created from form.");
+      setSimulateResult(null);
+      setTriggerResult(null);
+      await loadRules();
+    } catch (error) {
+      console.error("Save failed", error);
+      setStatusError(error instanceof Error ? error.message : "Save failed");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleNew = useCallback(() => {
     setSelectedId(null);
     setActiveTab("definition");
@@ -917,7 +991,7 @@ export default function CepBuilderPage() {
 
       <div className="flex gap-2">
         <button
-          onClick={handleSave}
+          onClick={activeTab === "definition-form" ? handleSaveFromForm : handleSave}
           disabled={isSaving || !ruleName.trim() || formActions.length === 0}
           className="flex-1 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
         >
