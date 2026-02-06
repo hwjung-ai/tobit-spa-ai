@@ -1,7 +1,7 @@
 "use client";
 
-import ObservabilityDashboard from "@/components/admin/ObservabilityDashboard";
+import DashboardPage from "@/components/admin/observability/DashboardPage";
 
 export default function ObservabilityPage() {
-  return <ObservabilityDashboard />;
+  return <DashboardPage />;
 }
