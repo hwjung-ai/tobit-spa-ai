@@ -499,10 +499,43 @@ async def event_stream(
     request: Request,
     session: Session = Depends(get_session)
 ) -> EventSourceResponse:
+    """
+    이벤트 실시간 스트림 (SSE)
+
+    클라이언트 연결 시 최근 1시간 이벤트를 먼저 전송하고,
+    이후 새로운 이벤트를 실시간으로 전송합니다.
+    """
     summary = summarize_events(session)
 
     async def event_generator():
+        # 1. 초기 요약 전송
         yield {"event": "summary", "data": json.dumps(summary)}
+
+        # 2. 최근 1시간 이벤트 로드백 (클라이언트 재연결 시 손실 복구)
+        LOOKBACK_MINUTES = 60
+        cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=LOOKBACK_MINUTES)
+        recent_events = session.exec(
+            select(TbCepNotificationLog)
+            .where(TbCepNotificationLog.fired_at >= cutoff_time)
+            .order_by(TbCepNotificationLog.fired_at.asc())
+            .limit(100)
+        ).all()
+
+        # 과거 이벤트 전송
+        for event_log in recent_events:
+            try:
+                yield {
+                    "event": "historical",
+                    "data": json.dumps({
+                        "event_id": str(event_log.log_id),
+                        "fired_at": event_log.fired_at.isoformat(),
+                        "status": event_log.status,
+                    })
+                }
+            except Exception:
+                continue
+
+        # 3. 라이브 구독 시작
         queue = event_broadcaster.subscribe()
         try:
             while True:
@@ -831,3 +864,139 @@ def get_field_suggestions(search: str = "") -> ResponseEnvelope:
     return ResponseEnvelope.success(
         data={"fields": [f.model_dump() for f in common_fields]}
     )
+
+
+@router.get("/events/search")
+def search_events(
+    q: str | None = Query(None),
+    rule_id: str | None = None,
+    severity: str | None = None,
+    acked: bool | None = None,
+    since: datetime | None = None,
+    until: datetime | None = None,
+    limit: int = Query(100, ge=1, le=500),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    고급 이벤트 검색
+
+    - q: 규칙명, 요약, 페이로드에서 전문 검색
+    - rule_id: 특정 규칙 필터
+    - severity: CRITICAL, HIGH, MEDIUM, LOW
+    - acked: 확인 상태 필터
+    - since/until: 날짜 범위
+    """
+    query = select(TbCepNotificationLog)
+
+    # 텍스트 검색
+    if q:
+        search_pattern = f"%{q}%"
+        query = query.where(
+            (TbCepNotificationLog.reason.ilike(search_pattern))
+            | (TbCepNotificationLog.payload.astext.ilike(search_pattern))
+        )
+
+    # 규칙 필터
+    if rule_id:
+        try:
+            rule_uuid = uuid.UUID(rule_id)
+            query = query.where(TbCepNotificationLog.rule_id == rule_uuid)
+        except ValueError:
+            pass
+
+    # 심각도 필터
+    if severity:
+        query = query.where(TbCepNotificationLog.payload["severity"].astext == severity)
+
+    # ACK 상태 필터
+    if acked is not None:
+        query = query.where(TbCepNotificationLog.ack.is_(acked))
+
+    # 날짜 범위
+    if since:
+        query = query.where(TbCepNotificationLog.fired_at >= since)
+    if until:
+        query = query.where(TbCepNotificationLog.fired_at <= until)
+
+    # 정렬 및 제한
+    query = query.order_by(desc(TbCepNotificationLog.fired_at)).limit(limit)
+
+    events = session.exec(query).all()
+    payload = [
+        {
+            "event_id": str(event.log_id),
+            "fired_at": event.fired_at.isoformat(),
+            "status": event.status,
+            "rule_id": str(event.rule_id) if event.rule_id else None,
+            "ack": event.ack,
+            "ack_at": event.ack_at.isoformat() if event.ack_at else None,
+        }
+        for event in events
+    ]
+
+    return ResponseEnvelope.success(
+        data={"events": payload, "count": len(events)}
+    )
+
+
+@router.get("/events/stats")
+def get_event_stats(
+    period: str = Query("24h"),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """
+    이벤트 통계
+
+    - period: 1h, 6h, 24h, 7d
+    """
+    period_mapping = {
+        "1h": timedelta(hours=1),
+        "6h": timedelta(hours=6),
+        "24h": timedelta(hours=24),
+        "7d": timedelta(days=7),
+    }
+
+    lookback = period_mapping.get(period, timedelta(hours=24))
+    cutoff_time = datetime.now(timezone.utc) - lookback
+
+    # 전체 이벤트
+    total_query = select(TbCepNotificationLog).where(
+        TbCepNotificationLog.fired_at >= cutoff_time
+    )
+    total_events = session.exec(total_query).all()
+
+    # 확인된 이벤트
+    acked_count = sum(1 for e in total_events if e.ack)
+
+    # 심각도별 분포
+    severity_dist = {}
+    for event in total_events:
+        severity = event.payload.get("severity", "info") if event.payload else "info"
+        severity_dist[severity] = severity_dist.get(severity, 0) + 1
+
+    # 규칙별 분포
+    rule_dist = {}
+    for event in total_events:
+        rule_id = str(event.rule_id) if event.rule_id else "unknown"
+        rule_dist[rule_id] = rule_dist.get(rule_id, 0) + 1
+
+    # ACK 시간 평균
+    acked_events = [e for e in total_events if e.ack and e.ack_at]
+    avg_time_to_ack = None
+    if acked_events:
+        total_seconds = sum(
+            (e.ack_at - e.fired_at).total_seconds() for e in acked_events
+        )
+        avg_time_to_ack = int(total_seconds / len(acked_events))
+
+    stats = {
+        "total_count": len(total_events),
+        "ack_count": acked_count,
+        "ack_rate": acked_count / len(total_events) if total_events else 0,
+        "avg_time_to_ack_seconds": avg_time_to_ack,
+        "by_severity": severity_dist,
+        "by_rule": rule_dist,
+        "period": period,
+    }
+
+    return ResponseEnvelope.success(data={"stats": stats})
