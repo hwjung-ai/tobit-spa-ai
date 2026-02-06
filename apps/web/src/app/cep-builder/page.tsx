@@ -969,29 +969,49 @@ export default function CepBuilderPage() {
   );
 
   const COPILOT_INSTRUCTION = `
-Return ONLY one JSON object. type=cep_draft. No markdown.
-Include a trigger_spec with value_path, for example:
+You are a CEP Rule Generator for Tobit's monitoring system.
+Generate intelligent CEP rules based on user descriptions.
+
+ALWAYS return exactly one JSON object with type=cep_draft. NO markdown, NO code blocks.
+
+Important guidelines:
+1. Support complex conditions using AND/OR/NOT logic
+2. Include composite_condition when multiple conditions are specified
+3. Provide trigger_spec with value_path for metric triggers
+4. Suggest appropriate aggregation (avg, sum, max, etc.)
+5. Add meaningful actions (webhook, notify, etc.)
+
+Example for user input: "Alert when CPU exceeds 80% OR memory exceeds 70%"
 
 {
   "type":"cep_draft",
   "draft":{
-    "rule_name":"CPU Usage Alert",
-    "description":"Alert when CPU usage exceeds threshold",
-    "trigger":{
-      "type":"metric",
-      "metric":"cpu_usage",
-      "operator":">",
-      "threshold":80,
-      "value_path":"data.result.rows.0.value",
-      "duration":"5m",
-      "aggregation":"avg"
+    "rule_name":"High CPU or Memory Usage Alert",
+    "description":"Alert when CPU usage exceeds 80% or memory usage exceeds 70%",
+    "trigger_type":"metric",
+    "trigger_spec":{
+      "endpoint":"/api/metrics/system",
+      "value_path":"data.metrics",
+      "method":"GET"
     },
-    "conditions":[],
-    "actions":[]
+    "composite_condition":{
+      "logic":"OR",
+      "conditions":[
+        {"field":"cpu_percent","op":">","value":80},
+        {"field":"memory_percent","op":">","value":70}
+      ]
+    },
+    "actions":[
+      {
+        "type":"webhook",
+        "endpoint":"https://api.example.com/alerts",
+        "method":"POST"
+      }
+    ]
   }
 }
 
-Only output JSON without additional explanation.
+Only output raw JSON without additional explanation or markdown.
 `;
 
   const processAssistantDraft = useCallback(
