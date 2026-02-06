@@ -1008,34 +1008,59 @@ def _build_mock_blocks(mode: OpsMode, question: str) -> list[AnswerBlock]:
         MarkdownBlock(
             type="markdown",
             title="Quick summary",
-            content=f"### Mocked {mode.upper()} response\nQuestion: {question}\nData generated for {mode} scenario.",
+            content=f"### {mode.upper()} Mode Response\nQuestion: {question}\nShowing sample data for {mode} scenario.",
         ),
-        _mock_table(),
     ]
-    if mode in {"metric", "all"}:
-        blocks.append(_mock_timeseries())
-    if mode in {"relation", "all"}:
+
+    # Mode-specific blocks
+    if mode == "metric":
+        blocks.extend(_mock_metric_blocks(question))
+    elif mode == "hist" or mode == "history":
+        blocks.append(_mock_table())
+        blocks.append(MarkdownBlock(
+            type="markdown",
+            title="Event Details",
+            content="Recent infrastructure events and changes",
+        ))
+    elif mode == "graph" or mode == "relation":
         blocks.append(_mock_graph())
-    if mode == "document":
+        blocks.append(MarkdownBlock(
+            type="markdown",
+            title="Dependency Analysis",
+            content="CI relationships and topology visualization",
+        ))
+    elif mode == "config":
+        blocks.append(_mock_table())
+    elif mode == "document":
         blocks.append(_mock_document_results())
-    blocks.append(
-        ReferencesBlock(
-            type="references",
-            title="Sample references",
-            items=[
-                ReferenceItem(
-                    kind="sql",
-                    title="Mock SQL",
-                    payload={"query": "SELECT * FROM ci WHERE ci_type = 'SYSTEM';"},
-                ),
-                ReferenceItem(
-                    kind="cypher",
-                    title="Mock Cypher",
-                    payload="MATCH (n)-[:COMPOSED_OF]->(m) RETURN n, m LIMIT 5",
-                ),
-            ],
+    elif mode == "all":
+        blocks.append(_mock_table())
+        blocks.append(_mock_timeseries())
+        blocks.append(_mock_graph())
+    else:
+        blocks.append(_mock_table())
+
+    # Add references for non-document modes
+    if mode != "document":
+        blocks.append(
+            ReferencesBlock(
+                type="references",
+                title="References",
+                items=[
+                    ReferenceItem(
+                        kind="sql",
+                        title="CI Lookup Query",
+                        payload={"query": "SELECT * FROM ci WHERE ci_type = 'SYSTEM' LIMIT 10;"},
+                    ),
+                    ReferenceItem(
+                        kind="cypher",
+                        title="Relationship Query",
+                        payload="MATCH (n)-[:COMPOSED_OF]->(m) RETURN n, m LIMIT 5",
+                    ),
+                ],
+            )
         )
-    )
+
     return blocks
 
 
