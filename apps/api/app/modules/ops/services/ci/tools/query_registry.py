@@ -634,6 +634,27 @@ def _build_ci_query(operation: str, builder: SchemaQueryBuilder, params: Dict[st
 def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dict[str, Any]) -> str:
     """Build metric query using schema"""
 
+    def _build_time_filter(column: str) -> tuple[str, list[str]]:
+        time_range = params.get("time_range")
+        start_time = params.get("start_time")
+        end_time = params.get("end_time")
+        full_time = params.get("full_time_range") or time_range in {"all_time", "all"}
+
+        if full_time:
+            return "", []
+
+        if start_time and end_time:
+            return f" AND {column} >= '{start_time}' AND {column} < '{end_time}'", []
+
+        interval_map = {
+            "last_1h": "1 hour",
+            "last_24h": "24 hours",
+            "last_7d": "7 days",
+            "last_30d": "30 days",
+        }
+        interval = interval_map.get(time_range, "1 hour")
+        return f" AND {column} >= NOW() - INTERVAL '{interval}'", []
+
     if operation == "aggregate_by_ci":
         # Aggregate metric values grouped by CI
         metric_name = params.get("metric_name")
@@ -641,7 +662,14 @@ def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dic
             raise ValueError("metric_name required for aggregate_by_ci")
 
         agg = params.get("agg", "avg")
-        time_range = params.get("time_range", "last_24h")
+        time_filter, _ = _build_time_filter("metric_value.time")
+
+        ci_ids = params.get("ci_ids") or []
+        ci_filter = ""
+        if isinstance(ci_ids, list) and ci_ids:
+            escaped = [str(cid).replace("'", "''") for cid in ci_ids]
+            ci_list = ", ".join(f"'{cid}'" for cid in escaped)
+            ci_filter = f" AND metric_value.ci_id IN ({ci_list})"
 
         query = f"""
         SELECT
@@ -653,9 +681,10 @@ def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dic
         JOIN metric_def ON metric_value.metric_id = metric_def.metric_id
         JOIN ci ON metric_value.ci_id = ci.ci_id
         WHERE metric_def.metric_name = %s
-            AND metric_value.time >= NOW() - INTERVAL '1 hour'
+            {time_filter}
             AND ci.tenant_id = %s
             AND ci.deleted_at IS NULL
+            {ci_filter}
         GROUP BY ci.ci_id, ci.ci_code, ci.ci_name
         ORDER BY metric_value {('DESC' if agg in ['max', 'avg'] else 'ASC')}
         LIMIT %s
@@ -668,6 +697,7 @@ def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dic
         # Time series for a metric
         metric_name = params.get("metric_name")
         ci_id = params.get("ci_id")
+        time_filter, _ = _build_time_filter("metric_value.time")
 
         query = f"""
         SELECT
@@ -678,7 +708,7 @@ def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dic
         FROM metric_value
         JOIN metric_def ON metric_value.metric_id = metric_def.metric_id
         WHERE metric_def.metric_name = %s
-            AND metric_value.time >= NOW() - INTERVAL '24 hours'
+            {time_filter}
         """
 
         if ci_id:
@@ -694,13 +724,14 @@ def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dic
         # Single aggregate value
         metric_name = params.get("metric_name")
         agg = params.get("agg", "avg")
+        time_filter, _ = _build_time_filter("metric_value.time")
 
         query = f"""
         SELECT {agg.upper()}(metric_value.value) AS value
         FROM metric_value
         JOIN metric_def ON metric_value.metric_id = metric_def.metric_id
         WHERE metric_def.metric_name = %s
-            AND metric_value.time >= NOW() - INTERVAL '1 hour'
+            {time_filter}
         """
         query += f" -- PARAMS: ['{metric_name}']"
         return query
@@ -712,10 +743,44 @@ def _build_metric_query(operation: str, builder: SchemaQueryBuilder, params: Dic
 def _build_history_query(operation: str, builder: SchemaQueryBuilder, params: Dict[str, Any]) -> str:
     """Build history query using schema"""
 
+    def _build_time_filter(column: str) -> str:
+        time_range = params.get("time_range")
+        start_time = params.get("start_time")
+        end_time = params.get("end_time")
+        full_time = params.get("full_time_range") or time_range in {"all_time", "all"}
+
+        if full_time:
+            return ""
+
+        if start_time and end_time:
+            return f" AND {column} >= '{start_time}' AND {column} < '{end_time}'"
+
+        interval_map = {
+            "last_24h": "24 hours",
+            "last_7d": "7 days",
+            "last_30d": "30 days",
+        }
+        interval = interval_map.get(time_range, "7 days")
+        return f" AND {column} >= NOW() - INTERVAL '{interval}'"
+
+    def _build_ci_filter(column: str) -> str:
+        ci_id = params.get("ci_id")
+        ci_ids = params.get("ci_ids")
+        if ci_id:
+            return f" AND {column} = '{str(ci_id).replace(\"'\", \"''\")}'"
+        if isinstance(ci_ids, list) and ci_ids:
+            escaped = [str(cid).replace(\"'\", \"''\") for cid in ci_ids]
+            ci_list = \", \".join(f\"'{cid}'\" for cid in escaped)
+            return f\" AND {column} IN ({ci_list})\"
+        return ""
+
     if operation == "work_and_maintenance":
         # Combine work_history and maintenance_history
-        time_range = params.get("time_range", "last_7d")
         limit = params.get("limit", 50)
+        work_time_filter = _build_time_filter("start_time")
+        maint_time_filter = _build_time_filter("start_time")
+        work_ci_filter = _build_ci_filter("ci_id")
+        maint_ci_filter = _build_ci_filter("ci_id")
 
         query = f"""
         (
@@ -729,7 +794,9 @@ def _build_history_query(operation: str, builder: SchemaQueryBuilder, params: Di
                 performer,
                 result
             FROM work_history
-            WHERE start_time >= NOW() - INTERVAL '7 days'
+            WHERE 1=1
+                {work_time_filter}
+                {work_ci_filter}
                 AND tenant_id = %s
             ORDER BY start_time DESC
             LIMIT {limit}
@@ -746,7 +813,9 @@ def _build_history_query(operation: str, builder: SchemaQueryBuilder, params: Di
                 performer,
                 result
             FROM maintenance_history
-            WHERE start_time >= NOW() - INTERVAL '7 days'
+            WHERE 1=1
+                {maint_time_filter}
+                {maint_ci_filter}
                 AND tenant_id = %s
             ORDER BY start_time DESC
             LIMIT {limit}
@@ -758,7 +827,56 @@ def _build_history_query(operation: str, builder: SchemaQueryBuilder, params: Di
         query += f" -- PARAMS: ['{tenant_id}', '{tenant_id}']"
         return query
 
+    elif operation == "work_history":
+        limit = params.get("limit", 50)
+        time_filter = _build_time_filter("start_time")
+        ci_filter = _build_ci_filter("ci_id")
+        query = f"""
+        SELECT
+            start_time,
+            work_type,
+            summary,
+            result,
+            performer
+        FROM work_history
+        WHERE 1=1
+            {time_filter}
+            {ci_filter}
+            AND tenant_id = %s
+        ORDER BY created_at DESC
+        LIMIT {limit}
+        """
+        tenant_id = _get_required_tenant_id(params)
+        query += f" -- PARAMS: ['{tenant_id}']"
+        return query
+
+    elif operation == "maintenance_history":
+        limit = params.get("limit", 50)
+        time_filter = _build_time_filter("start_time")
+        ci_filter = _build_ci_filter("ci_id")
+        query = f"""
+        SELECT
+            start_time,
+            maint_type,
+            summary,
+            result,
+            performer
+        FROM maintenance_history
+        WHERE 1=1
+            {time_filter}
+            {ci_filter}
+            AND tenant_id = %s
+        ORDER BY start_time DESC
+        LIMIT {limit}
+        """
+        tenant_id = _get_required_tenant_id(params)
+        query += f" -- PARAMS: ['{tenant_id}']"
+        return query
+
     elif operation == "event_log":
+        limit = params.get("limit", 50)
+        time_filter = _build_time_filter("time")
+        ci_filter = _build_ci_filter("ci_id")
         query = f"""
         SELECT
             time,
@@ -767,13 +885,15 @@ def _build_history_query(operation: str, builder: SchemaQueryBuilder, params: Di
             title,
             message
         FROM event_log
-        WHERE time >= NOW() - INTERVAL '24 hours'
+        WHERE 1=1
+            {time_filter}
+            {ci_filter}
             AND tenant_id = %s
         ORDER BY time DESC
-        LIMIT %s
+        LIMIT {limit}
         """
         tenant_id = _get_required_tenant_id(params)
-        query += f" -- PARAMS: ['{tenant_id}', {params.get('limit', 50)}]"
+        query += f" -- PARAMS: ['{tenant_id}']"
         return query
 
     else:

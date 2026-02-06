@@ -828,12 +828,19 @@ class CIOrchestratorRunner:
         metric_list = tuple(metrics or ())
         filters_tuple = tuple(filters or ())
         ci_ids_tuple = tuple(ci_ids or ())
+
+        # Use default group_by if empty
+        if not group_list:
+            group_list = ("ci_type",)
+
         input_params = {
+            "operation": "database_query",
             "group_by": list(group_list),
             "metrics": list(metric_list),
             "filter_count": len(filters_tuple),
             "ci_ids_count": len(ci_ids_tuple),
-            "top_n": top_n,
+            "top_n": top_n or 10,
+            "tenant_id": self.tenant_id,  # Add tenant_id
         }
         with self._tool_context(
             "ci.aggregate",
@@ -846,7 +853,7 @@ class CIOrchestratorRunner:
         ) as meta:
             try:
                 result = await self._ci_aggregate_via_registry_async(
-                    group_by=group_by,
+                    group_by=group_list,
                     metrics=metrics,
                     filters=filters,
                     ci_ids=ci_ids,
@@ -1050,12 +1057,30 @@ class CIOrchestratorRunner:
         ci_ids: Iterable[str] | None = None,
     ) -> dict[str, Any]:
         ci_ids_tuple = tuple(ci_ids or ())
+
+        # Convert time_range to start_time and end_time
+        from datetime import datetime, timedelta
+        end_time = datetime.utcnow()
+        if time_range == "last_24h":
+            start_time = end_time - timedelta(hours=24)
+        elif time_range == "last_7d":
+            start_time = end_time - timedelta(days=7)
+        elif time_range == "last_30d":
+            start_time = end_time - timedelta(days=30)
+        else:
+            start_time = end_time - timedelta(hours=24)
+
         input_params = {
+            "operation": "database_query",
             "metric_name": metric_name,
-            "agg": agg,
+            "function": agg.upper(),  # Map agg to function
             "time_range": time_range,
+            "start_time": start_time.isoformat(),
+            "end_time": end_time.isoformat(),
             "ci_id": ci_id,
-            "ci_ids_count": len(ci_ids_tuple),
+            "ci_ids": list(ci_ids_tuple),  # Convert to list
+            "tenant_id": self.tenant_id,  # Add tenant_id
+            "limit": 10,  # Add limit
         }
         with self._tool_context(
             "metric.aggregate",
@@ -5033,14 +5058,22 @@ class CIOrchestratorRunner:
         ci_ids: Iterable[str] | None = None,
         top_n: int | None = None,
     ) -> Dict[str, Any]:
+        # Convert parameters to list for DynamicTool
+        group_by_list = list(group_by) if group_by else []
+        metrics_list = list(metrics) if metrics else []
+        filters_list = list(filters) if filters else []
+        ci_ids_list = list(ci_ids) if ci_ids else []
+
         result = await self._execute_tool_with_tracing(
-            "ci",
-            "aggregate",
-            group_by=group_by,
-            metrics=metrics,
-            filters=filters,
-            ci_ids=ci_ids,
+            "ci_aggregate",  # Use ci_aggregate tool_type directly
+            "database_query",  # Use database_query operation
+            group_by=group_by_list,
+            metrics=metrics_list,
+            filters=filters_list,
+            ci_ids=ci_ids_list,
             top_n=top_n,
+            limit=top_n if top_n else 10,  # Map top_n to limit for query template
+            tenant_id=self.tenant_id,  # Add tenant_id
         )
         return result.dict() if hasattr(result, "dict") else result
 
@@ -5067,14 +5100,33 @@ class CIOrchestratorRunner:
         ci_id: str | None = None,
         ci_ids: Iterable[str] | None = None,
     ) -> dict[str, Any]:
+        # Convert ci_ids to list for DynamicTool
+        ci_ids_list = list(ci_ids) if ci_ids else []
+
+        # Convert time_range to start_time and end_time
+        from datetime import datetime, timedelta
+        end_time = datetime.utcnow()
+        if time_range == "last_24h":
+            start_time = end_time - timedelta(hours=24)
+        elif time_range == "last_7d":
+            start_time = end_time - timedelta(days=7)
+        elif time_range == "last_30d":
+            start_time = end_time - timedelta(days=30)
+        else:
+            start_time = end_time - timedelta(hours=24)
+
         result = await self._execute_tool_with_tracing(
-            "metric",
-            "aggregate",
+            "metric",  # Use metric tool_type directly
+            "database_query",  # Use database_query operation
             metric_name=metric_name,
-            agg=agg,
+            function=agg.upper(),  # Map agg to function for metric tool
             time_range=time_range,
+            start_time=start_time.isoformat(),
+            end_time=end_time.isoformat(),
             ci_id=ci_id,
-            ci_ids=ci_ids,
+            ci_ids=ci_ids_list,
+            tenant_id=self.tenant_id,  # Add tenant_id
+            limit=10,  # Add limit for metric tool
         )
         return result.dict() if hasattr(result, "dict") else result
 
@@ -5752,7 +5804,9 @@ class CIOrchestratorRunner:
             applied_assets=applied_assets,
             params={
                 "plan_output": plan_output.model_dump(),
+                "question": self.question,
                 "original_question": self.question,  # Add original question for scope correction
+                "enable_orchestration": True,  # Enable orchestration for tool execution
             },
             prev_output=prev_output,
             trace_id=trace_id,

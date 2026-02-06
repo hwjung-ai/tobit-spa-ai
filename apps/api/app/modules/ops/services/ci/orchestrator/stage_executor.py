@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import time
+from datetime import date, datetime, time as datetime_time
 from typing import Any, Dict, List, Optional
 
 from core.db import get_session_context
@@ -277,6 +278,9 @@ class StageExecutor:
                 overridden_asset = self._resolve_asset(asset_type, key_part)
                 applied_assets[asset_type] = overridden_asset
 
+        question_text = stage_input.params.get("question", "") if stage_input.params else ""
+        full_time_range = "전체기간" in question_text or "전체 기간" in question_text or "all time" in question_text.lower()
+
         # Tool execution context
         tool_context = ToolContext(
             tenant_id=self.context.tenant_id,
@@ -285,6 +289,7 @@ class StageExecutor:
             metadata={
                 "applied_assets": applied_assets,
                 "asset_overrides": self.context.asset_overrides if self.context.test_mode else {},
+                "full_time_range": full_time_range,
             }
         )
 
@@ -295,12 +300,30 @@ class StageExecutor:
             # Convert dict back to Plan object for easier access
             from app.modules.ops.services.ci.planner.plan_schema import Plan
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
+            if plan.history and plan.history.enabled:
+                normalized_question = question_text.lower()
+                if plan.history.tool_type in {"history", "event_log"}:
+                    maintenance_keywords = ("점검", "정비", "maintenance", "inspection", "maint")
+                    work_keywords = ("작업 이력", "작업이력", "work history", "작업", "work")
+                    if any(key in normalized_question for key in maintenance_keywords):
+                        tool_type = "maintenance_history"
+                    elif any(key in normalized_question for key in work_keywords):
+                        tool_type = "work_history"
+                    else:
+                        tool_type = "event_log"
+                    plan = plan.model_copy(
+                        update={
+                            "history": plan.history.copy(
+                                update={"tool_type": tool_type, "source": tool_type}
+                            )
+                        }
+                    )
 
             # Check if orchestration should be used
             # IMPORTANT: Default to True to use new orchestration layer with Tool Registry
-            use_orchestration = stage_input.params.get("enable_orchestration", True) or (
-                hasattr(plan, "execution_strategy") and plan.execution_strategy is not None
-            )
+            enable_orchestration = stage_input.params.get("enable_orchestration", True)
+            has_execution_strategy = hasattr(plan, "execution_strategy") and plan.execution_strategy is not None
+            use_orchestration = enable_orchestration or has_execution_strategy
 
             self.logger.info(
                 "execute_stage.orchestration_check",
@@ -329,15 +352,39 @@ class StageExecutor:
                     orchestrator = ToolOrchestrator(plan=plan, context=tool_context)
                     chain_result = await orchestrator.execute()
 
+                    # Map tool_id to mode for compose stage compatibility
+                    tool_id_to_mode = {
+                        "primary": "primary",
+                        "secondary": "secondary",
+                        "aggregate": "aggregate",
+                        "metric": "metric",
+                        "history": "history",
+                        "graph": "graph",
+                    }
+
                     # Convert ChainExecutionResult to execution results format
                     # chain_result.step_results is dict[step_id, StepResult]
                     for step_id, step_result in chain_result.step_results.items():
-                        # Format each result with tool_name, success, and data fields
+                        # Format each result with tool_name, mode, success, and data fields
+                        step_data = step_result.data if step_result.success else None
+
+                        # Flatten data structure for compose stage compatibility
+                        # If data is {"rows": [...], ...}, promote rows to top level
                         formatted_result = {
                             "tool_name": step_id,  # step_id is the tool identifier (metric, history, etc)
+                            "mode": tool_id_to_mode.get(step_id, step_id),  # Map to mode for compose stage
                             "success": step_result.success,
-                            "data": step_result.data if step_result.success else None,
+                            "data": step_data,
                         }
+
+                        # Promote rows to top level if data is a dict with rows
+                        if step_data and isinstance(step_data, dict):
+                            if "rows" in step_data:
+                                formatted_result["rows"] = step_data["rows"]
+                            if "count" in step_data:
+                                formatted_result["count"] = step_data["count"]
+                            if "headers" in step_data:
+                                formatted_result["headers"] = step_data["headers"]
 
                         if not step_result.success and step_result.error:
                             formatted_result["error"] = step_result.error
@@ -345,9 +392,9 @@ class StageExecutor:
                         results.append(formatted_result)
 
                         # Extract references from step data if available
-                        if step_result.success and isinstance(step_result.data, dict):
-                            if "references" in step_result.data:
-                                references.extend(step_result.data.get("references", []))
+                        if step_result.success and isinstance(step_data, dict):
+                            if "references" in step_data:
+                                references.extend(step_data.get("references", []))
 
                     self.logger.info(
                         "execute_stage.orchestration_completed",
@@ -358,12 +405,178 @@ class StageExecutor:
                         }
                     )
 
-                    return {
+                    # Enrich with CI detail if requested and available
+                    if "구성" in question_text or "configuration" in question_text.lower():
+                        def _rows_from_result(result: Dict[str, Any] | None) -> list[dict[str, Any]]:
+                            if not result:
+                                return []
+                            rows = result.get("rows") or []
+                            if not rows and isinstance(result.get("data"), dict):
+                                rows = result["data"].get("rows") or []
+                            return rows if isinstance(rows, list) else []
+
+                        def _score_metric_row(row: Dict[str, Any]) -> float:
+                            for key in ("metric_value", "max_cpu_usage", "cpu_usage", "value"):
+                                value = row.get(key)
+                                if isinstance(value, (int, float)):
+                                    return float(value)
+                            return 0.0
+
+                        primary_result = next(
+                            (r for r in results if r.get("mode") == "primary"), None
+                        )
+                        metric_result = next(
+                            (r for r in results if r.get("mode") == "metric"), None
+                        )
+                        aggregate_result = next(
+                            (r for r in results if r.get("mode") == "aggregate"), None
+                        )
+
+                        candidate_result = primary_result or metric_result or aggregate_result
+                        candidate_rows = _rows_from_result(candidate_result)
+                        if candidate_rows:
+                            if candidate_result is primary_result:
+                                selected_row = candidate_rows[0]
+                            else:
+                                selected_row = max(candidate_rows, key=_score_metric_row)
+
+                            ci_id = selected_row.get("ci_id")
+                            if ci_id:
+                                from sqlalchemy import text
+                                sql = (
+                                    "SELECT ci_id, ci_code, ci_name, ci_type, ci_subtype, "
+                                    "ci_category, status, location, owner, tags, attributes "
+                                    "FROM ci "
+                                    f"WHERE ci_id = '{ci_id}' "
+                                    f"AND tenant_id = '{self.context.tenant_id}' "
+                                    "AND deleted_at IS NULL "
+                                    "LIMIT 1"
+                                )
+                                try:
+                                    detail_result = await self.tool_executor.execute_tool(
+                                        tool_type="direct_query",
+                                        params={"sql": sql},
+                                        context=tool_context,
+                                    )
+                                    detail_payload = (
+                                        detail_result.get("data")
+                                        if isinstance(detail_result, dict) and "data" in detail_result
+                                        else detail_result
+                                    )
+                                    detail_rows = []
+                                    raw_rows = detail_payload.get("rows", []) if isinstance(detail_payload, dict) else []
+                                    for row in raw_rows:
+                                        if hasattr(row, "_mapping"):
+                                            detail_rows.append(dict(row._mapping))
+                                        elif isinstance(row, dict):
+                                            detail_rows.append(row)
+                                        else:
+                                            detail_rows.append({"value": str(row)})
+                                    results.append(
+                                        {
+                                            "tool_name": "ci_detail",
+                                            "mode": "ci_detail",
+                                            "success": True,
+                                            "data": {"rows": detail_rows},
+                                            "rows": detail_rows,
+                                        }
+                                    )
+                                except Exception as e:
+                                    self.logger.warning(
+                                        "execute_stage.ci_detail_failed",
+                                        extra={"error": str(e)},
+                                    )
+
+                    # Fallback: if history returned empty rows but primary has ci_id, retry with explicit ci_id
+                    if plan.history and plan.history.enabled:
+                        def _rows_from_result(result: Dict[str, Any] | None) -> list[dict[str, Any]]:
+                            if not result:
+                                return []
+                            rows = result.get("rows") or []
+                            if not rows and isinstance(result.get("data"), dict):
+                                rows = result["data"].get("rows") or []
+                            return rows if isinstance(rows, list) else []
+
+                        history_result = next(
+                            (r for r in results if r.get("mode") == "history"), None
+                        )
+                        history_rows = _rows_from_result(history_result)
+                        if not history_rows:
+                            primary_result = next(
+                                (r for r in results if r.get("mode") == "primary"), None
+                            )
+                            primary_rows = _rows_from_result(primary_result)
+                            if primary_rows:
+                                ci_id = primary_rows[0].get("ci_id")
+                            else:
+                                ci_id = None
+                            if ci_id:
+                                from datetime import datetime, timedelta
+
+                                end_time = datetime.utcnow()
+                                time_range = plan.history.time_range
+                                if time_range in {"all_time", "all"} or tool_context.get_metadata("full_time_range"):
+                                    start_time = datetime(1970, 1, 1)
+                                elif time_range == "last_24h":
+                                    start_time = end_time - timedelta(hours=24)
+                                elif time_range == "last_7d":
+                                    start_time = end_time - timedelta(days=7)
+                                elif time_range == "last_30d":
+                                    start_time = end_time - timedelta(days=30)
+                                else:
+                                    start_time = end_time - timedelta(days=7)
+
+                                try:
+                                    fallback_result = await self.tool_executor.execute_tool(
+                                        tool_type=plan.history.tool_type,
+                                        params={
+                                            "ci_id": ci_id,
+                                            "start_time": start_time.isoformat(),
+                                            "end_time": end_time.isoformat(),
+                                            "time_range": plan.history.time_range,
+                                            "limit": plan.history.limit,
+                                            "tenant_id": self.context.tenant_id,
+                                        },
+                                        context=tool_context,
+                                    )
+                                    payload = (
+                                        fallback_result.get("data")
+                                        if isinstance(fallback_result, dict) and "data" in fallback_result
+                                        else fallback_result
+                                    )
+                                    fallback_rows = []
+                                    raw_rows = payload.get("rows", []) if isinstance(payload, dict) else []
+                                    for row in raw_rows:
+                                        if hasattr(row, "_mapping"):
+                                            fallback_rows.append(dict(row._mapping))
+                                        elif isinstance(row, dict):
+                                            fallback_rows.append(row)
+                                        else:
+                                            fallback_rows.append({"value": str(row)})
+                                    if fallback_rows:
+                                        if history_result is None:
+                                            history_result = {
+                                                "tool_name": "history",
+                                                "mode": "history",
+                                                "success": True,
+                                            }
+                                            results.append(history_result)
+                                        history_result["data"] = {"rows": fallback_rows}
+                                        history_result["rows"] = fallback_rows
+                                        history_result["count"] = len(fallback_rows)
+                                except Exception as e:
+                                    self.logger.warning(
+                                        "execute_stage.history_fallback_failed",
+                                        extra={"error": str(e)},
+                                    )
+
+                    response_payload = {
                         "execution_results": results,
                         "references": references,
                         "plan_output": plan_output_dict,
                         "executed_at": time.time(),
                     }
+                    return self._sanitize_json_value(response_payload)
                 except Exception as e:
                     self.logger.error(
                         "execute_stage.orchestration_failed",
@@ -440,7 +653,9 @@ class StageExecutor:
                     from datetime import datetime, timedelta
                     end_time = datetime.utcnow()
                     time_range = plan.metric.time_range
-                    if time_range == "last_24h":
+                    if full_time_range or time_range in {"all_time", "all"}:
+                        start_time = datetime(1970, 1, 1)
+                    elif time_range == "last_24h":
                         start_time = end_time - timedelta(hours=24)
                     elif time_range == "last_7d":
                         start_time = end_time - timedelta(days=7)
@@ -476,15 +691,22 @@ class StageExecutor:
                     self.logger.error(f"Failed to execute metric aggregate query: {str(e)}")
             elif plan.aggregate and (plan.aggregate.group_by or plan.aggregate.metrics or plan.aggregate.filters):
                 try:
+                    limit_value = plan.aggregate.top_n or 10
+                    aggregate_params = {
+                        "group_by": plan.aggregate.group_by or [],
+                        "metrics": plan.aggregate.metrics,
+                        "filters": plan.aggregate.filters,
+                        "top_n": plan.aggregate.top_n,
+                        "limit": limit_value,
+                        "scope": plan.aggregate.scope,
+                        "tenant_id": tool_context.tenant_id,
+                    }
+                    # DEBUG: Print params
+                    import sys
+                    print(f"[DEBUG stage_executor] aggregate_params keys: {list(aggregate_params.keys())}", file=sys.stderr, flush=True)
                     aggregate_result = await self.tool_executor.execute_tool(
                         tool_type=plan.aggregate.tool_type,
-                        params={
-                            "group_by": plan.aggregate.group_by,
-                            "metrics": plan.aggregate.metrics,
-                            "filters": plan.aggregate.filters,
-                            "top_n": plan.aggregate.top_n,
-                            "scope": plan.aggregate.scope,
-                        },
+                        params=aggregate_params,
                         context=tool_context,
                     )
                     results.append(aggregate_result)
@@ -657,6 +879,119 @@ class StageExecutor:
                         self._summarize_aggregate_results(aggregate_results)
                     )
 
+                # Also expose primary/secondary results for CI-level context
+                primary_results = [
+                    r for r in execution_results if r.get("mode") == "primary"
+                ]
+                if primary_results:
+                    composed_result["primary_result"] = primary_results[0]
+
+                secondary_results = [
+                    r for r in execution_results if r.get("mode") == "secondary"
+                ]
+                if secondary_results:
+                    composed_result["secondary_result"] = secondary_results[0]
+
+                # Also include metric and history results for aggregate intent
+                metric_results = [
+                    r for r in execution_results if r.get("mode") == "metric"
+                ]
+                if metric_results:
+                    composed_result["metric_result"] = metric_results[0]
+
+                history_results = [
+                    r for r in execution_results if r.get("mode") == "history"
+                ]
+                if history_results:
+                    composed_result["history_result"] = history_results[0]
+
+                ci_detail_results = [
+                    r for r in execution_results if r.get("mode") == "ci_detail"
+                ]
+                if ci_detail_results:
+                    detail_rows = ci_detail_results[0].get("rows") or []
+                    if not detail_rows and isinstance(ci_detail_results[0].get("data"), dict):
+                        detail_rows = ci_detail_results[0]["data"].get("rows") or []
+                    if detail_rows:
+                        detail_row = detail_rows[0]
+                        composed_result["ci_detail"] = {
+                            "ci_id": detail_row.get("ci_id"),
+                            "ci_code": detail_row.get("ci_code"),
+                            "ci_name": detail_row.get("ci_name"),
+                            "ci_type": detail_row.get("ci_type"),
+                            "ci_subtype": detail_row.get("ci_subtype"),
+                            "ci_category": detail_row.get("ci_category"),
+                            "status": detail_row.get("status"),
+                            "location": detail_row.get("location"),
+                            "owner": detail_row.get("owner"),
+                            "tags": detail_row.get("tags"),
+                            "attributes": detail_row.get("attributes"),
+                        }
+
+                # If CI detail is missing, derive from primary results (best-effort)
+                if not composed_result.get("ci_detail") and primary_results:
+                    primary_rows = []
+                    primary_data = primary_results[0].get("data", {})
+                    if isinstance(primary_results[0].get("rows"), list):
+                        primary_rows = primary_results[0].get("rows", [])
+                    elif isinstance(primary_data, dict) and isinstance(primary_data.get("rows"), list):
+                        primary_rows = primary_data.get("rows", [])
+
+                    if primary_rows:
+                        def _score_row(row: Dict[str, Any]) -> float:
+                            for key in ("max_cpu_usage", "cpu_usage", "value"):
+                                value = row.get(key)
+                                if isinstance(value, (int, float)):
+                                    return float(value)
+                            return 0.0
+
+                        best_row = max(primary_rows, key=_score_row)
+                        composed_result["ci_detail"] = {
+                            "ci_id": best_row.get("ci_id"),
+                            "ci_code": best_row.get("ci_code"),
+                            "ci_name": best_row.get("ci_name"),
+                            "ci_type": best_row.get("ci_type"),
+                            "ci_subtype": best_row.get("ci_subtype"),
+                            "ci_category": best_row.get("ci_category"),
+                            "status": best_row.get("status"),
+                            "location": best_row.get("location"),
+                            "owner": best_row.get("owner"),
+                            "tags": best_row.get("tags"),
+                            "attributes": best_row.get("attributes"),
+                        }
+
+                # If still missing, derive from metric results (best-effort)
+                if not composed_result.get("ci_detail") and metric_results:
+                    metric_rows = []
+                    metric_data = metric_results[0].get("data", {})
+                    if isinstance(metric_results[0].get("rows"), list):
+                        metric_rows = metric_results[0].get("rows", [])
+                    elif isinstance(metric_data, dict) and isinstance(metric_data.get("rows"), list):
+                        metric_rows = metric_data.get("rows", [])
+
+                    if metric_rows:
+                        def _score_metric_row(row: Dict[str, Any]) -> float:
+                            for key in ("metric_value", "max_cpu_usage", "cpu_usage", "value"):
+                                value = row.get(key)
+                                if isinstance(value, (int, float)):
+                                    return float(value)
+                            return 0.0
+
+                        best_row = max(metric_rows, key=_score_metric_row)
+                        composed_result["ci_detail"] = {
+                            "ci_id": best_row.get("ci_id"),
+                            "ci_code": best_row.get("ci_code"),
+                            "ci_name": best_row.get("ci_name"),
+                            "ci_type": best_row.get("ci_type"),
+                            "ci_subtype": best_row.get("ci_subtype"),
+                            "ci_category": best_row.get("ci_category"),
+                            "status": best_row.get("status"),
+                            "location": best_row.get("location"),
+                            "owner": best_row.get("owner"),
+                            "tags": best_row.get("tags"),
+                            "attributes": best_row.get("attributes"),
+                        }
+
             elif intent == "PATH":
                 # For path, include both primary and path results
                 path_results = [r for r in execution_results if r.get("mode") == "path"]
@@ -689,7 +1024,7 @@ class StageExecutor:
         )
         composed_result["llm_summary"] = llm_summary
 
-        return composed_result
+        return self._sanitize_json_value(composed_result)
 
     async def _execute_present(self, stage_input: StageInput) -> Dict[str, Any]:
         """Execute the present stage."""
@@ -739,6 +1074,54 @@ class StageExecutor:
                     "content": llm_summary,
                     "metadata": {"generated_by": "llm_compose"},
                 })
+
+                def _build_table_block(title: str, headers: list[str], rows: list[list[Any]]) -> dict[str, Any]:
+                    return {
+                        "type": "table",
+                        "title": title,
+                        "content": {
+                            "headers": headers,
+                            "rows": rows,
+                        },
+                        "metadata": {"count": len(rows)},
+                    }
+
+                if isinstance(composed_result, dict):
+                    ci_detail = composed_result.get("ci_detail") or {}
+                    if isinstance(ci_detail, dict) and ci_detail:
+                        ci_headers = [
+                            "ci_code",
+                            "ci_name",
+                            "ci_type",
+                            "status",
+                            "ci_subtype",
+                            "ci_category",
+                            "location",
+                            "owner",
+                        ]
+                        ci_row = [[ci_detail.get(h) for h in ci_headers]]
+                        blocks.append(_build_table_block("CI 구성정보", ci_headers, ci_row))
+
+                    history_result = composed_result.get("history_result") or {}
+                    history_rows = history_result.get("rows") or []
+                    if not history_rows and isinstance(history_result.get("data"), dict):
+                        history_rows = history_result["data"].get("rows") or []
+                    if isinstance(history_rows, list) and history_rows:
+                        history_headers = [
+                            "start_time",
+                            "work_type",
+                            "result",
+                            "impact_level",
+                            "summary",
+                            "requested_by",
+                            "approved_by",
+                        ]
+                        table_rows = []
+                        for row in history_rows[:20]:
+                            if isinstance(row, dict):
+                                table_rows.append([row.get(h) for h in history_headers])
+                        if table_rows:
+                            blocks.append(_build_table_block("최근 작업 이력", history_headers, table_rows))
 
                 # Get additional blocks from composed_result if available
                 if isinstance(composed_result, dict):
@@ -795,6 +1178,54 @@ class StageExecutor:
             runner_blocks = base_result.get("blocks", [])
             blocks.extend(runner_blocks)
 
+            if isinstance(composed_result, dict):
+                def _build_table_block(title: str, headers: list[str], rows: list[list[Any]]) -> dict[str, Any]:
+                    return {
+                        "type": "table",
+                        "title": title,
+                        "content": {
+                            "headers": headers,
+                            "rows": rows,
+                        },
+                        "metadata": {"count": len(rows)},
+                    }
+
+                ci_detail = composed_result.get("ci_detail") or {}
+                if isinstance(ci_detail, dict) and ci_detail:
+                    ci_headers = [
+                        "ci_code",
+                        "ci_name",
+                        "ci_type",
+                        "status",
+                        "ci_subtype",
+                        "ci_category",
+                        "location",
+                        "owner",
+                    ]
+                    ci_row = [[ci_detail.get(h) for h in ci_headers]]
+                    blocks.append(_build_table_block("CI 구성정보", ci_headers, ci_row))
+
+                history_result = composed_result.get("history_result") or {}
+                history_rows = history_result.get("rows") or []
+                if not history_rows and isinstance(history_result.get("data"), dict):
+                    history_rows = history_result["data"].get("rows") or []
+                if isinstance(history_rows, list) and history_rows:
+                    history_headers = [
+                        "start_time",
+                        "work_type",
+                        "result",
+                        "impact_level",
+                        "summary",
+                        "requested_by",
+                        "approved_by",
+                    ]
+                    table_rows = []
+                    for row in history_rows[:20]:
+                        if isinstance(row, dict):
+                            table_rows.append([row.get(h) for h in history_headers])
+                    if table_rows:
+                        blocks.append(_build_table_block("최근 작업 이력", history_headers, table_rows))
+
             # Disable old block creation - using runner's blocks instead
             # if False:  # Disable duplicate block creation
             #     if intent == "LOOKUP":
@@ -836,7 +1267,30 @@ class StageExecutor:
             result["baseline_trace_id"] = self.context.baseline_trace_id
             result["baseline_comparison_available"] = True
 
-        return result
+        return self._sanitize_json_value(result)
+
+    def _sanitize_json_value(self, value: Any) -> Any:
+        """Recursively sanitize datetimes for JSON serialization."""
+        from pydantic import BaseModel
+
+        if isinstance(value, BaseModel):
+            return self._sanitize_json_value(value.model_dump())
+
+        if isinstance(value, dict):
+            return {key: self._sanitize_json_value(val) for key, val in value.items()}
+
+        if isinstance(value, (list, tuple, set)):
+            sequence = [self._sanitize_json_value(v) for v in value]
+            if isinstance(value, tuple):
+                return tuple(sequence)
+            if isinstance(value, set):
+                return list(sequence)
+            return sequence
+
+        if isinstance(value, (datetime, date, datetime_time)):
+            return value.isoformat()
+
+        return value
 
     def _build_diagnostics(
         self, result: Dict[str, Any], stage_name: str
@@ -984,6 +1438,50 @@ class StageExecutor:
         composed_result: Dict[str, Any],
     ) -> str:
         """Generate LLM summary from execution results."""
+        if ("전체기간" in question or "전체 기간" in question) and composed_result.get("ci_detail"):
+            ci_detail = composed_result.get("ci_detail") or {}
+            ci_name = ci_detail.get("ci_name") or "unknown"
+            ci_code = ci_detail.get("ci_code") or "unknown"
+            ci_type = ci_detail.get("ci_type") or "unknown"
+            status = ci_detail.get("status") or "unknown"
+
+            max_cpu_usage = None
+            primary_result = composed_result.get("primary_result") or {}
+            primary_rows = primary_result.get("rows") or []
+            if not primary_rows and isinstance(primary_result.get("data"), dict):
+                primary_rows = primary_result["data"].get("rows") or []
+            if primary_rows:
+                max_cpu_usage = primary_rows[0].get("max_cpu_usage")
+
+            if max_cpu_usage is None:
+                metric_result = composed_result.get("metric_result") or {}
+                metric_rows = metric_result.get("rows") or []
+                if not metric_rows and isinstance(metric_result.get("data"), dict):
+                    metric_rows = metric_result["data"].get("rows") or []
+                if metric_rows:
+                    for key in ("metric_value", "max_cpu_usage", "cpu_usage", "value"):
+                        value = metric_rows[0].get(key)
+                        if isinstance(value, (int, float)):
+                            max_cpu_usage = float(value)
+                            break
+
+            history_result = composed_result.get("history_result") or {}
+            history_rows = history_result.get("rows") or []
+            if not history_rows and isinstance(history_result.get("data"), dict):
+                history_rows = history_result["data"].get("rows") or []
+
+            summary = (
+                f"전체 기간 기준 CPU 사용률이 가장 높은 CI는 **{ci_name}**"
+                f"(코드 **{ci_code}**)입니다."
+            )
+            if max_cpu_usage is not None:
+                summary += f" 최대 CPU 사용률은 **{max_cpu_usage:.2f}**입니다."
+            summary += (
+                f" 구성정보: Code **{ci_code}**, Name **{ci_name}**, Type **{ci_type}**, Status **{status}**."
+            )
+            summary += f" 최근 작업 이력은 {len(history_rows)}건입니다."
+            return summary
+
         # Skip LLM call if no question or no execution results
         if not question or not execution_results:
             return self._generate_summary(composed_result)

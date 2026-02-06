@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List
 
+from fastapi.encoders import jsonable_encoder
+
 from sqlmodel import Session, select
 
 from app.modules.asset_registry.models import TbAssetRegistry
@@ -201,6 +203,22 @@ def persist_execution_trace(
         f"stage_inputs={len(stage_inputs)}, stage_outputs={len(stage_outputs)}"
     )
 
+    def _json_safe(value: Any) -> Any:
+        if value is None:
+            return None
+        return jsonable_encoder(value)
+
+    safe_request_payload = _json_safe(request_payload)
+    safe_plan_raw = _json_safe(plan_raw)
+    safe_plan_validated = _json_safe(plan_validated)
+    safe_execution_steps = _json_safe(execution_steps)
+    safe_references = _json_safe(references)
+    safe_answer_data = _json_safe(answer_data)
+    safe_flow_spans = _json_safe(flow_spans)
+    safe_stage_inputs = _json_safe(stage_inputs)
+    safe_stage_outputs = _json_safe(stage_outputs)
+    safe_replan_events = _json_safe(trace_payload.get("replan_events", []))
+
     trace_entry = TbExecutionTrace(
         trace_id=trace_id,
         parent_trace_id=parent_trace_id,
@@ -211,22 +229,22 @@ def persist_execution_trace(
         question=question,
         status=status,
         duration_ms=duration_ms,
-        request_payload=request_payload,
+        request_payload=safe_request_payload,
         applied_assets=applied_assets,
         asset_versions=asset_versions or None,
         fallbacks=fallbacks,
-        plan_raw=plan_raw,
-        plan_validated=plan_validated,
-        execution_steps=execution_steps,
-        references=references,
-        answer=answer_data,
+        plan_raw=safe_plan_raw,
+        plan_validated=safe_plan_validated,
+        execution_steps=safe_execution_steps,
+        references=safe_references,
+        answer=safe_answer_data,
         ui_render=None,
         audit_links={"related_audit_log_ids": []},
-        flow_spans=flow_spans,
+        flow_spans=safe_flow_spans,
         # New orchestration fields
         route=trace_payload.get("route", "orch"),
-        stage_inputs=stage_inputs,
-        stage_outputs=stage_outputs,
-        replan_events=trace_payload.get("replan_events", []),
+        stage_inputs=safe_stage_inputs or [],
+        stage_outputs=safe_stage_outputs or [],
+        replan_events=safe_replan_events or [],
     )
     return create_execution_trace(session, trace_entry)

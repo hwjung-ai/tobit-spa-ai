@@ -8,6 +8,7 @@ import BlockRenderer, {
 } from "../../components/answer/BlockRenderer";
 import { type NextAction } from "./nextActions";
 import { authenticatedFetch } from "@/lib/apiClient/index";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   type ServerHistoryEntry,
   type CiAnswerPayload,
@@ -253,21 +254,38 @@ const buildErrorEnvelope = (backendMode: BackendMode, message: string): AnswerEn
   ],
 });
 
-const genId = () => {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
+const normalizeHistoryResponse = (
+  response: ServerHistoryEntry["response"]
+): AnswerEnvelope | CiAnswerPayload | null => {
+  if (!response || typeof response !== "object") return null;
+  const maybeEnvelope = response as AnswerEnvelope;
+  if (Array.isArray(maybeEnvelope.blocks)) return maybeEnvelope;
+
+  const responseWithData = response as { data?: unknown };
+  const data = responseWithData.data;
+  if (data && typeof data === "object") {
+    const maybeCi = data as CiAnswerPayload;
+    if (Array.isArray(maybeCi.blocks) || typeof maybeCi.answer === "string") {
+      return maybeCi;
+    }
+    const maybeAnswer = (data as { answer?: AnswerEnvelope }).answer;
+    if (maybeAnswer && Array.isArray(maybeAnswer.blocks)) {
+      return maybeAnswer;
+    }
   }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  return null;
 };
 
 const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | null => {
   const metadata = entry.metadata;
   const backendMode = metadata?.backendMode ?? metadata?.backend_mode ?? entry.feature ?? "config";
   const response = entry.response;
-  const envelope: AnswerEnvelope | CiAnswerPayload =
-    response && (Array.isArray((response as AnswerEnvelope).blocks) || Array.isArray((response as CiAnswerPayload).blocks))
-      ? response as AnswerEnvelope | CiAnswerPayload
-      : buildErrorEnvelope(backendMode as BackendMode, "Missing response data from history");
+  const normalizedResponse = normalizeHistoryResponse(response);
+  if (!normalizedResponse) {
+    return null;
+  }
+  const envelope: AnswerEnvelope | CiAnswerPayload = normalizedResponse;
   const blocks = (envelope as AnswerEnvelope).blocks ?? (envelope as CiAnswerPayload).blocks;
   if (!blocks || !Array.isArray(blocks)) {
     return null;
@@ -276,8 +294,18 @@ const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | n
   const status = entry.status === "error" ? "error" : "ok";
 
   // Extract trace_id from metadata or response
-  const traceId = metadata?.trace_id || metadata?.trace?.trace_id || envelope?.meta?.trace_id;
-  const trace = metadata?.trace ? { ...metadata.trace, trace_id: traceId } : { trace_id: traceId };
+  const traceId =
+    metadata?.trace_id ||
+    metadata?.trace?.trace_id ||
+    (envelope as AnswerEnvelope | CiAnswerPayload)?.meta?.trace_id ||
+    (envelope as CiAnswerPayload)?.trace?.trace_id ||
+    (response as { data?: { trace?: { trace_id?: string } } })?.data?.trace?.trace_id;
+  const responseTrace = (envelope as CiAnswerPayload)?.trace;
+  const trace = metadata?.trace
+    ? { ...metadata.trace, trace_id: traceId }
+    : responseTrace
+      ? { ...responseTrace, trace_id: traceId }
+      : { trace_id: traceId };
 
   return {
     id: entry.id,
@@ -296,6 +324,7 @@ const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEntry | n
 };
 
 export default function OpsPage() {
+  const { isLoading: authLoading, user } = useAuth();
   const [history, setHistory] = useState<LocalOpsHistoryEntry[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uiMode, setUiMode] = useState<UiMode>("all");
@@ -315,11 +344,12 @@ export default function OpsPage() {
      setHistoryLoading(true);
      setHistoryError(null);
      try {
-       const payload = await authenticatedFetch<{ history: ServerHistoryEntry[] }>(`/history?feature=ops&limit=${HISTORY_LIMIT}`);
+       const payload = await authenticatedFetch<{ history: ServerHistoryEntry[] }>(`/history/?feature=ops&limit=${HISTORY_LIMIT}`);
        const rawHistory = (payload as { data?: { history: ServerHistoryEntry[] } })?.data?.history ?? [];
        const hydrated = rawHistory
          .map((entry: ServerHistoryEntry): LocalOpsHistoryEntry | null => hydrateServerEntry(entry))
          .filter((entry): entry is LocalOpsHistoryEntry => Boolean(entry));
+       hydrated.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
        if (hydrated.length === 0) {
          setHistory([]);
          setSelectedId(null);
@@ -337,37 +367,6 @@ export default function OpsPage() {
      }
    }, []);
 
-  const persistHistoryEntry = useCallback(
-    async (entry: LocalOpsHistoryEntry) => {
-      try {
-        // Extract trace_id from response
-        const traceId = entry.response?.meta?.trace_id || entry.trace?.trace_id;
-
-        await authenticatedFetch(`/history`, {
-          method: "POST",
-          body: JSON.stringify({
-            feature: "ops",
-            question: entry.question,
-            summary: entry.summary,
-            status: entry.status,
-            response: entry.response,
-            metadata: {
-              uiMode: entry.uiMode,
-              backendMode: entry.backendMode,
-              trace: entry.trace,
-              trace_id: traceId,
-              nextActions: entry.nextActions,
-              errorDetails: entry.errorDetails,
-            },
-          }),
-        });
-      } catch (error) {
-        console.error("Failed to persist OPS history", error);
-      }
-    },
-    []
-  );
-
   const deleteHistoryEntry = useCallback(
     async (id: string) => {
       try {
@@ -382,8 +381,11 @@ export default function OpsPage() {
   );
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     fetchHistory();
-  }, [fetchHistory]);
+  }, [authLoading, fetchHistory, user?.id]);
 
   useEffect(() => {
     const savedMode = window.localStorage.getItem(MODE_STORAGE_KEY) as UiMode | null;
@@ -555,12 +557,43 @@ export default function OpsPage() {
           method: "POST",
           body: JSON.stringify(payload),
         });
-        const answer = data?.data?.answer;
-        if (!answer || !Array.isArray(answer.blocks)) {
-          throw new Error("Invalid OPS response format");
+        const payloadData = data?.data as
+          | { answer?: AnswerEnvelope; trace?: unknown }
+          | { data?: { answer?: AnswerEnvelope; trace?: unknown } }
+          | undefined;
+        const answerCandidate =
+          (payloadData as { answer?: AnswerEnvelope })?.answer ??
+          (payloadData as { data?: { answer?: AnswerEnvelope } })?.data?.answer ??
+          (payloadData as { answer?: { answer?: AnswerEnvelope } })?.answer?.answer ??
+          (payloadData as { answer?: { data?: { answer?: AnswerEnvelope } } })?.answer?.data?.answer;
+        const normalizedAnswer = normalizeHistoryResponse({ data: { answer: answerCandidate } } as ServerHistoryEntry["response"]);
+        if (normalizedAnswer && Array.isArray((normalizedAnswer as AnswerEnvelope).blocks)) {
+          envelope = normalizedAnswer as AnswerEnvelope;
+        } else {
+          const rawAnswerText =
+            typeof (answerCandidate as AnswerEnvelope | undefined)?.answer === "string"
+              ? (answerCandidate as AnswerEnvelope).answer
+              : typeof answerCandidate === "string"
+                ? answerCandidate
+                : undefined;
+          if (rawAnswerText) {
+            const meta = normalizeAnswerMeta((answerCandidate as AnswerEnvelope | undefined)?.meta, rawAnswerText);
+            envelope = {
+              meta: meta as unknown as AnswerEnvelope["meta"],
+              blocks: [
+                {
+                  type: "markdown",
+                  content: rawAnswerText,
+                } as RendererAnswerBlock,
+              ],
+            };
+          } else {
+            throw new Error("Invalid OPS response format");
+          }
         }
-        envelope = answer;
-        trace = data?.data?.trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined;
+        trace =
+          (payloadData as { trace?: unknown })?.trace ??
+          (payloadData as { data?: { trace?: unknown } })?.data?.trace;
       }
     } catch (rawError) {
       const normalized = await normalizeError(rawError);
@@ -574,28 +607,14 @@ export default function OpsPage() {
       }
       setStatusMessage(`Error: ${normalized.message}`);
     } finally {
-      const entry: LocalOpsHistoryEntry = {
-        id: genId(),
-        createdAt: new Date().toISOString(),
-        uiMode: requestedMode.id,
-        backendMode: requestedMode.backend,
-        question: question.trim(),
-        response: envelope,
-        status,
-        summary: extractSummary(envelope, question.trim()),
-        errorDetails,
-        trace: trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined,
-        nextActions,
-        next_actions: nextActions,
-      };
-      // Save to server DB and refresh history from server (no localStorage)
-      await persistHistoryEntry(entry);
+      // Refresh history from server (server writes final history entry)
+      setSelectedId(null);
       await fetchHistory();
       setQuestion("");
       setIsRunning(false);
       setIsFullScreen(false);
     }
-  }, [currentModeDefinition, isRunning, question, persistHistoryEntry, fetchHistory]);
+  }, [currentModeDefinition, isRunning, question, fetchHistory]);
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {
@@ -695,28 +714,14 @@ export default function OpsPage() {
         }
         setStatusMessage(`Error: ${normalized.message}`);
       } finally {
-      const entry: LocalOpsHistoryEntry = {
-          id: genId(),
-          createdAt: new Date().toISOString(),
-          uiMode: selectedEntry.uiMode ?? "ci",
-          backendMode: selectedEntry.backendMode ?? "config",
-          question: selectedEntry.question,
-          response: envelope,
-          status,
-          summary: extractSummary(envelope, selectedEntry.question),
-          errorDetails,
-          trace: trace as { plan_validated?: unknown; policy_decisions?: unknown; [key: string]: unknown } | undefined,
-          nextActions,
-          next_actions: nextActions,
-        };
-        // Save to server DB and refresh history from server (no localStorage)
-        await persistHistoryEntry(entry);
+        // Server already persists history entries; refresh list only.
+        setSelectedId(null);
         await fetchHistory();
         setIsRunning(false);
         setTraceOpen(false);
       }
     },
-    [currentModeDefinition.backend, persistHistoryEntry, fetchHistory, selectedEntry]
+    [currentModeDefinition.backend, fetchHistory, selectedEntry]
   );
 
   const gridColsClass = isFullScreen

@@ -11,6 +11,9 @@ from .registry import (
 )
 from .registry_init import initialize_mappings
 
+# Auto-initialize mappings when this module is imported
+initialize_mappings()
+
 __all__ = [
     "MappingRegistry",
     "get_mapping_registry",

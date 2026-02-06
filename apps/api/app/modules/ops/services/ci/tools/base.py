@@ -342,9 +342,12 @@ class ToolRegistry:
         Raises:
             ValueError: If the tool type is not registered
         """
-        if tool_type not in self._instances:
-            raise ValueError(f"Tool type '{tool_type}' is not registered")
-        return self._instances[tool_type]
+        # Check both _instances and _tools for compatibility
+        if tool_type in self._instances:
+            return self._instances[tool_type]
+        if tool_type in self._tools:
+            return self._tools[tool_type]
+        raise ValueError(f"Tool type '{tool_type}' is not registered")
 
     def get_available_tools(self) -> Dict[str, BaseTool]:
         """Get all registered tools."""
@@ -352,7 +355,8 @@ class ToolRegistry:
 
     def is_registered(self, tool_type: str) -> bool:
         """Check if a tool type is registered."""
-        return tool_type in self._instances
+        # Check both _instances and _tools for compatibility
+        return tool_type in self._instances or tool_type in self._tools
 
     def list_tool_types(self) -> list[str]:
         """List all registered tool type strings."""

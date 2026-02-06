@@ -78,7 +78,7 @@ def _register_fallbacks(registry) -> None:
     registry.register_fallback(
         "history_keywords",
         {
-            "keywords": ["이벤트", "알람", "로그", "event"],
+            "keywords": ["이벤트", "알람", "로그", "event", "작업이력", "이력", "history", "변경", "기록"],
             "time_map": {
                 "24시간": "last_24h",
                 "하루": "last_24h",

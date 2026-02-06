@@ -188,6 +188,11 @@ class DynamicTool(BaseTool):
         else:
             # Generic mode - direct placeholder replacement
 
+            # DEBUG LOG (forced to stderr)
+            import sys
+            print(f"[DEBUG FORCED {self.name}] Input data keys: {list(input_data.keys())}", file=sys.stderr, flush=True)
+            print(f"[DEBUG FORCED {self.name}] Query template (first 200 chars): {processed_query[:200]}", file=sys.stderr, flush=True)
+
             # Handle metric tool specific mappings
             if "{function}" in processed_query:
                 # Map 'agg' to 'function' for metric aggregation
@@ -215,17 +220,19 @@ class DynamicTool(BaseTool):
                     )
 
             # First handle special aggregate-specific placeholders
-            group_by = input_data.get("group_by", [])
-            if group_by and isinstance(group_by, list):
-                # Handle {select_field} for single field GROUP BY
+            raw_group_by = input_data.get("group_by")
+            group_by = raw_group_by if isinstance(raw_group_by, list) else []
+            if not group_by:
+                group_by = ["ci_type"]
+                print(f"[DEBUG {self.name}] group_by was empty or missing, using default: {group_by}", file=sys.stderr, flush=True)
+
+            if isinstance(group_by, list):
                 if "{select_field}" in processed_query:
                     select_field = group_by[0] if group_by else "ci_type"
                     processed_query = processed_query.replace("{select_field}", select_field)
-                # Handle {group_clause} for multi-field GROUP BY
                 if "{group_clause}" in processed_query:
                     group_clause = ", ".join(group_by) if group_by else "ci_type"
                     processed_query = processed_query.replace("{group_clause}", group_clause)
-                # Handle {group_field} for single field
                 if "{group_field}" in processed_query:
                     group_field = group_by[0] if group_by else "event_type"
                     processed_query = processed_query.replace("{group_field}", group_field)
@@ -264,6 +271,16 @@ class DynamicTool(BaseTool):
                         # Query templates should include quotes if needed (e.g., '{metric_name}' not {metric_name})
                         escaped_value = str(value).replace("'", "''")
                         processed_query = processed_query.replace(placeholder, escaped_value)
+
+            # DEBUG LOG - Final check (forced to stderr)
+            if self.name in ["ci_aggregate", "metric"]:
+                import sys
+                print(f"[DEBUG FORCED {self.name}] Processed query (first 300 chars): {processed_query[:300]}", file=sys.stderr, flush=True)
+                # Check for remaining placeholders
+                import re
+                remaining = re.findall(r'\{[^}]+\}', processed_query)
+                if remaining:
+                    print(f"[DEBUG FORCED {self.name}] WARNING: Remaining placeholders: {set(remaining)}", file=sys.stderr, flush=True)
 
         return processed_query
 

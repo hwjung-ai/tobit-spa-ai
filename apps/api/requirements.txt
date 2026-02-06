@@ -34,3 +34,4 @@ psutil
 aiomysql>=0.2.0
 PyMySQL>=1.1.0
 oracledb>=2.0.0
+bytewax

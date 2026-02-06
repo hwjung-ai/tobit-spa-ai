@@ -82,51 +82,42 @@ class DependencyAnalyzer:
                 tool_id="aggregate",
                 depends_on=primary_deps,
                 output_mapping={
-                    "ci_type_filter": "{primary.data.rows[0].ci_type}"
+                    "ci_type_filter": "primary.data.rows[0].ci_type"
                 } if plan.primary else {}
             ))
 
-        # Graph depends on primary (needs ci_id from primary results)
-        if plan.graph:
-            primary_deps = ["primary"] if plan.primary else []
-            deps.append(ToolDependency(
-                tool_id="graph",
-                depends_on=primary_deps,
-                output_mapping={
-                    "root_ci_id": "{primary.data.rows[0].ci_id}"
-                } if plan.primary else {}
-            ))
-
-        # Metric can depend on aggregate or be independent
+        # Metric can depend on aggregate or primary (ci_lookup with metric data)
         if plan.metric:
-            metric_deps = ["aggregate"] if plan.aggregate else []
+            # Prefer ci_lookup (primary) as it already has metric data, fallback to aggregate
+            metric_deps = ["primary"] if plan.primary else (["aggregate"] if plan.aggregate else [])
+            ci_source = "primary" if plan.primary else ("aggregate" if plan.aggregate else None)
             deps.append(ToolDependency(
                 tool_id="metric",
                 depends_on=metric_deps,
                 output_mapping={
-                    "ci_ids": "aggregate.data.rows.*.ci_id"
-                } if plan.aggregate else {}
+                    "ci_ids": f"{ci_source}.data.rows.*.ci_id"
+                } if ci_source else {}
             ))
 
         # History depends on primary or metric (needs ci_id from results)
-        # If both metric and primary exist, prefer metric as it's more specific
+        # Prefer primary to avoid NULL when metric rows are empty
         if plan.history and plan.history.enabled:
-            if plan.metric:
-                # History depends on metric results
-                deps.append(ToolDependency(
-                    tool_id="history",
-                    depends_on=["metric"],
-                    output_mapping={
-                        "ci_id": "{metric.data.rows[0].ci_id}"
-                    }
-                ))
-            elif plan.primary:
+            if plan.primary:
                 # History depends on primary results
                 deps.append(ToolDependency(
                     tool_id="history",
                     depends_on=["primary"],
                     output_mapping={
-                        "ci_id": "{primary.data.rows[0].ci_id}"
+                        "ci_id": "primary.data.rows[0].ci_id"
+                    }
+                ))
+            elif plan.metric:
+                # History depends on metric results
+                deps.append(ToolDependency(
+                    tool_id="history",
+                    depends_on=["metric"],
+                    output_mapping={
+                        "ci_id": "metric.data.rows[0].ci_id"
                     }
                 ))
             else:
@@ -135,6 +126,18 @@ class DependencyAnalyzer:
                     tool_id="history",
                     depends_on=[],
                 ))
+
+        # Graph depends on primary (needs ci_id from primary results)
+        # NOTE: keep graph last to avoid blocking other tools in serial execution.
+        if plan.graph:
+            primary_deps = ["primary"] if plan.primary else []
+            deps.append(ToolDependency(
+                tool_id="graph",
+                depends_on=primary_deps,
+                output_mapping={
+                    "root_ci_id": "primary.data.rows[0].ci_id"
+                } if plan.primary else {}
+            ))
 
         return deps
 
@@ -441,7 +444,9 @@ class ToolOrchestrator:
         self.data_flow_mapper = DataFlowMapper()
         self.execution_planner = ExecutionPlanner()
         self.llm_decider = IntermediateLLMDecider() if plan.enable_intermediate_llm else None
-        self.chain_executor = ToolChainExecutor()
+        # Use get_chain_executor() to get the global executor which has proper registry
+        from app.modules.ops.services.ci.orchestrator.chain_executor import get_chain_executor
+        self.chain_executor = get_chain_executor()
         self.start_time = perf_counter()
 
     async def execute(self, execution_plan_trace: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -575,6 +580,7 @@ class ToolOrchestrator:
             "aggregate": self.plan.aggregate,
             "graph": self.plan.graph,
             "metric": self.plan.metric,
+            "history": self.plan.history,
         }
 
         spec_obj = spec_map.get(tool_id)
@@ -625,7 +631,9 @@ class ToolOrchestrator:
                     "metrics": spec_obj.metrics,
                     "filters": spec_obj.filters,
                     "top_n": spec_obj.top_n,
+                    "limit": spec_obj.top_n or 10,  # Map top_n to limit for query template
                     "scope": spec_obj.scope,
+                    "tenant_id": self.context.tenant_id,  # Add tenant_id for query template
                 }
             }
         elif tool_id == "graph":
@@ -642,7 +650,9 @@ class ToolOrchestrator:
             from datetime import datetime, timedelta
             end_time = datetime.utcnow()
             time_range = spec_obj.time_range
-            if time_range == "last_24h":
+            if time_range in {"all_time", "all"} or self.context.get_metadata("full_time_range"):
+                start_time = datetime(1970, 1, 1)
+            elif time_range == "last_24h":
                 start_time = end_time - timedelta(hours=24)
             elif time_range == "last_7d":
                 start_time = end_time - timedelta(days=7)
@@ -670,7 +680,9 @@ class ToolOrchestrator:
             from datetime import datetime, timedelta
             end_time = datetime.utcnow()
             time_range = spec_obj.time_range
-            if time_range == "last_24h":
+            if time_range in {"all_time", "all"}:
+                start_time = datetime(1970, 1, 1)
+            elif time_range == "last_24h":
                 start_time = end_time - timedelta(hours=24)
             elif time_range == "last_7d":
                 start_time = end_time - timedelta(days=7)

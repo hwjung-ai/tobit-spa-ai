@@ -139,11 +139,25 @@ def _normalize_time_range(value: str | None) -> str:
     if not value:
         return "last_24h"
     trimmed = value.strip()
+    lower = trimmed.lower()
+    if any(
+        key in lower
+        for key in (
+            "전체기간",
+            "전체 기간",
+            "전체기간중",
+            "전체 기간 중",
+            "all time",
+            "all-time",
+            "full time",
+            "lifetime",
+        )
+    ):
+        return "all_time"
     match = ISO_DATE_PATTERN.search(trimmed)
     if match:
         year, month, day = match.groups()
         return f"{int(year):04d}-{int(month):02d}-{int(day):02d}"
-    lower = trimmed.lower()
     history_keywords = _get_history_keywords()
     time_map = history_keywords.get("time_map", {})
     if lower in time_map:
@@ -151,7 +165,7 @@ def _normalize_time_range(value: str | None) -> str:
     for key, mapped in time_map.items():
         if key in lower:
             return mapped
-    if lower in {"last_1h", "last_24h", "last_7d"}:
+    if lower in {"last_1h", "last_24h", "last_7d", "last_30d"}:
         return lower
     return "last_24h"
 
@@ -733,10 +747,25 @@ def _determine_metric_spec(text: str):
     
     history_keywords = _get_history_keywords()
     time_map = history_keywords.get("time_map", {})
-    time_range = next(
-        (value for key, value in time_map.items() if key in normalized),
-        "last_24h",
-    )
+    if any(
+        key in normalized
+        for key in (
+            "전체기간",
+            "전체 기간",
+            "전체기간중",
+            "전체 기간 중",
+            "all time",
+            "all-time",
+            "full time",
+            "lifetime",
+        )
+    ):
+        time_range = "all_time"
+    else:
+        time_range = next(
+            (value for key, value in time_map.items() if key in normalized),
+            "last_24h",
+        )
     
     agg_keywords = _get_agg_keywords()
     agg = next(
@@ -1024,7 +1053,22 @@ def _determine_history_spec(text: str):
         return None
     
     time_map = history_keywords.get("time_map", {})
-    time_range = "last_7d"
+    if any(
+        key in normalized
+        for key in (
+            "전체기간",
+            "전체 기간",
+            "전체기간중",
+            "전체 기간 중",
+            "all time",
+            "all-time",
+            "full time",
+            "lifetime",
+        )
+    ):
+        time_range = "all_time"
+    else:
+        time_range = "last_7d"
     for key, value in time_map.items():
         if key in normalized:
             time_range = value
@@ -1034,9 +1078,29 @@ def _determine_history_spec(text: str):
     match = re.search(r"(\d{1,3})\s*개", normalized)
     if match:
         limit = min(200, max(1, int(match.group(1))))
-    
+    elif "최근" in normalized or "recent" in normalized:
+        limit = 6
+
     scope = "graph" if _has_graph_scope_keyword(normalized) else "ci"
-    return HistorySpec(enabled=True, scope=scope, time_range=time_range, limit=limit)
+    history_tool_type = _determine_history_tool_type(normalized)
+    return HistorySpec(
+        enabled=True,
+        scope=scope,
+        time_range=time_range,
+        limit=limit,
+        tool_type=history_tool_type,
+        source=history_tool_type,
+    )
+
+
+def _determine_history_tool_type(normalized_text: str) -> str:
+    maintenance_keywords = ("점검", "정비", "maintenance", "inspection", "maint")
+    work_keywords = ("작업", "work history", "work")
+    if any(keyword in normalized_text for keyword in maintenance_keywords):
+        return "maintenance_history"
+    if any(keyword in normalized_text for keyword in work_keywords):
+        return "work_history"
+    return "event_log"
 
 
 def _determine_cep_spec(text: str) -> CepSpec | None:
@@ -1376,7 +1440,7 @@ async def plan_llm_query(question: str, source_ref: str = None) -> PlanOutput:
             metric_name=metric_spec.get("metric_name"),
             agg=metric_spec.get("agg", "avg"),
             time_range=metric_spec.get("time_range"),
-            tool_type=metric_spec.get("tool_type", "metric_query")  # Use tool_type
+            tool_type=metric_spec.get("tool_type", "metric")  # Use tool_type
         )
         # Validate tool_type
         if plan.metric.tool_type not in valid_tool_types:

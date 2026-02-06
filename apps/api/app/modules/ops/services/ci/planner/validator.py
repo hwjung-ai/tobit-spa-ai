@@ -535,7 +535,7 @@ def validate_plan(
     metric_trace: Dict[str, Any] = {}
     metric_spec = normalized.metric
     if metric_spec:
-        allowed_time_ranges = {"last_1h", "last_24h", "last_7d"}
+        allowed_time_ranges = {"last_1h", "last_24h", "last_7d", "last_30d", "all_time"}
         allowed_aggs = {"count", "max", "min", "avg"}
         allowed_modes = (
             {"aggregate"} if metric_spec.scope == "graph" else {"aggregate", "series"}
@@ -593,7 +593,7 @@ def validate_plan(
         trace["metric"] = metric_trace
     history_spec = normalized.history
     if history_spec.enabled:
-        allowed_history_ranges = {"last_24h", "last_7d", "last_30d"}
+        allowed_history_ranges = {"last_24h", "last_7d", "last_30d", "all_time"}
         history_updates: dict[str, Any] = {}
         history_trace: dict[str, Any] = {
             "requested": history_spec.dict(),
@@ -652,7 +652,8 @@ def validate_plan(
             )
         history_updates["mode"] = mode_applied
         history_trace["mode_applied"] = mode_applied
-        if history_spec.source != "event_log":
+        allowed_history_sources = {"event_log", "work_history", "maintenance_history"}
+        if history_spec.source not in allowed_history_sources:
             warnings.append(
                 f"source '{history_spec.source}' not supported, forcing 'event_log'"
             )
@@ -665,8 +666,11 @@ def validate_plan(
                     "policy_code": "history_source",
                 },
             )
-        history_updates["source"] = "event_log"
-        history_trace["source"] = "event_log"
+            history_updates["source"] = "event_log"
+            history_trace["source"] = "event_log"
+        else:
+            history_updates["source"] = history_spec.source
+            history_trace["source"] = history_spec.source
         normalized = normalized.copy(
             update={"history": history_spec.copy(update=history_updates)}
         )

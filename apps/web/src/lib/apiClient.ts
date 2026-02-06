@@ -30,6 +30,8 @@ export async function authenticatedFetch<T = unknown>(
   options?: FetchOptions
 ): Promise<T> {
   const token = localStorage.getItem("access_token");
+  const tenantId = localStorage.getItem("tenant_id");
+  const userId = localStorage.getItem("user_id");
   const timeout = options?.timeout || 120000; // Default 120 seconds
 
   // Create an AbortController for timeout
@@ -44,6 +46,8 @@ export async function authenticatedFetch<T = unknown>(
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
+        ...(tenantId && { "X-Tenant-Id": tenantId }),
+        ...(userId && { "X-User-Id": userId }),
         ...options?.headers,
       },
     });

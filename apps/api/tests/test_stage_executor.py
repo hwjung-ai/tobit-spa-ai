@@ -138,6 +138,37 @@ class TestStageExecutor:
         assert len(output.diagnostics.errors) > 0
         assert "Test error" in output.diagnostics.errors[0]
 
+    @pytest.mark.asyncio
+    async def test_generate_llm_summary_full_time_metric_fallback(self, base_context):
+        """Ensure full-time summary uses metric_result when primary_result is missing."""
+        executor = StageExecutor(context=base_context)
+        composed_result = {
+            "ci_detail": {
+                "ci_id": "ci-1",
+                "ci_code": "CI-001",
+                "ci_name": "test-ci",
+                "ci_type": "server",
+                "status": "active",
+            },
+            "metric_result": {
+                "rows": [{"ci_id": "ci-1", "metric_value": 95.5}],
+            },
+            "history_result": {
+                "rows": [{"id": 1}, {"id": 2}],
+            },
+        }
+
+        summary = await executor._generate_llm_summary(
+            question="전체기간 cpu 사용률이 가장 높은 ci 알려줘",
+            intent="AGGREGATE",
+            execution_results=[],
+            composed_result=composed_result,
+        )
+
+        assert "CI-001" in summary
+        assert "95.50" in summary
+        assert "최근 작업 이력은 2건" in summary
+
     def test_build_diagnostics_success(self, base_context):
         """Test diagnostics building for successful execution."""
         executor = StageExecutor(context=base_context)

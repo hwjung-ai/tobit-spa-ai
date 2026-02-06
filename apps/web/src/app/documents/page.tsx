@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authenticatedFetch } from "@/lib/apiClient/index";
+import { useAuth } from "@/contexts/AuthContext";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -155,6 +156,7 @@ const formatTimestamp = (value: string) => {
 };
 
 export default function DocumentsPage() {
+  const { isLoading: authLoading, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamAbortController = useRef<AbortController | null>(null);
 
@@ -200,7 +202,7 @@ export default function DocumentsPage() {
         return;
       }
       try {
-        await authenticatedFetch("/history", {
+        await authenticatedFetch("/history/", {
           method: "POST",
           body: JSON.stringify({
             feature: "docs",
@@ -231,7 +233,7 @@ export default function DocumentsPage() {
     setDocHistoryError(null);
     try {
       const payload = await authenticatedFetch(
-        `/history?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`
+        `/history/?feature=docs&limit=${DOCUMENT_HISTORY_LIMIT}`
       ) as { data: { history: DocsServerHistoryEntry[] } };
       const rawHistory = (payload?.data?.history ?? []) as DocsServerHistoryEntry[];
       const hydrated = rawHistory
@@ -279,12 +281,18 @@ export default function DocumentsPage() {
   }, [fetchDocumentDetail]);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     fetchDocuments();
-  }, [fetchDocuments]);
+  }, [authLoading, fetchDocuments, user?.id]);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     fetchDocHistory();
-  }, [fetchDocHistory]);
+  }, [authLoading, fetchDocHistory, user?.id]);
 
   const selectDocument = useCallback(
     (documentId: string) => {
@@ -307,6 +315,26 @@ export default function DocumentsPage() {
     }
     return docHistory.filter((entry) => entry.documentId === selectedDocument.id);
   }, [docHistory, selectedDocument]);
+
+  useEffect(() => {
+    if (docHistory.length === 0 || documents.length === 0) {
+      return;
+    }
+    if (selectedDocument && documentHistoryEntries.length > 0) {
+      return;
+    }
+    const recentHistory = docHistory
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    if (!recentHistory) {
+      return;
+    }
+    const targetDoc = documents.find((doc) => doc.id === recentHistory.documentId);
+    if (!targetDoc) {
+      return;
+    }
+    selectDocument(targetDoc.id);
+  }, [docHistory, documents, selectedDocument, documentHistoryEntries.length, selectDocument]);
 
   useEffect(() => {
     if (documentHistoryEntries.length === 0) {

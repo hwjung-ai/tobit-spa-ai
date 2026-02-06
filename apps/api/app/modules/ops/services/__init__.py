@@ -52,17 +52,23 @@ def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
 
 
 def run_hist(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Removed executor - hist_executor.py has been deleted for generic orchestration."""
-    logger = logging.getLogger(__name__)
-    logger.error("Executor 'hist_executor' is no longer available. Please implement as Tool Asset.")
-    return ([], [])
+    """Run hist executor using execute_universal."""
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "hist", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def run_metric(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Removed executor - metric_executor.py has been deleted for generic orchestration."""
-    logger = logging.getLogger(__name__)
-    logger.error("Executor 'metric_executor' is no longer available. Please implement as Tool Asset.")
-    return ([], [])
+    """Run metric executor using execute_universal."""
+    tenant_id = kwargs.get("tenant_id")
+    if not tenant_id:
+        settings = kwargs.get("settings") or get_settings()
+        tenant_id = _get_required_tenant_id(settings)
+    result = execute_universal(question, "metric", tenant_id)
+    return result.blocks, result.used_tools
 
 
 def execute_universal(
@@ -70,26 +76,163 @@ def execute_universal(
 ) -> ExecutorResult:
     """Universal executor for relation, metric, history, and hist modes.
 
-    This is a stub implementation that returns empty results.
-    The actual functionality should be implemented as Tool Assets.
+    Uses the CI Orchestrator for execution.
     """
+    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.planner.plan_schema import Plan
+    import asyncio
+
     logger = logging.getLogger(__name__)
-    logger.error(
-        f"Executor for mode '{mode}' is not yet implemented. "
-        "Please implement as Tool Asset."
+    logger.info(f"Executing universal mode '{mode}' for question: {question[:100]}")
+
+    try:
+        # Create runner with tenant_id
+        runner = CIOrchestratorRunner(
+            question=question,
+            tenant_id=tenant_id,
+        )
+
+        # Create a simple plan based on mode
+        plan = _create_simple_plan(mode)
+
+        # Run the orchestrator
+        result = runner.run(plan_output=None)
+
+        # Convert result to ExecutorResult
+        blocks = _convert_result_to_blocks(result, mode)
+        used_tools = result.get("used_tools", [])
+
+        return ExecutorResult(
+            blocks=blocks,
+            used_tools=used_tools,
+            tool_calls=result.get("tool_calls", []),
+            references=[],
+            summary={
+                "status": "success",
+                "mode": mode,
+                "question": question,
+            },
+        )
+    except Exception as exc:
+        logger.exception(f"Universal executor failed for mode '{mode}'")
+        # Return empty blocks on error
+        return ExecutorResult(
+            blocks=[],
+            used_tools=[],
+            tool_calls=[],
+            references=[],
+            summary={
+                "status": "error",
+                "error": str(exc),
+                "mode": mode,
+            },
+        )
+
+
+def _create_simple_plan(mode: str) -> Any:
+    """Create a simple plan based on mode."""
+    from app.modules.ops.services.ci.planner.plan_schema import (
+        Plan,
+        AggregateStage,
+        MetricStage,
+        HistoryStage,
+        OutputStage,
+    )
+    from app.modules.ops.services.ci.planner.plan_schema import ExecutionStrategy
+
+    # Build stages based on mode
+    stages = []
+    aggregate = None
+    metric = None
+    history = None
+
+    if mode in ("metric", "all", "hist"):
+        # Add aggregate stage for CI grouping
+        aggregate = AggregateStage(
+            enabled=True,
+            group_by=["ci_type"],
+            metrics=["ci_name"],
+            filters=[],
+            top_n=10,
+        )
+
+    if mode in ("metric", "all"):
+        # Add metric stage
+        metric = MetricStage(
+            enabled=True,
+            primary="cpu_usage",
+            agg="MAX",
+            time_range="last_24h",
+        )
+
+    if mode in ("history", "all", "hist"):
+        # Add history stage
+        history = HistoryStage(
+            enabled=True,
+            event_types=[],
+            limit=10,
+        )
+
+    return Plan(
+        graph=None,
+        aggregate=aggregate,
+        metric=metric,
+        history=history,
+        list=None,
+        auto=None,
+        output=OutputStage(enabled=True),
+        execution_strategy=ExecutionStrategy.ORCHESTRATION,
+        policy=None,
     )
 
-    # Return empty ExecutorResult to prevent crashes
-    return ExecutorResult(
-        blocks=[],
-        used_tools=[],
-        tool_calls=[],
-        references=[],
-        summary={
-            "status": "not_implemented",
-            "message": f"Executor for mode '{mode}' is not yet available",
-        },
-    )
+
+def _convert_result_to_blocks(result: dict, mode: str) -> list:
+    """Convert orchestrator result to answer blocks."""
+    blocks = []
+
+    # Try to extract data from result
+    execution_results = result.get("execution_results", {})
+
+    for tool_id, tool_result in execution_results.items():
+        if isinstance(tool_result, dict) and tool_result.get("success"):
+            data = tool_result.get("data", {})
+            rows = data.get("rows", []) if isinstance(data, dict) else []
+            columns = data.get("columns") if isinstance(data, dict) else None
+
+            if not rows:
+                continue
+
+            table_columns: list[str] = []
+            table_rows: list[list[str]] = []
+
+            if isinstance(rows[0], dict):
+                if isinstance(columns, list) and columns:
+                    table_columns = [str(col) for col in columns]
+                else:
+                    table_columns = [str(col) for col in rows[0].keys()]
+                for row in rows:
+                    table_rows.append(
+                        ["" if row.get(col) is None else str(row.get(col)) for col in table_columns]
+                    )
+            else:
+                if isinstance(columns, list) and columns:
+                    table_columns = [str(col) for col in columns]
+                else:
+                    row_len = len(rows[0]) if hasattr(rows[0], "__len__") else 0
+                    table_columns = [f"col_{idx + 1}" for idx in range(row_len)]
+                for row in rows:
+                    if isinstance(row, (list, tuple)):
+                        table_rows.append(["" if cell is None else str(cell) for cell in row])
+                    else:
+                        table_rows.append(["" if row is None else str(row)])
+
+            blocks.append(TableBlock(
+                title=f"{tool_id} Results",
+                columns=table_columns,
+                rows=table_rows,
+            ))
+
+    return blocks
 
 
 OpsMode = Literal["config", "history", "relation", "metric", "all", "hist", "graph"]

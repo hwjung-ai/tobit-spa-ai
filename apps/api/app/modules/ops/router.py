@@ -11,6 +11,7 @@ from core.config import get_settings
 from core.db import get_session, get_session_context
 from core.logging import get_logger, get_request_context
 from fastapi import APIRouter, Depends, Header, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from schemas import ResponseEnvelope
 from sqlmodel import Session
@@ -155,14 +156,14 @@ def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
                 history_entry = session.get(QueryHistory, history_id)
                 if history_entry:
                     history_entry.status = status
-                    history_entry.response = response_payload.model_dump()
+                    history_entry.response = jsonable_encoder(response_payload.model_dump())
                     history_entry.summary = envelope.meta.summary if envelope.meta else ""
-                    history_entry.metadata_info = {
+                    history_entry.metadata_info = jsonable_encoder({
                         "uiMode": payload.mode,
                         "backendMode": payload.mode,
                         "trace_id": envelope.meta.trace_id if envelope.meta else None,
                         "trace": trace_data,  # Include full trace data for consistency with CI ask
-                    }
+                    })
                     session.add(history_entry)
                     session.commit()
         except Exception as exc:
@@ -1188,15 +1189,17 @@ def ask_ci(
                     history_entry = session.get(QueryHistory, history_id)
                     if history_entry:
                         history_entry.status = status
-                        history_entry.response = response_payload.model_dump() if response_payload else None
+                        history_entry.response = (
+                            jsonable_encoder(response_payload.model_dump()) if response_payload else None
+                        )
                         if result:
                             history_entry.summary = result.get("meta", {}).get("summary") or result.get("meta", {}).get("answer", "")[:200]
-                            history_entry.metadata_info = {
+                            history_entry.metadata_info = jsonable_encoder({
                                 "uiMode": "ci",
                                 "backendMode": "ci",
                                 "trace": trace_payload,
                                 "nextActions": next_actions,
-                            }
+                            })
                         session.add(history_entry)
                         session.commit()
             except Exception as exc:

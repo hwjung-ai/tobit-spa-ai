@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Tuple
 
+from core.config import get_settings
 from core.db import get_session
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from models.history import QueryHistory
@@ -56,11 +57,14 @@ def list_history(
     session: Session = Depends(get_session),
     identity: Tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
+    settings = get_settings()
     tenant_id, user_id = identity
-    statement = select(QueryHistory).where(
-        QueryHistory.tenant_id == tenant_id,
-        QueryHistory.user_id == user_id,
-    )
+    statement = select(QueryHistory)
+    if settings.enable_auth:
+        statement = statement.where(
+            QueryHistory.tenant_id == tenant_id,
+            QueryHistory.user_id == user_id,
+        )
     if feature:
         statement = statement.where(QueryHistory.feature == feature)
     statement = statement.order_by(QueryHistory.created_at.desc()).limit(limit)

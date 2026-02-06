@@ -87,7 +87,14 @@ class ToolChainExecutor:
 
     def __init__(self):
         """Initialize the chain executor."""
-        self._registry = get_tool_registry()
+        # Don't cache registry in __init__ - get it fresh each time to handle lazy initialization
+        self._registry = None
+
+    def _get_registry(self):
+        """Get the tool registry, creating it if necessary."""
+        if self._registry is None:
+            self._registry = get_tool_registry()
+        return self._registry
 
     async def execute_chain(
         self, chain: ToolChain, context: ToolContext, execution_plan_trace: dict[str, Any] | None = None
@@ -309,7 +316,7 @@ class ToolChainExecutor:
 
         # Get tool from registry
         try:
-            tool = self._registry.get_tool(step.tool_name)
+            tool = self._get_registry().get_tool(step.tool_name)
         except ValueError:
             return StepResult(
                 step_id=step.step_id,
@@ -386,6 +393,9 @@ class ToolChainExecutor:
 
         Example: "step1.data.records[0].ci_id"
         Special syntax: "step1.data.rows.*.ci_id" extracts ci_id from all rows
+
+        Note: path format is "step_id.field.subfield" where step_id is the key in results dict
+        If results[step_id] is a StepResult, we automatically access its .data attribute.
         """
         parts = path.split(".")
         if not parts:
@@ -395,9 +405,25 @@ class ToolChainExecutor:
         if step_id not in results:
             return None
 
-        current: Any = results[step_id]
+        # Get the step result
+        step_result = results[step_id]
 
-        for i, part in enumerate(parts[1:], 1):
+        # If it's a StepResult, extract the data field first
+        # The path should be "step_id.data.xxx" or just "step_id" for the whole data
+        if hasattr(step_result, 'data'):
+            current = step_result.data
+            # If path has more than just step_id, process remaining parts
+            # (skipping 'data' if it's the next part since we already extracted it)
+            start_idx = 1
+            if len(parts) > 1 and parts[1] == 'data':
+                start_idx = 2  # Skip 'data' since we already extracted .data
+            elif len(parts) == 1:
+                return current  # Just return the whole data
+        else:
+            current = step_result
+            start_idx = 1
+
+        for i, part in enumerate(parts[start_idx:], start_idx):
             if current is None:
                 return None
 

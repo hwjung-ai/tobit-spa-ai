@@ -378,8 +378,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             );
 
           case "table": {
+            const columns = block.columns ?? block.content?.headers ?? [];
+            const rows = block.rows ?? block.content?.rows ?? [];
             const isCandidateTable = (block.id ?? "").startsWith("ci-candidates");
-            const ciIdIndex = block.columns.findIndex((column) => column === "ci_id");
+            const ciIdIndex = columns.findIndex((column) => column === "ci_id");
             return (
               <section
                 key={`${block.type}-${block.id ?? index}`}
@@ -390,7 +392,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                   <table className="min-w-full text-left text-sm text-slate-200">
                     <thead>
                       <tr>
-                        {block.columns.map((column) => (
+                        {columns.map((column) => (
                           <th
                             key={column}
                             className="border-b border-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400"
@@ -406,7 +408,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       </tr>
                     </thead>
                     <tbody>
-                      {block.rows.map((row, rowIndex) => {
+                      {rows.map((row, rowIndex) => {
                         const candidateId = ciIdIndex >= 0 ? row[ciIdIndex] : undefined;
                         const candidateAction =
                           candidateId && candidateActionMap.has(candidateId)

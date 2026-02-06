@@ -72,13 +72,13 @@ def _get_series_keywords():
 def _get_history_keywords():
     """Get history keywords from registry (uses active version)."""
     global _HISTORY_KEYWORDS_CACHE
-    if _HISTORY_KEYWORDS_CACHE is not None:
+    if _HISTORY_KEYWORDS_CACHE is not None and _HISTORY_KEYWORDS_CACHE.get("keywords"):
         return _HISTORY_KEYWORDS_CACHE
 
     from .registry import get_mapping_registry
     registry = get_mapping_registry()
     active_name = registry.get_active_mapping_name("history_keywords")
-    mapping = get_mapping(active_name)
+    mapping = get_mapping(active_name, use_cache=False)  # Don't use cache to force reload
     _HISTORY_KEYWORDS_CACHE = {
         "keywords": set(mapping.get("keywords", [])),
         "time_map": mapping.get("time_map", {}),

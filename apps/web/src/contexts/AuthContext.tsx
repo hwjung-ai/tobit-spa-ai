@@ -34,22 +34,34 @@ const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
 
 // Default debug user for development mode
 const DEBUG_USER: User = {
-  id: "dev-user",
+  id: "default",
   email: "debug@dev",
   username: "debug@dev",
   role: "ADMIN",
-  tenant_id: "dev-tenant",
+  tenant_id: "t1",
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("user_id", user.id);
+      localStorage.setItem("tenant_id", user.tenant_id);
+    } else {
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("tenant_id");
+    }
+  }, [user]);
+
   // Check for existing token on mount
   useEffect(() => {
     // If authentication is disabled, auto-login with debug user
     if (!ENABLE_AUTH) {
       setUser(DEBUG_USER);
+      localStorage.setItem("user_id", DEBUG_USER.id);
+      localStorage.setItem("tenant_id", DEBUG_USER.tenant_id);
       setIsLoading(false);
       return;
     }
@@ -74,9 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setUser(data.data.user);
+        localStorage.setItem("user_id", data.data.user.id);
+        localStorage.setItem("tenant_id", data.data.user.tenant_id);
       } else {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("tenant_id");
         setUser(null);
       }
     } catch (error) {
@@ -111,6 +127,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await response.json();
     localStorage.setItem("access_token", data.data.access_token);
     localStorage.setItem("refresh_token", data.data.refresh_token);
+    localStorage.setItem("user_id", data.data.user.id);
+    localStorage.setItem("tenant_id", data.data.user.tenant_id);
     setUser(data.data.user);
   }
 
@@ -129,6 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("tenant_id");
     setUser(null);
   }
 

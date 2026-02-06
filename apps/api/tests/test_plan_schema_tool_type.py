@@ -57,7 +57,7 @@ class TestSpecToolType:
             time_range="last_7d"
         )
         assert hasattr(spec, "tool_type")
-        assert spec.tool_type == "metric_query"
+        assert spec.tool_type == "metric"
 
     def test_metric_spec_tool_type_override(self):
         """MetricSpec tool_type should be overridable."""
@@ -73,7 +73,7 @@ class TestSpecToolType:
         """AggregateSpec should have tool_type field with default."""
         spec = AggregateSpec(metrics=["cpu", "memory"])
         assert hasattr(spec, "tool_type")
-        assert spec.tool_type == "metric_query"
+        assert spec.tool_type == "ci_aggregate"
 
     def test_aggregate_spec_tool_type_override(self):
         """AggregateSpec tool_type should be overridable."""
@@ -87,7 +87,7 @@ class TestSpecToolType:
         """HistorySpec should have tool_type field with default."""
         spec = HistorySpec(enabled=True)
         assert hasattr(spec, "tool_type")
-        assert spec.tool_type == "history_query"
+        assert spec.tool_type == "event_log"
 
     def test_history_spec_tool_type_override(self):
         """HistorySpec tool_type should be overridable."""
@@ -101,7 +101,7 @@ class TestSpecToolType:
         """GraphSpec should have tool_type field with default."""
         spec = GraphSpec(depth=3)
         assert hasattr(spec, "tool_type")
-        assert spec.tool_type == "graph_analysis"
+        assert spec.tool_type == "ci_graph"
 
     def test_graph_spec_tool_type_override(self):
         """GraphSpec tool_type should be overridable."""
@@ -167,7 +167,7 @@ class TestPlanWithToolType:
                 time_range="last_7d"
             )
         )
-        assert plan.metric.tool_type == "metric_query"
+        assert plan.metric.tool_type == "metric"
 
     def test_plan_with_multiple_tool_types(self):
         """Plan with multiple specs should preserve all tool_types."""
@@ -182,8 +182,8 @@ class TestPlanWithToolType:
             graph=GraphSpec(depth=2)
         )
         assert plan.primary.tool_type == "ci_lookup"
-        assert plan.metric.tool_type == "metric_query"
-        assert plan.graph.tool_type == "graph_analysis"
+        assert plan.metric.tool_type == "metric"
+        assert plan.graph.tool_type == "ci_graph"
 
     def test_plan_with_custom_multiple_tool_types(self):
         """Plan should allow custom tool_type for each spec."""
@@ -316,10 +316,10 @@ class TestBackwardCompatibility:
         specs = [
             ("PrimarySpec", PrimarySpec(keywords=["test"]), "ci_lookup"),
             ("SecondarySpec", SecondarySpec(keywords=["test"]), "ci_lookup"),
-            ("MetricSpec", MetricSpec(metric_name="cpu", agg="avg", time_range="7d"), "metric_query"),
-            ("AggregateSpec", AggregateSpec(metrics=["cpu"]), "metric_query"),
-            ("GraphSpec", GraphSpec(depth=2), "graph_analysis"),
-            ("HistorySpec", HistorySpec(enabled=True), "history_query"),
+            ("MetricSpec", MetricSpec(metric_name="cpu", agg="avg", time_range="7d"), "metric"),
+            ("AggregateSpec", AggregateSpec(metrics=["cpu"]), "ci_aggregate"),
+            ("GraphSpec", GraphSpec(depth=2), "ci_graph"),
+            ("HistorySpec", HistorySpec(enabled=True), "event_log"),
             ("CepSpec", CepSpec(), "cep_query"),
             ("AutoSpec", AutoSpec(), "auto_analyzer"),
         ]
