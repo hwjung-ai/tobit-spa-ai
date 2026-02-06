@@ -306,12 +306,16 @@ def execute_universal(
 
         # Create a simple plan based on mode
         plan = _create_simple_plan(mode)
+        logger.debug(f"Created plan for {mode} mode: {plan}")
 
         # Run the orchestrator
+        logger.info(f"Running orchestrator for {mode} mode with question: {question[:80]}")
         result = runner.run(plan_output=None)
+        logger.info(f"Orchestrator returned result type: {type(result)}, keys: {list(result.keys()) if isinstance(result, dict) else 'not a dict'}")
 
         # Convert result to ExecutorResult
         blocks = _convert_result_to_blocks(result, mode)
+        logger.info(f"Converted to {len(blocks)} blocks for {mode} mode")
         used_tools = result.get("used_tools", [])
 
         return ExecutorResult(
@@ -326,8 +330,9 @@ def execute_universal(
             },
         )
     except Exception as exc:
-        logger.exception(f"Universal executor failed for mode '{mode}'")
-        # Return empty blocks on error
+        logger.exception(f"Universal executor failed for mode '{mode}': {str(exc)}")
+        # Return error info instead of empty blocks
+        error_msg = str(exc)
         return ExecutorResult(
             blocks=[],
             used_tools=[],
@@ -335,8 +340,9 @@ def execute_universal(
             references=[],
             summary={
                 "status": "error",
-                "error": str(exc),
+                "error": error_msg,
                 "mode": mode,
+                "error_type": type(exc).__name__,
             },
         )
 
