@@ -306,6 +306,278 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 
 ---
 
+## 9-1. 인증 & 세션 & Tenant_ID 규칙 (필독)
+
+모든 API 엔드포인트에서 **반드시** 다음 규칙을 준수하세요. 이를 어기면 조회 오류, 권한 오류, 테넌트 데이터 누락 등이 발생합니다.
+
+### 1. 로그인 세션 처리
+
+#### 1-1. 현재 사용자 정보 조회
+
+**필수 파일**: `core/auth.py`
+
+```python
+from fastapi import Depends
+from core.auth import get_current_user
+from app.modules.auth.models import TbUser
+
+@router.get("/api/endpoint")
+def my_endpoint(
+    current_user: TbUser = Depends(get_current_user)  # ← 반드시 추가
+) -> ResponseEnvelope:
+    """
+    Requirements:
+    1. current_user: 항상 추가해야 함
+    2. Type: TbUser (dict가 아님!)
+    3. 자동 처리: 토큰 검증, 사용자 조회, 권한 확인
+    """
+    user_id = current_user.id  # UUID
+    tenant_id = current_user.tenant_id  # 테넌트 ID (중요!)
+    role = current_user.role  # UserRole enum
+    return ResponseEnvelope.success(data={"user_id": user_id})
+```
+
+**문제점과 해결방안**:
+
+| 문제 | 원인 | 해결방법 |
+|------|------|--------|
+| `AttributeError: 'NoneType' has no attribute 'id'` | `current_user` 미전달 | `Depends(get_current_user)` 추가 |
+| `AttributeError: 'dict' object has no attribute 'role'` | `current_user: dict` 사용 | `current_user: TbUser` 로 변경 |
+| 401 Unauthorized 반복 | JWT 토큰 만료/무효 | 새로운 토큰 발급 받기 |
+| `enable_auth=False` 개발 모드에서 사용자 없음 | 디버그 사용자 미생성 | DB에 `admin@tobit.local` 사용자 생성 |
+
+#### 1-2. API 키 인증 (선택)
+
+```python
+from core.auth import get_current_user_from_api_key
+
+@router.get("/api/endpoint")
+def my_endpoint(
+    current_user: TbUser = Depends(get_current_user_from_api_key)
+) -> ResponseEnvelope:
+    """API 키 기반 인증 (Bearer 토큰 대신 사용)"""
+    pass
+```
+
+**API 키 사용 방법**:
+```bash
+# Header
+curl -H "Authorization: Bearer <api_key>" http://localhost:8000/api/endpoint
+
+# 또는 Query Parameter
+curl http://localhost:8000/api/endpoint?api_key=<api_key>
+```
+
+### 2. 데이터베이스 세션 관리
+
+**필수 파일**: `core/db.py`
+
+```python
+from core.db import get_session
+from sqlmodel import Session
+
+@router.get("/api/endpoint")
+def my_endpoint(
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session)  # ← DB 조회 필요시 추가
+) -> ResponseEnvelope:
+    """
+    Database operations must use get_session()
+    FastAPI는 자동으로 트랜잭션 관리 (commit/rollback)
+    """
+    # DB 조회 (session 필수)
+    user = session.get(TbUser, current_user.id)
+
+    # DB 쓰기
+    session.add(user)
+    session.commit()  # ← session.flush() 호출 가능하지만 commit은 불필요 (자동)
+```
+
+**주의**:
+- `session`은 **요청 범위** (request scope)에서만 유효
+- 요청 종료 후 자동 정리 (컨텍스트 매니저)
+- 비동기 함수에서는 `get_session_context()` 사용 (실제 사용 예시 없음 - 동기만 권장)
+
+### 3. Tenant_ID 처리 (중요!)
+
+#### 3-1. Tenant_ID 자동 주입
+
+**필수 파일**: `core/middleware.py`, `core/tenant.py`
+
+```python
+# middleware.py에서 자동 설정
+# ↓ request.headers에서 'x-tenant-id' 추출
+# ↓ 없으면 기본값 't1' 사용
+# ↓ request.state.tenant_id 에 저장
+
+# Router에서 접근
+from core.tenant import get_tenant_id
+
+@router.get("/api/endpoint")
+def my_endpoint(
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_tenant_id)  # ← Tenant_ID 자동 조회
+) -> ResponseEnvelope:
+    """
+    Tenant_ID는 두 가지 방법으로 획득:
+    1. current_user.tenant_id (사용자의 테넌트)
+    2. get_tenant_id() (HTTP 헤더에서)
+
+    보통 둘이 같아야 함. 다르면 권한 오류.
+    """
+    # current_user.tenant_id와 동일해야 함
+    assert current_user.tenant_id == tenant_id
+
+    # 데이터 조회시 반드시 tenant_id로 필터링
+    return ResponseEnvelope.success(data={"tenant_id": tenant_id})
+```
+
+#### 3-2. 데이터 조회 시 Tenant 필터링 (필수!)
+
+```python
+# ❌ 잘못된 예 (보안 위험!)
+@router.get("/api/users")
+def get_users(session: Session = Depends(get_session)):
+    # tenant_id 필터 없음 → 다른 테넌트 데이터도 조회됨
+    users = session.exec(select(TbUser)).all()
+    return ResponseEnvelope.success(data={"users": users})
+
+# ✅ 올바른 예
+@router.get("/api/users")
+def get_users(
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # tenant_id로 필터링
+    users = session.exec(
+        select(TbUser).where(TbUser.tenant_id == current_user.tenant_id)
+    ).all()
+    return ResponseEnvelope.success(data={"users": users})
+```
+
+#### 3-3. HTTP 헤더에서 Tenant_ID 전송
+
+프론트엔드에서:
+```javascript
+// apps/web/src/lib/api.ts
+fetch("/api/endpoint", {
+    headers: {
+        "x-tenant-id": "t1",  // ← 테넌트 ID 추가
+        "Authorization": "Bearer <token>"
+    }
+})
+
+// 또는 Axios/TanStack Query에서 인터셉터 설정
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            queryFn: async ({ queryKey }) => {
+                const response = await fetch(queryKey[0], {
+                    headers: {
+                        "x-tenant-id": localStorage.getItem("tenant_id") || "t1"
+                    }
+                });
+                return response.json();
+            }
+        }
+    }
+});
+```
+
+### 4. 인증 설정 (환경변수)
+
+**필수 파일**: `.env`
+
+```bash
+# 인증 활성화 (프로덕션)
+ENABLE_AUTH=true
+
+# 인증 비활성화 (개발 모드 - 주의!)
+ENABLE_AUTH=false  # ← 개발 중에만 사용
+
+# JWT 설정
+JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_MINUTES=60
+
+# 기본 테넌트
+DEFAULT_TENANT_ID=t1
+```
+
+**개발 모드 활성화 확인**:
+```python
+# apps/api/main.py
+from core.config import get_settings
+
+settings = get_settings()
+if not settings.enable_auth:
+    print("⚠️  Authentication DISABLED - Dev Mode Only")
+```
+
+### 5. 테스트에서 인증 처리
+
+```python
+# apps/api/tests/test_endpoint.py
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_authenticated_endpoint():
+    """현재 사용자 필수 엔드포인트 테스트"""
+    # Case 1: 토큰 없음 → 401 Unauthorized
+    response = client.get("/api/endpoint")
+    assert response.status_code == 401
+
+    # Case 2: 유효한 토큰 → 200 OK
+    # (enable_auth=False일 때 자동으로 debug 사용자 사용)
+    response = client.get(
+        "/api/endpoint",
+        headers={"x-tenant-id": "t1"}  # 테넌트 ID 추가
+    )
+    assert response.status_code == 200
+
+def test_tenant_isolation():
+    """테넌트 격리 테스트"""
+    # t1 테넌트 데이터
+    response1 = client.get(
+        "/api/users",
+        headers={"x-tenant-id": "t1"}
+    )
+
+    # t2 테넌트 데이터
+    response2 = client.get(
+        "/api/users",
+        headers={"x-tenant-id": "t2"}
+    )
+
+    # 다른 데이터 확인
+    assert response1.json()["data"] != response2.json()["data"]
+```
+
+### 6. 일반적인 오류와 해결방법
+
+| 오류 메시지 | 원인 | 해결방법 |
+|-----------|------|--------|
+| `401 Unauthorized` | 토큰 없음/만료 | JWT 토큰 재발급 또는 `ENABLE_AUTH=false` |
+| `AttributeError: 'NoneType'` | `current_user` None | `Depends(get_current_user)` 필수 추가 |
+| `AttributeError: 'dict' object` | 타입 오류 | `current_user: TbUser` 명시 |
+| 다른 테넌트 데이터 조회됨 | Tenant 필터 누락 | WHERE 절에 `tenant_id` 필터 추가 |
+| `get_current_user()` 호출 안됨 | `Depends()` 미사용 | FastAPI `Depends()` 반드시 사용 |
+| 테넌트 헤더 무시됨 | 미들웨어 미등록 | `core/middleware.py` 확인 |
+
+### 7. 체크리스트 (엔드포인트 추가 시)
+
+- [ ] `current_user: TbUser = Depends(get_current_user)` 추가?
+- [ ] 데이터 조회 시 `tenant_id` 필터링?
+- [ ] DB 접근 시 `session: Session = Depends(get_session)` 추가?
+- [ ] Type hint 정확함? (`dict` 아닌 `TbUser`)
+- [ ] 테스트에서 `x-tenant-id` 헤더 추가?
+- [ ] `.env`에 `ENABLE_AUTH`, `JWT_SECRET_KEY` 설정?
+
+---
+
 ## 10. 작업 완료의 정의 (Definition of Done)
 
 AI 에이전트는 모든 작업을 종료하기 전, 다음 네 가지 기준을 충족했는지 스스로 확인해야 합니다.
