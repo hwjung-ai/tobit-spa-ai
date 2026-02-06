@@ -657,15 +657,27 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
         route_reason = "OPS real mode"
         summary = f"Real mode response for {mode}"
 
-    # Ensure blocks is never empty - add fallback if needed
+    # Log block generation status
     logger = logging.getLogger(__name__)
     if not blocks:
-        logger.warning(f"Empty blocks returned for {mode} mode, using fallback mock blocks")
-        blocks = _build_mock_blocks(mode, question)
-        used_tools = ["fallback_mock"]
-        fallback = True
-        if not summary:
-            summary = f"Fallback mock data for {mode}"
+        logger.warning(f"Empty blocks returned for {mode} mode (ops_mode={settings.ops_mode})")
+        # In real mode, don't use fallback - show error instead
+        if settings.ops_mode == "real":
+            error = error or f"No data available for {mode} mode"
+            blocks = [MarkdownBlock(
+                type="markdown",
+                title="No Data",
+                content=f"❌ Unable to retrieve {mode} mode data.\n\nError: {error}\n\nPlease check:\n- Data availability\n- Query syntax\n- System configuration",
+            )]
+            fallback = True
+        else:
+            # In mock mode, use fallback data
+            logger.info("Mock mode: using fallback blocks")
+            blocks = _build_mock_blocks(mode, question)
+            used_tools = ["fallback_mock"]
+            fallback = True
+            if not summary:
+                summary = f"Fallback mock data for {mode}"
     else:
         logger.info(f"Successfully generated {len(blocks)} blocks for {mode} mode (ops_mode={settings.ops_mode})")
 
