@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchApi } from "../../lib/adminUtils";
 import ValidationAlert from "./ValidationAlert";
@@ -8,6 +8,17 @@ import ValidationAlert from "./ValidationAlert";
 interface CreateToolModalProps {
     onClose: () => void;
     onSuccess: (assetId: string) => void;
+}
+
+interface ApiManagerItem {
+    id: string;
+    name: string;
+    method: string;
+    path: string;
+    description?: string | null;
+    scope?: string | null;
+    mode?: string | null;
+    is_enabled?: boolean;
 }
 
 const TOOL_TYPES = [
@@ -37,8 +48,14 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
     const [catalogRef, setCatalogRef] = useState<string>("");
     const [toolConfig, setToolConfig] = useState(JSON.stringify(DEFAULT_TOOL_CONFIG, null, 2));
     const [inputSchema, setInputSchema] = useState(JSON.stringify(DEFAULT_INPUT_SCHEMA, null, 2));
+    const [selectedApiId, setSelectedApiId] = useState<string>("");
     const [isCreating, setIsCreating] = useState(false);
     const [errors, setErrors] = useState<string[]>([]);
+
+    const apiBaseUrl = useMemo(() => {
+        const raw = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+        return raw.replace(/\/+$/, "");
+    }, []);
 
     // Fetch available catalogs
     const { data: catalogsData } = useQuery({
@@ -48,6 +65,49 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             return response.data?.assets || [];
         },
     });
+
+    const { data: apiManagerApis = [] } = useQuery({
+        queryKey: ["api-manager-apis"],
+        queryFn: async () => {
+            const response = await fetchApi<{ apis: ApiManagerItem[] }>("/api-manager/apis");
+            return (response.data as { apis?: ApiManagerItem[] })?.apis || [];
+        },
+    });
+
+    const handleApiSelection = (apiId: string) => {
+        setSelectedApiId(apiId);
+        const selected = apiManagerApis.find((api) => api.id === apiId);
+        if (!selected) {
+            return;
+        }
+
+        const executeUrl = `${apiBaseUrl}/api-manager/apis/${selected.id}/execute`;
+        const apiToolConfig = {
+            url: executeUrl,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body_template: {
+                params: "params",
+            },
+        };
+
+        const apiInputSchema = {
+            type: "object",
+            properties: {
+                params: {
+                    type: "object",
+                    description: `Parameters for API Manager execute: ${selected.name} (${selected.method} ${selected.path})`,
+                },
+            },
+            required: ["params"],
+        };
+
+        setToolType("http_api");
+        setToolConfig(JSON.stringify(apiToolConfig, null, 2));
+        setInputSchema(JSON.stringify(apiInputSchema, null, 2));
+    };
 
     const handleCreate = async () => {
         const validationErrors: string[] = [];
@@ -185,6 +245,30 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 ))}
                             </div>
                         </div>
+
+                        {/* API Manager Selection (HTTP API Tools) */}
+                        {toolType === "http_api" && (
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
+                                    API Manager API (Optional)
+                                </label>
+                                <select
+                                    value={selectedApiId}
+                                    onChange={(e) => handleApiSelection(e.target.value)}
+                                    className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 focus:outline-none focus:border-sky-500 transition-all"
+                                >
+                                    <option value="">-- Select API Manager API --</option>
+                                    {apiManagerApis.map((api) => (
+                                        <option key={api.id} value={api.id}>
+                                            {api.name} ({api.method} {api.path})
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-slate-600 text-xs mt-1 ml-1">
+                                    선택 시 Tool Config/Input Schema가 API 실행용으로 자동 채워집니다.
+                                </p>
+                            </div>
+                        )}
 
                         {/* Description */}
                         <div>
