@@ -128,16 +128,119 @@ def evaluate_trigger(
     )
 
 
+def _evaluate_single_condition(
+    condition: Dict[str, Any],
+    payload: Dict[str, Any],
+) -> Tuple[bool, Dict[str, Any]]:
+    """평가 단일 조건과 상세 정보 반환"""
+    field = condition.get("field")
+    op = str(condition.get("op", "==")).strip()
+    target_value = condition.get("value")
+
+    raw_value = payload.get(field)
+    if raw_value is None:
+        metrics_block = payload.get("metrics") or {}
+        if isinstance(metrics_block, dict):
+            raw_value = metrics_block.get(field)
+
+    condition_ref: Dict[str, Any] = {
+        "field": field,
+        "operator": op,
+        "expected": target_value,
+    }
+
+    if raw_value is None:
+        condition_ref["condition_evaluated"] = False
+        condition_ref["reason"] = "field missing"
+        return False, condition_ref
+
+    try:
+        actual = float(raw_value)
+        expected = float(target_value)
+    except (TypeError, ValueError):
+        actual = raw_value
+        expected = target_value
+
+    operators = {
+        ">": actual > expected,
+        "<": actual < expected,
+        ">=": actual >= expected,
+        "<=": actual <= expected,
+        "==": actual == expected,
+        "=": actual == expected,
+        "!=": actual != expected,
+    }
+    result = operators.get(op)
+    if result is None:
+        raise HTTPException(status_code=400, detail=f"Unsupported operator: {op}")
+
+    condition_ref["actual"] = actual
+    condition_ref["condition_evaluated"] = True
+    return result, condition_ref
+
+
+def _evaluate_composite_conditions(
+    conditions: list[Dict[str, Any]],
+    logic: str,
+    payload: Dict[str, Any],
+) -> Tuple[bool, Dict[str, Any]]:
+    """복합 조건 평가 (AND/OR/NOT)"""
+    if not conditions or len(conditions) == 0:
+        return True, {"composite_logic": logic, "conditions_evaluated": []}
+
+    logic = logic.upper()
+    if logic not in {"AND", "OR", "NOT"}:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported composite logic: {logic}. Must be AND, OR, or NOT"
+        )
+
+    results: list[bool] = []
+    condition_refs: list[Dict[str, Any]] = []
+
+    for condition in conditions:
+        matched, cond_ref = _evaluate_single_condition(condition, payload)
+        results.append(matched)
+        condition_refs.append(cond_ref)
+
+    if logic == "AND":
+        final_result = all(results)
+    elif logic == "OR":
+        final_result = any(results)
+    else:  # NOT
+        final_result = not any(results)
+
+    return final_result, {
+        "composite_logic": logic,
+        "conditions_evaluated": condition_refs,
+        "final_result": final_result,
+    }
+
+
 def _evaluate_event_trigger(
     trigger_spec: Dict[str, Any],
     payload: Dict[str, Any] | None,
 ) -> Tuple[bool, Dict[str, Any]]:
+    """이벤트 트리거 평가 (단일 또는 복합 조건)"""
     spec = trigger_spec
+    payload = payload or {}
     references: Dict[str, Any] = {"trigger_spec": spec}
+
+    # 새로운 복합 조건 형식 지원
+    if "conditions" in spec and isinstance(spec.get("conditions"), list):
+        conditions = spec.get("conditions", [])
+        logic = spec.get("logic", "AND")
+        matched, composite_refs = _evaluate_composite_conditions(
+            conditions, logic, payload
+        )
+        references.update(composite_refs)
+        return matched, references
+
+    # 기존 단일 조건 형식 (하위 호환성)
     field = spec.get("field")
     op = str(spec.get("op", "==")).strip()
     target_value = spec.get("value")
-    payload = payload or {}
+
     raw_value = payload.get(field)
     if raw_value is None:
         metrics_block = payload.get("metrics") or {}
