@@ -1,5 +1,6 @@
 """Multi-channel notification service for CEP rule actions (Slack, Email, SMS, Webhook)"""
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -10,6 +11,9 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 logger = logging.getLogger(__name__)
+
+# 재시도 관리자는 notification_service에서 주입됨
+retry_manager = None
 
 
 class NotificationMessage:
