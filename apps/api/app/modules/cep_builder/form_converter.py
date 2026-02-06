@@ -153,3 +153,75 @@ def convert_action_spec_to_form(action_spec: Dict[str, Any]) -> list[Dict[str, A
 
     # 단일 액션 형식
     return [action_spec]
+
+
+# ============================================================================
+# Frontend Conversion Functions (for JSON ↔ Form sync)
+# ============================================================================
+
+
+def serialize_form_state(
+    rule_name: str,
+    trigger_type: str,
+    trigger_spec: Dict[str, Any],
+    action_spec: Dict[str, Any],
+    composite_condition: Dict[str, Any] | None = None,
+    window_config: Dict[str, Any] | None = None,
+    aggregation: Dict[str, Any] | None = None,
+    enrichments: list[Dict[str, Any]] | None = None,
+) -> Dict[str, Any]:
+    """
+    폼 상태를 JSON으로 직렬화 (로컬 스토리지용)
+
+    폼의 모든 상태를 하나의 JSON으로 직렬화하여
+    로컬 스토리지에 저장하거나 다른 컴포넌트로 전달할 수 있도록 함
+
+    Args:
+        rule_name: 규칙명
+        trigger_type: 트리거 타입
+        trigger_spec: 트리거 스펙
+        action_spec: 액션 스펙
+        composite_condition: 복합 조건
+        window_config: 윈도우 설정
+        aggregation: 집계 스펙
+        enrichments: 보강 스펙 목록
+
+    Returns:
+        직렬화된 폼 상태
+    """
+    return {
+        "rule_name": rule_name,
+        "trigger_type": trigger_type,
+        "trigger_spec": trigger_spec,
+        "action_spec": action_spec,
+        "composite_condition": composite_condition,
+        "window_config": window_config,
+        "aggregation": aggregation,
+        "enrichments": enrichments or [],
+    }
+
+
+def deserialize_form_state(
+    serialized: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    직렬화된 폼 상태를 복원
+
+    로컬 스토리지에서 불러온 폼 상태를 복원
+
+    Args:
+        serialized: 직렬화된 폼 상태
+
+    Returns:
+        복원된 폼 상태 dict
+    """
+    return {
+        "rule_name": serialized.get("rule_name", ""),
+        "trigger_type": serialized.get("trigger_type", "metric"),
+        "trigger_spec": serialized.get("trigger_spec", {}),
+        "action_spec": serialized.get("action_spec", {}),
+        "composite_condition": serialized.get("composite_condition"),
+        "window_config": serialized.get("window_config"),
+        "aggregation": serialized.get("aggregation"),
+        "enrichments": serialized.get("enrichments", []),
+    }

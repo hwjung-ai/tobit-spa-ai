@@ -495,6 +495,61 @@ export default function CepBuilderPage() {
     }
   }, [finalStorageId, buildFormSnapshot]);
 
+  // JSON → Form 동기화: selectedRule 로드 시 폼 데이터 자동 채우기
+  useEffect(() => {
+    if (!selectedRule) return;
+
+    // Form Builder 탭에서만 동기화 (JSON Editor는 이미 로드됨)
+    if (activeTab !== "definition-form") return;
+
+    // trigger_spec에서 복합 조건 추출
+    const triggerSpec = selectedRule.trigger_spec as Record<string, any>;
+
+    if (triggerSpec.conditions && Array.isArray(triggerSpec.conditions)) {
+      const conditions = triggerSpec.conditions.map((c: any) => ({
+        field: c.field || "",
+        op: c.op || "==",
+        value: c.value,
+      }));
+      setFormConditions(conditions);
+      setFormConditionLogic(triggerSpec.logic || "AND");
+    } else {
+      setFormConditions([]);
+      setFormConditionLogic("AND");
+    }
+
+    // 윈도우 설정 추출
+    if (triggerSpec.window_config) {
+      setFormWindowConfig(triggerSpec.window_config);
+    } else {
+      setFormWindowConfig({});
+    }
+
+    // 집계 설정 추출
+    if (triggerSpec.aggregation) {
+      setFormAggregations([triggerSpec.aggregation]);
+    } else {
+      setFormAggregations([]);
+    }
+
+    // 보강 설정 추출
+    if (triggerSpec.enrichments && Array.isArray(triggerSpec.enrichments)) {
+      setFormEnrichments(triggerSpec.enrichments);
+    } else {
+      setFormEnrichments([]);
+    }
+
+    // 액션 설정 추출
+    const actionSpec = selectedRule.action_spec as Record<string, any>;
+    if (actionSpec.type === "multi_action" && Array.isArray(actionSpec.actions)) {
+      setFormActions(actionSpec.actions);
+    } else if (actionSpec) {
+      setFormActions([actionSpec]);
+    } else {
+      setFormActions([]);
+    }
+  }, [selectedRule, activeTab]);
+
   const handleSave = async () => {
     setStatusError(null);
     let parsedTriggerSpec;
