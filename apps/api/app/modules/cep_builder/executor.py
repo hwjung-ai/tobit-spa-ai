@@ -355,6 +355,16 @@ def _evaluate_metric_trigger(
     matched = comparisons.get(op)
     references["condition_evaluated"] = True
     references["actual_value"] = actual_value
+
+    # Aggregation support: If aggregation spec exists, apply it
+    aggregation_spec = spec.get("aggregation")
+    if aggregation_spec:
+        # For metric triggers, we can apply aggregation to historic data
+        # This would require windowing support (not fully implemented yet)
+        # For now, we just document the aggregation intent
+        references["aggregation_spec"] = aggregation_spec
+        references["note"] = "Aggregation spec present; full windowing support requires Redis or state storage"
+
     return matched, references
 
 
@@ -570,3 +580,181 @@ def execute_http_api(
         row_count=len(rows),
         duration_ms=duration_ms,
     )
+
+
+# ============================================================================
+# Aggregation Functions for Windowing/Aggregation Support
+# ============================================================================
+
+
+def _apply_aggregation(
+    values: list[Any],
+    agg_type: str,
+    percentile_value: float | None = None,
+) -> float | None:
+    """
+    Apply aggregation function to a list of values
+
+    Args:
+        values: List of numeric values
+        agg_type: Aggregation type (count, sum, avg, min, max, std, percentile)
+        percentile_value: Value for percentile calculation (0-100)
+
+    Returns:
+        Aggregated value or None if cannot compute
+    """
+    if not values:
+        return None
+
+    # Filter out None values
+    numeric_values = [v for v in values if isinstance(v, (int, float)) and v is not None]
+
+    if not numeric_values:
+        return None
+
+    agg_type = agg_type.lower() if agg_type else "count"
+
+    try:
+        if agg_type == "count":
+            return float(len(numeric_values))
+        elif agg_type == "sum":
+            return float(sum(numeric_values))
+        elif agg_type == "avg" or agg_type == "average":
+            return float(sum(numeric_values)) / len(numeric_values)
+        elif agg_type == "min":
+            return float(min(numeric_values))
+        elif agg_type == "max":
+            return float(max(numeric_values))
+        elif agg_type == "std" or agg_type == "stddev":
+            if len(numeric_values) < 2:
+                return 0.0
+            mean = sum(numeric_values) / len(numeric_values)
+            variance = sum((x - mean) ** 2 for x in numeric_values) / (
+                len(numeric_values) - 1
+            )
+            return float(variance**0.5)
+        elif agg_type == "percentile":
+            if percentile_value is None or not (0 <= percentile_value <= 100):
+                return None
+            sorted_values = sorted(numeric_values)
+            index = (percentile_value / 100.0) * (len(sorted_values) - 1)
+            lower = int(index)
+            upper = lower + 1
+            if upper >= len(sorted_values):
+                return float(sorted_values[lower])
+            weight = index - lower
+            return float(
+                sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
+            )
+        else:
+            return None
+    except (ValueError, ZeroDivisionError, TypeError):
+        return None
+
+
+def evaluate_aggregation(
+    window_events: list[Dict[str, Any]],
+    aggregation_spec: Dict[str, Any],
+) -> Tuple[bool, Dict[str, Any]]:
+    """
+    Evaluate aggregation over a window of events
+
+    Args:
+        window_events: List of events in the current window
+        aggregation_spec: Aggregation specification with type, field, threshold
+
+    Returns:
+        Tuple of (matched: bool, details: dict)
+    """
+    if not window_events or not aggregation_spec:
+        return False, {"reason": "No events or aggregation spec"}
+
+    agg_type = aggregation_spec.get("type", "count")
+    field = aggregation_spec.get("field")
+    threshold = aggregation_spec.get("threshold")
+
+    # Extract field values from window events
+    if field:
+        values = []
+        for event in window_events:
+            # event can be {"timestamp": ..., "data": {...}} or just payload
+            payload = event.get("data", event)
+            value = get_path_value(payload, field)
+            if value is not None:
+                values.append(value)
+    else:
+        # If no field specified, count events
+        values = [1] * len(window_events)
+        agg_type = "count"
+
+    # Apply aggregation
+    percentile_value = aggregation_spec.get("percentile_value")
+    aggregated_value = _apply_aggregation(values, agg_type, percentile_value)
+
+    if aggregated_value is None:
+        return False, {"reason": f"Cannot compute {agg_type} aggregation"}
+
+    # Evaluate condition if threshold provided
+    if threshold is not None:
+        op = aggregation_spec.get("op", ">")
+        matched = False
+
+        if op == ">":
+            matched = aggregated_value > threshold
+        elif op == ">=":
+            matched = aggregated_value >= threshold
+        elif op == "<":
+            matched = aggregated_value < threshold
+        elif op == "<=":
+            matched = aggregated_value <= threshold
+        elif op == "==":
+            matched = aggregated_value == threshold
+        elif op == "!=":
+            matched = aggregated_value != threshold
+
+        return matched, {
+            "aggregation_type": agg_type,
+            "field": field,
+            "aggregated_value": aggregated_value,
+            "threshold": threshold,
+            "operator": op,
+            "matched": matched,
+            "event_count": len(window_events),
+        }
+    else:
+        # No threshold, just return aggregated value
+        return True, {
+            "aggregation_type": agg_type,
+            "field": field,
+            "aggregated_value": aggregated_value,
+            "event_count": len(window_events),
+        }
+
+
+def apply_window_aggregation(
+    trigger_spec: Dict[str, Any],
+    window_events: list[Dict[str, Any]],
+) -> Tuple[bool, Dict[str, Any]]:
+    """
+    Apply windowing and aggregation to a set of events
+
+    Args:
+        trigger_spec: Trigger specification with window and aggregation config
+        window_events: List of events in the current window
+
+    Returns:
+        Tuple of (matched: bool, details: dict)
+    """
+    aggregation_spec = trigger_spec.get("aggregation")
+
+    if not aggregation_spec:
+        return False, {"reason": "No aggregation spec provided"}
+
+    # Apply aggregation
+    matched, details = evaluate_aggregation(window_events, aggregation_spec)
+
+    # Add window info
+    details["window_size"] = len(window_events)
+    details["window_config"] = trigger_spec.get("window_config", {})
+
+    return matched, details
