@@ -66,6 +66,13 @@ from .schemas import (
     CepSimulateResponse,
     CepTriggerRequest,
     CepTriggerResponse,
+    # Phase 2: Form-based UI schemas
+    CepRuleFormData,
+    ConditionSpec,
+    ValidationResult,
+    PreviewResult,
+    FieldInfo,
+    ConditionTemplate,
 )
 
 router = APIRouter(prefix="/cep", tags=["cep-builder"])
@@ -656,3 +663,171 @@ def scheduler_instances(session: Session = Depends(get_session)) -> ResponseEnve
         for instance in instances
     ]
     return ResponseEnvelope.success(data={"instances": payload})
+
+
+# ============================================================================
+# Phase 2: Form-based UI API Endpoints
+# ============================================================================
+
+
+@router.post("/validate/condition")
+def validate_condition(
+    condition: ConditionSpec, payload: dict[str, Any]
+) -> ResponseEnvelope:
+    """단일 조건 검증"""
+    try:
+        from .executor import _evaluate_single_condition
+
+        matched, refs = _evaluate_single_condition(condition.model_dump(), payload)
+        result = ValidationResult(
+            valid=True,
+            suggestions=(
+                ["조건이 매치되었습니다." if matched else "조건이 매치되지 않았습니다."]
+            ),
+        )
+    except Exception as e:
+        result = ValidationResult(valid=False, errors=[str(e)])
+    return ResponseEnvelope.success(data={"validation": result.model_dump()})
+
+
+@router.get("/condition-templates")
+def get_condition_templates() -> ResponseEnvelope:
+    """조건 템플릿 조회"""
+    templates = [
+        ConditionTemplate(
+            id="gt",
+            name="초과",
+            description="값이 임계값보다 큼",
+            operator=">",
+            example_value=80,
+            category="numeric",
+        ),
+        ConditionTemplate(
+            id="lt",
+            name="미만",
+            description="값이 임계값보다 작음",
+            operator="<",
+            example_value=20,
+            category="numeric",
+        ),
+        ConditionTemplate(
+            id="eq",
+            name="같음",
+            description="값이 정확히 일치",
+            operator="==",
+            example_value="error",
+            category="string",
+        ),
+        ConditionTemplate(
+            id="ne",
+            name="다름",
+            description="값이 일치하지 않음",
+            operator="!=",
+            example_value="success",
+            category="string",
+        ),
+        ConditionTemplate(
+            id="gte",
+            name="이상",
+            description="값이 임계값 이상",
+            operator=">=",
+            example_value=70,
+            category="numeric",
+        ),
+        ConditionTemplate(
+            id="lte",
+            name="이하",
+            description="값이 임계값 이하",
+            operator="<=",
+            example_value=90,
+            category="numeric",
+        ),
+    ]
+    return ResponseEnvelope.success(
+        data={"templates": [t.model_dump() for t in templates]}
+    )
+
+
+@router.post("/rules/preview")
+def preview_rule(
+    trigger_spec: dict[str, Any],
+    conditions: list[dict[str, Any]] | None = None,
+    test_payload: dict[str, Any] | None = None,
+) -> ResponseEnvelope:
+    """규칙 미리보기 (조건 평가만 수행)"""
+    try:
+        from .executor import _evaluate_composite_conditions, _evaluate_event_trigger
+
+        if conditions:
+            # 복합 조건 평가
+            logic = "AND"  # 기본값
+            matched, refs = _evaluate_composite_conditions(conditions, logic, test_payload or {})
+            result = PreviewResult(
+                condition_matched=matched,
+                would_execute=matched,
+                references=refs,
+                condition_evaluation_tree=refs,
+            )
+        else:
+            # 트리거 스펙 평가
+            matched, refs = _evaluate_event_trigger(trigger_spec, test_payload)
+            result = PreviewResult(
+                condition_matched=matched,
+                would_execute=matched,
+                references=refs,
+            )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return ResponseEnvelope.success(data={"preview": result.model_dump()})
+
+
+@router.get("/field-suggestions")
+def get_field_suggestions(search: str = "") -> ResponseEnvelope:
+    """자동완성용 필드 제안"""
+    # 기본 필드 제안
+    common_fields = [
+        FieldInfo(
+            name="cpu",
+            description="CPU 사용률",
+            type="number",
+            examples=[45.2, 78.5, 92.1],
+        ),
+        FieldInfo(
+            name="memory",
+            description="메모리 사용률",
+            type="number",
+            examples=[32.0, 64.5, 85.3],
+        ),
+        FieldInfo(
+            name="disk",
+            description="디스크 사용률",
+            type="number",
+            examples=[50.0, 75.2, 95.8],
+        ),
+        FieldInfo(
+            name="status",
+            description="상태",
+            type="string",
+            examples=["success", "error", "warning"],
+        ),
+        FieldInfo(
+            name="count",
+            description="카운트",
+            type="number",
+            examples=[1, 5, 10],
+        ),
+        FieldInfo(
+            name="duration_ms",
+            description="지속시간 (밀리초)",
+            type="number",
+            examples=[100, 500, 2000],
+        ),
+    ]
+
+    if search:
+        common_fields = [f for f in common_fields if search.lower() in f.name.lower()]
+
+    return ResponseEnvelope.success(
+        data={"fields": [f.model_dump() for f in common_fields]}
+    )

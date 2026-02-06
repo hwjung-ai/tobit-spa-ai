@@ -212,3 +212,116 @@ class CepEventDetail(BaseModel):
 class CepEventSummary(BaseModel):
     unacked_count: int
     by_severity: Dict[str, int]
+
+
+# ============================================================================
+# Phase 2: Form-based UI Schemas
+# ============================================================================
+
+
+class ConditionSpec(BaseModel):
+    """단일 조건 명세"""
+    field: str
+    op: Literal["==", "!=", ">", ">=", "<", "<=", "in", "contains"]
+    value: Any
+    case_sensitive: bool = True
+
+
+class CompositeCondition(BaseModel):
+    """복합 조건 (AND/OR/NOT)"""
+    conditions: list[ConditionSpec]
+    logic: Literal["AND", "OR", "NOT"] = "AND"
+
+
+class WindowConfig(BaseModel):
+    """시간 윈도우 설정"""
+    type: Literal["tumbling", "sliding", "session"]
+    size_seconds: int
+    slide_seconds: int | None = None  # sliding window용
+    gap_seconds: int | None = None    # session window용
+
+
+class AggregationSpec(BaseModel):
+    """집계 명세"""
+    type: Literal["count", "sum", "avg", "min", "max", "std", "percentile"]
+    group_by: str | None = None
+    field: str | None = None
+    percentile_value: float | None = None
+
+
+class EnrichmentSpec(BaseModel):
+    """데이터 보강 명세"""
+    type: Literal["lookup", "calculate", "api_call"]
+    name: str
+    source: str  # "database", "cache", "api"
+    key: str
+    table: str | None = None
+    endpoint: str | None = None
+    formula: str | None = None
+
+
+class ActionSpecV2(BaseModel):
+    """액션 명세 (V2: 다중 액션 타입 지원)"""
+    type: Literal["notify", "store", "trigger", "webhook"]
+    endpoint: str | None = None
+    method: Literal["GET", "POST", "PUT", "DELETE"] | None = None
+    headers: Dict[str, str] = Field(default_factory=dict)
+    params: Dict[str, Any] = Field(default_factory=dict)
+    body: Dict[str, Any] | None = None
+    channels: list[str] | None = None
+    message: str | None = None
+    target_rule_id: str | None = None
+
+
+class CepRuleFormData(BaseModel):
+    """폼 기반 규칙 데이터"""
+    rule_name: str
+    description: str | None = None
+    is_active: bool = True
+    trigger_type: Literal["metric", "event", "schedule"]
+    trigger_spec: Dict[str, Any]
+
+    # 복합 조건 (선택사항)
+    composite_condition: CompositeCondition | None = None
+
+    # 기타 설정
+    window_config: WindowConfig | None = None
+    aggregation: AggregationSpec | None = None
+    enrichments: list[EnrichmentSpec] = Field(default_factory=list)
+    actions: list[ActionSpecV2] = Field(min_length=1)
+
+
+class ValidationResult(BaseModel):
+    """검증 결과"""
+    valid: bool
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    suggestions: list[str] = Field(default_factory=list)
+
+
+class PreviewResult(BaseModel):
+    """규칙 미리보기 결과"""
+    condition_matched: bool
+    matched_conditions: list[str] = Field(default_factory=list)
+    failed_conditions: list[str] = Field(default_factory=list)
+    condition_evaluation_tree: Dict[str, Any] | None = None
+    would_execute: bool
+    references: Dict[str, Any] = Field(default_factory=dict)
+
+
+class FieldInfo(BaseModel):
+    """필드 정보 (자동완성용)"""
+    name: str
+    description: str | None = None
+    type: str
+    examples: list[Any] = Field(default_factory=list)
+
+
+class ConditionTemplate(BaseModel):
+    """조건 템플릿"""
+    id: str
+    name: str
+    description: str
+    operator: str
+    example_value: Any
+    category: str
