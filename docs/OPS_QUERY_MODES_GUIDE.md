@@ -7,12 +7,13 @@
 
 ## 1. 개요
 
-OPS 메뉴의 왼쪽 패널에는 **5가지 질의 모드**가 있습니다:
+OPS 메뉴의 왼쪽 패널에는 **6가지 질의 모드**가 있습니다:
 - **구성** (Configuration)
 - **수치** (Metrics)
 - **이력** (History)
 - **연결** (Relations/Graph)
-- **전체** (All)
+- **문서** (Document Search)
+- **전체** (All/Orchestration)
 
 각 모드는 다른 API 엔드포인트를 사용하며, 사용자 질문에 따라 다른 응답 형식과 표시 방식을 제공합니다.
 
@@ -26,7 +27,8 @@ OPS 메뉴의 왼쪽 패널에는 **5가지 질의 모드**가 있습니다:
 | **수치** | metric | `POST /ops/query` | POST |
 | **이력** | hist | `POST /ops/query` | POST |
 | **연결** | graph | `POST /ops/query` | POST |
-| **전체** | all | `POST /ops/ci/ask` | POST |
+| **문서** | document | `POST /ops/query` | POST |
+| **전체** | all | `POST /ops/ask` | POST |
 
 ### 2.1 세부 API 정보
 
@@ -72,9 +74,9 @@ X-User-Id: user_456
 
 ---
 
-#### 그룹 B: 복합 모드 쿼리 (all/CI Ask)
+#### 그룹 B: 복합 모드 쿼리 (all/Orchestration)
 
-**엔드포인트**: `POST /ops/ci/ask`
+**엔드포인트**: `POST /ops/ask`
 
 **요청 스키마**:
 ```python
@@ -87,15 +89,13 @@ class CiAskRequest(BaseModel):
 
 **요청 예시**:
 ```bash
-POST /ops/ci/ask
+POST /ops/ask
 Content-Type: application/json
 X-Tenant-Id: tenant_123
 X-User-Id: user_456
 
 {
-  "question": "최근 장애 원인을 분석해주고 관련 문서를 찾아줘",
-  "include_tools": true,
-  "include_references": true
+  "question": "최근 장애 원인을 분석해주고 관련 문서를 찾아줘"
 }
 ```
 
@@ -350,11 +350,11 @@ POST /ops/query?mode=graph
 
 ---
 
-### 3.5 전체 (All/CI Ask) - mode: "all" → `/ops/ci/ask`
+### 3.5 전체 (All/Orchestration) - mode: "all" → `/ops/ask`
 
 #### API 호출
 ```
-POST /ops/ci/ask
+POST /ops/ask
 ```
 
 #### 목적
@@ -489,133 +489,131 @@ POST /ops/ci/ask
 
 ---
 
-## 5. 문서 (DOCS) 모드 추가 계획
+## 5. 문서 (Document) 모드 - ✅ 구현 완료
 
-### 5.1 새로운 모드: "문서" (Document) - 향후 추가
+### 5.1 모드: "문서" (Document) - 구현됨
 
 ```typescript
-// 현재 UI_MODES (5개)
+// UI_MODES (6개) - 모두 구현됨
 { id: "ci", label: "구성", backend: "config" },
 { id: "metric", label: "수치", backend: "metric" },
 { id: "history", label: "이력", backend: "hist" },
 { id: "relation", label: "연결", backend: "graph" },
-{ id: "all", label: "전체", backend: "all" },
-
-// 추가될 모드 (6개)
 { id: "document", label: "문서", backend: "document" },
+{ id: "all", label: "전체", backend: "all" },
 ```
 
-### 5.2 문서 모드 API 디자인
+### 5.2 문서 모드 API
 
-**엔드포인트**: `POST /ops/query?mode=document` 또는 `POST /ops/documents/search`
+**엔드포인트**: `POST /ops/query`
 
 **요청**:
 ```json
 {
   "question": "성능 최적화 관련 문서를 찾아줘",
-  "mode": "document",
-  "search_type": "hybrid",  // text, vector, hybrid
-  "top_k": 10,
-  "filters": {
-    "document_types": ["pdf", "md"],
-    "date_from": "2025-01-01"
-  }
+  "mode": "document"
 }
 ```
 
 **응답**:
 ```json
 {
-  "answer": "성능 최적화 관련 문서 검색 결과입니다.",
-  "blocks": [
-    {
-      "type": "references",
-      "title": "관련 문서",
-      "items": [
+  "status": "success",
+  "data": {
+    "answer": {
+      "blocks": [
         {
-          "type": "document",
-          "title": "성능 최적화 가이드",
-          "url": "/docs/performance-guide",
-          "relevance": 0.94,
-          "excerpt": "CPU 과다 사용 시 확인할 사항...",
-          "source": "md",
-          "page": 5
+          "type": "table",
+          "title": "Document Search Results",
+          "columns": ["Document", "Content", "Score"],
+          "rows": [
+            ["performance-guide.md", "성능 최적화 기본 가이드...", "94%"],
+            ["tuning-tips.pdf", "고급 튜닝 팁과 사례...", "87%"]
+          ]
+        },
+        {
+          "type": "references",
+          "title": "Detailed Document Matches",
+          "items": [
+            {
+              "kind": "document",
+              "title": "1. performance-guide.md",
+              "payload": {
+                "chunk_id": "c1",
+                "document_id": "d1",
+                "content": "성능 최적화 가이드 전문...",
+                "page": 5,
+                "relevance": 0.94
+              }
+            }
+          ]
         }
       ]
     }
-  ]
+  }
 }
 ```
 
 ### 5.3 구현 방식
 
-#### 옵션 1: 독립 모드 추가 (권장)
+**통합된 구현**:
 ```
 UI_MODES에 추가: { id: "document", label: "문서", backend: "document" }
-API 엔드포인트: POST /ops/query?mode=document
-내부 라우팅: DocumentSearchService 호출
-```
-
-#### 옵션 2: 전체 모드에 통합 (현재)
-```
-전체 모드에서 document_search 도구 자동 호출
-별도 모드 불필요
+API 엔드포인트: POST /ops/query (mode: "document" 파라미터)
+내부 라우팅: _execute_real_mode() → run_document() → DocumentSearchService
+검색 유형: 하이브리드 (BM25 텍스트 + pgvector 의미론적 검색)
 ```
 
 ### 5.4 UI 배치
 
-**현재 모드 선택 순서**:
+**현재 모드 선택 순서** (6가지):
 ```
-┌─────────────────────┐
-│ 구성 | 수치 | 이력  │ → 추가될 예정
-│ 연결 | 전체 | 문서  │ (6번째 위치)
-└─────────────────────┘
+┌──────────────────────────┐
+│ 구성 | 수치 | 이력 | 연결 │
+│ 문서 | 전체 (기본)      │
+└──────────────────────────┘
 ```
 
-또는 **삽입 위치**:
-```
-┌─────────────────────┐
-│ 구성 | 수치 | 이력  │
-│ 연결 | 문서 | 전체  │ (연결과 전체 사이)
-└─────────────────────┘
-```
+**특징**:
+- 문서 모드: 독립적인 문서 검색 제공
+- 전체 모드: 문서 검색을 포함한 종합 분석 (자동 호출)
 
 ---
 
 ## 6. 모드별 응답 흐름도
 
 ```
-┌─────────────────────────────────────────────────────┐
-│           사용자 질문 입력                           │
-├─────────────────────────────────────────────────────┤
-│                                                     │
+┌──────────────────────────────────────────────────────┐
+│           사용자 질문 입력                            │
+├──────────────────────────────────────────────────────┤
+│                                                      │
 │  ┌──────────────┐  ┌──────────────┐              │
 │  │   구성       │  │   수치       │              │
 │  │ (config)    │  │ (metric)    │              │
 │  │ ↓           │  │ ↓           │              │
 │  │ 테이블      │  │ 차트        │              │
 │  └──────────────┘  └──────────────┘              │
-│                                                     │
+│                                                      │
 │  ┌──────────────┐  ┌──────────────┐              │
 │  │   이력       │  │   연결       │              │
 │  │ (hist)      │  │ (graph)     │              │
 │  │ ↓           │  │ ↓           │              │
 │  │ 타임라인    │  │ 네트워크    │              │
 │  └──────────────┘  └──────────────┘              │
-│                                                     │
-│  ┌──────────────────────────────────┐             │
-│  │   전체 (all/ci/ask)              │             │
-│  │   LLM 종합 분석                  │             │
-│  │ ↓                                │             │
-│  │ 모든 도구 활용:                 │             │
-│  │ - 구성 정보                      │             │
-│  │ - 성능 메트릭                    │             │
-│  │ - 이벤트 이력                    │             │
-│  │ - 의존성 분석                    │             │
-│  │ - 📚 문서 검색 (NEW!)            │             │
-│  └──────────────────────────────────┘             │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+│                                                      │
+│  ┌──────────────┐  ┌──────────────────┐         │
+│  │   문서       │  │  전체(all/ask)   │         │
+│  │ (document)  │  │  LLM 종합 분석   │         │
+│  │ ↓           │  │ ↓                │         │
+│  │ 참고자료    │  │ 모든 도구 활용:  │         │
+│  │ 검색 결과   │  │ - 구성 정보      │         │
+│  └──────────────┘  │ - 성능 메트릭    │         │
+│                      │ - 이벤트 이력   │         │
+│                      │ - 의존성 분석   │         │
+│                      │ - 📚 문서 검색  │         │
+│                      └──────────────────┘         │
+│                                                      │
+└──────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -624,57 +622,50 @@ API 엔드포인트: POST /ops/query?mode=document
 
 | 항목 | 구성 | 수치 | 이력 | 연결 | 전체 |
 |------|------|------|------|------|------|
-| **API** | /ops/query | /ops/query | /ops/query | /ops/query | /ops/ci/ask |
-| **데이터** | 구성정보 | 메트릭 | 이벤트 | 관계도 | 모두 |
-| **시각화** | 테이블 | 차트 | 타임라인 | 그래프 | 혼합 |
-| **LLM** | 아니오 | 아니오 | 아니오 | 아니오 | 예 |
-| **도구** | DB | Metrics | History | Graph | 모두 |
-| **문서** | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **속도** | ⚡ 빠움 | ⚡ 빠움 | ⚡ 빠움 | ⚡ 빠움 | 🐢 느림 |
-| **정확도** | 높음 | 높음 | 높음 | 높음 | 최고 |
+| **API** | /ops/query | /ops/query | /ops/query | /ops/query | /ops/query | /ops/ask |
+| **데이터** | 구성정보 | 메트릭 | 이벤트 | 관계도 | 문서 | 모두 |
+| **시각화** | 테이블 | 차트 | 타임라인 | 그래프 | 참고자료 | 혼합 |
+| **LLM** | 아니오 | 아니오 | 아니오 | 아니오 | 아니오 | 예 |
+| **도구** | DB | Metrics | History | Graph | Search | 모두 |
+| **문서** | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| **속도** | ⚡ 빠움 | ⚡ 빠움 | ⚡ 빠움 | ⚡ 빠움 | ⚡ 빠름 | 🐢 느림 |
+| **정확도** | 높음 | 높음 | 높음 | 높음 | 높음 | 최고 |
 
 ---
 
 ## 8. 코드 참고 위치
 
 ### 프론트엔드
-- UI 모드 정의: `/apps/web/src/app/ops/page.tsx:30-39`
-- 모드 선택 로직: `/apps/web/src/app/ops/page.tsx`
+- UI 모드 정의: `/apps/web/src/app/ops/page.tsx:30-40`
+- 모드 선택 로직: `/apps/web/src/app/ops/page.tsx:526-635` (runQuery 함수)
 - OpsSummaryStrip 컴포넌트: `/apps/web/src/components/ops/OpsSummaryStrip.tsx`
 
-### 백엔드
-- /ops/query 엔드포인트: `/apps/api/app/modules/ops/routes/query.py`
-- /ops/ci/ask 엔드포인트: `/apps/api/app/modules/ops/routes/ci_ask.py`
-- 모드 처리: `/apps/api/app/modules/ops/services/`
+### 백엔드 API 엔드포인트
+- `/ops/query` 엔드포인트: `/apps/api/app/modules/ops/routes/query.py:34-140`
+- `/ops/ask` 엔드포인트: `/apps/api/app/modules/ops/routes/ci_ask.py:68-1000+` (ask_ci 함수)
+- 모드 디스패처: `/apps/api/app/modules/ops/services/__init__.py:522-544` (_execute_real_mode)
+- Document 모드 실행기: `/apps/api/app/modules/ops/services/__init__.py:74-172` (run_document)
 
-### 문서 통합 (NEW)
+### 문서 검색 통합
 - Document Search API: `/apps/api/app/modules/document_processor/router.py`
+- DocumentSearchService: `/apps/api/app/modules/document_processor/services/search_service.py`
 - Tool Asset: `/apps/api/tools/init_document_search_tool.py`
 
 ---
 
-## 9. 다음 단계: 문서 모드 추가
+## 9. 구현 상태
 
-### Phase 1: UI 추가 (1-2일)
-```typescript
-// OpsSummaryStrip.tsx에 문서 모드 추가
-UI_MODES에 { id: "document", label: "문서", backend: "document" } 추가
-```
+### ✅ 완료된 작업
+- **Phase 1**: UI 모드 추가 (document mode)
+- **Phase 2**: API 라우팅 및 엔드포인트 통합
+- **Phase 3**: DocumentSearchService 하이브리드 검색 통합
+- **Phase 4**: 테스트 및 배포
 
-### Phase 2: API 라우팅 추가 (1일)
-```python
-# query.py에 document 모드 처리 추가
-if mode == "document":
-    results = await DocumentSearchService.search(...)
-```
-
-### Phase 3: 통합 테스트 (1-2일)
-```bash
-# 문서 모드 테스트
-POST /ops/query?mode=document
-```
-
-### Phase 4: 성능 최적화 및 배포 (2-3일)
+### 📋 최종 구현
+- 6가지 모드 모두 구현 완료
+- `/ops/query` 엔드포인트 통합 (config, metric, hist, graph, document)
+- `/ops/ask` 엔드포인트 (all/orchestration)
+- DocumentSearchService 기반 하이브리드 검색 (BM25 + pgvector)
 
 ---
 
@@ -696,11 +687,19 @@ POST /ops/query?mode=document
 → 응답: 시계열 차트
 ```
 
-### 시나리오 3: 장애 원인 종합 분석 (문서 포함)
+### 시나리오 3: 문서 검색
+```
+사용자: "성능 최적화 관련 문서를 찾아줘"
+→ 모드: 문서 선택
+→ API: POST /ops/query { mode: "document", question: "..." }
+→ 응답: 검색된 문서 테이블 + 상세 문서 매칭 정보
+```
+
+### 시나리오 4: 장애 원인 종합 분석 (문서 포함)
 ```
 사용자: "어제 발생한 장애의 원인을 분석해주고 관련 문서도 찾아줄 수 있니?"
 → 모드: 전체 선택
-→ API: POST /ops/ci/ask { question: "..." }
+→ API: POST /ops/ask { question: "..." }
 → 실행 단계:
    1. Route Planning: ORCHESTRATION 결정
    2. Validation: 필요 도구 확인
