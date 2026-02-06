@@ -10,6 +10,14 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 type ChunkType = "answer" | "summary" | "detail" | "done" | "error";
 
+const chunkTypeLabel: Record<ChunkType, string> = {
+  answer: "답변",
+  summary: "요약",
+  detail: "상세",
+  done: "완료",
+  error: "오류",
+};
+
 interface StreamChunk {
   type: ChunkType;
   text: string;
@@ -844,16 +852,15 @@ export default function DocumentsPage() {
               {streamChunks.map((chunk, idx) => (
                 <div key={`${chunk.type}-${idx}`} className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm">
                   <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-300">
-                    {chunk.type}
+                    {chunkTypeLabel[chunk.type] ?? chunk.type}
                   </span>
                   <p className="whitespace-pre-wrap text-base leading-relaxed text-white">{chunk.text}</p>
                   {chunk.meta ? (
                     <div className="text-xs text-slate-400">
-                      <p>Document: {chunk.meta.document_id}</p>
+                      <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
                       <p>
-                        Chunks:{" "}
                         {chunk.meta.chunks
-                          .map((item) => `${item.chunk_id}${item.page ? ` (page ${item.page})` : ""}`)
+                          .map((item) => `${item.chunk_id}${item.page ? ` (${item.page}p)` : ""}`)
                           .join(", ")}
                       </p>
                     </div>
@@ -863,23 +870,22 @@ export default function DocumentsPage() {
               {references.length > 0 && (
                 <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
                   <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                    <span>References</span>
+                    <span>근거 문서 ({references.length}건)</span>
                   </div>
                   <div className="space-y-3">
                     {references.map((reference) => {
                       const href = buildReferenceViewerHref(reference);
                       const containerClass =
                         "block rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90";
-                      const disabledClass = "opacity-60 cursor-not-allowed";
                       const content = (
                         <>
                           <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
                             <span>{reference.document_title}</span>
-                            <span>{reference.page != null ? `Page ${reference.page}` : "Page ?"}</span>
+                            <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                           </div>
                           <p className="mt-2 text-xs text-slate-200 line-clamp-3">{reference.snippet}</p>
                           {reference.score != null ? (
-                            <p className="mt-2 text-[10px] text-slate-400">Score {reference.score.toFixed(3)}</p>
+                            <p className="mt-2 text-[10px] text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
                           ) : null}
                         </>
                       );
@@ -890,7 +896,8 @@ export default function DocumentsPage() {
                       ) : (
                         <div
                           key={`${reference.document_id}-${reference.chunk_id}`}
-                          className={`${containerClass} ${disabledClass}`}
+                          className={`${containerClass} opacity-60 cursor-not-allowed`}
+                          title="문서 정보가 부족하여 원문을 열 수 없습니다"
                         >
                           {content}
                         </div>
