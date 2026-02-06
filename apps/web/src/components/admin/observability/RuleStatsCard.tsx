@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 interface RuleStats {
   rule_id: string;
@@ -25,15 +26,8 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
     const fetchRulesPerformance = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-        const response = await fetch(`${apiBaseUrl}/cep/rules/performance?limit=10`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        setRules(data.data?.rules || []);
+        const response = await authenticatedFetch("/cep/rules/performance?limit=10");
+        setRules(response.data?.rules || []);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to fetch rules";

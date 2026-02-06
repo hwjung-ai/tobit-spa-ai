@@ -13,6 +13,13 @@ class AppSettings(BaseSettings):
     api_port: int = 8000
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     log_level: str = "info"
+    log_retention_days: int = 30
+    log_max_file_size_mb: int = 100
+    log_enable_file_rotation: bool = True
+    log_enable_json_format: bool = False
+    log_console_output: bool = True
+    log_api_file_path: str = "/home/spa/tobit-spa-ai/apps/api/logs/api.log"
+    log_web_file_path: str = "/home/spa/tobit-spa-ai/apps/web/logs/web.log"
     ops_mode: Literal["mock", "real"] = "mock"
     ops_enable_langgraph: bool = False
     enable_system_apis: bool = False

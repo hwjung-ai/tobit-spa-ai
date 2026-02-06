@@ -159,6 +159,72 @@ def list_rules_endpoint(
     return ResponseEnvelope.success(data={"rules": payload})
 
 
+@router.get("/rules/performance")
+def get_rules_performance(
+    limit: int = Query(10, ge=1, le=50),
+    session: Session = Depends(get_session),
+):
+    """
+    Get performance metrics for all rules
+
+    Returns:
+        - Rules sorted by execution frequency
+        - Execution count, error count, avg duration for each rule
+    """
+    try:
+        all_rules = list_rules(session)
+        now = datetime.now(timezone.utc)
+        last_7d = now - timedelta(days=7)
+
+        rules_perf = []
+        for rule in all_rules:
+            try:
+                # Get execution logs for last 7 days
+                rule_logs_query = select(TbCepExecLog).where(
+                    (TbCepExecLog.rule_id == rule.rule_id) &
+                    (TbCepExecLog.triggered_at >= last_7d)
+                )
+                rule_logs = session.exec(rule_logs_query).scalars().all()
+
+                if rule_logs:
+                    exec_count = len(rule_logs)
+                    error_count = sum(1 for log in rule_logs if log.status == "fail")
+                    avg_duration = sum(log.duration_ms for log in rule_logs) / exec_count
+
+                    rules_perf.append({
+                        "rule_id": str(rule.rule_id),
+                        "rule_name": str(rule.rule_name),
+                        "is_active": bool(rule.is_active),
+                        "execution_count": int(exec_count),
+                        "error_count": int(error_count),
+                        "error_rate": float(error_count / exec_count),
+                        "avg_duration_ms": float(round(avg_duration, 2)),
+                    })
+            except Exception as e:
+                logger.exception(f"Error processing rule {rule.rule_id}")
+                continue
+
+        # Sort by execution count (descending)
+        rules_perf.sort(key=lambda x: x["execution_count"], reverse=True)
+
+        return ResponseEnvelope.success(
+            data={
+                "rules": rules_perf[:limit],
+                "total_rules": int(len(all_rules)),
+                "period_days": 7,
+            }
+        )
+    except Exception as e:
+        logger.exception("Error in get_rules_performance")
+        return ResponseEnvelope.success(
+            data={
+                "rules": [],
+                "total_rules": 0,
+                "period_days": 7,
+            }
+        )
+
+
 @router.get("/rules/{rule_id}")
 def get_rule_endpoint(
     rule_id: str, session: Session = Depends(get_session)
@@ -588,7 +654,7 @@ async def event_stream(
                 .where(TbCepNotificationLog.fired_at >= cutoff_time)
                 .order_by(TbCepNotificationLog.fired_at.asc())
                 .limit(100)
-            ).all()
+            ).scalars().all()
 
             # 과거 이벤트 전송
             for event_log in recent_events:
@@ -755,7 +821,7 @@ def metric_polling_snapshots_latest(
 def scheduler_instances(session: Session = Depends(get_session)) -> ResponseEnvelope:
     instances = session.exec(
         select(TbCepSchedulerState).order_by(desc(TbCepSchedulerState.updated_at))
-    ).all()
+    ).scalars().all()
     payload = [
         {
             "instance_id": instance.instance_id,
@@ -993,7 +1059,7 @@ def search_events(
     # 정렬 및 제한
     query = query.order_by(desc(TbCepNotificationLog.fired_at)).limit(limit)
 
-    events = session.exec(query).all()
+    events = session.exec(query).scalars().all()
     payload = [
         {
             "event_id": str(event.log_id),
@@ -1035,7 +1101,7 @@ def get_event_stats(
     total_query = select(TbCepNotificationLog).where(
         TbCepNotificationLog.fired_at >= cutoff_time
     )
-    total_events = session.exec(total_query).all()
+    total_events = session.exec(total_query).scalars().all()
 
     # 확인된 이벤트
     acked_count = sum(1 for e in total_events if e.ack)
@@ -1311,7 +1377,7 @@ def get_stats_summary(session: Session = Depends(get_session)) -> ResponseEnvelo
     today_logs_query = select(TbCepExecLog).where(
         TbCepExecLog.triggered_at >= today_start
     )
-    today_logs = session.exec(today_logs_query).all()
+    today_logs = session.exec(today_logs_query).scalars().all()
 
     today_execution_count = len(today_logs)
     today_errors = sum(1 for log in today_logs if log.status == "fail")
@@ -1329,7 +1395,7 @@ def get_stats_summary(session: Session = Depends(get_session)) -> ResponseEnvelo
     logs_24h_query = select(TbCepExecLog).where(
         TbCepExecLog.triggered_at >= last_24h
     )
-    logs_24h = session.exec(logs_24h_query).all()
+    logs_24h = session.exec(logs_24h_query).scalars().all()
 
     return ResponseEnvelope.success(
         data={
@@ -1383,7 +1449,7 @@ def get_errors_timeline(
         (TbCepExecLog.status == "fail")
     ).order_by(TbCepExecLog.triggered_at.desc())
 
-    error_logs = session.exec(error_logs_query).all()
+    error_logs = session.exec(error_logs_query).scalars().all()
 
     # Create hourly timeline
     timeline = {}
@@ -1438,59 +1504,5 @@ def get_errors_timeline(
             "recent_errors": recent_errors,
             "period": period,
             "total_errors": len(error_logs),
-        }
-    )
-
-
-@router.get("/rules/performance")
-def get_rules_performance(
-    limit: int = Query(10, ge=1, le=50),
-    session: Session = Depends(get_session),
-) -> ResponseEnvelope:
-    """
-    Get performance metrics for all rules
-
-    Returns:
-        - Rules sorted by execution frequency
-        - Execution count, error count, avg duration for each rule
-    """
-    from datetime import timedelta
-
-    all_rules = list_rules(session)
-    now = datetime.now(timezone.utc)
-    last_7d = now - timedelta(days=7)
-
-    rules_perf = []
-    for rule in all_rules:
-        # Get execution logs for last 7 days
-        rule_logs_query = select(TbCepExecLog).where(
-            (TbCepExecLog.rule_id == rule.rule_id) &
-            (TbCepExecLog.triggered_at >= last_7d)
-        )
-        rule_logs = session.exec(rule_logs_query).all()
-
-        if rule_logs:
-            exec_count = len(rule_logs)
-            error_count = sum(1 for log in rule_logs if log.status == "fail")
-            avg_duration = sum(log.duration_ms for log in rule_logs) / exec_count
-
-            rules_perf.append({
-                "rule_id": str(rule.rule_id),
-                "rule_name": rule.rule_name,
-                "is_active": rule.is_active,
-                "execution_count": exec_count,
-                "error_count": error_count,
-                "error_rate": error_count / exec_count,
-                "avg_duration_ms": round(avg_duration, 2),
-            })
-
-    # Sort by execution count (descending)
-    rules_perf.sort(key=lambda x: x["execution_count"], reverse=True)
-
-    return ResponseEnvelope.success(
-        data={
-            "rules": rules_perf[:limit],
-            "total_rules": len(all_rules),
-            "period_days": 7,
         }
     )

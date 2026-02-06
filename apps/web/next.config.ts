@@ -22,7 +22,19 @@ const nextConfig: NextConfig = {
       throw new Error(`Invalid API_BASE_URL: ${API_BASE_URL}`);
     }
 
-    return [
+    return {
+      beforeFiles: [
+        // API proxy routes that MUST take priority over Next.js pages
+        {
+          source: "/ops/query",
+          destination: `${API_BASE_URL}/ops/query`,
+        },
+        {
+          source: "/ops/ask",
+          destination: `${API_BASE_URL}/ops/ask`,
+        },
+      ],
+      afterFiles: [
       // Fix trailing slash for /api/documents (must come before /api/:path*)
       {
         source: "/api/documents",
@@ -155,7 +167,8 @@ const nextConfig: NextConfig = {
         source: "/api/settings/:path*",
         destination: `${API_BASE_URL}/settings/:path*`,
       },
-    ];
+      ],
+    };
   },
   redirects: async () => {
     return [

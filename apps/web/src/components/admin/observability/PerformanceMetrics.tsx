@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 interface SystemStats {
   total_rules: number;
@@ -31,15 +32,8 @@ export default function PerformanceMetrics() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-        const response = await fetch(`${apiBaseUrl}/cep/stats/summary`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        setStats(data.data?.stats || null);
+        const response = await authenticatedFetch("/cep/stats/summary");
+        setStats(response.data?.stats || null);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to fetch metrics";

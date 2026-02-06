@@ -102,9 +102,10 @@ class DocumentSearchService:
         self, query: str, filters: SearchFilters, top_k: int
     ) -> List[SearchResult]:
         """
-        Full-text search using BM25 (PostgreSQL tsvector)
+        Full-text search using BM25 (PostgreSQL tsvector) with ILIKE fallback.
 
-        Uses PostgreSQL's built-in full-text search with ts_rank for ranking.
+        Uses 'simple' analyzer for multilingual support (Korean, etc.).
+        Falls back to ILIKE when tsvector returns no results.
         """
 
         results = []
@@ -115,45 +116,20 @@ class DocumentSearchService:
         try:
             from sqlalchemy import text
 
-            # Build WHERE clauses
-            where_clauses = [
-                "d.tenant_id = :tenant_id",
-                "d.deleted_at IS NULL",
-                "to_tsvector('english', dc.text) @@ plainto_tsquery('english', :query)"
-            ]
-
-            # Add date filters
+            # Common filter clauses
+            base_where = ["d.tenant_id = :tenant_id", "d.deleted_at IS NULL"]
             if filters.date_from:
-                where_clauses.append("dc.created_at >= :date_from")
+                base_where.append("dc.created_at >= :date_from")
             if filters.date_to:
-                where_clauses.append("dc.created_at <= :date_to")
-
-            # Add document type filter
+                base_where.append("dc.created_at <= :date_to")
             if filters.document_types:
-                where_clauses.append("dc.chunk_type = ANY(:doc_types)")
+                base_where.append("dc.chunk_type = ANY(:doc_types)")
 
-            where_clause = " AND ".join(where_clauses)
-
-            # BM25 full-text search query
-            query_sql = f"""
-            SELECT dc.id, dc.document_id, d.filename, dc.text,
-                   dc.page_number, dc.chunk_type,
-                   ts_rank(to_tsvector('english', dc.text),
-                           plainto_tsquery('english', :query)) as score
-            FROM document_chunks dc
-            JOIN documents d ON d.id = dc.document_id
-            WHERE {where_clause}
-            ORDER BY score DESC
-            LIMIT :top_k
-            """
-
-            # Build parameters
             params = {
                 "tenant_id": filters.tenant_id,
                 "query": query,
                 "top_k": top_k,
             }
-
             if filters.date_from:
                 params["date_from"] = filters.date_from
             if filters.date_to:
@@ -161,9 +137,45 @@ class DocumentSearchService:
             if filters.document_types:
                 params["doc_types"] = filters.document_types
 
-            # Execute query
-            statement = text(query_sql)
-            rows = self.db.execute(statement, params).fetchall()
+            # 1) Try tsvector with 'simple' analyzer (supports CJK)
+            ts_where = base_where + [
+                "to_tsvector('simple', dc.text) @@ plainto_tsquery('simple', :query)"
+            ]
+            query_sql = f"""
+            SELECT dc.id, dc.document_id, d.filename, dc.text,
+                   dc.page_number, dc.chunk_type,
+                   ts_rank(to_tsvector('simple', dc.text),
+                           plainto_tsquery('simple', :query)) as score
+            FROM document_chunks dc
+            JOIN documents d ON d.id = dc.document_id
+            WHERE {' AND '.join(ts_where)}
+            ORDER BY score DESC
+            LIMIT :top_k
+            """
+            rows = self.db.execute(text(query_sql), params).fetchall()
+
+            # 2) Fallback to ILIKE if tsvector returns nothing
+            if not rows:
+                # Split query into keywords for ILIKE search
+                keywords = [kw.strip() for kw in query.split() if len(kw.strip()) >= 2]
+                if keywords:
+                    ilike_conditions = " OR ".join(
+                        [f"dc.text ILIKE :kw{i}" for i in range(len(keywords))]
+                    )
+                    ilike_where = base_where + [f"({ilike_conditions})"]
+                    ilike_sql = f"""
+                    SELECT dc.id, dc.document_id, d.filename, dc.text,
+                           dc.page_number, dc.chunk_type,
+                           0.5 as score
+                    FROM document_chunks dc
+                    JOIN documents d ON d.id = dc.document_id
+                    WHERE {' AND '.join(ilike_where)}
+                    LIMIT :top_k
+                    """
+                    ilike_params = dict(params)
+                    for i, kw in enumerate(keywords):
+                        ilike_params[f"kw{i}"] = f"%{kw}%"
+                    rows = self.db.execute(text(ilike_sql), ilike_params).fetchall()
 
             # Map results
             for row in rows:

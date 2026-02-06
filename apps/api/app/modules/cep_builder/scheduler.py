@@ -125,15 +125,46 @@ def start_scheduler() -> None:
     _start_notification_loop(settings)
 
 
-def stop_scheduler() -> None:
+async def stop_scheduler() -> None:
+    """Stop all scheduler tasks gracefully with timeout. Fast shutdown optimized."""
     global _scheduler_task
+
     _release_leader_lock()
-    if _scheduler_task:
-        _scheduler_task.cancel()
-        _scheduler_task = None
-    _stop_metric_poll_loop()
-    _stop_notification_loop()
-    _stop_follower_loop()
+
+    # Collect all tasks to cancel
+    tasks_to_cancel = []
+    if _scheduler_task and not _scheduler_task.done():
+        tasks_to_cancel.append(_scheduler_task)
+
+    # Stop sub-loops in parallel (not sequential) to reduce shutdown time
+    try:
+        await asyncio.wait_for(
+            asyncio.gather(
+                _stop_metric_poll_loop(),
+                _stop_notification_loop(),
+                _stop_follower_loop(),
+                return_exceptions=True
+            ),
+            timeout=1.5
+        )
+    except asyncio.TimeoutError:
+        logger.warning("Sub-loop shutdown timed out")
+
+    # Cancel main scheduler task and wait for completion
+    if tasks_to_cancel:
+        for task in tasks_to_cancel:
+            task.cancel()
+
+        # Wait for all cancelled tasks with reduced timeout
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(*tasks_to_cancel, return_exceptions=True),
+                timeout=1.0
+            )
+        except asyncio.TimeoutError:
+            logger.warning("Scheduler tasks did not complete within timeout")
+
+    _scheduler_task = None
 
 
 def _acquire_leader_lock() -> bool:
@@ -209,11 +240,15 @@ def _ensure_follower_loop() -> None:
     _follower_task = asyncio.create_task(_follower_heartbeat_loop())
 
 
-def _stop_follower_loop() -> None:
+async def _stop_follower_loop() -> None:
     global _follower_task
-    if _follower_task:
+    if _follower_task and not _follower_task.done():
         _follower_task.cancel()
-        _follower_task = None
+        try:
+            await asyncio.wait_for(_follower_task, timeout=1.0)
+        except (asyncio.CancelledError, asyncio.TimeoutError):
+            pass
+    _follower_task = None
 
 
 def _start_metric_poll_loop(settings: Any) -> None:
@@ -236,18 +271,26 @@ def _start_notification_loop(settings: Any) -> None:
     _notification_task = asyncio.create_task(_notification_loop())
 
 
-def _stop_notification_loop() -> None:
+async def _stop_notification_loop() -> None:
     global _notification_task
-    if _notification_task:
+    if _notification_task and not _notification_task.done():
         _notification_task.cancel()
-        _notification_task = None
+        try:
+            await asyncio.wait_for(_notification_task, timeout=1.0)
+        except (asyncio.CancelledError, asyncio.TimeoutError):
+            pass
+    _notification_task = None
 
 
-def _stop_metric_poll_loop() -> None:
+async def _stop_metric_poll_loop() -> None:
     global _metric_poll_task, _metric_poll_semaphore
-    if _metric_poll_task:
+    if _metric_poll_task and not _metric_poll_task.done():
         _metric_poll_task.cancel()
-        _metric_poll_task = None
+        try:
+            await asyncio.wait_for(_metric_poll_task, timeout=1.0)
+        except (asyncio.CancelledError, asyncio.TimeoutError):
+            pass
+    _metric_poll_task = None
     _metric_poll_semaphore = None
 
 

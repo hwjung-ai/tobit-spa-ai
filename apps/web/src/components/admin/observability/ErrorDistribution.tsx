@@ -9,6 +9,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 interface ErrorDistribution {
   [key: string]: number;
@@ -48,15 +49,8 @@ export default function ErrorDistribution() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-        const response = await fetch(`${apiBaseUrl}/cep/errors/timeline?period=24h`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        setData(responseData.data || null);
+        const response = await authenticatedFetch("/cep/errors/timeline?period=24h");
+        setData(response.data || null);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to fetch error data";

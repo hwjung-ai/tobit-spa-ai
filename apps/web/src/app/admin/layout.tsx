@@ -20,6 +20,7 @@ export default function AdminLayout({
         { label: "Inspector", href: "/admin/inspector" },
         { label: "Regression", href: "/admin/regression" },
         { label: "Observability", href: "/admin/observability" },
+        { label: "Logs", href: "/admin/logs" },
     ];
 
     return (

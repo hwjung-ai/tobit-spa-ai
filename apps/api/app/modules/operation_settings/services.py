@@ -16,6 +16,43 @@ class OperationSettingsService:
 
     # Settings that can be changed at runtime
     CONFIGURABLE_SETTINGS = {
+        "log_level": {
+            "type": str,
+            "default": "info",
+            "allowed_values": ["debug", "info", "warning", "error"],
+            "restart_required": True,
+            "description": "Logging level for application",
+        },
+        "log_retention_days": {
+            "type": int,
+            "default": 30,
+            "restart_required": False,
+            "description": "Number of days to retain log files",
+        },
+        "log_max_file_size_mb": {
+            "type": int,
+            "default": 100,
+            "restart_required": False,
+            "description": "Maximum log file size in megabytes before rotation",
+        },
+        "log_enable_file_rotation": {
+            "type": bool,
+            "default": True,
+            "restart_required": False,
+            "description": "Enable automatic log file rotation",
+        },
+        "log_enable_json_format": {
+            "type": bool,
+            "default": False,
+            "restart_required": True,
+            "description": "Enable JSON format for log output",
+        },
+        "log_console_output": {
+            "type": bool,
+            "default": True,
+            "restart_required": True,
+            "description": "Enable console output for logs",
+        },
         "ops_mode": {
             "type": str,
             "default": "mock",
@@ -95,6 +132,12 @@ class OperationSettingsService:
 
         # Get environment variable values
         env_values = {
+            "log_level": current_app_settings.log_level,
+            "log_retention_days": current_app_settings.log_retention_days,
+            "log_max_file_size_mb": current_app_settings.log_max_file_size_mb,
+            "log_enable_file_rotation": current_app_settings.log_enable_file_rotation,
+            "log_enable_json_format": current_app_settings.log_enable_json_format,
+            "log_console_output": current_app_settings.log_console_output,
             "ops_mode": current_app_settings.ops_mode,
             "ops_enable_langgraph": current_app_settings.ops_enable_langgraph,
             "enable_system_apis": current_app_settings.enable_system_apis,
@@ -143,6 +186,12 @@ class OperationSettingsService:
 
         # Get environment variable value
         env_values = {
+            "log_level": current_app_settings.log_level,
+            "log_retention_days": current_app_settings.log_retention_days,
+            "log_max_file_size_mb": current_app_settings.log_max_file_size_mb,
+            "log_enable_file_rotation": current_app_settings.log_enable_file_rotation,
+            "log_enable_json_format": current_app_settings.log_enable_json_format,
+            "log_console_output": current_app_settings.log_console_output,
             "ops_mode": current_app_settings.ops_mode,
             "ops_enable_langgraph": current_app_settings.ops_enable_langgraph,
             "enable_system_apis": current_app_settings.enable_system_apis,

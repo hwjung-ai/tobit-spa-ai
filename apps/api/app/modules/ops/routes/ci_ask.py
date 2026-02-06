@@ -112,8 +112,8 @@ def ask_ci(
         status="processing",
         response=None,
         metadata_info={
-            "uiMode": "ci",
-            "backendMode": "ci",
+            "uiMode": "all",
+            "backendMode": "all",
         },
     )
 
@@ -654,8 +654,8 @@ def ask_ci(
                             )
                             history_entry.metadata_info = jsonable_encoder(
                                 {
-                                    "uiMode": "ci",
-                                    "backendMode": "ci",
+                                    "uiMode": "all",
+                                    "backendMode": "all",
                                     "trace": trace_payload,
                                     "nextActions": next_actions,
                                 }

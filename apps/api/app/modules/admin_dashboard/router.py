@@ -459,3 +459,8 @@ async def get_settings_audit_log(
     except Exception as e:
         logger.error(f"Failed to get audit log: {str(e)}")
         raise HTTPException(500, str(e))
+
+
+# Include logs router
+from app.modules.admin.routes.logs import router as logs_router
+router.include_router(logs_router)

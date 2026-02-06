@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 interface Error {
   exec_id: string;
@@ -29,15 +30,8 @@ export default function RecentErrors() {
     const fetchErrors = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-        const response = await fetch(`${apiBaseUrl}/cep/errors/timeline?period=24h`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data: { data: ErrorsData } = await response.json();
-        setErrors(data.data?.recent_errors || []);
+        const response = await authenticatedFetch("/cep/errors/timeline?period=24h");
+        setErrors(response.data?.recent_errors || []);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to fetch errors";

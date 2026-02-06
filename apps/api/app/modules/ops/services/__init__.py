@@ -78,7 +78,7 @@ def run_metric(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
 
 
 def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run document search executor."""
+    """Run document search + RAG answer generation (same as Docs menu)."""
     import asyncio
     from app.modules.document_processor.services.search_service import DocumentSearchService, SearchFilters
     from core.db import get_session_context
@@ -89,7 +89,7 @@ def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]
         tenant_id = _get_required_tenant_id(settings)
 
     logger = logging.getLogger(__name__)
-    logger.info(f"Executing document search for question: {question[:100]}")
+    logger.info(f"Executing document RAG for question: {question[:100]}")
 
     try:
         with get_session_context() as session:
@@ -100,21 +100,20 @@ def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]
                 date_from=None,
                 date_to=None,
                 document_types=[],
-                min_relevance=0.5
+                min_relevance=0.3
             )
 
-            # Run async search
-            loop = asyncio.get_event_loop()
-            search_results = loop.run_until_complete(
+            # Step 1: Retrieve relevant document chunks
+            # Use text search (BM25 + ILIKE) since embedding service is not available
+            search_results = asyncio.run(
                 search_service.search(
                     query=question,
                     filters=filters,
                     top_k=10,
-                    search_type="hybrid"
+                    search_type="text"
                 )
             )
 
-            # Convert search results to blocks
             if not search_results:
                 markdown_block = MarkdownBlock(
                     type="markdown",
@@ -123,59 +122,112 @@ def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]
                 )
                 return [markdown_block], ["document_search"]
 
-            # Create table block with results
-            columns = ["Document", "Content", "Score"]
-            rows = []
-            for result in search_results:
-                score_str = f"{result.relevance_score:.2%}" if hasattr(result, 'relevance_score') else "N/A"
-                rows.append([
-                    result.document_name if hasattr(result, 'document_name') else "Unknown",
-                    (result.chunk_text[:100] + "...") if hasattr(result, 'chunk_text') and len(result.chunk_text) > 100 else result.chunk_text if hasattr(result, 'chunk_text') else "",
-                    score_str
-                ])
+            # Step 2: Build RAG context from retrieved chunks
+            context_snippets = []
+            for i, result in enumerate(search_results, 1):
+                doc_name = getattr(result, 'document_name', 'Unknown')
+                chunk_text = getattr(result, 'chunk_text', '')
+                page = getattr(result, 'page_number', None)
+                page_info = f" page:{page}" if page else ""
+                context_snippets.append(
+                    f"[{i}. {doc_name}{page_info}]\n{chunk_text}"
+                )
 
-            table_block = TableBlock(
-                type="table",
-                title="Document Search Results",
-                columns=columns,
-                rows=rows
-            )
+            context = "\n\n".join(context_snippets)
 
-            # Create references block with detailed results
+            # Step 3: Generate answer using LLM (RAG)
+            answer_text = _generate_rag_answer(question, context, logger)
+
+            # Step 4: Build response blocks
+            blocks: list[AnswerBlock] = []
+
+            # Main answer block (LLM-generated)
+            blocks.append(MarkdownBlock(
+                type="markdown",
+                title="Answer",
+                content=answer_text
+            ))
+
+            # References block with source documents
             items = []
             for i, result in enumerate(search_results, 1):
-                doc_name = result.document_name if hasattr(result, 'document_name') else "Unknown"
-                chunk_text = result.chunk_text if hasattr(result, 'chunk_text') else ""
-                page = result.page_number if hasattr(result, 'page_number') else None
+                doc_name = getattr(result, 'document_name', 'Unknown')
+                chunk_text = getattr(result, 'chunk_text', '')
+                page = getattr(result, 'page_number', None)
+                score = getattr(result, 'relevance_score', 0)
 
                 items.append(ReferenceItem(
                     kind="document",
-                    title=f"{i}. {doc_name}",
+                    title=f"{i}. {doc_name}" + (f" (p.{page})" if page else ""),
                     payload={
-                        "chunk_id": result.chunk_id if hasattr(result, 'chunk_id') else "",
-                        "document_id": result.document_id if hasattr(result, 'document_id') else "",
-                        "content": chunk_text,
+                        "chunk_id": getattr(result, 'chunk_id', ''),
+                        "document_id": getattr(result, 'document_id', ''),
+                        "content": chunk_text[:200] + "..." if len(chunk_text) > 200 else chunk_text,
                         "page": page,
-                        "relevance": result.relevance_score if hasattr(result, 'relevance_score') else 0,
+                        "relevance": score,
                     }
                 ))
 
-            references_block = ReferencesBlock(
-                type="references",
-                title="Detailed Document Matches",
-                items=items
-            )
+            if items:
+                blocks.append(ReferencesBlock(
+                    type="references",
+                    title="Source Documents",
+                    items=items
+                ))
 
-            return [table_block, references_block], ["document_search"]
+            return blocks, ["document_search", "llm_rag"]
 
     except Exception as exc:
-        logger.exception(f"Document search executor failed: {exc}")
+        logger.exception(f"Document RAG executor failed: {exc}")
         error_block = MarkdownBlock(
             type="markdown",
             title="Document Search Error",
             content=f"Error performing document search: {str(exc)}"
         )
         return [error_block], ["document_search"]
+
+
+def _generate_rag_answer(question: str, context: str, logger: logging.Logger) -> str:
+    """Generate an answer using LLM with retrieved document context (RAG)."""
+    from app.llm.client import get_llm_client
+
+    settings = get_settings()
+    llm = get_llm_client()
+
+    system_prompt = (
+        "You are a helpful assistant that answers questions based on the provided document context. "
+        "Answer the user's question using ONLY the information from the document context below. "
+        "If the context doesn't contain enough information, say so clearly. "
+        "Always cite which document/page the information comes from. "
+        "Respond in the same language as the user's question."
+    )
+
+    user_prompt = f"Document context:\n{context}\n\nQuestion: {question}"
+
+    try:
+        request_kwargs: dict[str, Any] = {
+            "input": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "model": settings.chat_model,
+        }
+        if "gpt-5" not in settings.chat_model:
+            request_kwargs["temperature"] = 0.1
+
+        response = llm.create_response(**request_kwargs)
+        answer = llm.get_output_text(response)
+
+        if answer:
+            logger.info(f"RAG answer generated: {len(answer)} chars")
+            return answer
+        else:
+            return "LLM did not generate a response. Here are the relevant document excerpts found."
+
+    except Exception as exc:
+        logger.warning(f"LLM RAG generation failed, falling back to search results: {exc}")
+        # Fallback: return context snippets as-is
+        return f"(LLM unavailable - showing raw search results)\n\n{context}"
 
 
 def execute_universal(

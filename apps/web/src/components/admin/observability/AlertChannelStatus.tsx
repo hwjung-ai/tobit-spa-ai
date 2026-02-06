@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { authenticatedFetch } from "@/lib/apiClient";
 
 interface ChannelStatus {
   type: string;
@@ -36,15 +37,8 @@ export default function AlertChannelStatus() {
     const fetchChannels = async () => {
       try {
         setLoading(true);
-        const apiBaseUrl = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
-        const response = await fetch(`${apiBaseUrl}/cep/channels/status`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        setChannels(data.data?.channels || []);
+        const response = await authenticatedFetch("/cep/channels/status");
+        setChannels(response.data?.channels || []);
         setError(null);
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : "Failed to fetch channels";
