@@ -340,54 +340,122 @@ function CepEventBrowserContent() {
   }, [leftWidth]);
 
   useEffect(() => {
+    // SSE 스트림 초기화
+    // - 최근 1시간 이벤트 로드백 (재연결 시 손실 복구)
+    // - 새 이벤트 실시간 전송
+    // - 자동 재연결 (기본값: 3초)
+
     // Use Next.js API proxy for SSE to avoid firewall issues
-    const eventSource = new EventSource(!apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`);
-    const handleSummary = (event: MessageEvent) => {
-      const data = JSON.parse(event.data) as SummaryResponse;
-      queryClient.setQueryData(["cep-events-summary"], data);
+    const streamUrl = !apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isClosing = false;
+
+    const connectStream = () => {
+      if (isClosing) return;
+
+      try {
+        eventSource = new EventSource(streamUrl);
+
+        const handleSummary = (event: MessageEvent) => {
+          try {
+            const data = JSON.parse(event.data) as SummaryResponse;
+            queryClient.setQueryData(["cep-events-summary"], data);
+          } catch (error) {
+            console.error("Failed to parse summary event:", error);
+          }
+        };
+
+        const handleNewEvent = (event: MessageEvent) => {
+          try {
+            const data = JSON.parse(event.data) as CepEventSummary & { ack_at?: string | null };
+            queryClient.setQueryData<CepEventSummary[]>(eventsQueryKey, (prev) => {
+              const current = prev ?? [];
+              if (current.find((item) => item.event_id === data.event_id)) {
+                return current;
+              }
+              if (ackedFilter === "acked" && !data.ack) {
+                return current;
+              }
+              if (ackedFilter === "unacked" && data.ack) {
+                return current;
+              }
+              if (severityFilter !== "all" && data.severity !== severityFilter) {
+                return current;
+              }
+              if (ruleFilter.trim() && data.rule_id !== ruleFilter.trim()) {
+                return current;
+              }
+              return [data, ...current];
+            });
+          } catch (error) {
+            console.error("Failed to parse new_event:", error);
+          }
+        };
+
+        const handleAckEvent = (event: MessageEvent) => {
+          try {
+            const data = JSON.parse(event.data) as { event_id: string; ack: boolean; ack_at?: string | null };
+            queryClient.setQueryData<CepEventSummary[]>(eventsQueryKey, (prev) => {
+              const current = prev ?? [];
+              const next = current.map((item) =>
+                item.event_id === data.event_id ? { ...item, ack: data.ack, ack_at: data.ack_at ?? null } : item
+              );
+              if (ackedFilter === "unacked") {
+                return next.filter((item) => !item.ack);
+              }
+              if (ackedFilter === "acked") {
+                return next.filter((item) => item.ack);
+              }
+              return next;
+            });
+          } catch (error) {
+            console.error("Failed to parse ack_event:", error);
+          }
+        };
+
+        const handleError = (error: Event) => {
+          console.error("SSE connection error:", error);
+          if (eventSource?.readyState === EventSource.CLOSED) {
+            // 자동 재연결 (3초 후)
+            if (!isClosing && !reconnectTimeout) {
+              reconnectTimeout = setTimeout(() => {
+                console.log("Reconnecting SSE stream...");
+                reconnectTimeout = null;
+                connectStream();
+              }, 3000);
+            }
+          }
+        };
+
+        eventSource.addEventListener("summary", handleSummary);
+        eventSource.addEventListener("new_event", handleNewEvent);
+        eventSource.addEventListener("ack_event", handleAckEvent);
+        eventSource.addEventListener("error", handleError);
+      } catch (error) {
+        console.error("Failed to connect SSE stream:", error);
+        if (!isClosing && !reconnectTimeout) {
+          reconnectTimeout = setTimeout(() => {
+            reconnectTimeout = null;
+            connectStream();
+          }, 3000);
+        }
+      }
     };
-    const handleNewEvent = (event: MessageEvent) => {
-      const data = JSON.parse(event.data) as CepEventSummary & { ack_at?: string | null };
-      queryClient.setQueryData<CepEventSummary[]>(eventsQueryKey, (prev) => {
-        const current = prev ?? [];
-        if (current.find((item) => item.event_id === data.event_id)) {
-          return current;
-        }
-        if (ackedFilter === "acked" && !data.ack) {
-          return current;
-        }
-        if (ackedFilter === "unacked" && data.ack) {
-          return current;
-        }
-        if (severityFilter !== "all" && data.severity !== severityFilter) {
-          return current;
-        }
-        if (ruleFilter.trim() && data.rule_id !== ruleFilter.trim()) {
-          return current;
-        }
-        return [data, ...current];
-      });
+
+    connectStream();
+
+    return () => {
+      isClosing = true;
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
     };
-    const handleAckEvent = (event: MessageEvent) => {
-      const data = JSON.parse(event.data) as { event_id: string; ack: boolean; ack_at?: string | null };
-      queryClient.setQueryData<CepEventSummary[]>(eventsQueryKey, (prev) => {
-        const current = prev ?? [];
-        const next = current.map((item) =>
-          item.event_id === data.event_id ? { ...item, ack: data.ack, ack_at: data.ack_at ?? null } : item
-        );
-        if (ackedFilter === "unacked") {
-          return next.filter((item) => !item.ack);
-        }
-        if (ackedFilter === "acked") {
-          return next.filter((item) => item.ack);
-        }
-        return next;
-      });
-    };
-    eventSource.addEventListener("summary", handleSummary);
-    eventSource.addEventListener("new_event", handleNewEvent);
-    eventSource.addEventListener("ack_event", handleAckEvent);
-    return () => eventSource.close();
   }, [ackedFilter, apiBaseUrl, eventsQueryKey, queryClient, ruleFilter, severityFilter]);
 
   useEffect(() => {

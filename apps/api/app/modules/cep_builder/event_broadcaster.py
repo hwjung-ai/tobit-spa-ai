@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import threading
 from typing import Any, Optional
 
@@ -16,6 +17,12 @@ class CepEventBroadcaster:
     - 메모리 기반 (asyncio.Queue) 로컬 구독자 지원
     - Redis Pub/Sub 옵션 지원 (분산 환경)
     - 양쪽 모드 동시 지원 가능
+
+    특징:
+    - 로컬 asyncio.Queue로 메모리 기반 메시징 지원
+    - Redis Pub/Sub으로 분산 환경 지원
+    - 자동 폴백: Redis 미사용 시 메모리만 사용
+    - 스레드-안전 구독자 관리
     """
 
     def __init__(self, redis_url: Optional[str] = None) -> None:
@@ -28,8 +35,16 @@ class CepEventBroadcaster:
         self._redis = None
         self._redis_pubsub = None
         self._redis_listen_task = None
-        if redis_url:
-            self._setup_redis(redis_url)
+        self._redis_url = redis_url
+
+        # Redis URL 자동 감지
+        if not redis_url:
+            redis_url = os.getenv("REDIS_URL")
+            if redis_url:
+                self._redis_url = redis_url
+
+        if self._redis_url:
+            self._setup_redis(self._redis_url)
 
     def _setup_redis(self, redis_url: str) -> None:
         """Redis 연결 설정"""
@@ -37,10 +52,11 @@ class CepEventBroadcaster:
             import redis.asyncio as redis
 
             self._redis_url = redis_url
-            logger.info(f"Redis Pub/Sub 활성화: {redis_url}")
+            logger.info(f"Redis Pub/Sub 초기화 예정: {redis_url}")
         except ImportError:
             logger.warning("redis 패키지를 설치하세요 (pip install redis)")
             self._redis = None
+            self._redis_url = None
 
     async def _start_redis_listener(self) -> None:
         """Redis Pub/Sub 리스너 시작"""
@@ -50,9 +66,16 @@ class CepEventBroadcaster:
         try:
             import redis.asyncio as redis
 
-            self._redis = await redis.from_url(self._redis_url)
+            logger.info(f"Redis Pub/Sub 연결 중: {self._redis_url}")
+            self._redis = await redis.from_url(self._redis_url, decode_responses=True)
+
+            # 연결 테스트
+            await self._redis.ping()
+            logger.info("Redis Pub/Sub 연결 성공")
+
             self._redis_pubsub = self._redis.pubsub()
             await self._redis_pubsub.subscribe("cep:*")
+            logger.info("Redis Pub/Sub 구독 시작: cep:*")
 
             # 수신 루프 시작
             async for message in self._redis_pubsub.listen():
@@ -63,7 +86,21 @@ class CepEventBroadcaster:
                     except json.JSONDecodeError:
                         logger.warning(f"Invalid JSON from Redis: {message['data']}")
         except Exception as e:
-            logger.error(f"Redis listener error: {e}")
+            logger.error(f"Redis listener error: {e}", exc_info=True)
+            self._redis = None
+            self._redis_pubsub = None
+
+    async def ensure_redis_listener(self) -> None:
+        """Redis 리스너 시작 (필요시 중복 호출해도 안전)"""
+        if not self._redis_url:
+            return
+
+        # 이미 실행 중인 경우 무시
+        if self._redis_listen_task and not self._redis_listen_task.done():
+            return
+
+        # 새로운 리스너 태스크 생성
+        self._redis_listen_task = asyncio.create_task(self._start_redis_listener())
 
     def subscribe(self) -> asyncio.Queue[dict[str, Any]]:
         """로컬 구독자 등록"""

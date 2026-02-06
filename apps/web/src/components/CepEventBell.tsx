@@ -51,23 +51,77 @@ export default function CepEventBell() {
   });
 
   useEffect(() => {
-    // Use Next.js API proxy for SSE to avoid firewall issues
-    const eventSource = new EventSource(!apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`);
-    const handleSummary = (event: MessageEvent) => {
-      const data = JSON.parse(event.data) as SummaryPayload;
-      queryClient.setQueryData(["cep-events-summary"], data);
-      const current = data?.unacked_count ?? 0;
-      if (current > previousCount.current) {
-        setPulse(true);
-        window.setTimeout(() => setPulse(false), 1500);
+    // SSE 스트림 연결 관리
+    // - 미승인 이벤트 수 실시간 추적
+    // - 새 이벤트 발생 시 펄스 애니메이션
+    // - 자동 재연결 처리
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let isClosing = false;
+
+    const connectStream = () => {
+      if (isClosing) return;
+
+      try {
+        const streamUrl = !apiBaseUrl ? `/api/proxy-sse/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+        eventSource = new EventSource(streamUrl);
+
+        const handleSummary = (event: MessageEvent) => {
+          try {
+            const data = JSON.parse(event.data) as SummaryPayload;
+            queryClient.setQueryData(["cep-events-summary"], data);
+            const current = data?.unacked_count ?? 0;
+            if (current > previousCount.current) {
+              setPulse(true);
+              window.setTimeout(() => setPulse(false), 1500);
+            }
+            previousCount.current = current;
+          } catch (error) {
+            console.error("Failed to parse summary event:", error);
+          }
+        };
+
+        const handleError = (error: Event) => {
+          console.error("SSE connection error:", error);
+          if (eventSource?.readyState === EventSource.CLOSED) {
+            // 자동 재연결 (3초 후)
+            if (!isClosing && !reconnectTimeout) {
+              reconnectTimeout = setTimeout(() => {
+                console.log("Reconnecting SSE stream (bell)...");
+                reconnectTimeout = null;
+                connectStream();
+              }, 3000);
+            }
+          }
+        };
+
+        eventSource.addEventListener("summary", handleSummary);
+        eventSource.addEventListener("error", handleError);
+      } catch (error) {
+        console.error("Failed to connect SSE stream:", error);
+        if (!isClosing && !reconnectTimeout) {
+          reconnectTimeout = setTimeout(() => {
+            reconnectTimeout = null;
+            connectStream();
+          }, 3000);
+        }
       }
-      previousCount.current = current;
     };
-    eventSource.addEventListener("summary", handleSummary);
-    eventSource.addEventListener("error", () => {
-      // Error is handled by summaryQuery.error
-    });
-    return () => eventSource.close();
+
+    connectStream();
+
+    return () => {
+      isClosing = true;
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
+    };
   }, [apiBaseUrl, queryClient]);
 
   const summary = summaryQuery.data ?? null;
