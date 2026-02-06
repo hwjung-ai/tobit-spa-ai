@@ -38,23 +38,16 @@ from .resolvers import resolve_ci, resolve_time_range
 
 # Stub implementations for removed executors
 def run_config_executor(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run config executor using execute_universal."""
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-    result = execute_universal(question, "config", tenant_id)
-    return result.blocks, result.used_tools
+    """Run config executor - returns placeholder until Tool Asset is implemented."""
+    settings = kwargs.get("settings") or get_settings()
+    placeholder = _build_config_placeholder(question, settings)
+    return (placeholder, ["placeholder"])
 
 
 def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run graph executor using execute_universal."""
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-    result = execute_universal(question, "graph", tenant_id)
-    return result.blocks, result.used_tools
+    """Run graph executor - returns mock data until Tool Asset is implemented."""
+    blocks = _build_mock_blocks("relation", question)
+    return (blocks, ["mock"])
 
 
 def run_hist(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
