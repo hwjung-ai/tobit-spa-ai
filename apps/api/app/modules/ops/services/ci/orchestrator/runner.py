@@ -8,6 +8,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import timedelta
 from time import perf_counter
 from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
 
@@ -66,6 +67,7 @@ from app.modules.ops.services.ci.tools import (
 )
 from app.modules.ops.services.ci.tools.cache import ToolResultCache
 from app.modules.ops.services.ci.tools.observability import ExecutionTracer
+from app.modules.ops.services.ci.services.ci_cache import CICache
 
 # NOTE: Built-in tools (ci, graph, metric, history, cep) have been removed for
 # generic orchestration. All tool functionality should be implemented as Tool Assets
@@ -202,6 +204,11 @@ class CIOrchestratorRunner:
         self._tool_executor = get_tool_executor(cache=self._tool_cache)
         self._tool_selector = SmartToolSelector()
         self._tracer = ExecutionTracer()
+        # CI search cache for performance optimization
+        self._ci_search_cache = CICache(
+            max_size=500,
+            default_ttl=timedelta(seconds=300),
+        )
         # Stage execution infrastructure
         self._execution_context = self._build_execution_context()
         self._stage_executor = StageExecutor(
@@ -543,6 +550,25 @@ class CIOrchestratorRunner:
             "limit": limit,
             "sort": sort,
         }
+
+        # Generate cache key and check cache first
+        cache_key = self._ci_search_cache.generate_key(
+            keywords=keywords_tuple,
+            filters=filters_tuple,
+            limit=limit,
+            sort=sort,
+        )
+        cached_results = await self._ci_search_cache.get(cache_key)
+        if cached_results is not None:
+            self.logger.debug(
+                "ci.search.cache_hit",
+                extra={
+                    "cache_key": cache_key[:8],
+                    "result_count": len(cached_results),
+                },
+            )
+            return cached_results
+
         with self._tool_context(
             "ci.search",
             input_params=input_params,
@@ -550,6 +576,7 @@ class CIOrchestratorRunner:
             filter_count=len(filters_tuple),
             limit=limit,
             sort_column=sort[0] if sort else None,
+            cache_hit=False,
         ) as meta:
             try:
                 result_data = await self._ci_search_via_registry_async(
@@ -569,6 +596,15 @@ class CIOrchestratorRunner:
                 meta["fallback"] = False
                 meta["error"] = f"CI search tool not available: {str(e)}"
                 result_records = []
+
+        # Cache successful results
+        if result_records:
+            await self._ci_search_cache.set(
+                cache_key,
+                result_records,
+                keywords=keywords_tuple,
+                filters=filters_tuple,
+            )
 
         if not result_records and not self._ci_search_recovery:
             recovered = self._recover_ci_identifiers()
@@ -768,8 +804,18 @@ class CIOrchestratorRunner:
         return asyncio.run(self._ci_get_async(ci_id))
 
     async def _ci_get_async(self, ci_id: str) -> Dict[str, Any] | None:
+        # Check cache first for CI detail
+        cache_key = f"ci.get:{ci_id}"
+        cached_detail = await self._ci_search_cache.get(cache_key)
+        if cached_detail is not None:
+            self.logger.debug(
+                "ci.get.cache_hit",
+                extra={"ci_id": ci_id},
+            )
+            return cached_detail[0] if isinstance(cached_detail, list) else cached_detail
+
         with self._tool_context(
-            "ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id
+            "ci.get", input_params={"ci_id": ci_id}, ci_id=ci_id, cache_hit=False
         ) as meta:
             try:
                 detail = await self._ci_get_via_registry_async(ci_id)
@@ -782,7 +828,19 @@ class CIOrchestratorRunner:
                 meta["found"] = False
                 meta["fallback"] = False
                 meta["error"] = f"CI get tool not available: {str(e)}"
-        return detail.dict() if (detail and hasattr(detail, "dict")) else detail
+
+        result = detail.dict() if (detail and hasattr(detail, "dict")) else detail
+
+        # Cache successful result
+        if result:
+            await self._ci_search_cache.set(
+                cache_key,
+                [result],  # Wrap in list for consistency with set() interface
+                keywords=[ci_id],
+                filters=None,
+            )
+
+        return result
 
     def _ci_get_by_code(self, ci_code: str) -> Dict[str, Any] | None:
         return asyncio.run(self._ci_get_by_code_async(ci_code))
