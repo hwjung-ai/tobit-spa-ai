@@ -109,7 +109,7 @@ def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]
                 search_service.search(
                     query=question,
                     filters=filters,
-                    top_k=10,
+                    top_k=5,
                     search_type="text"
                 )
             )
@@ -155,13 +155,27 @@ def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]
                 chunk_text = getattr(result, 'chunk_text', '')
                 page = getattr(result, 'page_number', None)
                 score = getattr(result, 'relevance_score', 0)
+                document_id = getattr(result, 'document_id', '')
+                chunk_id = getattr(result, 'chunk_id', '')
+
+                # Build viewer URL for the document
+                viewer_url = f"/documents/{document_id}/viewer"
+                if chunk_id or page:
+                    params = []
+                    if chunk_id:
+                        params.append(f"chunkId={chunk_id}")
+                    if page is not None:
+                        params.append(f"page={page}")
+                    if params:
+                        viewer_url += f"?{'&'.join(params)}"
 
                 items.append(ReferenceItem(
                     kind="document",
                     title=f"{i}. {doc_name}" + (f" (p.{page})" if page else ""),
+                    url=viewer_url,
                     payload={
-                        "chunk_id": getattr(result, 'chunk_id', ''),
-                        "document_id": getattr(result, 'document_id', ''),
+                        "chunk_id": chunk_id,
+                        "document_id": document_id,
                         "content": chunk_text[:200] + "..." if len(chunk_text) > 200 else chunk_text,
                         "page": page,
                         "relevance": score,

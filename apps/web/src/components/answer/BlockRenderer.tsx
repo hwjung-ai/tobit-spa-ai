@@ -662,32 +662,50 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
               >
                 {title}
                 <div className="mt-4 space-y-3">
-                  {block.items.map((reference, refIndex) => (
-                    <div
-                      key={`${reference.title}-${refIndex}`}
-                      className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition hover:border-sky-500 hover:text-white"
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold">{reference.title}</p>
-                        <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                          {reference.kind ?? "reference"}
-                        </span>
-                      </div>
-                      {reference.snippet ? (
-                        <p className="mt-1 text-xs text-slate-400">{reference.snippet}</p>
-                      ) : null}
-                      {reference.url ? (
-                        <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                          {reference.url}
-                        </p>
-                      ) : null}
-                      {renderReferencePayload(reference.payload) ? (
-                        <pre className="mt-3 max-h-40 overflow-auto rounded-xl bg-slate-950/80 px-3 py-2 text-[11px] text-slate-100">
-                          {renderReferencePayload(reference.payload)}
-                        </pre>
-                      ) : null}
-                    </div>
-                  ))}
+                  {block.items.map((reference, refIndex) => {
+                    const ReferenceElement = reference.url ? 'a' : 'div';
+                    const linkProps = reference.url ? {
+                      href: reference.url,
+                      target: reference.kind === "document" ? "_blank" : undefined,
+                      rel: reference.kind === "document" ? "noopener noreferrer" : undefined,
+                    } : {};
+
+                    return (
+                      <ReferenceElement
+                        key={`${reference.title}-${refIndex}`}
+                        {...linkProps}
+                        className={`rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition ${
+                          reference.url
+                            ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-slate-950/80"
+                            : "hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold">{reference.title}</p>
+                          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                            {reference.kind ?? "reference"}
+                          </span>
+                        </div>
+                        {reference.snippet ? (
+                          <p className="mt-1 text-xs text-slate-400">{reference.snippet}</p>
+                        ) : null}
+                        {reference.url && reference.kind === "document" ? (
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                            📄 View document
+                          </p>
+                        ) : reference.url ? (
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                            {reference.url}
+                          </p>
+                        ) : null}
+                        {renderReferencePayload(reference.payload) ? (
+                          <pre className="mt-3 max-h-40 overflow-auto rounded-xl bg-slate-950/80 px-3 py-2 text-[11px] text-slate-100">
+                            {renderReferencePayload(reference.payload)}
+                          </pre>
+                        ) : null}
+                      </ReferenceElement>
+                    );
+                  })}
                 </div>
               </section>
             );

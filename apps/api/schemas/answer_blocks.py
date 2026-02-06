@@ -68,6 +68,7 @@ class ReferenceItem(BaseModel):
     kind: Literal["sql", "cypher", "row", "document"]
     title: str
     payload: Any
+    url: str | None = None
 
 
 class ReferencesBlock(BaseModel):
