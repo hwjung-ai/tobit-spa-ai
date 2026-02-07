@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
         },
       ],
       afterFiles: [
+      // Admin logs API - proxy sub-paths to backend
+      // Must be in afterFiles so /admin/logs page renders as Next.js page first
+      {
+        source: "/admin/logs/:path+",
+        destination: `${API_BASE_URL}/admin/logs/:path+`,
+      },
       // Fix trailing slash for /api/documents (must come before /api/:path*)
       {
         source: "/api/documents",
@@ -128,15 +134,8 @@ const nextConfig: NextConfig = {
         source: "/data/:path*",
         destination: `${API_BASE_URL}/data/:path*`,
       },
-      // Proxy documents routes
-      {
-        source: "/documents",
-        destination: `${API_BASE_URL}/documents`,
-      },
-      {
-        source: "/documents/:path*",
-        destination: `${API_BASE_URL}/documents/:path*`,
-      },
+      // NOTE: /documents routes are Next.js pages (main page + viewer)
+      // Document API calls use /api/documents/* which is already proxied above
       // Proxy chat routes
       {
         source: "/chat/:path*",

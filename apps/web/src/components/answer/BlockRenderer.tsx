@@ -12,6 +12,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import "reactflow/dist/style.css";
+import Link from "next/link";
 import { type NextAction } from "../../app/ops/nextActions";
 import UIPanelRenderer from "./UIPanelRenderer";
 import UIScreenRenderer from "./UIScreenRenderer";
@@ -663,23 +664,13 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 {title}
                 <div className="mt-4 space-y-3">
                   {block.items.map((reference, refIndex) => {
-                    const ReferenceElement = reference.url ? 'a' : 'div';
-                    const linkProps = reference.url ? {
-                      href: reference.url,
-                      target: reference.kind === "document" ? "_blank" : undefined,
-                      rel: reference.kind === "document" ? "noopener noreferrer" : undefined,
-                    } : {};
-
-                    return (
-                      <ReferenceElement
-                        key={`${reference.title}-${refIndex}`}
-                        {...linkProps}
-                        className={`rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition ${
-                          reference.url
-                            ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-slate-950/80"
-                            : "hover:border-slate-700"
-                        }`}
-                      >
+                    const cardClass = `block rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition ${
+                      reference.url
+                        ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-slate-950/80"
+                        : "hover:border-slate-700"
+                    }`;
+                    const cardContent = (
+                      <>
                         <div className="flex items-center justify-between">
                           <p className="font-semibold">{reference.title}</p>
                           <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
@@ -703,7 +694,45 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                             {renderReferencePayload(reference.payload)}
                           </pre>
                         ) : null}
-                      </ReferenceElement>
+                      </>
+                    );
+
+                    // Use Next.js Link for same-origin document references (client-side navigation)
+                    if (reference.url && reference.kind === "document") {
+                      return (
+                        <Link
+                          key={`${reference.title}-${refIndex}`}
+                          href={reference.url}
+                          className={cardClass}
+                        >
+                          {cardContent}
+                        </Link>
+                      );
+                    }
+
+                    // Use <a> for external URLs
+                    if (reference.url) {
+                      return (
+                        <a
+                          key={`${reference.title}-${refIndex}`}
+                          href={reference.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cardClass}
+                        >
+                          {cardContent}
+                        </a>
+                      );
+                    }
+
+                    // No URL - static card
+                    return (
+                      <div
+                        key={`${reference.title}-${refIndex}`}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                      </div>
                     );
                   })}
                 </div>

@@ -7,8 +7,20 @@ import "react-pdf/dist/Page/TextLayer.css";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
-import { Document, Page, pdfjs } from "react-pdf";
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+import dynamic from "next/dynamic";
+
+// Lazy-load react-pdf to avoid SSR issues (uses browser-only APIs)
+const ReactPdfDocument = dynamic(
+  () => import("react-pdf").then((mod) => {
+    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+    return mod.Document;
+  }),
+  { ssr: false }
+);
+const ReactPdfPage = dynamic(
+  () => import("react-pdf").then((mod) => mod.Page),
+  { ssr: false }
+);
 
 const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
@@ -397,12 +409,12 @@ function DocumentViewerContent() {
               </div>
             )}
             {pdfBlobUrl && (
-              <Document
+              <ReactPdfDocument
                 file={pdfBlobUrl}
                 onLoadSuccess={handleDocumentLoadSuccess}
               >
-                <Page pageNumber={currentPage} width={pageWidth} />
-              </Document>
+                <ReactPdfPage pageNumber={currentPage} width={pageWidth} />
+              </ReactPdfDocument>
             )}
           </div>
         </div>
