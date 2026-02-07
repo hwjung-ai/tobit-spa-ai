@@ -13,9 +13,14 @@ export async function GET(request: NextRequest) {
   try {
     // Get the original URL path after /sse-proxy
     const { searchParams } = new URL(request.url);
+    const forwardParams = new URLSearchParams(searchParams);
+    const token = forwardParams.get("token");
+    if (token) {
+      forwardParams.delete("token");
+    }
     const pathname = request.nextUrl.pathname.replace(/^\/sse-proxy/, "");
 
-    const queryString = searchParams.toString();
+    const queryString = forwardParams.toString();
 
     // Build the target backend URL
     const targetUrl = new URL(
@@ -40,6 +45,9 @@ export async function GET(request: NextRequest) {
       }
       headers.set(key, value);
     });
+    if (token && !headers.has("authorization")) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
 
     // Forward the request to the backend with caching disabled
     const response = await fetch(targetUrl.toString(), {

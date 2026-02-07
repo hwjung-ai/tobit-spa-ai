@@ -15,24 +15,28 @@ from schemas.common import ResponseEnvelope
 from sqlmodel import Session, select
 
 from app.modules.asset_registry.crud import (
+    build_schema_catalog,
     create_resolver_asset,
     create_schema_asset,
     create_source_asset,
     create_tool_asset,
-    build_schema_catalog,
     delete_resolver_asset,
     delete_schema_asset,
     delete_source_asset,
     get_resolver_asset,
     get_schema_asset,
     get_source_asset,
-    list_assets as list_registry_assets,
-    scan_schema,
     simulate_resolver_configuration,
     test_source_connection,
     update_resolver_asset,
     update_schema_asset,
     update_source_asset,
+)
+from app.modules.asset_registry.crud import (
+    list_assets as list_registry_assets,
+)
+from app.modules.asset_registry.crud import (
+    unpublish_asset as unpublish_registry_asset,
 )
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.asset_registry.resolver_models import (
@@ -42,7 +46,6 @@ from app.modules.asset_registry.resolver_models import (
     ResolverConfig,
 )
 from app.modules.asset_registry.schema_models import (
-    ScanRequest,
     SchemaAssetCreate,
     SchemaAssetResponse,
     SchemaAssetUpdate,
@@ -123,7 +126,7 @@ def create_screen_asset_impl(
             screen_id=payload.screen_id,
             name=payload.name,
             description=payload.description,
-            screen_schema=payload.screen_schema,
+            schema_json=payload.screen_schema,
             tags=payload.tags,
             created_by=payload.created_by,
             status="draft",
@@ -540,6 +543,21 @@ def update_asset(
                 status_code=400, detail="only draft assets can be updated"
             )
 
+        if not payload.force and payload.expected_updated_at is not None:
+            expected = payload.expected_updated_at
+            current = asset.updated_at
+            # optimistic concurrency guard for collaborative editing
+            if current and expected != current:
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "message": "asset has been modified by another session",
+                        "expected_updated_at": expected.isoformat(),
+                        "current_updated_at": current.isoformat(),
+                        "asset_id": str(asset.asset_id),
+                    },
+                )
+
         if payload.name is not None:
             asset.name = payload.name
         if payload.description is not None:
@@ -769,6 +787,56 @@ def rollback_asset(
                     "published_at": asset.published_at,
                     "rollback_from_version": hist.version,
                     "created_at": asset.created_at,
+                    "updated_at": asset.updated_at,
+                }
+            }
+        )
+
+
+@router.post("/assets/{asset_id}/unpublish")
+def unpublish_asset(
+    asset_id: str,
+    body: dict[str, Any] = Body(default_factory=dict),
+    current_user: TbUser = Depends(get_current_user),
+):
+    executed_by = body.get("published_by") or body.get("executed_by") or current_user.id
+    with get_session_context() as session:
+        asset = None
+        try:
+            asset_uuid = uuid.UUID(asset_id)
+            asset = session.get(TbAssetRegistry, asset_uuid)
+        except ValueError:
+            pass
+
+        if not asset:
+            asset = session.exec(
+                select(TbAssetRegistry)
+                .where(TbAssetRegistry.asset_type == "screen")
+                .where(TbAssetRegistry.screen_id == asset_id)
+                .where(TbAssetRegistry.status == "published")
+            ).first()
+
+        if not asset:
+            raise HTTPException(status_code=404, detail="asset not found")
+
+        try:
+            asset = unpublish_registry_asset(
+                session=session,
+                asset=asset,
+                executed_by=str(executed_by),
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+        return ResponseEnvelope.success(
+            data={
+                "asset": {
+                    "asset_id": str(asset.asset_id),
+                    "asset_type": asset.asset_type,
+                    "name": asset.name,
+                    "description": asset.description,
+                    "version": asset.version,
+                    "status": asset.status,
                     "updated_at": asset.updated_at,
                 }
             }
@@ -1163,8 +1231,9 @@ async def scan_catalog_endpoint(
         schema_names: List of schema names to scan (e.g., ["public"] for PostgreSQL)
         include_row_counts: Whether to count table rows (can be slow for large tables)
     """
-    from app.modules.asset_registry.crud import scan_schema_asset
     import logging
+
+    from app.modules.asset_registry.crud import scan_schema_asset
 
     logger = logging.getLogger(__name__)
 

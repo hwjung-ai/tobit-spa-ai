@@ -19,6 +19,8 @@ def validate_asset(asset: TbAssetRegistry) -> None:
         validate_source_asset(asset)
     elif asset.asset_type == "resolver":
         validate_resolver_asset(asset)
+    elif asset.asset_type == "screen":
+        validate_screen_asset(asset)
     else:
         raise ValueError(f"Unknown asset_type: {asset.asset_type}")
 
@@ -306,5 +308,72 @@ def validate_resolver_asset(asset: TbAssetRegistry) -> None:
         raise ValueError("Resolver asset rules must be a list")
     if default_namespace is not None and not isinstance(default_namespace, str):
         raise ValueError("Resolver asset default_namespace must be a string")
+
+
+def validate_screen_asset(asset: TbAssetRegistry) -> None:
+    """Validate screen asset fields"""
+    # Check required fields
+    if not asset.screen_id or not asset.screen_id.strip():
+        raise ValueError("Screen asset must have non-empty screen_id")
+    
+    if not asset.name or not asset.name.strip():
+        raise ValueError("Screen asset must have non-empty name")
+    
+    # Check schema_json
+    if not asset.schema_json:
+        raise ValueError("Screen asset must have schema_json")
+    
+    if not isinstance(asset.schema_json, dict):
+        raise ValueError("Screen asset schema_json must be a dictionary")
+    
+    # Validate schema_json structure
+    schema = asset.schema_json
+    
+    # Required fields in schema_json
+    required_fields = ["components", "layout", "state"]
+    for field in required_fields:
+        if field not in schema:
+            raise ValueError(f"Screen schema_json must include '{field}' field")
+    
+    # Validate components is a list
+    if not isinstance(schema["components"], list):
+        raise ValueError("Screen schema_json.components must be a list")
+    
+    # Validate each component
+    for i, component in enumerate(schema["components"]):
+        if not isinstance(component, dict):
+            raise ValueError(f"Screen component at index {i} must be a dictionary")
+        
+        if "id" not in component:
+            raise ValueError(f"Screen component at index {i} must have 'id'")
+        
+        if "type" not in component:
+            raise ValueError(f"Screen component at index {i} must have 'type'")
+        
+        valid_types = [
+            "text", "button", "input", "table", "chart", "keyvalue",
+            "row", "modal", "column", "tabs", "accordion"
+        ]
+        if component["type"] not in valid_types:
+            raise ValueError(
+                f"Screen component '{component['id']}' has invalid type '{component['type']}'. "
+                f"Valid types: {valid_types}"
+            )
+    
+    # Validate layout
+    if not isinstance(schema["layout"], dict):
+        raise ValueError("Screen schema_json.layout must be a dictionary")
+    
+    # Validate state
+    if not isinstance(schema["state"], dict):
+        raise ValueError("Screen schema_json.state must be a dictionary")
+    
+    state = schema["state"]
+    
+    if "schema" not in state:
+        raise ValueError("Screen schema_json.state must include 'schema'")
+    
+    if "initial" not in state:
+        raise ValueError("Screen schema_json.state must include 'initial'")
 
 

@@ -9,17 +9,18 @@ Tests cover:
 - Output structure validation
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from sqlmodel import Session
+from unittest.mock import MagicMock
 
+import httpx
+import pytest
 from app.modules.ops.services.action_registry import (
     ActionRegistry,
     ExecutorResult,
-    register_action,
     execute_action,
     get_action_registry,
+    list_registered_actions,
 )
+from sqlmodel import Session
 
 
 class TestActionRegistryRegistration:
@@ -61,6 +62,50 @@ class TestActionRegistryRegistration:
         """Test accessing global registry."""
         registry = get_action_registry()
         assert isinstance(registry, ActionRegistry)
+
+    def test_register_action_with_metadata(self):
+        """Test registering action with explicit metadata."""
+        registry = ActionRegistry()
+
+        @registry.register(
+            "custom_action",
+            metadata={
+                "label": "Custom Action",
+                "description": "Custom test action",
+                "tags": ["test", "custom"],
+                "input_schema": {"type": "object"},
+            },
+        )
+        async def handler(inputs, context, session):
+            return ExecutorResult(blocks=[])
+
+        assert registry.get("custom_action") is not None
+        metadata = registry.get_metadata("custom_action")
+        assert metadata is not None
+        assert metadata["action_id"] == "custom_action"
+        assert metadata["label"] == "Custom Action"
+        assert metadata["tags"] == ["test", "custom"]
+
+    def test_list_actions_returns_sorted_metadata(self):
+        """Test listing actions from registry metadata."""
+        registry = ActionRegistry()
+
+        @registry.register("z_action")
+        async def handler_z(inputs, context, session):
+            return ExecutorResult(blocks=[])
+
+        @registry.register("a_action")
+        async def handler_a(inputs, context, session):
+            return ExecutorResult(blocks=[])
+
+        listed = registry.list_actions()
+        assert [item["action_id"] for item in listed] == ["a_action", "z_action"]
+
+    def test_global_registry_exposes_registered_actions(self):
+        """Test global helper returns list of action metadata."""
+        actions = list_registered_actions()
+        assert isinstance(actions, list)
+        assert all("action_id" in action for action in actions)
 
 
 class TestActionRegistryExecution:
@@ -134,6 +179,72 @@ class TestActionRegistryExecution:
         # Note: This tests the global registry functionality
         # In real scenarios, actions are registered at startup
         pass
+
+    @pytest.mark.asyncio
+    async def test_execute_builtin_state_set_action(self):
+        """Test built-in state.set action applies dotted state patch."""
+        session = MagicMock(spec=Session)
+        result = await execute_action(
+            "state.set",
+            inputs={"key": "filters.device_id", "value": "srv-01"},
+            context={},
+            session=session,
+        )
+        assert result.state_patch == {"filters": {"device_id": "srv-01"}}
+
+    @pytest.mark.asyncio
+    async def test_execute_builtin_state_merge_action(self):
+        """Test built-in state.merge action merges object patch."""
+        session = MagicMock(spec=Session)
+        result = await execute_action(
+            "state.merge",
+            inputs={"patch": {"offset": 20, "limit": 10}},
+            context={},
+            session=session,
+        )
+        assert result.state_patch == {"offset": 20, "limit": 10}
+
+    @pytest.mark.asyncio
+    async def test_execute_builtin_api_call_action(self, monkeypatch):
+        """Test built-in api.call action stores response in state patch."""
+
+        async def mock_request(self, method, url, **kwargs):  # noqa: ANN001
+            request = httpx.Request(method, url)
+            return httpx.Response(
+                200,
+                json={"ok": True, "echo": kwargs.get("params", {})},
+                request=request,
+                headers={"content-type": "application/json"},
+            )
+
+        monkeypatch.setattr(httpx.AsyncClient, "request", mock_request)
+
+        session = MagicMock(spec=Session)
+        result = await execute_action(
+            "api.call",
+            inputs={
+                "url": "https://example.com/v1/data",
+                "method": "GET",
+                "query": {"device_id": "srv-01"},
+            },
+            context={},
+            session=session,
+        )
+        assert result.summary.get("status_code") == 200
+        assert result.state_patch["api_last_response"]["ok"] is True
+        assert result.state_patch["api_last_response"]["data"]["ok"] is True
+
+    @pytest.mark.asyncio
+    async def test_execute_builtin_api_call_action_rejects_non_http(self):
+        """Test api.call blocks unsupported schemes."""
+        session = MagicMock(spec=Session)
+        with pytest.raises(ValueError, match="http:// or https://"):
+            await execute_action(
+                "api.call",
+                inputs={"url": "file:///etc/passwd"},
+                context={},
+                session=session,
+            )
 
 
 class TestExecutorResult:

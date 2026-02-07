@@ -29,6 +29,11 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   const isSaving = useEditorState((state) => state.isSaving);
   const isPublishing = useEditorState((state) => state.isPublishing);
   const selectedComponentId = useEditorState((state) => state.selectedComponentId);
+  const draftConflict = useEditorState((state) => state.draftConflict);
+  const clearDraftConflict = useEditorState((state) => state.clearDraftConflict);
+  const applyAutoMergedConflict = useEditorState((state) => state.applyAutoMergedConflict);
+  const reloadFromServer = useEditorState((state) => state.reloadFromServer);
+  const forceSaveDraft = useEditorState((state) => state.forceSaveDraft);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -194,6 +199,75 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           {/* Errors */}
           {validationErrors.length > 0 && (
             <ScreenEditorErrors errors={validationErrors} />
+          )}
+          {draftConflict.hasConflict && (
+            <div
+              className="mx-6 mt-3 rounded-md border border-amber-700/70 bg-amber-900/30 px-3 py-2 text-xs text-amber-100"
+              data-testid="screen-editor-draft-conflict"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span>
+                  {draftConflict.message || "Draft conflict detected."}
+                </span>
+                <div className="flex gap-2">
+                  {draftConflict.autoMergedScreen && (
+                    <button
+                      type="button"
+                      className="rounded border border-sky-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                      onClick={() => {
+                        applyAutoMergedConflict();
+                        setToast({ message: "Auto-merge applied to draft", type: "success" });
+                      }}
+                    >
+                      Apply Auto-Merge
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="rounded border border-slate-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                    onClick={() => {
+                      void (async () => {
+                        try {
+                          await reloadFromServer();
+                          setToast({ message: "Reloaded latest version", type: "success" });
+                        } catch (err) {
+                          const message =
+                            err instanceof Error ? err.message : "Failed to reload";
+                          setToast({ message, type: "error" });
+                        }
+                      })();
+                    }}
+                  >
+                    Reload Latest
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                    onClick={() => {
+                      void (async () => {
+                        try {
+                          await forceSaveDraft();
+                          setToast({ message: "Draft force-saved", type: "success" });
+                        } catch (err) {
+                          const message =
+                            err instanceof Error ? err.message : "Force save failed";
+                          setToast({ message, type: "error" });
+                        }
+                      })();
+                    }}
+                  >
+                    Force Save
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded border border-slate-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                    onClick={() => clearDraftConflict()}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Tabs */}

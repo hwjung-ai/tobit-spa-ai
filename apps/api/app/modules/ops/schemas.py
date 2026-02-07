@@ -126,6 +126,14 @@ class UIActionResponse(BaseModel):
     error: Dict[str, Any] | None = None
 
 
+class UIEditorPresenceHeartbeatRequest(BaseModel):
+    """Heartbeat payload for UI screen editor presence tracking."""
+
+    screen_id: str
+    session_id: str
+    tab_name: str | None = None
+
+
 # Regression Watch schemas
 class GoldenQueryCreate(BaseModel):
     """Create a new golden query"""

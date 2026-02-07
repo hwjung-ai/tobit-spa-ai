@@ -22,7 +22,7 @@ import { ComponentActionRef, ScreenSchemaV1 } from "@/lib/ui-screen/screen.schem
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PathPicker, type PathTreeNode } from "@/components/admin/screen-editor/common/PathPicker";
 import { validateBindingPath } from "@/lib/ui-screen/validation-utils";
-import { Trash2, Plus, Edit2 } from "lucide-react";
+import { Trash2, Plus, Edit2, ChevronUp, ChevronDown } from "lucide-react";
 import { Component } from "@/lib/ui-screen/screen.schema";
 
 // Helper to find component by ID (including nested)
@@ -37,6 +37,14 @@ function findComponentById(components: Component[], id: string): Component | nul
   }
   return null;
 }
+
+type AutoRefreshEditorValue = {
+  enabled?: boolean;
+  interval_ms?: number;
+  action_index?: number;
+  max_failures?: number;
+  backoff_ms?: number;
+};
 
 export default function PropertiesPanel() {
   const editorState = useEditorState();
@@ -88,12 +96,95 @@ export default function PropertiesPanel() {
   const normalizedType = (selectedComponent.type || "").toLowerCase();
   const isTextComponent = TEXT_COMPONENT_TYPES.has(normalizedType);
   const isTextField = (name: string) => isTextComponent && TEXT_PROPERTY_FIELDS.has(name);
-  const bindableFields = fields.filter(field => !isTextField(field.name));
+  const editorManagedProps = new Set<string>();
+  if (normalizedType === "table") {
+    editorManagedProps.add("columns");
+  }
+  if (normalizedType === "chart") {
+    editorManagedProps.add("series");
+  }
+  const renderableFields = fields.filter((field) => !editorManagedProps.has(field.name));
+  const bindableFields = renderableFields.filter(field => !isTextField(field.name));
+  const actionOptions = selectedComponent.actions || [];
+  const rawAutoRefresh = formData.auto_refresh;
+  const autoRefresh: AutoRefreshEditorValue =
+    rawAutoRefresh && typeof rawAutoRefresh === "object"
+      ? (rawAutoRefresh as AutoRefreshEditorValue)
+      : {};
+  const rawTableColumns = formData.columns;
+  const tableColumns = !Array.isArray(rawTableColumns)
+    ? ([] as Array<{ field: string; header: string; sortable: boolean; format: string }>)
+    : rawTableColumns.map((item) => {
+        if (typeof item === "string") {
+          return { field: item, header: item, sortable: true, format: "" };
+        }
+        const obj = (item || {}) as Record<string, unknown>;
+        const field = String(obj.field || obj.key || "");
+        return {
+          field,
+          header: String(obj.header || obj.label || field),
+          sortable: obj.sortable !== false,
+          format: String(obj.format || ""),
+        };
+      });
+  const rawChartSeries = formData.series;
+  const chartSeries = !Array.isArray(rawChartSeries)
+    ? ([] as Array<{ name: string; data_key: string; color: string }>)
+    : rawChartSeries.map((item, index) => {
+        const obj = (item || {}) as Record<string, unknown>;
+        return {
+          name: String(obj.name || `Series ${index + 1}`),
+          data_key: String(obj.data_key || obj.dataKey || (index === 0 ? "y" : `y${index + 1}`)),
+          color: String(obj.color || obj.stroke || "#38bdf8"),
+        };
+      });
+  const rawConditionalStyles = formData.conditional_styles;
+  const componentConditionalStyles = !Array.isArray(rawConditionalStyles)
+    ? ([] as Array<{
+        field: string;
+        operator: string;
+        value: string;
+        color: string;
+        bg_color: string;
+        border_color: string;
+        series_name: string;
+        target: string;
+        variant: string;
+      }>)
+    : rawConditionalStyles.map((item) => {
+        const obj = (item || {}) as Record<string, unknown>;
+        return {
+          field: String(obj.field || ""),
+          operator: String(obj.operator || "eq"),
+          value: String(obj.value ?? ""),
+          color: String(obj.color || ""),
+          bg_color: String(obj.bg_color || ""),
+          border_color: String(obj.border_color || ""),
+          series_name: String(obj.series_name || ""),
+          target: String(obj.target || "auto"),
+          variant: String(obj.variant || ""),
+        };
+      });
 
   const handlePropChange = (name: string, value: unknown) => {
     const newData = { ...formData, [name]: value };
     setFormData(newData);
     editorState.updateComponentProps(selectedComponent.id, newData);
+  };
+
+  const handleAutoRefreshChange = (
+    key: keyof AutoRefreshEditorValue,
+    value: boolean | number
+  ) => {
+    const next: AutoRefreshEditorValue = {
+      enabled: autoRefresh.enabled ?? false,
+      interval_ms: autoRefresh.interval_ms ?? 30000,
+      action_index: autoRefresh.action_index ?? 0,
+      max_failures: autoRefresh.max_failures ?? 3,
+      backoff_ms: autoRefresh.backoff_ms ?? 10000,
+      [key]: value,
+    };
+    handlePropChange("auto_refresh", next as unknown as Record<string, unknown>);
   };
 
   const handleLabelChange = (value: string) => {
@@ -146,12 +237,12 @@ export default function PropertiesPanel() {
         </div>
 
         {/* Props */}
-        {fields.length === 0 ? (
+        {renderableFields.length === 0 ? (
           <div className="text-xs text-slate-500 text-center py-4">
             No properties available
           </div>
         ) : (
-          fields.map(field => (
+          renderableFields.map(field => (
             isTextField(field.name) ? (
               <TextPropertyField
                 key={field.name}
@@ -170,6 +261,341 @@ export default function PropertiesPanel() {
               />
             )
           ))
+        )}
+
+        {normalizedType === "table" && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="table-columns">
+              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+                Table Columns
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2 pt-3">
+                {tableColumns.length === 0 ? (
+                  <p className="text-xs text-slate-500">No columns configured.</p>
+                ) : (
+                  tableColumns.map((column, index) => (
+                    <div key={`table-col-${index}`} className="rounded border border-slate-700 bg-slate-800/60 p-2 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          value={column.field}
+                          onChange={(e) => {
+                            const next = [...tableColumns];
+                            next[index] = { ...next[index], field: e.target.value };
+                            handlePropChange("columns", next);
+                          }}
+                          placeholder="field"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          data-testid={`prop-table-column-field-${index}`}
+                        />
+                        <Input
+                          value={column.header}
+                          onChange={(e) => {
+                            const next = [...tableColumns];
+                            next[index] = { ...next[index], header: e.target.value };
+                            handlePropChange("columns", next);
+                          }}
+                          placeholder="header"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                          data-testid={`prop-table-column-header-${index}`}
+                        />
+                      </div>
+                      <div>
+                        <Select
+                          value={column.format || "none"}
+                          onValueChange={(val) => {
+                            const next = [...tableColumns];
+                            next[index] = {
+                              ...next[index],
+                              format: val === "none" ? "" : val,
+                            };
+                            handlePropChange("columns", next);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                            <SelectValue placeholder="format" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">No format</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="percent">Percent</SelectItem>
+                            <SelectItem value="date">Date</SelectItem>
+                            <SelectItem value="datetime">DateTime</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 text-xs text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={column.sortable}
+                            onChange={(e) => {
+                              const next = [...tableColumns];
+                              next[index] = { ...next[index], sortable: e.target.checked };
+                              handlePropChange("columns", next);
+                            }}
+                          />
+                          sortable
+                        </label>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-rose-300 hover:text-rose-200"
+                          onClick={() => {
+                            const next = tableColumns.filter((_, i) => i !== index);
+                            handlePropChange("columns", next);
+                          }}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs"
+                  onClick={() =>
+                    handlePropChange("columns", [
+                      ...tableColumns,
+                      {
+                        field: `field_${tableColumns.length + 1}`,
+                        header: `Field ${tableColumns.length + 1}`,
+                        sortable: true,
+                        format: "",
+                      },
+                    ])
+                  }
+                >
+                  Add Column
+                </Button>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
+
+        {normalizedType === "chart" && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="chart-series">
+              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+                Chart Behavior
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2 pt-3">
+                <div>
+                  <label className="text-[11px] text-slate-400">Chart Type</label>
+                  <Select
+                    value={String(formData.chart_type || formData.type || "line")}
+                    onValueChange={(val) => {
+                      handlePropChange("chart_type", val);
+                      handlePropChange("type", val);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="line">Line</SelectItem>
+                      <SelectItem value="bar">Bar</SelectItem>
+                      <SelectItem value="pie">Pie</SelectItem>
+                      <SelectItem value="area">Area</SelectItem>
+                      <SelectItem value="scatter">Scatter</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    value={String(formData.x_key || "")}
+                    onChange={(e) => handlePropChange("x_key", e.target.value)}
+                    placeholder="x_key (e.g. timestamp)"
+                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    data-testid="prop-chart-x-key"
+                  />
+                  <Input
+                    type="number"
+                    min={200}
+                    max={800}
+                    step={10}
+                    value={String((formData.height as number) ?? 400)}
+                    onChange={(e) => handlePropChange("height", Number(e.target.value || 400))}
+                    placeholder="height"
+                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    data-testid="prop-chart-height"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={formData.show_legend !== false}
+                      onChange={(e) => handlePropChange("show_legend", e.target.checked)}
+                    />
+                    Show Legend
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={formData.show_grid !== false}
+                      onChange={(e) => handlePropChange("show_grid", e.target.checked)}
+                    />
+                    Show Grid
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={formData.responsive !== false}
+                      onChange={(e) => handlePropChange("responsive", e.target.checked)}
+                    />
+                    Responsive
+                  </label>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="number"
+                    value={String((formData.y_min as number) ?? "")}
+                    onChange={(e) =>
+                      handlePropChange(
+                        "y_min",
+                        e.target.value === "" ? undefined : Number(e.target.value)
+                      )
+                    }
+                    placeholder="y_min"
+                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    data-testid="prop-chart-y-min"
+                  />
+                  <Input
+                    type="number"
+                    value={String((formData.y_max as number) ?? "")}
+                    onChange={(e) =>
+                      handlePropChange(
+                        "y_max",
+                        e.target.value === "" ? undefined : Number(e.target.value)
+                      )
+                    }
+                    placeholder="y_max"
+                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    data-testid="prop-chart-y-max"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-400">Y-Axis Options (JSON)</label>
+                  <Textarea
+                    value={JSON.stringify(formData.y_axis || {}, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        handlePropChange("y_axis", JSON.parse(e.target.value));
+                      } catch {
+                        // keep previous value until valid JSON
+                      }
+                    }}
+                    placeholder='{"min": 0, "max": 100, "title": "Value"}'
+                    className="h-20 text-xs bg-slate-800 border-slate-700 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-400">Legend Options (JSON)</label>
+                  <Textarea
+                    value={JSON.stringify(formData.legend || {}, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        handlePropChange("legend", JSON.parse(e.target.value));
+                      } catch {
+                        // keep previous value until valid JSON
+                      }
+                    }}
+                    placeholder='{"show": true, "position": "right"}'
+                    className="h-20 text-xs bg-slate-800 border-slate-700 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-slate-400">Tooltip Options (JSON)</label>
+                  <Textarea
+                    value={JSON.stringify(formData.tooltip || {}, null, 2)}
+                    onChange={(e) => {
+                      try {
+                        handlePropChange("tooltip", JSON.parse(e.target.value));
+                      } catch {
+                        // keep previous value until valid JSON
+                      }
+                    }}
+                    placeholder='{"show": true, "trigger": "axis"}'
+                    className="h-20 text-xs bg-slate-800 border-slate-700 font-mono"
+                  />
+                </div>
+                {chartSeries.length === 0 ? (
+                  <p className="text-xs text-slate-500">No series configured.</p>
+                ) : (
+                  chartSeries.map((series, index) => (
+                    <div key={`chart-series-${index}`} className="rounded border border-slate-700 bg-slate-800/60 p-2 space-y-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        <Input
+                          value={series.name}
+                          onChange={(e) => {
+                            const next = [...chartSeries];
+                            next[index] = { ...next[index], name: e.target.value };
+                            handlePropChange("series", next);
+                          }}
+                          placeholder="name"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                        <Input
+                          value={series.data_key}
+                          onChange={(e) => {
+                            const next = [...chartSeries];
+                            next[index] = { ...next[index], data_key: e.target.value };
+                            handlePropChange("series", next);
+                          }}
+                          placeholder="data_key"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                        <Input
+                          value={series.color}
+                          onChange={(e) => {
+                            const next = [...chartSeries];
+                            next[index] = { ...next[index], color: e.target.value };
+                            handlePropChange("series", next);
+                          }}
+                          placeholder="#38bdf8"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-rose-300 hover:text-rose-200"
+                        onClick={() => {
+                          const next = chartSeries.filter((_, i) => i !== index);
+                          handlePropChange("series", next);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs"
+                  onClick={() =>
+                    handlePropChange("series", [
+                      ...chartSeries,
+                      {
+                        name: `Series ${chartSeries.length + 1}`,
+                        data_key: chartSeries.length === 0 ? "y" : `y${chartSeries.length + 1}`,
+                        color: "#38bdf8",
+                      },
+                    ])
+                  }
+                >
+                  Add Series
+                </Button>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         )}
 
         {/* Bindings Section */}
@@ -246,7 +672,7 @@ export default function PropertiesPanel() {
                 </p>
               ) : (
                 <div className="space-y-1">
-                  {selectedComponent.actions.map((action) => (
+                  {selectedComponent.actions.map((action, index) => (
                     <div
                       key={action.id}
                       className="flex items-center justify-between p-2 rounded bg-slate-800 border border-slate-700"
@@ -260,6 +686,36 @@ export default function PropertiesPanel() {
                         </p>
                       </div>
                       <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={index === 0}
+                          onClick={() => {
+                            editorState.moveComponentAction(
+                              selectedComponent.id,
+                              action.id,
+                              "up"
+                            );
+                          }}
+                          className="h-6 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-30"
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={index === (selectedComponent.actions?.length || 1) - 1}
+                          onClick={() => {
+                            editorState.moveComponentAction(
+                              selectedComponent.id,
+                              action.id,
+                              "down"
+                            );
+                          }}
+                          className="h-6 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-700 disabled:opacity-30"
+                        >
+                          <ChevronDown className="w-3 h-3" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -301,6 +757,378 @@ export default function PropertiesPanel() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
+
+        {/* Auto Refresh Section */}
+        {actionOptions.length > 0 && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="auto-refresh">
+              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+                Auto Refresh
+              </AccordionTrigger>
+              <AccordionContent className="space-y-3 pt-3">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoRefresh.enabled ?? false}
+                    onChange={(e) =>
+                      handleAutoRefreshChange("enabled", e.target.checked)
+                    }
+                    className="rounded"
+                    data-testid="prop-auto-refresh-enabled"
+                  />
+                  Enabled
+                </label>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    Action
+                  </label>
+                  <Select
+                    value={String(autoRefresh.action_index ?? 0)}
+                    onValueChange={(val) =>
+                      handleAutoRefreshChange("action_index", Number(val))
+                    }
+                  >
+                    <SelectTrigger
+                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      data-testid="prop-auto-refresh-action-index"
+                    >
+                      <SelectValue placeholder="Select action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {actionOptions.map((action, index) => (
+                        <SelectItem key={`${action.id}-${index}`} value={String(index)}>
+                          {(action.label || action.id) + " · " + action.handler}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    Interval (ms)
+                  </label>
+                  <Input
+                    type="number"
+                    min={1000}
+                    value={String(autoRefresh.interval_ms ?? 30000)}
+                    onChange={(e) =>
+                      handleAutoRefreshChange(
+                        "interval_ms",
+                        Number(e.target.value || 30000)
+                      )
+                    }
+                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    data-testid="prop-auto-refresh-interval-ms"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Max Failures
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={String(autoRefresh.max_failures ?? 3)}
+                      onChange={(e) =>
+                        handleAutoRefreshChange(
+                          "max_failures",
+                          Number(e.target.value || 3)
+                        )
+                      }
+                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      data-testid="prop-auto-refresh-max-failures"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                      Backoff (ms)
+                    </label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={String(autoRefresh.backoff_ms ?? 10000)}
+                      onChange={(e) =>
+                        handleAutoRefreshChange(
+                          "backoff_ms",
+                          Number(e.target.value || 0)
+                        )
+                      }
+                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      data-testid="prop-auto-refresh-backoff-ms"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Runtime executes selected action periodically with backoff and failure stop.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
+
+        {/* Table Behavior Section */}
+        {normalizedType === "table" && actionOptions.length > 0 && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="table-behavior">
+              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+                Table Behavior
+              </AccordionTrigger>
+              <AccordionContent className="space-y-3 pt-3">
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.sortable !== false}
+                    onChange={(e) => handlePropChange("sortable", e.target.checked)}
+                    className="rounded"
+                    data-testid="prop-table-sortable"
+                  />
+                  Sortable
+                </label>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    Page Size (0 = off)
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={String((formData.page_size as number) ?? 0)}
+                    onChange={(e) =>
+                      handlePropChange("page_size", Number(e.target.value || 0))
+                    }
+                    className="h-8 text-xs bg-slate-800 border-slate-700"
+                    data-testid="prop-table-page-size"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1">
+                    Row Click Action
+                  </label>
+                  <Select
+                    value={String((formData.row_click_action_index as number) ?? -1)}
+                    onValueChange={(val) =>
+                      handlePropChange("row_click_action_index", Number(val))
+                    }
+                  >
+                    <SelectTrigger
+                      className="h-8 text-xs bg-slate-800 border-slate-700"
+                      data-testid="prop-table-row-action-index"
+                    >
+                      <SelectValue placeholder="Select action" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="-1">No Action</SelectItem>
+                      {actionOptions.map((action, index) => (
+                        <SelectItem key={`${action.id}-${index}`} value={String(index)}>
+                          {(action.label || action.id) + " · " + action.handler}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
+
+        {(normalizedType === "table" || normalizedType === "chart" || normalizedType === "badge") && (
+          <Accordion type="single" collapsible>
+            <AccordionItem value="component-conditional-styles">
+              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+                Conditional Styles
+              </AccordionTrigger>
+              <AccordionContent className="space-y-2 pt-3">
+                {componentConditionalStyles.length === 0 ? (
+                  <p className="text-xs text-slate-500">No rules configured.</p>
+                ) : (
+                  componentConditionalStyles.map((rule, index) => (
+                    <div
+                      key={`component-style-rule-${index}`}
+                      className="rounded border border-slate-700 bg-slate-800/60 p-2 space-y-2"
+                    >
+                      <div className={normalizedType === "chart" ? "grid grid-cols-3 gap-2" : "grid grid-cols-2 gap-2"}>
+                        <Input
+                          value={rule.field}
+                          onChange={(e) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], field: e.target.value };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                          placeholder="field"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                        <Select
+                          value={rule.operator}
+                          onValueChange={(val) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], operator: val };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                            <SelectValue placeholder="operator" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="eq">eq</SelectItem>
+                            <SelectItem value="ne">ne</SelectItem>
+                            <SelectItem value="gt">gt</SelectItem>
+                            <SelectItem value="gte">gte</SelectItem>
+                            <SelectItem value="lt">lt</SelectItem>
+                            <SelectItem value="lte">lte</SelectItem>
+                            <SelectItem value="contains">contains</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {normalizedType === "chart" && (
+                          <Input
+                            value={rule.series_name}
+                            onChange={(e) => {
+                              const next = [...componentConditionalStyles];
+                              next[index] = { ...next[index], series_name: e.target.value };
+                              handlePropChange("conditional_styles", next);
+                            }}
+                            placeholder="series (optional)"
+                            className="h-8 text-xs bg-slate-800 border-slate-700"
+                          />
+                        )}
+                      </div>
+                      {normalizedType === "chart" && (
+                        <div className="grid grid-cols-1 gap-2">
+                          <Select
+                            value={rule.target || "auto"}
+                            onValueChange={(val) => {
+                              const next = [...componentConditionalStyles];
+                              next[index] = { ...next[index], target: val };
+                              handlePropChange("conditional_styles", next);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                              <SelectValue placeholder="target" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="auto">target: auto</SelectItem>
+                              <SelectItem value="line">target: line</SelectItem>
+                              <SelectItem value="area">target: area</SelectItem>
+                              <SelectItem value="point">target: point</SelectItem>
+                              <SelectItem value="bar">target: bar</SelectItem>
+                              <SelectItem value="pie">target: pie</SelectItem>
+                              <SelectItem value="scatter">target: scatter</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-4 gap-2">
+                        <Input
+                          value={rule.value}
+                          onChange={(e) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], value: e.target.value };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                          placeholder="value"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                        <Input
+                          value={rule.color}
+                          onChange={(e) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], color: e.target.value };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                          placeholder="#fca5a5"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                        <Input
+                          value={rule.bg_color}
+                          onChange={(e) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], bg_color: e.target.value };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                          placeholder="#7f1d1d"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                        <Input
+                          value={rule.border_color}
+                          onChange={(e) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], border_color: e.target.value };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                          placeholder="#ef4444"
+                          className="h-8 text-xs bg-slate-800 border-slate-700"
+                        />
+                      </div>
+                      {normalizedType === "badge" && (
+                        <Select
+                          value={rule.variant || "default"}
+                          onValueChange={(val) => {
+                            const next = [...componentConditionalStyles];
+                            next[index] = { ...next[index], variant: val };
+                            handlePropChange("conditional_styles", next);
+                          }}
+                        >
+                          <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                            <SelectValue placeholder="variant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">variant: default</SelectItem>
+                            <SelectItem value="secondary">variant: secondary</SelectItem>
+                            <SelectItem value="success">variant: success</SelectItem>
+                            <SelectItem value="warning">variant: warning</SelectItem>
+                            <SelectItem value="danger">variant: danger</SelectItem>
+                            <SelectItem value="outline">variant: outline</SelectItem>
+                            <SelectItem value="ghost">variant: ghost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-rose-300 hover:text-rose-200"
+                        onClick={() => {
+                          const next = componentConditionalStyles.filter((_, i) => i !== index);
+                          handlePropChange("conditional_styles", next);
+                        }}
+                      >
+                        Remove Rule
+                      </Button>
+                    </div>
+                  ))
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs"
+                  onClick={() =>
+                    handlePropChange("conditional_styles", [
+                      ...componentConditionalStyles,
+                      {
+                        field: "",
+                        operator: "eq",
+                        value: "",
+                        color: "#fca5a5",
+                        bg_color: "",
+                        border_color: "",
+                        series_name: "",
+                        target: normalizedType === "chart" ? "auto" : "",
+                        variant: normalizedType === "badge" ? "default" : "",
+                      },
+                    ])
+                  }
+                >
+                  Add Rule
+                </Button>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
       </div>
 
       {/* Component-level Actions */}
@@ -366,6 +1194,29 @@ interface PropsFormFieldProps {
 }
 
 function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
+  const [jsonText, setJsonText] = React.useState(() => {
+    if (field.type === "array" || field.type === "object") {
+      try {
+        return JSON.stringify(value ?? (field.type === "array" ? [] : {}), null, 2);
+      } catch {
+        return field.type === "array" ? "[]" : "{}";
+      }
+    }
+    return "";
+  });
+  const [jsonError, setJsonError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (field.type === "array" || field.type === "object") {
+      try {
+        setJsonText(JSON.stringify(value ?? (field.type === "array" ? [] : {}), null, 2));
+        setJsonError(null);
+      } catch {
+        setJsonError("Failed to serialize value");
+      }
+    }
+  }, [field.type, value]);
+
   if (field.type === "boolean") {
     return (
       <div>
@@ -438,6 +1289,44 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
           max={field.max}
           data-testid={`prop-${field.name}`}
         />
+      </div>
+    );
+  }
+
+  if (field.type === "array" || field.type === "object") {
+    return (
+      <div>
+        <label className="block text-xs font-medium text-slate-300 mb-1">
+          {field.label || field.name}
+        </label>
+        <Textarea
+          value={jsonText}
+          onChange={e => {
+            const next = e.target.value;
+            setJsonText(next);
+            try {
+              const parsed = JSON.parse(next);
+              if (field.type === "array" && !Array.isArray(parsed)) {
+                setJsonError("Value must be a JSON array");
+                return;
+              }
+              if (field.type === "object" && (Array.isArray(parsed) || parsed === null || typeof parsed !== "object")) {
+                setJsonError("Value must be a JSON object");
+                return;
+              }
+              setJsonError(null);
+              onChange(parsed);
+            } catch {
+              setJsonError("Invalid JSON");
+            }
+          }}
+          placeholder={field.type === "array" ? "[]" : "{}"}
+          className="min-h-24 text-xs font-mono bg-slate-800 border-slate-700 resize-y"
+          data-testid={`prop-${field.name}`}
+        />
+        {jsonError && (
+          <p className="text-[11px] text-rose-300 mt-1">{jsonError}</p>
+        )}
       </div>
     );
   }
@@ -546,7 +1435,7 @@ function TextPropertyField({
     <FieldBindingControl
       label={field.label || field.name}
       description={description}
-      value={value}
+      value={String(value ?? "")}
       onChange={onChange}
       bindingTrees={bindingTrees}
       screenSchema={screenSchema}

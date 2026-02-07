@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavTabs from "../components/NavTabs";
 import CepEventBell from "../components/CepEventBell";
+import SystemStatusIndicator from "../components/SystemStatusIndicator";
 import Providers from "./providers";
 import HeaderUserMenu from "../components/HeaderUserMenu";
 
@@ -32,11 +33,14 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen bg-slate-950 text-slate-100">
             <header className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                    Tobit SPA AI
-                  </p>
-                  <h1 className="text-2xl font-semibold text-white">Intelligent Ops Studio</h1>
+                <div className="flex items-end gap-5">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                      Tobit SPA AI
+                    </p>
+                    <h1 className="text-2xl font-semibold text-white">Intelligent Ops Studio</h1>
+                  </div>
+                  <SystemStatusIndicator />
                 </div>
               <nav className="flex items-center gap-6">
                 <CepEventBell />

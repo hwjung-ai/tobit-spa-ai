@@ -1,20 +1,37 @@
 from __future__ import annotations
 
+import asyncio
 import importlib
+import json
 import re
 import time
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_session, get_session_context
 from core.logging import get_logger, get_request_context
-from fastapi import APIRouter, Depends, Header, Request
+from core.security import decode_token
+from core.tenant import get_current_tenant
+from fastapi import (
+    APIRouter,
+    Depends,
+    Header,
+    HTTPException,
+    Query,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from jose import JWTError
+from models.history import QueryHistory
 from schemas import ResponseEnvelope
-from sqlmodel import Session
+from sqlmodel import Session, select
+from sse_starlette.sse import EventSourceResponse
 
 from app.modules.asset_registry.loader import (
     load_catalog_asset,
@@ -23,6 +40,7 @@ from app.modules.asset_registry.loader import (
     load_resolver_asset,
     load_source_asset,
 )
+from app.modules.auth.models import TbUser
 from app.modules.inspector.service import persist_execution_trace
 from app.modules.inspector.span_tracker import (
     clear_spans,
@@ -30,7 +48,6 @@ from app.modules.inspector.span_tracker import (
     get_all_spans,
     start_span,
 )
-from models.history import QueryHistory
 
 from .schemas import (
     CiAskRequest,
@@ -43,8 +60,10 @@ from .schemas import (
     RerunPatch,
     StageInput,
     UIActionRequest,
+    UIEditorPresenceHeartbeatRequest,
 )
 from .services import handle_ops_query
+from .services.action_registry import list_registered_actions
 from .services.ci.blocks import text_block
 from .services.ci.orchestrator.runner import CIOrchestratorRunner
 from .services.ci.planner import planner_llm, validator
@@ -57,6 +76,8 @@ from .services.ci.planner.plan_schema import (
 )
 from .services.control_loop import evaluate_replan
 from .services.observability_service import collect_observability_metrics
+from .services.ui_editor_collab import ui_editor_collab_manager
+from .services.ui_editor_presence import ui_editor_presence_manager
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -594,7 +615,7 @@ def ask_ci(
         # Load mapping asset to ensure tracking
         mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
         # Load policy asset to ensure tracking (for all routes including reject)
-        policy_payload = load_policy_asset("plan_budget", scope="ops")
+        _ = load_policy_asset("plan_budget", scope="ops")
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload
@@ -1272,6 +1293,258 @@ def ask_all(
 
 
 # --- UI Actions (Deterministic Interactive UI) ---
+
+
+@router.get("/ui-actions/catalog", response_model=ResponseEnvelope)
+def list_ui_actions_catalog() -> ResponseEnvelope:
+    """
+    Return deterministic UI action catalog for screen editor.
+
+    The catalog is sourced from ActionRegistry metadata and used by admin
+    screen editors to render validated handler choices.
+    """
+    actions = list_registered_actions()
+    return ResponseEnvelope.success(data={"actions": actions, "count": len(actions)})
+
+
+@router.post("/ui-editor/presence/heartbeat", response_model=ResponseEnvelope)
+async def ui_editor_presence_heartbeat(
+    payload: UIEditorPresenceHeartbeatRequest,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> ResponseEnvelope:
+    """
+    Register/refresh active editor session for a screen.
+
+    This endpoint is used by admin screen editor tabs to provide server-side
+    collaboration presence. It is tenant-scoped and user-aware.
+    """
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+
+    snapshot = await ui_editor_presence_manager.heartbeat(
+        tenant_id=tenant_id,
+        screen_id=payload.screen_id,
+        session_id=payload.session_id,
+        user_id=str(current_user.id),
+        user_label=current_user.username,
+        tab_name=payload.tab_name,
+    )
+    return ResponseEnvelope.success(
+        data={
+            "screen_id": payload.screen_id,
+            "count": len(snapshot),
+            "sessions": snapshot,
+        }
+    )
+
+
+@router.post("/ui-editor/presence/leave", response_model=ResponseEnvelope)
+async def ui_editor_presence_leave(
+    payload: UIEditorPresenceHeartbeatRequest,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> ResponseEnvelope:
+    """Remove editor session from presence set."""
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    snapshot = await ui_editor_presence_manager.leave(
+        tenant_id=tenant_id,
+        screen_id=payload.screen_id,
+        session_id=payload.session_id,
+    )
+    return ResponseEnvelope.success(
+        data={
+            "screen_id": payload.screen_id,
+            "count": len(snapshot),
+            "sessions": snapshot,
+        }
+    )
+
+
+@router.get("/ui-editor/presence/stream")
+async def ui_editor_presence_stream(
+    request: Request,
+    screen_id: str = Query(..., min_length=1),
+    session_id: str = Query(..., min_length=1),
+    tab_name: str | None = Query(None),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> EventSourceResponse:
+    """
+    SSE stream for editor presence updates.
+
+    Events:
+    - presence: full active session snapshot
+    - ping: connection keepalive
+    """
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+
+    queue, initial_snapshot = await ui_editor_presence_manager.subscribe(
+        tenant_id=tenant_id,
+        screen_id=screen_id,
+    )
+
+    # Register stream-owner session immediately.
+    await ui_editor_presence_manager.heartbeat(
+        tenant_id=tenant_id,
+        screen_id=screen_id,
+        session_id=session_id,
+        user_id=str(current_user.id),
+        user_label=current_user.username,
+        tab_name=tab_name,
+    )
+
+    async def event_generator():
+        try:
+            initial_payload = {
+                "type": "presence",
+                "tenant_id": tenant_id,
+                "screen_id": screen_id,
+                "count": len(initial_snapshot),
+                "sessions": initial_snapshot,
+            }
+            yield {"event": "presence", "data": json.dumps(initial_payload)}
+
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    payload = await asyncio.wait_for(queue.get(), timeout=10.0)
+                    yield {"event": "presence", "data": json.dumps(payload)}
+                except asyncio.TimeoutError:
+                    await ui_editor_presence_manager.heartbeat(
+                        tenant_id=tenant_id,
+                        screen_id=screen_id,
+                        session_id=session_id,
+                        user_id=str(current_user.id),
+                        user_label=current_user.username,
+                        tab_name=tab_name,
+                    )
+                    yield {"event": "ping", "data": "{}"}
+        finally:
+            await ui_editor_presence_manager.unsubscribe(tenant_id, screen_id, queue)
+            await ui_editor_presence_manager.leave(tenant_id, screen_id, session_id)
+
+    return EventSourceResponse(event_generator())
+
+
+@router.websocket("/ui-editor/collab/ws")
+async def ui_editor_collab_websocket(websocket: WebSocket) -> None:
+    """
+    WebSocket endpoint for screen editor real-time collaboration.
+
+    Query params:
+    - screen_id: target screen id
+    - tenant_id: tenant scope
+    - session_id: browser-tab session id
+    - token: optional JWT (required when auth is enabled)
+    """
+    settings = get_settings()
+    qp = websocket.query_params
+    screen_id = qp.get("screen_id", "").strip()
+    tenant_id = qp.get("tenant_id", "").strip()
+    session_id = qp.get("session_id", "").strip()
+    token = qp.get("token", "").strip()
+
+    if not screen_id or not tenant_id:
+        await websocket.close(code=4400)
+        return
+    if not session_id:
+        session_id = f"ws-{uuid.uuid4()}"
+
+    user_id = "anonymous"
+    user_label = "anonymous"
+
+    try:
+        with get_session_context() as session:
+            if settings.enable_auth:
+                if not token:
+                    await websocket.close(code=4401)
+                    return
+                try:
+                    payload = decode_token(
+                        token, settings.jwt_secret_key, settings.jwt_algorithm
+                    )
+                except JWTError:
+                    await websocket.close(code=4401)
+                    return
+                if payload.get("type") != "access":
+                    await websocket.close(code=4401)
+                    return
+                token_user_id = payload.get("sub")
+                if not token_user_id:
+                    await websocket.close(code=4401)
+                    return
+                current_user = session.get(TbUser, token_user_id)
+                if current_user is None or not current_user.is_active:
+                    await websocket.close(code=4403)
+                    return
+                if current_user.tenant_id != tenant_id:
+                    await websocket.close(code=4403)
+                    return
+                user_id = str(current_user.id)
+                user_label = current_user.username or str(current_user.id)
+            else:
+                debug_user = session.exec(
+                    select(TbUser).where(TbUser.username == "admin@tobit.local")
+                ).first()
+                if debug_user:
+                    user_id = str(debug_user.id)
+                    user_label = debug_user.username or "debug@dev"
+                else:
+                    user_id = "dev-user"
+                    user_label = "debug@dev"
+    except Exception:
+        await websocket.close(code=1011)
+        return
+
+    await ui_editor_collab_manager.connect(
+        websocket,
+        tenant_id=tenant_id,
+        screen_id=screen_id,
+        session_id=session_id,
+        user_id=user_id,
+        user_label=user_label,
+    )
+
+    try:
+        while True:
+            payload = await websocket.receive_json()
+            if not isinstance(payload, dict):
+                continue
+            msg_type = str(payload.get("type") or "")
+            if msg_type == "hello":
+                await ui_editor_collab_manager.touch(
+                    websocket, tenant_id=tenant_id, screen_id=screen_id
+                )
+                await ui_editor_collab_manager.broadcast_presence(
+                    tenant_id=tenant_id, screen_id=screen_id
+                )
+            elif msg_type == "screen_update":
+                screen = payload.get("screen")
+                if isinstance(screen, dict):
+                    await ui_editor_collab_manager.broadcast_screen_update(
+                        tenant_id=tenant_id,
+                        screen_id=screen_id,
+                        source_session_id=session_id,
+                        screen=screen,
+                        updated_at=str(payload.get("updated_at") or ""),
+                    )
+            else:
+                await ui_editor_collab_manager.touch(
+                    websocket, tenant_id=tenant_id, screen_id=screen_id
+                )
+    except WebSocketDisconnect:
+        pass
+    finally:
+        await ui_editor_collab_manager.disconnect(
+            websocket, tenant_id=tenant_id, screen_id=screen_id
+        )
 
 
 @router.post("/ui-actions", response_model=ResponseEnvelope)

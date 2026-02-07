@@ -103,6 +103,8 @@ class PromptAssetUpdate(BaseModel):
     input_schema: dict[str, Any] | None = None
     output_contract: dict[str, Any] | None = None
     tags: dict[str, Any] | None = None
+    expected_updated_at: datetime | None = None
+    force: bool = False
 
 
 class MappingAssetUpdate(BaseModel):
@@ -111,6 +113,8 @@ class MappingAssetUpdate(BaseModel):
     description: str | None = None
     content: dict[str, Any] | None = None
     tags: dict[str, Any] | None = None
+    expected_updated_at: datetime | None = None
+    force: bool = False
 
 
 class PolicyAssetUpdate(BaseModel):
@@ -119,6 +123,8 @@ class PolicyAssetUpdate(BaseModel):
     description: str | None = None
     limits: dict[str, Any] | None = None
     tags: dict[str, Any] | None = None
+    expected_updated_at: datetime | None = None
+    force: bool = False
 
 
 class QueryAssetUpdate(BaseModel):
@@ -129,6 +135,8 @@ class QueryAssetUpdate(BaseModel):
     query_params: dict[str, Any] | None = None
     query_metadata: dict[str, Any] | None = None
     tags: dict[str, Any] | None = None
+    expected_updated_at: datetime | None = None
+    force: bool = False
 
 
 class ScreenAssetUpdate(BaseModel):
@@ -137,6 +145,8 @@ class ScreenAssetUpdate(BaseModel):
     description: str | None = None
     screen_schema: dict[str, Any] | None = Field(default=None, alias="schema_json")
     tags: dict[str, Any] | None = None
+    expected_updated_at: datetime | None = None
+    force: bool = False
 
 
 class ToolAssetCreate(BaseModel):

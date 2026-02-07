@@ -1,0 +1,574 @@
+{
+  "screen_id": "cep_monitoring",
+  "name": "CEP Monitoring",
+  "version": "1.0",
+  "description": "Complex Event Processing monitoring dashboard with event streams, patterns, and alerts",
+  "layout": {
+    "type": "dashboard",
+    "direction": "vertical",
+    "spacing": 16
+  },
+  "components": [
+    {
+      "id": "cep_header",
+      "type": "row",
+      "label": "Header Row",
+      "props": {
+        "gap": 4,
+        "components": [
+          {
+            "id": "cep_title",
+            "type": "text",
+            "label": "Title",
+            "props": {
+              "content": "CEP Monitoring Dashboard",
+              "variant": "heading",
+              "color": "#1e293b"
+            }
+          },
+          {
+            "id": "cep_refresh_btn",
+            "type": "button",
+            "label": "Refresh Button",
+            "props": {
+              "label": "Refresh",
+              "variant": "default"
+            },
+            "actions": [
+              {
+                "id": "action_refresh_cep",
+                "handler": "fetch_cep_metrics",
+                "payload_template": {},
+                "continue_on_error": false
+              }
+            ]
+          }
+        ]
+      },
+      "visibility": { "rule": "true" }
+    },
+    {
+      "id": "cep_kpi_row",
+      "type": "row",
+      "label": "KPI Row",
+      "props": {
+        "gap": 3,
+        "components": [
+          {
+            "id": "cep_kpi_events",
+            "type": "keyvalue",
+            "label": "Events Processed",
+            "props": {
+              "items": [
+                {
+                  "key": "Total Events",
+                  "value": "{{state.total_events}}"
+                },
+                {
+                  "key": "Rate/sec",
+                  "value": "{{state.events_per_sec}}"
+                }
+              ]
+            },
+            "visibility": { "rule": "true" }
+          },
+          {
+            "id": "cep_kpi_patterns",
+            "type": "keyvalue",
+            "label": "Pattern Matches",
+            "props": {
+              "items": [
+                {
+                  "key": "Matches",
+                  "value": "{{state.pattern_matches}}"
+                },
+                {
+                  "key": "Active Patterns",
+                  "value": "{{state.active_patterns}}"
+                }
+              ]
+            },
+            "visibility": { "rule": "true" }
+          },
+          {
+            "id": "cep_kpi_latency",
+            "type": "keyvalue",
+            "label": "Processing Latency",
+            "props": {
+              "items": [
+                {
+                  "key": "Avg",
+                  "value": "{{state.avg_latency}}ms"
+                },
+                {
+                  "key": "P99",
+                  "value": "{{state.p99_latency}}ms"
+                }
+              ]
+            },
+            "visibility": { "rule": "true" }
+          },
+          {
+            "id": "cep_kpi_alerts",
+            "type": "keyvalue",
+            "label": "Alerts",
+            "props": {
+              "items": [
+                {
+                  "key": "Critical",
+                  "value": "{{state.critical_alerts}}"
+                },
+                {
+                  "key": "Warning",
+                  "value": "{{state.warning_alerts}}"
+                }
+              ]
+            },
+            "visibility": { "rule": "true" }
+          }
+        ]
+      },
+      "visibility": { "rule": "true" }
+    },
+    {
+      "id": "cep_chart_row",
+      "type": "row",
+      "label": "Charts Row",
+      "props": {
+        "gap": 3,
+        "components": [
+          {
+            "id": "cep_chart_event_rate",
+            "type": "chart",
+            "label": "Event Rate",
+            "props": {
+              "chart_type": "line",
+              "data": "{{state.event_rate_history}}",
+              "x_key": "timestamp",
+              "series": [
+                {
+                  "data_key": "rate",
+                  "color": "#3b82f6",
+                  "name": "Events/sec"
+                }
+              ],
+              "show_legend": true,
+              "show_grid": true,
+              "height": 200,
+              "responsive": true
+            },
+            "visibility": { "rule": "true" }
+          },
+          {
+            "id": "cep_chart_pattern_matches",
+            "type": "chart",
+            "label": "Pattern Matches",
+            "props": {
+              "chart_type": "bar",
+              "data": "{{state.pattern_matches_history}}",
+              "x_key": "timestamp",
+              "series": [
+                {
+                  "data_key": "matches",
+                  "color": "#22c55e",
+                  "name": "Matches"
+                }
+              ],
+              "show_legend": true,
+              "show_grid": true,
+              "height": 200,
+              "responsive": true
+            },
+            "visibility": { "rule": "true" }
+          }
+        ]
+      },
+      "visibility": { "rule": "true" }
+    },
+    {
+      "id": "cep_streams_table",
+      "type": "table",
+      "label": "Event Streams",
+      "props": {
+        "rows": "{{state.event_streams}}",
+        "columns": [
+          {
+            "field": "stream_id",
+            "header": "Stream ID",
+            "sortable": true
+          },
+          {
+            "field": "source",
+            "header": "Source",
+            "sortable": true
+          },
+          {
+            "field": "event_type",
+            "header": "Event Type",
+            "sortable": true
+          },
+          {
+            "field": "throughput",
+            "header": "Throughput (events/sec)",
+            "sortable": true
+          },
+          {
+            "field": "status",
+            "header": "Status"
+          },
+          {
+            "field": "last_event",
+            "header": "Last Event",
+            "sortable": true
+          }
+        ],
+        "sortable": true,
+        "page_size": 10,
+        "auto_refresh": {
+          "enabled": true,
+          "interval_ms": 15000,
+          "action_index": 0,
+          "max_failures": 3,
+          "backoff_ms": 5000
+        },
+        "conditional_styles": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "active",
+            "color": "#065f46",
+            "bg_color": "#d1fae5"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "paused",
+            "color": "#92400e",
+            "bg_color": "#fef3c7"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "stopped",
+            "color": "#7f1d1d",
+            "bg_color": "#fee2e2"
+          }
+        ]
+      },
+      "visibility": { "rule": "true" },
+      "actions": [
+        {
+          "id": "action_auto_refresh_streams",
+          "handler": "fetch_cep_streams",
+          "payload_template": {},
+          "continue_on_error": true
+        }
+      ]
+    },
+    {
+      "id": "cep_patterns_table",
+      "type": "table",
+      "label": "Active Patterns",
+      "props": {
+        "rows": "{{state.active_patterns_list}}",
+        "columns": [
+          {
+            "field": "pattern_id",
+            "header": "Pattern ID",
+            "sortable": true
+          },
+          {
+            "field": "pattern_name",
+            "header": "Pattern Name",
+            "sortable": true
+          },
+          {
+            "field": "pattern_type",
+            "header": "Type",
+            "sortable": true
+          },
+          {
+            "field": "match_count",
+            "header": "Match Count",
+            "sortable": true
+          },
+          {
+            "field": "avg_match_time",
+            "header": "Avg Match Time (ms)",
+            "sortable": true
+          },
+          {
+            "field": "status",
+            "header": "Status"
+          }
+        ],
+        "sortable": true,
+        "page_size": 10,
+        "conditional_styles": [
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "enabled",
+            "color": "#065f46",
+            "bg_color": "#d1fae5"
+          },
+          {
+            "field": "status",
+            "operator": "eq",
+            "value": "disabled",
+            "color": "#374151",
+            "bg_color": "#e5e7eb"
+          }
+        ]
+      },
+      "visibility": { "rule": "true" },
+      "actions": [
+        {
+          "id": "action_fetch_patterns",
+          "handler": "fetch_cep_patterns",
+          "payload_template": {},
+          "continue_on_error": true
+        }
+      ]
+    },
+    {
+      "id": "cep_alerts_table",
+      "type": "table",
+      "label": "CEP Alerts",
+      "props": {
+        "rows": "{{state.cep_alerts}}",
+        "columns": [
+          {
+            "field": "timestamp",
+            "header": "Time",
+            "sortable": true
+          },
+          {
+            "field": "severity",
+            "header": "Severity"
+          },
+          {
+            "field": "alert_type",
+            "header": "Alert Type"
+          },
+          {
+            "field": "message",
+            "header": "Message"
+          },
+          {
+            "field": "pattern_id",
+            "header": "Pattern ID"
+          },
+          {
+            "field": "event_count",
+            "header": "Event Count",
+            "sortable": true
+          },
+          {
+            "field": "status",
+            "header": "Status"
+          }
+        ],
+        "sortable": true,
+        "page_size": 10,
+        "auto_refresh": {
+          "enabled": true,
+          "interval_ms": 10000,
+          "action_index": 0,
+          "max_failures": 3,
+          "backoff_ms": 5000
+        },
+        "conditional_styles": [
+          {
+            "field": "severity",
+            "operator": "eq",
+            "value": "critical",
+            "color": "#ffffff",
+            "bg_color": "#ef4444"
+          },
+          {
+            "field": "severity",
+            "operator": "eq",
+            "value": "warning",
+            "color": "#1f2937",
+            "bg_color": "#f59e0b"
+          },
+          {
+            "field": "severity",
+            "operator": "eq",
+            "value": "info",
+            "color": "#1f2937",
+            "bg_color": "#3b82f6"
+          }
+        ]
+      },
+      "visibility": { "rule": "true" },
+      "actions": [
+        {
+          "id": "action_auto_refresh_alerts",
+          "handler": "fetch_cep_alerts",
+          "payload_template": {},
+          "continue_on_error": true
+        }
+      ]
+    },
+    {
+      "id": "cep_filter_row",
+      "type": "row",
+      "label": "Filter Row",
+      "props": {
+        "gap": 2,
+        "components": [
+          {
+            "id": "cep_filter_label",
+            "type": "text",
+            "label": "Filter Label",
+            "props": {
+              "content": "Filter:",
+              "variant": "label"
+            }
+          },
+          {
+            "id": "cep_filter_input",
+            "type": "input",
+            "label": "Filter Input",
+            "props": {
+              "placeholder": "Search alerts...",
+              "value": "{{state.filter_text}}"
+            },
+            "actions": [
+              {
+                "id": "action_apply_filter",
+                "handler": "state.merge",
+                "payload_template": {
+                  "patch": {
+                    "filter_text": "{{inputs.value}}"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "cep_clear_filter_btn",
+            "type": "button",
+            "label": "Clear Filter",
+            "props": {
+              "label": "Clear",
+              "variant": "outline"
+            },
+            "actions": [
+              {
+                "id": "action_clear_filter",
+                "handler": "state.merge",
+                "payload_template": {
+                  "patch": {
+                    "filter_text": ""
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "visibility": { "rule": "true" }
+    }
+  ],
+  "state": {
+    "initial": {
+      "total_events": 0,
+      "events_per_sec": 0,
+      "pattern_matches": 0,
+      "active_patterns": 0,
+      "avg_latency": 0,
+      "p99_latency": 0,
+      "critical_alerts": 0,
+      "warning_alerts": 0,
+      "event_rate_history": [],
+      "pattern_matches_history": [],
+      "event_streams": [],
+      "active_patterns_list": [],
+      "cep_alerts": [],
+      "filter_text": "",
+      "last_refresh": ""
+    },
+    "schema": {
+      "total_events": { "type": "number" },
+      "events_per_sec": { "type": "number" },
+      "pattern_matches": { "type": "number" },
+      "active_patterns": { "type": "number" },
+      "avg_latency": { "type": "number" },
+      "p99_latency": { "type": "number" },
+      "critical_alerts": { "type": "number" },
+      "warning_alerts": { "type": "number" },
+      "event_rate_history": { "type": "array" },
+      "pattern_matches_history": { "type": "array" },
+      "event_streams": { "type": "array" },
+      "active_patterns_list": { "type": "array" },
+      "cep_alerts": { "type": "array" },
+      "filter_text": { "type": "string" },
+      "last_refresh": { "type": "string" }
+    }
+  },
+  "actions": [
+    {
+      "id": "fetch_cep_metrics",
+      "label": "Fetch CEP Metrics",
+      "handler": "fetch_cep_metrics",
+      "payload_template": {},
+      "context_required": [],
+      "endpoint": "/ops/ui-actions"
+    },
+    {
+      "id": "fetch_cep_streams",
+      "label": "Fetch CEP Streams",
+      "handler": "fetch_cep_streams",
+      "payload_template": {},
+      "context_required": [],
+      "endpoint": "/ops/ui-actions"
+    },
+    {
+      "id": "fetch_cep_patterns",
+      "label": "Fetch CEP Patterns",
+      "handler": "fetch_cep_patterns",
+      "payload_template": {},
+      "context_required": [],
+      "endpoint": "/ops/ui-actions"
+    },
+    {
+      "id": "fetch_cep_alerts",
+      "label": "Fetch CEP Alerts",
+      "handler": "fetch_cep_alerts",
+      "payload_template": {
+        "filter": "{{state.filter_text}}"
+      },
+      "context_required": [],
+      "endpoint": "/ops/ui-actions"
+    }
+  ],
+  "bindings": {
+    "state.total_events": "{{result.fetch_cep_metrics.total_events}}",
+    "state.events_per_sec": "{{result.fetch_cep_metrics.events_per_sec}}",
+    "state.pattern_matches": "{{result.fetch_cep_metrics.pattern_matches}}",
+    "state.active_patterns": "{{result.fetch_cep_metrics.active_patterns}}",
+    "state.avg_latency": "{{result.fetch_cep_metrics.avg_latency}}",
+    "state.p99_latency": "{{result.fetch_cep_metrics.p99_latency}}",
+    "state.critical_alerts": "{{result.fetch_cep_metrics.critical_alerts}}",
+    "state.warning_alerts": "{{result.fetch_cep_metrics.warning_alerts}}",
+    "state.event_rate_history": "{{result.fetch_cep_metrics.event_rate_history}}",
+    "state.pattern_matches_history": "{{result.fetch_cep_metrics.pattern_matches_history}}",
+    "state.event_streams": "{{result.fetch_cep_streams.streams}}",
+    "state.active_patterns_list": "{{result.fetch_cep_patterns.patterns}}",
+    "state.cep_alerts": "{{result.fetch_cep_alerts.alerts}}",
+    "state.last_refresh": "{{context.timestamp}}"
+  },
+  "metadata": {
+    "author": "CEP Administrator",
+    "created_at": "2026-02-07",
+    "notes": "Complex Event Processing monitoring dashboard with event streams, pattern matching, and alert management",
+    "tags": {
+      "category": "cep",
+      "type": "monitoring",
+      "auto_refresh": "true"
+    }
+  }
+}

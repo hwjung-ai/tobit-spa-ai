@@ -8,9 +8,6 @@ import {
   AlertTriangle,
   CheckCircle,
   RefreshCw,
-  Server,
-  Database,
-  Network,
 } from "lucide-react";
 import { type OpsSummaryData, type OpsHistoryEntry } from "./types/opsTypes";
 import { cn } from "@/lib/utils";
@@ -48,11 +45,6 @@ export default function OpsSummaryStrip({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [healthStatus, setHealthStatus] = useState<Record<string, string>>({
-    service: "ok",
-    database: "ok",
-    network: "ok"
-  });
 
   // Function to aggregate metrics from the real API
   const aggregateMetrics = useCallback(async () => {
@@ -65,7 +57,6 @@ export default function OpsSummaryStrip({
         failedQueries: number;
         avgResponseTime: number;
         recentActivity: AggregatedMetrics["recentActivity"];
-        health: Record<string, string>;
       }>("/ops/summary/stats");
 
       // ResponseEnvelope logic: the actual data is in (response as any).data
@@ -82,10 +73,6 @@ export default function OpsSummaryStrip({
         avgResponseTime: data.avgResponseTime,
         recentActivity: data.recentActivity,
       });
-
-      if (data.health) {
-        setHealthStatus(data.health);
-      }
 
       onUpdateData?.({
         totalQueries: data.totalQueries,
@@ -129,14 +116,6 @@ export default function OpsSummaryStrip({
       all: "전체",
     };
     return labels[type] || type;
-  };
-
-  const getHealthColor = (status: string) => {
-    return status === "ok" ? "text-green-400" : "text-rose-400";
-  };
-
-  const getHealthText = (status: string) => {
-    return status === "ok" ? "정상" : "장애";
   };
 
   return (
@@ -221,50 +200,7 @@ export default function OpsSummaryStrip({
         <span className="text-xs text-slate-400">새로고침</span>
       </button>
 
-      {/* System Status Indicators */}
-      <div className="flex items-center gap-3 border-l border-slate-700 pl-4">
-        <Tooltip content="서비스 상태">
-          <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Server className={cn("h-3 w-3", getHealthColor(healthStatus.service))} />
-            <span className={getHealthColor(healthStatus.service)}>{getHealthText(healthStatus.service)}</span>
-          </div>
-        </Tooltip>
-        <Tooltip content="데이터베이스">
-          <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Database className={cn("h-3 w-3", getHealthColor(healthStatus.database))} />
-            <span className={getHealthColor(healthStatus.database)}>{getHealthText(healthStatus.database)}</span>
-          </div>
-        </Tooltip>
-        <Tooltip content="네트워크">
-          <div className="flex items-center gap-1 text-xs text-slate-400">
-            <Network className={cn("h-3 w-3", getHealthColor(healthStatus.network))} />
-            <span className={getHealthColor(healthStatus.network)}>{getHealthText(healthStatus.network)}</span>
-          </div>
-        </Tooltip>
-      </div>
     </div>
   );
 }
 
-// Simple Tooltip component
-function Tooltip({ content, children }: { content: string; children: React.ReactNode }) {
-  const [show, setShow] = useState(false);
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      {children}
-      {show && (
-        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-slate-800 text-xs text-white px-2 py-1 rounded whitespace-nowrap">
-          {content}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-            <div className="w-2 h-2 bg-slate-800 rotate-45" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}

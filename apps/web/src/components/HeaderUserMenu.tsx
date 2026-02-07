@@ -47,7 +47,7 @@ export default function HeaderUserMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+          className="border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
         >
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">

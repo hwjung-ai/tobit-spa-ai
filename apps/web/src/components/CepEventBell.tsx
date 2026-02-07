@@ -32,6 +32,7 @@ const normalizeError = (error: unknown) => {
 
 export default function CepEventBell() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const disableRealtime = process.env.NEXT_PUBLIC_E2E_DISABLE_REALTIME === "true";
   const [pulse, setPulse] = useState(false);
   const previousCount = useRef<number>(0);
   const queryClient = useQueryClient();
@@ -46,11 +47,16 @@ export default function CepEventBell() {
       }
       return payload.data?.summary as SummaryPayload;
     },
+    enabled: !disableRealtime,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
 
   useEffect(() => {
+    if (disableRealtime) {
+      return;
+    }
+
     // SSE 스트림 연결 관리
     // - 미승인 이벤트 수 실시간 추적
     // - 새 이벤트 발생 시 펄스 애니메이션
@@ -128,7 +134,7 @@ export default function CepEventBell() {
         reconnectTimeout = null;
       }
     };
-  }, [apiBaseUrl, queryClient]);
+  }, [apiBaseUrl, disableRealtime, queryClient]);
 
   const summary = summaryQuery.data ?? null;
   const error = summaryQuery.error ? normalizeError(summaryQuery.error) : null;

@@ -1,11 +1,21 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  Cell,
   Line,
   LineChart,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
@@ -31,6 +41,72 @@ interface UIScreenRendererProps {
   onResult?: (blocks: unknown[]) => void;
   schemaOverride?: ScreenSchemaV1 | null;
 }
+
+interface UIActionPayload {
+  handler: string;
+  payload_template?: Record<string, unknown>;
+  continue_on_error?: boolean;
+  stop_on_error?: boolean;
+  retry_count?: number;
+  retry_delay_ms?: number;
+  run_if?: string;
+  on_error_action_index?: number;
+  on_error_action_indexes?: number[];
+}
+
+interface AutoRefreshConfig {
+  key: string;
+  componentId: string;
+  componentLabel: string;
+  action: UIActionPayload;
+  intervalMs: number;
+  backoffMs: number;
+  maxFailures: number;
+}
+
+interface AutoRefreshStatus {
+  failures: number;
+  lastSuccessAt: number | null;
+  lastError: string | null;
+  paused: boolean;
+  stopped: boolean;
+}
+
+interface ActionExecutionResult {
+  ok: boolean;
+  error?: string;
+}
+
+interface ActionLogEntry {
+  id: string;
+  handler: string;
+  status: "ok" | "error";
+  source: "user" | "auto_refresh";
+  startedAt: number;
+  durationMs: number;
+  attempt: number;
+  error?: string;
+}
+
+type TableSortDirection = "asc" | "desc";
+
+interface TableUiState {
+  sortKey: string | null;
+  sortDir: TableSortDirection;
+  page: number;
+}
+
+type ConditionalStyleRule = {
+  field: string;
+  operator: string;
+  value: string;
+  color?: string;
+  bg_color?: string;
+  border_color?: string;
+  series_name?: string;
+  target?: string;
+  variant?: string;
+};
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -68,6 +144,85 @@ class UIScreenErrorBoundary extends React.Component<
   }
 }
 
+function parseMaybeNumber(value: unknown): number | null {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function evaluateConditionalRule(
+  leftValue: unknown,
+  operatorRaw: string,
+  rightValue: unknown
+): boolean {
+  const operator = String(operatorRaw || "eq");
+  const leftNum = parseMaybeNumber(leftValue);
+  const rightNum = parseMaybeNumber(rightValue);
+  const leftStr = String(leftValue ?? "");
+  const rightStr = String(rightValue ?? "");
+
+  if (operator === "eq") return leftStr === rightStr;
+  if (operator === "ne") return leftStr !== rightStr;
+  if (operator === "contains") return leftStr.includes(rightStr);
+  if (operator === "gt") {
+    if (leftNum !== null && rightNum !== null) return leftNum > rightNum;
+    return leftStr > rightStr;
+  }
+  if (operator === "gte") {
+    if (leftNum !== null && rightNum !== null) return leftNum >= rightNum;
+    return leftStr >= rightStr;
+  }
+  if (operator === "lt") {
+    if (leftNum !== null && rightNum !== null) return leftNum < rightNum;
+    return leftStr < rightStr;
+  }
+  if (operator === "lte") {
+    if (leftNum !== null && rightNum !== null) return leftNum <= rightNum;
+    return leftStr <= rightStr;
+  }
+  return false;
+}
+
+function toConditionalStyleRules(raw: unknown): ConditionalStyleRule[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item) => {
+    const obj = (item || {}) as Record<string, unknown>;
+    return {
+      field: String(obj.field || ""),
+      operator: String(obj.operator || "eq"),
+      value: String(obj.value ?? ""),
+      color: String(obj.color || ""),
+      bg_color: String(obj.bg_color || ""),
+      border_color: String(obj.border_color || ""),
+      series_name: String(obj.series_name || ""),
+      target: String(obj.target || "auto"),
+      variant: String(obj.variant || ""),
+    };
+  });
+}
+
+function badgeVariantClass(variant: string): string {
+  const normalized = String(variant || "default").toLowerCase();
+  if (normalized === "secondary") {
+    return "border-slate-600 bg-slate-800 text-slate-200";
+  }
+  if (normalized === "success") {
+    return "border-emerald-700 bg-emerald-900/50 text-emerald-200";
+  }
+  if (normalized === "warning") {
+    return "border-amber-700 bg-amber-900/50 text-amber-200";
+  }
+  if (normalized === "danger" || normalized === "destructive") {
+    return "border-rose-700 bg-rose-900/50 text-rose-200";
+  }
+  if (normalized === "outline") {
+    return "border-slate-500 bg-transparent text-slate-200";
+  }
+  if (normalized === "ghost") {
+    return "border-transparent bg-transparent text-slate-200";
+  }
+  return "border-slate-700 bg-slate-800/40 text-slate-200";
+}
+
 export default function UIScreenRenderer({
   block,
   traceId,
@@ -77,10 +232,26 @@ export default function UIScreenRenderer({
   const [screenSchema, setScreenSchema] = useState<ScreenSchemaV1 | null>(null);
   const [state, setState] = useState<Record<string, unknown>>({});
   const [activeTabs, setActiveTabs] = useState<Record<string, number>>({});
+  const [activeAccordions, setActiveAccordions] = useState<Record<string, number[]>>({});
+  const [tableUiState, setTableUiState] = useState<Record<string, TableUiState>>({});
   const screenId = block.screen_id;
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [autoRefreshConfigs, setAutoRefreshConfigs] = useState<AutoRefreshConfig[]>([]);
+  const [autoRefreshStatus, setAutoRefreshStatus] = useState<Record<string, AutoRefreshStatus>>({});
+  const [actionLogs, setActionLogs] = useState<ActionLogEntry[]>([]);
+  const contextRef = useRef({
+    state: {} as Record<string, unknown>,
+    inputs: {} as Record<string, unknown>,
+    context: {} as Record<string, unknown>,
+    trace_id: traceId || null,
+  });
+  const inFlightAutoActionsRef = useRef<Set<string>>(new Set());
+  const autoRefreshFailuresRef = useRef<Record<string, number>>({});
+  const autoRefreshCooldownUntilRef = useRef<Record<string, number>>({});
+  const autoRefreshControlsRef = useRef<Record<string, { paused: boolean; stopped: boolean }>>({});
+  const lastNavigationRef = useRef<string>("");
 
   useEffect(() => {
     async function load() {
@@ -107,6 +278,16 @@ export default function UIScreenRenderer({
 
         const initial = schema.state?.initial || {};
         const baseState: Record<string, unknown> = { ...initial, params: block.params || {} };
+        const paramsPayload = (block.params || {}) as Record<string, unknown>;
+        if (paramsPayload.inputs && typeof paramsPayload.inputs === "object") {
+          baseState.inputs = {
+            ...((baseState.inputs as Record<string, unknown>) || {}),
+            ...(paramsPayload.inputs as Record<string, unknown>),
+          };
+        }
+        if (paramsPayload.state && typeof paramsPayload.state === "object") {
+          Object.assign(baseState, paramsPayload.state as Record<string, unknown>);
+        }
 
         applyBindings(baseState, schema.bindings || null, {
           state: baseState,
@@ -139,13 +320,49 @@ export default function UIScreenRenderer({
     () => ({
       state,
       inputs: (state.inputs as Record<string, unknown>) || {},
-      context: {},
+      context:
+        ((state.params as Record<string, unknown> | undefined)?.context as Record<
+          string,
+          unknown
+        >) || {},
       trace_id: traceId || null,
     }),
     [state, traceId]
   );
 
-  const handleAction = async (action: { handler: string; payload_template?: Record<string, unknown> }) => {
+  useEffect(() => {
+    contextRef.current = context;
+  }, [context]);
+
+  useEffect(() => {
+    const nav = (state.__nav as Record<string, unknown> | undefined) || null;
+    if (!nav) return;
+    const to = typeof nav.to === "string" ? nav.to : "";
+    if (!to) return;
+    const query = nav.query && typeof nav.query === "object" ? (nav.query as Record<string, unknown>) : {};
+    const queryString = Object.keys(query).length
+      ? `?${new URLSearchParams(
+          Object.entries(query).map(([k, v]) => [k, String(v ?? "")])
+        ).toString()}`
+      : "";
+    const target = `${to}${queryString}`;
+    if (!target || lastNavigationRef.current === target) {
+      return;
+    }
+    lastNavigationRef.current = target;
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", target);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    }
+  }, [state.__nav]);
+
+  const handleAction = useCallback(async (
+    action: UIActionPayload,
+    opts?: {
+      silent?: boolean;
+      runtimeContext?: Record<string, unknown>;
+    }
+  ): Promise<ActionExecutionResult> => {
     setState((prev) => {
       const next = { ...prev };
       setLoading(next, action.handler, true);
@@ -154,11 +371,21 @@ export default function UIScreenRenderer({
     });
 
     try {
+      const mergedContext = {
+        ...(contextRef.current.context || {}),
+        ...(opts?.runtimeContext || {}),
+      };
       const payload = {
         trace_id: traceId || null,
         action_id: action.handler,
-        inputs: renderTemplate(action.payload_template || {}, context) as Record<string, unknown>,
-        context: {},
+        inputs: renderTemplate(
+          action.payload_template || {},
+          {
+            ...contextRef.current,
+            context: mergedContext,
+          }
+        ) as Record<string, unknown>,
+        context: mergedContext,
         screen_id: screenId,
       };
 
@@ -181,17 +408,332 @@ export default function UIScreenRenderer({
       });
 
       if (resultBlocks.length && onResult) {
-        onResult(resultBlocks);
+        if (!opts?.silent) {
+          onResult(resultBlocks);
+        }
       }
+      return { ok: true };
     } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       setState((prev) => {
         const next = { ...prev };
         setLoading(next, action.handler, false);
-        setError(next, action.handler, err instanceof Error ? err.message : String(err));
+        setError(next, action.handler, errorMessage);
         return next;
       });
+      return { ok: false, error: errorMessage };
     }
-  };
+  }, [onResult, screenId, traceId]);
+
+  const executeActionWithPolicy = useCallback(
+    async (
+      action: UIActionPayload,
+      opts?: {
+        silent?: boolean;
+        runtimeContext?: Record<string, unknown>;
+        source?: "user" | "auto_refresh";
+      }
+    ) => {
+      const retryCount = Math.max(0, Number(action.retry_count || 0));
+      const retryDelayMs = Math.max(0, Number(action.retry_delay_ms || 500));
+
+      for (let attempt = 0; attempt <= retryCount; attempt += 1) {
+        const startedAt = Date.now();
+        const result = await handleAction(action, {
+          silent: opts?.silent,
+          runtimeContext: opts?.runtimeContext,
+        });
+        const durationMs = Date.now() - startedAt;
+        setActionLogs((prev) => {
+          const next: ActionLogEntry[] = [
+            {
+              id: `${action.handler}-${startedAt}-${attempt}`,
+              handler: action.handler,
+              status: result.ok ? "ok" : "error",
+              source: opts?.source || "user",
+              startedAt,
+              durationMs,
+              attempt,
+              error: result.error,
+            },
+            ...prev,
+          ];
+          return next.slice(0, 30);
+        });
+
+        if (result.ok) {
+          return result;
+        }
+        if (attempt >= retryCount) {
+          return result;
+        }
+        if (retryDelayMs > 0) {
+          const waitMs = retryDelayMs * (attempt + 1);
+          await new Promise((resolve) => window.setTimeout(resolve, waitMs));
+        }
+      }
+
+      return { ok: false, error: "retry policy exhausted" } as ActionExecutionResult;
+    },
+    [handleAction]
+  );
+
+  const executeActions = useCallback(
+    async (
+      actions: UIActionPayload[] | undefined,
+      opts?: { silent?: boolean; runtimeContext?: Record<string, unknown> }
+    ) => {
+      if (!actions || actions.length === 0) return;
+      const shouldRun = (action: UIActionPayload): boolean => {
+        if (!action.run_if) return true;
+        const rendered = renderTemplate(action.run_if, {
+          ...contextRef.current,
+          context: {
+            ...(contextRef.current.context || {}),
+            ...(opts?.runtimeContext || {}),
+          },
+        });
+        if (typeof rendered === "boolean") return rendered;
+        if (typeof rendered === "number") return rendered !== 0;
+        if (typeof rendered === "string") {
+          const v = rendered.trim().toLowerCase();
+          if (v === "" || v === "false" || v === "0" || v === "no") return false;
+          if (v === "true" || v === "1" || v === "yes") return true;
+          return true;
+        }
+        return !!rendered;
+      };
+      for (let idx = 0; idx < actions.length; idx += 1) {
+        const action = actions[idx];
+        if (!shouldRun(action)) {
+          continue;
+        }
+        const result = await executeActionWithPolicy(action, {
+          silent: opts?.silent,
+          runtimeContext: opts?.runtimeContext,
+          source: opts?.silent ? "auto_refresh" : "user",
+        });
+        const stopOnError = action.stop_on_error !== false;
+        const continueOnError = action.continue_on_error === true;
+        if (!result.ok && stopOnError && !continueOnError) {
+          const queue: number[] = [];
+          const multiple = Array.isArray(action.on_error_action_indexes)
+            ? action.on_error_action_indexes
+            : [];
+          for (const candidate of multiple) {
+            const num = Number(candidate);
+            if (Number.isFinite(num) && num >= 0 && num !== idx) {
+              queue.push(num);
+            }
+          }
+          const fallbackIndex = Number(action.on_error_action_index ?? -1);
+          if (Number.isFinite(fallbackIndex) && fallbackIndex >= 0 && fallbackIndex !== idx) {
+            queue.push(fallbackIndex);
+          }
+          const fallbackOrder = [...new Set(queue)];
+          for (const fallbackIdx of fallbackOrder) {
+            if (fallbackIdx < 0 || fallbackIdx >= actions.length) continue;
+            const fallback = actions[fallbackIdx];
+            const fallbackResult = await executeActionWithPolicy(fallback, {
+              silent: opts?.silent,
+              runtimeContext: opts?.runtimeContext,
+              source: opts?.silent ? "auto_refresh" : "user",
+            });
+            if (fallbackResult.ok) {
+              break;
+            }
+          }
+          break;
+        }
+      }
+    },
+    [executeActionWithPolicy]
+  );
+
+  const toggleAutoRefreshPaused = useCallback((key: string) => {
+    const current = autoRefreshControlsRef.current[key] || { paused: false, stopped: false };
+    autoRefreshControlsRef.current[key] = { ...current, paused: !current.paused };
+    setAutoRefreshStatus((prev) => ({
+      ...prev,
+      [key]: {
+        failures: prev[key]?.failures || 0,
+        lastSuccessAt: prev[key]?.lastSuccessAt || null,
+        lastError: prev[key]?.lastError || null,
+        paused: !current.paused,
+        stopped: current.stopped,
+      },
+    }));
+  }, []);
+
+  useEffect(() => {
+    const collectAutoRefreshConfigs = (components: Component[]): AutoRefreshConfig[] => {
+      const out: AutoRefreshConfig[] = [];
+      const walk = (items: Component[]) => {
+        for (const comp of items) {
+          const props = (comp.props || {}) as Record<string, unknown>;
+          const autoRefresh = (props.auto_refresh ||
+            props.refresh ||
+            null) as Record<string, unknown> | null;
+          const legacyInterval = Number(props.refresh_interval_ms || 0);
+          const actions = comp.actions || [];
+
+          if (actions.length > 0) {
+            const configuredEnabled = autoRefresh ? autoRefresh.enabled !== false : true;
+            const intervalRaw = autoRefresh ? Number(autoRefresh.interval_ms || 0) : 0;
+            const intervalMs = intervalRaw > 0 ? intervalRaw : legacyInterval;
+            if (configuredEnabled && intervalMs > 0) {
+              const actionIndexRaw = autoRefresh ? Number(autoRefresh.action_index || 0) : 0;
+              const actionIndex = Number.isFinite(actionIndexRaw) ? actionIndexRaw : 0;
+              const selectedAction = actions[actionIndex] || actions[0];
+              if (selectedAction?.handler) {
+                const maxFailuresRaw = autoRefresh
+                  ? Number(autoRefresh.max_failures || 3)
+                  : 3;
+                const backoffRaw = autoRefresh
+                  ? Number(autoRefresh.backoff_ms || 0)
+                  : 0;
+                const config: AutoRefreshConfig = {
+                  key: `${comp.id}:${selectedAction.handler}:${actionIndex}`,
+                  componentId: comp.id,
+                  componentLabel: comp.label || comp.id,
+                  action: {
+                    handler: selectedAction.handler,
+                    payload_template: selectedAction.payload_template || {},
+                  },
+                  intervalMs: Math.max(1000, intervalMs),
+                  backoffMs: Math.max(0, backoffRaw),
+                  maxFailures: Math.max(1, maxFailuresRaw),
+                };
+                out.push(config);
+              }
+            }
+          }
+
+          const propChildren = (props.components as Component[]) || [];
+          const directChildren = ((comp as unknown as { children?: Component[] }).children || []);
+          if (propChildren.length > 0) walk(propChildren);
+          if (directChildren.length > 0) walk(directChildren);
+        }
+      };
+      walk(components);
+      return out;
+    };
+
+    if (!screenSchema) {
+      return;
+    }
+
+    const configs = collectAutoRefreshConfigs(screenSchema.components || []);
+    setAutoRefreshConfigs(configs);
+    if (configs.length === 0) {
+      return;
+    }
+
+    setAutoRefreshStatus((prev) => {
+      const next = { ...prev };
+      for (const config of configs) {
+        if (!next[config.key]) {
+          next[config.key] = {
+            failures: 0,
+            lastSuccessAt: null,
+            lastError: null,
+            paused: false,
+            stopped: false,
+          };
+        }
+        if (!autoRefreshControlsRef.current[config.key]) {
+          autoRefreshControlsRef.current[config.key] = {
+            paused: false,
+            stopped: false,
+          };
+        }
+      }
+      return next;
+    });
+
+    const timers: number[] = [];
+    let disposed = false;
+
+    configs.forEach((config) => {
+      const timer = window.setInterval(async () => {
+        if (disposed) return;
+        const control = autoRefreshControlsRef.current[config.key];
+        if (control?.paused || control?.stopped) return;
+        if (typeof document !== "undefined" && document.hidden) return;
+
+        const cooldownUntil = autoRefreshCooldownUntilRef.current[config.key] || 0;
+        if (Date.now() < cooldownUntil) return;
+
+        if (inFlightAutoActionsRef.current.has(config.key)) return;
+        inFlightAutoActionsRef.current.add(config.key);
+
+        try {
+          const result = await executeActionWithPolicy(config.action, {
+            silent: true,
+            source: "auto_refresh",
+          });
+          if (result.ok) {
+            autoRefreshFailuresRef.current[config.key] = 0;
+            autoRefreshCooldownUntilRef.current[config.key] = 0;
+            setAutoRefreshStatus((prev) => ({
+              ...prev,
+              [config.key]: {
+                failures: 0,
+                lastSuccessAt: Date.now(),
+                lastError: null,
+                paused: autoRefreshControlsRef.current[config.key]?.paused || false,
+                stopped: autoRefreshControlsRef.current[config.key]?.stopped || false,
+              },
+            }));
+            return;
+          }
+
+          const nextFailures = (autoRefreshFailuresRef.current[config.key] || 0) + 1;
+          autoRefreshFailuresRef.current[config.key] = nextFailures;
+
+          if (nextFailures >= config.maxFailures) {
+            autoRefreshCooldownUntilRef.current[config.key] = Number.MAX_SAFE_INTEGER;
+            autoRefreshControlsRef.current[config.key] = { paused: false, stopped: true };
+            setAutoRefreshStatus((prev) => ({
+              ...prev,
+              [config.key]: {
+                failures: nextFailures,
+                lastSuccessAt: prev[config.key]?.lastSuccessAt || null,
+                lastError: `Stopped after ${nextFailures} failures`,
+                paused: false,
+                stopped: true,
+              },
+            }));
+            return;
+          }
+
+          if (config.backoffMs > 0) {
+            const backoffMultiplier = 2 ** Math.max(0, nextFailures - 1);
+            autoRefreshCooldownUntilRef.current[config.key] =
+              Date.now() + config.backoffMs * backoffMultiplier;
+          }
+          setAutoRefreshStatus((prev) => ({
+            ...prev,
+            [config.key]: {
+              failures: nextFailures,
+              lastSuccessAt: prev[config.key]?.lastSuccessAt || null,
+              lastError: `refresh failed (${nextFailures}/${config.maxFailures})`,
+              paused: autoRefreshControlsRef.current[config.key]?.paused || false,
+              stopped: autoRefreshControlsRef.current[config.key]?.stopped || false,
+            },
+          }));
+        } finally {
+          inFlightAutoActionsRef.current.delete(config.key);
+        }
+      }, config.intervalMs);
+      timers.push(timer);
+    });
+
+    return () => {
+      disposed = true;
+      timers.forEach((timer) => window.clearInterval(timer));
+    };
+  }, [executeActionWithPolicy, screenSchema]);
 
   const handleInputChange = (component: Component, value: unknown) => {
     setState((prev) => {
@@ -225,7 +767,30 @@ export default function UIScreenRenderer({
     );
   }
 
-  const renderComponent = (comp: Component) => {
+  const evaluateVisibility = (rule: unknown): boolean => {
+    if (rule === null || rule === undefined || rule === "") return true;
+    const rendered =
+      typeof rule === "string" ? renderTemplate(rule, context) : rule;
+    if (typeof rendered === "boolean") return rendered;
+    if (typeof rendered === "number") return rendered !== 0;
+    if (typeof rendered === "string") {
+      const normalized = rendered.trim().toLowerCase();
+      if (normalized === "" || normalized === "false" || normalized === "0" || normalized === "no") {
+        return false;
+      }
+      if (normalized === "true" || normalized === "1" || normalized === "yes") {
+        return true;
+      }
+      return true;
+    }
+    if (Array.isArray(rendered)) return rendered.length > 0;
+    return !!rendered;
+  };
+
+  const renderComponent = (comp: Component): React.ReactNode => {
+    if (!evaluateVisibility(comp.visibility?.rule)) {
+      return null;
+    }
     const desc = getComponentDescriptor(comp.type);
     const boundValue = comp.bind ? get(state, comp.bind.replace(/^state\./, "")) : undefined;
     const props = renderTemplate(comp.props || {}, context) as Record<string, unknown>;
@@ -261,14 +826,13 @@ export default function UIScreenRenderer({
       const disabled = !!props.disabled;
       const actionId = comp.actions?.[0]?.handler;
       const isLoadingAction = actionId ? !!(state.__loading as Record<string, boolean>)?.[actionId] : false;
-      const action = comp.actions?.[0];
       return (
         <button
           key={comp.id}
           type="button"
           className="rounded-full border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-100 hover:border-slate-500"
           disabled={disabled || isLoadingAction}
-          onClick={() => action && handleAction(action)}
+          onClick={() => executeActions(comp.actions as UIActionPayload[])}
           data-testid={`component-button-${comp.id}`}
         >
           {isLoadingAction ? "Loading..." : label}
@@ -287,8 +851,8 @@ export default function UIScreenRenderer({
           value={String(value)}
           onChange={(e) => handleInputChange(comp, e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && comp.actions?.[0]) {
-              handleAction(comp.actions[0]);
+            if (e.key === "Enter" && comp.actions?.length) {
+              executeActions(comp.actions as UIActionPayload[]);
             }
           }}
           data-testid={`component-input-${comp.id}`}
@@ -296,49 +860,509 @@ export default function UIScreenRenderer({
       );
     }
 
-    if (comp.type === "table") {
-      const rows = (props.rows as unknown[]) || (boundValue as unknown[]) || [];
-      const columns = (props.columns as string[]) || (Array.isArray(rows[0]) ? Object.keys(rows[0]) : []);
+    if (comp.type === "form") {
+      const title = String(props.title || comp.label || "Form");
+      const submitLabel = String(props.submit_label || "Submit");
+      const children = (props.components as Component[]) || [];
       return (
-        <table key={comp.id} className="min-w-full border border-slate-800 text-xs" data-testid={`component-table-${comp.id}`}>
-          <thead className="bg-slate-900/80 text-slate-300">
-            <tr>
-              {columns.map((col) => (
-                <th key={col} className="border border-slate-800 px-2 py-1 text-left">
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row: unknown, index: number) => (
-              <tr key={`${comp.id}-row-${index}`} className="border border-slate-800">
-                {columns.map((col) => (
-                  <td key={`${comp.id}-${col}-${index}`} className="border border-slate-800 px-2 py-1">
-                    {String((row as Record<string, unknown>)?.[col] ?? "")}
-                  </td>
-                ))}
+        <form
+          key={comp.id}
+          className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void executeActions(comp.actions as UIActionPayload[]);
+          }}
+          data-testid={`component-form-${comp.id}`}
+        >
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+            {title}
+          </div>
+          <div className="space-y-3">{children.map((child) => renderComponent(child))}</div>
+          <div className="pt-1">
+            <button
+              type="submit"
+              className="rounded-full border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-100 hover:border-slate-500"
+            >
+              {submitLabel}
+            </button>
+          </div>
+        </form>
+      );
+    }
+
+    if (comp.type === "table") {
+      const rawRows = (props.rows as unknown[]) || (boundValue as unknown[]) || [];
+      const rows = Array.isArray(rawRows) ? rawRows : [];
+      const explicitColumns = Array.isArray(props.columns)
+        ? (props.columns as unknown[])
+        : [];
+      const columnsMeta =
+        explicitColumns.length > 0
+          ? explicitColumns.map((col) => {
+              if (typeof col === "string") {
+                return { key: col, label: col, sortable: true, format: "" };
+              }
+              const meta = col as Record<string, unknown>;
+              const key = String(meta.field || meta.key || "");
+              return {
+                key,
+                label: String(meta.header || meta.label || key),
+                sortable: meta.sortable !== false,
+                format: String(meta.format || ""),
+              };
+            })
+          : (Array.isArray(rows[0]) ? [] : Object.keys((rows[0] as Record<string, unknown>) || {})).map(
+              (key) => ({ key, label: key, sortable: true, format: "" })
+            );
+      const conditionalRules = toConditionalStyleRules(props.conditional_styles);
+      const resolveCellStyle = (field: string, cellValue: unknown): React.CSSProperties => {
+        for (const rule of conditionalRules) {
+          if (rule.field !== field) continue;
+          if (!evaluateConditionalRule(cellValue, rule.operator, rule.value)) continue;
+          return {
+            color: String(rule.color || ""),
+            backgroundColor: String(rule.bg_color || ""),
+            borderColor: String(rule.border_color || ""),
+            fontWeight: 600,
+          };
+        }
+        return {};
+      };
+      const formatCell = (value: unknown, format: string) => {
+        if (value === null || value === undefined) return "";
+        if (!format) return String(value);
+        if (format === "number") {
+          const n = Number(value);
+          return Number.isFinite(n) ? n.toLocaleString() : String(value);
+        }
+        if (format === "percent") {
+          const n = Number(value);
+          return Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : String(value);
+        }
+        if (format === "date") {
+          const d = new Date(String(value));
+          return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString();
+        }
+        if (format === "datetime") {
+          const d = new Date(String(value));
+          return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString();
+        }
+        return String(value);
+      };
+
+      const sortableEnabled = props.sortable !== false;
+      const rowClickActionIndex = Number(
+        props.row_click_action_index ?? props.rowClickActionIndex ?? -1
+      );
+      const pageSizeRaw = Number(props.page_size ?? props.pageSize ?? 0);
+      const pageSize = Number.isFinite(pageSizeRaw) && pageSizeRaw > 0 ? pageSizeRaw : 0;
+      const currentTableState = tableUiState[comp.id] || {
+        sortKey: null,
+        sortDir: "asc" as TableSortDirection,
+        page: 0,
+      };
+
+      const processedRows =
+        sortableEnabled && currentTableState.sortKey
+          ? [...rows].sort((a, b) => {
+              const key = currentTableState.sortKey as string;
+              const av = (a as Record<string, unknown>)?.[key];
+              const bv = (b as Record<string, unknown>)?.[key];
+              const aNorm = av === null || av === undefined ? "" : String(av).toLowerCase();
+              const bNorm = bv === null || bv === undefined ? "" : String(bv).toLowerCase();
+              if (aNorm < bNorm) return currentTableState.sortDir === "asc" ? -1 : 1;
+              if (aNorm > bNorm) return currentTableState.sortDir === "asc" ? 1 : -1;
+              return 0;
+            })
+          : [...rows];
+
+      const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(processedRows.length / pageSize)) : 1;
+      const safePage = Math.min(currentTableState.page, totalPages - 1);
+      const pagedRows =
+        pageSize > 0
+          ? processedRows.slice(safePage * pageSize, safePage * pageSize + pageSize)
+          : processedRows;
+
+      const updateTableState = (updater: (prev: TableUiState) => TableUiState) => {
+        setTableUiState((prev) => {
+          const base = prev[comp.id] || {
+            sortKey: null,
+            sortDir: "asc" as TableSortDirection,
+            page: 0,
+          };
+          return {
+            ...prev,
+            [comp.id]: updater(base),
+          };
+        });
+      };
+
+      return (
+        <div key={comp.id} className="space-y-2" data-testid={`component-table-${comp.id}`}>
+          <table className="min-w-full border border-slate-800 text-xs">
+            <thead className="bg-slate-900/80 text-slate-300">
+              <tr>
+                {columnsMeta.map((col) => {
+                  const isSorted = currentTableState.sortKey === col.key;
+                  const sortIndicator = isSorted
+                    ? currentTableState.sortDir === "asc"
+                      ? " ▲"
+                      : " ▼"
+                    : "";
+                  return (
+                    <th key={col.key} className="border border-slate-800 px-2 py-1 text-left">
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1"
+                        disabled={!sortableEnabled || !col.sortable || !col.key}
+                        onClick={() => {
+                          if (!sortableEnabled || !col.sortable || !col.key) return;
+                          updateTableState((prev) => {
+                            if (prev.sortKey === col.key) {
+                              return {
+                                ...prev,
+                                sortDir: prev.sortDir === "asc" ? "desc" : "asc",
+                                page: 0,
+                              };
+                            }
+                            return { ...prev, sortKey: col.key, sortDir: "asc", page: 0 };
+                          });
+                        }}
+                      >
+                        {col.label}
+                        {sortIndicator}
+                      </button>
+                    </th>
+                  );
+                })}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {pagedRows.map((row: unknown, index: number) => (
+                <tr
+                  key={`${comp.id}-row-${index}`}
+                  className={`border border-slate-800 ${
+                    rowClickActionIndex >= 0 ? "cursor-pointer hover:bg-slate-800/40" : ""
+                  }`}
+                  onClick={() => {
+                    if (rowClickActionIndex < 0) return;
+                    const rowAction = (comp.actions || [])[rowClickActionIndex];
+                    if (!rowAction) return;
+                    setState((prev) => ({ ...prev, selected_row: row }));
+                    void executeActions([rowAction as UIActionPayload], {
+                      runtimeContext: {
+                        row,
+                        row_index: index,
+                        component_id: comp.id,
+                      },
+                    });
+                  }}
+                >
+                  {columnsMeta.map((col) => (
+                    <td
+                      key={`${comp.id}-${col.key}-${index}`}
+                      className="border border-slate-800 px-2 py-1"
+                      style={resolveCellStyle(col.key, (row as Record<string, unknown>)?.[col.key])}
+                    >
+                      {formatCell((row as Record<string, unknown>)?.[col.key], col.format)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {pageSize > 0 && (
+            <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <span>
+                Page {safePage + 1}/{totalPages} · {processedRows.length} rows
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="rounded border border-slate-700 px-2 py-1 disabled:opacity-40"
+                  disabled={safePage <= 0}
+                  onClick={() =>
+                    updateTableState((prev) => ({ ...prev, page: Math.max(0, prev.page - 1) }))
+                  }
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  className="rounded border border-slate-700 px-2 py-1 disabled:opacity-40"
+                  disabled={safePage >= totalPages - 1}
+                  onClick={() =>
+                    updateTableState((prev) => ({
+                      ...prev,
+                      page: Math.min(totalPages - 1, prev.page + 1),
+                    }))
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       );
     }
 
     if (comp.type === "chart") {
-      const series = (props.series as unknown[]) || [];
-      const firstSeries = series[0] as Record<string, unknown> | undefined;
-      const data = (firstSeries?.data as unknown[]) || [];
+      const rawSeries = Array.isArray(props.series) ? (props.series as unknown[]) : [];
+      const rows = (props.data as unknown[]) || (boundValue as unknown[]) || [];
+      const firstSeries = rawSeries[0] as Record<string, unknown> | undefined;
+      const fallbackData = (firstSeries?.data as unknown[]) || [];
+      const data = Array.isArray(rows) && rows.length > 0 ? rows : fallbackData;
+      const xKey = String(props.x_key || props.xKey || "x");
+      const chartType = String(props.chart_type || props.type || "line").toLowerCase();
+      const seriesDefs =
+        rawSeries.length > 0
+          ? rawSeries.map((item, index) => {
+              const def = item as Record<string, unknown>;
+              const dataKey = String(
+                def.data_key || def.dataKey || def.key || (index === 0 ? "y" : `y${index + 1}`)
+              );
+              return {
+                dataKey,
+                stroke: String(def.color || def.stroke || "#38bdf8"),
+                name: String(def.name || dataKey),
+              };
+            })
+          : [{ dataKey: "y", stroke: "#38bdf8", name: "y" }];
+      const conditionalRules = toConditionalStyleRules(props.conditional_styles);
+      const latestRow =
+        Array.isArray(data) && data.length > 0
+          ? (data[data.length - 1] as Record<string, unknown>)
+          : null;
+      const styleBySeries = new Map<
+        string,
+        {
+          stroke?: string;
+          fill?: string;
+          dotFill?: string;
+          dotStroke?: string;
+        }
+      >();
+      if (latestRow) {
+        for (const rule of conditionalRules) {
+          const targetField = rule.field;
+          if (!targetField) continue;
+          const leftValue = latestRow[targetField];
+          if (!evaluateConditionalRule(leftValue, rule.operator, rule.value)) continue;
+          const targetSeries = rule.series_name || targetField;
+          const target = String(rule.target || "auto").toLowerCase();
+          const prev = styleBySeries.get(targetSeries) || {};
+          const next = { ...prev };
+          if (target === "area") {
+            if (rule.bg_color || rule.color) next.fill = rule.bg_color || rule.color;
+            if (rule.color) next.stroke = rule.color;
+          } else if (target === "point" || target === "dot") {
+            if (rule.color) next.dotFill = rule.color;
+            if (rule.border_color || rule.color) next.dotStroke = rule.border_color || rule.color;
+          } else if (target === "bar" || target === "pie") {
+            if (rule.bg_color || rule.color) next.fill = rule.bg_color || rule.color;
+            if (rule.color) next.stroke = rule.color;
+          } else {
+            if (rule.color) next.stroke = rule.color;
+            if (rule.bg_color) next.fill = rule.bg_color;
+            if (rule.border_color) next.dotStroke = rule.border_color;
+          }
+          styleBySeries.set(targetSeries, next);
+        }
+      }
+      const showLegend = props.show_legend !== false;
+      const showGrid = props.show_grid !== false;
+      const yAxis = (props.y_axis || {}) as Record<string, unknown>;
+      const yMin = (yAxis.min as number | undefined) ?? (props.y_min as number | undefined);
+      const yMax = (yAxis.max as number | undefined) ?? (props.y_max as number | undefined);
+      const yTitle = String(yAxis.title || "");
+      const legendCfg = (props.legend || {}) as Record<string, unknown>;
+      const tooltipCfg = (props.tooltip || {}) as Record<string, unknown>;
+      const containerHeight = Number(props.height || 208);
+      const isResponsive = props.responsive !== false;
+      const pieDataKey = seriesDefs[0]?.dataKey || "value";
+
+      const renderChartBody = () => {
+        if (chartType === "bar") {
+          return (
+            <BarChart data={data as Record<string, unknown>[]}>
+              {showGrid && <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />}
+              <XAxis dataKey={xKey} stroke="#94a3b8" />
+              <YAxis
+                stroke="#94a3b8"
+                domain={[yMin !== undefined ? yMin : "auto", yMax !== undefined ? yMax : "auto"]}
+                label={yTitle ? { value: yTitle, angle: -90, position: "insideLeft" } : undefined}
+              />
+              <Tooltip {...(tooltipCfg as object)} />
+              {showLegend && <Legend {...(legendCfg as object)} />}
+              {seriesDefs.map((serie) => (
+                <Bar
+                  key={`${comp.id}-${serie.dataKey}`}
+                  dataKey={serie.dataKey}
+                  fill={
+                    styleBySeries.get(serie.name)?.fill ||
+                    styleBySeries.get(serie.name)?.stroke ||
+                    styleBySeries.get(serie.dataKey)?.fill ||
+                    styleBySeries.get(serie.dataKey)?.stroke ||
+                    serie.stroke
+                  }
+                  name={serie.name}
+                />
+              ))}
+            </BarChart>
+          );
+        }
+
+        if (chartType === "area") {
+          return (
+            <AreaChart data={data as Record<string, unknown>[]}>
+              {showGrid && <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />}
+              <XAxis dataKey={xKey} stroke="#94a3b8" />
+              <YAxis
+                stroke="#94a3b8"
+                domain={[yMin !== undefined ? yMin : "auto", yMax !== undefined ? yMax : "auto"]}
+                label={yTitle ? { value: yTitle, angle: -90, position: "insideLeft" } : undefined}
+              />
+              <Tooltip {...(tooltipCfg as object)} />
+              {showLegend && <Legend {...(legendCfg as object)} />}
+              {seriesDefs.map((serie) => {
+                const style = styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {};
+                const stroke = style.stroke || serie.stroke;
+                const fill = style.fill || style.stroke || serie.stroke;
+                return (
+                  <Area
+                    key={`${comp.id}-${serie.dataKey}`}
+                    type="monotone"
+                    dataKey={serie.dataKey}
+                    stroke={stroke}
+                    fill={fill}
+                    fillOpacity={0.2}
+                    name={serie.name}
+                  />
+                );
+              })}
+            </AreaChart>
+          );
+        }
+
+        if (chartType === "scatter") {
+          return (
+            <ScatterChart data={data as Record<string, unknown>[]}>
+              {showGrid && <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />}
+              <XAxis dataKey={xKey} stroke="#94a3b8" />
+              <YAxis
+                stroke="#94a3b8"
+                domain={[yMin !== undefined ? yMin : "auto", yMax !== undefined ? yMax : "auto"]}
+                label={yTitle ? { value: yTitle, angle: -90, position: "insideLeft" } : undefined}
+              />
+              <Tooltip {...(tooltipCfg as object)} />
+              {showLegend && <Legend {...(legendCfg as object)} />}
+              {seriesDefs.map((serie) => (
+                <Scatter
+                  key={`${comp.id}-${serie.dataKey}`}
+                  dataKey={serie.dataKey}
+                  fill={
+                    styleBySeries.get(serie.name)?.fill ||
+                    styleBySeries.get(serie.name)?.stroke ||
+                    styleBySeries.get(serie.dataKey)?.fill ||
+                    styleBySeries.get(serie.dataKey)?.stroke ||
+                    serie.stroke
+                  }
+                  name={serie.name}
+                />
+              ))}
+            </ScatterChart>
+          );
+        }
+
+        if (chartType === "pie") {
+          const pieRows = (data as Record<string, unknown>[]) || [];
+          return (
+            <PieChart>
+              <Tooltip {...(tooltipCfg as object)} />
+              {showLegend && <Legend {...(legendCfg as object)} />}
+              <Pie
+                data={pieRows}
+                dataKey={pieDataKey}
+                nameKey={xKey}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                label
+              >
+                {pieRows.map((_, index) => (
+                  <Cell
+                    key={`cell-${comp.id}-${index}`}
+                    fill={
+                      styleBySeries.get(seriesDefs[index % Math.max(1, seriesDefs.length)]?.name || "")
+                        ?.fill ||
+                      styleBySeries.get(
+                        seriesDefs[index % Math.max(1, seriesDefs.length)]?.dataKey || ""
+                      )?.fill ||
+                      seriesDefs[index % Math.max(1, seriesDefs.length)]?.stroke ||
+                      "#38bdf8"
+                    }
+                  />
+                ))}
+              </Pie>
+            </PieChart>
+          );
+        }
+
+        return (
+          <LineChart data={data as Record<string, unknown>[]}>
+            {showGrid && <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />}
+            <XAxis dataKey={xKey} stroke="#94a3b8" />
+            <YAxis
+              stroke="#94a3b8"
+              domain={[
+                yMin !== undefined ? yMin : "auto",
+                yMax !== undefined ? yMax : "auto",
+              ]}
+              label={yTitle ? { value: yTitle, angle: -90, position: "insideLeft" } : undefined}
+            />
+            <Tooltip {...(tooltipCfg as object)} />
+            {showLegend && <Legend {...(legendCfg as object)} />}
+            {seriesDefs.map((serie) => (
+              <Line
+                key={`${comp.id}-${serie.dataKey}`}
+                type="monotone"
+                dataKey={serie.dataKey}
+                stroke={(styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {}).stroke || serie.stroke}
+                strokeWidth={2}
+                dot={
+                  ((styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {}).dotFill ||
+                    (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {}).dotStroke)
+                    ? {
+                        r: 3,
+                        fill:
+                          (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {})
+                            .dotFill ||
+                          serie.stroke,
+                        stroke:
+                          (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {})
+                            .dotStroke ||
+                          serie.stroke,
+                        strokeWidth: 1,
+                      }
+                    : false
+                }
+                name={serie.name}
+              />
+            ))}
+          </LineChart>
+        );
+      };
       return (
-        <div key={comp.id} className="h-52 w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-3" data-testid={`component-chart-${comp.id}`}>
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data as Record<string, unknown>[]}>
-              <CartesianGrid stroke="#1e293b" strokeDasharray="3 3" />
-              <XAxis dataKey="x" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip />
-              <Line type="monotone" dataKey="y" stroke="#38bdf8" strokeWidth={2} dot={false} />
-            </LineChart>
+        <div
+          key={comp.id}
+          className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 p-3"
+          style={{ height: containerHeight }}
+          data-testid={`component-chart-${comp.id}`}
+        >
+          <ResponsiveContainer width={isResponsive ? "100%" : "99%"} height="100%">
+            {renderChartBody()}
           </ResponsiveContainer>
         </div>
       );
@@ -346,8 +1370,27 @@ export default function UIScreenRenderer({
 
     if (comp.type === "badge") {
       const label = (props.label as string) || String(boundValue || comp.label || "Badge");
+      const conditionalRules = toConditionalStyleRules(props.conditional_styles);
+      const badgeStyle: React.CSSProperties = {};
+      let badgeVariant = String(props.variant || "default");
+      for (const rule of conditionalRules) {
+        if (rule.field && rule.field !== "value" && rule.field !== "label") continue;
+        if (!evaluateConditionalRule(label, rule.operator, rule.value)) continue;
+        if (rule.variant) badgeVariant = rule.variant;
+        if (rule.color) badgeStyle.color = rule.color;
+        if (rule.bg_color) badgeStyle.backgroundColor = rule.bg_color;
+        if (rule.border_color) badgeStyle.borderColor = rule.border_color;
+        break;
+      }
       return (
-        <span key={comp.id} className="inline-flex rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-200" data-testid={`component-badge-${comp.id}`}>
+        <span
+          key={comp.id}
+          className={`inline-flex rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${badgeVariantClass(
+            badgeVariant
+          )}`}
+          style={badgeStyle}
+          data-testid={`component-badge-${comp.id}`}
+        >
           {label}
         </span>
       );
@@ -383,10 +1426,53 @@ export default function UIScreenRenderer({
       );
     }
 
+    if (comp.type === "accordion") {
+      const items = (props.items as unknown[]) || [];
+      const allowMultiple = props.allow_multiple === true;
+      const active = activeAccordions[comp.id] || [0];
+      return (
+        <div
+          key={comp.id}
+          className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3 space-y-2"
+          data-testid={`component-accordion-${comp.id}`}
+        >
+          {items.map((rawItem, index) => {
+            const item = (rawItem || {}) as Record<string, unknown>;
+            const expanded = active.includes(index);
+            const title = String(item.title || `Section ${index + 1}`);
+            const children = ((item.components as Component[]) || []);
+            return (
+              <div key={`${comp.id}-acc-${index}`} className="rounded-lg border border-slate-800 overflow-hidden">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between bg-slate-900/70 px-3 py-2 text-left text-xs text-slate-100"
+                  onClick={() => {
+                    setActiveAccordions((prev) => {
+                      const current = prev[comp.id] || [0];
+                      if (allowMultiple) {
+                        const next = current.includes(index)
+                          ? current.filter((i) => i !== index)
+                          : [...current, index];
+                        return { ...prev, [comp.id]: next };
+                      }
+                      return { ...prev, [comp.id]: current.includes(index) ? [] : [index] };
+                    });
+                  }}
+                >
+                  <span>{title}</span>
+                  <span className="text-slate-400">{expanded ? "−" : "+"}</span>
+                </button>
+                {expanded && <div className="space-y-3 p-3">{children.map((child) => renderComponent(child))}</div>}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     if (comp.type === "modal") {
       const isOpen = props.open as boolean | undefined;
       if (!isOpen) return null;
-      const action = comp.actions?.[0];
       return (
         <div key={comp.id} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70" data-testid={`component-modal-${comp.id}`}>
           <div className="w-full max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-5">
@@ -395,7 +1481,7 @@ export default function UIScreenRenderer({
               <button
                 type="button"
                 className="text-xs uppercase tracking-[0.2em] text-slate-400"
-                onClick={() => action && handleAction(action)}
+                onClick={() => executeActions(comp.actions as UIActionPayload[])}
               >
                 Close
               </button>
@@ -577,6 +1663,81 @@ export default function UIScreenRenderer({
   return (
     <UIScreenErrorBoundary>
       <div data-testid={`screen-renderer-${screenId}`}>
+        {autoRefreshConfigs.length > 0 && (
+          <div
+            className="mb-3 rounded-xl border border-slate-700/80 bg-slate-900/40 p-3 text-[11px] text-slate-200"
+            data-testid="auto-refresh-panel"
+          >
+            <p className="mb-2 uppercase tracking-[0.2em] text-slate-400">Auto Refresh</p>
+            <div className="space-y-2">
+              {autoRefreshConfigs.map((config) => {
+                const status = autoRefreshStatus[config.key];
+                return (
+                  <div key={config.key} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-slate-100">
+                        {config.componentLabel} · {config.action.handler}
+                      </p>
+                      <p className="text-slate-400">
+                        {status?.stopped
+                          ? "stopped"
+                          : status?.paused
+                            ? "paused"
+                            : `every ${Math.round(config.intervalMs / 1000)}s`}
+                        {status?.failures ? ` · failures ${status.failures}` : ""}
+                        {status?.lastSuccessAt
+                          ? ` · last ok ${new Date(status.lastSuccessAt).toLocaleTimeString()}`
+                          : ""}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="rounded border border-slate-600 px-2 py-1 text-[10px] uppercase tracking-[0.15em] text-slate-100"
+                      onClick={() => toggleAutoRefreshPaused(config.key)}
+                      disabled={!!status?.stopped}
+                    >
+                      {status?.paused ? "Resume" : "Pause"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        {actionLogs.length > 0 && (
+          <div
+            className="mb-3 rounded-xl border border-slate-700/80 bg-slate-900/30 p-3 text-[11px] text-slate-200"
+            data-testid="action-log-panel"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <p className="uppercase tracking-[0.2em] text-slate-400">Action Log</p>
+              <button
+                type="button"
+                className="rounded border border-slate-600 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                onClick={() => setActionLogs([])}
+              >
+                Clear
+              </button>
+            </div>
+            <div className="max-h-48 space-y-1 overflow-y-auto">
+              {actionLogs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between gap-3">
+                  <p className="truncate text-slate-100">
+                    {log.handler} · {log.source} · attempt {log.attempt + 1}
+                  </p>
+                  <p
+                    className={
+                      log.status === "ok" ? "text-emerald-300" : "text-rose-300"
+                    }
+                  >
+                    {log.status} · {log.durationMs}ms
+                    {log.error ? ` · ${log.error}` : ""}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {renderByLayout()}
       </div>
     </UIScreenErrorBoundary>

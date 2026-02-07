@@ -58,10 +58,12 @@ export type ComponentType =
   | "markdown"
   | "button"
   | "input"
+  | "form"
   | "table"
   | "chart"
   | "badge"
   | "tabs"
+  | "accordion"
   | "modal"
   | "keyvalue"
   | "divider"
@@ -83,6 +85,13 @@ export interface ComponentActionRef {
   label?: string;
   handler: string;
   payload_template?: Record<string, unknown>;
+  continue_on_error?: boolean;
+  stop_on_error?: boolean;
+  retry_count?: number;
+  retry_delay_ms?: number;
+  run_if?: string;
+  on_error_action_index?: number;
+  on_error_action_indexes?: number[];
 }
 
 export interface ComponentBase {
@@ -91,7 +100,7 @@ export interface ComponentBase {
   label?: string;
   bind?: string | null; // dot-path into state, e.g. state.items
   props?: PropsMap; // component-specific props
-  visibility?: { rule?: string | null } | null; // rule syntax reserved (not implemented)
+  visibility?: { rule?: string | null } | null; // rule syntax: binding expression (e.g. {{state.flags.visible}})
   actions?: ComponentActionRef[] | null; // local actions
   // Note: nested components (e.g. modal.components) can be typed as `components?: Component[]`
 }

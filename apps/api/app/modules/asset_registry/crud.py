@@ -112,7 +112,7 @@ def create_asset(
         query_metadata=query_metadata,
         # Screen fields
         screen_id=screen_id,
-        screen_schema=screen_schema,
+        schema_json=screen_schema,
         # Tool fields
         tool_type=tool_type,
         tool_config=tool_config,

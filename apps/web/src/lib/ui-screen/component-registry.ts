@@ -49,21 +49,48 @@ const INPUT_PROPS: JsonSchema = {
   },
 };
 
+const FORM_PROPS: JsonSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    submit_label: { type: "string" },
+    components: { type: "array" },
+  },
+};
+
 const TABLE_PROPS: JsonSchema = {
   type: "object",
   properties: {
     columns: { type: "array" },
     rows: { type: "array" },
     selectable: { type: "boolean" },
+    sortable: { type: "boolean" },
+    page_size: { type: "integer" },
+    row_click_action_index: { type: "integer" },
+    auto_refresh: { type: "object" },
+    conditional_styles: { type: "array" },
   },
 };
 
 const CHART_PROPS: JsonSchema = {
   type: "object",
   properties: {
+    chart_type: { type: "string" },
     type: { type: "string" },
+    data: { type: "array" },
+    x_key: { type: "string" },
+    show_legend: { type: "boolean" },
+    show_grid: { type: "boolean" },
+    y_min: { type: "number" },
+    y_max: { type: "number" },
     series: { type: "array" },
+    y_axis: { type: "object" },
+    legend: { type: "object" },
+    tooltip: { type: "object" },
+    height: { type: "number" },
+    responsive: { type: "boolean" },
     options: { type: "object" },
+    conditional_styles: { type: "array" },
   },
 };
 
@@ -73,6 +100,7 @@ const BADGE_PROPS: JsonSchema = {
     label: { type: "string" },
     variant: { type: "string" },
     color: { type: "string" },
+    conditional_styles: { type: "array" },
   },
 };
 
@@ -81,6 +109,14 @@ const TABS_PROPS: JsonSchema = {
   properties: {
     tabs: { type: "array" },
     activeIndex: { type: "number" },
+  },
+};
+
+const ACCORDION_PROPS: JsonSchema = {
+  type: "object",
+  properties: {
+    items: { type: "array" },
+    allow_multiple: { type: "boolean" },
   },
 };
 
@@ -157,6 +193,13 @@ export const COMPONENT_REGISTRY: ComponentDescriptor[] = [
     events: ["onChange", "onSubmit"],
   },
   {
+    type: "form",
+    label: "Form",
+    propsSchema: FORM_PROPS,
+    supportedBindings: ["state"],
+    events: ["onSubmit"],
+  },
+  {
     type: "table",
     label: "DataTable",
     propsSchema: TABLE_PROPS,
@@ -183,6 +226,13 @@ export const COMPONENT_REGISTRY: ComponentDescriptor[] = [
     propsSchema: TABS_PROPS,
     supportedBindings: ["state"],
     events: ["onTabChange"],
+  },
+  {
+    type: "accordion",
+    label: "Accordion",
+    propsSchema: ACCORDION_PROPS,
+    supportedBindings: ["state"],
+    events: ["onToggle"],
   },
   {
     type: "modal",

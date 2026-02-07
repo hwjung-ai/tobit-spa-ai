@@ -162,15 +162,26 @@ def collect_ops_summary_stats(session: Session) -> Dict[str, Any]:
     # Reverse to match frontend expectation (reverse internally or just send)
     # The frontend does .reverse() so we send in DESC order.
 
+    # Real health checks via SystemMonitor
+    try:
+        from app.modules.admin_dashboard.system_monitor import SystemMonitor
+
+        monitor = SystemMonitor()
+        health = monitor.check_health()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Health check failed: {e}")
+        health = {
+            "service": {"status": "error", "detail": f"Monitor unavailable: {e}"},
+            "database": {"status": "error", "detail": f"Monitor unavailable: {e}"},
+            "network": {"status": "error", "detail": f"Monitor unavailable: {e}"},
+        }
+
     return {
         "totalQueries": int(total_queries),
         "successfulQueries": int(successful_queries),
         "failedQueries": int(failed_queries),
         "avgResponseTime": int(avg_latency),
         "recentActivity": recent_activity,
-        "health": {
-            "service": "ok",
-            "database": "ok",
-            "network": "ok"
-        }
+        "health": health,
     }

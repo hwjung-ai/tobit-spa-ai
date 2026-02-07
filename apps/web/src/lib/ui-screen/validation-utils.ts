@@ -197,6 +197,74 @@ export function validateComponentActionRef(
     });
   }
 
+  if (
+    action.retry_count !== undefined &&
+    (!Number.isFinite(action.retry_count) || action.retry_count < 0 || action.retry_count > 5)
+  ) {
+    errors.push({
+      path: `${pathPrefix}.retry_count`,
+      message: "retry_count must be a number between 0 and 5",
+      severity: "warning",
+      type: "invalid-retry-count",
+    });
+  }
+
+  if (
+    action.retry_delay_ms !== undefined &&
+    (!Number.isFinite(action.retry_delay_ms) || action.retry_delay_ms < 0)
+  ) {
+    errors.push({
+      path: `${pathPrefix}.retry_delay_ms`,
+      message: "retry_delay_ms must be a non-negative number",
+      severity: "warning",
+      type: "invalid-retry-delay",
+    });
+  }
+
+  if (action.run_if) {
+    const runIfErrors = validateBindingPath(action.run_if, schema);
+    errors.push(
+      ...runIfErrors.map((e) => ({
+        ...e,
+        path: `${pathPrefix}.run_if`,
+      }))
+    );
+  }
+
+  if (
+    action.on_error_action_index !== undefined &&
+    (!Number.isFinite(action.on_error_action_index) || action.on_error_action_index < -1)
+  ) {
+    errors.push({
+      path: `${pathPrefix}.on_error_action_index`,
+      message: "on_error_action_index must be -1 or a non-negative number",
+      severity: "warning",
+      type: "invalid-on-error-action-index",
+    });
+  }
+
+  if (action.on_error_action_indexes !== undefined) {
+    if (!Array.isArray(action.on_error_action_indexes)) {
+      errors.push({
+        path: `${pathPrefix}.on_error_action_indexes`,
+        message: "on_error_action_indexes must be an array of non-negative numbers",
+        severity: "warning",
+        type: "invalid-on-error-action-indexes",
+      });
+    } else {
+      action.on_error_action_indexes.forEach((value, idx) => {
+        if (!Number.isFinite(value) || value < 0) {
+          errors.push({
+            path: `${pathPrefix}.on_error_action_indexes[${idx}]`,
+            message: "fallback index must be a non-negative number",
+            severity: "warning",
+            type: "invalid-on-error-action-indexes",
+          });
+        }
+      });
+    }
+  }
+
   return errors;
 }
 

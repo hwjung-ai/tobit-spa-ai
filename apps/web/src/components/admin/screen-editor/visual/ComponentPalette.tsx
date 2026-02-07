@@ -8,7 +8,7 @@ import { Component, ComponentType } from "@/lib/ui-screen/screen.schema";
 import { GripVertical } from "lucide-react";
 
 // Container types that can have children
-const CONTAINER_TYPES = new Set(["row", "column", "modal"]);
+const CONTAINER_TYPES = new Set(["row", "column", "modal", "form"]);
 
 // Drag data type identifier
 export const PALETTE_DRAG_TYPE = "application/x-component-type";

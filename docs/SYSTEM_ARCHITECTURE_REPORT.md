@@ -1,6 +1,6 @@
 # Tobit SPA AI - 시스템 아키텍처 개요 보고서
 
-**작성일**: 2026년 2월 5일 (최종 갱신: 2026년 2월 6일)
+**작성일**: 2026년 2월 5일 (최종 갱신: 2026년 2월 7일)
 **대상**: 경영진, 의사결정자
 **목적**: OPS, CEP, ADMIN, DOCS 모듈의 개념적 이해 및 시스템 아키텍처 정리
 
@@ -18,17 +18,21 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 
 **현재 상태**: 실제 상용 제품 목표로 개발 중 (Production-Ready 구축 단계)
 
-**개발 단계**: 
+**개발 단계**:
 - **MVP 완료**: 핵심 기능(OPS, CEP, ADMIN) 구현 및 테스트 완료
+- **OPS 6모드 완성**: config, metric, hist, graph, document, all 모드 전체 구현
+- **DOCS 뷰어 개선**: 인증, 한국어화, 다운로드, 키보드 네비게이션
 - **프로덕션 준비 중**: 보안 테스트, 성능 최적화, 모니터링 강화 진행
 - **배포 가능성**: 현재 개발 환경에서 안정적으로 운영 중, 운영 환경 배포 준비 완료
 
 **주요 성과**:
 - ✅ 백엔드 API 100% 구현
-- ✅ 프론트엔드 UI 완성
+- ✅ 프론트엔드 UI 완성 (한국어 지원)
 - ✅ E2E 테스트 커버리지 22개 시나리오
 - ✅ 보안 테스트 100% 통과
 - ✅ 품질 관리 (pre-commit, lint, type-check) 적용
+- ✅ OPS 6개 쿼리 모드 완성 (구성/수치/이력/연결/문서/전체)
+- ✅ Admin 관측성 버그 수정 (Logs, CEP Monitoring)
 
 ### 1.2 시스템 규모
 
@@ -40,9 +44,10 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 | **E2E 테스트 시나리오** | 22개 시나리오 |
 | **데이터베이스 테이블** | 32+ 테이블 |
 | **자산(Assets)** | Prompt, Catalog, Policy, Tool, Screen, Document Search |
-| **코드량** | ~12,000줄 (코드 + 문서) |
-| **DB 마이그레이션** | 45개 버전 |
-| **Git 커밋** | 17개 (Phase 5 OPS-Docs 포함) |
+| **OPS 쿼리 모드** | 6개 (구성, 수치, 이력, 연결, 문서, 전체) |
+| **코드량** | ~14,000줄 (코드 + 문서) |
+| **DB 마이그레이션** | 47개 버전 |
+| **Git 커밋** | 35+ 커밋 (Phase 10 OPS Real Mode 포함) |
 
 ### 시스템 구성도
 
@@ -51,27 +56,33 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 │                    Tobit SPA AI Platform                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│  ┌──────────────┐    ┌──────────────┐    ┌─────────────┐      │
-│  │     OPS      │    │     CEP      │    │    ADMIN    │      │
-│  │ (운영 질의)  │    │(이벤트 처리) │    │  (관리)     │      │
-│  └──────────────┘    └──────────────┘    └─────────────┘      │
+│  ┌──────────────────────────────────────────┐                  │
+│  │     OPS (운영 질의) - 6개 모드          │                  │
+│  │  구성 │ 수치 │ 이력 │ 연결 │ 문서 │ 전체│                  │
+│  │  /ops/query (단순모드) │ /ops/ask (전체) │                  │
+│  └──────────────────────────────────────────┘                  │
 │                                                                 │
-│  ┌──────────────┐    ┌──────────────┐                          │
-│  │    DOCS      │    │ API MANAGER  │                          │
-│  │ (문서검색)   │    │ (동적 API)   │                          │
-│  │ +OPS통합     │    │              │                          │
-│  └──────────────┘    └──────────────┘                          │
-│         │                  │                                    │
-│         └──────────────────┴────────────────┬──────────────┐   │
-│                                             ▼              ▼   │
-│                 ┌──────────────────────────────────────────┐  │
-│                 │   Core Infrastructure & Services        │  │
-│                 │ - PostgreSQL, Neo4j, Redis              │  │
-│                 │ - pgvector (1536-dim embeddings)        │  │
-│                 │ - Asset Registry                        │  │
-│                 │ - Document Search API                   │  │
-│                 │ - Auth, Permissions, API Keys           │  │
-│                 └──────────────────────────────────────────┘  │
+│  ┌──────────────┐    ┌──────────────┐    ┌─────────────┐      │
+│  │     CEP      │    │    DOCS      │    │    ADMIN    │      │
+│  │(이벤트 처리) │    │ (문서검색)   │    │  (관리)     │      │
+│  │ Scheduler    │    │ PDF 뷰어    │    │ Observability│      │
+│  └──────────────┘    │ +OPS통합     │    └─────────────┘      │
+│                      └──────────────┘                          │
+│  ┌──────────────┐                                              │
+│  │ API MANAGER  │                                              │
+│  │ (동적 API)   │                                              │
+│  └──────────────┘                                              │
+│         │                                                       │
+│         └───────────────────────────────┬──────────────┐       │
+│                                         ▼              ▼       │
+│                 ┌──────────────────────────────────────────┐   │
+│                 │   Core Infrastructure & Services         │   │
+│                 │ - PostgreSQL, Neo4j, Redis               │   │
+│                 │ - pgvector (1536-dim embeddings)         │   │
+│                 │ - Asset Registry                         │   │
+│                 │ - Document Search API (BM25 + pgvector)  │   │
+│                 │ - Auth (JWT + RBAC), API Keys            │   │
+│                 └──────────────────────────────────────────┘   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -84,11 +95,40 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 
 **OPS**는 인프라 운영 관련 질문에 AI 기반으로 답변하는 **지능형 질의응답 시스템**입니다.
 
-### 2.2 핵심 기능
+### 2.2 쿼리 모드 (6개)
+
+OPS는 6가지 쿼리 모드를 제공하며, 각 모드는 특화된 데이터 소스와 처리 로직을 가집니다:
+
+| 모드 | UI 라벨 | 백엔드 모드 | 엔드포인트 | 설명 |
+|------|---------|------------|-----------|------|
+| **구성** | 구성 | config | `/ops/query` | CI 구성 정보 조회 (서버, 장비, 네트워크) |
+| **수치** | 수치 | metric | `/ops/query` | 성능 메트릭 조회 (CPU, Memory, Disk I/O) |
+| **이력** | 이력 | hist | `/ops/query` | 이벤트/변경 이력 조회 |
+| **연결** | 연결 | graph | `/ops/query` | 서비스/장비 간 관계도 (Neo4j) |
+| **문서** | 문서 | document | `/ops/query` | 문서 검색 (BM25 + pgvector 하이브리드) |
+| **전체** | 전체 (기본) | all | `/ops/ask` | 모든 모드 통합 오케스트레이션 |
+
+**라우팅 구조**:
+```
+사용자 질문
+    ↓
+프론트엔드 모드 선택
+    ├─ "전체" 모드 → POST /ops/ask (CIOrchestratorRunner)
+    └─ 기타 모드   → POST /ops/query {mode, question}
+                        ↓
+                   handle_ops_query() 디스패처
+                        ├─ config → run_config_executor()
+                        ├─ metric → run_metric()
+                        ├─ hist   → run_hist()
+                        ├─ graph  → run_graph()
+                        └─ document → run_document()
+```
+
+### 2.3 핵심 실행 흐름
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    OPS Query Flow                        │
+│                    OPS Query Flow (전체 모드)            │
 └─────────────────────────────────────────────────────────────┘
 
 사용자 질문 → [1. 질문 분석] → [2. 실행 계획] → [3. 단계별 실행] → [4. 답변 생성]
@@ -102,7 +142,7 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
                  Direct)            (present)
 ```
 
-### 2.3 실행 계획 (Plan) 구조
+### 2.4 실행 계획 (Plan) 구조
 
 OPS는 질문을 분석하여 **4단계 실행 계획**을 생성합니다:
 
@@ -136,7 +176,24 @@ OPS는 질문을 분석하여 **4단계 실행 계획**을 생성합니다:
   - **Graph**: 그래프 시각화
   - **Reference**: 참조 정보 (SQL, Cypher 쿼리 등)
 
-### 2.4 주요 컴포넌트
+### 2.5 블록 추출 전략 (execute_universal)
+
+`execute_universal()` 함수는 3단계 폴백 전략으로 답변 블록을 추출합니다:
+
+```
+1단계: Runner의 pre-built blocks 사용 (최우선)
+    ↓ (없을 경우)
+2단계: trace/stage_outputs의 execution_results에서 추출
+    ↓ (없을 경우)
+3단계: answer_text를 Markdown 블록으로 변환
+```
+
+**Real 모드 동작**:
+- 실제 데이터가 없으면 명시적 에러 메시지 표시 ("Unable to retrieve {mode} data")
+- Mock 데이터 대신 정직한 에러 반환 (신뢰성 우선)
+- 상세 로깅으로 디버깅 용이
+
+### 2.6 주요 컴포넌트
 
 | 컴포넌트 | 역할 | 설명 |
 |----------|------|------|
@@ -147,7 +204,7 @@ OPS는 질문을 분석하여 **4단계 실행 계획**을 생성합니다:
 | **Asset Registry** | 자산 관리 | Prompt, Catalog, Policy, Tool 자산 관리 |
 | **Observability Service** | 관측성 | KPI 수집, 시스템 상태 모니터링 |
 
-### 2.5 RCA (Root Cause Analysis)
+### 2.7 RCA (Root Cause Analysis)
 
 **RCA Engine**은 실패한 트레이스를 분석하여 원인을 추론합니다:
 
@@ -159,7 +216,7 @@ OPS는 질문을 분석하여 **4단계 실행 계획**을 생성합니다:
             [순위 3] 메모리 부족
 ```
 
-### 2.6 Regression Watch
+### 2.8 Regression Watch
 
 **Golden Queries**를 통해 회귀 테스트를 자동화합니다:
 
@@ -363,17 +420,38 @@ DOCS는 3가지 검색 전략을 제공합니다:
 ...
 ```
 
-### 4.6 주요 컴포넌트
+### 4.6 문서 뷰어 (Document Viewer)
+
+문서의 근거 링크를 클릭하면 PDF 뷰어가 열리며, 해당 청크를 하이라이트합니다:
+
+```
+근거 링크 클릭 → /documents/{id}/viewer?chunkId=xxx&page=N
+    ↓
+[1. 인증된 PDF 로드]     (Bearer 토큰 + Tenant/User ID)
+[2. 청크 정보 조회]       (chunk_id로 위치 확인)
+[3. 페이지 이동]          (해당 페이지로 자동 이동)
+[4. 텍스트 하이라이트]     (스니펫 매칭 → 노란색 강조)
+```
+
+**주요 기능**:
+- PDF 다운로드 버튼
+- 키보드 네비게이션 (방향키 ←→↑↓)
+- 로딩 스피너 및 에러 처리 (재시도 버튼)
+- 삭제된 청크 참조 시 친화적 에러 메시지
+- 전체 한국어 UI
+
+### 4.7 주요 컴포넌트
 
 | 컴포넌트 | 역할 | 설명 |
 |----------|------|------|
 | **Document Processor** | 문서 처리 | 파일 업로드, 텍스트 추출, OCR |
 | **Chunking Strategy** | 청킹 전략 | 문서를 검색 가능한 청크로 분할 |
 | **Document Search Service** | 검색 서비스 | Text/Vector/Hybrid 검색 |
+| **Document Viewer** | 문서 뷰어 | PDF 렌더링, 청크 하이라이트, 다운로드 |
 | **Document Export Service** | 내보내기 | JSON, CSV, Markdown, Text 형식 내보내기 |
 | **Vector Store** | 벡터 저장소 | pgvector를 통한 벡터 임베딩 저장 |
 
-### 4.7 API 기능
+### 4.8 API 기능
 
 | 기능 | 엔드포인트 | 설명 |
 |------|-----------|------|
@@ -386,7 +464,7 @@ DOCS는 3가지 검색 전략을 제공합니다:
 | **문서 내보내기** | `GET /api/documents/{id}/export` | JSON/CSV/Markdown/Text 내보내기 |
 | **문서 삭제** | `DELETE /api/documents/{id}` | 문서 soft delete |
 
-### 4.8 처리 과정 예시
+### 4.9 처리 과정 예시
 
 **시나리오: PDF 문서 업로드 및 검색**
 
@@ -571,11 +649,11 @@ execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
 
 ## 6. ADMIN (Administration) 모듈
 
-### 4.1 개요
+### 6.1 개요
 
 **ADMIN**은 시스템 사용자, 권한, 설정을 관리하는 **관리자 대시보드**입니다.
 
-### 4.2 핵심 기능
+### 6.2 핵심 기능
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -590,28 +668,36 @@ execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
     감사 로그                이력 메트릭              기본값 초기화
 ```
 
-### 4.3 사용자 관리
+### 6.3 사용자 관리
 
 - **사용자 목록**: 페이지네이션, 필터링(활성/비활성), 검색
 - **사용자 상태**: 활성/비활성 전환
 - **권한 관리**: 권한 부여/회수
 - **감사 로그**: 권한 변경 이력 추적
 
-### 4.4 시스템 모니터링
+### 6.4 시스템 모니터링
 
 - **건강 상태**: 현재 시스템 상태
 - **자원 사용량**: CPU, 메모리, 디스크, 네트워크
 - **시스템 경보**: 심각도별 알림
 - **이력 메트릭**: 시계열 데이터
 
-### 4.5 설정 관리
+### 6.5 관측성(Observability) 버그 수정 (2026-02-06)
+
+| 문제 | 원인 | 해결 |
+|------|------|------|
+| Logs 페이지 "Not Found" | Next.js rewrite 규칙 충돌 | `/admin/logs` rewrite 제거 |
+| CEP Monitoring 500 에러 | `/rules/performance`가 `/rules/{rule_id}`로 매칭 | 엔드포인트 순서 변경 (구체적 경로 우선) |
+| Recent Errors 중복 | API 응답은 정상 (UI 인식 문제) | 분석 완료, 자동 갱신 이슈 |
+
+### 6.6 설정 관리
 
 - **시스템 설정**: 개별 설정 조회/업데이트
 - **일괄 업데이트**: 여러 설정 동시 변경
 - **카테고리별**: 기능별 설정 그룹화
 - **감사 로그**: 설정 변경 이력 추적
 
-### 4.6 주요 컴포넌트
+### 6.7 주요 컴포넌트
 
 | 컴포넌트 | 역할 | 설명 |
 |----------|------|------|
@@ -621,9 +707,9 @@ execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
 
 ---
 
-## 5. 시스템 상관관계
+## 7. 시스템 상관관계
 
-### 5.1 데이터 흐름
+### 7.1 데이터 흐름
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -644,7 +730,7 @@ Admin 설정 변경             →  Settings DB (설정 저장)
                           →  System Monitor (모니터링)
 ```
 
-### 5.2 공통 인프라
+### 7.2 공통 인프라
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -669,18 +755,21 @@ Admin 설정 변경             →  Settings DB (설정 저장)
 
 ---
 
-## 6. 기술적 특징
+## 8. 기술적 특징
 
-### 6.1 OPS 모듈
+### 8.1 OPS 모듈
 
+- **6개 쿼리 모드**: 구성/수치/이력/연결/문서/전체 모드 완성
+- **듀얼 엔드포인트**: `/ops/query` (단순 모드) + `/ops/ask` (전체 오케스트레이션)
 - **AI 기반**: LLM을 사용한 질문 의도 파악 및 실행 계획 생성
 - **Stage-based**: 4단계 계획-실행 패턴 (route_plan → validate → execute → present)
 - **Asset-driven**: Prompt, Catalog, Policy, Tool 자산 기반 실행
-- **관측성**: Flow Spans으로 단계별 실행 추적
+- **3단계 블록 폴백**: pre-built → execution_results → markdown 변환
+- **관측성**: Flow Spans으로 단계별 실행 추적 + 상세 로깅
 - **RCA 지원**: 실패 원인 분석 및 가설 생성
 - **Regression Watch**: Golden Queries로 회귀 테스트 자동화
 
-### 6.2 CEP 모듈
+### 8.2 CEP 모듈
 
 - **Trigger-Action 패턴**: 단순한 조건-반응 메커니즘
 - **폴링 스케줄링**: asyncio 기반 백그라운드 루프
@@ -699,7 +788,7 @@ Admin 설정 변경             →  Settings DB (설정 저장)
   - 실제 소스 코드에서는 `import bytewax` 또는 `from bytewax`를 사용하지 않음
   - 커스텀 asyncio 기반 스케줄러로 구현 (`scheduler.py`)
 
-### 6.3 DOCS 모듈
+### 8.3 DOCS 모듈
 
 - **다중 형식 지원**: PDF, Word, Excel, PowerPoint, Images
 - **하이브리드 검색**: Text (BM25) + Vector (Semantic) + Hybrid (RRF)
@@ -707,8 +796,11 @@ Admin 설정 변경             →  Settings DB (설정 저장)
 - **벡터 저장소**: pgvector를 통한 효율적인 임베딩 저장 및 검색
 - **백그라운드 처리**: RQ + Redis를 통한 비동기 문서 처리
 - **다중 내보내기**: JSON, CSV, Markdown, Text 형식 지원
+- **PDF 뷰어**: 인증된 PDF 로드, 청크 하이라이트, 다운로드, 키보드 네비게이션
+- **근거 링크**: 검색 결과에서 원문 위치로 직접 이동 (유사도 % 표시)
+- **한국어 UI**: 전체 한국어 라벨 (답변/요약/상세/완료/오류)
 
-### 6.5 API MANAGER 모듈
+### 8.4 API MANAGER 모듈
 
 - **동적 API 관리**: SQL/Python/Workflow/HTTP API 정의 및 실행
 - **SQL 보안 검사**: 위험 키워드 감지, SQL Injection 패턴 체크, 성능 분석
@@ -716,19 +808,20 @@ Admin 설정 변경             →  Settings DB (설정 저장)
 - **API 테스트**: 단일 테스트, 통합 테스트, Dry-run 실행
 - **CEP 통합**: CEP Builder의 HTTP Action Type과 통합
 
-### 6.6 ADMIN 모듈
+### 8.5 ADMIN 모듈
 
 - **사용자 관리**: 사용자 CRUD, 권한 부여/회수
 - **시스템 모니터링**: 실시간 자원 추적, 경보 생성
 - **설정 관리**: 시스템 설정, 일괄 업데이트
 - **감사 로그**: 모든 변경 이력 추적
 - **관리자 인터페이스**: REST API 기반 관리 기능 제공
+- **관측성 개선**: Logs 페이지 라우팅 수정, CEP 모니터링 엔드포인트 수정
 
 ---
 
-## 7. 핵심 설계 패턴
+## 9. 핵심 설계 패턴
 
-### 7.1 Trigger-Action 패턴 (CEP)
+### 9.1 Trigger-Action 패턴 (CEP)
 
 ```
 Trigger → Condition Check → Action Execute
@@ -739,7 +832,7 @@ Trigger → Condition Check → Action Execute
 - **장점**: 단순함, 확장성, 테스트 용이성
 - **사용**: 메트릭 모니터링, 주기적 작업, 알림 전송
 
-### 7.2 Stage-based Execution (OPS)
+### 9.2 Stage-based Execution (OPS)
 
 ```
 Route Plan → Validate → Execute → Compose → Present
@@ -748,7 +841,7 @@ Route Plan → Validate → Execute → Compose → Present
 - **장점**: 명확한 실행 단계, 오류 격리, 관측성
 - **사용**: 복잡한 쿼리 실행, 데이터 집계, 그래프 분석
 
-### 7.3 Asset Registry (OPS, 공통)
+### 9.3 Asset Registry (OPS, 공통)
 
 ```
 Prompt Asset  ────┐
@@ -761,35 +854,45 @@ Policy Asset   ───┘   (자산 기반 실행)
 
 ---
 
-## 8. 향후 개선 방향
+## 10. 향후 개선 방향
 
-### 8.1 OPS
+### 10.1 OPS
+- [x] 6개 쿼리 모드 완성 (구성/수치/이력/연결/문서/전체)
+- [x] 듀얼 엔드포인트 구조 (/ops/query + /ops/ask)
+- [ ] Real mode 데이터 소스 연결 (config, metric, hist 모드)
 - [ ] 더 많은 Tool 통합 (로그 분석, 토폴로지 등)
 - [ ] RCA 정확도 향상 (LLM 통합)
 - [ ] Golden Queries 확장
 - [ ] Multi-tenant 지원 강화
 
-### 8.2 CEP
+### 10.2 CEP
 - [ ] 더 많은 Trigger 유형 지원
 - [ ] 알림 채널 확장
 - [ ] Rule 템플릿 제공
 - [ ] 대시보드 시각화 강화
 
-### 8.3 DOCS
+### 10.3 DOCS
+- [x] PDF 뷰어 인증 수정
+- [x] 한국어 UI 완성
+- [x] PDF 다운로드 기능
+- [x] 키보드 네비게이션
+- [x] 근거 링크 유사도 % 표시
 - [ ] OCR 기능 강화 (다국어 지원)
 - [ ] 더 많은 문서 형식 지원
 - [ ] 검색 정확도 향상 (Custom Embedding)
 - [ ] 문서 버전 관리
 - [ ] 협업 기능 (주석, 공동 편집)
 
-### 8.5 API MANAGER
+### 10.4 API MANAGER
 - [ ] 더 많은 로직 타입 지원
 - [ ] API 테스트 케이스 자동화
 - [ ] API 성능 모니터링
 - [ ] API 모니터링 대시보드
 - [ ] API Marketplace/템플릿
 
-### 8.6 ADMIN
+### 10.5 ADMIN
+- [x] Logs 페이지 라우팅 수정
+- [x] CEP Monitoring 엔드포인트 수정
 - [ ] 실시간 대시보드 UI
 - [ ] 경보 규칙 설정
 - [ ] 자동화된 운영 작업
@@ -797,15 +900,15 @@ Policy Asset   ───┘   (자산 기반 실행)
 
 ---
 
-## 9. 요약
+## 11. 요약
 
 | 모듈 | 목적 | 핵심 기능 | 주요 패턴 |
 |------|------|----------|----------|
-| **OPS** | 인프라 질의 응답 | AI 기반 쿼리 자동화, RCA, Regression Watch | Stage-based Execution, Asset-driven |
+| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, RCA | Stage-based Execution, Dual-endpoint |
 | **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 주기적 작업, 알림 전송 | Trigger-Action, Polling Scheduler |
-| **DOCS** | 문서 관리 | 문서 업로드, 텍스트/벡터 검색, 청킹 | Hybrid Search, Chunking, Vector Store |
+| **DOCS** | 문서 관리 | 문서 업로드, 하이브리드 검색, PDF 뷰어 | Hybrid Search, Chunking, Vector Store |
 | **API MANAGER** | 동적 API 관리 | SQL/Python/Workflow API, 버전 관리, 보안 검사 | Runtime Engine, Version Control, SQL Validation |
-| **ADMIN** | 시스템 관리 | 사용자 관리, 시스템 모니터링, 설정 관리 | CRUD, Audit Logging |
+| **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성 | CRUD, Audit Logging, Observability |
 
 ### 시스템 특징
 - **AI 기반**: LLM을 활용한 지능형 질의응답
@@ -816,9 +919,9 @@ Policy Asset   ───┘   (자산 기반 실행)
 
 ---
 
-## 11. 기술 스택
+## 12. 기술 스택
 
-### 11.1 백엔드 (Backend)
+### 12.1 백엔드 (Backend)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -880,7 +983,7 @@ Policy Asset   ───┘   (자산 기반 실행)
 | **System Monitoring** | psutil | 시스템 모니터링 |
 | **Scheduler** | croniter | Cron 표현식 파싱 |
 
-### 11.2 프론트엔드 (Frontend)
+### 12.2 프론트엔드 (Frontend)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -940,7 +1043,7 @@ Policy Asset   ───┘   (자산 기반 실행)
 | **Linting & Formatting** | ESLint, Prettier | 코드 품질, 포맷팅 |
 | **Performance** | React Compiler | 성능 최적화 |
 
-### 11.3 아키텍처 구조
+### 12.3 아키텍처 구조
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -998,7 +1101,7 @@ Policy Asset   ───┘   (자산 기반 실행)
 | **테스트** | E2E + Unit | Playwright(E2E) + pytest(단위) |
 | **코드 품질** | Pre-commit Hooks | Ruff, Prettier, mypy 자동 검사 |
 
-### 11.4 개발 도구 및 프로세스
+### 12.4 개발 도구 및 프로세스
 
 **개발 도구**:
 
@@ -1032,13 +1135,13 @@ Git Push → Pre-commit Check → Lint & Type Check → Unit Tests → E2E Tests
 
 ---
 
-## 9-1. DOCS (Document Management) 모듈
+## 12-A. DOCS (Document Management) 모듈 - 상세
 
-### 9-1-1 개요
+### 12-A-1 개요
 
 **DOCS**는 문서를 업로드하고 검색하며, **OPS CI Ask와 통합하여 문서 기반 답변을 제공하는 모듈**입니다.
 
-### 9-1-2 핵심 아키텍처
+### 12-A-2 핵심 아키텍처
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1052,7 +1155,7 @@ Git Push → Pre-commit Check → Lint & Type Check → Unit Tests → E2E Tests
                (1536-dim)      (DynamicTool http_api)
 ```
 
-### 9-1-3 검색 엔드포인트
+### 12-A-3 검색 엔드포인트
 
 #### POST /api/documents/search - 하이브리드 검색
 
@@ -1112,7 +1215,7 @@ Git Push → Pre-commit Check → Lint & Type Check → Unit Tests → E2E Tests
 }
 ```
 
-### 9-1-4 OPS 통합
+### 12-A-4 OPS 통합
 
 #### Tool Asset 설정
 
@@ -1155,7 +1258,7 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 답변: "문서에 따르면... [인용] 성능 최적화를 위해..."
 ```
 
-### 9-1-5 기술 스택
+### 12-A-5 기술 스택
 
 | 컴포넌트 | 기술 | 용도 |
 |---------|------|------|
@@ -1166,7 +1269,7 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 | **API 통합** | DynamicTool http_api | Tool Asset 기반 |
 | **Asset 관리** | Asset Registry | Tool 등록 및 관리 |
 
-### 9-1-6 성능 특성
+### 12-A-6 성능 특성
 
 | 지표 | 값 | 비고 |
 |------|-----|------|
@@ -1177,7 +1280,7 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 | **메모리 사용** | ~300MB | 10,000 문서 기준 |
 | **확장성** | 100,000+ 청크 | 테스트 완료 |
 
-### 9-1-7 다중 테넌트 보안
+### 12-A-7 다중 테넌트 보안
 
 - ✅ **Tenant ID 격리**: 모든 쿼리에 WHERE tenant_id 필터
 - ✅ **삭제 확인**: soft delete (deleted_at IS NULL)
@@ -1186,7 +1289,7 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 
 ---
 
-## 10. 용어 정의
+## 13. 용어 정의
 
 | 용어 | 설명 |
 |------|------|
@@ -1213,36 +1316,60 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 
 ---
 
-## 11. 최근 업데이트 (2026-02-06)
+## 14. 최근 업데이트
 
-### OPS-Docs 통합 완료
+### 2026-02-07: OPS Real Mode + DOCS 뷰어 개선
 
-**구현 내용**:
-- ✅ DocumentSearchService 완성 (BM25 + pgvector)
-- ✅ Document Search API 엔드포인트
-- ✅ Tool Asset 등록 스크립트
+**OPS 모듈 (Phase 9-10)**:
+- ✅ 6개 쿼리 모드 전체 완성 (구성/수치/이력/연결/문서/전체)
+- ✅ 듀얼 엔드포인트: `/ops/query` (단순) + `/ops/ask` (전체 오케스트레이션)
+- ✅ Real mode에서 가짜 데이터 제거 → 명시적 에러 표시
+- ✅ execute_universal() 3단계 블록 폴백 + 상세 로깅
+- ✅ 기본 선택 모드: "all" (전체)
+
+**DOCS 뷰어 개선**:
+- ✅ 근거 링크 클릭 버그 수정 (인증 헤더 누락 + `/api` prefix 누락)
+- ✅ PDF 인증된 Blob 로드 (Bearer 토큰 + Tenant/User ID)
+- ✅ PDF 다운로드 버튼
+- ✅ 키보드 네비게이션 (방향키 ←→↑↓)
+- ✅ 로딩 스피너 + 에러 처리 (재시도 버튼)
+- ✅ 삭제된 청크 참조 시 친화적 에러 메시지
+- ✅ 전체 한국어 UI 완성
+
+**DOCS 질문 페이지 개선**:
+- ✅ 청크 타입 한국어 라벨 (답변/요약/상세/완료/오류)
+- ✅ 근거 문서 개수 표시 (N건)
+- ✅ 비활성 링크 툴팁 ("문서 정보가 부족하여 원문을 열 수 없습니다")
+- ✅ 유사도 점수 % 표시 (Score 0.842 → 유사도 84.2%)
+- ✅ Document ID → 파일명으로 대체
+
+### 2026-02-06: Admin 관측성 수정 + OPS 6모드
+
+**Admin 관측성 버그 수정 (Phase 8)**:
+- ✅ Logs 페이지 "Not Found" 수정 (Next.js rewrite 제거)
+- ✅ CEP Monitoring `/rules/performance` 엔드포인트 순서 수정
+- ✅ Recent Errors 중복 분석 완료
+
+**OPS 문서 모드 추가 (Phase 6-7)**:
+- ✅ 문서(document) 모드 추가 (DocumentSearchService 통합)
+- ✅ 전체(all) 모드 기본 선택 + `/ops/ask` 엔드포인트
+- ✅ UI_MODES 순서 정리 (구성/수치/이력/연결/문서/전체)
+
+**OPS-Docs 통합 완료 (Phase 5)**:
+- ✅ DocumentSearchService (BM25 + pgvector)
+- ✅ Document Search API + Tool Asset 등록
 - ✅ DB 마이그레이션 (IVFFLAT + GIN 인덱스)
-- ✅ 테스트 스위트 및 문서
 
 **관련 문서**:
-- [OPS-Docs 아키텍처 검토](docs/OPS_DOCS_INTEGRATION_ARCHITECTURE_REVIEW.md)
-- [Document Search 구현 완료](docs/DOCUMENT_SEARCH_IMPLEMENTATION.md)
-
-**즉시 사용 가능**:
-```bash
-# 1. 마이그레이션
-alembic upgrade head
-
-# 2. Tool Asset 등록
-python tools/init_document_search_tool.py
-
-# 3. OPS CI Ask에서 문서 검색 활용
-POST /ops/ci/ask?question=문서에서_정보는
-```
+- [OPS 쿼리 모드 가이드](OPS_QUERY_MODES_GUIDE.md)
+- [OPS 쿼리 모드 분석](OPS_QUERY_MODE_ANALYSIS.md)
+- [OPS-Docs 아키텍처 검토](OPS_DOCS_INTEGRATION_ARCHITECTURE_REVIEW.md)
+- [Document Search 구현 완료](DOCUMENT_SEARCH_IMPLEMENTATION.md)
+- [OPS 문서 모드 구현](OPS_DOCUMENT_MODE_IMPLEMENTATION.md)
 
 ---
 
-**작성**: Cline AI Agent
-**버전**: 1.1 (DOCS 모듈 추가)
+**작성**: Cline AI Agent + Claude Code
+**버전**: 1.3 (OPS 6모드 + DOCS 뷰어 개선)
 **문서 위치**: `docs/SYSTEM_ARCHITECTURE_REPORT.md`
-**최종 갱신**: 2026-02-06
+**최종 갱신**: 2026-02-07

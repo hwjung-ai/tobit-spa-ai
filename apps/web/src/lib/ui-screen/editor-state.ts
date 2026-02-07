@@ -10,6 +10,15 @@ export interface ValidationError {
   severity: "error" | "warning";
 }
 
+export interface DraftConflictInfo {
+  hasConflict: boolean;
+  message: string | null;
+  expectedUpdatedAt: string | null;
+  serverUpdatedAt: string | null;
+  serverScreen: ScreenSchemaV1 | null;
+  autoMergedScreen: ScreenSchemaV1 | null;
+}
+
 export interface EditorState {
   // State
   screen: ScreenSchemaV1 | null;
@@ -25,6 +34,9 @@ export interface EditorState {
   previewEnabled: boolean;
   previewError: string | null;
   proposedPatch: string | null;
+  serverUpdatedAt: string | null;
+  lastSyncedScreen: ScreenSchemaV1 | null;
+  draftConflict: DraftConflictInfo;
 
   // Computed
   selectedComponent: Component | null;
@@ -36,6 +48,7 @@ export interface EditorState {
   setAssetId: (assetId: string) => void;
   loadScreen: (assetId: string) => Promise<void>;
   initializeScreen: (screen: ScreenSchemaV1, status: "draft" | "published") => void;
+  applyRemoteScreen: (screen: ScreenSchemaV1, updatedAt?: string | null) => void;
   addComponent: (type: ComponentType, index?: number) => void;
   addComponentToParent: (type: ComponentType, parentId: string) => void;
   deleteComponent: (id: string) => void;
@@ -58,6 +71,7 @@ export interface EditorState {
   addComponentAction: (componentId: string, action: ComponentActionRef) => void;
   updateComponentAction: (componentId: string, actionId: string, updates: Partial<ComponentActionRef>) => void;
   deleteComponentAction: (componentId: string, actionId: string) => void;
+  moveComponentAction: (componentId: string, actionId: string, direction: "up" | "down") => void;
   getComponentActions: (componentId: string) => ComponentActionRef[];
 
   // Binding management
@@ -80,7 +94,11 @@ export interface EditorState {
   discardProposal: () => void;
 
   // Draft/Publish/Rollback
-  saveDraft: () => Promise<void>;
+  saveDraft: (opts?: { force?: boolean }) => Promise<void>;
+  clearDraftConflict: () => void;
+  applyAutoMergedConflict: () => void;
+  reloadFromServer: () => Promise<void>;
+  forceSaveDraft: () => Promise<void>;
   publish: () => Promise<void>;
   rollback: () => Promise<void>;
 
@@ -102,8 +120,15 @@ function createDefaultComponent(type: ComponentType, id: string): Component {
     props: {},
   };
   // Initialize empty components array for container types
-  if (type === "row" || type === "column") {
+  if (type === "row" || type === "column" || type === "form") {
     component.props = { components: [] };
+  } else if (type === "accordion") {
+    component.props = {
+      items: [
+        { id: "section_1", title: "Section 1", components: [] },
+      ],
+      allow_multiple: false,
+    };
   }
   return component;
 }
@@ -135,7 +160,7 @@ function generateUniqueComponentId(type: string, allComponents: Component[]): st
 
 // Helper to check if component is a container type
 function isContainerComponent(type: string): boolean {
-  return type === "row" || type === "column" || type === "modal";
+  return type === "row" || type === "column" || type === "modal" || type === "form";
 }
 
 // Helper to add component to a parent container (returns new components array)
@@ -310,7 +335,56 @@ function validateScreen(screen: ScreenSchemaV1): ValidationError[] {
   }
 }
 
+const MERGE_KEYS: Array<keyof ScreenSchemaV1> = [
+  "name",
+  "layout",
+  "components",
+  "actions",
+  "state",
+  "bindings",
+  "metadata",
+];
+
+function changedScreenKeys(
+  before: ScreenSchemaV1 | null,
+  after: ScreenSchemaV1 | null
+): Set<keyof ScreenSchemaV1> {
+  const out = new Set<keyof ScreenSchemaV1>();
+  if (!before || !after) return out;
+  for (const key of MERGE_KEYS) {
+    const a = before[key];
+    const b = after[key];
+    if (JSON.stringify(a) !== JSON.stringify(b)) {
+      out.add(key);
+    }
+  }
+  return out;
+}
+
+function buildAutoMergedScreen(
+  baseRemote: ScreenSchemaV1,
+  localScreen: ScreenSchemaV1,
+  localChanged: Set<keyof ScreenSchemaV1>
+): ScreenSchemaV1 {
+  const merged = { ...baseRemote } as ScreenSchemaV1;
+  for (const key of localChanged) {
+    (merged as unknown as Record<string, unknown>)[key] = (
+      localScreen as unknown as Record<string, unknown>
+    )[key];
+  }
+  return merged;
+}
+
 let currentAssetId = "";
+
+const EMPTY_DRAFT_CONFLICT: DraftConflictInfo = {
+  hasConflict: false,
+  message: null,
+  expectedUpdatedAt: null,
+  serverUpdatedAt: null,
+  serverScreen: null,
+  autoMergedScreen: null,
+};
 
 export const useEditorState = create<EditorState>((set, get) => ({
   // State
@@ -327,6 +401,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
   previewEnabled: false,
   previewError: null,
   proposedPatch: null,
+  serverUpdatedAt: null,
+  lastSyncedScreen: null,
+  draftConflict: { ...EMPTY_DRAFT_CONFLICT },
 
   // Computed
   get selectedComponent() {
@@ -361,32 +438,60 @@ export const useEditorState = create<EditorState>((set, get) => ({
       console.log("[EDITOR] Attempting to load screen from /asset-registry:", assetId);
       const response = await fetchApi(`/asset-registry/assets/${assetId}`);
       // fetchApi returns ResponseEnvelope, so access response.data.asset
-      const asset = (response as { data?: { asset?: { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } } } | null)?.data?.asset as { asset_id?: string; schema_json?: Record<string, unknown>; screen_schema?: Record<string, unknown>; status?: string } | null;
-      const rawSchema = (asset?.schema_json || asset?.screen_schema) as Record<string, unknown>;
+      const asset = (response as {
+        data?: {
+          asset?: {
+            asset_id?: string;
+            screen_id?: string;
+            schema_json?: Record<string, unknown>;
+            screen_schema?: Record<string, unknown>;
+            status?: string;
+            updated_at?: string;
+          };
+        };
+      } | null)?.data?.asset as {
+        asset_id?: string;
+        screen_id?: string;
+        schema_json?: Record<string, unknown>;
+        screen_schema?: Record<string, unknown>;
+        status?: string;
+        updated_at?: string;
+      } | null;
+      const rawSchema = ((asset?.schema_json || asset?.screen_schema || {}) as Record<
+        string,
+        unknown
+      >);
+      const raw = rawSchema as Record<string, unknown>;
       const status = (asset?.status || "draft") as "draft" | "published";
 
       const baseSchema: ScreenSchemaV1 = {
-        screen_id: rawSchema?.screen_id || asset?.screen_id || asset?.asset_id || assetId,
-        name: rawSchema?.name,
-        description: rawSchema?.description,
-        version: rawSchema?.version,
-        layout: rawSchema?.layout || { type: "form", direction: "vertical" },
-        components: (rawSchema?.components as Record<string, unknown>[]) || [],
-        actions: (rawSchema?.actions as Record<string, unknown>) || null,
-        state: rawSchema?.state || null,
-        bindings: rawSchema?.bindings || null,
-        metadata: rawSchema?.metadata,
+        screen_id:
+          String(raw.screen_id || asset?.screen_id || asset?.asset_id || assetId),
+        name: (raw.name as string | undefined) || undefined,
+        version: (raw.version as string | undefined) || undefined,
+        layout:
+          (raw.layout as ScreenSchemaV1["layout"] | undefined) || {
+            type: "form",
+            direction: "vertical",
+          },
+        components: (raw.components as ScreenSchemaV1["components"]) || [],
+        actions: (raw.actions as ScreenSchemaV1["actions"]) || null,
+        state: (raw.state as ScreenSchemaV1["state"]) || null,
+        bindings: (raw.bindings as ScreenSchemaV1["bindings"]) || null,
+        metadata: (raw.metadata as ScreenSchemaV1["metadata"]) || undefined,
         ...rawSchema,
       };
 
       const schema: ScreenSchemaV1 = {
         ...baseSchema,
-        screen_id: baseSchema.screen_id || rawSchema?.screen_id || asset?.screen_id || asset?.asset_id || assetId,
+        screen_id:
+          baseSchema.screen_id ||
+          String(raw.screen_id || asset?.screen_id || asset?.asset_id || assetId),
       };
 
       // IMPORTANT: Update currentAssetId to be canonical UUID from backend
       // This ensures subsequent PUT requests use UUID, not a slug/screen_id
-      if (asset.asset_id) {
+      if (asset?.asset_id) {
         console.log("[EDITOR] Updating currentAssetId to canonical UUID:", asset.asset_id);
         currentAssetId = asset.asset_id;
       }
@@ -398,6 +503,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
         status,
         draftModified: false,
         validationErrors: validateScreen(schema),
+        serverUpdatedAt: asset?.updated_at || null,
+        lastSyncedScreen: schema,
+        draftConflict: { ...EMPTY_DRAFT_CONFLICT },
       });
       console.log("[EDITOR] Screen loaded successfully from /asset-registry");
     } catch (error) {
@@ -414,6 +522,52 @@ export const useEditorState = create<EditorState>((set, get) => ({
       status,
       draftModified: false,
       validationErrors: validateScreen(screen),
+      serverUpdatedAt: null,
+      lastSyncedScreen: screen,
+      draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+    });
+  },
+
+  applyRemoteScreen: (screen: ScreenSchemaV1, updatedAt?: string | null) => {
+    set((state) => {
+      if (state.draftModified && state.screen) {
+        const localJson = JSON.stringify(state.screen);
+        const remoteJson = JSON.stringify(screen);
+        if (localJson !== remoteJson) {
+          const localChanged = changedScreenKeys(
+            state.lastSyncedScreen,
+            state.screen as ScreenSchemaV1
+          );
+          const remoteChanged = changedScreenKeys(state.lastSyncedScreen, screen);
+          const hasOverlap = [...localChanged].some((key) => remoteChanged.has(key));
+          const autoMergedScreen =
+            !hasOverlap && localChanged.size > 0
+              ? buildAutoMergedScreen(screen, state.screen as ScreenSchemaV1, localChanged)
+              : null;
+          return {
+            draftConflict: {
+              hasConflict: true,
+              message: autoMergedScreen
+                ? "Remote changes merged candidate is ready. Review and apply auto-merge."
+                : "Remote editor updated this screen while you have local draft changes.",
+              expectedUpdatedAt: state.serverUpdatedAt,
+              serverUpdatedAt: updatedAt || state.serverUpdatedAt,
+              serverScreen: screen,
+              autoMergedScreen,
+            },
+          };
+        }
+      }
+
+      return {
+        screen,
+        draft: screen,
+        lastSyncedScreen: screen,
+        serverUpdatedAt: updatedAt || state.serverUpdatedAt,
+        validationErrors: validateScreen(screen),
+        draftModified: false,
+        draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+      };
     });
   },
 
@@ -851,6 +1005,38 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
+  moveComponentAction: (componentId: string, actionId: string, direction: "up" | "down") => {
+    set((state) => {
+      if (!state.screen) return state;
+
+      const newComponents = updateComponentById(
+        state.screen.components,
+        componentId,
+        (c) => {
+          const actions = c.actions || [];
+          const index = actions.findIndex((a) => a.id === actionId);
+          if (index < 0) return c;
+          const targetIndex = direction === "up" ? index - 1 : index + 1;
+          if (targetIndex < 0 || targetIndex >= actions.length) return c;
+          const reordered = [...actions];
+          [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+          return { ...c, actions: reordered };
+        }
+      );
+
+      const newScreen = {
+        ...state.screen,
+        components: newComponents,
+      };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+      };
+    });
+  },
+
   getComponentActions: (componentId: string) => {
     const state = get();
     if (!state.screen) return [];
@@ -948,9 +1134,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
       // Prepare request body
       const requestBody = {
-        handler: action.handler,
-        payload: payload || action.payload_template || {},
-        context: {},
+        action_id: action.handler,
+        inputs: payload || action.payload_template || {},
+        context: { mode: "real", origin: "screen_editor_test" },
         trace_id: `test-${Date.now()}`,
       };
 
@@ -965,10 +1151,11 @@ export const useEditorState = create<EditorState>((set, get) => ({
         throw new Error(`Action execution failed: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const envelope = await response.json();
+      const result = envelope?.data ?? envelope;
 
       // Apply state patch if provided
-      if (result.state_patch) {
+      if (result?.state_patch) {
         get().applyStatePatch(result.state_patch);
       }
 
@@ -1004,7 +1191,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
     });
   },
 
-  saveDraft: async () => {
+  saveDraft: async (opts?: { force?: boolean }) => {
     try {
       console.log("[EDITOR] saveDraft called");
       const state = get();
@@ -1026,6 +1213,8 @@ export const useEditorState = create<EditorState>((set, get) => ({
         // Try PUT (update existing)
         const putPayload = {
           schema_json: state.screen as unknown as Record<string, unknown>,
+          expected_updated_at: state.serverUpdatedAt || undefined,
+          force: !!opts?.force,
         };
         console.log("[EDITOR] Attempting PUT to /asset-registry/assets");
         console.log("[EDITOR] PUT payload:", putPayload);
@@ -1036,6 +1225,13 @@ export const useEditorState = create<EditorState>((set, get) => ({
         });
         console.log("[EDITOR] PUT response:", putResponse);
         console.log("[EDITOR] Saved to asset-registry successfully");
+        const nextUpdatedAt =
+          ((putResponse as { data?: { asset?: { updated_at?: string } } })?.data?.asset
+            ?.updated_at as string | undefined) || state.serverUpdatedAt || null;
+        set({
+          serverUpdatedAt: nextUpdatedAt,
+          draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+        });
       } catch (putError: unknown) {
         // If asset doesn't exist (404), create it with POST
         // Check for 404 status code or "not found" in error message
@@ -1047,7 +1243,64 @@ export const useEditorState = create<EditorState>((set, get) => ({
         console.log("[EDITOR] Status code:", statusCode);
         console.log("[EDITOR] Checking error for 404/not found matches...");
 
-        if (
+        if (statusCode === 409) {
+          try {
+            const latest = await fetchApi(`/asset-registry/assets/${currentAssetId}`);
+            const latestAsset = (latest as {
+              data?: {
+                asset?: {
+                  schema_json?: Record<string, unknown>;
+                  screen_schema?: Record<string, unknown>;
+                  updated_at?: string;
+                };
+              };
+            })?.data?.asset;
+            const latestRaw = (latestAsset?.schema_json ||
+              latestAsset?.screen_schema ||
+              {}) as Record<string, unknown>;
+            const latestSchema: ScreenSchemaV1 = {
+              ...(state.screen as ScreenSchemaV1),
+              ...latestRaw,
+            };
+            const localChanged = changedScreenKeys(
+              state.lastSyncedScreen,
+              state.screen as ScreenSchemaV1
+            );
+            const serverChanged = changedScreenKeys(state.lastSyncedScreen, latestSchema);
+            let autoMergedScreen: ScreenSchemaV1 | null = null;
+            const hasOverlap = [...localChanged].some((key) => serverChanged.has(key));
+            if (!hasOverlap && localChanged.size > 0) {
+              autoMergedScreen = buildAutoMergedScreen(
+                latestSchema,
+                state.screen as ScreenSchemaV1,
+                localChanged
+              );
+            }
+            set({
+              draftConflict: {
+                hasConflict: true,
+                message: "Another editor saved newer changes. Choose reload or force save.",
+                expectedUpdatedAt: state.serverUpdatedAt,
+                serverUpdatedAt: latestAsset?.updated_at || null,
+                serverScreen: latestSchema,
+                autoMergedScreen,
+              },
+            });
+          } catch {
+            set({
+              draftConflict: {
+                hasConflict: true,
+                message:
+                  "Another editor saved newer changes. Reload latest version before saving.",
+                expectedUpdatedAt: state.serverUpdatedAt,
+                serverUpdatedAt: null,
+                serverScreen: null,
+                autoMergedScreen: null,
+              },
+            });
+          }
+          throw new Error("Draft conflict detected");
+        } else if (
           statusCode === 404 ||
           errStr.includes("404") ||
           errStr.includes("not found") ||
@@ -1073,6 +1326,13 @@ export const useEditorState = create<EditorState>((set, get) => ({
             console.log("[EDITOR] POST response received");
             console.log("[EDITOR] POST response data:", postResponse);
             console.log("[EDITOR] Created new asset successfully");
+            const postUpdatedAt =
+              ((postResponse as { data?: { asset?: { updated_at?: string } } })?.data?.asset
+                ?.updated_at as string | undefined) || state.serverUpdatedAt || null;
+            set({
+              serverUpdatedAt: postUpdatedAt,
+              draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+            });
           } catch (postError: unknown) {
             console.error("[EDITOR] POST error:", postError);
             console.error("[EDITOR] POST error details:", {
@@ -1102,6 +1362,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
         draft: state.screen,
         draftModified: false,
         isSaving: false,
+        lastSyncedScreen: state.screen,
       });
       console.log("[EDITOR] saveDraft completed successfully");
     } catch (error) {
@@ -1109,6 +1370,34 @@ export const useEditorState = create<EditorState>((set, get) => ({
       set({ isSaving: false });
       throw error;
     }
+  },
+
+  clearDraftConflict: () => {
+    set({ draftConflict: { ...EMPTY_DRAFT_CONFLICT } });
+  },
+
+  applyAutoMergedConflict: () => {
+    const state = get();
+    const merged = state.draftConflict.autoMergedScreen;
+    if (!merged) return;
+    set({
+      screen: merged,
+      draftModified: true,
+      validationErrors: validateScreen(merged),
+      draftConflict: {
+        ...state.draftConflict,
+        message: "Auto-merged draft prepared. Review and save.",
+      },
+    });
+  },
+
+  reloadFromServer: async () => {
+    if (!currentAssetId) return;
+    await get().loadScreen(currentAssetId);
+  },
+
+  forceSaveDraft: async () => {
+    await get().saveDraft({ force: true });
   },
 
   publish: async () => {
@@ -1211,6 +1500,9 @@ export const useEditorState = create<EditorState>((set, get) => ({
       isRollbacking: false,
       previewEnabled: false,
       previewError: null,
+      serverUpdatedAt: null,
+      lastSyncedScreen: null,
+      draftConflict: { ...EMPTY_DRAFT_CONFLICT },
     });
   },
 }));

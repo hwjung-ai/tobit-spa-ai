@@ -3,8 +3,6 @@
 /**
  * Minimal RFC6902 JSON Patch implementation tailored for ScreenSchema patches.
  * Supports: add, replace, remove with object keys and array indices (including '-' append).
- *
- * Path syntax: "/components/0/props/content"
  */
 
 export type JsonPatchOperation =
@@ -29,28 +27,34 @@ function parsePointer(path: string): PathSegment[] {
     .map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"));
 }
 
-function getParent(root: unknown, segments: PathSegment[]): { parent: unknown; key: string | number | null } {
+function getParent(root: unknown, segments: PathSegment[]): { parent: unknown; key: string | null } {
   if (segments.length === 0) {
     return { parent: null, key: null };
   }
 
-  let node = root;
+  let node = root as unknown;
   for (let i = 0; i < segments.length - 1; i++) {
     const segment = segments[i];
+
     if (Array.isArray(node)) {
       const index = segment === "-" ? node.length - 1 : parseInt(segment, 10);
       if (isNaN(index) || index < 0 || index >= node.length) {
         throw new Error(`Invalid array index "${segment}" while walking path`);
       }
       node = node[index];
-    } else if (node && typeof node === "object") {
-      if (!(segment in node)) {
+      continue;
+    }
+
+    if (node && typeof node === "object") {
+      const obj = node as Record<string, unknown>;
+      if (!(segment in obj)) {
         throw new Error(`Path segment "${segment}" does not exist`);
       }
-      node = node[segment];
-    } else {
-      throw new Error(`Cannot traverse path segment "${segment}"`);
+      node = obj[segment];
+      continue;
     }
+
+    throw new Error(`Cannot traverse path segment "${segment}"`);
   }
 
   const lastSegment = segments[segments.length - 1];
@@ -61,15 +65,14 @@ function getParent(root: unknown, segments: PathSegment[]): { parent: unknown; k
   return { parent: node, key: lastSegment };
 }
 
-function applySingleOp(doc: unknown, op: JsonPatchOperation) {
+function applySingleOp(doc: unknown, op: JsonPatchOperation): unknown {
   const segments = parsePointer(op.path);
+
   if (segments.length === 0) {
     if (op.op === "remove") {
-      throw new Error("Removing of entire document is not supported");
+      throw new Error("Removing entire document is not supported");
     }
-    if (op.op === "replace" || op.op === "add") {
-      return cloneDeep(op.value);
-    }
+    return cloneDeep(op.value);
   }
 
   const { parent, key } = getParent(doc, segments);
@@ -79,123 +82,45 @@ function applySingleOp(doc: unknown, op: JsonPatchOperation) {
 
   if (op.op === "remove") {
     if (Array.isArray(parent)) {
-      const index = key === "-" ? parent.length - 1 : parseInt(String(key), 10);
+      const index = key === "-" ? parent.length - 1 : parseInt(key, 10);
       if (isNaN(index) || index < 0 || index >= parent.length) {
         throw new Error(`Invalid array index "${key}" for remove`);
       }
       parent.splice(index, 1);
-      return;
-    } else {
-      delete parent[key];
+      return doc;
     }
-    return;
+
+    const obj = parent as Record<string, unknown>;
+    delete obj[key];
+    return doc;
   }
 
   if (Array.isArray(parent)) {
-    const indexStr = String(key);
-    if (indexStr === "-") {
+    if (key === "-") {
       parent.push(op.value);
-      return;
+      return doc;
     }
-    const index = parseInt(indexStr, 10);
+
+    const index = parseInt(key, 10);
     if (isNaN(index) || index < 0 || index > parent.length) {
-      throw new Error(`Invalid array index "${indexStr}" for ${op.op}`);
+      throw new Error(`Invalid array index "${key}" for ${op.op}`);
     }
+
     if (op.op === "replace") {
       if (index >= parent.length) {
         throw new Error(`Array index "${key}" out of bounds for replace`);
       }
       parent[index] = op.value;
-      return;
+      return doc;
     }
+
     parent.splice(index, 0, op.value);
-    return;
+    return doc;
   }
 
-  if (op.op === "add" || op.op === "replace") {
-    parent[key] = op.value;
-    return;
-  }
-
-  throw new Error(`Unsupported operation "${op.op}"`);
-}
-    if (op.op === "replace" || op.op === "add") {
-      return cloneDeep(op.value);
-    }
-  }
-
-  const { parent, key } = getParent(doc, segments);
-  if (parent === null || key === null) {
-    throw new Error("Invalid JSON Patch target");
-  }
-
-  if (op.op === "remove") {
-    if (Array.isArray(parent)) {
-      const index = key === "-" ? parent.length - 1 : parseInt(String(key), 10);
-      if (isNaN(index) || index < 0 || index >= parent.length) {
-        throw new Error(`Invalid array index "${key}" for remove`);
-      }
-      parent.splice(index, 1);
-    } else {
-      delete parent[key];
-    }
-    return;
-  }
-
-    if (Array.isArray(parent)) {
-      const indexStr = String(key);
-      if (indexStr === "-") {
-        parent.push(op.value);
-        return;
-      }
-      const index = parseInt(indexStr, 10);
-      if (isNaN(index) || index < 0 || index > parent.length) {
-        throw new Error(`Invalid array index "${indexStr}" for ${op.op}`);
-      }
-      if (op.op === "replace") {
-        if (index >= parent.length) {
-          throw new Error(`Array index "${key}" out of bounds for replace`);
-        }
-        parent[index] = op.value;
-        return;
-      }
-      parent.splice(index, 0, op.value);
-      return;
-    }
-
-    if (op.op === "add" || op.op === "replace") {
-      parent[key] = op.value;
-      return;
-    }
-  
-  if (op.op === "add" || op.op === "replace") {
-    parent[key] = op.value;
-    return;
-  }
-
-  throw new Error(`Unsupported operation "${op}"`);
-}
-    const index = parseInt(indexStr, 10);
-    if (isNaN(index) || index < 0 || index > parent.length) {
-      throw new Error(`Invalid array index "${indexStr}" for ${op.op}`);
-    }
-    if (op.op === "replace") {
-      if (index >= parent.length) {
-        throw new Error(`Array index "${key}" out of bounds for replace`);
-      }
-      parent[index] = op.value;
-      return;
-    }
-    parent.splice(index, 0, op.value);
-    return;
-  }
-
-  if (op.op === "add" || op.op === "replace") {
-    parent[key] = op.value;
-    return;
-  }
-
-  throw new Error(`Unsupported operation "${op.op}"`);
+  const obj = parent as Record<string, unknown>;
+  obj[key] = op.value;
+  return doc;
 }
 
 export function applyJsonPatch(doc: unknown, patch: JsonPatchOperation[]) {

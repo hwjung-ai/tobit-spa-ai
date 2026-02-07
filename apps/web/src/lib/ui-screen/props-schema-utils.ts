@@ -18,6 +18,73 @@ export interface PropsFormField {
  * Generate form fields from component props schema
  */
 export function generatePropsFormFields(componentType: string): PropsFormField[] {
+  if (componentType === "chart") {
+    return [
+      {
+        name: "chart_type",
+        type: "select",
+        label: "Chart Type",
+        description: "Type of chart visualization",
+        options: [
+          { value: "line", label: "Line" },
+          { value: "bar", label: "Bar" },
+          { value: "pie", label: "Pie" },
+          { value: "area", label: "Area" },
+          { value: "scatter", label: "Scatter" },
+        ],
+      },
+      {
+        name: "x_key",
+        type: "text",
+        label: "X-Axis Field",
+        description: "Field name for X-axis values",
+        placeholder: "e.g., timestamp",
+      },
+      {
+        name: "series",
+        type: "textarea",
+        label: "Series Configuration",
+        description: "Array of series with data_key, label, color. JSON format.",
+        placeholder: '[{"data_key":"value","label":"Value","color":"#38bdf8"}]',
+      },
+      {
+        name: "y_axis",
+        type: "textarea",
+        label: "Y-Axis Options",
+        description: "Y-axis configuration (min, max, title). JSON format.",
+        placeholder: '{"min":0,"max":100,"title":"Value"}',
+      },
+      {
+        name: "legend",
+        type: "textarea",
+        label: "Legend Options",
+        description: "Legend configuration (show, position). JSON format.",
+        placeholder: '{"show":true,"position":"right"}',
+      },
+      {
+        name: "tooltip",
+        type: "textarea",
+        label: "Tooltip Options",
+        description: "Tooltip configuration. JSON format.",
+        placeholder: '{"show":true,"trigger":"axis"}',
+      },
+      {
+        name: "height",
+        type: "number",
+        label: "Chart Height",
+        description: "Height in pixels",
+        min: 200,
+        max: 800,
+      },
+      {
+        name: "responsive",
+        type: "boolean",
+        label: "Responsive",
+        description: "Enable responsive resizing",
+      },
+    ];
+  }
+
   const descriptor = getComponentDescriptor(componentType);
   if (!descriptor || !descriptor.propsSchema) return [];
 

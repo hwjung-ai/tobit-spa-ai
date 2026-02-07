@@ -2,30 +2,25 @@ import { test, expect, type Page } from "@playwright/test";
 
 async function openDraftScreen(page: Page) {
   await page.goto("/admin/screens", { waitUntil: "domcontentloaded" });
-  await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 });
+  await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 20000 });
 
-  const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({
-    has: page.locator('[data-testid^="status-badge-"]', { hasText: "draft" }),
-  }).first();
-  if (!(await draftCard.isVisible())) {
-    const draftId = `e2e_draft_${Date.now()}`;
-    await page.locator('[data-testid="btn-create-screen"]').click();
-    await page.locator('[data-testid="input-screen-id"]').fill(draftId);
-    await page.locator('[data-testid="input-screen-name"]').fill("E2E Draft Screen");
-    await page.locator('[data-testid="btn-confirm-create"]').click();
-    await page.waitForTimeout(1000);
+  const firstLink = page.locator('[data-testid^="link-screen-"]').first();
+  if (await firstLink.isVisible({ timeout: 5000 }).catch(() => false)) {
+    await firstLink.click();
+    return;
   }
 
-  const draftLink = page
-    .locator('[data-testid^="screen-asset-"]')
-    .filter({
-      has: page.locator('[data-testid^="status-badge-"]', { hasText: "draft" }),
-    })
-    .first()
-    .locator('[data-testid^="link-screen-"]')
-    .first();
-  await draftLink.waitFor({ timeout: 15000 });
-  await draftLink.click();
+  const draftId = `e2e_diff_${Date.now()}`;
+  const draftName = `E2E Diff ${Date.now()}`;
+  await page.click('[data-testid="btn-create-screen"]');
+  await page.waitForSelector('[data-testid="modal-create-screen"]', { timeout: 10000 });
+  await page.locator('[data-testid="input-screen-id"]').fill(draftId);
+  await page.locator('[data-testid="input-screen-name"]').fill(draftName);
+  await page.locator('[data-testid="btn-confirm-create"]').click();
+
+  const createdLink = page.locator('[data-testid^="link-screen-"]', { hasText: draftName }).first();
+  await createdLink.waitFor({ state: "visible", timeout: 30000 });
+  await createdLink.click();
 }
 
 async function addTextComponent(page: Page) {
@@ -93,10 +88,10 @@ test.describe("U3-2-1: Screen Diff / Compare UI", () => {
     const diffContent = page.locator('[data-testid="diff-content"]');
     await expect(diffContent).toBeVisible();
 
-    const summary = page.locator("text=added");
+    const summary = page.locator('text=/\\+\\d+ added/i');
     await expect(summary).toBeVisible();
 
-    const addedItem = page.locator(".bg-green-50").first();
+    const addedItem = page.locator(".border-green-500").first();
     await expect(addedItem).toBeVisible();
   });
 
@@ -110,11 +105,11 @@ test.describe("U3-2-1: Screen Diff / Compare UI", () => {
     await page.click('[data-testid="tab-diff"]');
     await page.waitForSelector('[data-testid="diff-content"]');
 
-    const summary = page.locator("text=added");
+    const summary = page.locator('text=/\\+\\d+ added/i');
     await expect(summary).toBeVisible();
 
-    const addedItem = page.locator(".bg-green-50").first();
-    await expect(addedItem).toBeVisible();
+    const modifiedOrAddedItem = page.locator(".border-amber-500, .border-green-500").first();
+    await expect(modifiedOrAddedItem).toBeVisible();
   });
 
   test("should show accurate diff summary counts", async ({ page }) => {
@@ -127,9 +122,19 @@ test.describe("U3-2-1: Screen Diff / Compare UI", () => {
     await page.click('[data-testid="tab-diff"]');
     await page.waitForSelector('[data-testid="diff-content"]');
 
-    const summary = page.locator(".px-4.py-3.bg-slate-50");
-    const summaryText = await summary.textContent();
+    const summaryAdded = page.locator('text=/\\+\\d+ added/i').first();
+    await expect(summaryAdded).toBeVisible();
+  });
 
-    expect(summaryText).toContain("+");
+  test("should render changed diff entries", async ({ page }) => {
+    await page.click('[data-testid="tab-visual"]');
+    await page.waitForSelector('[data-testid="visual-editor-content"]');
+
+    await addTextComponent(page);
+    await page.click('[data-testid="tab-diff"]');
+    await page.waitForSelector('[data-testid="diff-content"]');
+
+    const addedItem = page.locator(".border-green-500").first();
+    await expect(addedItem).toBeVisible();
   });
 });

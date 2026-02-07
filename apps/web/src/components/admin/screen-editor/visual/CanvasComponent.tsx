@@ -9,7 +9,7 @@ import { PALETTE_DRAG_TYPE } from "./ComponentPalette";
 import { GripVertical } from "lucide-react";
 
 // Container types that can have children
-const CONTAINER_TYPES = new Set(["row", "column", "modal"]);
+const CONTAINER_TYPES = new Set(["row", "column", "modal", "form"]);
 
 // Drag type for reordering existing components
 export const COMPONENT_DRAG_TYPE = "application/x-component-id";

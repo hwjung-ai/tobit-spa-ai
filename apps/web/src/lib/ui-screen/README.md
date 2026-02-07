@@ -23,7 +23,7 @@ MVP Subset (required fields to render):
 - bindings (required, can be empty or null) - map of target -> source for quick state initialization
 
 Extensibility (NOT implemented in v1):
-- Visibility rule evaluation (reserved field `visibility.rule`) - left as a placeholder for future phases.
+- Visibility rule supports dot-path binding expressions (`{{state...}}`, `{{inputs...}}`, `{{context...}}`).
 - Computed props / transform functions - intentionally out-of-scope.
 - Plugin-based custom components - out-of-scope.
 

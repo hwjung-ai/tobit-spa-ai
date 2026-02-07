@@ -367,3 +367,96 @@ class SystemMonitor:
             "api": [m.to_dict() for m in self.api_metrics[-limit:]],
             "database": [m.to_dict() for m in self.database_metrics[-limit:]],
         }
+
+    def check_health(self) -> Dict[str, Dict[str, str]]:
+        """Check service/database/network health with real connectivity tests.
+
+        Returns e.g. {"service": {"status": "ok", "detail": ""}, ...}
+        """
+        return {
+            "service": self._check_service_health(),
+            "database": self._check_database_health(),
+            "network": self._check_network_health(),
+        }
+
+    def _check_service_health(self) -> Dict[str, str]:
+        """Service = API process health (CPU/Memory within thresholds)"""
+        try:
+            cpu = psutil.cpu_percent(interval=0.1)
+            mem = psutil.virtual_memory().percent
+            if cpu > 95 or mem > 95:
+                return {"status": "error", "detail": f"CPU {cpu:.0f}% / Memory {mem:.0f}%"}
+            return {"status": "ok", "detail": f"CPU {cpu:.0f}% / Memory {mem:.0f}%"}
+        except Exception as e:
+            logger.error(f"Service health check failed: {e}")
+            return {"status": "error", "detail": f"Health check failed: {e}"}
+
+    def _check_database_health(self) -> Dict[str, str]:
+        """Database = PostgreSQL SELECT 1 + connection pool check"""
+        try:
+            from sqlalchemy import text
+
+            from core.db import engine
+
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+
+            pool = engine.pool
+            checked_out = pool.checkedout()
+            pool_size = pool.size()
+            if pool_size > 0 and checked_out / pool_size > 0.9:
+                logger.warning(
+                    f"DB pool near capacity: {checked_out}/{pool_size}"
+                )
+                return {"status": "error", "detail": f"Connection pool near capacity ({checked_out}/{pool_size})"}
+            return {"status": "ok", "detail": f"Pool {checked_out}/{pool_size}"}
+        except Exception as e:
+            logger.error(f"Database health check failed: {e}")
+            return {"status": "error", "detail": f"Connection failed: {e}"}
+
+    def _check_network_health(self) -> Dict[str, str]:
+        """Network = Neo4j + Redis connectivity"""
+        neo4j_ok = self._ping_neo4j()
+        redis_ok = self._ping_redis()
+        if not neo4j_ok or not redis_ok:
+            parts = []
+            if not neo4j_ok:
+                parts.append("Neo4j 연결 실패")
+            if not redis_ok:
+                parts.append("Redis 연결 실패")
+            detail = ", ".join(parts)
+            logger.warning(
+                f"Network health: neo4j={neo4j_ok}, redis={redis_ok}"
+            )
+            return {"status": "error", "detail": detail}
+        return {"status": "ok", "detail": "Neo4j, Redis 정상"}
+
+    @staticmethod
+    def _ping_neo4j() -> bool:
+        try:
+            from core.db_neo4j import get_neo4j_driver
+
+            driver = get_neo4j_driver()
+            try:
+                with driver.session() as session:
+                    session.run("RETURN 1").single()
+                return True
+            finally:
+                driver.close()
+        except Exception as e:
+            logger.warning(f"Neo4j ping failed: {e}")
+            return False
+
+    @staticmethod
+    def _ping_redis() -> bool:
+        try:
+            from core.config import get_settings
+            from core.redis import create_redis_client
+
+            settings = get_settings()
+            client = create_redis_client(settings)
+            client.ping()
+            return True
+        except Exception as e:
+            logger.warning(f"Redis ping failed: {e}")
+            return False

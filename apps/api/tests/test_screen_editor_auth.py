@@ -316,6 +316,65 @@ class TestScreenEditorAuthFlow:
         # Should succeed or at least not fail due to auth
         assert rollback_response.status_code != 401
 
+    def test_update_conflict_returns_409(self, client, auth_token):
+        """Screen update should return 409 when expected_updated_at is stale."""
+        create_response = client.post(
+            "/asset-registry/assets",
+            json={
+                "asset_type": "screen",
+                "screen_id": "workflow-conflict-screen",
+                "name": "Workflow Conflict Screen",
+                "description": "Testing optimistic concurrency",
+                "schema_json": {
+                    "screen_id": "workflow-conflict-screen",
+                    "layout": {"type": "dashboard"},
+                    "components": [],
+                    "state": {"initial": {}},
+                },
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert create_response.status_code in [200, 201]
+        asset_id = _extract_asset_id(create_response)
+        assert asset_id is not None
+
+        detail_response = client.get(
+            f"/asset-registry/assets/{asset_id}",
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert detail_response.status_code == 200
+        initial_updated_at = detail_response.json()["data"]["asset"]["updated_at"]
+
+        first_update = client.put(
+            f"/asset-registry/assets/{asset_id}",
+            json={
+                "expected_updated_at": initial_updated_at,
+                "schema_json": {
+                    "screen_id": "workflow-conflict-screen",
+                    "layout": {"type": "dashboard"},
+                    "components": [{"id": "text_1", "type": "text", "props": {"content": "A"}}],
+                    "state": {"initial": {}},
+                },
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert first_update.status_code in [200, 204]
+
+        conflict_update = client.put(
+            f"/asset-registry/assets/{asset_id}",
+            json={
+                "expected_updated_at": initial_updated_at,
+                "schema_json": {
+                    "screen_id": "workflow-conflict-screen",
+                    "layout": {"type": "dashboard"},
+                    "components": [{"id": "text_2", "type": "text", "props": {"content": "B"}}],
+                    "state": {"initial": {}},
+                },
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+        )
+        assert conflict_update.status_code == 409
+
     def test_publish_invalid_asset_returns_validation_error(self, client, auth_token):
         """Publish should fail when screen schema validation fails on the server."""
         create_response = client.post(

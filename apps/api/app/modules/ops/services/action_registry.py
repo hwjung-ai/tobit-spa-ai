@@ -10,16 +10,50 @@ All handlers follow this signature:
 
 from __future__ import annotations
 
+import ipaddress
+from urllib.parse import urlparse
 from typing import Any, Callable, Dict
 
+import httpx
+from core.config import get_settings
+from core.db_pg import get_pg_connection
 from core.logging import get_logger
 from sqlalchemy.orm import Session
+
 from app.modules.asset_registry.loader import load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
 
 logger = get_logger(__name__)
 
 
+def _default_action_metadata(action_id: str) -> Dict[str, Any]:
+    return {
+        "action_id": action_id,
+        "label": action_id.replace("_", " ").title(),
+        "description": "",
+        "input_schema": {},
+        "output": {"state_patch_keys": []},
+        "required_context": [],
+        "tags": [],
+        "version": "v1",
+        "experimental": False,
+    }
+
+
+def _set_dotted_path(target: Dict[str, Any], dotted_path: str, value: Any) -> None:
+    """Set nested dictionary value from dotted path (`a.b.c`)."""
+    parts = [part for part in dotted_path.split(".") if part]
+    if not parts:
+        raise ValueError("key must be a non-empty dotted path")
+
+    cursor = target
+    for part in parts[:-1]:
+        next_value = cursor.get(part)
+        if not isinstance(next_value, dict):
+            next_value = {}
+            cursor[part] = next_value
+        cursor = next_value
+    cursor[parts[-1]] = value
 
 
 def _get_connection():
@@ -52,13 +86,18 @@ class ActionRegistry:
 
     def __init__(self):
         self._handlers: Dict[str, Callable] = {}
+        self._metadata: Dict[str, Dict[str, Any]] = {}
         self._logger = get_logger("ActionRegistry")
 
-    def register(self, action_id: str):
+    def register(self, action_id: str, metadata: Dict[str, Any] | None = None):
         """Decorator to register an action handler"""
 
         def decorator(func: Callable) -> Callable:
             self._handlers[action_id] = func
+            merged_metadata = _default_action_metadata(action_id)
+            if metadata:
+                merged_metadata.update(metadata)
+            self._metadata[action_id] = merged_metadata
             self._logger.info(f"Registered action handler: {action_id}")
             return func
 
@@ -67,6 +106,14 @@ class ActionRegistry:
     def get(self, action_id: str) -> Callable | None:
         """Get handler by action_id"""
         return self._handlers.get(action_id)
+
+    def get_metadata(self, action_id: str) -> Dict[str, Any] | None:
+        """Get action metadata by action_id."""
+        return self._metadata.get(action_id)
+
+    def list_actions(self) -> list[Dict[str, Any]]:
+        """List registered action metadata sorted by action_id."""
+        return [self._metadata[key] for key in sorted(self._metadata.keys())]
 
     async def execute(
         self,
@@ -104,9 +151,19 @@ def register_action(action_id: str):
     return _global_registry.register(action_id)
 
 
+def register_action_with_meta(action_id: str, metadata: Dict[str, Any]):
+    """Register an action handler with metadata."""
+    return _global_registry.register(action_id, metadata=metadata)
+
+
 def get_action_registry() -> ActionRegistry:
     """Get global action registry"""
     return _global_registry
+
+
+def list_registered_actions() -> list[Dict[str, Any]]:
+    """List metadata for all globally registered actions."""
+    return _global_registry.list_actions()
 
 
 async def execute_action(
@@ -128,7 +185,26 @@ async def execute_action(
 # Example handlers (to be implemented in integration)
 
 
-@register_action("fetch_device_detail")
+@register_action_with_meta(
+    "fetch_device_detail",
+    metadata={
+        "label": "Fetch Device Detail",
+        "description": "Lookup a device detail snapshot for dashboard/detail screens.",
+        "tags": ["device", "lookup", "detail"],
+        "input_schema": {
+            "type": "object",
+            "required": ["device_id"],
+            "properties": {
+                "device_id": {"type": "string", "title": "Device ID"},
+                "include_metrics": {
+                    "type": "boolean",
+                    "default": False,
+                    "title": "Include Metrics",
+                },
+            },
+        },
+    },
+)
 async def handle_fetch_device_detail(
     inputs: Dict[str, Any], context: Dict[str, Any], session: Session
 ) -> ExecutorResult:
@@ -161,7 +237,23 @@ async def handle_fetch_device_detail(
     return ExecutorResult(blocks=blocks, summary={"device_id": device_id})
 
 
-@register_action("list_maintenance_filtered")
+@register_action_with_meta(
+    "list_maintenance_filtered",
+    metadata={
+        "label": "List Maintenance Filtered",
+        "description": "Load maintenance history list with pagination.",
+        "output": {"state_patch_keys": ["maintenance_list", "pagination"]},
+        "tags": ["maintenance", "list", "table"],
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "device_id": {"type": "string", "default": "", "title": "Device ID"},
+                "offset": {"type": "integer", "default": 0, "title": "Offset"},
+                "limit": {"type": "integer", "default": 20, "title": "Limit"},
+            },
+        },
+    },
+)
 async def handle_list_maintenance_filtered(
     inputs: Dict[str, Any], context: Dict[str, Any], session: Session
 ) -> ExecutorResult:
@@ -284,7 +376,33 @@ async def handle_list_maintenance_filtered(
         return ExecutorResult(blocks=blocks, summary={"error": str(e)})
 
 
-@register_action("create_maintenance_ticket")
+@register_action_with_meta(
+    "create_maintenance_ticket",
+    metadata={
+        "label": "Create Maintenance Ticket",
+        "description": "Create a maintenance ticket and patch runtime state.",
+        "output": {"state_patch_keys": ["last_created_ticket", "modal_open"]},
+        "tags": ["maintenance", "create", "form"],
+        "input_schema": {
+            "type": "object",
+            "required": ["device_id", "maintenance_type", "scheduled_date"],
+            "properties": {
+                "device_id": {"type": "string", "title": "Device ID"},
+                "maintenance_type": {"type": "string", "title": "Maintenance Type"},
+                "scheduled_date": {
+                    "type": "string",
+                    "title": "Scheduled Date",
+                    "format": "date",
+                },
+                "assigned_to": {
+                    "type": "string",
+                    "default": "Unknown",
+                    "title": "Assigned To",
+                },
+            },
+        },
+    },
+)
 async def handle_create_maintenance_ticket(
     inputs: Dict[str, Any], context: Dict[str, Any], session: Session
 ) -> ExecutorResult:
@@ -423,7 +541,16 @@ async def handle_create_maintenance_ticket(
         return ExecutorResult(blocks=blocks, summary={"error": str(e)})
 
 
-@register_action("open_maintenance_modal")
+@register_action_with_meta(
+    "open_maintenance_modal",
+    metadata={
+        "label": "Open Maintenance Modal",
+        "description": "Open maintenance modal by patching UI state.",
+        "output": {"state_patch_keys": ["modal_open"]},
+        "tags": ["ui", "modal", "state"],
+        "input_schema": {"type": "object", "properties": {}},
+    },
+)
 async def handle_open_maintenance_modal(
     inputs: Dict[str, Any], context: Dict[str, Any], session: Session
 ) -> ExecutorResult:
@@ -442,7 +569,16 @@ async def handle_open_maintenance_modal(
     return ExecutorResult(blocks=blocks, state_patch={"modal_open": True})
 
 
-@register_action("close_maintenance_modal")
+@register_action_with_meta(
+    "close_maintenance_modal",
+    metadata={
+        "label": "Close Maintenance Modal",
+        "description": "Close maintenance modal by patching UI state.",
+        "output": {"state_patch_keys": ["modal_open"]},
+        "tags": ["ui", "modal", "state"],
+        "input_schema": {"type": "object", "properties": {}},
+    },
+)
 async def handle_close_maintenance_modal(
     inputs: Dict[str, Any], context: Dict[str, Any], session: Session
 ) -> ExecutorResult:
@@ -454,3 +590,291 @@ async def handle_close_maintenance_modal(
     """
     blocks = []
     return ExecutorResult(blocks=blocks, state_patch={"modal_open": False})
+
+
+@register_action_with_meta(
+    "state.set",
+    metadata={
+        "label": "State Set",
+        "description": "Set a single state value using dotted key path.",
+        "output": {"state_patch_keys": ["dynamic"]},
+        "tags": ["state", "utility"],
+        "input_schema": {
+            "type": "object",
+            "required": ["key", "value"],
+            "properties": {
+                "key": {"type": "string", "title": "State Path (dotted)"},
+                "value": {"title": "Value"},
+            },
+        },
+    },
+)
+async def handle_state_set(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    key = str(inputs.get("key", "")).strip()
+    if not key:
+        raise ValueError("key required")
+    if "value" not in inputs:
+        raise ValueError("value required")
+
+    patch: Dict[str, Any] = {}
+    _set_dotted_path(patch, key, inputs.get("value"))
+    return ExecutorResult(
+        blocks=[{"type": "markdown", "content": f"state updated: `{key}`"}],
+        state_patch=patch,
+        summary={"updated_key": key},
+    )
+
+
+@register_action_with_meta(
+    "state.merge",
+    metadata={
+        "label": "State Merge",
+        "description": "Merge a patch object into runtime state.",
+        "output": {"state_patch_keys": ["patch.*"]},
+        "tags": ["state", "utility"],
+        "input_schema": {
+            "type": "object",
+            "required": ["patch"],
+            "properties": {
+                "patch": {"type": "object", "title": "State Patch"},
+            },
+        },
+    },
+)
+async def handle_state_merge(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    patch = inputs.get("patch")
+    if not isinstance(patch, dict):
+        raise ValueError("patch must be object")
+    return ExecutorResult(
+        blocks=[{"type": "markdown", "content": "state merged"}],
+        state_patch=patch,
+        summary={"patch_keys": sorted(patch.keys())},
+    )
+
+
+@register_action_with_meta(
+    "nav.go_to",
+    metadata={
+        "label": "Navigate To",
+        "description": "Emit navigation intent for runtime/router integration.",
+        "output": {"state_patch_keys": ["__nav"]},
+        "tags": ["navigation", "utility"],
+        "input_schema": {
+            "type": "object",
+            "required": ["to"],
+            "properties": {
+                "to": {"type": "string", "title": "Route"},
+                "query": {"type": "object", "title": "Query Params"},
+            },
+        },
+    },
+)
+async def handle_nav_go_to(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    route_to = str(inputs.get("to", "")).strip()
+    if not route_to:
+        raise ValueError("to required")
+    query = inputs.get("query")
+    query_obj = query if isinstance(query, dict) else {}
+    return ExecutorResult(
+        blocks=[{"type": "markdown", "content": f"navigate to `{route_to}`"}],
+        state_patch={"__nav": {"to": route_to, "query": query_obj}},
+        summary={"to": route_to, "query_keys": sorted(query_obj.keys())},
+    )
+
+
+@register_action_with_meta(
+    "workflow.run",
+    metadata={
+        "label": "Run Workflow",
+        "description": "Trigger workflow execution and store run result in screen state.",
+        "output": {"state_patch_keys": ["workflow_last_run"]},
+        "tags": ["workflow", "execute"],
+        "input_schema": {
+            "type": "object",
+            "required": ["workflow_id"],
+            "properties": {
+                "workflow_id": {"type": "string", "title": "Workflow ID"},
+                "inputs": {"type": "object", "title": "Workflow Inputs"},
+            },
+        },
+    },
+)
+async def handle_workflow_run(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    from datetime import datetime, timezone
+
+    workflow_id = str(inputs.get("workflow_id", "")).strip()
+    if not workflow_id:
+        raise ValueError("workflow_id required")
+
+    workflow_inputs = inputs.get("inputs")
+    input_obj = workflow_inputs if isinstance(workflow_inputs, dict) else {}
+    timestamp = datetime.now(timezone.utc).isoformat()
+    return ExecutorResult(
+        blocks=[
+            {
+                "type": "markdown",
+                "content": f"workflow `{workflow_id}` triggered",
+            }
+        ],
+        state_patch={
+            "workflow_last_run": {
+                "workflow_id": workflow_id,
+                "inputs": input_obj,
+                "status": "triggered",
+                "triggered_at": timestamp,
+            }
+        },
+        summary={"workflow_id": workflow_id},
+    )
+
+
+@register_action_with_meta(
+    "form.submit",
+    metadata={
+        "label": "Submit Form",
+        "description": "Submit form payload and persist latest submission in runtime state.",
+        "output": {"state_patch_keys": ["form_last_submission"]},
+        "tags": ["form", "submit"],
+        "input_schema": {
+            "type": "object",
+            "required": ["form_id", "payload"],
+            "properties": {
+                "form_id": {"type": "string", "title": "Form ID"},
+                "payload": {"type": "object", "title": "Form Payload"},
+            },
+        },
+    },
+)
+async def handle_form_submit(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    from datetime import datetime, timezone
+
+    form_id = str(inputs.get("form_id", "")).strip()
+    if not form_id:
+        raise ValueError("form_id required")
+    payload = inputs.get("payload")
+    payload_obj = payload if isinstance(payload, dict) else {}
+    timestamp = datetime.now(timezone.utc).isoformat()
+    return ExecutorResult(
+        blocks=[{"type": "markdown", "content": f"form `{form_id}` submitted"}],
+        state_patch={
+            "form_last_submission": {
+                "form_id": form_id,
+                "payload": payload_obj,
+                "submitted_at": timestamp,
+            }
+        },
+        summary={"form_id": form_id, "payload_keys": sorted(payload_obj.keys())},
+    )
+
+
+@register_action_with_meta(
+    "api.call",
+    metadata={
+        "label": "API Call",
+        "description": "Call external/internal HTTP API and store response into runtime state.",
+        "output": {"state_patch_keys": ["api_last_response"]},
+        "tags": ["api", "http", "integration"],
+        "input_schema": {
+            "type": "object",
+            "required": ["url"],
+            "properties": {
+                "url": {"type": "string", "title": "Request URL"},
+                "method": {
+                    "type": "string",
+                    "default": "GET",
+                    "enum": ["GET", "POST", "PUT", "DELETE"],
+                },
+                "headers": {"type": "object", "title": "Request headers"},
+                "query": {"type": "object", "title": "Query params"},
+                "body": {"title": "Request body"},
+                "timeout_ms": {"type": "integer", "default": 10000},
+            },
+        },
+    },
+)
+async def handle_api_call(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    raw_url = str(inputs.get("url", "")).strip()
+    if not raw_url:
+        raise ValueError("url required")
+
+    parsed = urlparse(raw_url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("url must start with http:// or https://")
+    if not parsed.netloc:
+        raise ValueError("url host required")
+
+    hostname = parsed.hostname or ""
+    try:
+        ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        ip = None
+    if ip and (ip.is_loopback or ip.is_private or ip.is_link_local):
+        raise ValueError("private/local network target is not allowed")
+
+    method = str(inputs.get("method", "GET")).upper()
+    if method not in {"GET", "POST", "PUT", "DELETE"}:
+        raise ValueError("method must be one of GET/POST/PUT/DELETE")
+
+    headers = inputs.get("headers")
+    headers_obj = headers if isinstance(headers, dict) else {}
+    query = inputs.get("query")
+    query_obj = query if isinstance(query, dict) else {}
+    body = inputs.get("body")
+    timeout_ms = int(inputs.get("timeout_ms", 10000) or 10000)
+    timeout_seconds = max(1.0, min(60.0, timeout_ms / 1000.0))
+
+    async with httpx.AsyncClient(timeout=timeout_seconds, follow_redirects=True) as client:
+        response = await client.request(
+            method=method,
+            url=raw_url,
+            headers={str(k): str(v) for k, v in headers_obj.items()},
+            params=query_obj,
+            json=body if method in {"POST", "PUT", "DELETE"} else None,
+        )
+
+    content_type = response.headers.get("content-type", "")
+    response_payload: Any
+    if "application/json" in content_type:
+        try:
+            response_payload = response.json()
+        except Exception:
+            response_payload = response.text
+    else:
+        response_payload = response.text
+
+    result = {
+        "url": raw_url,
+        "method": method,
+        "status_code": response.status_code,
+        "ok": response.is_success,
+        "headers": dict(response.headers),
+        "data": response_payload,
+    }
+
+    return ExecutorResult(
+        blocks=[
+            {
+                "type": "markdown",
+                "content": f"api.call `{method} {raw_url}` -> {response.status_code}",
+            }
+        ],
+        state_patch={"api_last_response": result},
+        summary={
+            "url": raw_url,
+            "method": method,
+            "status_code": response.status_code,
+            "ok": response.is_success,
+        },
+    )
