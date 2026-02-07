@@ -13,13 +13,67 @@ export default function VisualEditor() {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete key: delete selected component
-      if (e.key === "Delete" && editorState.selectedComponentId) {
-        editorState.deleteComponent(editorState.selectedComponentId);
-      }
+      // Skip shortcuts when focus is in an input element
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isEditable = tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable;
+      if (isEditable) return;
 
+      const isMod = e.ctrlKey || e.metaKey;
+
+      // Undo: Ctrl+Z
+      if (isMod && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        editorState.undo();
+        return;
+      }
+      // Redo: Ctrl+Shift+Z
+      if (isMod && e.key === "z" && e.shiftKey) {
+        e.preventDefault();
+        editorState.redo();
+        return;
+      }
+      // Select All: Ctrl+A
+      if (isMod && e.key === "a") {
+        e.preventDefault();
+        editorState.selectAll();
+        return;
+      }
+      // Copy: Ctrl+C
+      if (isMod && e.key === "c") {
+        e.preventDefault();
+        editorState.copySelectedComponents();
+        return;
+      }
+      // Cut: Ctrl+X
+      if (isMod && e.key === "x") {
+        e.preventDefault();
+        editorState.cutSelectedComponents();
+        return;
+      }
+      // Paste: Ctrl+V
+      if (isMod && e.key === "v") {
+        e.preventDefault();
+        editorState.pasteComponents();
+        return;
+      }
+      // Duplicate: Ctrl+D
+      if (isMod && e.key === "d") {
+        e.preventDefault();
+        editorState.duplicateSelectedComponents();
+        return;
+      }
+      // Escape: Deselect
+      if (e.key === "Escape") {
+        editorState.deselectAll();
+        return;
+      }
+      // Delete: Delete selected components
+      if (e.key === "Delete" && editorState.selectedComponentIds.length > 0) {
+        editorState.deleteSelectedComponents();
+        return;
+      }
       // Arrow keys for reordering (with Ctrl/Cmd)
-      if ((e.ctrlKey || e.metaKey) && editorState.selectedComponentId) {
+      if (isMod && editorState.selectedComponentId) {
         if (e.key === "ArrowUp") {
           e.preventDefault();
           editorState.moveComponent(editorState.selectedComponentId, "up");

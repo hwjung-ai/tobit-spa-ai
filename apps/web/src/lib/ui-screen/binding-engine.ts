@@ -1,7 +1,8 @@
 /*
-  Binding Engine v1 - Template rendering and dot-path binding
+  Binding Engine v2 - Template rendering with expression support
   - Supports: {{inputs.x}}, {{state.x}}, {{context.x}}, {{trace_id}}
-  - Dot-path only, no expression evaluation
+  - Dot-path binding (v1) + safe expression evaluation (v2)
+  - Expression syntax: {{sum(state.items, 'value')}}, {{state.x > 10 ? 'high' : 'low'}}
   - Provides helpers to apply action result, props binding, loading/error state
 */
 
@@ -14,20 +15,53 @@ export type BindingContext = {
 
 export type BindingState = Record<string, unknown>;
 
+/** Check if an expression contains function calls, operators, or ternary */
+function isExpression(inner: string): boolean {
+  return /[()!?:+\-*/<>=|&]/.test(inner);
+}
+
+/** Safely evaluate an expression string */
+let _expressionParser: typeof import("./expression-parser") | null = null;
+let _expressionEvaluator: typeof import("./expression-evaluator") | null = null;
+
+function safeEvalExpression(expr: string, ctx: BindingContext): unknown {
+  try {
+    // Lazy load to keep v1 paths fast
+    if (!_expressionParser) _expressionParser = require("./expression-parser"); // eslint-disable-line @typescript-eslint/no-require-imports
+    if (!_expressionEvaluator) _expressionEvaluator = require("./expression-evaluator"); // eslint-disable-line @typescript-eslint/no-require-imports
+    const ast = _expressionParser!.parseExpression(expr);
+    return _expressionEvaluator!.evaluate(ast, ctx);
+  } catch {
+    // Fallback: return null on parse/eval error (graceful degradation)
+    return null;
+  }
+}
+
 export function renderTemplate(template: unknown, ctx: BindingContext) {
   if (template == null) return template;
   if (typeof template === "string") {
     const exactMatch = template.match(/^{{\s*([^}]+)\s*}}$/);
     if (exactMatch) {
-      return resolvePath(exactMatch[1].trim(), ctx);
+      const inner = exactMatch[1].trim();
+      // v2: check for expression syntax
+      if (isExpression(inner)) {
+        return safeEvalExpression(inner, ctx);
+      }
+      return resolvePath(inner, ctx);
     }
     return template.replace(/{{\s*([^}]+)\s*}}/g, (_match: string, expr: string): string => {
-      const parts = expr.split(".");
+      const trimmed = expr.trim();
+      // v2: expression in inline interpolation
+      if (isExpression(trimmed)) {
+        const result = safeEvalExpression(trimmed, ctx);
+        return result != null ? String(result) : "";
+      }
+      const parts = trimmed.split(".");
       const root = parts[0];
       const path = parts.slice(1).join(".");
-      if (root === "inputs") return get(ctx.inputs || {}, path) ?? "";
-      if (root === "state") return get(ctx.state || {}, path) ?? "";
-      if (root === "context") return get(ctx.context || {}, path) ?? "";
+      if (root === "inputs") return String(get(ctx.inputs || {}, path) ?? "");
+      if (root === "state") return String(get(ctx.state || {}, path) ?? "");
+      if (root === "context") return String(get(ctx.context || {}, path) ?? "");
       if (root === "trace_id") return ctx.trace_id ?? "";
       return "";
     });

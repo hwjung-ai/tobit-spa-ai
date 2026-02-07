@@ -25,6 +25,7 @@ export interface EditorState {
   draft: ScreenSchemaV1 | null;
   published: ScreenSchemaV1 | null;
   selectedComponentId: string | null;
+  selectedComponentIds: string[];
   draftModified: boolean;
   status: "draft" | "published";
   validationErrors: ValidationError[];
@@ -37,6 +38,16 @@ export interface EditorState {
   serverUpdatedAt: string | null;
   lastSyncedScreen: ScreenSchemaV1 | null;
   draftConflict: DraftConflictInfo;
+
+  // History (Undo/Redo)
+  historyStack: ScreenSchemaV1[];
+  historyIndex: number;
+  canUndo: boolean;
+  canRedo: boolean;
+
+  // Clipboard
+  clipboard: Component[] | null;
+  clipboardOperation: "copy" | "cut" | null;
 
   // Computed
   selectedComponent: Component | null;
@@ -53,6 +64,11 @@ export interface EditorState {
   addComponentToParent: (type: ComponentType, parentId: string) => void;
   deleteComponent: (id: string) => void;
   selectComponent: (id: string | null) => void;
+  selectComponentToggle: (id: string) => void;
+  selectComponentRange: (id: string) => void;
+  selectAll: () => void;
+  deselectAll: () => void;
+  deleteSelectedComponents: () => void;
   updateComponentProps: (id: string, props: Record<string, unknown>) => void;
   updateComponentLabel: (id: string, label: string) => void;
   moveComponent: (id: string, direction: "up" | "down") => void;
@@ -60,6 +76,16 @@ export interface EditorState {
   reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => void;
   updateLayout: (layout: unknown) => void;
   updateScreenFromJson: (json: string) => void;
+
+  // Undo/Redo
+  undo: () => void;
+  redo: () => void;
+
+  // Clipboard
+  copySelectedComponents: () => void;
+  cutSelectedComponents: () => void;
+  pasteComponents: () => void;
+  duplicateSelectedComponents: () => void;
 
   // Action CRUD (screen-level)
   addAction: (action: ScreenAction) => void;
@@ -375,6 +401,32 @@ function buildAutoMergedScreen(
   return merged;
 }
 
+const MAX_HISTORY_SIZE = 50;
+
+// Deep clone a component with a new unique ID (including nested children)
+function deepCloneComponent(component: Component, existingComponents: Component[]): Component {
+  const newId = generateUniqueComponentId(component.type, existingComponents);
+  const cloned: Component = {
+    ...component,
+    id: newId,
+    label: component.label ? `${component.label} (copy)` : undefined,
+    props: component.props ? { ...component.props } : undefined,
+  };
+  if (cloned.props?.components && Array.isArray(cloned.props.components)) {
+    const clonedChildren = (cloned.props.components as Component[]).map(child =>
+      deepCloneComponent(child, [...existingComponents, cloned])
+    );
+    cloned.props = { ...cloned.props, components: clonedChildren };
+  }
+  if (cloned.actions) {
+    cloned.actions = cloned.actions.map(a => ({
+      ...a,
+      id: `${a.id}_${Date.now().toString(36).slice(-4)}`,
+    }));
+  }
+  return cloned;
+}
+
 let currentAssetId = "";
 
 const EMPTY_DRAFT_CONFLICT: DraftConflictInfo = {
@@ -392,6 +444,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
   draft: null,
   published: null,
   selectedComponentId: null,
+  selectedComponentIds: [],
   draftModified: false,
   status: "draft",
   validationErrors: [],
@@ -405,7 +458,20 @@ export const useEditorState = create<EditorState>((set, get) => ({
   lastSyncedScreen: null,
   draftConflict: { ...EMPTY_DRAFT_CONFLICT },
 
+  // History
+  historyStack: [],
+  historyIndex: -1,
+  clipboard: null,
+  clipboardOperation: null,
+
   // Computed
+  get canUndo() {
+    return get().historyIndex >= 0;
+  },
+  get canRedo() {
+    const state = get();
+    return state.historyIndex < state.historyStack.length - 1;
+  },
   get selectedComponent() {
     const state = get();
     if (!state.screen || !state.selectedComponentId) return null;
@@ -506,6 +572,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
         serverUpdatedAt: asset?.updated_at || null,
         lastSyncedScreen: schema,
         draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+        historyStack: [],
+        historyIndex: -1,
+        selectedComponentId: null,
+        selectedComponentIds: [],
       });
       console.log("[EDITOR] Screen loaded successfully from /asset-registry");
     } catch (error) {
@@ -525,6 +595,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
       serverUpdatedAt: null,
       lastSyncedScreen: screen,
       draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+      historyStack: [],
+      historyIndex: -1,
+      selectedComponentId: null,
+      selectedComponentIds: [],
     });
   },
 
@@ -572,16 +646,14 @@ export const useEditorState = create<EditorState>((set, get) => ({
   },
 
   addComponent: (type: ComponentType, index?: number) => {
-    console.log("[EDITOR] Adding component:", type);
     set((state) => {
-      if (!state.screen) {
-        console.log("[EDITOR] No screen loaded");
-        return state;
-      }
+      if (!state.screen) return state;
+
+      // Push history
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
 
       const newId = generateUniqueComponentId(type, state.screen.components);
       const newComponent = createDefaultComponent(type, newId);
-      console.log("[EDITOR] Created component:", newId, newComponent);
 
       const newComponents = [...state.screen.components];
       if (index !== undefined) {
@@ -590,49 +662,38 @@ export const useEditorState = create<EditorState>((set, get) => ({
         newComponents.push(newComponent);
       }
 
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      console.log("[EDITOR] Updated screen with", newComponents.length, "components");
-      console.log("[EDITOR] Setting selectedComponentId to:", newId);
+      const newScreen = { ...state.screen, components: newComponents };
 
       return {
         screen: newScreen,
         draftModified: true,
         validationErrors: validateScreen(newScreen),
         selectedComponentId: newId,
+        selectedComponentIds: [newId],
+        historyStack: newStack,
+        historyIndex: newStack.length - 1,
       };
     });
   },
 
   addComponentToParent: (type: ComponentType, parentId: string) => {
-    console.log("[EDITOR] Adding component to parent:", type, parentId);
     set((state) => {
-      if (!state.screen) {
-        console.log("[EDITOR] No screen loaded");
-        return state;
-      }
+      if (!state.screen) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
 
       const newId = generateUniqueComponentId(type, state.screen.components);
       const newComponent = createDefaultComponent(type, newId);
-      console.log("[EDITOR] Created component:", newId, newComponent);
-
       const newComponents = addToParent(state.screen.components, parentId, newComponent);
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      console.log("[EDITOR] Added component to parent:", parentId);
+      const newScreen = { ...state.screen, components: newComponents };
 
       return {
         screen: newScreen,
         draftModified: true,
         validationErrors: validateScreen(newScreen),
         selectedComponentId: newId,
+        selectedComponentIds: [newId],
+        historyStack: newStack,
+        historyIndex: newStack.length - 1,
       };
     });
   },
@@ -640,205 +701,195 @@ export const useEditorState = create<EditorState>((set, get) => ({
   deleteComponent: (id: string) => {
     set((state) => {
       if (!state.screen) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
 
-      // Use recursive delete to handle nested components
       const newComponents = deleteComponentById(state.screen.components, id);
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
+      const newScreen = { ...state.screen, components: newComponents };
+      const newSelectedIds = state.selectedComponentIds.filter(sid => sid !== id);
 
       return {
         screen: newScreen,
         draftModified: true,
         validationErrors: validateScreen(newScreen),
-        selectedComponentId: state.selectedComponentId === id ? null : state.selectedComponentId,
+        selectedComponentId: state.selectedComponentId === id ? (newSelectedIds[newSelectedIds.length - 1] || null) : state.selectedComponentId,
+        selectedComponentIds: newSelectedIds,
+        historyStack: newStack,
+        historyIndex: newStack.length - 1,
       };
     });
   },
 
   selectComponent: (id: string | null) => {
-    console.log("[EDITOR] selectComponent called with:", id);
+    set(() => ({
+      selectedComponentId: id,
+      selectedComponentIds: id ? [id] : [],
+    }));
+  },
+
+  selectComponentToggle: (id: string) => {
     set((state) => {
-      console.log("[EDITOR] Current selectedComponentId:", state.selectedComponentId);
-      console.log("[EDITOR] Screen components:", state.screen?.components.map(c => c.id));
-      return { selectedComponentId: id };
+      const ids = [...state.selectedComponentIds];
+      const idx = ids.indexOf(id);
+      if (idx >= 0) {
+        ids.splice(idx, 1);
+      } else {
+        ids.push(id);
+      }
+      return {
+        selectedComponentId: ids[ids.length - 1] || null,
+        selectedComponentIds: ids,
+      };
+    });
+  },
+
+  selectComponentRange: (id: string) => {
+    set((state) => {
+      if (!state.screen) return state;
+      const allIds = collectAllComponentIds(state.screen.components);
+      const lastSelected = state.selectedComponentId;
+      if (!lastSelected) return { selectedComponentId: id, selectedComponentIds: [id] };
+
+      const startIdx = allIds.indexOf(lastSelected);
+      const endIdx = allIds.indexOf(id);
+      if (startIdx === -1 || endIdx === -1) return { selectedComponentId: id, selectedComponentIds: [id] };
+
+      const min = Math.min(startIdx, endIdx);
+      const max = Math.max(startIdx, endIdx);
+      const rangeIds = allIds.slice(min, max + 1);
+
+      return {
+        selectedComponentId: id,
+        selectedComponentIds: rangeIds,
+      };
+    });
+  },
+
+  selectAll: () => {
+    set((state) => {
+      if (!state.screen) return state;
+      const allIds = collectAllComponentIds(state.screen.components);
+      return {
+        selectedComponentId: allIds[allIds.length - 1] || null,
+        selectedComponentIds: allIds,
+      };
+    });
+  },
+
+  deselectAll: () => {
+    set(() => ({
+      selectedComponentId: null,
+      selectedComponentIds: [],
+    }));
+  },
+
+  deleteSelectedComponents: () => {
+    set((state) => {
+      if (!state.screen || state.selectedComponentIds.length === 0) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+
+      let newComponents = state.screen.components;
+      for (const id of state.selectedComponentIds) {
+        newComponents = deleteComponentById(newComponents, id);
+      }
+      const newScreen = { ...state.screen, components: newComponents };
+
+      return {
+        screen: newScreen,
+        draftModified: true,
+        validationErrors: validateScreen(newScreen),
+        selectedComponentId: null,
+        selectedComponentIds: [],
+        historyStack: newStack,
+        historyIndex: newStack.length - 1,
+      };
     });
   },
 
   updateComponentProps: (id: string, props: Record<string, unknown>) => {
     set((state) => {
       if (!state.screen) return state;
-
-      // Use updateComponentById to handle nested components
-      const newComponents = updateComponentById(
-        state.screen.components,
-        id,
-        (c) => ({ ...c, props: { ...c.props, ...props } })
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, id, (c) => ({ ...c, props: { ...c.props, ...props } }));
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   updateComponentLabel: (id: string, label: string) => {
     set((state) => {
       if (!state.screen) return state;
-
-      // Use updateComponentById to handle nested components
-      const newComponents = updateComponentById(
-        state.screen.components,
-        id,
-        (c) => ({ ...c, label })
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, id, (c) => ({ ...c, label }));
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   moveComponent: (id: string, direction: "up" | "down") => {
     set((state) => {
       if (!state.screen) return state;
-
       const idx = state.screen.components.findIndex(c => c.id === id);
       if (idx === -1) return state;
-
       const newIndex = direction === "up" ? idx - 1 : idx + 1;
       if (newIndex < 0 || newIndex >= state.screen.components.length) return state;
-
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
       const newComponents = [...state.screen.components];
       [newComponents[idx], newComponents[newIndex]] = [newComponents[newIndex], newComponents[idx]];
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   moveComponentToParent: (componentId: string, targetParentId: string) => {
-    console.log("[EDITOR] moveComponentToParent:", componentId, "->", targetParentId);
     set((state) => {
       if (!state.screen) return state;
-
-      // Find the component to move
       const componentToMove = findComponentById(state.screen.components, componentId);
-      if (!componentToMove) {
-        console.log("[EDITOR] Component not found:", componentId);
-        return state;
-      }
-
-      // Can't move into itself or its children
-      if (componentId === targetParentId) {
-        console.log("[EDITOR] Cannot move component into itself");
-        return state;
-      }
-
-      // Remove from current location
+      if (!componentToMove || componentId === targetParentId) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
       let newComponents = deleteComponentById(state.screen.components, componentId);
-
-      // Add to new parent
       newComponents = addToParent(newComponents, targetParentId, componentToMove);
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   reorderComponentAtIndex: (componentId: string, targetIndex: number, targetParentId?: string | null) => {
-    console.log("[EDITOR] reorderComponentAtIndex:", componentId, "-> index", targetIndex, "parent:", targetParentId);
     set((state) => {
       if (!state.screen) return state;
-
-      // Find the component to move
       const componentToMove = findComponentById(state.screen.components, componentId);
-      if (!componentToMove) {
-        console.log("[EDITOR] Component not found:", componentId);
-        return state;
-      }
-
-      // Remove from current location
+      if (!componentToMove) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
       let newComponents = deleteComponentById(state.screen.components, componentId);
-
-      // Insert at new position
-      newComponents = insertComponentAtIndex(
-        newComponents,
-        componentToMove,
-        targetIndex,
-        targetParentId ?? null
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      newComponents = insertComponentAtIndex(newComponents, componentToMove, targetIndex, targetParentId ?? null);
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   updateLayout: (layout: unknown) => {
     set((state) => {
       if (!state.screen) return state;
-
-      const newScreen = {
-        ...state.screen,
-        layout: { ...state.screen.layout, ...(layout as Record<string, unknown>) },
-      } as ScreenSchemaV1;
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newScreen = { ...state.screen, layout: { ...state.screen.layout, ...(layout as Record<string, unknown>) } } as ScreenSchemaV1;
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   updateScreenFromJson: (jsonString: string) => {
     try {
       const parsed = JSON.parse(jsonString) as ScreenSchemaV1;
-      set(() => {
+      set((state) => {
+        const newStack = state.screen
+          ? [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE)
+          : state.historyStack;
         return {
           screen: parsed,
           draftModified: true,
           validationErrors: validateScreen(parsed),
           selectedComponentId: null,
+          selectedComponentIds: [],
+          historyStack: newStack,
+          historyIndex: newStack.length - 1,
         };
       });
     } catch (error) {
@@ -853,62 +904,32 @@ export const useEditorState = create<EditorState>((set, get) => ({
 
   // Screen-level action CRUD
   addAction: (action: ScreenAction) => {
-    set(() => {
-      const currentScreen = get().screen;
-      if (!currentScreen) return {};
-
-      const newActions = [...(currentScreen.actions || []), action];
-      const newScreen: ScreenSchemaV1 = {
-        ...currentScreen,
-        actions: newActions,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+    set((state) => {
+      if (!state.screen) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newActions = [...(state.screen.actions || []), action];
+      const newScreen: ScreenSchemaV1 = { ...state.screen, actions: newActions };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   updateAction: (actionId: string, updates: Partial<ScreenAction>) => {
-    set(() => {
-      const currentScreen = get().screen;
-      if (!currentScreen || !currentScreen.actions) return {};
-
-      const newActions = currentScreen.actions.map(a =>
-        a.id === actionId ? { ...a, ...updates } : a
-      );
-
-      const newScreen: ScreenSchemaV1 = {
-        ...currentScreen,
-        actions: newActions,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+    set((state) => {
+      if (!state.screen?.actions) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newActions = state.screen.actions.map(a => a.id === actionId ? { ...a, ...updates } : a);
+      const newScreen: ScreenSchemaV1 = { ...state.screen, actions: newActions };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   deleteAction: (actionId: string) => {
-    set(() => {
-      const currentScreen = get().screen;
-      if (!currentScreen || !currentScreen.actions) return {};
-
-      const newActions = currentScreen.actions.filter(a => a.id !== actionId);
-      const newScreen: ScreenSchemaV1 = {
-        ...currentScreen,
-        actions: newActions.length > 0 ? newActions : null,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+    set((state) => {
+      if (!state.screen?.actions) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newActions = state.screen.actions.filter(a => a.id !== actionId);
+      const newScreen: ScreenSchemaV1 = { ...state.screen, actions: newActions.length > 0 ? newActions : null };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
@@ -922,118 +943,54 @@ export const useEditorState = create<EditorState>((set, get) => ({
   addComponentAction: (componentId: string, action: ComponentActionRef) => {
     set((state) => {
       if (!state.screen) return state;
-
-      // Use updateComponentById to handle nested components
-      const newComponents = updateComponentById(
-        state.screen.components,
-        componentId,
-        (c) => ({
-          ...c,
-          actions: [...(c.actions || []), action],
-        })
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, componentId, (c) => ({ ...c, actions: [...(c.actions || []), action] }));
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   updateComponentAction: (componentId: string, actionId: string, updates: Partial<ComponentActionRef>) => {
     set((state) => {
       if (!state.screen) return state;
-
-      // Use updateComponentById to handle nested components
-      const newComponents = updateComponentById(
-        state.screen.components,
-        componentId,
-        (c) => ({
-          ...c,
-          actions: c.actions
-            ? c.actions.map(a => a.id === actionId ? { ...a, ...updates } : a)
-            : [],
-        })
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, componentId, (c) => ({
+        ...c, actions: c.actions ? c.actions.map(a => a.id === actionId ? { ...a, ...updates } : a) : [],
+      }));
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   deleteComponentAction: (componentId: string, actionId: string) => {
     set((state) => {
       if (!state.screen) return state;
-
-      // Use updateComponentById to handle nested components
-      const newComponents = updateComponentById(
-        state.screen.components,
-        componentId,
-        (c) => {
-          const newActions = c.actions?.filter(a => a.id !== actionId) || [];
-          return {
-            ...c,
-            actions: newActions.length > 0 ? newActions : undefined,
-          };
-        }
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, componentId, (c) => {
+        const newActions = c.actions?.filter(a => a.id !== actionId) || [];
+        return { ...c, actions: newActions.length > 0 ? newActions : undefined };
+      });
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   moveComponentAction: (componentId: string, actionId: string, direction: "up" | "down") => {
     set((state) => {
       if (!state.screen) return state;
-
-      const newComponents = updateComponentById(
-        state.screen.components,
-        componentId,
-        (c) => {
-          const actions = c.actions || [];
-          const index = actions.findIndex((a) => a.id === actionId);
-          if (index < 0) return c;
-          const targetIndex = direction === "up" ? index - 1 : index + 1;
-          if (targetIndex < 0 || targetIndex >= actions.length) return c;
-          const reordered = [...actions];
-          [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
-          return { ...c, actions: reordered };
-        }
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, componentId, (c) => {
+        const actions = c.actions || [];
+        const index = actions.findIndex((a) => a.id === actionId);
+        if (index < 0) return c;
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= actions.length) return c;
+        const reordered = [...actions];
+        [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+        return { ...c, actions: reordered };
+      });
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
@@ -1049,42 +1006,21 @@ export const useEditorState = create<EditorState>((set, get) => ({
   updateBinding: (targetPath: string, sourcePath: string) => {
     set((state) => {
       if (!state.screen) return state;
-
-      const newBindings = {
-        ...(state.screen.bindings || {}),
-        [targetPath]: sourcePath,
-      };
-
-      const newScreen = {
-        ...state.screen,
-        bindings: newBindings,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newBindings = { ...(state.screen.bindings || {}), [targetPath]: sourcePath };
+      const newScreen = { ...state.screen, bindings: newBindings };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
   deleteBinding: (targetPath: string) => {
     set((state) => {
-      if (!state.screen || !state.screen.bindings) return state;
-
+      if (!state.screen?.bindings) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
       const newBindings = { ...state.screen.bindings };
       delete newBindings[targetPath];
-
-      const newScreen = {
-        ...state.screen,
-        bindings: Object.keys(newBindings).length > 0 ? newBindings : null,
-      };
-
-      return {
-        screen: newScreen,
-        draftModified: true,
-        validationErrors: validateScreen(newScreen),
-      };
+      const newScreen = { ...state.screen, bindings: Object.keys(newBindings).length > 0 ? newBindings : null };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
     });
   },
 
@@ -1098,28 +1034,109 @@ export const useEditorState = create<EditorState>((set, get) => ({
   updateComponentVisibility: (componentId: string, visibleIf: string | null) => {
     set((state) => {
       if (!state.screen) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+      const newComponents = updateComponentById(state.screen.components, componentId, (c) => ({
+        ...c, visibility: visibleIf ? { rule: visibleIf } : undefined,
+      }));
+      const newScreen = { ...state.screen, components: newComponents };
+      return { screen: newScreen, draftModified: true, validationErrors: validateScreen(newScreen), historyStack: newStack, historyIndex: newStack.length - 1 };
+    });
+  },
 
-      // Use updateComponentById to handle nested components
-      const newComponents = updateComponentById(
-        state.screen.components,
-        componentId,
-        (c) => ({
-          ...c,
-          visibility: visibleIf ? { rule: visibleIf } : undefined,
-        })
-      );
-
-      const newScreen = {
-        ...state.screen,
-        components: newComponents,
+  // Undo/Redo
+  undo: () => {
+    set((state) => {
+      if (state.historyIndex < 0 || !state.screen) return state;
+      // Save current screen as redo point if we're at the top
+      let stack = state.historyStack;
+      if (state.historyIndex === stack.length - 1) {
+        stack = [...stack, JSON.parse(JSON.stringify(state.screen))];
+      }
+      const previousScreen = stack[state.historyIndex] as ScreenSchemaV1;
+      return {
+        screen: previousScreen,
+        historyStack: stack,
+        historyIndex: state.historyIndex - 1,
+        draftModified: true,
+        validationErrors: validateScreen(previousScreen),
+        selectedComponentId: null,
+        selectedComponentIds: [],
       };
+    });
+  },
 
+  redo: () => {
+    set((state) => {
+      if (state.historyIndex >= state.historyStack.length - 1) return state;
+      const nextIndex = state.historyIndex + 2;
+      if (nextIndex >= state.historyStack.length) return state;
+      const nextScreen = state.historyStack[nextIndex] as ScreenSchemaV1;
+      return {
+        screen: nextScreen,
+        historyIndex: state.historyIndex + 1,
+        draftModified: true,
+        validationErrors: validateScreen(nextScreen),
+        selectedComponentId: null,
+        selectedComponentIds: [],
+      };
+    });
+  },
+
+  // Clipboard
+  copySelectedComponents: () => {
+    const state = get();
+    if (!state.screen || state.selectedComponentIds.length === 0) return;
+    const components = state.selectedComponentIds
+      .map(id => findComponentById(state.screen!.components, id))
+      .filter(Boolean) as Component[];
+    set({ clipboard: JSON.parse(JSON.stringify(components)), clipboardOperation: "copy" });
+  },
+
+  cutSelectedComponents: () => {
+    const state = get();
+    if (!state.screen || state.selectedComponentIds.length === 0) return;
+    const components = state.selectedComponentIds
+      .map(id => findComponentById(state.screen!.components, id))
+      .filter(Boolean) as Component[];
+    set({ clipboard: JSON.parse(JSON.stringify(components)), clipboardOperation: "cut" });
+    // Delete the originals
+    get().deleteSelectedComponents();
+  },
+
+  pasteComponents: () => {
+    set((state) => {
+      if (!state.screen || !state.clipboard || state.clipboard.length === 0) return state;
+      const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
+
+      const newIds: string[] = [];
+      let newComponents = [...state.screen.components];
+      for (const original of state.clipboard) {
+        const cloned = deepCloneComponent(original, newComponents);
+        newIds.push(cloned.id);
+        newComponents.push(cloned);
+      }
+
+      const newScreen = { ...state.screen, components: newComponents };
       return {
         screen: newScreen,
         draftModified: true,
         validationErrors: validateScreen(newScreen),
+        selectedComponentId: newIds[newIds.length - 1] || null,
+        selectedComponentIds: newIds,
+        historyStack: newStack,
+        historyIndex: newStack.length - 1,
+        clipboardOperation: state.clipboardOperation === "cut" ? null : state.clipboardOperation,
+        clipboard: state.clipboardOperation === "cut" ? null : state.clipboard,
       };
     });
+  },
+
+  duplicateSelectedComponents: () => {
+    const state = get();
+    if (!state.screen || state.selectedComponentIds.length === 0) return;
+    // Copy then immediately paste
+    get().copySelectedComponents();
+    get().pasteComponents();
   },
 
   // Test action by calling /ops/ui-actions endpoint
@@ -1492,6 +1509,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
       draft: null,
       published: null,
       selectedComponentId: null,
+      selectedComponentIds: [],
       draftModified: false,
       status: "draft",
       validationErrors: [],
@@ -1503,6 +1521,10 @@ export const useEditorState = create<EditorState>((set, get) => ({
       serverUpdatedAt: null,
       lastSyncedScreen: null,
       draftConflict: { ...EMPTY_DRAFT_CONFLICT },
+      historyStack: [],
+      historyIndex: -1,
+      clipboard: null,
+      clipboardOperation: null,
     });
   },
 }));

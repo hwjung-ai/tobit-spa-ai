@@ -9,7 +9,7 @@ import { ComponentType } from "@/lib/ui-screen/screen.schema";
 
 export default function Canvas() {
   const editorState = useEditorState();
-  const { screen, selectedComponentId, moveComponent, reorderComponentAtIndex } = editorState;
+  const { screen, selectedComponentId, selectedComponentIds, moveComponent, reorderComponentAtIndex } = editorState;
   const [isDragOver, setIsDragOver] = useState(false);
 
   if (!screen) return null;
@@ -79,7 +79,7 @@ export default function Canvas() {
               <div key={component.id} className="space-y-1">
                 <CanvasComponent
                   component={component}
-                  isSelected={selectedComponentId === component.id}
+                  isSelected={selectedComponentIds.includes(component.id)}
                   onSelect={() => editorState.selectComponent(component.id)}
                   index={index}
                   parentId={null}

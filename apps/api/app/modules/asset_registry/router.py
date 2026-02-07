@@ -5,10 +5,8 @@ from datetime import datetime
 from typing import Any, List
 
 from core.auth import get_current_user
-
-# Permission checks disabled due to missing tb_resource_permission table
-# from app.modules.permissions.models import ResourcePermission
-# from app.modules.permissions.crud import check_permission
+from app.modules.permissions.models import ResourcePermission
+from app.modules.permissions.crud import check_permission
 from core.db import get_session, get_session_context
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
@@ -105,20 +103,20 @@ def create_screen_asset_impl(
         raise HTTPException(status_code=400, detail="asset_type must be 'screen'")
 
     # Check permission
-    # permission_result = check_permission(
-    #     session=session,
-    #     user_id=current_user.id,
-    #     role=current_user.role,
-    #     permission=ResourcePermission.ASSET_CREATE,
-    #     resource_type="asset",
-    #     resource_id=None,
-    # )
+    permission_result = check_permission(
+        session=session,
+        user_id=current_user.id,
+        role=current_user.role,
+        permission=ResourcePermission.SCREEN_CREATE,
+        resource_type="screen",
+        resource_id=None,
+    )
 
-    # if not permission_result.granted:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail=f"Permission denied: {permission_result.reason}",
-    #     )
+    if not permission_result.granted:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission denied: {permission_result.reason}",
+        )
 
     try:
         asset = TbAssetRegistry(
@@ -535,8 +533,21 @@ def update_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # TODO: Permission check disabled due to missing tb_resource_permission table
-        # Will be re-enabled once database migrations are complete
+        # Permission check for screen assets
+        if asset.asset_type == "screen":
+            permission_result = check_permission(
+                session=session,
+                user_id=current_user.id,
+                role=current_user.role,
+                permission=ResourcePermission.SCREEN_EDIT,
+                resource_type="screen",
+                resource_id=str(asset.asset_id),
+            )
+            if not permission_result.granted:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Permission denied: {permission_result.reason}",
+                )
 
         if asset.status != "draft":
             raise HTTPException(
@@ -660,8 +671,22 @@ def publish_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # TODO: Permission check disabled due to missing tb_resource_permission table
-        # Will be re-enabled once database migrations are complete
+        # Permission check for screen publish
+        if asset.asset_type == "screen":
+            permission_result = check_permission(
+                session=session,
+                user_id=current_user.id,
+                role=current_user.role,
+                permission=ResourcePermission.SCREEN_PUBLISH,
+                resource_type="screen",
+                resource_id=str(asset.asset_id),
+            )
+            if not permission_result.granted:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Permission denied: {permission_result.reason}",
+                )
+
         # Run validation before publish
         try:
             validate_asset(asset)
@@ -747,8 +772,22 @@ def rollback_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # TODO: Permission check disabled due to missing tb_resource_permission table
-        # Will be re-enabled once database migrations are complete
+        # Permission check for screen rollback
+        if asset.asset_type == "screen":
+            permission_result = check_permission(
+                session=session,
+                user_id=current_user.id,
+                role=current_user.role,
+                permission=ResourcePermission.SCREEN_ROLLBACK,
+                resource_type="screen",
+                resource_id=str(asset.asset_id),
+            )
+            if not permission_result.granted:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Permission denied: {permission_result.reason}",
+                )
+
         hist = session.exec(
             select(TbAssetVersionHistory)
             .where(TbAssetVersionHistory.asset_id == asset.asset_id)
@@ -877,21 +916,21 @@ def delete_asset(
         if not asset:
             raise HTTPException(status_code=404, detail="asset not found")
 
-        # Permission checks disabled due to missing tb_resource_permission table
-        # permission_result = check_permission(
-        #     session=session,
-        #     user_id=current_user.id,
-        #     role=current_user.role,
-        #     permission=ResourcePermission.ASSET_DELETE,
-        #     resource_type="asset",
-        #     resource_id=asset_id,
-        # )
-
-        # if not permission_result.granted:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail=f"Permission denied: {permission_result.reason}",
-        #     )
+        # Permission check for screen delete
+        if asset.asset_type == "screen":
+            permission_result = check_permission(
+                session=session,
+                user_id=current_user.id,
+                role=current_user.role,
+                permission=ResourcePermission.SCREEN_DELETE,
+                resource_type="screen",
+                resource_id=str(asset.asset_id),
+            )
+            if not permission_result.granted:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Permission denied: {permission_result.reason}",
+                )
 
         if asset.status != "draft":
             raise HTTPException(

@@ -188,6 +188,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             onSaveDraft={handleSaveDraft}
             onPublish={handlePublishClick}
             onRollback={handleRollback}
+            onUndo={editorState.undo}
+            onRedo={editorState.redo}
+            canUndo={editorState.canUndo}
+            canRedo={editorState.canRedo}
             isSaving={isSaving}
             isPublishing={isPublishing}
             justPublished={justPublished}

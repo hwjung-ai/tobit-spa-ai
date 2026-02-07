@@ -169,7 +169,13 @@ export default function CanvasComponent({
         onDragEnd={handleDragEnd}
         onClick={(e) => {
           e.stopPropagation();
-          onSelect();
+          if (e.ctrlKey || e.metaKey) {
+            editorState.selectComponentToggle(component.id);
+          } else if (e.shiftKey) {
+            editorState.selectComponentRange(component.id);
+          } else {
+            onSelect();
+          }
         }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CheckCircle, ExternalLink } from "lucide-react";
+import { CheckCircle, ExternalLink, Undo2, Redo2 } from "lucide-react";
 
 interface ScreenEditorHeaderProps {
   status: "draft" | "published";
@@ -13,6 +13,10 @@ interface ScreenEditorHeaderProps {
   onSaveDraft: () => void;
   onPublish: () => void;
   onRollback: () => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   isSaving: boolean;
   isPublishing: boolean;
   justPublished?: boolean;
@@ -28,6 +32,10 @@ export default function ScreenEditorHeader({
   onSaveDraft,
   onPublish,
   onRollback,
+  onUndo,
+  onRedo,
+  canUndo = false,
+  canRedo = false,
   isSaving,
   isPublishing,
   justPublished,
@@ -81,6 +89,29 @@ export default function ScreenEditorHeader({
             >
               ← Back to Screens
             </Link>
+
+            <div className="flex items-center gap-1 border-r border-slate-700 pr-3 mr-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onUndo}
+                disabled={!canUndo}
+                title="Undo (Ctrl+Z)"
+                className="h-7 w-7 p-0 text-slate-400 hover:text-white disabled:opacity-30"
+              >
+                <Undo2 className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onRedo}
+                disabled={!canRedo}
+                title="Redo (Ctrl+Shift+Z)"
+                className="h-7 w-7 p-0 text-slate-400 hover:text-white disabled:opacity-30"
+              >
+                <Redo2 className="w-4 h-4" />
+              </Button>
+            </div>
 
             <div className="flex items-center gap-3">
               <span

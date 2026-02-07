@@ -169,6 +169,12 @@ export interface ScreenSchemaV1 {
     notes?: string | null;
     tags?: Record<string, string> | null;
   } | null;
+
+  // Theme override (optional, screen-level)
+  theme?: {
+    preset?: "light" | "dark" | "brand";
+    overrides?: Record<string, unknown>;
+  } | null;
 }
 
 // MVP-subset type helper: only fields/components required for minimal rendering

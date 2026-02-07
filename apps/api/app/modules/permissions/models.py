@@ -58,6 +58,13 @@ class ResourcePermission(str, Enum):
     UI_UPDATE = "ui:update"
     UI_DELETE = "ui:delete"
 
+    # Screen Editor
+    SCREEN_CREATE = "screen:create"
+    SCREEN_EDIT = "screen:edit"
+    SCREEN_PUBLISH = "screen:publish"
+    SCREEN_ROLLBACK = "screen:rollback"
+    SCREEN_DELETE = "screen:delete"
+
     # Asset Registry
     ASSET_READ = "asset:read"
     ASSET_CREATE = "asset:create"

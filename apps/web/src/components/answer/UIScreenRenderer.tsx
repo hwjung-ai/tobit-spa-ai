@@ -32,6 +32,7 @@ import {
   setError,
   setLoading,
 } from "@/lib/ui-screen/binding-engine";
+import { StreamManager, extractStreamConfigs, StreamState } from "@/lib/ui-screen/stream-binding";
 import { fetchApi } from "@/lib/adminUtils";
 import type { UIScreenBlock } from "./BlockRenderer";
 
@@ -238,6 +239,8 @@ export default function UIScreenRenderer({
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [streamStates, setStreamStates] = useState<Record<string, StreamState>>({});
+  const streamManagerRef = useRef<StreamManager | null>(null);
   const [autoRefreshConfigs, setAutoRefreshConfigs] = useState<AutoRefreshConfig[]>([]);
   const [autoRefreshStatus, setAutoRefreshStatus] = useState<Record<string, AutoRefreshStatus>>({});
   const [actionLogs, setActionLogs] = useState<ActionLogEntry[]>([]);
@@ -333,6 +336,45 @@ export default function UIScreenRenderer({
   useEffect(() => {
     contextRef.current = context;
   }, [context]);
+
+  // SSE Stream lifecycle management
+  useEffect(() => {
+    if (!screenSchema || isLoading) return;
+
+    const components = screenSchema.components || [];
+    const streamConfigs = extractStreamConfigs(
+      components as Array<{ id: string; props?: Record<string, unknown> }>,
+      (template: string) => {
+        const result = renderTemplate(template, contextRef.current);
+        return typeof result === "string" ? result : String(result ?? "");
+      }
+    );
+
+    if (streamConfigs.length === 0) return;
+
+    const manager = new StreamManager(
+      (path: string, value: unknown) => {
+        setState((prev) => {
+          const next = { ...prev };
+          set(next, path, value);
+          return next;
+        });
+      },
+      (streamId: string, streamState: StreamState) => {
+        setStreamStates((prev) => ({ ...prev, [streamId]: streamState }));
+      }
+    );
+    streamManagerRef.current = manager;
+
+    for (const config of streamConfigs) {
+      manager.subscribe(config);
+    }
+
+    return () => {
+      manager.dispose();
+      streamManagerRef.current = null;
+    };
+  }, [screenSchema, isLoading]);
 
   useEffect(() => {
     const nav = (state.__nav as Record<string, unknown> | undefined) || null;
@@ -1736,6 +1778,38 @@ export default function UIScreenRenderer({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        {/* Stream connection status */}
+        {Object.keys(streamStates).length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {Object.entries(streamStates).map(([id, ss]) => (
+              <span
+                key={id}
+                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] ${
+                  ss.status === "connected"
+                    ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
+                    : ss.status === "connecting"
+                      ? "bg-sky-950/50 text-sky-300 border border-sky-800/50"
+                      : ss.status === "error"
+                        ? "bg-rose-950/50 text-rose-300 border border-rose-800/50"
+                        : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
+                }`}
+              >
+                <span
+                  className={`inline-block w-1.5 h-1.5 rounded-full ${
+                    ss.status === "connected"
+                      ? "bg-emerald-400"
+                      : ss.status === "connecting"
+                        ? "bg-sky-400 animate-pulse"
+                        : ss.status === "error"
+                          ? "bg-rose-400"
+                          : "bg-slate-500"
+                  }`}
+                />
+                {id.replace("stream_", "")}
+              </span>
+            ))}
           </div>
         )}
         {renderByLayout()}
