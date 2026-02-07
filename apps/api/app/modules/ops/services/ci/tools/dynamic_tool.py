@@ -520,14 +520,13 @@ class DynamicTool(BaseTool):
     async def _execute_graph_query(
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
-        """Execute graph query using PostgreSQL ci_ext relationship attributes.
+        """Execute graph query using Neo4j for relationships + PostgreSQL for CI node info.
 
-        Builds a graph from ci_ext.attributes fields:
-        - depends_on (array): system-level dependency (e.g. ['erp', 'scada'])
-        - host_server (string): SW → HW hosting relationship
-        - connected_servers (array): network → server connections
+        - Relationships (edges): from Neo4j (COMPOSED_OF, DEPLOYED_ON, RUNS_ON, etc.)
+        - CI node basic info (label, type, status): from PostgreSQL ci table
         """
         from core.db import engine
+        from core.db_neo4j import get_neo4j_driver
         from sqlalchemy import text
 
         tenant_id = input_data.get("tenant_id", "default")
@@ -535,140 +534,143 @@ class DynamicTool(BaseTool):
         limit = input_data.get("limit", 50)
         ci_ids = input_data.get("ci_ids", [])
 
-        # Build WHERE clause for source CIs
-        ci_filter = ""
-        if ci_ids and isinstance(ci_ids, list) and len(ci_ids) > 0:
-            ci_list = ", ".join(f"'{cid}'" for cid in ci_ids if cid)
-            if ci_list:
-                ci_filter = f"AND c.ci_id IN ({ci_list})"
-
-        # Query: Get all CIs with their relationship attributes
-        query = f"""
-        WITH ci_with_rels AS (
-            SELECT
-                c.ci_id,
-                c.ci_code,
-                c.ci_name,
-                c.ci_type::text,
-                c.ci_subtype::text,
-                c.status,
-                ce.attributes
-            FROM ci c
-            LEFT JOIN ci_ext ce ON c.ci_id = ce.ci_id
-            WHERE c.tenant_id = '{tenant_id}'
-                AND c.deleted_at IS NULL
-                {ci_filter}
-            LIMIT {limit * 2}
-        )
-        SELECT * FROM ci_with_rels
-        """
+        # Relationship type → Korean label mapping
+        rel_label_map = {
+            "COMPOSED_OF": "구성",
+            "DEPLOYED_ON": "배포",
+            "RUNS_ON": "실행",
+            "USES": "사용",
+            "PROTECTED_BY": "보호",
+            "DEPENDS_ON": "의존",
+            "CONNECTED_TO": "연결",
+        }
 
         try:
-            with engine.connect() as conn:
-                result = conn.execute(text(query))
-                rows = result.fetchall()
-                columns = list(result.keys())
-
-            # Build graph nodes and edges
-            nodes = []
+            # --- Step 1: Query Neo4j for relationships ---
+            driver = get_neo4j_driver()
+            neo4j_nodes = {}  # ci_id -> node properties from Neo4j
             edges = []
-            node_ids = set()
-            ci_code_map = {}  # ci_code -> ci_id mapping
 
-            for row in rows:
-                row_dict = dict(zip(columns, row))
-                ci_id = str(row_dict["ci_id"])
-                ci_code = row_dict.get("ci_code", "")
-                ci_name = row_dict.get("ci_name", "")
-                ci_type = row_dict.get("ci_type", "")
-                ci_subtype = row_dict.get("ci_subtype", "")
-                attrs = row_dict.get("attributes") or {}
+            with driver.session() as session:
+                if ci_ids and isinstance(ci_ids, list) and len(ci_ids) > 0:
+                    # Expand from specific CI nodes
+                    cypher = (
+                        "MATCH (a:CI)-[r]-(b:CI) "
+                        "WHERE a.tenant_id = $tenant_id "
+                        "  AND a.ci_id IN $ci_ids "
+                        "  AND b.tenant_id = $tenant_id "
+                        "RETURN a.ci_id AS src_id, a.ci_name AS src_name, "
+                        "       a.ci_type AS src_type, a.ci_code AS src_code, "
+                        "       a.status AS src_status, "
+                        "       type(r) AS rel_type, "
+                        "       b.ci_id AS tgt_id, b.ci_name AS tgt_name, "
+                        "       b.ci_type AS tgt_type, b.ci_code AS tgt_code, "
+                        "       b.status AS tgt_status "
+                        "LIMIT $limit"
+                    )
+                    result = session.run(
+                        cypher,
+                        tenant_id=tenant_id,
+                        ci_ids=ci_ids,
+                        limit=limit * 5,
+                    )
+                else:
+                    # Get all relationships for the tenant
+                    cypher = (
+                        "MATCH (a:CI)-[r]->(b:CI) "
+                        "WHERE a.tenant_id = $tenant_id "
+                        "  AND b.tenant_id = $tenant_id "
+                        "RETURN a.ci_id AS src_id, a.ci_name AS src_name, "
+                        "       a.ci_type AS src_type, a.ci_code AS src_code, "
+                        "       a.status AS src_status, "
+                        "       type(r) AS rel_type, "
+                        "       b.ci_id AS tgt_id, b.ci_name AS tgt_name, "
+                        "       b.ci_type AS tgt_type, b.ci_code AS tgt_code, "
+                        "       b.status AS tgt_status "
+                        "LIMIT $limit"
+                    )
+                    result = session.run(
+                        cypher,
+                        tenant_id=tenant_id,
+                        limit=limit * 5,
+                    )
 
-                if ci_id not in node_ids:
-                    nodes.append({
-                        "id": ci_id,
-                        "label": ci_name,
-                        "code": ci_code,
-                        "type": ci_type,
-                        "subtype": ci_subtype,
-                        "status": row_dict.get("status", ""),
-                    })
-                    node_ids.add(ci_id)
-                    ci_code_map[ci_code.lower()] = ci_id
+                for record in result:
+                    src_id = record["src_id"]
+                    tgt_id = record["tgt_id"]
+                    rel_type = record["rel_type"]
 
-                # Extract relationships from attributes
-                # 1. depends_on (system-level dependencies)
-                depends_on = attrs.get("depends_on", [])
-                if isinstance(depends_on, list):
-                    for dep in depends_on:
-                        dep_lower = str(dep).lower()
-                        if dep_lower in ci_code_map:
-                            edges.append({
-                                "source": ci_id,
-                                "target": ci_code_map[dep_lower],
-                                "relation": "depends_on",
-                                "label": "의존",
-                            })
+                    # Collect node info from Neo4j
+                    if src_id and src_id not in neo4j_nodes:
+                        neo4j_nodes[src_id] = {
+                            "ci_name": record["src_name"] or "",
+                            "ci_type": record["src_type"] or "",
+                            "ci_code": record["src_code"] or "",
+                            "status": record["src_status"] or "",
+                        }
+                    if tgt_id and tgt_id not in neo4j_nodes:
+                        neo4j_nodes[tgt_id] = {
+                            "ci_name": record["tgt_name"] or "",
+                            "ci_type": record["tgt_type"] or "",
+                            "ci_code": record["tgt_code"] or "",
+                            "status": record["tgt_status"] or "",
+                        }
 
-                # 2. host_server (SW -> HW hosting)
-                host_server = attrs.get("host_server")
-                if host_server:
-                    host_lower = str(host_server).lower()
-                    if host_lower in ci_code_map:
+                    # Build edge
+                    if src_id and tgt_id:
                         edges.append({
-                            "source": ci_id,
-                            "target": ci_code_map[host_lower],
-                            "relation": "hosted_on",
-                            "label": "호스팅",
+                            "source": src_id,
+                            "target": tgt_id,
+                            "relation": rel_type,
+                            "label": rel_label_map.get(rel_type, rel_type),
                         })
 
-                # 3. connected_servers (network -> server connections)
-                connected = attrs.get("connected_servers", [])
-                if isinstance(connected, list):
-                    for srv in connected:
-                        srv_lower = str(srv).lower()
-                        if srv_lower in ci_code_map:
-                            edges.append({
-                                "source": ci_id,
-                                "target": ci_code_map[srv_lower],
-                                "relation": "connected_to",
-                                "label": "연결",
-                            })
+            driver.close()
 
-            # Second pass: resolve depends_on with ci_name matching (for system names like 'erp', 'mes')
-            # Build name-based lookup for unresolved references
-            ci_name_lower_map = {}
-            for node in nodes:
-                name_parts = node["label"].lower().split()
-                for part in name_parts:
-                    if len(part) >= 2:
-                        ci_name_lower_map[part] = node["id"]
+            # --- Step 2: Enrich node info from PostgreSQL ---
+            node_ids_list = list(neo4j_nodes.keys())
+            pg_node_info = {}
 
-            # Re-process depends_on for system-name matches
-            for row in rows:
-                row_dict = dict(zip(columns, row))
-                ci_id = str(row_dict["ci_id"])
-                attrs = row_dict.get("attributes") or {}
-                depends_on = attrs.get("depends_on", [])
-                if isinstance(depends_on, list):
-                    for dep in depends_on:
-                        dep_lower = str(dep).lower()
-                        if dep_lower not in ci_code_map and dep_lower in ci_name_lower_map:
-                            target_id = ci_name_lower_map[dep_lower]
-                            if target_id != ci_id:
-                                # Check if edge already exists
-                                edge_key = (ci_id, target_id, "depends_on")
-                                existing = any(
-                                    (e["source"], e["target"], e["relation"]) == edge_key
-                                    for e in edges
-                                )
-                                if not existing:
-                                    edges.append({
-                                        "source": ci_id,
-                                        "target": target_id,
-                                        "relation": "depends_on",
-                                        "label": "의존",
-                                    })
+            if node_ids_list:
+                # Query PostgreSQL for authoritative CI info
+                placeholders = ", ".join(f"'{nid}'" for nid in node_ids_list)
+                pg_query = f"""
+                SELECT ci_id::text, ci_code, ci_name, ci_type::text,
+                       ci_subtype::text, status
+                FROM ci
+                WHERE tenant_id = '{tenant_id}'
+                  AND ci_id::text IN ({placeholders})
+                  AND deleted_at IS NULL
+                """
+                with engine.connect() as conn:
+                    result = conn.execute(text(pg_query))
+                    for row in result:
+                        row_dict = dict(row._mapping)
+                        pg_node_info[row_dict["ci_id"]] = row_dict
+
+            # --- Step 3: Build final nodes (PostgreSQL preferred, Neo4j fallback) ---
+            nodes = []
+            for ci_id, neo4j_info in neo4j_nodes.items():
+                pg_info = pg_node_info.get(ci_id)
+                if pg_info:
+                    nodes.append({
+                        "id": ci_id,
+                        "label": pg_info.get("ci_name", neo4j_info["ci_name"]),
+                        "code": pg_info.get("ci_code", neo4j_info["ci_code"]),
+                        "type": pg_info.get("ci_type", neo4j_info["ci_type"]),
+                        "subtype": pg_info.get("ci_subtype", ""),
+                        "status": pg_info.get("status", neo4j_info["status"]),
+                    })
+                else:
+                    # Fallback to Neo4j properties
+                    nodes.append({
+                        "id": ci_id,
+                        "label": neo4j_info["ci_name"],
+                        "code": neo4j_info["ci_code"],
+                        "type": neo4j_info["ci_type"],
+                        "subtype": "",
+                        "status": neo4j_info["status"],
+                    })
 
             return ToolResult(
                 success=True,
