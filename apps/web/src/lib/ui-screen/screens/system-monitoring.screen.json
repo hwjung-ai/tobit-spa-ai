@@ -1,4 +1,5 @@
 {
+  "id": "system_monitoring",
   "screen_id": "system_monitoring",
   "name": "System Monitoring",
   "version": "1.0",
@@ -22,30 +23,48 @@
             "label": "Title",
             "props": {
               "content": "System Monitoring Dashboard",
-              "variant": "heading",
-              "color": "#1e293b"
+              "variant": "heading"
             }
           },
           {
             "id": "sys_refresh_btn",
             "type": "button",
-            "label": "Refresh Button",
+            "label": "Refresh Now",
             "props": {
               "label": "Refresh Now",
               "variant": "default"
             },
             "actions": [
               {
-                "id": "action_refresh_all",
-                "handler": "fetch_system_metrics",
-                "payload_template": {},
-                "continue_on_error": false
+                "id": "action_refresh_health",
+                "handler": "fetch_system_health",
+                "endpoint": "/admin/system/health",
+                "method": "GET",
+                "response_mapping": {
+                  "cpu_usage": "health.resource.cpu_percent",
+                  "memory_usage": "health.resource.memory_percent",
+                  "memory_available_gb": "health.resource.memory_available_gb",
+                  "disk_usage": "health.resource.disk_percent",
+                  "disk_available_gb": "health.resource.disk_available_gb",
+                  "system_status": "health.status"
+                },
+                "continue_on_error": true
+              },
+              {
+                "id": "action_refresh_alerts",
+                "handler": "fetch_system_alerts",
+                "endpoint": "/admin/system/alerts?limit=20",
+                "method": "GET",
+                "response_mapping": {
+                  "system_alerts": "alerts",
+                  "alert_count": "alert_count"
+                },
+                "continue_on_error": true
               }
             ]
           }
         ]
-      },
-      "visibility": { "rule": "true" }
+      }
     },
     {
       "id": "sys_kpi_row",
@@ -65,16 +84,11 @@
                   "value": "{{state.cpu_usage}}%"
                 },
                 {
-                  "key": "Cores",
-                  "value": "{{state.cpu_cores}}"
-                },
-                {
-                  "key": "Load Avg",
-                  "value": "{{state.cpu_load_avg}}"
+                  "key": "Status",
+                  "value": "{{state.system_status}}"
                 }
               ]
-            },
-            "visibility": { "rule": "true" }
+            }
           },
           {
             "id": "sys_kpi_memory",
@@ -83,20 +97,15 @@
             "props": {
               "items": [
                 {
-                  "key": "Total",
-                  "value": "{{state.memory_total}}GB"
-                },
-                {
-                  "key": "Used",
-                  "value": "{{state.memory_used}}GB"
-                },
-                {
                   "key": "Usage",
                   "value": "{{state.memory_usage}}%"
+                },
+                {
+                  "key": "Available",
+                  "value": "{{state.memory_available_gb}}GB"
                 }
               ]
-            },
-            "visibility": { "rule": "true" }
+            }
           },
           {
             "id": "sys_kpi_disk",
@@ -105,158 +114,31 @@
             "props": {
               "items": [
                 {
-                  "key": "Total",
-                  "value": "{{state.disk_total}}GB"
-                },
-                {
-                  "key": "Used",
-                  "value": "{{state.disk_used}}GB"
-                },
-                {
                   "key": "Usage",
                   "value": "{{state.disk_usage}}%"
+                },
+                {
+                  "key": "Available",
+                  "value": "{{state.disk_available_gb}}GB"
                 }
               ]
-            },
-            "visibility": { "rule": "true" }
+            }
           },
           {
-            "id": "sys_kpi_network",
+            "id": "sys_kpi_alerts",
             "type": "keyvalue",
-            "label": "Network I/O",
+            "label": "Alerts",
             "props": {
               "items": [
                 {
-                  "key": "RX",
-                  "value": "{{state.network_rx}}MB/s"
-                },
-                {
-                  "key": "TX",
-                  "value": "{{state.network_tx}}MB/s"
-                },
-                {
-                  "key": "Connections",
-                  "value": "{{state.network_connections}}"
+                  "key": "Total Alerts",
+                  "value": "{{state.alert_count}}"
                 }
               ]
-            },
-            "visibility": { "rule": "true" }
+            }
           }
         ]
-      },
-      "visibility": { "rule": "true" }
-    },
-    {
-      "id": "sys_chart_row",
-      "type": "row",
-      "label": "Charts Row",
-      "props": {
-        "gap": 3,
-        "components": [
-          {
-            "id": "sys_chart_cpu",
-            "type": "chart",
-            "label": "CPU Trend",
-            "props": {
-              "chart_type": "line",
-              "data": "{{state.cpu_history}}",
-              "x_key": "timestamp",
-              "series": [
-                {
-                  "data_key": "usage",
-                  "color": "#3b82f6",
-                  "name": "CPU Usage %"
-                }
-              ],
-              "show_legend": true,
-              "show_grid": true,
-              "height": 200,
-              "responsive": true
-            },
-            "visibility": { "rule": "true" }
-          },
-          {
-            "id": "sys_chart_memory",
-            "type": "chart",
-            "label": "Memory Trend",
-            "props": {
-              "chart_type": "line",
-              "data": "{{state.memory_history}}",
-              "x_key": "timestamp",
-              "series": [
-                {
-                  "data_key": "used",
-                  "color": "#22c55e",
-                  "name": "Memory GB"
-                }
-              ],
-              "show_legend": true,
-              "show_grid": true,
-              "height": 200,
-              "responsive": true
-            },
-            "visibility": { "rule": "true" }
-          }
-        ]
-      },
-      "visibility": { "rule": "true" }
-    },
-    {
-      "id": "sys_process_table",
-      "type": "table",
-      "label": "Top Processes",
-      "props": {
-        "rows": "{{state.top_processes}}",
-        "columns": [
-          {
-            "field": "pid",
-            "header": "PID",
-            "sortable": true
-          },
-          {
-            "field": "name",
-            "header": "Process Name",
-            "sortable": true
-          },
-          {
-            "field": "cpu",
-            "header": "CPU %",
-            "sortable": true
-          },
-          {
-            "field": "memory",
-            "header": "Memory %",
-            "sortable": true
-          },
-          {
-            "field": "status",
-            "header": "Status"
-          },
-          {
-            "field": "runtime",
-            "header": "Runtime",
-            "sortable": true
-          }
-        ],
-        "sortable": true,
-        "page_size": 10,
-        "auto_refresh": {
-          "enabled": true,
-          "interval_ms": 10000,
-          "action_index": 0,
-          "max_failures": 3,
-          "backoff_ms": 5000
-        }
-      },
-      "visibility": { "rule": "true" },
-      "actions": [
-        {
-          "id": "action_auto_refresh_processes",
-          "handler": "fetch_system_metrics",
-          "payload_template": {},
-          "continue_on_error": true
-        }
-      ]
+      }
     },
     {
       "id": "sys_alerts_table",
@@ -279,16 +161,19 @@
             "header": "Message"
           },
           {
-            "field": "source",
-            "header": "Source"
-          },
-          {
-            "field": "status",
-            "header": "Status"
+            "field": "type",
+            "header": "Type"
           }
         ],
         "sortable": true,
-        "page_size": 5,
+        "page_size": 10,
+        "auto_refresh": {
+          "enabled": true,
+          "interval_ms": 15000,
+          "action_index": 0,
+          "max_failures": 3,
+          "backoff_ms": 5000
+        },
         "conditional_styles": [
           {
             "field": "severity",
@@ -313,12 +198,16 @@
           }
         ]
       },
-      "visibility": { "rule": "true" },
       "actions": [
         {
-          "id": "action_fetch_alerts",
+          "id": "action_auto_refresh_alerts",
           "handler": "fetch_system_alerts",
-          "payload_template": {},
+          "endpoint": "/admin/system/alerts?limit=20",
+          "method": "GET",
+          "response_mapping": {
+            "system_alerts": "alerts",
+            "alert_count": "alert_count"
+          },
           "continue_on_error": true
         }
       ]
@@ -327,84 +216,57 @@
   "state": {
     "initial": {
       "cpu_usage": 0,
-      "cpu_cores": 4,
-      "cpu_load_avg": "0.00",
-      "memory_total": 0,
-      "memory_used": 0,
       "memory_usage": 0,
-      "disk_total": 0,
-      "disk_used": 0,
+      "memory_available_gb": 0,
       "disk_usage": 0,
-      "network_rx": 0,
-      "network_tx": 0,
-      "network_connections": 0,
-      "cpu_history": [],
-      "memory_history": [],
-      "top_processes": [],
+      "disk_available_gb": 0,
+      "system_status": "unknown",
       "system_alerts": [],
-      "last_refresh": ""
+      "alert_count": 0
     },
     "schema": {
       "cpu_usage": { "type": "number" },
-      "cpu_cores": { "type": "number" },
-      "cpu_load_avg": { "type": "string" },
-      "memory_total": { "type": "number" },
-      "memory_used": { "type": "number" },
       "memory_usage": { "type": "number" },
-      "disk_total": { "type": "number" },
-      "disk_used": { "type": "number" },
+      "memory_available_gb": { "type": "number" },
       "disk_usage": { "type": "number" },
-      "network_rx": { "type": "number" },
-      "network_tx": { "type": "number" },
-      "network_connections": { "type": "number" },
-      "cpu_history": { "type": "array" },
-      "memory_history": { "type": "array" },
-      "top_processes": { "type": "array" },
+      "disk_available_gb": { "type": "number" },
+      "system_status": { "type": "string" },
       "system_alerts": { "type": "array" },
-      "last_refresh": { "type": "string" }
+      "alert_count": { "type": "number" }
     }
   },
   "actions": [
     {
-      "id": "fetch_system_metrics",
-      "label": "Fetch System Metrics",
-      "handler": "fetch_system_metrics",
-      "payload_template": {},
-      "context_required": [],
-      "endpoint": "/ops/ui-actions"
+      "id": "fetch_system_health",
+      "label": "Fetch System Health",
+      "handler": "fetch_system_health",
+      "endpoint": "/admin/system/health",
+      "method": "GET",
+      "response_mapping": {
+        "cpu_usage": "health.resource.cpu_percent",
+        "memory_usage": "health.resource.memory_percent",
+        "memory_available_gb": "health.resource.memory_available_gb",
+        "disk_usage": "health.resource.disk_percent",
+        "disk_available_gb": "health.resource.disk_available_gb",
+        "system_status": "health.status"
+      }
     },
     {
       "id": "fetch_system_alerts",
       "label": "Fetch System Alerts",
       "handler": "fetch_system_alerts",
-      "payload_template": {},
-      "context_required": [],
-      "endpoint": "/ops/ui-actions"
+      "endpoint": "/admin/system/alerts?limit=20",
+      "method": "GET",
+      "response_mapping": {
+        "system_alerts": "alerts",
+        "alert_count": "alert_count"
+      }
     }
   ],
-  "bindings": {
-    "state.cpu_usage": "{{result.fetch_system_metrics.cpu_usage}}",
-    "state.cpu_cores": "{{result.fetch_system_metrics.cpu_cores}}",
-    "state.cpu_load_avg": "{{result.fetch_system_metrics.cpu_load_avg}}",
-    "state.memory_total": "{{result.fetch_system_metrics.memory_total}}",
-    "state.memory_used": "{{result.fetch_system_metrics.memory_used}}",
-    "state.memory_usage": "{{result.fetch_system_metrics.memory_usage}}",
-    "state.disk_total": "{{result.fetch_system_metrics.disk_total}}",
-    "state.disk_used": "{{result.fetch_system_metrics.disk_used}}",
-    "state.disk_usage": "{{result.fetch_system_metrics.disk_usage}}",
-    "state.network_rx": "{{result.fetch_system_metrics.network_rx}}",
-    "state.network_tx": "{{result.fetch_system_metrics.network_tx}}",
-    "state.network_connections": "{{result.fetch_system_metrics.network_connections}}",
-    "state.cpu_history": "{{result.fetch_system_metrics.cpu_history}}",
-    "state.memory_history": "{{result.fetch_system_metrics.memory_history}}",
-    "state.top_processes": "{{result.fetch_system_metrics.top_processes}}",
-    "state.system_alerts": "{{result.fetch_system_alerts.alerts}}",
-    "state.last_refresh": "{{context.timestamp}}"
-  },
   "metadata": {
     "author": "System Administrator",
     "created_at": "2026-02-07",
-    "notes": "Real-time system monitoring dashboard with CPU, memory, disk, and network metrics",
+    "notes": "Real-time system monitoring dashboard using /admin/system/* API endpoints",
     "tags": {
       "category": "monitoring",
       "type": "dashboard",

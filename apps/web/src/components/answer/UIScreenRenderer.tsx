@@ -45,6 +45,8 @@ interface UIScreenRendererProps {
 
 interface UIActionPayload {
   handler: string;
+  endpoint?: string;
+  method?: string;
   payload_template?: Record<string, unknown>;
   continue_on_error?: boolean;
   stop_on_error?: boolean;
@@ -53,6 +55,7 @@ interface UIActionPayload {
   run_if?: string;
   on_error_action_index?: number;
   on_error_action_indexes?: number[];
+  response_mapping?: Record<string, string>;
 }
 
 interface AutoRefreshConfig {
@@ -417,37 +420,98 @@ export default function UIScreenRenderer({
         ...(contextRef.current.context || {}),
         ...(opts?.runtimeContext || {}),
       };
-      const payload = {
-        trace_id: traceId || null,
-        action_id: action.handler,
-        inputs: renderTemplate(
-          action.payload_template || {},
-          {
-            ...contextRef.current,
-            context: mergedContext,
+
+      let data: Record<string, unknown>;
+      let resultBlocks: unknown[];
+
+      if (action.endpoint) {
+        // Direct API call mode: call the specified endpoint directly
+        const endpointUrl = typeof action.endpoint === "string"
+          ? (renderTemplate(action.endpoint, { ...contextRef.current, context: mergedContext }) as string)
+          : action.endpoint;
+        const method = (action.method || "GET").toUpperCase();
+
+        const fetchOpts: RequestInit = {
+          method,
+          headers: { "Content-Type": "application/json" },
+        };
+        if (method !== "GET" && action.payload_template) {
+          fetchOpts.body = JSON.stringify(
+            renderTemplate(action.payload_template, {
+              ...contextRef.current,
+              context: mergedContext,
+            })
+          );
+        }
+
+        const resp = await fetch(endpointUrl, fetchOpts);
+        if (!resp.ok) {
+          throw new Error(`API call failed: ${resp.status} ${resp.statusText}`);
+        }
+        const envelope = await resp.json();
+        // Support ResponseEnvelope format (envelope.data) or plain JSON
+        data = (envelope?.data as Record<string, unknown>) || envelope || {};
+        resultBlocks = (data.blocks as unknown[]) || [];
+
+        // Apply response_mapping if defined, or use state_patch, or apply entire data
+        const statePatch = action.response_mapping
+          ? Object.fromEntries(
+              Object.entries(action.response_mapping).map(([stateKey, dataPath]) => [
+                stateKey,
+                get(data, dataPath),
+              ])
+            )
+          : (data.state_patch as Record<string, unknown>) || data;
+
+        setState((prev) => {
+          const next = { ...prev };
+          // Apply state_patch keys to state
+          if (statePatch && typeof statePatch === "object") {
+            for (const [key, value] of Object.entries(statePatch)) {
+              if (key !== "blocks" && key !== "state_patch" && key !== "meta" && key !== "status") {
+                set(next, key, value);
+              }
+            }
           }
-        ) as Record<string, unknown>,
-        context: mergedContext,
-        screen_id: screenId,
-      };
+          applyActionResultToState(next, action.handler, statePatch);
+          setLoading(next, action.handler, false);
+          setError(next, action.handler, null);
+          return next;
+        });
+      } else {
+        // Standard ui-actions mode: route through /ops/ui-actions
+        const payload = {
+          trace_id: traceId || null,
+          action_id: action.handler,
+          inputs: renderTemplate(
+            action.payload_template || {},
+            {
+              ...contextRef.current,
+              context: mergedContext,
+            }
+          ) as Record<string, unknown>,
+          context: mergedContext,
+          screen_id: screenId,
+        };
 
-      const resp = await fetch(`/ops/ui-actions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const envelope = await resp.json();
-      const data = envelope?.data || {};
-      const resultBlocks = data.blocks || [];
-      const result = resultBlocks[0] || data;
+        const resp = await fetch(`/ops/ui-actions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const envelope = await resp.json();
+        data = (envelope?.data as Record<string, unknown>) || {};
+        resultBlocks = (data.blocks as unknown[]) || [];
+        const result = resultBlocks[0] || data;
 
-      setState((prev) => {
-        const next = { ...prev };
-        applyActionResultToState(next, action.handler, result);
-        setLoading(next, action.handler, false);
-        setError(next, action.handler, null);
-        return next;
-      });
+        setState((prev) => {
+          const next = { ...prev };
+          applyActionResultToState(next, action.handler, result);
+          setLoading(next, action.handler, false);
+          setError(next, action.handler, null);
+          return next;
+        });
+      }
 
       if (resultBlocks.length && onResult) {
         if (!opts?.silent) {

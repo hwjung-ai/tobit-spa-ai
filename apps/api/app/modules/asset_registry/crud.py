@@ -418,6 +418,13 @@ def delete_asset(
     if asset.status != "draft":
         raise ValueError("Only draft assets can be deleted")
 
+    # Delete version history first
+    histories = session.exec(
+        select(TbAssetVersionHistory).where(TbAssetVersionHistory.asset_id == asset.asset_id)
+    ).all()
+    for history in histories:
+        session.delete(history)
+
     session.delete(asset)
     session.commit()
     return asset

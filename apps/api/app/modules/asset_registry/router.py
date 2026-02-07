@@ -936,9 +936,25 @@ def delete_asset(
             raise HTTPException(
                 status_code=400, detail="only draft assets can be deleted"
             )
-        session.delete(asset)
-        session.commit()
-        return {"ok": True}
+
+        try:
+            # Delete version history first
+            histories = session.exec(
+                select(TbAssetVersionHistory).where(TbAssetVersionHistory.asset_id == asset.asset_id)
+            ).all()
+            for history in histories:
+                session.delete(history)
+            
+            # Delete the asset
+            session.delete(asset)
+            session.commit()
+            return ResponseEnvelope.success(data={"ok": True})
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(
+                status_code=500, 
+                detail=f"Failed to delete asset: {str(e)}"
+            )
 
 
 # Source Asset Endpoints

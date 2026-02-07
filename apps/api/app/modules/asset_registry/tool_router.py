@@ -331,10 +331,23 @@ def delete_tool(
                 status_code=400, detail="Only draft tools can be deleted"
             )
 
-        session.delete(asset)
-        session.commit()
+        try:
+            # Delete version history first
+            histories = session.exec(
+                select(TbAssetVersionHistory).where(TbAssetVersionHistory.asset_id == asset.asset_id)
+            ).all()
+            for history in histories:
+                session.delete(history)
 
-        return ResponseEnvelope.success(message="Tool asset deleted")
+            session.delete(asset)
+            session.commit()
+            return ResponseEnvelope.success(message="Tool asset deleted")
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to delete tool asset: {str(e)}"
+            )
 
 
 @router.post("/{asset_id}/publish", response_model=ResponseEnvelope)
