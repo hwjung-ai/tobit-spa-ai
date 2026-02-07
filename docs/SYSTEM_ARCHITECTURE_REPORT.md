@@ -1,18 +1,20 @@
 # Tobit SPA AI - 시스템 아키텍처 개요 보고서
 
-**작성일**: 2026년 2월 5일 (최종 갱신: 2026년 2월 7일)
+**작성일**: 2026년 2월 5일 (최종 갱신: 2026년 2월 8일)
 **대상**: 경영진, 의사결정자
-**목적**: OPS, CEP, ADMIN, DOCS 모듈의 개념적 이해 및 시스템 아키텍처 정리
+**목적**: OPS, CEP, DOCS, API Engine, ADMIN, Screen Editor 모듈의 개념적 이해 및 시스템 아키텍처 정리
 
 ---
 
 ## 1. 개요
 
-Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실시간 모니터링 및 알림을 제공하며, **문서 기반 의사결정을 지원하는 운영 지원 플랫폼**입니다. 시스템은 크게 4가지 핵심 모듈로 구성됩니다:
-- **OPS**: 인프라 질의응답
+Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실시간 모니터링 및 알림을 제공하며, **문서 기반 의사결정을 지원하고, 운영 화면을 시각적으로 편집/배포하는 운영 지원 플랫폼**입니다. 시스템은 크게 6가지 핵심 모듈로 구성됩니다:
+- **OPS**: 인프라 질의응답 (6개 쿼리 모드)
 - **CEP**: 실시간 이벤트 처리 및 알림
-- **ADMIN**: 시스템 관리
 - **DOCS**: 문서 관리 및 검색
+- **API Engine**: 동적 API 정의/실행/관리
+- **ADMIN**: 시스템 관리
+- **Screen Editor**: 시각적 UI 화면 편집/배포
 
 ### 1.1 배포 상태
 
@@ -21,9 +23,10 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 **개발 단계**:
 - **MVP 완료**: 핵심 기능(OPS, CEP, ADMIN) 구현 및 테스트 완료
 - **OPS 6모드 완성**: config, metric, hist, graph, document, all 모드 전체 구현
+- **Screen Editor 상용화**: 15개 컴포넌트, Undo/Redo, Expression Engine, Theme System, RBAC (95% 준비)
+- **API Engine**: 4가지 실행 엔진(SQL, HTTP, Python, Workflow) 완료, Backend 13개 엔드포인트 완성, UI 80% (80% 준비)
 - **DOCS 뷰어 개선**: 인증, 한국어화, 다운로드, 키보드 네비게이션
 - **프로덕션 준비 중**: 보안 테스트, 성능 최적화, 모니터링 강화 진행
-- **배포 가능성**: 현재 개발 환경에서 안정적으로 운영 중, 운영 환경 배포 준비 완료
 
 **주요 성과**:
 - ✅ 백엔드 API 100% 구현
@@ -32,22 +35,27 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 - ✅ 보안 테스트 100% 통과
 - ✅ 품질 관리 (pre-commit, lint, type-check) 적용
 - ✅ OPS 6개 쿼리 모드 완성 (구성/수치/이력/연결/문서/전체)
+- ✅ Screen Editor 5 Phase 구현 완료 (UX Polish → Expression → Theme → RBAC → SSE)
+- ✅ API Engine 실행 엔진 완성 (SQL/HTTP/Python/Workflow)
 - ✅ Admin 관측성 버그 수정 (Logs, CEP Monitoring)
 
 ### 1.2 시스템 규모
 
 | 항목 | 규모 |
 |------|------|
-| **백엔드 모듈** | 22개 주요 모듈 (DOCS 추가) |
-| **백엔드 API 엔드포인트** | 55+ 엔드포인트 |
+| **백엔드 모듈** | 22개 주요 모듈 (DOCS, Screen Editor, API Engine 포함) |
+| **백엔드 API 엔드포인트** | 60+ 엔드포인트 |
 | **프론트엔드 페이지** | 20+ 페이지 |
+| **프론트엔드 컴포넌트** | 100+ 컴포넌트 (Screen Editor 15개 UI 컴포넌트 포함) |
 | **E2E 테스트 시나리오** | 22개 시나리오 |
 | **데이터베이스 테이블** | 32+ 테이블 |
 | **자산(Assets)** | Prompt, Catalog, Policy, Tool, Screen, Document Search |
 | **OPS 쿼리 모드** | 6개 (구성, 수치, 이력, 연결, 문서, 전체) |
-| **코드량** | ~14,000줄 (코드 + 문서) |
+| **Screen Editor 컴포넌트** | 15개 (Table, Chart, KPI Card 등) |
+| **API Engine 실행기** | 4개 (SQL, HTTP, Python, Workflow) |
+| **코드량** | ~18,000줄 (코드 + 문서) |
 | **DB 마이그레이션** | 47개 버전 |
-| **Git 커밋** | 35+ 커밋 (Phase 10 OPS Real Mode 포함) |
+| **Git 커밋** | 40+ 커밋 |
 
 ### 시스템 구성도
 
@@ -63,15 +71,18 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 │  └──────────────────────────────────────────┘                  │
 │                                                                 │
 │  ┌──────────────┐    ┌──────────────┐    ┌─────────────┐      │
-│  │     CEP      │    │    DOCS      │    │    ADMIN    │      │
-│  │(이벤트 처리) │    │ (문서검색)   │    │  (관리)     │      │
-│  │ Scheduler    │    │ PDF 뷰어    │    │ Observability│      │
-│  └──────────────┘    │ +OPS통합     │    └─────────────┘      │
-│                      └──────────────┘                          │
-│  ┌──────────────┐                                              │
-│  │ API MANAGER  │                                              │
-│  │ (동적 API)   │                                              │
-│  └──────────────┘                                              │
+│  │     CEP      │    │    DOCS      │    │ API Engine  │      │
+│  │(이벤트 처리) │    │ (문서검색)   │    │ SQL/HTTP/   │      │
+│  │ Scheduler    │    │ PDF 뷰어    │    │ Python/WF   │      │
+│  │ Notification │    │ +OPS통합     │    │ +Asset Reg  │      │
+│  └──────────────┘    └──────────────┘    └─────────────┘      │
+│                                                                 │
+│  ┌──────────────┐    ┌──────────────┐                          │
+│  │    ADMIN     │    │Screen Editor │                          │
+│  │  (관리)      │    │ (화면 편집)  │                          │
+│  │ Observability│    │ 15개 컴포넌트│                          │
+│  │ Monitoring   │    │ RBAC + Theme │                          │
+│  └──────────────┘    └──────────────┘                          │
 │         │                                                       │
 │         └───────────────────────────────┬──────────────┐       │
 │                                         ▼              ▼       │
@@ -79,7 +90,7 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 │                 │   Core Infrastructure & Services         │   │
 │                 │ - PostgreSQL, Neo4j, Redis               │   │
 │                 │ - pgvector (1536-dim embeddings)         │   │
-│                 │ - Asset Registry                         │   │
+│                 │ - Asset Registry (Screen, Tool, Prompt)  │   │
 │                 │ - Document Search API (BM25 + pgvector)  │   │
 │                 │ - Auth (JWT + RBAC), API Keys            │   │
 │                 └──────────────────────────────────────────┘   │
@@ -226,6 +237,8 @@ Golden Query → Baseline Trace 저장 → 정기적 재실행 → 비교 분석
 "CPU > 80%"   [기준 결과]            [현재 결과]      [차이 분석]    [알림]
 ```
 
+> 상세 설계: [OPS_QUERY_BLUEPRINT.md](OPS_QUERY_BLUEPRINT.md)
+
 ---
 
 ## 3. CEP (Complex Event Processing) 모듈
@@ -246,7 +259,7 @@ CEP은 **Trigger-Action 패턴**을 사용하여 단순하지만 강력한 자�
     Trigger (트리거)        Evaluator (평가)        Action (동작)
     ──────────────            ─────────────            ─────────────
     [조건 감지]      →       [조건 체크]      →      [동작 실행]
-    
+
     예시:
     1. CPU > 80%           2. 85% > 80%? ✓      3. Slack 알림 전송
     2. 매일 오전 9시        2. 현재 시간 = 9시? ✓  3. 매일 보고서 생성
@@ -262,7 +275,7 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 │                CEP Scheduler Architecture                  │
 └─────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────┐
 │              Scheduler (Leader Process)                │
 │  - PostgreSQL Advisory Lock로 Leader 선출             │
 │  - 여러 인스턴스 중 하나만 실제 실행                 │
@@ -301,40 +314,19 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 - **예시**: API 호출로 즉시 트리거
 - **구현**: 폴링 없이 외부 API 호출로 즉시 실행
 
-### 3.5 폴링 실행 과정 예시
+### 3.5 알림 시스템 (5채널)
 
-**시나리오: CPU 사용량 모니터링 (임계점: 80%)**
+| 채널 | 프로토콜 | 전송 시간 |
+|------|----------|----------|
+| **Slack** | Webhook | ~200ms |
+| **Email** | SMTP | ~500ms |
+| **SMS** | Twilio API | ~300ms |
+| **Webhook** | HTTP | ~150ms |
+| **PagerDuty** | Events API v2 | ~250ms |
 
-```
-시간: 00:00:00
-┌─────────────────────────────────────────┐
-│ Metric Polling Loop - Tick 1           │
-│ - CPU 규칙 체크: 마지막 폴링 없음    │
-│ - HTTP GET /api/metrics/cpu          │
-│ - 응답: {"usage_percent": 75}        │
-│ - 조건: 75 > 80? → ✗ False         │
-│ - Action 미실행                      │
-└─────────────────────────────────────────┘
-
-시간: 00:00:30 (30초 후)
-┌─────────────────────────────────────────┐
-│ Metric Polling Loop - Tick 2           │
-│ - CPU 규칙 체크: 마지막 폴링 30초 전  │
-│ - HTTP GET /api/metrics/cpu          │
-│ - 응답: {"usage_percent": 85}        │
-│ - 조건: 85 > 80? → ✓ True          │
-│ - Action: POST /api/notifications/slack │
-│ - 알림 전송 대기열에 추가             │
-└─────────────────────────────────────────┘
-
-시간: 00:00:30+5초
-┌─────────────────────────────────────────┐
-│ Notification Loop                     │
-│ - 대기열에서 알림 가져오기            │
-│ - Slack webhook로 전송                │
-│ - DB에 전송 로그 기록                 │
-└─────────────────────────────────────────┘
-```
+- **재시도**: 지수 백오프 (1s → 2s → 4s → 8s), 최대 3회
+- **템플릿**: Jinja2 기반 (4가지 기본 템플릿, 커스텀 가능)
+- **분산 상태**: Redis 기반 (재시도 기록, 규칙 상태, Pub/Sub)
 
 ### 3.6 주요 컴포넌트
 
@@ -343,9 +335,11 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 | **Scheduler** | 스케줄링 | 3개의 루프(Schedule, Metric, Notification) 관리 |
 | **Leader Election** | 중복 방지 | PostgreSQL Advisory Lock으로 Leader 선출 |
 | **Metric Poll Loop** | 메트릭 폴링 | 주기적 메트릭 조회 및 조건 체크 |
-| **Notification Engine** | 알림 전송 | Slack, Email, SMS, Webhook 채널 관리 |
+| **Notification Engine** | 알림 전송 | 5채널 알림 + 재시도 + 템플릿 |
 | **Executor** | 트리거 실행 | Trigger 평가 및 Action 실행 |
-| **Rule Monitor** | 규칙 모니터링 | 규칙 성능 및 오류 추적 |
+| **Redis State Manager** | 분산 상태 | 재시도 기록, 규칙 상태, 템플릿 캐시 |
+
+> 상세 설계: [CEP_ENGINE_BLUEPRINT.md](CEP_ENGINE_BLUEPRINT.md)
 
 ---
 
@@ -382,63 +376,33 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 
 ### 4.4 검색 전략
 
-DOCS는 3가지 검색 전략을 제공합니다:
+| 타입 | 엔진 | 인덱스 | 성능 |
+|------|------|--------|------|
+| **Text (BM25)** | PostgreSQL tsvector | GIN | < 50ms |
+| **Vector (pgvector)** | 1536-dim cosine | IVFFLAT | < 100ms |
+| **Hybrid (RRF)** | 결합 | GIN + IVFFLAT | < 150ms |
 
-#### 1. Text Search (텍스트 검색)
-- **기법**: BM25 알고리즘 (Full-text Search)
-- **용도**: 키워드 기반 검색
-- **장점**: 빠른 검색, 키워드 정확도
+### 4.5 문서 뷰어 (Document Viewer)
 
-#### 2. Vector Search (벡터 검색)
-- **기법**: Semantic Search (의미 기반 검색)
-- **용도**: 의미적 유사성 검색
-- **장점**: 문맥 이해, 동의어 처리
-
-#### 3. Hybrid Search (하이브리드 검색)
-- **기법**: Text + Vector 결합 (RRF Ranking)
-- **용도**: 키워드 + 의미 기반 검색
-- **장점**: 정확도 + 문맥 이해 결합
-
-### 4.5 청킹(Chunking) 전략
-
-문서는 검색 효율을 위해 작은 청크(Chunk)로 분할됩니다:
-
-```
-원본 문서
-    ↓
-┌─────────────────────────────────────────────────┐
-│  청킹(Chunking) 전략                       │
-│  - 고정 길이 (예: 500자)                    │
-│  - 문단 기반                                 │
-│  - 표(Table) 단위                            │
-│  - 이미지 + 캡션                             │
-└─────────────────────────────────────────────────┘
-    ↓
-청크 1: "서버 CPU 사용량이 80%를 넘습니다..."
-청크 2: "메모리 사용량은 4GB 중 3.5GB 사용 중..."
-청크 3: "디스크 I/O가 병목 현상을 보입니다..."
-...
-```
-
-### 4.6 문서 뷰어 (Document Viewer)
-
-문서의 근거 링크를 클릭하면 PDF 뷰어가 열리며, 해당 청크를 하이라이트합니다:
-
-```
-근거 링크 클릭 → /documents/{id}/viewer?chunkId=xxx&page=N
-    ↓
-[1. 인증된 PDF 로드]     (Bearer 토큰 + Tenant/User ID)
-[2. 청크 정보 조회]       (chunk_id로 위치 확인)
-[3. 페이지 이동]          (해당 페이지로 자동 이동)
-[4. 텍스트 하이라이트]     (스니펫 매칭 → 노란색 강조)
-```
-
-**주요 기능**:
-- PDF 다운로드 버튼
+- PDF 인증된 Blob 로드 (Bearer 토큰 + Tenant/User ID)
+- 청크 하이라이트, PDF 다운로드
 - 키보드 네비게이션 (방향키 ←→↑↓)
-- 로딩 스피너 및 에러 처리 (재시도 버튼)
 - 삭제된 청크 참조 시 친화적 에러 메시지
 - 전체 한국어 UI
+
+### 4.6 OPS 통합
+
+Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
+
+```
+사용자: "문서에서 성능 최적화 관련 정보는?"
+  ↓
+[OPS Planner] → Tool 선택: document_search
+  ↓
+[DynamicTool 실행] → HTTP POST → Document Search API
+  ↓
+[LLM 답변] → 문서를 컨텍스트에 포함 → 답변 생성
+```
 
 ### 4.7 주요 컴포넌트
 
@@ -448,7 +412,6 @@ DOCS는 3가지 검색 전략을 제공합니다:
 | **Chunking Strategy** | 청킹 전략 | 문서를 검색 가능한 청크로 분할 |
 | **Document Search Service** | 검색 서비스 | Text/Vector/Hybrid 검색 |
 | **Document Viewer** | 문서 뷰어 | PDF 렌더링, 청크 하이라이트, 다운로드 |
-| **Document Export Service** | 내보내기 | JSON, CSV, Markdown, Text 형식 내보내기 |
 | **Vector Store** | 벡터 저장소 | pgvector를 통한 벡터 임베딩 저장 |
 
 ### 4.8 API 기능
@@ -457,193 +420,118 @@ DOCS는 3가지 검색 전략을 제공합니다:
 |------|-----------|------|
 | **문서 업로드** | `POST /api/documents/upload` | 문서 파일 업로드 및 처리 |
 | **문서 목록** | `GET /api/documents/list` | 사용자 문서 목록 조회 |
-| **문서 상세** | `GET /api/documents/{id}` | 문서 상세 정보 및 처리 상태 |
 | **문서 검색** | `POST /api/documents/search` | Text/Vector/Hybrid 검색 |
-| **청크 목록** | `GET /api/documents/{id}/chunks` | 문서 청크 목록 조회 |
-| **문서 공유** | `POST /api/documents/{id}/share` | 다른 사용자와 공유 |
 | **문서 내보내기** | `GET /api/documents/{id}/export` | JSON/CSV/Markdown/Text 내보내기 |
 | **문서 삭제** | `DELETE /api/documents/{id}` | 문서 soft delete |
 
-### 4.9 처리 과정 예시
-
-**시나리오: PDF 문서 업로드 및 검색**
-
-```
-[1단계] 문서 업로드
-┌─────────────────────────────────────────┐
-│ POST /api/documents/upload           │
-│ File: server_report.pdf (2.5MB)      │
-│ Response: {"status": "queued"}       │
-└─────────────────────────────────────────┘
-
-[2단계] 백그라운드 처리
-┌─────────────────────────────────────────┐
-│ - 파일 저장 (Storage)                │
-│ - 텍스트 추출 (PDF → Text)          │
-│ - 청킹 (Text → 42 Chunks)         │
-│ - 벡터화 (Embedding)                │
-│ - DB 저장                           │
-│ Status: processing → done (100%)    │
-└─────────────────────────────────────────┘
-
-[3단계] 문서 검색
-┌─────────────────────────────────────────┐
-│ POST /api/documents/search           │
-│ {                                   │
-│   "query": "CPU 사용량 높음",        │
-│   "search_type": "hybrid",           │
-│   "top_k": 10                       │
-│ }                                   │
-│ Response: 10개 관련 청크 반환       │
-└─────────────────────────────────────────┘
-```
-
 ---
 
-## 5. API MANAGER (Dynamic API Management) 모듈
+## 5. API Engine 모듈
 
 ### 5.1 개요
 
-**API MANAGER**는 동적 API를 정의, 관리, 실행할 수 있는 **API 관리 시스템**입니다. 사용자가 SQL, Python, Workflow 로직을 작성하여 커스텀 API를 생성하고 실행할 수 있습니다.
+**API Engine**은 사용자가 정의한 커스텀 API를 생성, 관리, 실행하는 **동적 API 관리 시스템**입니다. SQL, HTTP, Python, Workflow 4가지 실행 엔진을 제공하며, Asset Registry 및 CEP Builder와 통합됩니다.
 
-### 5.2 핵심 기능
+**상용 준비도**: 80% (실행 엔진 95% 완료, Backend API 95% 완료, UI 80% 구현)
+
+### 5.2 아키텍처
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              API Manager Architecture                     │
+│                    API Engine Architecture                  │
 └─────────────────────────────────────────────────────────────┘
 
-API 정의 → [1. API 생성] → [2. SQL/Python/Workflow 작성] → [3. 유효성 검사] → [4. 테스트 실행]
-    ↓              ↓                  ↓                      ↓                ↓
-  커스텀 API      로직 타입      SQL Validator      테스트 결과
-  시스템 API      SQL/Python      보안 체크         통합 테스트
-                  Workflow        성능 체크         Dry-run
-                                   ↓
-                              [5. API 실행] → [6. 버전 관리] → [7. 실행 로그]
-                                   ↓                  ↓              ↓
-                              Runtime Engine   버전 히스토리      실행 기록
-                              (SQL/Python/      롤백 지원       성능 메트릭
-                               Workflow)
+API Engine
+├── Frontend (UI)
+│   ├── Asset Registry (/admin/assets)       ✅ 90%
+│   ├── API Manager (/api-manager)            ⚠️ 80%
+│   └── API Builder (/admin/api-builder)     ❌ 미구현
+│
+├── Backend (API)
+│   ├── Asset Registry API (/asset-registry/*)  ✅
+│   ├── API Manager API (/api-manager/*)        ✅
+│   └── API Executor (execute_api)              ✅
+│
+└── Executor (Runtime)
+    ├── SQL Executor (PostgreSQL)       ✅ 95%
+    ├── HTTP Executor (httpx)           ✅ 95%
+    ├── Python Executor (exec+sandbox)  ✅ 95%
+    └── Workflow Executor (sequential)  ⚠️ Placeholder
 ```
 
-### 5.3 지원 로직 타입
+### 5.3 4가지 실행 엔진
 
-실제 소스 코드(`models.py`)에서 확인된 5가지 로직 타입:
-
-| 타입 | 설명 | 구현 상태 |
-|------|------|----------|
-| **SQL** | SQL 쿼리 실행 | ✅ 완전 구현 (`execute_sql_api`) |
-| **Python** | Python 스크립트 실행 | ✅ 구현됨 |
-| **Workflow** | 복합 워크플로우 | ✅ 구현됨 |
-| **HTTP** | HTTP 요청 실행 | ✅ 완전 구현 (`execute_http_api`) |
-| **Script** | 스크립트 실행 | ✅ 구현됨 |
-
-**구현 세부사항**:
-
-- **SQL Executor** (`executor.py::execute_sql_api`):
-  - 보안 검사: `validate_select_sql()` - SELECT/WITH만 허용, 위험 키워드 차단
-  - 성능 제어: `STATEMENT_TIMEOUT_MS = 3000` (3초 타임아웃)
-  - 결과 제한: `DEFAULT_LIMIT = 200`, `MAX_LIMIT = 1000`
-  - 차단 키워드: INSERT, UPDATE, DELETE, ALTER, DROP, TRUNCATE, CREATE, GRANT, REVOKE, COPY, CALL, DO
-  - 실행 로그 기록: `record_exec_log()`로 실행 기록 DB 저장
-
-- **HTTP Executor** (`executor.py::execute_http_api`):
-  - 템플릿 치환: `{{params.field}}` 패턴 지원 (workflow_executor와 호환)
-  - HTTP 클라이언트: httpx 라이브러리 사용
-  - 타임아웃: `HTTP_TIMEOUT = 5.0` (5초)
-  - 응답 처리: JSON 또는 텍스트 응답을 표준화된 행/열 형식으로 변환
-  - 실행 로그 기록: `record_exec_log()`로 실행 기록 DB 저장
+| 실행기 | 설명 | 보안 | 타임아웃 |
+|--------|------|------|----------|
+| **SQL** | PostgreSQL 쿼리 실행 | SELECT/WITH만 허용, 위험 키워드 차단, 인젝션 감지 | 3초 |
+| **HTTP** | 외부 HTTP 요청 | 템플릿 치환 (`{{params.X}}`), httpx 클라이언트 | 5초 |
+| **Python** | Python 스크립트 실행 | `main(params, input_payload)` 필수, 샌드박스 환경 | 5초 |
+| **Workflow** | 다중 API 순차 실행 | 노드별 상태 기록, 템플릿 파라미터 | 30초 |
 
 ### 5.4 SQL 보안 검사
 
-SQL 쿼리 실행 전 자동으로 보안 검사를 수행합니다:
-
 ```
-SQL 쿼리
-    ↓
-┌─────────────────────────────────────────────────┐
-│  SQL Validator                             │
-│  - 위험 키워드 감지 (DROP, DELETE 등)      │
-│  - SQL Injection 패턴 체크               │
-│  - 테이블 접근 권한 확인                 │
-│  - 성능 문제 분석 (인덱스 사용 등)        │
-└─────────────────────────────────────────────────┘
-    ↓
-검증 결과
-    ↓
-  안전 여부 반환 (is_safe, is_valid, errors, warnings)
+SQL 쿼리 → validate_select_sql()
+    ├─ SELECT/WITH로 시작 확인
+    ├─ 위험 키워드 차단 (INSERT, UPDATE, DELETE, DROP, ALTER, TRUNCATE, GRANT, REVOKE, CREATE)
+    ├─ SQL 인젝션 패턴 감지 (세미콜론 주입, UNION 주입)
+    └─ 자동 LIMIT 적용 (기본 200행, 최대 1000행)
 ```
 
-### 5.5 API 버전 관리
+### 5.5 데이터 모델
 
-API는 버전별로 관리되며, 언제든 이전 버전으로 롤백할 수 있습니다:
+| 테이블 | 설명 |
+|--------|------|
+| **tb_api_definition** | API 정의 (이름, 타입, 로직, 파라미터 스키마, 런타임 정책) |
+| **tb_api_execution_log** | 실행 로그 (상태, 소요시간, 요청/응답, 에러 정보) |
+
+### 5.6 CEP Builder 통합
+
+CEP Rule의 Action Type이 `api_script`인 경우 API Engine을 호출:
 
 ```
-API Version History
+CEP Scheduler → Rule Trigger → action_spec.type == "api_script"
     ↓
-Version 1: "SELECT * FROM users" (2026-01-01)
-Version 2: "SELECT id, name FROM users WHERE active = true" (2026-01-15)
-Version 3: "SELECT * FROM users ORDER BY created_at DESC" (2026-02-01)
+_execute_api_script_action()
     ↓
-Rollback to Version 2 가능
+API 정의 조회 → API Executor 실행 → 실행 로그 기록 → 결과 반환
 ```
 
-### 5.6 주요 컴포넌트
+### 5.7 Asset Registry UI
 
-| 컴포넌트 | 역할 | 설명 |
-|----------|------|------|
-| **ApiManagerService** | API 관리 서비스 | API 생성, 업데이트, 삭제, 버전 관리 |
-| **SQL Validator** | SQL 유효성 검사 | 보안 체크, 성능 분석 |
-| **ApiTestRunner** | API 테스트 실행 | 단일 테스트, 통합 테스트 실행 |
-| **Runtime Router** | 런타임 라우터 | 동적 API 실행 (SQL, Python, Workflow, HTTP) |
-| **Executor** | 로직 실행기 | SQL, Python, Workflow 실행 엔진 |
+| 기능 | 완료도 | 설명 |
+|------|--------|------|
+| **에셋 목록** | ✅ | 전체 목록, 타입/상태 필터, URL 기반 필터 유지 |
+| **에셋 생성** | ✅ | CreateAssetModal, 타입 선택, 기본 정보 입력 |
+| **에셋 상세** | ✅ | 상세 페이지, 편집, 버전 관리, 상태 변경 |
+| **에셋 테이블** | ✅ | 정렬, 필터링, 상태/타입 아이콘 |
 
-### 5.7 API 기능
+### 5.8 주요 API 엔드포인트
 
 | 기능 | 엔드포인트 | 설명 |
 |------|-----------|------|
-| **API 목록** | `GET /api-manager/apis` | 사용 가능한 API 목록 조회 (public) |
+| **API 목록** | `GET /api-manager/apis` | API 목록 조회 |
 | **API 생성** | `POST /api-manager/apis` | 새 API 생성 |
-| **API 상세** | `GET /api-manager/{api_id}` | API 상세 정보 조회 |
-| **API 업데이트** | `PUT /api-manager/apis/{api_id}` | API 업데이트 |
-| **API 삭제** | `DELETE /api-manager/apis/{api_id}` | API soft delete |
 | **API 실행** | `POST /api-manager/apis/{api_id}/execute` | API 실행 |
 | **SQL 검사** | `POST /api-manager/{api_id}/validate-sql` | SQL 유효성 검사 |
-| **API 테스트** | `POST /api-manager/{api_id}/test` | API 테스트 실행 |
-| **버전 히스토리** | `GET /api-manager/{api_id}/versions` | 버전 히스토리 조회 |
-| **버전 롤백** | `POST /api-manager/{api_id}/rollback` | 이전 버전으로 롤백 |
+| **버전 히스토리** | `GET /api-manager/{api_id}/versions` | 버전 히스토리 |
+| **버전 롤백** | `POST /api-manager/{api_id}/rollback` | 이전 버전 롤백 |
 | **실행 로그** | `GET /api-manager/apis/{api_id}/execution-logs` | 실행 로그 조회 |
 | **Dry-run** | `POST /api-manager/dry-run` | SQL dry-run 실행 |
 
-### 5.8 CEP Builder와의 통합
+### 5.9 주요 컴포넌트
 
-API Manager는 **CEP Builder**와 통합되어 사용됩니다:
+| 컴포넌트 | 역할 | 설명 |
+|----------|------|------|
+| **SQL Executor** | SQL 실행 | 보안 검사 + PostgreSQL 쿼리 실행 |
+| **HTTP Executor** | HTTP 실행 | 템플릿 치환 + httpx 요청 |
+| **Python Executor** | Python 실행 | 샌드박스 + main() 함수 실행 |
+| **Workflow Executor** | 워크플로우 | 다중 노드 순차 실행 |
+| **ApiManagerService** | API 관리 | API CRUD, 버전 관리 |
+| **SQL Validator** | SQL 검증 | 보안 체크, 인젝션 감지 |
+| **HttpFormBuilder** | HTTP UI | Form/JSON 이중 모드 빌더 |
 
-```
-CEP Rule Trigger Action
-    ↓
-HTTP API Action Type
-    ↓
-┌─────────────────────────────────────────────────┐
-│  CEP Builder → API Manager                 │
-│  - CEP Rule의 Action Type이 "http"인 경우    │
-│  - API Manager의 API를 호출               │
-│  - ApiExecuteResponse 형태로 결과 반환      │
-└─────────────────────────────────────────────────┘
-```
-
-**사용 예시**:
-```python
-# CEP Rule Action
-{
-  "type": "http",
-  "api_id": "custom-api-123",
-  "params": {"threshold": 80}
-}
-
-# API Manager 실행
-execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
-```
+> 상세 설계: [API_ENGINE_BLUEPRINT.md](API_ENGINE_BLUEPRINT.md)
 
 ---
 
@@ -668,36 +556,14 @@ execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
     감사 로그                이력 메트릭              기본값 초기화
 ```
 
-### 6.3 사용자 관리
-
-- **사용자 목록**: 페이지네이션, 필터링(활성/비활성), 검색
-- **사용자 상태**: 활성/비활성 전환
-- **권한 관리**: 권한 부여/회수
-- **감사 로그**: 권한 변경 이력 추적
-
-### 6.4 시스템 모니터링
-
-- **건강 상태**: 현재 시스템 상태
-- **자원 사용량**: CPU, 메모리, 디스크, 네트워크
-- **시스템 경보**: 심각도별 알림
-- **이력 메트릭**: 시계열 데이터
-
-### 6.5 관측성(Observability) 버그 수정 (2026-02-06)
+### 6.3 관측성(Observability) 수정 (2026-02-06)
 
 | 문제 | 원인 | 해결 |
 |------|------|------|
 | Logs 페이지 "Not Found" | Next.js rewrite 규칙 충돌 | `/admin/logs` rewrite 제거 |
-| CEP Monitoring 500 에러 | `/rules/performance`가 `/rules/{rule_id}`로 매칭 | 엔드포인트 순서 변경 (구체적 경로 우선) |
-| Recent Errors 중복 | API 응답은 정상 (UI 인식 문제) | 분석 완료, 자동 갱신 이슈 |
+| CEP Monitoring 500 에러 | `/rules/performance`가 `/rules/{rule_id}`로 매칭 | 엔드포인트 순서 변경 |
 
-### 6.6 설정 관리
-
-- **시스템 설정**: 개별 설정 조회/업데이트
-- **일괄 업데이트**: 여러 설정 동시 변경
-- **카테고리별**: 기능별 설정 그룹화
-- **감사 로그**: 설정 변경 이력 추적
-
-### 6.7 주요 컴포넌트
+### 6.4 주요 컴포넌트
 
 | 컴포넌트 | 역할 | 설명 |
 |----------|------|------|
@@ -707,15 +573,93 @@ execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
 
 ---
 
-## 7. 시스템 상관관계
+## 7. Screen Editor 모듈
 
-### 7.1 데이터 흐름
+### 7.1 개요
+
+**Screen Editor**는 비개발자도 운영 대시보드와 조회 화면을 시각적으로 편집하고 배포할 수 있는 **로우코드 UI 빌더**입니다. Asset Registry에 저장된 Screen Asset을 WYSIWYG 방식으로 편집하며, 런타임에서 서버사이드 바인딩과 Direct API Endpoint를 통해 실제 데이터를 표시합니다.
+
+**상용 준비도**: 95% (단일 사용자 편집 기준 Production Ready)
+
+### 7.2 아키텍처
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    데이터 흐름                            │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                Screen Editor Architecture                  │
+└─────────────────────────────────────────────────────────────┘
 
+Editor (Web)                    Runtime (Server + Client)
+─────────────                   ──────────────────────────
+ [Visual Canvas]                [UIScreenRenderer]
+ [Drag & Drop]                  [Binding Engine]
+ [Properties Panel]             [Action Executor]
+ [Expression Editor]            [SSE Stream Manager]
+      ↓                              ↓
+ screen.schema.ts               Direct API Endpoint
+ (JSON Schema V1)               (REST API 직접 호출)
+      ↓                              ↓
+ Asset Registry                 PostgreSQL + Neo4j + Redis
+ (Screen Asset 저장)            (실제 데이터 소스)
+```
+
+### 7.3 15개 UI 컴포넌트
+
+| 카테고리 | 컴포넌트 | 설명 |
+|----------|----------|------|
+| **데이터** | Table, Chart, KPICard | 데이터 표시/시각화 |
+| **입력** | TextInput, Select, DatePicker, Checkbox | 사용자 입력 |
+| **레이아웃** | Container, Grid, Tabs | 화면 구조 |
+| **표시** | Text, Badge, Image | 정보 표시 |
+| **인터랙션** | Button, Modal | 사용자 상호작용 |
+
+### 7.4 핵심 기능
+
+| 기능 | 설명 |
+|------|------|
+| **Undo/Redo** | 50 히스토리, Ctrl+Z/Shift+Z |
+| **Multi-Select** | Ctrl+Click, Shift+Click, 일괄 삭제 |
+| **Copy/Paste** | 깊은 복제 + ID 재생성 |
+| **Expression Engine** | 재귀 하강 파서, 45+ 화이트리스트 함수 |
+| **Theme System** | Light/Dark/Brand, CSS 변수 + Tailwind |
+| **RBAC** | screen:create/edit/publish/rollback/delete 5개 권한 |
+| **Diff/Rollback** | 버전 비교, JSON Patch, 영향도 분석 |
+| **Template Gallery** | 템플릿 검색/복제, 태그 필터 |
+| **SSE Streaming** | 실시간 데이터 바인딩, 자동 재연결 |
+| **Direct API Endpoint** | REST API 직접 호출 (CEP Monitoring Screen 등) |
+
+### 7.5 Screen Runtime (UIScreenRenderer)
+
+```
+Screen Asset JSON
+    ↓
+UIScreenRenderer
+    ├─ Binding Engine: {{state.xxx}} → 실제 값 치환
+    ├─ Action Executor: 버튼 클릭 → API 호출
+    ├─ SSE Manager: 실시간 데이터 스트림
+    └─ Direct API: 컴포넌트별 API 엔드포인트 호출 (15초 자동 갱신)
+```
+
+### 7.6 주요 컴포넌트
+
+| 컴포넌트 | 역할 | 설명 |
+|----------|------|------|
+| **ScreenEditor** | 메인 편집기 | Visual/JSON/Preview 3탭 구조 |
+| **CanvasComponent** | 캔버스 렌더링 | 컴포넌트 선택/드래그/리사이즈 |
+| **PropertiesPanel** | 속성 편집 | 선택된 컴포넌트 속성 편집 |
+| **BindingEngine** | 바인딩 엔진 | 데이터 소스 → 컴포넌트 속성 매핑 |
+| **ExpressionParser** | 표현식 파서 | 안전한 표현식 평가 (AST 기반) |
+| **ThemeProvider** | 테마 관리 | Light/Dark/Brand 테마 전환 |
+| **UIScreenRenderer** | 런타임 렌더링 | 저장된 스크린을 실제 실행 |
+
+> 상세 설계: [SCREEN_EDITOR_BLUEPRINT.md](SCREEN_EDITOR_BLUEPRINT.md)
+
+---
+
+## 8. 시스템 상관관계
+
+### 8.1 데이터 흐름
+
+```
 사용자 질문 (OPS)          →  Query History (기록)
                           →  Execution Trace (실행 트레이스)
                           →  Asset Registry (자산 참조)
@@ -724,98 +668,41 @@ execute_http_api(session, "custom-api-123", logic_body, params, executed_by)
 CEP 이벤트 발생            →  CEP Rule (규칙 실행)
                           →  Notification Log (알림 기록)
                           →  Notification Channel (Slack/Email)
+                          →  API Engine (api_script Action 실행)
+
+API Engine                 →  SQL/HTTP/Python/Workflow 실행
+                          →  실행 로그 기록 (tb_api_execution_log)
+                          →  CEP Builder 통합 (Action Type)
+
+Screen Editor              →  Asset Registry (Screen Asset 저장)
+                          →  Direct API Endpoint (데이터 조회)
+                          →  SSE Stream (실시간 데이터)
+                          →  RBAC (권한 체크)
 
 Admin 설정 변경             →  Settings DB (설정 저장)
                           →  Audit Log (감사 로그)
                           →  System Monitor (모니터링)
 ```
 
-### 7.2 공통 인프라
+### 8.2 공통 인프라
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                  공통 인프라                              │
-└─────────────────────────────────────────────────────────────────┘
-
 데이터베이스:
-  - PostgreSQL: 메인 데이터 (Query History, CEP Rules, Settings)
+  - PostgreSQL: 메인 데이터 (Query History, CEP Rules, Settings, Screen Assets, API Definitions)
   - Neo4j: 그래프 데이터 (서비스 의존성)
-  - Redis: 캐싱, 메시지 큐
+  - Redis: 캐싱, 메시지 큐, CEP 분산 상태
 
 인증/권한:
   - JWT 기반 인증
-  - RBAC (Role-Based Access Control)
+  - RBAC (Role-Based Access Control) - Screen Editor 권한 포함
   - API Key 관리
 
 감사/로깅:
   - Audit Log: 모든 변경 이력
   - Execution Trace: OPS 실행 트레이스
+  - API Execution Log: API Engine 실행 로그
   - Flow Spans: 단계별 실행 추적
 ```
-
----
-
-## 8. 기술적 특징
-
-### 8.1 OPS 모듈
-
-- **6개 쿼리 모드**: 구성/수치/이력/연결/문서/전체 모드 완성
-- **듀얼 엔드포인트**: `/ops/query` (단순 모드) + `/ops/ask` (전체 오케스트레이션)
-- **AI 기반**: LLM을 사용한 질문 의도 파악 및 실행 계획 생성
-- **Stage-based**: 4단계 계획-실행 패턴 (route_plan → validate → execute → present)
-- **Asset-driven**: Prompt, Catalog, Policy, Tool 자산 기반 실행
-- **3단계 블록 폴백**: pre-built → execution_results → markdown 변환
-- **관측성**: Flow Spans으로 단계별 실행 추적 + 상세 로깅
-- **RCA 지원**: 실패 원인 분석 및 가설 생성
-- **Regression Watch**: Golden Queries로 회귀 테스트 자동화
-
-### 8.2 CEP 모듈
-
-- **Trigger-Action 패턴**: 단순한 조건-반응 메커니즘
-- **폴링 스케줄링**: asyncio 기반 백그라운드 루프
-  - **Schedule Loop**: 5초마다 Cron/Interval 기반 규칙 체크
-  - **Metric Poll Loop**: 글로벌 인터벌마다 메트릭 폴링 및 조건 체크
-  - **Notification Loop**: 대기중인 알림 전송
-- **Leader Election**: PostgreSQL Advisory Lock (`pg_try_advisory_lock`)으로 중복 실행 방지
-  - 여러 인스턴스 중 하나만 Leader로 선출되어 실제 스케줄링 수행
-  - Follower는 heartbeat만 전송
-- **동시성 제어**: Semaphore로 병렬 처리 제어
-  - `cep_metric_poll_concurrency` 설정으로 최대 동시 실행 개수 제어
-  - 각 Metric Rule이 개별 `poll_interval_seconds`로 폴링 타이밍 관리
-- **다중 채널**: Slack, Email, SMS, Webhook 알림
-- **직접 구현**: Bytewax 라이브러리 설치되어 있으나 실제로는 사용하지 않음
-  - `requirements.txt`에 `bytewax`가 존재하지만,
-  - 실제 소스 코드에서는 `import bytewax` 또는 `from bytewax`를 사용하지 않음
-  - 커스텀 asyncio 기반 스케줄러로 구현 (`scheduler.py`)
-
-### 8.3 DOCS 모듈
-
-- **다중 형식 지원**: PDF, Word, Excel, PowerPoint, Images
-- **하이브리드 검색**: Text (BM25) + Vector (Semantic) + Hybrid (RRF)
-- **청킹(Chunking) 전략**: 고정 길이, 문단 기반, 표 단위, 이미지 + 캡션
-- **벡터 저장소**: pgvector를 통한 효율적인 임베딩 저장 및 검색
-- **백그라운드 처리**: RQ + Redis를 통한 비동기 문서 처리
-- **다중 내보내기**: JSON, CSV, Markdown, Text 형식 지원
-- **PDF 뷰어**: 인증된 PDF 로드, 청크 하이라이트, 다운로드, 키보드 네비게이션
-- **근거 링크**: 검색 결과에서 원문 위치로 직접 이동 (유사도 % 표시)
-- **한국어 UI**: 전체 한국어 라벨 (답변/요약/상세/완료/오류)
-
-### 8.4 API MANAGER 모듈
-
-- **동적 API 관리**: SQL/Python/Workflow/HTTP API 정의 및 실행
-- **SQL 보안 검사**: 위험 키워드 감지, SQL Injection 패턴 체크, 성능 분석
-- **버전 관리**: API 버전 히스토리, 롤백 지원
-- **API 테스트**: 단일 테스트, 통합 테스트, Dry-run 실행
-- **CEP 통합**: CEP Builder의 HTTP Action Type과 통합
-
-### 8.5 ADMIN 모듈
-
-- **사용자 관리**: 사용자 CRUD, 권한 부여/회수
-- **시스템 모니터링**: 실시간 자원 추적, 경보 생성
-- **설정 관리**: 시스템 설정, 일괄 업데이트
-- **감사 로그**: 모든 변경 이력 추적
-- **관리자 인터페이스**: REST API 기반 관리 기능 제공
-- **관측성 개선**: Logs 페이지 라우팅 수정, CEP 모니터링 엔드포인트 수정
 
 ---
 
@@ -825,10 +712,7 @@ Admin 설정 변경             →  Settings DB (설정 저장)
 
 ```
 Trigger → Condition Check → Action Execute
-   ↓            ↓                ↓
-이벤트      조건 평가         동작 수행
 ```
-
 - **장점**: 단순함, 확장성, 테스트 용이성
 - **사용**: 메트릭 모니터링, 주기적 작업, 알림 전송
 
@@ -837,20 +721,39 @@ Trigger → Condition Check → Action Execute
 ```
 Route Plan → Validate → Execute → Compose → Present
 ```
-
 - **장점**: 명확한 실행 단계, 오류 격리, 관측성
 - **사용**: 복잡한 쿼리 실행, 데이터 집계, 그래프 분석
 
-### 9.3 Asset Registry (OPS, 공통)
+### 9.3 Asset Registry (공통)
 
 ```
 Prompt Asset  ────┐
-Catalog Asset ───┼──→ Query Execution
-Policy Asset   ───┘   (자산 기반 실행)
+Catalog Asset ───┼──→ Query Execution / Screen Rendering
+Policy Asset   ───┤
+Screen Asset  ────┘
 ```
-
 - **장점**: 버전 관리, 동적 변경, 재사용성
-- **사용**: 쿼리 자동화, 실행 계획 생성, 정책 적용
+- **사용**: 쿼리 자동화, 화면 배포, 정책 적용
+
+### 9.4 Schema-first Design (Screen Editor)
+
+```
+screen.schema.ts (JSON Schema V1) → Editor / Runtime / Validation
+```
+- **장점**: 단일 진실 원천, 편집기-런타임 정합성 보장
+- **사용**: 화면 정의, 바인딩 매핑, 액션 연결
+
+### 9.5 Runtime Engine Pattern (API Engine)
+
+```
+API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기록
+                    ├─ sql      → execute_sql_api()
+                    ├─ http     → execute_http_api()
+                    ├─ script   → execute_python_api()
+                    └─ workflow → execute_workflow_api()
+```
+- **장점**: 확장 가능한 실행기 구조, 보안 분리, 실행 로그 일관성
+- **사용**: 커스텀 API 실행, CEP Action 통합
 
 ---
 
@@ -860,9 +763,7 @@ Policy Asset   ───┘   (자산 기반 실행)
 - [x] 6개 쿼리 모드 완성 (구성/수치/이력/연결/문서/전체)
 - [x] 듀얼 엔드포인트 구조 (/ops/query + /ops/ask)
 - [ ] Real mode 데이터 소스 연결 (config, metric, hist 모드)
-- [ ] 더 많은 Tool 통합 (로그 분석, 토폴로지 등)
 - [ ] RCA 정확도 향상 (LLM 통합)
-- [ ] Golden Queries 확장
 - [ ] Multi-tenant 지원 강화
 
 ### 10.2 CEP
@@ -872,46 +773,52 @@ Policy Asset   ───┘   (자산 기반 실행)
 - [ ] 대시보드 시각화 강화
 
 ### 10.3 DOCS
-- [x] PDF 뷰어 인증 수정
-- [x] 한국어 UI 완성
-- [x] PDF 다운로드 기능
-- [x] 키보드 네비게이션
-- [x] 근거 링크 유사도 % 표시
+- [x] PDF 뷰어 인증 수정 + 한국어 UI
 - [ ] OCR 기능 강화 (다국어 지원)
-- [ ] 더 많은 문서 형식 지원
 - [ ] 검색 정확도 향상 (Custom Embedding)
 - [ ] 문서 버전 관리
-- [ ] 협업 기능 (주석, 공동 편집)
 
-### 10.4 API MANAGER
-- [ ] 더 많은 로직 타입 지원
-- [ ] API 테스트 케이스 자동화
-- [ ] API 성능 모니터링
-- [ ] API 모니터링 대시보드
-- [ ] API Marketplace/템플릿
+### 10.4 API Engine
+- [x] 4가지 실행 엔진 완성 (SQL/HTTP/Python/Workflow)
+- [x] Asset Registry UI 완성 (90%)
+- [x] API Manager Backend 완성 (13개 엔드포인트)
+- [x] API Manager UI 기본 구현 (`/api-manager/page.tsx` 2,996줄, 80%)
+- [ ] API Manager UI 고도화 (Visual Builder, 에디터 개선)
+- [ ] API Test Runner UI 구현
+- [ ] Workflow Executor 완전 구현
+- [ ] Redis 기반 캐싱
+- [ ] Python Sandbox 강화 (Docker 컨테이너)
 
 ### 10.5 ADMIN
 - [x] Logs 페이지 라우팅 수정
 - [x] CEP Monitoring 엔드포인트 수정
 - [ ] 실시간 대시보드 UI
 - [ ] 경보 규칙 설정
-- [ ] 자동화된 운영 작업
-- [ ] 성능 보고서
+
+### 10.6 Screen Editor
+- [x] 5 Phase 구현 완료 (UX/Expression/Theme/RBAC/SSE)
+- [ ] CRDT 기반 실시간 협업 편집
+- [ ] AI 지원 화면 생성 (자연어 → 화면 구성)
+- [ ] 모바일 반응형 레이아웃
+- [ ] 컴포넌트 마켓플레이스
 
 ---
 
 ## 11. 요약
 
-| 모듈 | 목적 | 핵심 기능 | 주요 패턴 |
-|------|------|----------|----------|
-| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, RCA | Stage-based Execution, Dual-endpoint |
-| **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 주기적 작업, 알림 전송 | Trigger-Action, Polling Scheduler |
-| **DOCS** | 문서 관리 | 문서 업로드, 하이브리드 검색, PDF 뷰어 | Hybrid Search, Chunking, Vector Store |
-| **API MANAGER** | 동적 API 관리 | SQL/Python/Workflow API, 버전 관리, 보안 검사 | Runtime Engine, Version Control, SQL Validation |
-| **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성 | CRUD, Audit Logging, Observability |
+| 모듈 | 목적 | 핵심 기능 | 상용 준비도 |
+|------|------|----------|------------|
+| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, RCA | 90% |
+| **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 5채널 알림, Redis 분산 상태 | 90% |
+| **DOCS** | 문서 관리 | 하이브리드 검색, PDF 뷰어, OPS 통합 | 85% |
+| **API Engine** | 동적 API 관리 | SQL/HTTP/Python/WF 실행, 보안 검사, CEP 통합 | 80% |
+| **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성 | 85% |
+| **Screen Editor** | 시각적 UI 편집 | 15개 컴포넌트, Expression, Theme, RBAC | 95% |
 
 ### 시스템 특징
 - **AI 기반**: LLM을 활용한 지능형 질의응답
+- **로우코드**: Screen Editor로 비개발자도 화면 구성
+- **동적 API**: API Engine으로 커스텀 API 정의/실행
 - **자동화**: CEP을 통한 실시간 모니터링 및 알림
 - **관측성**: 전체 실행 트레이스 및 감사 로그
 - **확장성**: Asset Registry를 통한 동적 자산 관리
@@ -923,48 +830,6 @@ Policy Asset   ───┘   (자산 기반 실행)
 
 ### 12.1 백엔드 (Backend)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Backend Architecture                     │
-├─────────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐    ┌──────────────┐    ┌─────────────┐ │
-│  │   FastAPI    │    │  SQLModel    │    │   Alembic   │ │
-│  │   (Web API)  │    │  (ORM)      │    │  (Migration)│ │
-│  └──────────────┘    └──────────────┘    └─────────────┘ │
-│         │                    │                    │          │
-│         ▼                    ▼                    ▼          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │          Core Libraries & Frameworks                │   │
-│  │  - Pydantic v2 (Validation)                     │   │
-│  │  - LangGraph (LLM Orchestration)                │   │
-│  │  - SSE-Starlette (Server-Sent Events)           │   │
-│  │  - OpenAI SDK (LLM Integration)                 │   │
-│  │  - Redis (Caching & Queue)                     │   │
-│  │  - RQ (Background Jobs)                         │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │              Data Layer                           │   │
-│  │  - PostgreSQL (psycopg >= 3.1)                 │   │
-│  │  - Neo4j (Graph Database)                       │   │
-│  │  - Redis (In-memory Cache)                       │   │
-│  │  - pgvector (Vector Extension)                    │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │           Development & Testing                    │   │
-│  │  - pytest + pytest-asyncio                       │   │
-│  │  - Ruff (Linter & Formatter)                   │   │
-│  │  - mypy (Type Checker)                           │   │
-│  │  - httpx (HTTP Client)                           │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**주요 라이브러리**:
-
 | 카테고리 | 라이브러리 | 용도 |
 |----------|-----------|------|
 | **Web Framework** | FastAPI, Uvicorn | REST API, ASGI 서버 |
@@ -972,60 +837,19 @@ Policy Asset   ───┘   (자산 기반 실행)
 | **ORM** | SQLModel | 데이터베이스 ORM |
 | **Migration** | Alembic | DB 스키마 마이그레이션 |
 | **Database Driver** | psycopg[binary] >= 3.1 | PostgreSQL 드라이버 |
-| **LLM Integration** | LangGraph, LangChain, OpenAI SDK | LLM 오케스트레이션, LLM 통합 |
-| **Graph Database** | Neo4j Driver | 그래프 데이터베이스 접속 |
+| **LLM Integration** | LangGraph, LangChain, OpenAI SDK | LLM 오케스트레이션 |
+| **Graph Database** | Neo4j Driver | 그래프 데이터베이스 |
 | **Caching & Queue** | Redis, RQ | 캐싱, 백그라운드 작업 |
 | **SSE** | sse-starlette | Server-Sent Events |
-| **Testing** | pytest, pytest-asyncio, httpx | 비동기 테스트, HTTP 클라이언트 |
-| **Linting & Formatting** | Ruff, mypy | 코드 품질, 타입 검사 |
+| **HTTP Client** | httpx | API Engine HTTP 실행기 |
+| **Testing** | pytest, pytest-asyncio, httpx | 비동기 테스트 |
+| **Linting** | Ruff, mypy | 코드 품질, 타입 검사 |
 | **Document Processing** | python-docx, pypdf | 문서 처리 |
-| **Authentication** | python-jose[cryptography], passlib[bcrypt] | JWT, 비밀번호 암호화 |
+| **Authentication** | python-jose, passlib[bcrypt] | JWT, 비밀번호 암호화 |
 | **System Monitoring** | psutil | 시스템 모니터링 |
 | **Scheduler** | croniter | Cron 표현식 파싱 |
 
 ### 12.2 프론트엔드 (Frontend)
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                  Frontend Architecture                      │
-├─────────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐    ┌──────────────┐    ┌─────────────┐ │
-│  │   Next.js    │    │   React 19   │    │ TypeScript  │ │
-│  │   App Router │    │  (UI Library)│    │   (Strict)  │ │
-│  └──────────────┘    └──────────────┘    └─────────────┘ │
-│         │                    │                    │          │
-│         ▼                    ▼                    ▼          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │          UI Components & Styling                   │   │
-│  │  - shadcn/ui (Radix UI primitives)              │   │
-│  │  - Tailwind CSS v4 (Styling)                    │   │
-│  │  - Lucide React (Icons)                         │   │
-│  │  - React Flow (Graph Visualization)              │   │
-│  │  - Apache ECharts (Charts via Recharts)          │   │
-│  │  - Monaco Editor (Code Editor)                   │   │
-│  │  - AG Grid (Data Grid)                          │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │           State Management & Data Fetching          │   │
-│  │  - TanStack Query v5 (Data Fetching)             │   │
-│  │  - React Server Components                        │   │
-│  │  - Server Actions                                │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │           Development & Testing                    │   │
-│  │  - Playwright (E2E Testing)                     │   │
-│  │  - ESLint + Prettier (Linting & Formatting)    │   │
-│  │  - TypeScript (Type Checking)                    │   │
-│  │  - React Compiler (Performance Optimization)      │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**주요 라이브러리**:
 
 | 카테고리 | 라이브러리 | 용도 |
 |----------|-----------|------|
@@ -1033,14 +857,13 @@ Policy Asset   ───┘   (자산 기반 실행)
 | **Language** | TypeScript 5.9 | 타입 안전성 (strict mode) |
 | **UI Components** | shadcn/ui, Radix UI | 접근성 있는 UI 컴포넌트 |
 | **Styling** | Tailwind CSS v4 | 유틸리티 기반 스타일링 |
-| **State Management** | TanStack Query v5 | 데이터 가져오기, 캐싱 |
+| **State Management** | TanStack Query v5, Zustand (editor-state) | 데이터 가져오기, 에디터 상태 |
 | **Visualization** | React Flow, Recharts, AG Grid | 그래프, 차트, 그리드 |
-| **Code Editor** | Monaco Editor | 코드 에디터 |
+| **Code Editor** | Monaco Editor | 코드 에디터 (SQL, Python, JSON) |
 | **Icons** | Lucide React | 아이콘 라이브러리 |
-| **Markdown** | react-markdown | Markdown 렌더링 |
 | **PDF** | react-pdf, pdfjs-dist | PDF 렌더링 |
-| **E2E Testing** | Playwright | 엔드투엔드 테스트 |
-| **Linting & Formatting** | ESLint, Prettier | 코드 품질, 포맷팅 |
+| **E2E Testing** | Playwright | 엔드투엔드 테스트 (22개 시나리오) |
+| **Linting** | ESLint, Prettier | 코드 품질 |
 | **Performance** | React Compiler | 성능 최적화 |
 
 ### 12.3 아키텍처 구조
@@ -1052,10 +875,11 @@ Policy Asset   ───┘   (자산 기반 실행)
 │                                                               │
 │  ┌─────────────────────────────────────────────────────┐   │
 │  │              Frontend (Next.js)                   │   │
-│  │  - App Router                                     │   │
-│  │  - React Server Components                        │   │
+│  │  - App Router, React Server Components              │   │
 │  │  - TanStack Query (Client-side Cache)              │   │
 │  │  - shadcn/ui Components                           │   │
+│  │  - Screen Editor (Zustand + editor-state.ts)       │   │
+│  │  - UIScreenRenderer (Screen Runtime)                │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                          │                                  │
 │                          │ REST API / SSE                      │
@@ -1066,6 +890,9 @@ Policy Asset   ───┘   (자산 기반 실행)
 │  │  - Service Layer (Business Logic)                 │   │
 │  │  - CRUD/Repository Layer (Data Access)            │   │
 │  │  - LLM Orchestrator (LangGraph)                   │   │
+│  │  - CEP Scheduler (asyncio)                         │   │
+│  │  - API Engine Executors (SQL/HTTP/Python/WF)       │   │
+│  │  - Binding Engine (server-side)                    │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                          │                                  │
 │         ┌────────────────┼────────────────┐                 │
@@ -1073,7 +900,7 @@ Policy Asset   ───┘   (자산 기반 실행)
 │         ▼                ▼                ▼                 │
 │  ┌──────────┐    ┌──────────┐    ┌──────────┐           │
 │  │PostgreSQL│    │  Neo4j   │    │  Redis   │           │
-│  │ (Main DB) │    │ (Graph)  │    │ (Cache)  │           │
+│  │ + pgvector│    │ (Graph)  │    │ (Cache)  │           │
 │  └──────────┘    └──────────┘    └──────────┘           │
 │                                                              │
 │  ┌─────────────────────────────────────────────────────┐   │
@@ -1081,13 +908,13 @@ Policy Asset   ───┘   (자산 기반 실행)
 │  │  - OpenAI API (LLM)                             │   │
 │  │  - Anthropic API (LLM)                           │   │
 │  │  - Slack Webhook (Notifications)                   │   │
-│  │  - Email Service (Notifications)                   │   │
+│  │  - Email/SMS/PagerDuty (Notifications)             │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-**아키텍처 특징**:
+### 12.4 아키텍처 특징
 
 | 레이어 | 특징 | 설명 |
 |--------|------|------|
@@ -1096,196 +923,11 @@ Policy Asset   ───┘   (자산 기반 실행)
 | **비즈니스 로직** | Service Layer Pattern | Router → Service → CRUD 분리 |
 | **데이터 접근** | Repository Pattern | CRUD/Repository로 데이터 접근 추상화 |
 | **LLM 통합** | LangGraph | 복잡한 LLM 워크플로우 오케스트레이션 |
+| **API 실행** | Runtime Engine | SQL/HTTP/Python/WF 동적 실행기 |
 | **데이터 저장** | Polyglot Persistence | PostgreSQL(관계형), Neo4j(그래프), Redis(캐시) |
 | **비동기 처리** | RQ + Redis | 백그라운드 작업 큐 |
 | **테스트** | E2E + Unit | Playwright(E2E) + pytest(단위) |
 | **코드 품질** | Pre-commit Hooks | Ruff, Prettier, mypy 자동 검사 |
-
-### 12.4 개발 도구 및 프로세스
-
-**개발 도구**:
-
-| 도구 | 용도 |
-|------|------|
-| **Makefile** | 빌드, 테스트, 린트 자동화 |
-| **pre-commit** | 커밋 전 코드 품질 검사 |
-| **Docker** | 컨테이너화 (준비 중) |
-| **Git** | 버전 관리, checkpoint 커밋 |
-| **VS Code** | 개발 환경 |
-
-**CI/CD 파이프라인** (준비 중):
-
-```
-Git Push → Pre-commit Check → Lint & Type Check → Unit Tests → E2E Tests → Build → Deploy
-     │              │                 │                │              │        │         │
-     ▼              ▼                 ▼                ▼              ▼        ▼         ▼
-  코드 변경    Ruff/Prettier    ruff check      pytest      Playwright   Docker   운영 환경
-             mypy/npm          mypy/tsc       +pytest-asyncio  (22개)      Build    배포
-            type-check
-```
-
-**품질 관리**:
-
-- **코드 품질**: Ruff (Python), ESLint/Prettier (JavaScript)
-- **타입 검사**: mypy (Python), TypeScript (JavaScript)
-- **단위 테스트**: pytest + pytest-asyncio (백엔드)
-- **E2E 테스트**: Playwright (프론트엔드, 22개 시나리오)
-- **보안 테스트**: 헤더 보안, HTTPS/CORS, CSRF, 암호화, RBAC, API 키, JWT
-- **문서화**: 기능 명세, 운영 체크리스트, 배포 가이드
-
----
-
-## 12-A. DOCS (Document Management) 모듈 - 상세
-
-### 12-A-1 개요
-
-**DOCS**는 문서를 업로드하고 검색하며, **OPS CI Ask와 통합하여 문서 기반 답변을 제공하는 모듈**입니다.
-
-### 12-A-2 핵심 아키텍처
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              DOCS + OPS Integration                      │
-└─────────────────────────────────────────────────────────────┘
-
-문서 업로드          임베딩 & 인덱싱      OPS CI Ask 통합       LLM 답변
-   ↓                    ↓                      ↓                ↓
-[PDF/DOCX]  →  [DocumentChunk]  →  [Document Search]  →  "문서 기반 답변"
-                  (pgvector)         (Tool Asset)
-               (1536-dim)      (DynamicTool http_api)
-```
-
-### 12-A-3 검색 엔드포인트
-
-#### POST /api/documents/search - 하이브리드 검색
-
-**세 가지 검색 방식**:
-
-1. **Text Search (BM25)**
-   - PostgreSQL tsvector + ts_rank
-   - 영문 전문 검색
-   - 성능: < 50ms
-   - 인덱스: GIN tsvector
-
-2. **Vector Search (pgvector)**
-   - 1536차원 코사인 유사도
-   - 의미론적 검색
-   - 성능: < 100ms
-   - 인덱스: IVFFLAT
-
-3. **Hybrid Search (RRF)**
-   - Reciprocal Rank Fusion
-   - 텍스트 + 벡터 결합
-   - 성능: < 150ms
-
-**요청**:
-```json
-{
-  "query": "머신러닝 관련 정보",
-  "search_type": "hybrid",
-  "top_k": 10,
-  "date_from": "2026-01-01",
-  "date_to": "2026-02-06",
-  "document_types": ["pdf", "docx"],
-  "min_relevance": 0.5
-}
-```
-
-**응답**:
-```json
-{
-  "status": "success",
-  "data": {
-    "query": "머신러닝 관련 정보",
-    "search_type": "hybrid",
-    "total_count": 5,
-    "execution_time_ms": 87,
-    "results": [
-      {
-        "chunk_id": "c-123",
-        "document_id": "doc-456",
-        "document_name": "ML_Guide.pdf",
-        "chunk_text": "Machine learning is...",
-        "page_number": 5,
-        "relevance_score": 0.94,
-        "chunk_type": "text"
-      }
-    ]
-  }
-}
-```
-
-### 12-A-4 OPS 통합
-
-#### Tool Asset 설정
-
-Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
-
-```json
-{
-  "name": "document_search",
-  "tool_type": "http_api",
-  "tool_config": {
-    "url": "http://localhost:8000/api/documents/search",
-    "method": "POST",
-    "headers": {"Content-Type": "application/json"},
-    "body_template": {
-      "query": "query",
-      "search_type": "hybrid",
-      "top_k": "top_k"
-    }
-  }
-}
-```
-
-#### OPS CI Ask 동작 흐름
-
-```
-사용자: "문서에서 성능 최적화 관련 정보는?"
-  ↓
-[OPS Planner]
-  - 키워드 감지: "문서", "성능"
-  - Tool 선택: document_search ← 자동
-  ↓
-[DynamicTool 실행]
-  - HTTP POST → Document Search API
-  - 관련 문서 청크 반환
-  ↓
-[LLM 답변]
-  - 문서를 컨텍스트에 포함
-  - 사용자 질문 답변
-  ↓
-답변: "문서에 따르면... [인용] 성능 최적화를 위해..."
-```
-
-### 12-A-5 기술 스택
-
-| 컴포넌트 | 기술 | 용도 |
-|---------|------|------|
-| **검색 엔진** | PostgreSQL tsvector | BM25 전문 검색 |
-| **벡터 DB** | pgvector (1536-dim) | 의미론적 검색 |
-| **하이브리드** | RRF (Reciprocal Rank Fusion) | 결과 결합 |
-| **인덱싱** | IVFFLAT + GIN | 50-100x 성능 개선 |
-| **API 통합** | DynamicTool http_api | Tool Asset 기반 |
-| **Asset 관리** | Asset Registry | Tool 등록 및 관리 |
-
-### 12-A-6 성능 특성
-
-| 지표 | 값 | 비고 |
-|------|-----|------|
-| **Text Search** | < 50ms | GIN 인덱싱 최적화 |
-| **Vector Search** | < 100ms | IVFFLAT ANN |
-| **Hybrid Search** | < 150ms | RRF 결합 |
-| **최대 결과** | 100 | API 제한 |
-| **메모리 사용** | ~300MB | 10,000 문서 기준 |
-| **확장성** | 100,000+ 청크 | 테스트 완료 |
-
-### 12-A-7 다중 테넌트 보안
-
-- ✅ **Tenant ID 격리**: 모든 쿼리에 WHERE tenant_id 필터
-- ✅ **삭제 확인**: soft delete (deleted_at IS NULL)
-- ✅ **JWT 인증**: get_current_user() 의존성 필수
-- ✅ **데이터 노출 방지**: 쿼리 검증 및 권한 확인
 
 ---
 
@@ -1296,80 +938,97 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 | **OPS** | Operations: 운영 관련 시스템, 질의응답 |
 | **CEP** | Complex Event Processing: 복합 이벤트 처리 |
 | **DOCS** | Document Management: 문서 관리 및 검색 |
+| **API Engine** | 동적 API 정의/실행/관리 시스템 |
+| **Screen Editor** | 로우코드 UI 빌더: 운영 화면 시각적 편집/배포 |
 | **Trace** | 실행 트레이스: 요청부터 응답까지의 전체 실행 기록 |
 | **Flow Span** | 플로우 스팬: 단계별 실행 추적 |
-| **Asset** | 자산: Prompt, Catalog, Policy, Tool 등 재사용 가능한 리소스 |
+| **Asset** | 자산: Prompt, Catalog, Policy, Tool, Screen 등 재사용 가능한 리소스 |
 | **Golden Query** | 골든 쿼리: 회귀 테스트용 기준 쿼리 |
 | **RCA** | Root Cause Analysis: 원인 분석 |
 | **Trigger-Action** | 트리거-액션 패턴: 조건 감지 후 동작 실행 |
-| **Polling** | 폴링: 주기적 데이터 확인 |
 | **Leader Election** | 리더 선출: 다중 인스턴스 중 리더 결정 |
-| **Advisory Lock** | 어드바이저리 락: PostgreSQL 잠금 메커니즘 |
 | **pgvector** | PostgreSQL 벡터 확장: 고차원 임베딩 저장 및 검색 |
 | **RRF** | Reciprocal Rank Fusion: 다중 검색 결과 결합 알고리즘 |
 | **BM25** | 전문 검색 알고리즘: PostgreSQL tsvector 기반 |
 | **IVFFLAT** | Inverted File with Flat Clustering: pgvector ANN 인덱스 |
-| **Tool Asset** | 도구 자산: HTTP API, DB 쿼리 등을 Tool로 정의 |
 | **DynamicTool** | 동적 도구: Tool Asset 기반으로 실행되는 도구 |
-
----
+| **Expression Engine** | 안전한 표현식 평가 엔진 (Screen Editor) |
+| **Direct API Endpoint** | 스크린 컴포넌트가 REST API를 직접 호출하는 방식 |
+| **RBAC** | Role-Based Access Control: 역할 기반 접근 제어 |
+| **Runtime Engine** | API Engine의 동적 실행기 (SQL/HTTP/Python/WF) |
 
 ---
 
 ## 14. 최근 업데이트
 
+### 2026-02-08: 외부 감사 (codepen) + Screen Editor 상용 고도화 + API Engine Blueprint + 문서 통합
+
+**외부 감사 (codepen) 결과 반영**:
+- ✅ CEP 엔진: 90% 상용 준비 확인 (Database Catalogs 100%, Data Explorer 95%, CEP Builder 85%)
+- ✅ OPS 쿼리: 85% 상용 준비 확인 (엔드포인트 명칭 오류 3건 정정)
+- ✅ API Engine: 80%로 상향 조정 (codepen 70% 평가 → Backend 95%, UI 80% 실제 확인)
+- ✅ Screen Editor: 95% 상용 준비 확인
+- ⚠️ codepen 보고서 오류 정정: API Manager "미구현" → 실제 13개 엔드포인트 완성, UI 2,996줄 존재
+- ⚠️ codepen 보고서 오류 정정: `/ops/trace`, `/ops/metrics`, `/ops/history` 엔드포인트 존재하지 않음
+- 📋 우선순위별 개선 과제 도출 (6개 항목, 각 Blueprint에 반영)
+
+
+
+**Screen Editor 5 Phase 완료**:
+- ✅ Phase 1: UX Polish (Undo/Redo, Multi-Select, Copy/Paste, 단축키)
+- ✅ Phase 2: Expression Engine v2 (재귀 하강 파서, 45+ 화이트리스트 함수)
+- ✅ Phase 3: Theme System (Light/Dark/Brand, CSS 변수)
+- ✅ Phase 4: RBAC + Template Gallery (5개 권한, 태그 기반 필터)
+- ✅ Phase 5: SSE Real-time Streaming (자동 재연결, 백프레셔)
+- ✅ 상용 준비도 95% (codepen 독립 감사 기준)
+
+**API Engine Blueprint 작성**:
+- ✅ 4가지 실행 엔진 문서화 (SQL/HTTP/Python/Workflow)
+- ✅ 보안 모델 정리 (SQL Validator, Python Sandbox)
+- ✅ CEP Builder 통합 흐름 정리
+- ✅ 향후 UI 구현 로드맵 수립
+
+**문서 통합**:
+- ✅ CEP 관련 4개 문서 → `CEP_ENGINE_BLUEPRINT.md` 통합
+- ✅ OPS 관련 5개 문서 → `OPS_QUERY_BLUEPRINT.md` 통합
+- ✅ Screen Editor 문서 → `SCREEN_EDITOR_BLUEPRINT.md` 정리
+- ✅ API Engine 문서 → `API_ENGINE_BLUEPRINT.md` 신규
+- ✅ 이전 문서 10개 → `docs/history/` 아카이브
+
 ### 2026-02-07: OPS Real Mode + DOCS 뷰어 개선
 
 **OPS 모듈 (Phase 9-10)**:
-- ✅ 6개 쿼리 모드 전체 완성 (구성/수치/이력/연결/문서/전체)
-- ✅ 듀얼 엔드포인트: `/ops/query` (단순) + `/ops/ask` (전체 오케스트레이션)
+- ✅ 6개 쿼리 모드 전체 완성
 - ✅ Real mode에서 가짜 데이터 제거 → 명시적 에러 표시
-- ✅ execute_universal() 3단계 블록 폴백 + 상세 로깅
-- ✅ 기본 선택 모드: "all" (전체)
+- ✅ Hist/Graph 모드 실제 데이터 연결 (work_history + Neo4j)
 
 **DOCS 뷰어 개선**:
-- ✅ 근거 링크 클릭 버그 수정 (인증 헤더 누락 + `/api` prefix 누락)
-- ✅ PDF 인증된 Blob 로드 (Bearer 토큰 + Tenant/User ID)
-- ✅ PDF 다운로드 버튼
-- ✅ 키보드 네비게이션 (방향키 ←→↑↓)
-- ✅ 로딩 스피너 + 에러 처리 (재시도 버튼)
-- ✅ 삭제된 청크 참조 시 친화적 에러 메시지
-- ✅ 전체 한국어 UI 완성
+- ✅ 근거 링크 클릭 버그 수정 (인증 헤더 + `/api` prefix)
+- ✅ PDF 다운로드, 키보드 네비게이션, 전체 한국어 UI
 
-**DOCS 질문 페이지 개선**:
-- ✅ 청크 타입 한국어 라벨 (답변/요약/상세/완료/오류)
-- ✅ 근거 문서 개수 표시 (N건)
-- ✅ 비활성 링크 툴팁 ("문서 정보가 부족하여 원문을 열 수 없습니다")
-- ✅ 유사도 점수 % 표시 (Score 0.842 → 유사도 84.2%)
-- ✅ Document ID → 파일명으로 대체
+### 2026-02-06: Admin 관측성 수정 + OPS 6모드 + OPS-Docs 통합
 
-### 2026-02-06: Admin 관측성 수정 + OPS 6모드
+- ✅ Logs 페이지/CEP Monitoring 버그 수정
+- ✅ 문서(document) 모드 추가 + 전체(all) 모드 `/ops/ask` 분리
+- ✅ DocumentSearchService (BM25 + pgvector) + Tool Asset 등록
 
-**Admin 관측성 버그 수정 (Phase 8)**:
-- ✅ Logs 페이지 "Not Found" 수정 (Next.js rewrite 제거)
-- ✅ CEP Monitoring `/rules/performance` 엔드포인트 순서 수정
-- ✅ Recent Errors 중복 분석 완료
+---
 
-**OPS 문서 모드 추가 (Phase 6-7)**:
-- ✅ 문서(document) 모드 추가 (DocumentSearchService 통합)
-- ✅ 전체(all) 모드 기본 선택 + `/ops/ask` 엔드포인트
-- ✅ UI_MODES 순서 정리 (구성/수치/이력/연결/문서/전체)
+## 15. 관련 문서
 
-**OPS-Docs 통합 완료 (Phase 5)**:
-- ✅ DocumentSearchService (BM25 + pgvector)
-- ✅ Document Search API + Tool Asset 등록
-- ✅ DB 마이그레이션 (IVFFLAT + GIN 인덱스)
-
-**관련 문서**:
-- [OPS 쿼리 모드 가이드](OPS_QUERY_MODES_GUIDE.md)
-- [OPS 쿼리 모드 분석](OPS_QUERY_MODE_ANALYSIS.md)
-- [OPS-Docs 아키텍처 검토](OPS_DOCS_INTEGRATION_ARCHITECTURE_REVIEW.md)
-- [Document Search 구현 완료](DOCUMENT_SEARCH_IMPLEMENTATION.md)
-- [OPS 문서 모드 구현](OPS_DOCUMENT_MODE_IMPLEMENTATION.md)
+| 문서 | 설명 |
+|------|------|
+| [CEP_ENGINE_BLUEPRINT.md](CEP_ENGINE_BLUEPRINT.md) | CEP 엔진 상세 설계 (Trigger-Action, 5채널 알림, Redis) |
+| [OPS_QUERY_BLUEPRINT.md](OPS_QUERY_BLUEPRINT.md) | OPS 쿼리 시스템 상세 설계 (6개 모드, CI Orchestrator, Document Search) |
+| [API_ENGINE_BLUEPRINT.md](API_ENGINE_BLUEPRINT.md) | API Engine 상세 설계 (SQL/HTTP/Python/WF 실행기, 보안, CEP 통합) |
+| [SCREEN_EDITOR_BLUEPRINT.md](SCREEN_EDITOR_BLUEPRINT.md) | Screen Editor 상세 설계 (15 컴포넌트, Expression, Theme, RBAC) |
+| [DEV_ENV.md](DEV_ENV.md) | 개발 환경 설정 가이드 |
+| [FEATURES.md](FEATURES.md) | 기능 명세서 |
+| [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) | 제품 개요 |
 
 ---
 
 **작성**: Cline AI Agent + Claude Code
-**버전**: 1.3 (OPS 6모드 + DOCS 뷰어 개선)
+**버전**: 1.6 (외부 감사 결과 반영 + API Engine 완료도 상향)
 **문서 위치**: `docs/SYSTEM_ARCHITECTURE_REPORT.md`
-**최종 갱신**: 2026-02-07
+**최종 갱신**: 2026-02-08

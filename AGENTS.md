@@ -19,10 +19,10 @@
 
 ## 3. 기술 스택 (변경 불가)
 
-- **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query, Apache ECharts, React Flow, Radix UI (checkbox, select), Lucide React (icons)
-- **Backend**: FastAPI, Pydantic v2, SQLModel, Alembic, LangGraph, Redis, RQ
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript 5.9, Tailwind CSS v4, shadcn/ui, TanStack Query v5, Zustand (Screen Editor), Recharts, React Flow, AG Grid, Radix UI, Lucide React (icons), Monaco Editor, react-pdf
+- **Backend**: FastAPI, Pydantic v2, SQLModel, Alembic, LangGraph, LangChain, OpenAI SDK, Redis, RQ, httpx, croniter, sse-starlette
 - **Database Driver**: psycopg (>=3.1) - PostgreSQL 접근의 필수 드라이버
-- **Data**: PostgreSQL, pgvector, TimescaleDB, Neo4j, Redis
+- **Data**: PostgreSQL, pgvector, Neo4j, Redis
 - **Observability**: LangSmith (선택 사항)
 - **Testing Stack**:
   - **Backend Unit Testing**: pytest, pytest-asyncio (비동기 테스트)
@@ -47,6 +47,8 @@
 - **CRUD/Repository (`app/modules/<...>/crud.py`)**: 데이터베이스 접근(읽기, 쓰기, 수정, 삭제)만을 담당합니다.
 
 ### OPS 모듈 구조 (CI Orchestrator)
+- **6개 쿼리 모드**: config, metric, hist, graph, document, all
+- **엔드포인트**: `/ops/query` (단순 모드) + `/ops/ask` (전체 오케스트레이션)
 - **Planner** (`services/ci/planner/`): 사용자 질문을 분석하여 실행 계획(Plan)을 생성합니다.
   - `planner_llm.py`: LLM을 사용한 질의 의도 분석
   - `plan_schema.py`: Plan 데이터 모델 정의
@@ -60,6 +62,28 @@
   - `hist_executor.py`: 이력(History) 조회
   - `graph_executor.py`: 그래프/의존성 조회
   - 모두 `(blocks: List[Block], references: List[Reference])` 형태의 표준 출력을 반환합니다.
+
+### API Engine 모듈 구조
+- **Router/API** (`app/modules/api_manager/router.py`): 13개 엔드포인트 (CRUD, 실행, 검증, 버전, 롤백)
+- **Executors** (`app/modules/api_manager/`):
+  - `executor.py`: SQL Executor (SELECT/WITH만 허용, 인젝션 감지)
+  - `script_executor.py`: Python Executor (main(params, input_payload) 패턴)
+  - `workflow_executor.py`: Workflow Executor (다중 노드 순차 실행)
+  - HTTP Executor: httpx 기반, 템플릿 치환
+- **Runtime** (`app/modules/api_manager/runtime_router.py`): `/runtime/{path}` 동적 API 실행
+- **Frontend**: `/api-manager/page.tsx` (2,996줄)
+
+### Screen Editor 모듈 구조
+- **Editor** (`apps/web/src/lib/ui-screen/`):
+  - `editor-state.ts`: Zustand 스토어 (Undo/Redo, Multi-Select, Copy/Paste)
+  - `screen.schema.ts`: JSON Schema V1 정의
+  - `binding-engine.ts`: 바인딩 엔진
+  - `expression-parser.ts` / `expression-evaluator.ts`: Expression Engine v2
+  - `design-tokens.ts`: Theme System (Light/Dark/Brand)
+- **Visual Editor** (`apps/web/src/components/admin/screen-editor/visual/`):
+  - `VisualEditor.tsx`, `Canvas.tsx`, `CanvasComponent.tsx`, `BindingEditor.tsx`
+- **Runtime** (`apps/web/src/components/answer/UIScreenRenderer.tsx`): 화면 렌더링
+- **Backend**: Asset Registry 기반 Screen Asset CRUD + RBAC (5개 권한)
 
 ---
 
@@ -162,15 +186,18 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `README.md`: 프로젝트 설치, 실행, 구조 등 가장 기본적인 정보를 담은 **Source of Truth**입니다.
    - `DEV_ENV.md`: 개발 환경의 DB(Postgres/Neo4j/Redis) 접속 정보 설정 가이드입니다.
    - `docs/FEATURES.md`: 각 기능의 상세 명세, API 노트, 사용 예시를 담고 있습니다. (기능 변경 시 반드시 업데이트)
-   - `docs/OPERATIONS.md`: 기능 검증을 위한 운영 체크리스트입니다. (운영 절차 변경 시 반드시 업데이트)
-   - `docs/PRODUCTION_GAPS.md`: 프로덕션 전환을 위해 필요한 작업 목록(TODO)입니다.
    - `docs/TESTIDS.md`: E2E 테스트 `data-testid` 속성 명명 규칙 표준입니다. (UI 컴포넌트 추가 시 반드시 준수)
 
-### 1-1) UI Creator Contract 관련 문서
-   - `CONTRACT_UI_CREATOR_V1.md`: UI Screen 기능의 3대 계약(C0-1, C0-2, C0-3) 명세서입니다.
-   - `PHASE_1_2_3_SUMMARY.md`: Phase 1-3 구현 내역 (API, Web, 테스트) 요약입니다.
-   - `DEPLOYMENT_GUIDE_PHASE_4.md`: Phase 4 배포 절차 및 마이그레이션 가이드입니다.
-   - `PHASE_4_FINAL_SUMMARY.md`: 전체 프로젝트 (Step 0 ~ Phase 4) 완성 요약입니다.
+### 1-0) 아키텍처 문서 (6개 모듈)
+   - `docs/SYSTEM_ARCHITECTURE_REPORT.md`: **시스템 전체 아키텍처 개요** (경영진/의사결정자 대상, v1.6)
+   - `docs/OPS_QUERY_BLUEPRINT.md`: OPS 쿼리 시스템 상세 설계 (6개 모드, CI Orchestrator, Document Search)
+   - `docs/CEP_ENGINE_BLUEPRINT.md`: CEP 엔진 상세 설계 (Trigger-Action, 5채널 알림, Redis 분산 상태)
+   - `docs/API_ENGINE_BLUEPRINT.md`: API Engine 상세 설계 (SQL/HTTP/Python/WF 실행기, 보안, CEP 통합)
+   - `docs/SCREEN_EDITOR_BLUEPRINT.md`: Screen Editor 상세 설계 (15 컴포넌트, Expression, Theme, RBAC)
+
+### 1-1) UI Creator Contract 관련 문서 (아카이브)
+   - UI Creator Contract 관련 문서들은 `docs/history/`에 아카이브되었습니다.
+   - 현재 Screen Editor 상세 설계는 `docs/SCREEN_EDITOR_BLUEPRINT.md`를 참조하세요.
 
 ### 2) 로그 위치
    - **Backend**: `apps/api/logs/api.log`
