@@ -18,6 +18,46 @@ import UIPanelRenderer from "./UIPanelRenderer";
 import UIScreenRenderer from "./UIScreenRenderer";
 import type { UIPanelBlock } from "@/types/uiActions";
 
+// ── Table download helpers ──
+
+function downloadTableAsCSV(columns: string[], rows: string[][], title?: string) {
+  const escapeCsv = (val: string) => {
+    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+      return `"${val.replace(/"/g, '""')}"`;
+    }
+    return val;
+  };
+  const header = columns.map(escapeCsv).join(",");
+  const body = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+  const csv = `${header}\n${body}`;
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  triggerDownload(blob, `${title || "table"}.csv`);
+}
+
+function downloadTableAsJSON(columns: string[], rows: string[][], title?: string) {
+  const data = rows.map((row) => {
+    const obj: Record<string, string> = {};
+    columns.forEach((col, i) => {
+      obj[col] = row[i] ?? "";
+    });
+    return obj;
+  });
+  const json = JSON.stringify({ title: title || "table", columns, data }, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+  triggerDownload(blob, `${title || "table"}.json`);
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.replace(/[^a-zA-Z0-9가-힣_.-]/g, "_");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export type AnswerBlock =
   | MarkdownBlock
   | TableBlock
@@ -388,7 +428,27 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 key={`${block.type}-${block.id ?? index}`}
                 className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
               >
-                {title}
+                <div className="flex items-center justify-between">
+                  {title}
+                  {rows.length > 0 && (
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="rounded border border-slate-700 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-400 transition hover:border-slate-500 hover:text-white"
+                        onClick={() => downloadTableAsCSV(columns, rows, block.title)}
+                      >
+                        CSV
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded border border-slate-700 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-400 transition hover:border-slate-500 hover:text-white"
+                        onClick={() => downloadTableAsJSON(columns, rows, block.title)}
+                      >
+                        JSON
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="mt-4 overflow-x-auto">
                   <table className="min-w-full text-left text-sm text-slate-200">
                     <thead>

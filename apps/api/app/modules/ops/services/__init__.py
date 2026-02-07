@@ -41,15 +41,131 @@ from .langgraph import LangGraphAllRunner
 from .resolvers import resolve_ci, resolve_time_range
 
 
-# Stub implementations for removed executors
+# Config executor – direct CI database query (bypasses heavy orchestrator)
 def run_config_executor(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run config executor using execute_universal with CI lookup and aggregation."""
+    """Run config executor by directly querying the CI database.
+
+    Strategy:
+    1. Resolve CI codes from the question
+    2. If specific CI found -> show detail + extended attributes
+    3. If no specific CI -> show CI summary (type distribution + list)
+    """
     tenant_id = kwargs.get("tenant_id")
     if not tenant_id:
         settings = kwargs.get("settings") or get_settings()
         tenant_id = _get_required_tenant_id(settings)
-    result = execute_universal(question, "config", tenant_id)
-    return result.blocks, result.used_tools
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Config executor: question={question[:100]}, tenant={tenant_id}")
+
+    from .resolvers.ci_resolver import _get_connection, _load_query
+
+    ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=10)
+
+    connection = _get_connection()
+    conn = connection.connection if hasattr(connection, "connection") else connection
+    blocks: list[AnswerBlock] = []
+    used_tools: list[str] = ["ci_config_query"]
+
+    with conn.cursor() as cur:
+        if ci_hits:
+            # --- Specific CI detail mode ---
+            ci_get_sql = _load_query("ci_get.sql").format(field="ci_id")
+            for hit in ci_hits[:5]:
+                cur.execute(ci_get_sql, (hit.ci_id, tenant_id))
+                row = cur.fetchone()
+                if row:
+                    ci_id, ci_code, ci_name, ci_type, ci_subtype, ci_category, status, location, owner, tags, attributes = row
+                    blocks.append(
+                        MarkdownBlock(
+                            type="markdown",
+                            title=f"{ci_name} ({ci_code})",
+                            content=(
+                                f"**Type**: {ci_type} / {ci_subtype}\n"
+                                f"**Status**: {status}\n"
+                                f"**Category**: {ci_category or '-'}\n"
+                                f"**Location**: {location or '-'}\n"
+                                f"**Owner**: {owner or '-'}"
+                            ),
+                        )
+                    )
+                    detail_rows = [
+                        ["CI Code", ci_code],
+                        ["CI Name", ci_name],
+                        ["Type", f"{ci_type} / {ci_subtype}"],
+                        ["Category", ci_category or "-"],
+                        ["Status", status],
+                        ["Location", location or "-"],
+                        ["Owner", owner or "-"],
+                    ]
+                    if attributes and isinstance(attributes, dict):
+                        for k, v in list(attributes.items())[:10]:
+                            detail_rows.append([str(k), str(v)])
+                    if tags and isinstance(tags, dict):
+                        tag_str = ", ".join(f"{k}={v}" for k, v in tags.items())
+                        detail_rows.append(["Tags", tag_str])
+                    blocks.append(
+                        TableBlock(
+                            type="table",
+                            title=f"Configuration: {ci_code}",
+                            columns=["Attribute", "Value"],
+                            rows=detail_rows,
+                        )
+                    )
+        else:
+            # --- CI summary mode (no specific CI) ---
+            cur.execute(
+                "SELECT ci_type, ci_subtype, status, COUNT(*) as cnt "
+                "FROM ci WHERE tenant_id = %s AND deleted_at IS NULL "
+                "GROUP BY ci_type, ci_subtype, status ORDER BY cnt DESC",
+                (tenant_id,),
+            )
+            dist_rows = cur.fetchall()
+            if dist_rows:
+                total = sum(r[3] for r in dist_rows)
+                blocks.append(
+                    MarkdownBlock(
+                        type="markdown",
+                        title="CI Configuration Summary",
+                        content=f"Total **{total}** configuration items registered for tenant `{tenant_id}`.",
+                    )
+                )
+                blocks.append(
+                    TableBlock(
+                        type="table",
+                        title="CI Distribution",
+                        columns=["Type", "Subtype", "Status", "Count"],
+                        rows=[[r[0], r[1], r[2], str(r[3])] for r in dist_rows],
+                    )
+                )
+
+            ci_list_sql = _load_query("ci_list.sql")
+            cur.execute(ci_list_sql, (tenant_id, 20, 0))
+            ci_rows = cur.fetchall()
+            if ci_rows:
+                blocks.append(
+                    TableBlock(
+                        type="table",
+                        title="Configuration Items",
+                        columns=["CI Code", "Name", "Type", "Subtype", "Category", "Status", "Location", "Owner"],
+                        rows=[
+                            [str(r[1]), str(r[2]), str(r[3]), str(r[4]), str(r[5] or "-"), str(r[6]), str(r[7] or "-"), str(r[8] or "-")]
+                            for r in ci_rows
+                        ],
+                    )
+                )
+
+            if not blocks:
+                blocks.append(
+                    MarkdownBlock(
+                        type="markdown",
+                        title="No Configuration Data",
+                        content=f"No CI data found for tenant `{tenant_id}`. Please check data ingestion.",
+                    )
+                )
+
+    logger.info(f"Config executor returned {len(blocks)} blocks")
+    return blocks, used_tools
 
 
 def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
@@ -978,8 +1094,13 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
 def _execute_real_mode(
     mode: OpsMode, question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str]]:
-    # Universal executor for all orchestrator-based modes
-    if mode in ("relation", "metric", "history", "hist", "config", "graph"):
+    # Config mode: direct CI database query (fast, no orchestrator)
+    if mode == "config":
+        tenant_id = _get_required_tenant_id(settings)
+        return run_config_executor(question, tenant_id=tenant_id, settings=settings)
+
+    # Universal executor for orchestrator-based modes
+    if mode in ("relation", "metric", "history", "hist", "graph"):
         tenant_id = _get_required_tenant_id(settings)
         result = execute_universal(question, mode, tenant_id)
         return result.blocks, result.used_tools
