@@ -1,0 +1,390 @@
+"use client";
+
+import React, { useState } from "react";
+import { QueryBuilder, formatQuery } from "react-querybuilder";
+import "react-querybuilder/dist/query-builder.css";
+
+interface SQLQueryBuilderProps {
+  query?: string;
+  onChange?: (query: string) => void;
+  readOnly?: boolean;
+}
+
+interface QueryRule {
+  field: string;
+  operator: string;
+  value: string;
+}
+
+interface QueryGroup {
+  combinator: string;
+  rules: (QueryRule | QueryGroup)[];
+}
+
+// Sample tables and columns (in production, fetch from API)
+const TABLES = {
+  "tb_user": ["id", "name", "email", "role", "created_at"],
+  "tb_api_definition": ["id", "name", "method", "path", "mode"],
+  "tb_metric": ["id", "metric_name", "value", "timestamp"],
+  "tb_event_log": ["id", "event_type", "event_data", "created_at"],
+};
+
+const OPERATORS = [
+  { name: "=", label: "=" },
+  { name: "!=", label: "!=" },
+  { name: ">", label: ">" },
+  { name: ">=", label: ">=" },
+  { name: "<", label: "<" },
+  { name: "<=", label: "<=" },
+  { name: "LIKE", label: "LIKE" },
+  { name: "IN", label: "IN" },
+  { name: "IS NULL", label: "IS NULL" },
+  { name: "IS NOT NULL", label: "IS NOT NULL" },
+];
+
+const formatRuleToSQL = (rule: QueryRule, tableName: string): string => {
+  const { field, operator, value } = rule;
+  
+  if (operator === "IS NULL") {
+    return `${field} IS NULL`;
+  }
+  if (operator === "IS NOT NULL") {
+    return `${field} IS NOT NULL`;
+  }
+  
+  const formattedValue = typeof value === 'string' ? `'${value}'` : value;
+  
+  switch (operator) {
+    case "LIKE":
+      return `${field} LIKE '%${value}%'`;
+    case "IN":
+      return `${field} IN (${value})`;
+    default:
+      return `${field} ${operator} ${formattedValue}`;
+  }
+};
+
+const formatGroupToSQL = (group: QueryGroup, tableName: string): string => {
+  const rules = group.rules.map((rule) => 
+    typeof rule === 'string' ? rule : formatRuleToSQL(rule as QueryRule, tableName)
+  );
+  
+  return rules.join(` ${group.combinator} `);
+};
+
+export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryBuilderProps) {
+  const [selectedTable, setSelectedTable] = useState<string>("");
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+  const [whereConditions, setWhereConditions] = useState<QueryGroup>({
+    combinator: "AND",
+    rules: [],
+  });
+  const [orderBy, setOrderBy] = useState<{ column: string; direction: "ASC" | "DESC" }>({
+    column: "",
+    direction: "ASC",
+  });
+  const [groupBy, setGroupBy] = useState<string[]>([]);
+  const [limit, setLimit] = useState<number>(100);
+
+  const generateSQL = (): string => {
+    if (!selectedTable) {
+      return "-- Select a table first";
+    }
+
+    let sql = `SELECT`;
+    
+    // Columns
+    if (selectedColumns.length === 0) {
+      sql += " *";
+    } else {
+      sql += `\n  ${selectedColumns.join(",\n  ")}`;
+    }
+    
+    // FROM
+    sql += `\nFROM ${selectedTable}`;
+    
+    // WHERE
+    if (whereConditions.rules.length > 0) {
+      const whereSQL = formatGroupToSQL(whereConditions, selectedTable);
+      sql += `\nWHERE ${whereSQL}`;
+    }
+    
+    // GROUP BY
+    if (groupBy.length > 0) {
+      sql += `\nGROUP BY ${groupBy.join(", ")}`;
+    }
+    
+    // ORDER BY
+    if (orderBy.column) {
+      sql += `\nORDER BY ${orderBy.column} ${orderBy.direction}`;
+    }
+    
+    // LIMIT
+    if (limit > 0) {
+      sql += `\nLIMIT ${limit}`;
+    }
+    
+    return sql;
+  };
+
+  const handleTableChange = (table: string) => {
+    setSelectedTable(table);
+    setSelectedColumns([]);
+    setWhereConditions({ combinator: "AND", rules: [] });
+    setOrderBy({ column: "", direction: "ASC" });
+    setGroupBy([]);
+  };
+
+  const handleColumnToggle = (column: string) => {
+    setSelectedColumns((prev) =>
+      prev.includes(column)
+        ? prev.filter((c) => c !== column)
+        : [...prev, column]
+    );
+  };
+
+  const handleQueryChange = (query: QueryGroup) => {
+    setWhereConditions(query);
+  };
+
+  const currentSQL = generateSQL();
+  
+  React.useEffect(() => {
+    if (onChange) {
+      onChange(currentSQL);
+    }
+  }, [currentSQL, onChange]);
+
+  return (
+    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
+      <h3 className="text-xs uppercase tracking-normal text-slate-500">SQL Visual Builder</h3>
+      
+      {/* Table Selection */}
+      <div className="space-y-2">
+        <label className="text-xs uppercase tracking-normal text-slate-500">Select Table</label>
+        <select
+          value={selectedTable}
+          onChange={(e) => handleTableChange(e.target.value)}
+          disabled={readOnly}
+          className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+        >
+          <option value="">-- Select a table --</option>
+          {Object.keys(TABLES).map((table) => (
+            <option key={table} value={table}>
+              {table}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Column Selection */}
+      {selectedTable && (
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-normal text-slate-500">Select Columns</label>
+          <div className="max-h-40 overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-3 custom-scrollbar">
+            {TABLES[selectedTable].map((column) => (
+              <label key={column} className="flex items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={selectedColumns.includes(column)}
+                  onChange={() => handleColumnToggle(column)}
+                  disabled={readOnly}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
+                />
+                {column}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* WHERE Conditions */}
+      {selectedTable && (
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-normal text-slate-500">WHERE Conditions</label>
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+            <QueryBuilder
+              query={whereConditions}
+              onQueryChange={handleQueryChange}
+              fields={TABLES[selectedTable].map((column) => ({
+                name: column,
+                label: column,
+              }))}
+              operators={OPERATORS}
+              combinators={["AND", "OR"]}
+              controlElements={{
+                queryBuilder: (props) => (
+                  <div className="query-builder">
+                    <QueryBuilder {...props} />
+                  </div>
+                ),
+                combinatorSelector: (props) => (
+                  <select
+                    {...props}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300"
+                  >
+                    <option value="AND">AND</option>
+                    <option value="OR">OR</option>
+                  </select>
+                ),
+                fieldSelector: (props) => (
+                  <select
+                    {...props}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300"
+                  >
+                    <option value="">-- Select field --</option>
+                    {props.options.map((opt: { name: string; label: string }) => (
+                      <option key={opt.name} value={opt.name}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ),
+                operatorSelector: (props) => (
+                  <select
+                    {...props}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300"
+                  >
+                    <option value="">-- Select operator --</option>
+                    {props.options.map((opt: { name: string; label: string }) => (
+                      <option key={opt.name} value={opt.name}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                ),
+                valueEditor: (props) => (
+                  <input
+                    {...props}
+                    type="text"
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300"
+                    placeholder="Value"
+                  />
+                ),
+                addRuleAction: (props) => (
+                  <button
+                    {...props}
+                    className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-sky-400 transition hover:border-sky-500"
+                  >
+                    + Rule
+                  </button>
+                ),
+                addGroupAction: (props) => (
+                  <button
+                    {...props}
+                    className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-indigo-400 transition hover:border-indigo-500"
+                  >
+                    + Group
+                  </button>
+                ),
+                removeRuleAction: (props) => (
+                  <button
+                    {...props}
+                    className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
+                  >
+                    ×
+                  </button>
+                ),
+                removeGroupAction: (props) => (
+                  <button
+                    {...props}
+                    className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
+                  >
+                    ×
+                  </button>
+                ),
+              }}
+              controlClassnames={{
+                queryBuilder: "query-builder-class",
+                ruleGroup: "rule-group-class",
+                rule: "rule-class",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ORDER BY */}
+      {selectedTable && (
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-normal text-slate-500">ORDER BY</label>
+          <div className="flex gap-2">
+            <select
+              value={orderBy.column}
+              onChange={(e) => setOrderBy({ ...orderBy, column: e.target.value })}
+              disabled={readOnly}
+              className="flex-1 rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+            >
+              <option value="">-- Select column --</option>
+              {TABLES[selectedTable].map((column) => (
+                <option key={column} value={column}>
+                  {column}
+                </option>
+              ))}
+            </select>
+            <select
+              value={orderBy.direction}
+              onChange={(e) => setOrderBy({ ...orderBy, direction: e.target.value as "ASC" | "DESC" })}
+              disabled={readOnly}
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+            >
+              <option value="ASC">ASC</option>
+              <option value="DESC">DESC</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* GROUP BY */}
+      {selectedTable && (
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-normal text-slate-500">GROUP BY</label>
+          <div className="max-h-32 overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60 p-3 custom-scrollbar">
+            {TABLES[selectedTable].map((column) => (
+              <label key={column} className="flex items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={groupBy.includes(column)}
+                  onChange={() => {
+                    setGroupBy((prev) =>
+                      prev.includes(column)
+                        ? prev.filter((c) => c !== column)
+                        : [...prev, column]
+                    );
+                  }}
+                  disabled={readOnly}
+                  className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
+                />
+                {column}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* LIMIT */}
+      {selectedTable && (
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-normal text-slate-500">LIMIT</label>
+          <input
+            type="number"
+            min={1}
+            max={10000}
+            value={limit}
+            onChange={(e) => setLimit(parseInt(e.target.value) || 100)}
+            disabled={readOnly}
+            className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          />
+        </div>
+      )}
+
+      {/* Generated SQL Preview */}
+      <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+        <label className="text-xs uppercase tracking-normal text-slate-500">Generated SQL</label>
+        <pre className="max-h-60 overflow-auto rounded-xl bg-slate-950/70 p-3 text-xs text-slate-100 custom-scrollbar">
+          {currentSQL}
+        </pre>
+      </div>
+    </div>
+  );
+}

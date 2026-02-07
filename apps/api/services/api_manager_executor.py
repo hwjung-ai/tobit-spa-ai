@@ -433,62 +433,430 @@ def execute_python_api(
     }
 
 
-def execute_workflow_api(
-    session: Session,
-    api_id: str,
-    logic: str,
+def substitute_workflow_params(
+    template: Any,
+    context: dict[str, Any],
     params: dict[str, Any],
-    executed_by: str | None = None,
+) -> Any:
+    """
+    Substitute workflow template parameters with actual values.
+    
+    Args:
+        template: Template value (string, dict, list)
+        context: Execution context including steps results
+        params: Input parameters
+        
+    Returns:
+        Substituted value
+        
+    Supports:
+        - {{params.field}} - Input parameters
+        - {{steps.node_id.rows}} - Results from previous steps
+        - {{steps.node_id.columns}} - Column names from previous steps
+        - {{steps.node_id.row_count}} - Row count from previous steps
+    """
+    if isinstance(template, str):
+        # Substitute {{params.field}}
+        pattern = r"\{\{params\.([^}]+)\}\}"
+        matches = re.findall(pattern, template)
+        for match in matches:
+            param_key = match.strip()
+            if param_key in params:
+                template = template.replace(f"{{params.{param_key}}}", str(params[param_key]))
+        
+        # Substitute {{steps.node_id.rows}}
+        pattern = r"\{\{steps\.([^}]+)\.rows\}\}"
+        matches = re.findall(pattern, template)
+        for match in matches:
+            node_id = match.strip()
+            if node_id in context:
+                node_result = context[node_id]
+                if "rows" in node_result and isinstance(node_result["rows"], list):
+                    rows_str = str(node_result["rows"])
+                    template = template.replace(f"{{steps.{node_id}.rows}}", rows_str)
+        
+        # Substitute {{steps.node_id.columns}}
+        pattern = r"\{\{steps\.([^}]+)\.columns\}\}"
+        matches = re.findall(pattern, template)
+        for match in matches:
+            node_id = match.strip()
+            if node_id in context:
+                node_result = context[node_id]
+                if "columns" in node_result and isinstance(node_result["columns"], list):
+                    columns_str = str(node_result["columns"])
+                    template = template.replace(f"{{steps.{node_id}.columns}}", columns_str)
+        
+        # Substitute {{steps.node_id.row_count}}
+        pattern = r"\{\{steps\.([^}]+)\.row_count\}\}"
+        matches = re.findall(pattern, template)
+        for match in matches:
+            node_id = match.strip()
+            if node_id in context:
+                node_result = context[node_id]
+                if "row_count" in node_result:
+                    template = template.replace(f"{{steps.{node_id}.row_count}}", str(node_result["row_count"]))
+        
+        return template
+    elif isinstance(template, dict):
+        return {k: substitute_workflow_params(v, context, params) for k, v in template.items()}
+    elif isinstance(template, list):
+        return [substitute_workflow_params(item, context, params) for item in template]
+    return template
+
+
+def build_execution_order(
+    nodes: list[dict[str, Any]],
+    edges: list[dict[str, Any]],
+) -> list[str]:
+    """
+    Build execution order using topological sort.
+    
+    Args:
+        nodes: List of workflow nodes
+        edges: List of workflow edges (dependencies)
+        
+    Returns:
+        Ordered list of node IDs
+        
+    Raises:
+        ValueError: If there's a circular dependency
+    """
+    # Build adjacency list and in-degree count
+    adjacency = {node["id"]: [] for node in nodes}
+    in_degree = {node["id"]: 0 for node in nodes}
+    
+    for edge in edges:
+        source = edge["source"]
+        target = edge["target"]
+        adjacency[source].append(target)
+        in_degree[target] += 1
+    
+    # Kahn's algorithm for topological sort
+    queue = [node_id for node_id, degree in in_degree.items() if degree == 0]
+    execution_order = []
+    
+    while queue:
+        node_id = queue.pop(0)
+        execution_order.append(node_id)
+        
+        for neighbor in adjacency[node_id]:
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+    
+    # Check for circular dependencies
+    if len(execution_order) != len(nodes):
+        raise ValueError("Circular dependency detected in workflow")
+    
+    return execution_order
+
+
+def execute_workflow_node(
+    session: Session,
+    node: dict[str, Any],
+    context: dict[str, Any],
+    params: dict[str, Any],
+    workflow_api_id: str,
+    executed_by: str | None,
 ) -> dict[str, Any]:
     """
-    Execute Workflow API.
+    Execute a single workflow node.
+    
+    Args:
+        session: Database session
+        node: Node configuration
+        context: Execution context (results from previous steps)
+        params: Input parameters
+        workflow_api_id: Parent workflow API ID
+        executed_by: User or system identifier
+        
+    Returns:
+        Dictionary with node execution result:
+        - node_id: str
+        - node_type: str
+        - status: str
+        - duration_ms: int
+        - columns: list (if applicable)
+        - rows: list (if applicable)
+        - output: any
+        - error_message: str (if failed)
+    """
+    start_time = time.time()
+    node_id = node["id"]
+    node_type = node["type"]
+    config = node.get("config", {})
+    
+    try:
+        # Substitute parameters in config
+        substituted_config = substitute_workflow_params(config, context, params)
+        
+        # Execute based on node type
+        if node_type == "sql":
+            query = substituted_config.get("query", "")
+            if not query:
+                raise ValueError(f"SQL node {node_id} has no query")
+            
+            # Validate and execute SQL
+            validation = validate_select_sql(query)
+            if not validation["is_safe"]:
+                raise ValueError(f"SQL validation failed: {', '.join(validation['errors'])}")
+            
+            # Apply LIMIT if not present
+            sql_to_execute = query.strip()
+            if "LIMIT" not in sql_to_execute.upper():
+                limit = params.get("limit", DEFAULT_LIMIT)
+                if limit > MAX_LIMIT:
+                    limit = MAX_LIMIT
+                sql_to_execute = f"{sql_to_execute.rstrip(';')} LIMIT {limit};"
+            
+            # Execute query
+            result = session.execute(text(sql_to_execute))
+            rows = [dict(row._mapping) for row in result]
+            columns = list(rows[0].keys()) if rows else []
+            
+            return {
+                "node_id": node_id,
+                "node_type": node_type,
+                "status": "success",
+                "duration_ms": int((time.time() - start_time) * 1000),
+                "columns": columns,
+                "rows": rows,
+                "row_count": len(rows),
+                "output": {"columns": columns, "rows": rows, "row_count": len(rows)},
+                "error_message": None,
+            }
+        
+        elif node_type == "http":
+            url = substituted_config.get("url", "")
+            method = substituted_config.get("method", "GET").upper()
+            headers = substituted_config.get("headers", {})
+            body = substituted_config.get("body")
+            
+            if not url:
+                raise ValueError(f"HTTP node {node_id} has no URL")
+            
+            # Execute HTTP request
+            with httpx.Client(timeout=HTTP_TIMEOUT) as client:
+                if method == "GET":
+                    response = client.get(url, headers=headers, params=params)
+                elif method == "POST":
+                    response = client.post(url, headers=headers, json=body if body else params)
+                elif method == "PUT":
+                    response = client.put(url, headers=headers, json=body if body else params)
+                elif method == "DELETE":
+                    response = client.delete(url, headers=headers)
+                else:
+                    raise ValueError(f"Unsupported HTTP method: {method}")
+                
+                # Try to parse JSON response
+                try:
+                    response_data = response.json()
+                except:
+                    response_data = {"text": response.text}
+                
+                # Convert to table format
+                if isinstance(response_data, dict):
+                    columns = list(response_data.keys())
+                    rows = [response_data]
+                elif isinstance(response_data, list):
+                    columns = list(response_data[0].keys()) if response_data else []
+                    rows = response_data
+                else:
+                    columns = ["value"]
+                    rows = [{"value": str(response_data)}]
+                
+                return {
+                    "node_id": node_id,
+                    "node_type": node_type,
+                    "status": "success",
+                    "duration_ms": int((time.time() - start_time) * 1000),
+                    "columns": columns,
+                    "rows": rows,
+                    "row_count": len(rows),
+                    "output": response_data,
+                    "error_message": None,
+                }
+        
+        elif node_type == "python":
+            code = substituted_config.get("code", "")
+            if not code:
+                raise ValueError(f"Python node {node_id} has no code")
+            
+            # Create restricted execution environment
+            exec_globals = {
+                "__builtins__": {
+                    "len": len,
+                    "str": str,
+                    "int": int,
+                    "float": float,
+                    "dict": dict,
+                    "list": list,
+                    "tuple": tuple,
+                    "bool": bool,
+                },
+                "params": params,
+                "context": context,
+            }
+            
+            # Execute Python code
+            exec(code, exec_globals)
+            
+            # Get result from 'result' variable if defined
+            if "result" in exec_globals:
+                result = exec_globals["result"]
+                
+                # Convert to table format
+                if isinstance(result, dict):
+                    columns = ["key", "value"]
+                    rows = [{"key": k, "value": v} for k, v in result.items()]
+                elif isinstance(result, list):
+                    columns = list(result[0].keys()) if result else []
+                    rows = result
+                else:
+                    columns = ["value"]
+                    rows = [{"value": str(result)}]
+            else:
+                result = {"message": "Python code executed (no result variable)"}
+                columns = ["message"]
+                rows = [result]
+            
+            return {
+                "node_id": node_id,
+                "node_type": node_type,
+                "status": "success",
+                "duration_ms": int((time.time() - start_time) * 1000),
+                "columns": columns,
+                "rows": rows,
+                "row_count": len(rows),
+                "output": result,
+                "error_message": None,
+            }
+        
+        else:
+            raise ValueError(f"Unsupported node type: {node_type}")
+    
+    except Exception as e:
+        return {
+            "node_id": node_id,
+            "node_type": node_type,
+            "status": "fail",
+            "duration_ms": int((time.time() - start_time) * 1000),
+            "columns": [],
+            "rows": [],
+            "row_count": 0,
+            "output": None,
+            "error_message": str(e),
+        }
+
+
+def execute_workflow_api(
+    session: Session,
+    workflow_api: Any,
+    params: dict[str, Any],
+    input_payload: dict[str, Any] | None = None,
+    executed_by: str | None = None,
+    limit: int | None = None,
+) -> dict[str, Any]:
+    """
+    Execute Workflow API with node orchestration.
     
     Args:
         session: Database session (for logging)
-        api_id: API definition ID
-        logic: Workflow configuration
+        workflow_api: Workflow API object or dict with 'logic' and 'api_id'
         params: Input parameters
+        input_payload: Additional input payload (optional)
         executed_by: User or system identifier
+        limit: Row limit for SQL nodes (optional)
         
     Returns:
         Dictionary with execution results:
         - success: bool
-        - data: Any (workflow output)
+        - steps: list[dict] (node execution results)
+        - final_output: dict (workflow final output)
         - execution_log: ApiExecutionLog
-        
-    Note:
-        This is a placeholder implementation. For production use,
-        integrate with your actual workflow execution engine.
+        - error: str (if failed)
     """
     start_time = time.time()
     error_message = None
     error_stacktrace = None
-    result_data = None
+    steps = []
+    final_output = {}
     
     try:
-        # Placeholder: Workflow execution logic
-        # In production, this would integrate with your workflow engine
+        # Parse workflow configuration
         import json
+        logic = workflow_api.logic if hasattr(workflow_api, "logic") else workflow_api.get("logic", "{}")
+        api_id = str(workflow_api.api_id) if hasattr(workflow_api, "api_id") else workflow_api.get("api_id", "unknown")
         
         if isinstance(logic, str):
             workflow_config = json.loads(logic)
         else:
             workflow_config = logic
         
-        # Placeholder workflow execution
-        result_data = {
-            "message": "Workflow execution not yet implemented",
-            "workflow": workflow_config.get("name", "unknown"),
-            "steps": workflow_config.get("steps", []),
-            "input_params": params,
+        # Get nodes and edges
+        nodes = workflow_config.get("nodes", [])
+        edges = workflow_config.get("edges", [])
+        
+        # Build execution order (topological sort)
+        execution_order = build_execution_order(nodes, edges)
+        
+        # Execute nodes in order
+        context: dict[str, Any] = {}
+        
+        for node_id in execution_order:
+            # Find node configuration
+            node = next((n for n in nodes if n["id"] == node_id), None)
+            if not node:
+                raise ValueError(f"Node not found: {node_id}")
+            
+            # Execute node
+            step_result = execute_workflow_node(
+                session=session,
+                node=node,
+                context=context,
+                params=params,
+                workflow_api_id=api_id,
+                executed_by=executed_by,
+            )
+            
+            steps.append(step_result)
+            
+            # Check for errors
+            if step_result["status"] == "fail":
+                raise Exception(f"Node {node_id} failed: {step_result['error_message']}")
+            
+            # Store result in context for next steps
+            context[node_id] = {
+                "columns": step_result["columns"],
+                "rows": step_result["rows"],
+                "row_count": step_result["row_count"],
+                "output": step_result["output"],
+            }
+        
+        # Final output (last step's output or all steps)
+        final_output = {
+            "steps": steps,
+            "total_duration_ms": sum(step["duration_ms"] for step in steps),
+            "total_nodes": len(steps),
+            "successful_nodes": len([s for s in steps if s["status"] == "success"]),
+            "failed_nodes": len([s for s in steps if s["status"] == "fail"]),
         }
         
-        # TODO: Implement actual workflow execution logic
-        # This would call your workflow orchestrator
-        
+        # Add last step's output as final result
+        if steps:
+            last_step = steps[-1]
+            final_output["last_node_output"] = last_step["output"]
+            final_output["last_node_id"] = last_step["node_id"]
+    
     except Exception as e:
         error_message = str(e)
         error_stacktrace = traceback.format_exc()
+        final_output = {
+            "steps": steps,
+            "total_duration_ms": sum(step["duration_ms"] for step in steps),
+            "total_nodes": len(steps),
+            "error": error_message,
+        }
     
     duration_ms = int((time.time() - start_time) * 1000)
     
@@ -498,16 +866,19 @@ def execute_workflow_api(
         api_id=api_id,
         executed_by=executed_by,
         duration_ms=duration_ms,
-        request_params=params,
-        response_data=result_data,
+        request_params={"params": params, "input_payload": input_payload},
+        response_data={"steps": steps, "final_output": final_output} if final_output else None,
         response_status="success" if error_message is None else "error",
         error_message=error_message,
         error_stacktrace=error_stacktrace,
+        rows_affected=sum(step.get("row_count", 0) for step in steps),
+        metadata={"workflow_steps": len(steps)},
     )
     
     return {
         "success": error_message is None,
-        "data": result_data,
+        "steps": steps,
+        "final_output": final_output,
         "execution_log": execution_log,
         "error": error_message,
     }
