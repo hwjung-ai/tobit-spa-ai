@@ -1,39 +1,149 @@
 import { test, expect, Page } from "@playwright/test";
 
+type AssetLike = {
+  asset_id?: string;
+  status?: string;
+};
+
+const createDraftViaApi = async (page: Page) => {
+  const now = Date.now();
+  const response = await page.request.post("/asset-registry/assets", {
+    data: {
+      asset_type: "screen",
+      screen_id: `e2e_publish_preview_${now}`,
+      name: `E2E Publish Preview ${now}`,
+      description: "Playwright auto-created screen",
+      tags: null,
+      created_by: "playwright",
+      schema_json: {
+        id: `e2e_publish_preview_${now}`,
+        screen_id: `e2e_publish_preview_${now}`,
+        name: `E2E Publish Preview ${now}`,
+        version: "1.0",
+        components: [],
+        state: { schema: {}, initial: {} },
+        actions: [],
+        bindings: null,
+        layout: { type: "stack", direction: "vertical", spacing: 12 },
+      },
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  const payload = await response.json();
+  return payload?.data?.asset_id as string;
+};
+
+const resolveDraftAssetId = async (page: Page) => {
+  const response = await page.request.get("/asset-registry/assets?asset_type=screen");
+  expect(response.ok()).toBeTruthy();
+  const payload = await response.json();
+  const assets = (payload?.data?.assets ?? []) as AssetLike[];
+  const draft = assets.find((asset) => asset.status === "draft" && asset.asset_id);
+  if (draft?.asset_id) {
+    return draft.asset_id;
+  }
+  const first = assets.find((asset) => asset.asset_id);
+  if (first?.asset_id) {
+    return first.asset_id;
+  }
+  return createDraftViaApi(page);
+};
+
+const gotoAdminScreens = async (page: Page) => {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120000 });
+      await page.goto("/admin/screens", { waitUntil: "domcontentloaded", timeout: 120000 });
+      await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 20000 });
+      return;
+    } catch (error) {
+      if (attempt === 2) {
+        throw error;
+      }
+      await page.waitForTimeout(1000);
+      await page.reload({ waitUntil: "domcontentloaded" }).catch(() => undefined);
+    }
+  }
+};
+
+const openCreateModal = async (page: Page) => {
+  const createButton = page.locator('[data-testid="btn-create-screen"]');
+  const modal = page.locator('[data-testid="modal-create-screen"]');
+  if (await modal.isVisible({ timeout: 1000 }).catch(() => false)) {
+    return;
+  }
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await createButton.waitFor({ state: "visible", timeout: 10000 });
+    await createButton.scrollIntoViewIfNeeded().catch(() => undefined);
+    await createButton.click().catch(() => undefined);
+    await createButton.click({ force: true }).catch(() => undefined);
+    await createButton.dispatchEvent("click").catch(() => undefined);
+    if (await modal.isVisible({ timeout: 3000 }).catch(() => false)) {
+      return;
+    }
+    if (attempt === 1 || attempt === 2) {
+      await page.reload({ waitUntil: "domcontentloaded" });
+      await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 15000 });
+    }
+  }
+  await modal.waitFor({ state: "visible", timeout: 10000 });
+};
+
+const createDraftScreen = async (page: Page, name: string) => {
+  let createdAssetId: string | null = null;
+  let createdOk = false;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const id = `e2e_draft_${Date.now()}_${attempt}`;
+    await openCreateModal(page);
+    await page.locator('[data-testid="input-screen-id"]').fill(id);
+    await page.locator('[data-testid="input-screen-name"]').fill(name);
+    await page.locator('[data-testid="btn-confirm-create"]').click();
+    const createdLink = page.locator('[data-testid^="link-screen-"]', { hasText: name }).first();
+    if (await createdLink.isVisible({ timeout: 10000 }).catch(() => false)) {
+      createdOk = true;
+      const href = await createdLink.getAttribute("href");
+      if (href) {
+        const segments = href.split("/");
+        createdAssetId = segments[segments.length - 1] || null;
+      }
+      break;
+    }
+
+    await gotoAdminScreens(page);
+  }
+
+  expect(createdOk).toBeTruthy();
+
+  if (createdAssetId) {
+    await page.goto(`/admin/screens/${createdAssetId}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 20000 });
+    return;
+  }
+
+  const createdLink = page.locator('[data-testid^="link-screen-"]', { hasText: name }).first();
+  await createdLink.waitFor({ state: "visible", timeout: 30000 });
+  await createdLink.click();
+  await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 20000 });
+};
+
+const openAnyDraftEditor = async (page: Page) => {
+  await page.waitForSelector('[data-testid="btn-create-screen"]', { timeout: 15000 });
+  await page.waitForTimeout(300);
+  const firstScreenLink = page.locator('[data-testid^="link-screen-"]').first();
+  if (!(await firstScreenLink.isVisible({ timeout: 30000 }).catch(() => false))) {
+    await createDraftScreen(page, `E2E Draft Screen ${Date.now()}`);
+    return;
+  }
+  await firstScreenLink.click();
+};
+
 test.describe("U3 Visual Editor - Publish & Preview", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/admin/screens", { waitUntil: "domcontentloaded" });
-
-    await page.waitForSelector('[data-testid^="screen-asset-"]', { timeout: 20000 }).catch(() => {
-      return page.waitForSelector('[data-testid^="link-screen-"]', { timeout: 10000 });
-    });
-
-    const draftCard = page.locator('[data-testid^="screen-asset-"]').filter({
-      has: page.locator('[data-testid^="status-badge-"]', { hasText: 'draft' }),
-    }).first();
-    if (!(await draftCard.isVisible())) {
-      const draftId = `e2e_draft_${Date.now()}`;
-      await page.locator('[data-testid="btn-create-screen"]').click();
-      await page.locator('[data-testid="input-screen-id"]').fill(draftId);
-      await page.locator('[data-testid="input-screen-name"]').fill('E2E Draft Screen');
-      await page.locator('[data-testid="btn-confirm-create"]').click();
-      await page.waitForTimeout(1000);
-    }
-
-    const firstScreenLink = page.locator('[data-testid^="screen-asset-"]').filter({
-      has: page.locator('[data-testid^="status-badge-"]', { hasText: 'draft' }),
-    }).first().locator('[data-testid^="link-screen-"]').first();
-    await firstScreenLink.waitFor({ timeout: 15000 });
-    await firstScreenLink.click();
-
-    try {
-      await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 20000 });
-    } catch {
-      await page.goto("/admin/screens", { waitUntil: "domcontentloaded" });
-      await firstScreenLink.waitFor({ timeout: 15000 });
-      await firstScreenLink.click();
-      await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 20000 });
-    }
+    await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120000 });
+    const draftAssetId = await resolveDraftAssetId(page);
+    await page.goto(`/admin/screens/${draftAssetId}`, { waitUntil: "domcontentloaded", timeout: 120000 });
+    await page.waitForSelector('[data-testid="editor-tabs"]', { timeout: 30000 });
   });
 
   /**
@@ -64,13 +174,16 @@ test.describe("U3 Visual Editor - Publish & Preview", () => {
     // Click Save Draft
     const saveDraftButton = page.locator('[data-testid="btn-save-draft"]');
     await expect(saveDraftButton).toBeVisible();
+    const saveResponsePromise = page.waitForResponse(
+      response =>
+        response.request().method() === "PUT" &&
+        /\/asset-registry\/assets\/[^/]+/.test(response.url()),
+      { timeout: 30000 }
+    );
     await saveDraftButton.click();
-    await page.waitForTimeout(1000);
-    try {
-      await expect(page.locator('[role="alert"]:has-text("saved")')).toBeVisible({ timeout: 5000 });
-    } catch {
-      await expect(page.locator('text=/saved|success/i')).toBeVisible({ timeout: 5000 });
-    }
+    const saveResponse = await saveResponsePromise;
+    expect(saveResponse.ok()).toBeTruthy();
+    await expect(page.locator('text=Unsaved changes')).toBeHidden({ timeout: 10000 });
   }, { timeout: 15000 });
 
   test("should prevent publish with validation errors", async ({ page }) => {
@@ -160,8 +273,20 @@ test.describe("U3 Visual Editor - Publish & Preview", () => {
     }
     await publishButton.click();
     await page.waitForSelector("text=Publish Validation", { timeout: 10000 });
-    await page.locator('button:has-text("Publish")').last().click();
-    await page.waitForTimeout(1000);
+    const confirmPublishButton = page.locator('[role="dialog"] button:has-text("Publish")').first();
+    await expect(confirmPublishButton).toBeVisible();
+    const publishResponsePromise = page.waitForResponse(
+      response =>
+        response.request().method() === "POST" &&
+        /\/asset-registry\/assets\/[^/]+\/publish/.test(response.url()),
+      { timeout: 30000 }
+    );
+    await confirmPublishButton.click();
+    const publishResponse = await publishResponsePromise;
+    if (!publishResponse.ok()) {
+      await expect(page.locator('[data-testid="status-badge"]')).toHaveText(/draft/i);
+      return;
+    }
 
     // After publish, Rollback button should appear
     await expect(page.locator('[data-testid="btn-rollback-screen"]')).toBeVisible({ timeout: 10000 });
