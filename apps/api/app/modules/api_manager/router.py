@@ -14,18 +14,13 @@ from sqlmodel import Session, select
 from .crud import DRY_RUN_API_ID, list_exec_logs
 from .executor import execute_http_api, execute_sql_api
 from .script_executor import execute_script_api
-from .services.api_service import ApiManagerService
 from .services.sql_validator import SQLValidator
-from .services.test_runner import ApiTestRunner
 from .workflow_executor import execute_workflow_api
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])
 
-# Initialize services
 sql_validator = SQLValidator()
-api_service = ApiManagerService(sql_validator=sql_validator)
-test_runner = ApiTestRunner(api_service=api_service)
 
 
 class CreateApiRequest(BaseModel):
@@ -212,23 +207,54 @@ async def create_or_update_api(
 
 @router.post("/create", response_model=dict)
 async def create_api(
-    request: CreateApiRequest, current_user: dict = Depends(get_current_user)
+    request: CreateApiRequest,
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user),
 ):
     """
-    Create new dynamic API
-
-    Modes:
-    - sql: Execute SQL queries
-    - python: Execute Python code
-    - workflow: Compose tools
-
-    Returns created API definition with version 1
+    Create new dynamic API (legacy endpoint).
+    Prefer POST /apis for new integrations.
     """
-
     try:
-        api = await api_service.create_api(request.dict(), current_user)
+        api_scope = (
+            ApiScope(request.scope)
+            if request.scope in [s.value for s in ApiScope]
+            else ApiScope.custom
+        )
+        api_mode = (
+            ApiMode(request.mode)
+            if request.mode in [m.value for m in ApiMode]
+            else ApiMode.sql
+        )
 
-        return {"status": "ok", "data": api}
+        api = ApiDefinition(
+            scope=api_scope,
+            name=request.name,
+            method=request.method.upper(),
+            path=request.path,
+            description=request.description,
+            mode=api_mode,
+            logic=request.logic,
+            is_enabled=True,
+        )
+        session.add(api)
+        session.commit()
+        session.refresh(api)
+
+        return {
+            "status": "ok",
+            "data": {
+                "id": str(api.id),
+                "scope": api.scope.value,
+                "name": api.name,
+                "method": api.method,
+                "path": api.path,
+                "mode": api.mode.value if api.mode else None,
+                "logic": api.logic,
+                "is_enabled": api.is_enabled,
+                "version": 1,
+            },
+        }
 
     except Exception as e:
         logger.error(f"Create API failed: {str(e)}")
@@ -236,15 +262,36 @@ async def create_api(
 
 
 @router.get("/{api_id}", response_model=dict)
-async def get_api(api_id: str, current_user: dict = Depends(get_current_user)):
-    """Get API definition"""
-
+async def get_api(
+    api_id: str,
+    session: Session = Depends(get_session),
+):
+    """Get API definition by ID"""
     try:
-        # In real implementation: db.get(ApiDefinition, api_id)
-        api = {"id": api_id, "name": "Example API", "version": 1, "status": "active"}
+        api = session.get(ApiDefinition, api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
 
-        return {"status": "ok", "data": api}
+        return {
+            "status": "ok",
+            "data": {
+                "id": str(api.id),
+                "scope": api.scope.value,
+                "name": api.name,
+                "method": api.method,
+                "path": api.path,
+                "description": api.description,
+                "tags": api.tags or [],
+                "mode": api.mode.value if api.mode else None,
+                "logic": api.logic,
+                "is_enabled": api.is_enabled,
+                "created_at": api.created_at.isoformat() if api.created_at else None,
+                "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+            },
+        }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Get API failed: {str(e)}")
         raise HTTPException(500, str(e))
@@ -267,13 +314,9 @@ async def update_api(
             raise HTTPException(status_code=404, detail="API not found")
 
         # Map frontend field names to backend field names
-        ApiScope(request.api_type) if request.api_type in [
-            "system",
-            "custom",
-        ] else ApiScope.custom
         api_mode = (
             ApiMode(request.logic_type)
-            if request.logic_type in ["sql", "python", "workflow"]
+            if request.logic_type in [m.value for m in ApiMode]
             else ApiMode.sql
         )
 
@@ -325,40 +368,52 @@ async def update_api(
 @router.post("/{api_id}/rollback", response_model=dict)
 async def rollback_api(
     api_id: str,
-    target_version: int = Query(...),
+    session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Rollback API to previous version
-
-    Args:
-        api_id: API ID
-        target_version: Version to rollback to
+    Rollback is not yet supported (requires version history table).
+    Returns 501 Not Implemented with guidance.
     """
-
-    try:
-        api = await api_service.rollback_api(api_id, target_version, current_user)
-
-        return {
-            "status": "ok",
-            "message": f"Rolled back to version {target_version}",
-            "data": api,
-        }
-
-    except Exception as e:
-        logger.error(f"Rollback failed: {str(e)}")
-        raise HTTPException(500, str(e))
+    raise HTTPException(
+        status_code=501,
+        detail="Rollback requires api_definition_versions table which is not yet implemented. "
+        "Use GET /{api_id}/versions to view current state.",
+    )
 
 
 @router.get("/{api_id}/versions", response_model=dict)
-async def get_versions(api_id: str, current_user: dict = Depends(get_current_user)):
-    """Get version history"""
-
+async def get_versions(
+    api_id: str,
+    session: Session = Depends(get_session),
+):
+    """Get version history from execution logs as a proxy for changes"""
     try:
-        versions = await api_service.get_api_versions(api_id)
+        api = session.get(ApiDefinition, api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
+
+        # Return current version info since we don't have a separate versions table
+        versions = [
+            {
+                "version": 1,
+                "created_at": api.created_at.isoformat() if api.created_at else None,
+                "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+                "is_current": True,
+                "snapshot": {
+                    "name": api.name,
+                    "method": api.method,
+                    "path": api.path,
+                    "mode": api.mode.value if api.mode else None,
+                    "logic": api.logic,
+                },
+            }
+        ]
 
         return {"status": "ok", "api_id": api_id, "versions": versions}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Get versions failed: {str(e)}")
         raise HTTPException(500, str(e))
@@ -427,10 +482,14 @@ async def execute_api(
             return {
                 "status": "ok",
                 "data": {
-                    "columns": result.columns,
-                    "rows": result.rows,
-                    "row_count": result.row_count,
-                    "duration_ms": result.duration_ms,
+                    "result": {
+                        "executed_sql": result.executed_sql,
+                        "params": result.params,
+                        "columns": result.columns,
+                        "rows": result.rows,
+                        "row_count": result.row_count,
+                        "duration_ms": result.duration_ms,
+                    }
                 },
             }
 
@@ -445,23 +504,25 @@ async def execute_api(
             return {
                 "status": "ok",
                 "data": {
-                    "columns": result.columns,
-                    "rows": result.rows,
-                    "row_count": result.row_count,
-                    "duration_ms": result.duration_ms,
+                    "result": {
+                        "executed_sql": result.executed_sql,
+                        "params": result.params,
+                        "columns": result.columns,
+                        "rows": result.rows,
+                        "row_count": result.row_count,
+                        "duration_ms": result.duration_ms,
+                    }
                 },
             }
 
         if mode == "workflow":
-            # workflow_executor expects TbApiDef with logic_spec/api_id attrs.
-            # Build a simple namespace adapter for ApiDefinition.
+            import json as _json
+
             class _WfAdapter:
                 def __init__(self, ad: ApiDefinition):
                     self.api_id = ad.id
                     self.logic_spec = {}
                     self.logic = ad.logic
-                    # Try to parse logic as JSON for workflow spec
-                    import json as _json
                     try:
                         self.logic_spec = _json.loads(ad.logic or "{}")
                     except (ValueError, TypeError):
@@ -477,7 +538,7 @@ async def execute_api(
             )
             return {
                 "status": "ok",
-                "data": wf_result.model_dump(),
+                "data": {"result": wf_result.model_dump()},
             }
 
         if mode in ("script", "python"):
@@ -492,7 +553,7 @@ async def execute_api(
             )
             return {
                 "status": "ok",
-                "data": sc_result.model_dump(),
+                "data": {"result": sc_result.model_dump()},
             }
 
         raise HTTPException(400, f"Unsupported API mode: {mode}")
