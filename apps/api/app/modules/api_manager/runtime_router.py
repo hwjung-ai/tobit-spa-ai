@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import time
+from collections import defaultdict
 from typing import Any
 
 from core.db import get_session
@@ -17,6 +19,42 @@ from .workflow_executor import execute_workflow_api
 
 runtime_router = APIRouter(tags=["runtime"])
 
+# ---------------------------------------------------------------------------
+# In-memory sliding-window rate limiter
+# ---------------------------------------------------------------------------
+RATE_LIMIT_WINDOW_SEC = 60
+RATE_LIMIT_MAX_REQUESTS = 120  # max per IP per window
+
+_rate_buckets: dict[str, list[float]] = defaultdict(list)
+_last_cleanup = time.monotonic()
+_CLEANUP_INTERVAL = 300  # prune stale entries every 5 min
+
+
+def _check_rate_limit(client_ip: str) -> None:
+    global _last_cleanup
+    now = time.monotonic()
+
+    # Periodic cleanup of stale buckets
+    if now - _last_cleanup > _CLEANUP_INTERVAL:
+        cutoff = now - RATE_LIMIT_WINDOW_SEC
+        stale_keys = [k for k, v in _rate_buckets.items() if not v or v[-1] < cutoff]
+        for k in stale_keys:
+            del _rate_buckets[k]
+        _last_cleanup = now
+
+    bucket = _rate_buckets[client_ip]
+    window_start = now - RATE_LIMIT_WINDOW_SEC
+    # Remove timestamps outside the window
+    while bucket and bucket[0] < window_start:
+        bucket.pop(0)
+
+    if len(bucket) >= RATE_LIMIT_MAX_REQUESTS:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded: {RATE_LIMIT_MAX_REQUESTS} requests per {RATE_LIMIT_WINDOW_SEC}s",
+        )
+    bucket.append(now)
+
 
 @runtime_router.api_route("/runtime/{path:path}", methods=["GET", "POST"])
 async def handle_runtime_request(
@@ -24,6 +62,9 @@ async def handle_runtime_request(
     request: Request,
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
+    client_ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(client_ip)
+
     normalized_path = _normalize_runtime_path(path)
     api = _find_runtime_api(session, normalized_path, request.method)
     if not api:

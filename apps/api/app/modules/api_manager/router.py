@@ -11,9 +11,13 @@ from models.api_definition import ApiDefinition, ApiMode, ApiScope
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
+from .crud import DRY_RUN_API_ID, list_exec_logs
+from .executor import execute_http_api, execute_sql_api
+from .script_executor import execute_script_api
 from .services.api_service import ApiManagerService
 from .services.sql_validator import SQLValidator
 from .services.test_runner import ApiTestRunner
+from .workflow_executor import execute_workflow_api
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])
@@ -137,7 +141,7 @@ async def create_or_update_api(
         )
         api_mode = (
             ApiMode(request.logic_type)
-            if request.logic_type in ["sql", "python", "workflow"]
+            if request.logic_type in [m.value for m in ApiMode]
             else ApiMode.sql
         )
 
@@ -394,65 +398,256 @@ async def validate_sql(
 async def execute_api(
     api_id: str,
     request: ExecuteApiRequest,
+    session: Session = Depends(get_session),
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Execute API with parameters
-
-    Returns result data and execution metadata
+    Execute API with parameters using real executors.
+    Dispatches to sql/http/workflow/script based on API mode.
     """
-
     try:
-        result = await api_service.execute_api(api_id, request.params, current_user)
+        api = session.get(ApiDefinition, api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
+        if not api.logic:
+            raise HTTPException(status_code=400, detail="API has no logic defined")
 
-        return {
-            "status": "ok" if result.get("status") == "success" else "error",
-            "data": result,
-        }
+        executed_by = current_user.get("id", "anonymous") if current_user else "anonymous"
+        mode = api.mode.value if api.mode else "sql"
 
+        if mode == "sql":
+            result = execute_sql_api(
+                session=session,
+                api_id=str(api.id),
+                logic_body=api.logic,
+                params=request.params or None,
+                limit=request.params.get("limit") if request.params else None,
+                executed_by=executed_by,
+            )
+            return {
+                "status": "ok",
+                "data": {
+                    "columns": result.columns,
+                    "rows": result.rows,
+                    "row_count": result.row_count,
+                    "duration_ms": result.duration_ms,
+                },
+            }
+
+        if mode == "http":
+            result = execute_http_api(
+                session=session,
+                api_id=str(api.id),
+                logic_body=api.logic,
+                params=request.params or None,
+                executed_by=executed_by,
+            )
+            return {
+                "status": "ok",
+                "data": {
+                    "columns": result.columns,
+                    "rows": result.rows,
+                    "row_count": result.row_count,
+                    "duration_ms": result.duration_ms,
+                },
+            }
+
+        if mode == "workflow":
+            # workflow_executor expects TbApiDef with logic_spec/api_id attrs.
+            # Build a simple namespace adapter for ApiDefinition.
+            class _WfAdapter:
+                def __init__(self, ad: ApiDefinition):
+                    self.api_id = ad.id
+                    self.logic_spec = {}
+                    self.logic = ad.logic
+                    # Try to parse logic as JSON for workflow spec
+                    import json as _json
+                    try:
+                        self.logic_spec = _json.loads(ad.logic or "{}")
+                    except (ValueError, TypeError):
+                        pass
+
+            wf_result = execute_workflow_api(
+                session=session,
+                workflow_api=_WfAdapter(api),
+                params=request.params or {},
+                input_payload=None,
+                executed_by=executed_by,
+                limit=request.params.get("limit") if request.params else None,
+            )
+            return {
+                "status": "ok",
+                "data": wf_result.model_dump(),
+            }
+
+        if mode in ("script", "python"):
+            sc_result = execute_script_api(
+                session=session,
+                api_id=str(api.id),
+                logic_body=api.logic,
+                params=request.params or None,
+                input_payload=None,
+                executed_by=executed_by,
+                runtime_policy=None,
+            )
+            return {
+                "status": "ok",
+                "data": sc_result.model_dump(),
+            }
+
+        raise HTTPException(400, f"Unsupported API mode: {mode}")
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"API execution failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
 @router.post("/{api_id}/test", response_model=dict)
-async def run_tests(api_id: str, current_user: dict = Depends(get_current_user)):
+async def run_tests(
+    api_id: str,
+    session: Session = Depends(get_session),
+    current_user: dict = Depends(get_current_user),
+):
     """
-    Run all tests for API
-
-    Returns test results summary
+    Run test for API by executing it with sample/empty params.
+    Validates that the API logic is executable without errors.
     """
-
     try:
-        test_result = await test_runner.run_tests(api_id)
+        api = session.get(ApiDefinition, api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
+        if not api.logic:
+            raise HTTPException(status_code=400, detail="API has no logic defined")
+
+        mode = api.mode.value if api.mode else "sql"
+        executed_by = current_user.get("id", "anonymous") if current_user else "anonymous"
+
+        # Extract test params from param_schema if available
+        test_params = {}
+        if api.mode == ApiMode.sql:
+            # For SQL, try to extract sample values from param_schema
+            # param_schema can contain {"test_cases": [{"params": {...}, "description": "..."}]}
+            pass
+
+        import time
+        test_results = []
+        start = time.time()
+
+        # Test 1: Syntax/validation test
+        if mode == "sql":
+            try:
+                sql_validator.validate(api.logic)
+                test_results.append({
+                    "test_id": "syntax_check",
+                    "status": "pass",
+                    "error": "",
+                    "duration_ms": int((time.time() - start) * 1000),
+                })
+            except Exception as e:
+                test_results.append({
+                    "test_id": "syntax_check",
+                    "status": "fail",
+                    "error": str(e),
+                    "duration_ms": int((time.time() - start) * 1000),
+                })
+
+        # Test 2: Execution test with sample params
+        exec_start = time.time()
+        try:
+            if mode == "sql":
+                result = execute_sql_api(
+                    session=session,
+                    api_id=DRY_RUN_API_ID,
+                    logic_body=api.logic,
+                    params=test_params or None,
+                    limit=10,
+                    executed_by="test-runner",
+                )
+                test_results.append({
+                    "test_id": "execution",
+                    "status": "pass",
+                    "error": "",
+                    "duration_ms": result.duration_ms,
+                    "row_count": result.row_count,
+                    "columns": result.columns,
+                })
+            elif mode == "http":
+                result = execute_http_api(
+                    session=session,
+                    api_id=DRY_RUN_API_ID,
+                    logic_body=api.logic,
+                    params=test_params or None,
+                    executed_by="test-runner",
+                )
+                test_results.append({
+                    "test_id": "execution",
+                    "status": "pass",
+                    "error": "",
+                    "duration_ms": result.duration_ms,
+                    "row_count": result.row_count,
+                })
+            else:
+                test_results.append({
+                    "test_id": "execution",
+                    "status": "skip",
+                    "error": f"Execution test not supported for mode: {mode}",
+                    "duration_ms": 0,
+                })
+        except Exception as e:
+            test_results.append({
+                "test_id": "execution",
+                "status": "fail",
+                "error": str(e),
+                "duration_ms": int((time.time() - exec_start) * 1000),
+            })
+
+        passed = len([r for r in test_results if r["status"] == "pass"])
+        failed = len([r for r in test_results if r["status"] == "fail"])
+        errors = len([r for r in test_results if r["status"] == "error"])
 
         return {
             "status": "ok",
             "api_id": api_id,
-            "total": test_result.total,
-            "passed": test_result.passed,
-            "failed": test_result.failed,
-            "errors": test_result.errors,
-            "results": [
-                {"test_id": r.test_id, "status": r.status, "error": r.error_message}
-                for r in test_result.results
-            ],
+            "total": len(test_results),
+            "passed": passed,
+            "failed": failed,
+            "errors": errors,
+            "results": test_results,
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Test execution failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
 @router.get("/apis/{api_id}/execution-logs", response_model=dict)
-async def get_logs(api_id: str, limit: int = Query(50, ge=1, le=500)):
-    """Get API execution history (public endpoint - no authentication required)"""
-
+async def get_logs(
+    api_id: str,
+    limit: int = Query(50, ge=1, le=500),
+    session: Session = Depends(get_session),
+):
+    """Get API execution history from tb_api_exec_log table"""
     try:
-        logs = await api_service.get_execution_logs(api_id, limit)
-
-        return {"status": "ok", "data": {"api_id": api_id, "logs": logs}}
-
+        logs = list_exec_logs(session, api_id, limit)
+        log_list = [
+            {
+                "exec_id": str(log.exec_id),
+                "api_id": str(log.api_id),
+                "executed_at": log.executed_at.isoformat() if log.executed_at else None,
+                "executed_by": log.executed_by,
+                "status": log.status,
+                "duration_ms": log.duration_ms,
+                "row_count": log.row_count,
+                "request_params": log.request_params,
+                "error_message": log.error_message,
+            }
+            for log in logs
+        ]
+        return {"status": "ok", "data": {"api_id": api_id, "logs": log_list}}
     except Exception as e:
         logger.error(f"Get logs failed: {str(e)}")
         raise HTTPException(500, str(e))
@@ -488,39 +683,65 @@ async def delete_api(
 @router.post("/dry-run", response_model=dict)
 async def dry_run(request: dict, session: Session = Depends(get_session)):
     """
-    Execute SQL query without saving (dry-run/test)
+    Execute query without saving to execution logs (dry-run/test).
+    Uses DRY_RUN_API_ID so that record_exec_log() skips logging.
 
-    Request body:
-    {
-        "logic_type": "sql|python|workflow",
-        "logic_body": "SQL query or code",
-        "params": {},
-        "runtime_policy": {}
-    }
+    Supports: sql, http
     """
     try:
         logic_type = request.get("logic_type", "sql")
         logic_body = request.get("logic_body", "")
         params = request.get("params", {})
 
-        if logic_type != "sql":
-            raise HTTPException(400, "Only SQL dry-run is supported")
-
         if not logic_body:
             raise HTTPException(400, "logic_body is required")
 
-        # For now, return a stub result
-        # In real implementation: validate and execute the SQL safely
-        result = {
-            "executed_sql": logic_body,
-            "params": params,
-            "columns": ["result"],
-            "rows": [{"result": 1}],
-            "row_count": 1,
-            "duration_ms": 10,
-        }
+        if logic_type == "sql":
+            result = execute_sql_api(
+                session=session,
+                api_id=DRY_RUN_API_ID,
+                logic_body=logic_body,
+                params=params or None,
+                limit=request.get("limit"),
+                executed_by="dry-run",
+            )
+            return {
+                "status": "ok",
+                "data": {
+                    "result": {
+                        "executed_sql": result.executed_sql,
+                        "params": result.params,
+                        "columns": result.columns,
+                        "rows": result.rows,
+                        "row_count": result.row_count,
+                        "duration_ms": result.duration_ms,
+                    }
+                },
+            }
 
-        return {"status": "ok", "data": {"result": result}}
+        if logic_type == "http":
+            result = execute_http_api(
+                session=session,
+                api_id=DRY_RUN_API_ID,
+                logic_body=logic_body,
+                params=params or None,
+                executed_by="dry-run",
+            )
+            return {
+                "status": "ok",
+                "data": {
+                    "result": {
+                        "executed_sql": result.executed_sql,
+                        "params": result.params,
+                        "columns": result.columns,
+                        "rows": result.rows,
+                        "row_count": result.row_count,
+                        "duration_ms": result.duration_ms,
+                    }
+                },
+            }
+
+        raise HTTPException(400, f"Dry-run not supported for logic_type: {logic_type}")
 
     except HTTPException:
         raise

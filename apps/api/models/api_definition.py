@@ -17,6 +17,8 @@ class ApiMode(str, enum.Enum):
     sql = "sql"
     python = "python"
     workflow = "workflow"
+    http = "http"
+    script = "script"
 
 
 class ApiDefinition(SQLModel, table=True):
