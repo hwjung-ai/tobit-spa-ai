@@ -75,22 +75,23 @@ class DependencyAnalyzer:
                 depends_on=[],
             ))
 
-        # Aggregate depends on primary (needs ci_type filter from primary results)
+        # Aggregate depends on primary only if primary will execute
+        primary_will_execute = plan.primary and plan.primary.keywords
         if plan.aggregate:
-            primary_deps = ["primary"] if plan.primary else []
+            agg_deps = ["primary"] if primary_will_execute else []
             deps.append(ToolDependency(
                 tool_id="aggregate",
-                depends_on=primary_deps,
+                depends_on=agg_deps,
                 output_mapping={
                     "ci_type_filter": "primary.data.rows[0].ci_type"
-                } if plan.primary else {}
+                } if primary_will_execute else {}
             ))
 
         # Metric can depend on aggregate or primary (ci_lookup with metric data)
         if plan.metric:
-            # Prefer ci_lookup (primary) as it already has metric data, fallback to aggregate
-            metric_deps = ["primary"] if plan.primary else (["aggregate"] if plan.aggregate else [])
-            ci_source = "primary" if plan.primary else ("aggregate" if plan.aggregate else None)
+            # Prefer ci_lookup (primary) if it will execute, fallback to aggregate
+            metric_deps = ["primary"] if primary_will_execute else (["aggregate"] if plan.aggregate else [])
+            ci_source = "primary" if primary_will_execute else ("aggregate" if plan.aggregate else None)
             deps.append(ToolDependency(
                 tool_id="metric",
                 depends_on=metric_deps,
@@ -100,10 +101,9 @@ class DependencyAnalyzer:
             ))
 
         # History depends on primary or metric (needs ci_id from results)
-        # Prefer primary to avoid NULL when metric rows are empty
+        # Only depend on primary if primary will actually execute (has keywords)
         if plan.history and plan.history.enabled:
-            if plan.primary:
-                # History depends on primary results
+            if primary_will_execute:
                 deps.append(ToolDependency(
                     tool_id="history",
                     depends_on=["primary"],
@@ -112,7 +112,6 @@ class DependencyAnalyzer:
                     }
                 ))
             elif plan.metric:
-                # History depends on metric results
                 deps.append(ToolDependency(
                     tool_id="history",
                     depends_on=["metric"],
@@ -121,23 +120,29 @@ class DependencyAnalyzer:
                     }
                 ))
             else:
-                # History is independent
+                # History is independent (no CI filter)
                 deps.append(ToolDependency(
                     tool_id="history",
                     depends_on=[],
                 ))
 
-        # Graph depends on primary (needs ci_id from primary results)
+        # Graph depends on primary only if primary will execute
         # NOTE: keep graph last to avoid blocking other tools in serial execution.
         if plan.graph:
-            primary_deps = ["primary"] if plan.primary else []
-            deps.append(ToolDependency(
-                tool_id="graph",
-                depends_on=primary_deps,
-                output_mapping={
-                    "root_ci_id": "primary.data.rows[0].ci_id"
-                } if plan.primary else {}
-            ))
+            if primary_will_execute:
+                deps.append(ToolDependency(
+                    tool_id="graph",
+                    depends_on=["primary"],
+                    output_mapping={
+                        "root_ci_id": "primary.data.rows[0].ci_id"
+                    }
+                ))
+            else:
+                # Graph is independent (queries all relationships)
+                deps.append(ToolDependency(
+                    tool_id="graph",
+                    depends_on=[],
+                ))
 
         return deps
 
@@ -643,6 +648,7 @@ class ToolOrchestrator:
                     "depth": spec_obj.depth,
                     "view": spec_obj.view,
                     "limits": spec_obj.limits.model_dump() if hasattr(spec_obj.limits, 'model_dump') else spec_obj.limits,
+                    "tenant_id": self.context.tenant_id,
                 }
             }
         elif tool_id == "metric":

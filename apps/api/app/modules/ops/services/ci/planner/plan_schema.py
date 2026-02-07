@@ -124,13 +124,13 @@ class MetricSpec(BaseModel):
 
 class HistorySpec(BaseModel):
     enabled: bool = False
-    source: Literal["event_log", "work_history", "maintenance_history"] = "event_log"
+    source: Literal["event_log", "work_history", "maintenance_history", "work_and_maintenance"] = "work_and_maintenance"
     scope: Literal["s1", "ci", "graph"] = "s1"
     mode: Literal["recent"] = "recent"
     time_range: Literal["last_24h", "last_7d", "last_30d", "all_time"] = "last_7d"
     limit: int = 50
     tool_type: str = Field(
-        default="event_log",
+        default="history",
         description="Tool to use for history query execution"
     )
 

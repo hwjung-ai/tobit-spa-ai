@@ -314,8 +314,13 @@ class DynamicTool(BaseTool):
                 error_details={"source_ref": source_ref},
             )
 
-        # Process query template to replace placeholders
-        query = self._process_query_template(query_template, input_data)
+        # For history tool: override query_template based on source parameter
+        source_param = input_data.get("source")
+        if self.name == "history" and source_param and source_param != "event_log":
+            query = self._build_history_query_by_source(source_param, input_data)
+        else:
+            # Process query template to replace placeholders
+            query = self._process_query_template(query_template, input_data)
 
         # source_asset is a dict, not an object
         connection_params = source_asset.get("connection", {})
@@ -337,6 +342,122 @@ class DynamicTool(BaseTool):
                 success=False,
                 error=f"Unsupported database type: {source_type}",
                 error_details={"source_type": source_type},
+            )
+
+    def _build_history_query_by_source(self, source: str, input_data: dict[str, Any]) -> str:
+        """Build history query based on source parameter.
+
+        Supports work_history, maintenance_history, and work_and_maintenance (UNION).
+        """
+        tenant_id = input_data.get("tenant_id", "default")
+        ci_id = input_data.get("ci_id")
+        start_time = input_data.get("start_time")
+        end_time = input_data.get("end_time")
+        limit = input_data.get("limit", 30)
+
+        # Build filter clauses
+        time_filter = ""
+        if start_time:
+            time_filter += f" AND start_time >= '{start_time}'"
+        if end_time:
+            time_filter += f" AND start_time < '{end_time}'"
+
+        ci_filter = ""
+        if ci_id and ci_id != "None" and ci_id != "null":
+            ci_filter = f" AND ci_id = '{ci_id}'"
+
+        if source == "work_and_maintenance":
+            return f"""
+            (
+                SELECT
+                    '작업' AS history_type,
+                    wh.work_type AS type,
+                    wh.summary,
+                    wh.detail,
+                    wh.start_time,
+                    wh.end_time,
+                    wh.duration_min,
+                    wh.result,
+                    c.ci_name,
+                    c.ci_code
+                FROM work_history wh
+                LEFT JOIN ci c ON c.ci_id = wh.ci_id
+                WHERE wh.tenant_id = '{tenant_id}'
+                    {time_filter.replace('start_time', 'wh.start_time')}
+                    {ci_filter.replace('ci_id', 'wh.ci_id')}
+                ORDER BY wh.start_time DESC
+                LIMIT {limit}
+            )
+            UNION ALL
+            (
+                SELECT
+                    '점검' AS history_type,
+                    mh.maint_type AS type,
+                    mh.summary,
+                    mh.detail,
+                    mh.start_time,
+                    mh.end_time,
+                    mh.duration_min,
+                    mh.result,
+                    c.ci_name,
+                    c.ci_code
+                FROM maintenance_history mh
+                LEFT JOIN ci c ON c.ci_id = mh.ci_id
+                WHERE mh.tenant_id = '{tenant_id}'
+                    {time_filter.replace('start_time', 'mh.start_time')}
+                    {ci_filter.replace('ci_id', 'mh.ci_id')}
+                ORDER BY mh.start_time DESC
+                LIMIT {limit}
+            )
+            ORDER BY start_time DESC
+            LIMIT {limit * 2}
+            """
+        elif source == "work_history":
+            return f"""
+            SELECT
+                wh.start_time,
+                wh.work_type,
+                wh.summary,
+                wh.detail,
+                wh.duration_min,
+                wh.result,
+                wh.requested_by,
+                wh.approved_by,
+                wh.impact_level,
+                c.ci_name,
+                c.ci_code
+            FROM work_history wh
+            LEFT JOIN ci c ON c.ci_id = wh.ci_id
+            WHERE wh.tenant_id = '{tenant_id}'
+                {time_filter.replace('start_time', 'wh.start_time')}
+                {ci_filter.replace('ci_id', 'wh.ci_id')}
+            ORDER BY wh.start_time DESC
+            LIMIT {limit}
+            """
+        elif source == "maintenance_history":
+            return f"""
+            SELECT
+                mh.start_time,
+                mh.maint_type,
+                mh.summary,
+                mh.detail,
+                mh.duration_min,
+                mh.performer,
+                mh.result,
+                c.ci_name,
+                c.ci_code
+            FROM maintenance_history mh
+            LEFT JOIN ci c ON c.ci_id = mh.ci_id
+            WHERE mh.tenant_id = '{tenant_id}'
+                {time_filter.replace('start_time', 'mh.start_time')}
+                {ci_filter.replace('ci_id', 'mh.ci_id')}
+            ORDER BY mh.start_time DESC
+            LIMIT {limit}
+            """
+        else:
+            # Fallback to event_log
+            return self._process_query_template(
+                self.tool_config.get("query_template", ""), input_data
             )
 
     async def _execute_http_api(
@@ -399,13 +520,172 @@ class DynamicTool(BaseTool):
     async def _execute_graph_query(
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
-        """Execute graph query tool."""
-        # Placeholder implementation
-        return ToolResult(
-            success=False,
-            error="Graph query not yet implemented",
-            error_details={"tool_type": "graph_query"},
+        """Execute graph query using PostgreSQL ci_ext relationship attributes.
+
+        Builds a graph from ci_ext.attributes fields:
+        - depends_on (array): system-level dependency (e.g. ['erp', 'scada'])
+        - host_server (string): SW → HW hosting relationship
+        - connected_servers (array): network → server connections
+        """
+        from core.db import engine
+        from sqlalchemy import text
+
+        tenant_id = input_data.get("tenant_id", "default")
+        depth = input_data.get("depth", 2)
+        limit = input_data.get("limit", 50)
+        ci_ids = input_data.get("ci_ids", [])
+
+        # Build WHERE clause for source CIs
+        ci_filter = ""
+        if ci_ids and isinstance(ci_ids, list) and len(ci_ids) > 0:
+            ci_list = ", ".join(f"'{cid}'" for cid in ci_ids if cid)
+            if ci_list:
+                ci_filter = f"AND c.ci_id IN ({ci_list})"
+
+        # Query: Get all CIs with their relationship attributes
+        query = f"""
+        WITH ci_with_rels AS (
+            SELECT
+                c.ci_id,
+                c.ci_code,
+                c.ci_name,
+                c.ci_type::text,
+                c.ci_subtype::text,
+                c.status,
+                ce.attributes
+            FROM ci c
+            LEFT JOIN ci_ext ce ON c.ci_id = ce.ci_id
+            WHERE c.tenant_id = '{tenant_id}'
+                AND c.deleted_at IS NULL
+                {ci_filter}
+            LIMIT {limit * 2}
         )
+        SELECT * FROM ci_with_rels
+        """
+
+        try:
+            with engine.connect() as conn:
+                result = conn.execute(text(query))
+                rows = result.fetchall()
+                columns = list(result.keys())
+
+            # Build graph nodes and edges
+            nodes = []
+            edges = []
+            node_ids = set()
+            ci_code_map = {}  # ci_code -> ci_id mapping
+
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                ci_id = str(row_dict["ci_id"])
+                ci_code = row_dict.get("ci_code", "")
+                ci_name = row_dict.get("ci_name", "")
+                ci_type = row_dict.get("ci_type", "")
+                ci_subtype = row_dict.get("ci_subtype", "")
+                attrs = row_dict.get("attributes") or {}
+
+                if ci_id not in node_ids:
+                    nodes.append({
+                        "id": ci_id,
+                        "label": ci_name,
+                        "code": ci_code,
+                        "type": ci_type,
+                        "subtype": ci_subtype,
+                        "status": row_dict.get("status", ""),
+                    })
+                    node_ids.add(ci_id)
+                    ci_code_map[ci_code.lower()] = ci_id
+
+                # Extract relationships from attributes
+                # 1. depends_on (system-level dependencies)
+                depends_on = attrs.get("depends_on", [])
+                if isinstance(depends_on, list):
+                    for dep in depends_on:
+                        dep_lower = str(dep).lower()
+                        if dep_lower in ci_code_map:
+                            edges.append({
+                                "source": ci_id,
+                                "target": ci_code_map[dep_lower],
+                                "relation": "depends_on",
+                                "label": "의존",
+                            })
+
+                # 2. host_server (SW -> HW hosting)
+                host_server = attrs.get("host_server")
+                if host_server:
+                    host_lower = str(host_server).lower()
+                    if host_lower in ci_code_map:
+                        edges.append({
+                            "source": ci_id,
+                            "target": ci_code_map[host_lower],
+                            "relation": "hosted_on",
+                            "label": "호스팅",
+                        })
+
+                # 3. connected_servers (network -> server connections)
+                connected = attrs.get("connected_servers", [])
+                if isinstance(connected, list):
+                    for srv in connected:
+                        srv_lower = str(srv).lower()
+                        if srv_lower in ci_code_map:
+                            edges.append({
+                                "source": ci_id,
+                                "target": ci_code_map[srv_lower],
+                                "relation": "connected_to",
+                                "label": "연결",
+                            })
+
+            # Second pass: resolve depends_on with ci_name matching (for system names like 'erp', 'mes')
+            # Build name-based lookup for unresolved references
+            ci_name_lower_map = {}
+            for node in nodes:
+                name_parts = node["label"].lower().split()
+                for part in name_parts:
+                    if len(part) >= 2:
+                        ci_name_lower_map[part] = node["id"]
+
+            # Re-process depends_on for system-name matches
+            for row in rows:
+                row_dict = dict(zip(columns, row))
+                ci_id = str(row_dict["ci_id"])
+                attrs = row_dict.get("attributes") or {}
+                depends_on = attrs.get("depends_on", [])
+                if isinstance(depends_on, list):
+                    for dep in depends_on:
+                        dep_lower = str(dep).lower()
+                        if dep_lower not in ci_code_map and dep_lower in ci_name_lower_map:
+                            target_id = ci_name_lower_map[dep_lower]
+                            if target_id != ci_id:
+                                # Check if edge already exists
+                                edge_key = (ci_id, target_id, "depends_on")
+                                existing = any(
+                                    (e["source"], e["target"], e["relation"]) == edge_key
+                                    for e in edges
+                                )
+                                if not existing:
+                                    edges.append({
+                                        "source": ci_id,
+                                        "target": target_id,
+                                        "relation": "depends_on",
+                                        "label": "의존",
+                                    })
+
+            return ToolResult(
+                success=True,
+                data={
+                    "nodes": nodes[:limit],
+                    "edges": edges,
+                    "total_nodes": len(nodes),
+                    "total_edges": len(edges),
+                }
+            )
+
+        except Exception as exc:
+            return ToolResult(
+                success=False,
+                error=f"Graph query failed: {str(exc)}",
+                error_details={"exception": str(exc)},
+            )
 
     async def _execute_custom(
         self, context: ToolContext, input_data: dict[str, Any]

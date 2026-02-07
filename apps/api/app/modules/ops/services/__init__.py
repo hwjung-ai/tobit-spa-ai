@@ -334,32 +334,33 @@ def execute_universal(
         # Use the blocks directly from the runner output first
         blocks = []
         if isinstance(result, dict):
-            # 1) Try runner's pre-built blocks
+            # 1) Try runner's pre-built blocks (usually markdown summary from compose)
             runner_blocks = result.get("blocks", [])
             if runner_blocks:
                 blocks = _convert_runner_blocks(runner_blocks, mode)
                 logger.info(f"Used {len(blocks)} blocks from runner output")
 
-            # 2) Fallback: try execution_results in trace
-            if not blocks:
-                trace = result.get("trace", {})
-                execution_results = trace.get("execution_results", {})
-                if not execution_results:
-                    # Try nested in stage_outputs
-                    for stage_out in (trace.get("stage_outputs") or []):
-                        if isinstance(stage_out, dict):
-                            sr = stage_out.get("result", {})
-                            if isinstance(sr, dict) and "execution_results" in sr:
-                                execution_results = sr["execution_results"]
-                                break
+            # 2) Extract execution_results from trace for data blocks
+            trace_data = result.get("trace", {})
+            execution_results = []
+            for stage_out in (trace_data.get("stage_outputs") or []):
+                if isinstance(stage_out, dict):
+                    sr = stage_out.get("result", {})
+                    if isinstance(sr, dict):
+                        base_result = sr.get("base_result", sr)
+                        er = base_result.get("execution_results", [])
+                        if er:
+                            execution_results = er
+                            break
 
-                if execution_results:
-                    blocks = _convert_result_to_blocks(
-                        {"execution_results": execution_results}, mode
-                    )
-                    logger.info(f"Used {len(blocks)} blocks from execution_results")
+            # 3) Augment with data blocks from execution_results
+            if execution_results:
+                data_blocks = _build_data_blocks_from_results(execution_results, mode)
+                if data_blocks:
+                    blocks.extend(data_blocks)
+                    logger.info(f"Added {len(data_blocks)} data blocks from execution_results")
 
-            # 3) Fallback: use answer text as markdown
+            # 4) Fallback: if no blocks at all, use answer text
             if not blocks and result.get("answer"):
                 blocks = [MarkdownBlock(
                     type="markdown",
@@ -459,17 +460,15 @@ def _create_simple_plan(mode: str) -> Any:
         )
 
     elif mode == "graph":
-        # Graph mode: Analyze CI relationships
+        # Graph mode: Analyze CI relationships (independent)
         intent = Intent.EXPAND
         view = View.NEIGHBORS
+        primary = PrimarySpec(limit=5)  # Default, won't execute (no keywords)
+        aggregate = AggregateSpec()  # Default empty
         graph = GraphSpec(
             depth=2,
             view=View.NEIGHBORS,
             tool_type="ci_graph"
-        )
-        primary = PrimarySpec(
-            limit=5,
-            tool_type="ci_lookup"
         )
 
     elif mode in ("metric", "all"):
@@ -489,19 +488,15 @@ def _create_simple_plan(mode: str) -> Any:
         )
 
     elif mode in ("hist", "history"):
-        # History mode
+        # History mode - independent history query
         intent = Intent.LIST
-        aggregate = AggregateSpec(
-            group_by=["ci_type"],
-            metrics=["ci_name"],
-            filters=[],
-            top_n=10,
-        )
+        primary = PrimarySpec(limit=10)  # Default, won't execute (no keywords)
+        aggregate = AggregateSpec()  # Default empty
         history = HistorySpec(
             enabled=True,
-            source="event_log",
-            time_range="last_7d",
-            limit=20,
+            source="work_and_maintenance",
+            time_range="all_time",
+            limit=30,
         )
 
     return Plan(
@@ -516,6 +511,66 @@ def _create_simple_plan(mode: str) -> Any:
         output=output,
         execution_strategy=ExecutionStrategy.SERIAL,
     )
+
+
+def _build_data_blocks_from_results(
+    execution_results: list, mode: str
+) -> list:
+    """Build data blocks (table, graph) from execution_results.
+
+    Converts raw tool results into structured blocks for display.
+    """
+    blocks = []
+
+    for er in execution_results:
+        if not isinstance(er, dict) or not er.get("success"):
+            continue
+
+        tool_name = er.get("tool_name", "")
+        data = er.get("data", {})
+        if not isinstance(data, dict):
+            continue
+
+        rows = data.get("rows", [])
+        nodes = data.get("nodes", [])
+        edges = data.get("edges", [])
+
+        # History/aggregate results → table block
+        if tool_name in ("history", "aggregate") and rows:
+            if not rows:
+                continue
+            # Build column list from first row
+            first_row = rows[0] if isinstance(rows[0], dict) else {}
+            columns = [k for k in first_row.keys() if k != "orchestration"]
+            # Build row data
+            table_rows = []
+            for row in rows:
+                if isinstance(row, dict):
+                    table_rows.append([
+                        str(row.get(col, "")) for col in columns
+                    ])
+
+            title_map = {
+                "history": "작업이력 / 유지보수 점검 이력",
+                "aggregate": "집계 결과",
+            }
+            blocks.append({
+                "type": "table",
+                "title": title_map.get(tool_name, tool_name),
+                "columns": columns,
+                "rows": table_rows,
+            })
+
+        # Graph results → network block
+        if tool_name == "graph" and (nodes or edges):
+            blocks.append({
+                "type": "network",
+                "title": "CI 관계도",
+                "nodes": nodes,
+                "edges": edges,
+            })
+
+    return blocks
 
 
 def _convert_runner_blocks(runner_blocks: list, mode: str) -> list[AnswerBlock]:

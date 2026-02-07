@@ -302,19 +302,24 @@ class StageExecutor:
             plan = Plan(**plan_dict) if isinstance(plan_dict, dict) else plan_dict
             if plan.history and plan.history.enabled:
                 normalized_question = question_text.lower()
-                if plan.history.tool_type in {"history", "event_log"}:
+                if plan.history.tool_type in {"history", "event_log", "work_and_maintenance"}:
                     maintenance_keywords = ("점검", "정비", "maintenance", "inspection", "maint")
-                    work_keywords = ("작업 이력", "작업이력", "work history", "작업", "work")
+                    work_keywords = ("작업 이력", "작업이력", "work history", "work_history")
+                    event_keywords = ("이벤트", "event", "event_log", "알림", "alert")
                     if any(key in normalized_question for key in maintenance_keywords):
-                        tool_type = "maintenance_history"
+                        source = "maintenance_history"
                     elif any(key in normalized_question for key in work_keywords):
-                        tool_type = "work_history"
+                        source = "work_history"
+                    elif any(key in normalized_question for key in event_keywords):
+                        source = "event_log"
                     else:
-                        tool_type = "event_log"
+                        # Default: 작업이력 + 유지보수 점검 이력 통합
+                        source = "work_and_maintenance"
+                    # tool_type stays "history" (registry lookup name), source controls query selection
                     plan = plan.model_copy(
                         update={
                             "history": plan.history.copy(
-                                update={"tool_type": tool_type, "source": tool_type}
+                                update={"tool_type": "history", "source": source}
                             )
                         }
                     )
