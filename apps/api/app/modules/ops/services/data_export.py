@@ -1,6 +1,6 @@
 """Data export service for dashboard and query results.
 
-Supports CSV, JSON, and Excel export formats.
+Supports CSV and JSON export formats.
 """
 
 import csv
@@ -9,8 +9,6 @@ import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -103,53 +101,6 @@ class DataExporter:
             raise
     
     @staticmethod
-    def export_to_excel(
-        data: List[Dict[str, Any]],
-        filename: Optional[str] = None,
-        sheet_name: str = "Data"
-    ) -> Dict[str, Any]:
-        """
-        Export data to Excel format.
-        
-        Args:
-            data: List of dictionaries to export
-            filename: Optional filename (defaults to timestamp)
-            sheet_name: Name of the Excel sheet
-            
-        Returns:
-            Dict with filename and content
-        """
-        try:
-            if not data:
-                raise ValueError("No data to export")
-            
-            # Generate filename
-            if filename is None:
-                filename = f"export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.xlsx"
-            
-            # Convert to DataFrame
-            df = pd.DataFrame(data)
-            
-            # Create Excel in memory
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
-            
-            output.seek(0)
-            content = output.getvalue()
-            
-            return {
-                "filename": filename,
-                "content": content,
-                "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "size": len(content)
-            }
-            
-        except Exception as e:
-            logger.error(f"Excel export failed: {e}", exc_info=True)
-            raise
-    
-    @staticmethod
     def export_observability_data(
         data: Dict[str, Any],
         format_type: str = "csv"
@@ -230,13 +181,8 @@ class DataExporter:
                     flattened_data,
                     filename=f"observability_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
                 )
-            elif format_type == "excel":
-                return DataExporter.export_to_excel(
-                    flattened_data,
-                    filename=f"observability_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.xlsx"
-                )
             else:
-                raise ValueError(f"Unsupported format: {format_type}")
+                raise ValueError(f"Unsupported format: {format_type}. Supported formats: csv, json")
             
         except Exception as e:
             logger.error(f"Observability data export failed: {e}", exc_info=True)
@@ -298,13 +244,8 @@ class DataExporter:
                     data,
                     filename=f"{filename_base}.json"
                 )
-            elif format_type == "excel":
-                return DataExporter.export_to_excel(
-                    data,
-                    filename=f"{filename_base}.xlsx"
-                )
             else:
-                raise ValueError(f"Unsupported format: {format_type}")
+                raise ValueError(f"Unsupported format: {format_type}. Supported formats: csv, json")
             
         except Exception as e:
             logger.error(f"Query result export failed: {e}", exc_info=True)

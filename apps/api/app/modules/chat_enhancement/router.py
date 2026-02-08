@@ -4,6 +4,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
+from app.modules.auth.models import TbUser
 from core.auth import get_current_user
 from core.config import get_settings
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -95,7 +96,7 @@ class ExportRequest(BaseModel):
 
 @router.post("/threads", response_model=ThreadResponse)
 async def create_thread(
-    request: CreateThreadRequest, current_user: dict = Depends(get_current_user)
+    request: CreateThreadRequest, current_user: TbUser = Depends(get_current_user)
 ):
     """
     Create a new chat thread
@@ -108,7 +109,7 @@ async def create_thread(
 
     try:
         logger.info(
-            f"Creating chat thread for user {current_user.get('id')}, "
+            f"Creating chat thread for user {getattr(current_user, 'id', 'anonymous')}, "
             f"title: {request.title}"
         )
 
@@ -137,7 +138,7 @@ async def create_thread(
 
 
 @router.get("/threads/{thread_id}", response_model=ThreadResponse)
-async def get_thread(thread_id: str, current_user: dict = Depends(get_current_user)):
+async def get_thread(thread_id: str, current_user: TbUser = Depends(get_current_user)):
     """
     Get chat thread details
 
@@ -176,7 +177,7 @@ async def get_thread(thread_id: str, current_user: dict = Depends(get_current_us
 async def add_message(
     thread_id: str,
     request: AddMessageRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Add message to chat thread
@@ -231,7 +232,7 @@ async def get_thread_messages(
     thread_id: str,
     page: int = Query(1, ge=1),
     per_page: int = Query(20, ge=1, le=100),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Get paginated messages from a thread
@@ -273,7 +274,7 @@ async def get_thread_messages(
 
 @router.post("/search", response_model=dict)
 async def search_history(
-    request: SearchHistoryRequest, current_user: dict = Depends(get_current_user)
+    request: SearchHistoryRequest, current_user: TbUser = Depends(get_current_user)
 ):
     """
     Search across chat history
@@ -322,7 +323,7 @@ async def search_history(
 async def export_conversation(
     thread_id: str,
     request: ExportRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Export conversation in specified format
@@ -368,7 +369,7 @@ async def export_conversation(
 
 
 @router.delete("/threads/{thread_id}", response_model=dict)
-async def delete_thread(thread_id: str, current_user: dict = Depends(get_current_user)):
+async def delete_thread(thread_id: str, current_user: TbUser = Depends(get_current_user)):
     """
     Soft delete a chat thread
 
@@ -398,7 +399,7 @@ async def list_threads(
     per_page: int = Query(20, ge=1, le=100),
     sort_by: str = Query("updated_at"),
     include_deleted: bool = Query(False),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     List all chat threads for current user
@@ -416,7 +417,7 @@ async def list_threads(
         (page - 1) * per_page
 
         logger.info(
-            f"Listing threads for user {current_user.get('id')}, "
+            f"Listing threads for user {getattr(current_user, 'id', 'anonymous')}, "
             f"page={page}, per_page={per_page}, sort_by={sort_by}"
         )
 

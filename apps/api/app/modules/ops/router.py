@@ -2395,14 +2395,10 @@ def execute_action(
             )
 
         elif action == "debug":
-            # Run diagnostics
-            # TODO: Implement debug service
-            result = {
-                "debug_id": str(uuid.uuid4()),
-                "status": "debugging",
-                "logs": [],
-                "recommendations": [],
-            }
+            # Run diagnostics on a specific execution trace
+            from app.modules.ops.routes.actions import _run_debug_diagnostics
+            execution_id = params.get("execution_id") or params.get("trace_id")
+            result = _run_debug_diagnostics(session, execution_id, stage)
 
         elif action == "skip":
             # Skip stage
@@ -2412,9 +2408,10 @@ def execute_action(
             )
 
         elif action == "rollback":
-            # Rollback to previous version
-            # TODO: Implement rollback service
-            result = {"rollback_id": str(uuid.uuid4()), "status": "rollback_initiated"}
+            # Rollback to a previous execution by re-running with original params
+            from app.modules.ops.routes.actions import _run_rollback
+            execution_id = params.get("execution_id") or params.get("trace_id")
+            result = _run_rollback(session, execution_id, params)
 
         else:
             return ResponseEnvelope.error(message=f"Unknown action: {action}")

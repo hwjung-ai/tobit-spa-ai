@@ -3,6 +3,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 
+from app.modules.auth.models import TbUser
 from core.auth import get_current_user
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -63,7 +64,7 @@ async def list_users(
     per_page: int = Query(20, ge=1, le=100),
     active_only: bool = Query(False),
     search: Optional[str] = Query(None),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     List users with filtering and pagination
@@ -94,7 +95,7 @@ async def list_users(
 
 
 @router.get("/users/{user_id}")
-async def get_user(user_id: str, current_user: dict = Depends(get_current_user)):
+async def get_user(user_id: str, current_user: TbUser = Depends(get_current_user)):
     """Get user details and permissions"""
 
     try:
@@ -122,7 +123,7 @@ async def get_user(user_id: str, current_user: dict = Depends(get_current_user))
 async def update_user_status(
     user_id: str,
     request: UserStatusUpdateRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Update user active status"""
 
@@ -149,7 +150,7 @@ async def update_user_status(
 async def grant_permission(
     user_id: str,
     request: PermissionRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Grant permission to user"""
 
@@ -162,7 +163,7 @@ async def grant_permission(
         success = user_service.grant_permission(
             user_id=user_id,
             permission=request.permission,
-            admin_id=current_user.get("id"),
+            admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
         )
 
@@ -185,7 +186,7 @@ async def grant_permission(
 async def revoke_permission(
     user_id: str,
     request: PermissionRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Revoke permission from user"""
 
@@ -198,7 +199,7 @@ async def revoke_permission(
         success = user_service.revoke_permission(
             user_id=user_id,
             permission=request.permission,
-            admin_id=current_user.get("id"),
+            admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
         )
 
@@ -221,7 +222,7 @@ async def revoke_permission(
 async def get_user_audit_log(
     user_id: str,
     limit: int = Query(50, ge=1, le=500),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Get permission audit log for a user"""
 
@@ -242,7 +243,7 @@ async def get_user_audit_log(
 
 
 @router.get("/users/activity-summary")
-async def get_user_activity_summary(current_user: dict = Depends(get_current_user)):
+async def get_user_activity_summary(current_user: TbUser = Depends(get_current_user)):
     """Get user activity summary"""
 
     try:
@@ -258,7 +259,7 @@ async def get_user_activity_summary(current_user: dict = Depends(get_current_use
 
 
 @router.get("/system/health")
-async def get_system_health(current_user: dict = Depends(get_current_user)):
+async def get_system_health(current_user: TbUser = Depends(get_current_user)):
     """Get current system health status"""
 
     try:
@@ -279,7 +280,7 @@ async def get_system_health(current_user: dict = Depends(get_current_user)):
 @router.get("/system/metrics")
 async def get_system_metrics(
     limit: int = Query(288, ge=1, le=1000),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Get historical system metrics"""
 
@@ -299,7 +300,7 @@ async def get_system_metrics(
 async def get_system_alerts(
     severity: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Get system alerts"""
 
@@ -321,7 +322,7 @@ async def get_system_alerts(
 @router.get("/settings")
 async def get_settings(
     keys: Optional[List[str]] = Query(None),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Get system settings"""
 
@@ -341,7 +342,7 @@ async def get_settings(
 async def update_setting(
     key: str,
     request: SettingUpdateRequest,
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Update a single setting"""
 
@@ -351,7 +352,7 @@ async def update_setting(
         success = settings_service.update_setting(
             key=key,
             value=request.value,
-            admin_id=current_user.get("id"),
+            admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
         )
 
@@ -373,7 +374,7 @@ async def update_setting(
 
 @router.patch("/settings")
 async def update_settings_batch(
-    request: SettingsBatchUpdateRequest, current_user: dict = Depends(get_current_user)
+    request: SettingsBatchUpdateRequest, current_user: TbUser = Depends(get_current_user)
 ):
     """Update multiple settings"""
 
@@ -382,7 +383,7 @@ async def update_settings_batch(
 
         results = settings_service.update_settings_batch(
             updates=request.settings,
-            admin_id=current_user.get("id"),
+            admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
         )
 
@@ -401,14 +402,14 @@ async def update_settings_batch(
 
 
 @router.post("/settings/reset-defaults")
-async def reset_settings_to_defaults(current_user: dict = Depends(get_current_user)):
+async def reset_settings_to_defaults(current_user: TbUser = Depends(get_current_user)):
     """Reset all settings to defaults"""
 
     try:
         logger.warning("Resetting all settings to defaults")
 
         count = settings_service.reset_to_defaults(
-            admin_id=current_user.get("id"),
+            admin_id=getattr(current_user, "id", "anonymous"),
             reason="Admin reset to defaults",
         )
 
@@ -423,7 +424,7 @@ async def reset_settings_to_defaults(current_user: dict = Depends(get_current_us
 
 
 @router.get("/settings/categories")
-async def get_settings_by_category(current_user: dict = Depends(get_current_user)):
+async def get_settings_by_category(current_user: TbUser = Depends(get_current_user)):
     """Get settings grouped by category"""
 
     try:
@@ -442,7 +443,7 @@ async def get_settings_by_category(current_user: dict = Depends(get_current_user
 async def get_settings_audit_log(
     key: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Get settings change audit log"""
 

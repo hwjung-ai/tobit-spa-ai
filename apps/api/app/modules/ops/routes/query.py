@@ -15,7 +15,7 @@ from typing import Any
 
 from core.db import get_session_context
 from core.logging import get_logger, set_request_context
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request
 from fastapi.encoders import jsonable_encoder
 from models.history import QueryHistory
 from schemas import ResponseEnvelope
@@ -27,6 +27,7 @@ from app.modules.ops.services import handle_ops_query
 from app.modules.ops.services.observability_service import collect_observability_metrics
 from app.modules.ops.services.data_export import DataExporter
 from app.modules.ops.security import SecurityUtils
+from .utils import _tenant_id
 from fastapi.responses import Response
 
 router = APIRouter(prefix="/ops", tags=["ops"])
@@ -34,7 +35,11 @@ logger = get_logger(__name__)
 
 
 @router.post("/query", response_model=ResponseEnvelope)
-def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
+def query_ops(
+    payload: OpsQueryRequest,
+    request: Request,
+    tenant_id: str = Depends(_tenant_id),
+) -> ResponseEnvelope:
     """Process OPS query with specified mode.
 
     Creates a history entry for the query, executes the query using the specified
@@ -53,11 +58,6 @@ def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
     """
     # 요청 받을 때 history 생성 (상태: processing)
     user_id = request.headers.get("X-User-Id", "default")
-    tenant_id = request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required")
 
     # Set request context for tenant_id to be available throughout the request
     request_id = str(uuid.uuid4())
@@ -165,10 +165,10 @@ def export_observability_data(
 ) -> ResponseEnvelope:
     """Export observability dashboard data.
 
-    Exports observability metrics, stats, timeline, and errors to CSV, JSON, or Excel format.
+    Exports observability metrics, stats, timeline, and errors to CSV or JSON format.
 
     Args:
-        format_type: Export format (csv, json, excel)
+        format_type: Export format (csv, json)
         session: Database session dependency
 
     Returns:

@@ -104,12 +104,9 @@ class CiAskResponse(BaseModel):
 
 
 def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
+    """Extract tenant ID from header. Falls back to 'default' if not provided."""
     if not x_tenant_id:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail="X-Tenant-Id header is required"
-        )
+        x_tenant_id = "default"
     return x_tenant_id
 
 

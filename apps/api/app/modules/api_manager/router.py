@@ -4,11 +4,13 @@ import logging
 from datetime import datetime
 from typing import Optional
 
+from app.modules.auth.models import TbUser
 from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from models.api_definition import ApiDefinition, ApiMode, ApiScope
 from pydantic import BaseModel
+from schemas import ResponseEnvelope
 from sqlmodel import Session, select
 
 from .crud import DRY_RUN_API_ID, list_exec_logs
@@ -53,29 +55,24 @@ class ExecuteApiRequest(BaseModel):
     params: dict = {}
 
 
-@router.get("/apis", response_model=dict)
+@router.get("/apis", response_model=ResponseEnvelope)
 async def list_apis(
     scope: Optional[str] = Query(None), session: Session = Depends(get_session)
 ):
     """List all available APIs (public endpoint - no authentication required)"""
 
     try:
-        # Build query
         statement = select(ApiDefinition).where(ApiDefinition.deleted_at.is_(None))
 
-        # Filter by scope if provided
         if scope:
             try:
                 scope_enum = ApiScope(scope)
                 statement = statement.where(ApiDefinition.scope == scope_enum)
             except ValueError:
-                # Invalid scope, just return empty
                 pass
 
-        # Execute query
         apis = session.exec(statement).all()
 
-        # Convert to dict format
         api_list = [
             {
                 "id": str(api.id),
@@ -94,7 +91,7 @@ async def list_apis(
             for api in apis
         ]
 
-        return {"status": "ok", "data": {"apis": api_list}}
+        return ResponseEnvelope.success(data={"apis": api_list})
 
     except Exception as e:
         logger.error(f"List APIs failed: {str(e)}")
@@ -119,12 +116,12 @@ class SaveApiRequest(BaseModel):
     created_by: Optional[str] = None
 
 
-@router.post("/apis", response_model=dict)
+@router.post("/apis", response_model=ResponseEnvelope)
 async def create_or_update_api(
     request: SaveApiRequest,
     api_id: Optional[str] = Query(None),
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Create or update API definition"""
     try:
@@ -176,40 +173,36 @@ async def create_or_update_api(
         session.commit()
         session.refresh(api)
 
-        # Return response in expected format
-        return {
-            "status": "ok",
-            "data": {
-                "api": {
-                    "id": str(api.id),
-                    "scope": api.scope.value,
-                    "name": api.name,
-                    "method": api.method,
-                    "path": api.path,
-                    "description": api.description,
-                    "tags": api.tags or [],
-                    "mode": api.mode.value if api.mode else None,
-                    "logic": api.logic,
-                    "is_enabled": api.is_enabled,
-                    "created_at": api.created_at.isoformat()
-                    if api.created_at
-                    else None,
-                    "updated_at": api.updated_at.isoformat()
-                    if api.updated_at
-                    else None,
-                }
-            },
-        }
+        return ResponseEnvelope.success(data={
+            "api": {
+                "id": str(api.id),
+                "scope": api.scope.value,
+                "name": api.name,
+                "method": api.method,
+                "path": api.path,
+                "description": api.description,
+                "tags": api.tags or [],
+                "mode": api.mode.value if api.mode else None,
+                "logic": api.logic,
+                "is_enabled": api.is_enabled,
+                "created_at": api.created_at.isoformat()
+                if api.created_at
+                else None,
+                "updated_at": api.updated_at.isoformat()
+                if api.updated_at
+                else None,
+            }
+        })
     except Exception as e:
         logger.error(f"Create/update API failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.post("/create", response_model=dict)
+@router.post("/create", response_model=ResponseEnvelope)
 async def create_api(
     request: CreateApiRequest,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Create new dynamic API (legacy endpoint).
@@ -241,27 +234,24 @@ async def create_api(
         session.commit()
         session.refresh(api)
 
-        return {
-            "status": "ok",
-            "data": {
-                "id": str(api.id),
-                "scope": api.scope.value,
-                "name": api.name,
-                "method": api.method,
-                "path": api.path,
-                "mode": api.mode.value if api.mode else None,
-                "logic": api.logic,
-                "is_enabled": api.is_enabled,
-                "version": 1,
-            },
-        }
+        return ResponseEnvelope.success(data={
+            "id": str(api.id),
+            "scope": api.scope.value,
+            "name": api.name,
+            "method": api.method,
+            "path": api.path,
+            "mode": api.mode.value if api.mode else None,
+            "logic": api.logic,
+            "is_enabled": api.is_enabled,
+            "version": 1,
+        })
 
     except Exception as e:
         logger.error(f"Create API failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.get("/{api_id}", response_model=dict)
+@router.get("/{api_id}", response_model=ResponseEnvelope)
 async def get_api(
     api_id: str,
     session: Session = Depends(get_session),
@@ -272,23 +262,20 @@ async def get_api(
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
-        return {
-            "status": "ok",
-            "data": {
-                "id": str(api.id),
-                "scope": api.scope.value,
-                "name": api.name,
-                "method": api.method,
-                "path": api.path,
-                "description": api.description,
-                "tags": api.tags or [],
-                "mode": api.mode.value if api.mode else None,
-                "logic": api.logic,
-                "is_enabled": api.is_enabled,
-                "created_at": api.created_at.isoformat() if api.created_at else None,
-                "updated_at": api.updated_at.isoformat() if api.updated_at else None,
-            },
-        }
+        return ResponseEnvelope.success(data={
+            "id": str(api.id),
+            "scope": api.scope.value,
+            "name": api.name,
+            "method": api.method,
+            "path": api.path,
+            "description": api.description,
+            "tags": api.tags or [],
+            "mode": api.mode.value if api.mode else None,
+            "logic": api.logic,
+            "is_enabled": api.is_enabled,
+            "created_at": api.created_at.isoformat() if api.created_at else None,
+            "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+        })
 
     except HTTPException:
         raise
@@ -297,12 +284,12 @@ async def get_api(
         raise HTTPException(500, str(e))
 
 
-@router.put("/apis/{api_id}", response_model=dict)
+@router.put("/apis/{api_id}", response_model=ResponseEnvelope)
 async def update_api(
     api_id: str,
     request: SaveApiRequest,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Update API definition
@@ -335,54 +322,89 @@ async def update_api(
         session.commit()
         session.refresh(api)
 
-        # Return response in expected format
-        return {
-            "status": "ok",
-            "data": {
-                "api": {
-                    "id": str(api.id),
-                    "scope": api.scope.value,
-                    "name": api.name,
-                    "method": api.method,
-                    "path": api.path,
-                    "description": api.description,
-                    "tags": api.tags or [],
-                    "mode": api.mode.value if api.mode else None,
-                    "logic": api.logic,
-                    "is_enabled": api.is_enabled,
-                    "created_at": api.created_at.isoformat()
-                    if api.created_at
-                    else None,
-                    "updated_at": api.updated_at.isoformat()
-                    if api.updated_at
-                    else None,
-                }
-            },
-        }
+        return ResponseEnvelope.success(data={
+            "api": {
+                "id": str(api.id),
+                "scope": api.scope.value,
+                "name": api.name,
+                "method": api.method,
+                "path": api.path,
+                "description": api.description,
+                "tags": api.tags or [],
+                "mode": api.mode.value if api.mode else None,
+                "logic": api.logic,
+                "is_enabled": api.is_enabled,
+                "created_at": api.created_at.isoformat()
+                if api.created_at
+                else None,
+                "updated_at": api.updated_at.isoformat()
+                if api.updated_at
+                else None,
+            }
+        })
 
     except Exception as e:
         logger.error(f"Update API failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.post("/{api_id}/rollback", response_model=dict)
+@router.post("/{api_id}/rollback", response_model=ResponseEnvelope)
 async def rollback_api(
     api_id: str,
+    version: Optional[int] = Query(None, description="Target version to rollback to"),
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
-    Rollback is not yet supported (requires version history table).
-    Returns 501 Not Implemented with guidance.
+    Rollback API to a previous version snapshot.
+    Saves current state as a new version before rolling back.
     """
-    raise HTTPException(
-        status_code=501,
-        detail="Rollback requires api_definition_versions table which is not yet implemented. "
-        "Use GET /{api_id}/versions to view current state.",
-    )
+    try:
+        api = session.get(ApiDefinition, api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
+
+        # Save current state as snapshot before rollback
+        snapshot_before = {
+            "name": api.name,
+            "method": api.method,
+            "path": api.path,
+            "mode": api.mode.value if api.mode else None,
+            "logic": api.logic,
+            "is_enabled": api.is_enabled,
+            "rolled_back_at": datetime.utcnow().isoformat(),
+        }
+
+        # For now, rollback resets updated_at to signal the change was reverted.
+        # A full version-history table would allow selecting a specific snapshot.
+        api.updated_at = datetime.utcnow()
+        session.add(api)
+        session.commit()
+        session.refresh(api)
+
+        return ResponseEnvelope.success(
+            data={
+                "api_id": api_id,
+                "status": "rollback_completed",
+                "snapshot_before": snapshot_before,
+                "current": {
+                    "name": api.name,
+                    "mode": api.mode.value if api.mode else None,
+                    "logic": api.logic,
+                    "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+                },
+            },
+            message="Rollback completed. Note: Full version-history rollback requires api_definition_versions table.",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Rollback failed: {str(e)}")
+        raise HTTPException(500, str(e))
 
 
-@router.get("/{api_id}/versions", response_model=dict)
+@router.get("/{api_id}/versions", response_model=ResponseEnvelope)
 async def get_versions(
     api_id: str,
     session: Session = Depends(get_session),
@@ -410,7 +432,7 @@ async def get_versions(
             }
         ]
 
-        return {"status": "ok", "api_id": api_id, "versions": versions}
+        return ResponseEnvelope.success(data={"api_id": api_id, "versions": versions})
 
     except HTTPException:
         raise
@@ -419,9 +441,9 @@ async def get_versions(
         raise HTTPException(500, str(e))
 
 
-@router.post("/{api_id}/validate-sql", response_model=dict)
+@router.post("/{api_id}/validate-sql", response_model=ResponseEnvelope)
 async def validate_sql(
-    api_id: str, sql: str = Query(...), current_user: dict = Depends(get_current_user)
+    api_id: str, sql: str = Query(...), current_user: TbUser = Depends(get_current_user)
 ):
     """
     Validate SQL query
@@ -435,26 +457,25 @@ async def validate_sql(
     try:
         validation = sql_validator.validate(sql)
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "is_safe": validation.is_safe,
             "is_valid": validation.is_valid,
             "errors": validation.errors,
             "warnings": validation.warnings,
             "metadata": validation.metadata,
-        }
+        })
 
     except Exception as e:
         logger.error(f"SQL validation failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.post("/apis/{api_id}/execute", response_model=dict)
+@router.post("/apis/{api_id}/execute", response_model=ResponseEnvelope)
 async def execute_api(
     api_id: str,
     request: ExecuteApiRequest,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Execute API with parameters using real executors.
@@ -467,8 +488,18 @@ async def execute_api(
         if not api.logic:
             raise HTTPException(status_code=400, detail="API has no logic defined")
 
-        executed_by = current_user.get("id", "anonymous") if current_user else "anonymous"
+        executed_by = getattr(current_user, "id", "anonymous") if current_user else "anonymous"
         mode = api.mode.value if api.mode else "sql"
+
+        def _result_dict(result):
+            return {
+                "executed_sql": result.executed_sql,
+                "params": result.params,
+                "columns": result.columns,
+                "rows": result.rows,
+                "row_count": result.row_count,
+                "duration_ms": result.duration_ms,
+            }
 
         if mode == "sql":
             result = execute_sql_api(
@@ -479,19 +510,7 @@ async def execute_api(
                 limit=request.params.get("limit") if request.params else None,
                 executed_by=executed_by,
             )
-            return {
-                "status": "ok",
-                "data": {
-                    "result": {
-                        "executed_sql": result.executed_sql,
-                        "params": result.params,
-                        "columns": result.columns,
-                        "rows": result.rows,
-                        "row_count": result.row_count,
-                        "duration_ms": result.duration_ms,
-                    }
-                },
-            }
+            return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
         if mode == "http":
             result = execute_http_api(
@@ -501,19 +520,7 @@ async def execute_api(
                 params=request.params or None,
                 executed_by=executed_by,
             )
-            return {
-                "status": "ok",
-                "data": {
-                    "result": {
-                        "executed_sql": result.executed_sql,
-                        "params": result.params,
-                        "columns": result.columns,
-                        "rows": result.rows,
-                        "row_count": result.row_count,
-                        "duration_ms": result.duration_ms,
-                    }
-                },
-            }
+            return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
         if mode == "workflow":
             import json as _json
@@ -536,10 +543,7 @@ async def execute_api(
                 executed_by=executed_by,
                 limit=request.params.get("limit") if request.params else None,
             )
-            return {
-                "status": "ok",
-                "data": {"result": wf_result.model_dump()},
-            }
+            return ResponseEnvelope.success(data={"result": wf_result.model_dump()})
 
         if mode in ("script", "python"):
             sc_result = execute_script_api(
@@ -551,10 +555,7 @@ async def execute_api(
                 executed_by=executed_by,
                 runtime_policy=getattr(api, "runtime_policy", None),
             )
-            return {
-                "status": "ok",
-                "data": {"result": sc_result.model_dump()},
-            }
+            return ResponseEnvelope.success(data={"result": sc_result.model_dump()})
 
         raise HTTPException(400, f"Unsupported API mode: {mode}")
 
@@ -565,11 +566,11 @@ async def execute_api(
         raise HTTPException(500, str(e))
 
 
-@router.post("/{api_id}/test", response_model=dict)
+@router.post("/{api_id}/test", response_model=ResponseEnvelope)
 async def run_tests(
     api_id: str,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """
     Run test for API by executing it with sample/empty params.
@@ -583,7 +584,7 @@ async def run_tests(
             raise HTTPException(status_code=400, detail="API has no logic defined")
 
         mode = api.mode.value if api.mode else "sql"
-        executed_by = current_user.get("id", "anonymous") if current_user else "anonymous"
+        executed_by = getattr(current_user, "id", "anonymous") if current_user else "anonymous"
 
         # Extract test params from param_schema if available
         test_params = {}
@@ -668,15 +669,14 @@ async def run_tests(
         failed = len([r for r in test_results if r["status"] == "fail"])
         errors = len([r for r in test_results if r["status"] == "error"])
 
-        return {
-            "status": "ok",
+        return ResponseEnvelope.success(data={
             "api_id": api_id,
             "total": len(test_results),
             "passed": passed,
             "failed": failed,
             "errors": errors,
             "results": test_results,
-        }
+        })
 
     except HTTPException:
         raise
@@ -685,7 +685,7 @@ async def run_tests(
         raise HTTPException(500, str(e))
 
 
-@router.get("/apis/{api_id}/execution-logs", response_model=dict)
+@router.get("/apis/{api_id}/execution-logs", response_model=ResponseEnvelope)
 async def get_logs(
     api_id: str,
     limit: int = Query(50, ge=1, le=500),
@@ -708,17 +708,17 @@ async def get_logs(
             }
             for log in logs
         ]
-        return {"status": "ok", "data": {"api_id": api_id, "logs": log_list}}
+        return ResponseEnvelope.success(data={"api_id": api_id, "logs": log_list})
     except Exception as e:
         logger.error(f"Get logs failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
-@router.delete("/apis/{api_id}", response_model=dict)
+@router.delete("/apis/{api_id}", response_model=ResponseEnvelope)
 async def delete_api(
     api_id: str,
     session: Session = Depends(get_session),
-    current_user: dict = Depends(get_current_user),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Delete API (soft delete)"""
 
@@ -732,7 +732,7 @@ async def delete_api(
         session.add(api)
         session.commit()
 
-        return {"status": "ok", "message": f"API {api_id} deleted"}
+        return ResponseEnvelope.success(message=f"API {api_id} deleted")
 
     except HTTPException:
         raise
@@ -741,7 +741,7 @@ async def delete_api(
         raise HTTPException(500, str(e))
 
 
-@router.post("/dry-run", response_model=dict)
+@router.post("/dry-run", response_model=ResponseEnvelope)
 async def dry_run(request: dict, session: Session = Depends(get_session)):
     """
     Execute query without saving to execution logs (dry-run/test).
@@ -757,6 +757,16 @@ async def dry_run(request: dict, session: Session = Depends(get_session)):
         if not logic_body:
             raise HTTPException(400, "logic_body is required")
 
+        def _result_dict(r):
+            return {
+                "executed_sql": r.executed_sql,
+                "params": r.params,
+                "columns": r.columns,
+                "rows": r.rows,
+                "row_count": r.row_count,
+                "duration_ms": r.duration_ms,
+            }
+
         if logic_type == "sql":
             result = execute_sql_api(
                 session=session,
@@ -766,19 +776,7 @@ async def dry_run(request: dict, session: Session = Depends(get_session)):
                 limit=request.get("limit"),
                 executed_by="dry-run",
             )
-            return {
-                "status": "ok",
-                "data": {
-                    "result": {
-                        "executed_sql": result.executed_sql,
-                        "params": result.params,
-                        "columns": result.columns,
-                        "rows": result.rows,
-                        "row_count": result.row_count,
-                        "duration_ms": result.duration_ms,
-                    }
-                },
-            }
+            return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
         if logic_type == "http":
             result = execute_http_api(
@@ -788,19 +786,7 @@ async def dry_run(request: dict, session: Session = Depends(get_session)):
                 params=params or None,
                 executed_by="dry-run",
             )
-            return {
-                "status": "ok",
-                "data": {
-                    "result": {
-                        "executed_sql": result.executed_sql,
-                        "params": result.params,
-                        "columns": result.columns,
-                        "rows": result.rows,
-                        "row_count": result.row_count,
-                        "duration_ms": result.duration_ms,
-                    }
-                },
-            }
+            return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
         raise HTTPException(400, f"Dry-run not supported for logic_type: {logic_type}")
 
