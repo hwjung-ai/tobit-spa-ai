@@ -600,19 +600,6 @@ Direct API 모드는 Screen Editor에서 사용자가 기존 REST API를 자유�
 6. **RBAC + Theme + Template**: 권한/테마/템플릿 3종 세트 완비
 7. **실시간 데이터**: SSE StreamManager + Auto Refresh + Direct API polling
 
-### 15.3 개선 가능 영역 (Optional / Future)
-
-| 항목 | 우선순위 | 예상 규모 | 설명 |
-|------|----------|----------|------|
-| 실시간 협업 (CRDT) | 중 | 3-5일 | WebSocket/CRDT 기반 동시 편집 (현재는 Presence lock) |
-| 기본 템플릿 DB 시딩 | 낮 | 0.5일 | monitoring 스크린 2종 DB 자동 등록 스크립트 |
-| 네트워크 요청 모니터링 | 낮 | 1-2일 | API 호출 로그 탭 (요청/응답 상세) |
-| 권한 에러 UX | 낮 | 0.5일 | 권한 부족 시 사용자 피드백 UI 개선 |
-| 접근성 (a11y) | 낮 | 2-3일 | ARIA 속성, 키보드 네비게이션, 스크린리더 테스트 |
-| AI Copilot | 미래 | 5-7일 | 자연어 UI 생성, 코드 제안, AI 최적화 |
-
----
-
 ## 16. 참고 (검증된 표준/공식 문서)
 
 1. JSON Schema 2020-12
@@ -691,3 +678,16 @@ Direct API 모드는 Screen Editor에서 사용자가 기존 REST API를 자유�
 | `apps/web/tests-e2e/u3_2_template_creation.spec.ts` | 템플릿 생성 E2E |
 | `apps/web/tests-e2e/u3_2_diff_compare.spec.ts` | 버전 비교 E2E |
 | `apps/web/tests-e2e/u3_2_publish_gate.spec.ts` | 배포 게이트 E2E |
+
+---
+
+## 18. 개선/고도화 제안
+
+| 항목 | 우선순위 | 예상 규모 | 설명 |
+|------|----------|----------|------|
+| 실시간 협업 (CRDT) | 중 | 3-5일 | WebSocket/CRDT 기반 동시 편집 (현재는 Presence lock) |
+| 기본 템플릿 DB 시딩 | 낮 | 0.5일 | monitoring 스크린 2종 DB 자동 등록 스크립트 |
+| 네트워크 요청 모니터링 | 낮 | 1-2일 | API 호출 로그 탭 (요청/응답 상세) |
+| 권한 에러 UX | 낮 | 0.5일 | 권한 부족 시 사용자 피드백 UI 개선 |
+| 접근성 (a11y) | 낮 | 2-3일 | ARIA 속성, 키보드 네비게이션, 스크린리더 테스트 |
+| AI Copilot | 미래 | 5-7일 | 자연어 UI 생성, 코드 제안, AI 최적화 |
