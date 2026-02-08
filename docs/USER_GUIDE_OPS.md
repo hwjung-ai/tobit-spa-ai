@@ -176,26 +176,39 @@ ROUTE+PLAN → VALIDATE → EXECUTE → COMPOSE → PRESENT
 │ History      │  OpsSummaryStrip                                          │
 │ Sidebar      │  Route: ORCH | Tools: 3 | Replans: 1 | Duration: 3.2s    │
 │              │                                                           │
-│ Recent       │  Question Input                                           │
-│ Queries      │  [_______________________________________] [메시지 전송]  │
-│              │                                                           │
-│ ORCH ✓      │  InspectorStagePipeline (조건부 표시*)                    │
-│ DIRECT ✓    │  ROUTE+PLAN → VALIDATE → EXECUTE → COMPOSE → PRESENT     │
-│ REJECT ✗    │   120ms✓      15ms✓      450ms⚠       85ms✓      12ms✓   │
+│ Recent       │  Mode Selector                                            │
+│ Queries      │  [전체] [구성] [수치] [이력] [연결] [문서]               │
+│              │    ↑ 기본                                                 │
+│ ORCH ✓      │  Question Input                                           │
+│ DIRECT ✓    │  [_______________________________________] [메시지 전송]  │
+│ REJECT ✗    │                                                           │
+│              │  InspectorStagePipeline (조건부 표시*)                    │
+│              │  ROUTE+PLAN → VALIDATE → EXECUTE → COMPOSE → PRESENT     │
+│              │   120ms✓      15ms✓      450ms⚠       85ms✓      12ms✓   │
 │              │  *trace에 stage_outputs 데이터가 있을 때만 표시          │
 │              │                                                           │
 │              │  [Stage Card 클릭 시 In/Out 표시]                         │
 │              │                                                           │
 │              │  BlockRenderer (답변 블록)                                │
-│              │  • Text Block: "GT-01 CPU 평균 67.3%"                    │
-│              │  • Chart Block: [시계열 그래프]                           │
-│              │  • Table Block: [상세 데이터]                            │
-│              │  • References Block: 데이터 출처                          │
+│              │  * Text Block: "GT-01 CPU 평균 67.3%"                    │
+│              │  * Chart Block: [시계열 그래프]                           │
+│              │  * Table Block: [상세 데이터]                            │
+│              │  * References Block: 데이터 출처                          │
 └──────────────┴───────────────────────────────────────────────────────────┘
 ```
 
+**모드 선택 (하단 버튼)**:
+
+```
+[전체] [구성] [수치] [이력] [연결] [문서]
+  ↑ 기본 선택
+```
+
+- 기본 선택 모드: **전체 (all)** — localStorage에 저장되어 다음 접속 시 유지
+- 모드 전환 시 localStorage에 기록되며, 같은 브라우저에서 재접속하면 마지막 모드가 유지됨
+
 **주요 파일**:
-- OPS 페이지: [apps/web/src/app/ops/page.tsx:284](apps/web/src/app/ops/page.tsx#L284)
+- OPS 페이지: [apps/web/src/app/ops/page.tsx:41-48](apps/web/src/app/ops/page.tsx#L41)
 - Summary Strip: [apps/web/src/components/ops/OpsSummaryStrip.tsx](apps/web/src/components/ops/OpsSummaryStrip.tsx)
 - Stage Pipeline: [apps/web/src/components/ops/InspectorStagePipeline.tsx](apps/web/src/components/ops/InspectorStagePipeline.tsx)
 
@@ -283,14 +296,31 @@ OPS 운영에서 자주 사용하는 탭:
 #### 단계
 
 1. **Mode 선택** (하단 Run OPS query 섹션)
-   - 6개 모드 중 **"전체 (all)"** 선택
+   - 6개 모드 중 **"전체 (all)"** 선택 (기본 선택)
    - 모드별 차이:
+     - **전체 (all)**: LLM이 자동 판단하여 최적 모드 결정 (기본값)
      - **구성 (config)**: 구성 정보 조회
      - **수치 (metric)**: 메트릭 데이터만 조회 (intent=metric)
      - **이력 (history)**: 이벤트 이력 조회 (intent=history)
      - **연결 (relation)**: 관계 그래프 조회 (intent=graph)
      - **문서 (document)**: 문서 검색/요약
-     - **전체 (all)**: LLM이 자동 판단
+
+   **API 엔드포인트 라우팅** (중요):
+
+   모드에 따라 호출되는 백엔드 엔드포인트가 다르다.
+
+   | UI 모드 | Backend 모드 | 엔드포인트 | 처리 방식 |
+   |---------|-------------|-----------|----------|
+   | 전체 (all) | `all` | `POST /ops/ask` | LLM 오케스트레이션 (전체 Pipeline) |
+   | 구성 (config) | `config` | `POST /ops/query` | 모드 디스패처 (직접 실행) |
+   | 수치 (metric) | `metric` | `POST /ops/query` | 모드 디스패처 (직접 실행) |
+   | 이력 (history) | `hist` | `POST /ops/query` | 모드 디스패처 (직접 실행) |
+   | 연결 (relation) | `graph` | `POST /ops/query` | 모드 디스패처 (직접 실행) |
+   | 문서 (document) | `document` | `POST /ops/query` | 모드 디스패처 (직접 실행) |
+
+   - **"전체" 모드만** `/ops/ask` 엔드포인트를 사용하며, LLM이 질의를 분석하여 최적의 모드를 자동 선택한다.
+   - **나머지 5개 모드**는 모두 `/ops/query` 엔드포인트를 사용하며, 지정된 모드로 직접 실행된다.
+   - 파일 위치: [apps/web/src/app/ops/page.tsx:266-326](apps/web/src/app/ops/page.tsx#L266)
 
 2. **질문 입력**
    ```
@@ -2360,9 +2390,22 @@ import httpx
 BASE_URL = "http://localhost:8000"
 
 async def test_question(question: str, mode: str):
+    """
+    mode == "all" 이면 /ops/ask, 나머지는 /ops/query 사용.
+    """
     async with httpx.AsyncClient(timeout=30.0) as client:
-        payload = {"question": question, "mode": mode}
-        resp = await client.post(f"{BASE_URL}/ops/query", json=payload)
+        if mode == "all":
+            # 전체 모드: 오케스트레이션 엔드포인트
+            resp = await client.post(
+                f"{BASE_URL}/ops/ask",
+                json={"question": question},
+            )
+        else:
+            # 개별 모드: 모드 디스패처 엔드포인트
+            resp = await client.post(
+                f"{BASE_URL}/ops/query",
+                json={"question": question, "mode": mode},
+            )
         if resp.status_code == 200:
             data = resp.json()
             meta = data.get("data", {}).get("answer", {}).get("meta", {})
