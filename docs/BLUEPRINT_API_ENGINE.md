@@ -732,10 +732,11 @@ result = execute_workflow_api(
 ### 3. 캐싱
 
 **구현된 기능:**
-- APICacheService 클래스 (In-memory 캐시)
+- APICacheService 클래스 (Redis 우선 + In-memory fallback)
 - SHA256 기반 키 생성
 - TTL 지원 (default 300초)
 - Cache hit/miss 기록
+- backend 통계 조회 (`backend`, `hit_rate`, `memory_items`)
 
 ---
 
@@ -743,43 +744,43 @@ result = execute_workflow_api(
 
 ### 1. 단위 테스트
 
-**파일:** `apps/api/tests/test_api_manager_executor.py`
+**파일:** `apps/api/tests/test_api_cache_service.py`, `apps/api/tests/unit/test_api_manager.py`
 
 **테스트 항목:**
-- ✅ SQL 보안 검사 (유효/무효 SQL)
-- ✅ CTE (Common Table Expression) 지원
-- ✅ 위험한 키워드 차단 (INSERT, DELETE, DROP 등)
-- ✅ SQL 인젝션 패턴 감지
-- ✅ HTTP API 실행 (GET/POST)
-- ✅ HTTP 타임아웃 및 에러 처리
-- ✅ Python 스크립트 실행
-- ✅ Python 스크립트 에러 처리
-- ✅ Workflow API (placeholder)
-- ✅ 지원하지 않는 API 타입 에러 처리
+- ✅ SQL 검증기 안전 규칙 (유효/무효 SQL)
+- ✅ 위험 키워드/인젝션 패턴 탐지
+- ✅ SQL 성능 경고 규칙 (SELECT *, 과도한 JOIN/OR)
+- ✅ 캐시 메모리 라운드트립
+- ✅ Redis 캐시 라운드트립
+- ✅ Redis 장애 시 memory fallback
 
 **테스트 실행:**
 ```bash
 cd apps/api
-pytest tests/test_api_manager_executor.py -v
+pytest tests/unit/test_api_manager.py tests/test_api_cache_service.py -v
 ```
 
-### 2. 통합 테스트 (미구현)
+### 2. 통합 테스트
 
-**필요한 테스트:**
+**현재 상태:**
 - API 생성 → 실행 → 로그 확인
 - 파라미터 검증
 - 타임아웃 처리
 - 에러 처리
 - 권한 검증
 
-### 3. E2E 테스트 (미구현)
+API Engine 전용 시나리오를 묶은 통합 테스트 패키지는 추가 보강이 필요하다.
 
-**필요한 테스트:**
+### 3. E2E 테스트
+
+**현재 상태:**
 - API Manager UI 접근
 - API 생성
 - API 실행
 - 결과 확인
 - 로그 조회
+
+Playwright 스위트는 존재하지만 API Engine 중심의 회귀 시나리오는 추가 보강이 필요하다.
 
 ---
 
@@ -885,8 +886,10 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 
 ### 2. 소스 파일
 
-- **Executor**: `apps/api/services/api_manager_executor.py`
-- **Execution Log Model**: `apps/api/models/api_execution_log.py`
+- **Executor**: `apps/api/app/modules/api_manager/executor.py`
+- **Workflow Executor**: `apps/api/app/modules/api_manager/workflow_executor.py`
+- **Runtime Router**: `apps/api/app/modules/api_manager/runtime_router.py`
+- **Cache Service**: `apps/api/app/modules/api_manager/cache_service.py`
 - **API Manager Components**: `apps/web/src/components/api-manager/`
 - **Asset Registry UI**: `apps/web/src/app/admin/assets/`
 
@@ -896,7 +899,7 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 
 | 모듈 | 완료도 | 상용 가능 | 비고 |
 |------|--------|----------|------|
-| **API Executor** | 95% | ✅ 가능 | SQL, HTTP, Python 완료, Workflow placeholder |
+| **API Executor** | 96% | ✅ 가능 | SQL, HTTP, Python 완료, Workflow 순차 실행/템플릿 매핑 지원 |
 | **Asset Registry UI** | 90% | ✅ 가능 | 목록, 필터, 생성/수정 완료 |
 | **API Manager Backend** | 95% | ✅ 가능 | `/api-manager/*` 13개 엔드포인트 완전 구현 |
 | **API Manager UI** | 95% | ✅ 가능 | `/api-manager/page.tsx` 3,000+ 줄, 모든 Builder 통합 완료 |
@@ -917,12 +920,12 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 ### 개선 필요 ⚠️
 
 1. **Workflow Executor 고도화**: 고급 DAG 스케줄링/부분 재시도/노드별 세밀한 복구 정책
-2. **Redis 캐싱 강화**: In-memory → Redis로 변경 (2-3일 예상)
-3. **Rate Limiting 구현**: API 실행 속도 제한, 사용자별/API별 제한
+2. **캐시 운영성 강화**: Redis 캐시 무효화 전략/통계 대시보드/운영 정책 보강
+3. **Rate Limiting 고도화**: 현재 IP 기준 in-memory 제한을 사용자/API 단위 분산 제한으로 확장
 4. **Python Sandbox 강화**: 컨테이너 기반 격리, 라이브러리/리소스 제한
 
 ---
 
 **작성일**: 2026-02-08
 **상태**: ✅ COMPLETE
-**다음 단계**: Workflow Executor 고도화 및 Redis 캐싱 강화
+**다음 단계**: Workflow Executor 고도화 및 분산 Rate Limiting/Sandbox 강화

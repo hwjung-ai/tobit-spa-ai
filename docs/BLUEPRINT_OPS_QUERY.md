@@ -345,20 +345,7 @@ API_BASE_URL=http://localhost:8000
 
 ---
 
-## 11. 구현 이력
-
-| Phase | 완료일 | 내용 |
-|-------|--------|------|
-| **Phase 1** | 2026-02-06 | 5개 모드 기본 구현 (config/metric/hist/graph/all) |
-| **Phase 2** | 2026-02-06 | Document Search API (BM25 + pgvector) |
-| **Phase 3** | 2026-02-06 | Document 모드 추가 (6번째 모드) |
-| **Phase 4** | 2026-02-06 | 전체(all) 모드 수정 (`/ops/ask` 분리) |
-| **Phase 5** | 2026-02-07 | Real mode 데이터 연결 검증 |
-| **Phase 6** | 2026-02-07 | Hist/Graph 모드 실제 데이터 연결 (work_history + Neo4j) |
-
----
-
-## 12. 향후 과제
+## 11. 향후 과제
 
 | 항목 | 우선순위 | 설명 |
 |------|----------|------|

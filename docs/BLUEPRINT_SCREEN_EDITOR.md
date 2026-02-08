@@ -565,40 +565,9 @@ Direct API 모드는 Screen Editor에서 사용자가 기존 REST API를 자유�
 
 ---
 
-## 15. 외부 제안 반영 (CodePen 의견 최종 평가)
+## 15. 최종 완성도 종합 (2026-02-08)
 
-### 15.1 Codepen 원래 평가 및 대응
-
-Codepen은 Screen Editor를 **상용 수준 50%**로 평가하고 8주 개선 로드맵을 제안했다.
-
-**보정된 평가: 95% (단일 사용자 편집 기준)**
-
-Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코드 기반 점검 결과 50% 평가는 구현 전 상태에 대한 것이었다.
-
-### 15.2 Codepen 제안별 대응 현황
-
-| Codepen 제안 | 대응 | 상태 |
-|-------------|------|------|
-| **Week 1-3: Drag & Drop 구현** | 이미 구현 완료 → UX polish + 성능 최적화로 변경 | 완료 |
-| **Week 4-6: 고급 데이터 바인딩** | Expression Parser v2, Safe Functions, 표현식 평가기 | 완료 |
-| **Week 7-8: 템플릿/권한/테마** | Template Gallery, RBAC, Theme System | 완료 |
-| **모니터링 스크린 2종 등록** | Direct API Endpoint 방식으로 재작성 | 완료 |
-| **실시간 협업 (CRDT)** | Presence 기반 기본 협업 구현, CRDT는 미래 과제 | 부분 |
-| **AI Copilot** | 미구현 (미래 과제) | 미구현 |
-
-### 15.3 Codepen 방향성 수용 원칙
-
-1. 스택 고정 원칙 유지: 신규 라이브러리 도입보다 기존 스택(Next.js, FastAPI, TanStack Query, ECharts, React Flow) 우선
-2. 우선순위: Drag & Drop 안정화 → 실시간 바인딩 프리뷰 → 액션 핸들러 카탈로그/테스트 → 협업
-3. 표현식 언어: 안전한 파서/평가기 기반 화이트리스트 함수 세트 완성 (Phase 2에서 해결)
-4. 협업: SSE + trace/event 기반 단방향 가시성 + Presence 기반 lock 구현, CRDT는 이후 확장
-5. 상용 UX 기준: 템플릿/자동완성/입력 스키마 기반 폼 자동생성으로 비개발자 생산성 확보
-
----
-
-## 16. 최종 완성도 종합 (2026-02-08)
-
-### 16.1 기능별 완료도
+### 15.1 기능별 완료도
 
 | 카테고리 | 완료도 | 비고 |
 |---------|--------|------|
@@ -621,7 +590,7 @@ Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코
 | 접근성 (a11y) | 10% | 기본 HTML 시맨틱만, ARIA 미검증 |
 | AI Copilot | 0% | 미래 과제 |
 
-### 16.2 강점
+### 15.2 강점
 
 1. **15종 컴포넌트 + 완전한 Drag & Drop**: 컨테이너 중첩, 순서 변경, 속성 편집
 2. **강력한 Expression Engine**: 안전한 파서/평가기, 화이트리스트 함수, AST 기반
@@ -631,7 +600,7 @@ Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코
 6. **RBAC + Theme + Template**: 권한/테마/템플릿 3종 세트 완비
 7. **실시간 데이터**: SSE StreamManager + Auto Refresh + Direct API polling
 
-### 16.3 개선 가능 영역 (Optional / Future)
+### 15.3 개선 가능 영역 (Optional / Future)
 
 | 항목 | 우선순위 | 예상 규모 | 설명 |
 |------|----------|----------|------|
@@ -644,40 +613,7 @@ Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코
 
 ---
 
-## 17. 구현 이력 (연대기)
-
-### 17.1 Phase 0: 기본 구현 (Codex)
-
-- Screen Editor 기본 골격 구현
-- 컴포넌트 팔레트, 캔버스, 속성 패널
-- JSON 편집기, 기본 프리뷰
-
-### 17.2 Phase 1-5: 상용 고도화 (커밋: 8cb64b7)
-
-- Phase 1: UX Polish (Undo/Redo, Multi-Select, Copy/Paste, 단축키)
-- Phase 2: Advanced Binding Expressions (Parser, Evaluator, Safe Functions)
-- Phase 3: Theme System (Design Tokens, ThemeProvider, Screen Override)
-- Phase 4: RBAC + Template Gallery (Permissions, Templates)
-- Phase 5: SSE Real-time Data Binding (StreamManager, Stream Actions)
-
-### 17.3 Monitoring Screen 수정
-
-- 문제: monitoring 스크린 2종이 미등록 action handler 참조로 에러 발생
-- 잘못된 접근: Backend에 hardcoded handler 추가 → **사용자 거부** (Screen Editor 철학 위반)
-- 올바른 해결: UIScreenRenderer에 `endpoint` + `response_mapping` Direct API 모드 추가
-- 스크린 JSON을 기존 REST API (`/admin/system/*`, `/cep/*`) 직접 호출 방식으로 재작성
-
-### 17.4 기타 안정화
-
-- Playwright E2E 안정화 (웹서버 설정, timeout, API 기반 진입)
-- Action Registry `api.call` 핸들러 추가
-- Preview 탭 상용 UX 강화 (반응형, Auto-run, Action Runner)
-- Table/Chart 조건부 스타일 고급화
-- Draft 충돌 감지 및 Auto-merge
-
----
-
-## 18. 참고 (검증된 표준/공식 문서)
+## 16. 참고 (검증된 표준/공식 문서)
 
 1. JSON Schema 2020-12
    - https://json-schema.org/draft/2020-12
@@ -694,9 +630,9 @@ Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코
 
 ---
 
-## 19. 주요 파일 맵
+## 17. 주요 파일 맵
 
-### 19.1 Frontend (Editor)
+### 17.1 Frontend (Editor)
 
 | 파일 | 역할 |
 |------|------|
@@ -720,13 +656,13 @@ Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코
 | `apps/web/src/components/admin/screen-editor/preview/PreviewTab.tsx` | 프리뷰 탭 |
 | `apps/web/src/components/admin/screen-editor/templates/TemplateGallery.tsx` | 템플릿 갤러리 |
 
-### 19.2 Frontend (Runtime)
+### 17.2 Frontend (Runtime)
 
 | 파일 | 역할 |
 |------|------|
 | `apps/web/src/components/answer/UIScreenRenderer.tsx` | 스크린 렌더러 (핵심) |
 
-### 19.3 Backend
+### 17.3 Backend
 
 | 파일 | 역할 |
 |------|------|
@@ -738,14 +674,14 @@ Codepen 평가 시점 이후 5개 Phase 구현이 완료되었으며, 실제 코
 | `apps/api/app/modules/asset_registry/schemas.py` | Asset 스키마 |
 | `apps/api/app/modules/permissions/models.py` | ResourcePermission 열거형 |
 
-### 19.4 Screen Assets
+### 17.4 Screen Assets
 
 | 파일 | 역할 |
 |------|------|
 | `apps/web/src/lib/ui-screen/screens/system-monitoring.screen.json` | 시스템 모니터링 스크린 |
 | `apps/web/src/lib/ui-screen/screens/cep-monitoring.screen.json` | CEP 모니터링 스크린 |
 
-### 19.5 테스트
+### 17.5 테스트
 
 | 파일 | 역할 |
 |------|------|

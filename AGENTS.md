@@ -626,7 +626,7 @@ def test_tenant_isolation():
      - `GET /api/documents/{document_id}/chunks` ✅
      - `POST /api/documents/{document_id}/reindex` ✅
      - `GET /api/documents/{document_id}/versions` ✅
-   - 상태: ✅ 완료 (모든 placeholder 제거)
+   - 상태: ✅ 완료 (실제 구현 반영)
 
 3. **Admin 영속화 테이블 생성 완료**
    - 파일: `apps/api/alembic/versions/0048_add_p0_p1_foundation_tables.py`

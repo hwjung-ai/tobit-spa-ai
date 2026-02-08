@@ -442,7 +442,7 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 
 **API Engine**은 사용자가 정의한 커스텀 API를 생성, 관리, 실행하는 **동적 API 관리 시스템**입니다. SQL, HTTP, Python, Workflow 4가지 실행 엔진을 제공하며, Asset Registry 및 CEP Builder와 통합됩니다.
 
-**상용 준비도**: 80% (실행 엔진 95% 완료, Backend API 95% 완료, UI 80% 구현)
+**상용 준비도**: 95% (실행 엔진/Backend API 고도화 완료, UI 통합 완료)
 
 ### 5.2 아키텍처
 
@@ -454,8 +454,8 @@ Document Search를 Tool Asset으로 등록하여 OPS에서 자동 활용:
 API Engine
 ├── Frontend (UI)
 │   ├── Asset Registry (/admin/assets)       ✅ 90%
-│   ├── API Manager (/api-manager)            ⚠️ 80%
-│   └── API Builder (/admin/api-builder)     ❌ 미구현
+│   ├── API Manager (/api-manager)            ✅ 95%
+│   └── API Builder (API Manager 내 통합)     ✅ 100%
 │
 ├── Backend (API)
 │   ├── Asset Registry API (/asset-registry/*)  ✅
@@ -466,7 +466,7 @@ API Engine
     ├── SQL Executor (PostgreSQL)       ✅ 95%
     ├── HTTP Executor (httpx)           ✅ 95%
     ├── Python Executor (exec+sandbox)  ✅ 95%
-    └── Workflow Executor (sequential)  ⚠️ Placeholder
+    └── Workflow Executor (sequential)   ✅ 90%+
 ```
 
 ### 5.3 4가지 실행 엔진
