@@ -1,7 +1,7 @@
 # OPS Query System Blueprint (v2 Final)
 
 > 최종 업데이트: 2026-02-08
-> 상태: **Production Ready** (6가지 모드 + Document Search 완료)
+> 상태: **Production Ready**
 
 ## 1. 목적
 
