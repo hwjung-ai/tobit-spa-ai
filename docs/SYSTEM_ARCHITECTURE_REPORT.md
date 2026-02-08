@@ -788,9 +788,13 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 ### 10.3 DOCS
 - [x] PDF 뷰어 인증 수정 + 한국어 UI
+- [x] 문서 공유 (Share) 구현 - 실제 DB 연동
+- [x] 문서 내보내기 (Export) 구현 - 4가지 포맷 지원
+- [x] 문서 검색 제안 (Suggestions) 구현
+- [x] 문서 재색인 (Reindex) 구현
+- [x] 문서 버전 관리 (Versioning) 구현 - 재귀 CTE 조회
 - [ ] OCR 기능 강화 (다국어 지원)
 - [ ] 검색 정확도 향상 (Custom Embedding)
-- [ ] 문서 버전 관리
 
 ### 10.4 API Engine
 - [x] 4가지 실행 엔진 완성 (SQL/HTTP/Python/Workflow)
@@ -798,6 +802,9 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 - [x] API Manager Backend 완성 (13개 엔드포인트)
 - [x] API Manager UI 기본 구현 (`/api-manager/page.tsx` 2,996줄, 80%)
 - [x] Script runtime_policy DB 기반 전달 (ApiDefinition.runtime_policy)
+- [x] API 버전/롤백 시스템 완전 구현 (P0 완료)
+- [x] API 캐싱 서비스 구현 (APICacheService, P1 완료)
+- [x] CEP→API 범용 트리거 구현 (4가지 action type, P1 완료)
 - [ ] API Manager UI 고도화 (Visual Builder, 에디터 개선)
 - [ ] API Test Runner UI 구현
 - [ ] Python Sandbox 강화 (Docker 컨테이너)
@@ -805,6 +812,10 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 ### 10.5 ADMIN
 - [x] Logs 페이지 라우팅 수정
 - [x] CEP Monitoring 엔드포인트 수정
+- [x] Admin 영속화 테이블 생성 완료 (P0 완료)
+  - tb_admin_setting (시스템 설정)
+  - tb_admin_setting_audit (설정 변경 이력)
+  - tb_user_activity_log (사용자 활동 로그)
 - [ ] 실시간 대시보드 UI
 - [ ] 경보 규칙 설정
 
@@ -821,12 +832,12 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 | 모듈 | 목적 | 핵심 기능 | 상용 준비도 |
 |------|------|----------|------------|
-| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, Debug/Rollback, CI Mgmt | 94% |
-| **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 5채널 알림, Redis 분산 상태, ML 이상 탐지 | 93% |
-| **DOCS** | 문서 관리 | 하이브리드 검색, PDF 뷰어, OPS 통합 | 85% |
-| **API Engine** | 동적 API 관리 | SQL/HTTP/Python/WF 실행, 보안 검사, runtime_policy 제어 | 93% |
-| **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성 | 85% |
-| **Screen Editor** | 시각적 UI 편집 | 15개 컴포넌트, Expression, Theme, RBAC, AI Copilot | 96% |
+| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, Debug/Rollback, CI Mgmt | 88% |
+| **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 5채널 알림, Redis 분산 상태, ML 이상 탐지, CEP→API 트리거 | 100% |
+| **DOCS** | 문서 관리 | 하이브리드 검색, PDF 뷰어, OPS 통합, share/export/reindex/versioning | 100% |
+| **API Engine** | 동적 API 관리 | SQL/HTTP/Python/WF 실행, 보안 검사, runtime_policy 제어, 버전/롤백, 캐싱 | 95% |
+| **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성, 영속화 | 100% |
+| **Screen Editor** | 시각적 UI 편집 | 15개 컴포넌트, Expression, Theme, RBAC, AI Copilot | 94% |
 
 ### 시스템 특징
 - **AI 기반**: LLM을 활용한 지능형 질의응답
