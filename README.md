@@ -5,16 +5,16 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 
 AI 에이전트는 `AGENTS.md`에 정의된 **프로젝트 규칙, 기술 스택, Tool Contract/Reference 표준**을 반드시 준수해야 합니다.
 
-## 6개 핵심 모듈 (상용 준비도: 94%)
+## 6개 핵심 모듈
 
-| 모듈 | 목적 | 상용 준비도 | 상태 |
-|------|------|------------|------|
-| **OPS** | 인프라 질의 응답 (6개 쿼리 모드) | 88% | ✅ 상용 가능 |
-| **CEP** | 실시간 이벤트 처리 및 알림 (5채널) | 100% | ✅ 상용 완료 |
-| **DOCS** | 문서 관리 및 하이브리드 검색 | 100% | ✅ 상용 완료 |
-| **API Engine** | 동적 API 정의/실행 (SQL/HTTP/Python/WF) | 95% | ✅ 상용 가능 |
-| **ADMIN** | 시스템 관리, 관측성 | 100% | ✅ 상용 완료 |
-| **Screen Editor** | 로우코드 UI 빌더 (15개 컴포넌트) | 94% | ✅ 상용 가능 |
+| 모듈 | 목적 |
+|------|------|
+| **OPS** | 인프라 질의 응답 (6개 쿼리 모드) |
+| **CEP** | 실시간 이벤트 처리 및 알림 (5채널) |
+| **DOCS** | 문서 관리 및 하이브리드 검색 |
+| **API Engine** | 동적 API 정의/실행 (SQL/HTTP/Python/WF) |
+| **ADMIN** | 시스템 관리, 관측성 |
+| **Screen Editor** | 로우코드 UI 빌더 (15개 컴포넌트) |
 
 ## 구조
 - `apps/api`: FastAPI + SQLModel 기반 백엔드 (router/service/crud 분리, ToolCall/ReferenceItem 적용)
@@ -36,7 +36,7 @@ AI 에이전트는 `AGENTS.md`에 정의된 **프로젝트 규칙, 기술 스택
 
 ### 기능/운영
 8. `docs/FEATURES.md` - 기능 명세서
-9. `docs/TESTIDS.md` - E2E 테스트 data-testid 표준
+9. `docs/TESTING_STRUCTURE.md` - 테스트 구조 표준 가이드 (data-testid 네이밍 규칙 포함)
 
 ## 빠른 시작
 1. **공통**
@@ -74,12 +74,6 @@ Next.js 16, React 19, TypeScript 5.9, Tailwind CSS v4, shadcn/ui, TanStack Query
 
 ### Data
 PostgreSQL + pgvector (1536-dim), Neo4j, Redis
-
-## 안정성 및 품질
-- ToolCall/Reference, UIScreen/Screen Asset, Binding Engine, Action Registry 등은 `schemas/` 기준 준수
-- Data Explorer는 Read-only, 위험 명령어 allowlist 강제
-- pre-commit (Ruff/Prettier) + ESLint + mypy + TypeScript strict mode
-- E2E 테스트 22개 시나리오 (Playwright)
 
 ## 참고
 - `AGENTS.md` 기준으로 작업, 변경 전후 checkpoint 커밋 고려

@@ -23,7 +23,7 @@
 
 ### 기능 구현
 1. **기능 명세서**: `FEATURES.md`
-2. **테스트 표준**: `TESTIDS.md`, TESTING_STRUCTURE.md
+2. **테스트 표준**: `TESTING_STRUCTURE.md` (data-testid 네이밍 규칙 포함)
 
 ### 사용자 가이드
 1. **OPS 사용자 가이드**: `USER_GUIDE_OPS.md`
@@ -62,7 +62,7 @@ tobit-spa-ai/
 │   │
 │   ├── 기능/운영 (2개)
 │   │   ├── FEATURES.md                    # 기능 명세서
-│   │   └── TESTIDS.md                     # E2E 테스트 표준
+│   │   └── TESTING_STRUCTURE.md           # 테스트 구조 표준 (data-testid 포함)
 │
 └── docs/history/ (아카이브)
     ├── Phase 완료 문서

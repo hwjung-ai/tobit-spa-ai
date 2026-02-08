@@ -186,7 +186,7 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `README.md`: 프로젝트 설치, 실행, 구조 등 가장 기본적인 정보를 담은 **Source of Truth**입니다.
    - `DEV_ENV.md`: 개발 환경의 DB(Postgres/Neo4j/Redis) 접속 정보 설정 가이드입니다.
    - `docs/FEATURES.md`: 각 기능의 상세 명세, API 노트, 사용 예시를 담고 있습니다. (기능 변경 시 반드시 업데이트)
-   - `docs/TESTIDS.md`: E2E 테스트 `data-testid` 속성 명명 규칙 표준입니다. (UI 컴포넌트 추가 시 반드시 준수)
+   - `docs/TESTING_STRUCTURE.md`: 테스트 구조 표준 가이드입니다. (`data-testid` 네이밍 규칙 포함, UI 컴포넌트 추가 시 반드시 준수)
 
 ### 1-0) 아키텍처 문서 (6개 모듈)
    - `docs/SYSTEM_ARCHITECTURE_REPORT.md`: **시스템 전체 아키텍처 개요** (경영진/의사결정자 대상, v1.6)
@@ -194,10 +194,6 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `docs/CEP_ENGINE_BLUEPRINT.md`: CEP 엔진 상세 설계 (Trigger-Action, 5채널 알림, Redis 분산 상태)
    - `docs/API_ENGINE_BLUEPRINT.md`: API Engine 상세 설계 (SQL/HTTP/Python/WF 실행기, 보안, CEP 통합)
    - `docs/SCREEN_EDITOR_BLUEPRINT.md`: Screen Editor 상세 설계 (15 컴포넌트, Expression, Theme, RBAC)
-
-### 1-1) UI Creator Contract 관련 문서 (아카이브)
-   - UI Creator Contract 관련 문서들은 `docs/history/`에 아카이브되었습니다.
-   - 현재 Screen Editor 상세 설계는 `docs/SCREEN_EDITOR_BLUEPRINT.md`를 참조하세요.
 
 ### 2) 로그 위치
    - **Backend**: `apps/api/logs/api.log`
@@ -208,16 +204,6 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
    - `make api-dev` / `make web-dev`: 백엔드 또는 프론트엔드를 개별적으로 실행합니다.
    - `make api-lint` / `make web-lint`: 각 파트의 코드 품질을 검사합니다.
    - `make api-migrate`: DB 마이그레이션(`alembic upgrade head`)을 실행합니다. **DB 스키마 변경 시 AI가 직접 실행해야 합니다.**
-
-### 2-1) UI Creator Contract (Phase 1-4) 구현 관련
-   - **Binding Engine** (`apps/api/app/modules/ops/services/binding_engine.py`): {{inputs}}, {{state}}, {{context}}, {{trace_id}} 템플릿 치환 엔진
-   - **Action Registry** (`apps/api/app/modules/ops/services/action_registry.py`): UI 액션 핸들러 라우팅 시스템
-   - **UIScreenRenderer** (`apps/web/src/components/answer/UIScreenRenderer.tsx`): 화면 렌더링 컴포넌트
-   - **DB Migration** (`apps/api/alembic/versions/0029_add_screen_asset_fields.py`): Screen asset 필드 추가 마이그레이션
-
-   관련 테스트:
-   - API 테스트: `apps/api/tests/test_ui_contract.py` (20개 테스트)
-   - E2E 테스트: `apps/web/e2e/ui-screen.spec.ts` (17개 테스트)
 
 ### 3-1) 테스트 실행 (필독)
    **코드를 수정한 후에는 반드시 아래 테스트를 실행하여 변경사항을 검증해야 합니다.**
@@ -333,7 +319,7 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 
 ---
 
-## 9-1. 인증 & 세션 & Tenant_ID 규칙 (필독)
+## 10. 인증 & 세션 & Tenant_ID 규칙 (필독)
 
 모든 API 엔드포인트에서 **반드시** 다음 규칙을 준수하세요. 이를 어기면 조회 오류, 권한 오류, 테넌트 데이터 누락 등이 발생합니다.
 
@@ -602,82 +588,6 @@ def test_tenant_isolation():
 - [ ] Type hint 정확함? (`dict` 아닌 `TbUser`)
 - [ ] 테스트에서 `x-tenant-id` 헤더 추가?
 - [ ] `.env`에 `ENABLE_AUTH`, `JWT_SECRET_KEY` 설정?
-
----
-
-## 10. 상용 서비스 현재 상태
-
-### 완료 항목
-
-1. **API 버전/롤백 시스템 완전 구현**
-   - 파일: `apps/api/app/modules/api_manager/router.py`
-   - 기능: 버전 스냅샷, 롤백, 버전 이력 조회
-   - 상태: ✅ 완료 (실제 DB 연동)
-
-2. **DOCS 모든 엔드포인트 실제 DB 연동 완료**
-   - 파일: `apps/api/app/modules/document_processor/router.py`
-   - 구현 완료:
-     - `POST /api/documents/upload` ✅
-     - `GET /api/documents/` ✅
-     - `GET /api/documents/{document_id}` ✅
-     - `POST /api/documents/{document_id}/share` ✅ (실제 구현)
-     - `GET /api/documents/{document_id}/export` ✅ (실제 구현)
-     - `DELETE /api/documents/{document_id}` ✅
-     - `GET /api/documents/{document_id}/chunks` ✅
-     - `POST /api/documents/{document_id}/reindex` ✅
-     - `GET /api/documents/{document_id}/versions` ✅
-   - 상태: ✅ 완료 (실제 구현 반영)
-
-3. **Admin 영속화 테이블 생성 완료**
-   - 파일: `apps/api/alembic/versions/0048_add_p0_p1_foundation_tables.py`
-   - 테이블: `tb_admin_setting`, `tb_admin_setting_audit`, `tb_user_activity_log`
-   - 상태: ✅ 완료 (마이그레이션 적용)
-
-4. **문서 검색 제안 (Suggestions) 구현**
-   - 파일: `apps/api/app/modules/document_processor/router.py`
-   - 기능: `GET /api/documents/search/suggestions`
-   - 상태: ✅ 완료 (실제 DB 쿼리)
-
-5. **문서 재색인 (Reindex) 구현**
-   - 파일: `apps/api/app/modules/document_processor/router.py`
-   - 기능: `POST /api/documents/{document_id}/reindex`
-   - 상태: ✅ 완료 (SQL 직접 실행)
-
-6. **문서 버전 관리 (Versioning) 구현**
-   - 파일: `apps/api/app/modules/document_processor/router.py`
-   - 기능: `GET /api/documents/{document_id}/versions` (재귀 CTE)
-   - 상태: ✅ 완료 (버전 체인 조회)
-
-7. **CEP→API 범용 트리거 구현**
-   - 파일: `apps/api/app/modules/cep_builder/executor.py`
-   - 기능:
-     - `execute_action()`: 4가지 action type 지원
-     - `_execute_api_action()`: API Manager 통합 (sql/http/workflow/script)
-     - `_execute_api_script_action()`: 스크립트 실행
-     - `_execute_trigger_rule_action()`: Rule chaining
-   - 상태: ✅ 완료 (모든 action type 구현)
-
-8. **API 캐싱 서비스 구현**
-   - 파일: `apps/api/app/modules/api_manager/cache_service.py`
-   - 기능:
-     - `APICacheService` 클래스 (in-memory 캐시)
-     - SHA256 기반 키 생성
-     - TTL 지원 (default 300초)
-     - Cache hit/miss 기록
-   - 통합: CEP executor에서 자동 호출
-   - 상태: ✅ 완료 (실제 캐싱 작동)
-
-### 상용 서비스 준비 상태
-
-프로젝트는 상용 서비스로 진행하기 위한 기술적 기반이 모두 완비되었습니다:
-
-1. **핵심 기능 완전 구현**: API 버전 관리, 문서 처리, CEP 트리거
-2. **DB 연동 완료**: 모든 엔드포인트 실제 DB 쿼리 사용
-3. **캐싱 최적화**: API 결과 캐싱으로 성능 향상
-4. **보안 완비**: 테넌트 격리, 소유권 검증, 권한 제어
-5. **확장성 준비**: CEP rule chaining, aggregation, windowing 지원
-
-추가적으로 필요한 작업은 프론트엔드 연동, 테스트 커버리지, 모니터링 구성 등 운영 관련 작업입니다.
 
 ---
 

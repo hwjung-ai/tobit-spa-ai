@@ -119,12 +119,3 @@ DATA_QUERY_TIMEOUT_MS=3000
   rq worker documents
   ```
 
-## 4. 버전 관리 (Version Control)
-
-### 커밋 메시지 형식 (Format)
-- 모든 커밋 메시지는 변경 사항에 대한 최소한의, 높은 수준의 요약으로 작성해야 합니다.
-
-### 작업 흐름 (Workflow)
-- 상태 확인: `git status`
-- 변경 사항 스테이징: `git add <file>`
-- 커밋: `git commit -m "Concise message"`
