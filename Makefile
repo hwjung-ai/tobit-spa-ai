@@ -59,7 +59,12 @@ e2e-test:
 	pytest tests/ops_e2e/
 
 dev:
-	npx concurrently --names "API,WORKER,WEB" --prefix-colors "blue,magenta,green" "cd apps/api && DEFER_HEAVY_STARTUP=true ENABLE_AUTO_MIGRATE=false ENABLE_RESOURCE_WATCHER=false .venv/bin/python -m uvicorn main:app --reload --reload-delay 0.5 --reload-dir app --reload-dir api --reload-dir core --reload-dir models --reload-dir schemas --port 8000 --timeout-graceful-shutdown 2" "cd apps/api && .venv/bin/python run_worker.py" "cd apps/web && npm run dev:log"
+	npx concurrently \
+		--names "API,WORKER,WEB" \
+		--prefix-colors "blue,magenta,green" \
+		'cd apps/api && DEFER_HEAVY_STARTUP=true ENABLE_AUTO_MIGRATE=false ENABLE_RESOURCE_WATCHER=false .venv/bin/python -m uvicorn main:app --reload --reload-delay 1.0 --reload-dir app --reload-dir api --reload-dir core --reload-dir models --reload-dir schemas --port 8000 --timeout-graceful-shutdown 2' \
+		'cd apps/api && .venv/bin/python run_worker.py' \
+		'cd apps/web && npm run dev:log'
 
 status:
 	git status
