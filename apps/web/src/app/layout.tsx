@@ -32,6 +32,12 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <div className="min-h-screen bg-slate-950 text-slate-100">
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-sky-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-sky-400"
+            >
+              Skip to main content
+            </a>
             <header className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
                 <div className="flex items-end gap-5">
                   <div>
@@ -48,7 +54,7 @@ export default function RootLayout({
                 <HeaderUserMenu />
               </nav>
             </header>
-            <main className="min-h-[calc(100vh-96px)] w-full px-4 py-4 md:px-6">
+            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full px-4 py-4 md:px-6">
               {children}
             </main>
           </div>

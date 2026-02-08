@@ -20,7 +20,7 @@ export default function BuilderCopilotPanel({
   inputPlaceholder,
 }: BuilderCopilotPanelProps) {
   return (
-    <div className="shadow-inner shadow-black/20">
+    <div className="shadow-inner shadow-black/20" aria-live="polite">
       <ChatExperience
         builderSlug={builderSlug}
         inline

@@ -1,14 +1,34 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
-import ScreenEditorCopilotPanel from "./CopilotPanel";
+import BuilderCopilotPanel from "@/components/chat/BuilderCopilotPanel";
 import ScreenEditorHeader from "./ScreenEditorHeader";
 import ScreenEditorTabs from "./ScreenEditorTabs";
 import ScreenEditorErrors from "./common/ScreenEditorErrors";
 import Toast from "@/components/admin/Toast";
 import PublishGateModal from "./publish/PublishGateModal";
+
+const SCREEN_COPILOT_INSTRUCTION = `You are a Screen Editor AI assistant. You help users modify UI screens by generating JSON Patch (RFC 6902) operations.
+
+The screen follows ScreenSchemaV1 with these key paths:
+- /title - Screen title (string)
+- /layout/type - Layout type: "flex" | "grid" | "tabs"
+- /layout/direction - "row" | "column"
+- /components/N - Component at index N
+- /components/N/type - Component type (text, table, chart, form, button, image, card, stat, markdown, divider, spacer, container, tabs, badge, alert)
+- /components/N/props - Component-specific properties
+- /components/N/props/label - Display label
+- /components/N/props/content - Content text (for text/markdown)
+- /components/N/bindings - Data bindings (key: binding expression)
+
+When the user asks to modify the screen, respond with a JSON Patch array wrapped in a code block:
+\`\`\`json
+[{"op": "replace", "path": "/title", "value": "New Title"}]
+\`\`\`
+
+Always respond in the same language as the user's message.`;
 
 interface ScreenEditorProps {
   assetId: string;
@@ -137,6 +157,27 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
       setToast({ message, type: "error" });
     }
   };
+
+  // AI Copilot: extract JSON Patch from assistant messages and apply
+  const handleAssistantMessageComplete = useCallback(
+    (text: string) => {
+      // Extract JSON patch from code blocks
+      const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (!codeBlockMatch) return;
+
+      try {
+        const parsed = JSON.parse(codeBlockMatch[1]);
+        const patchArray = Array.isArray(parsed) ? parsed : parsed?.patch;
+        if (!Array.isArray(patchArray) || patchArray.length === 0) return;
+
+        editorState.setProposedPatch(JSON.stringify(patchArray));
+        editorState.previewPatch();
+      } catch {
+        // Not valid JSON patch, ignore
+      }
+    },
+    [editorState]
+  );
 
   const schemaSummary = useMemo(() => {
     const activeScreen = editorState.screen ?? screen;
@@ -280,12 +321,52 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           </div>
         </div>
 
-        <ScreenEditorCopilotPanel
-          screenId={screen?.screen_id ?? assetId}
-          stage={status}
-          schemaSummary={schemaSummary}
-          selectedComponentId={selectedComponentId}
-        />
+        <div className="w-80 flex-shrink-0 flex flex-col border-l border-slate-800 bg-slate-950">
+          <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">AI Copilot</p>
+              <p className="text-[11px] text-slate-300">{schemaSummary}</p>
+            </div>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <BuilderCopilotPanel
+              builderSlug="screen-editor"
+              instructionPrompt={SCREEN_COPILOT_INSTRUCTION}
+              onAssistantMessageComplete={handleAssistantMessageComplete}
+              inputPlaceholder="Describe changes to apply..."
+            />
+          </div>
+          {editorState.proposedPatch && (
+            <div className="border-t border-slate-800 px-4 py-3 space-y-2">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      editorState.applyProposedPatch();
+                      setToast({ message: "Patch applied to draft", type: "success" });
+                    } catch (err) {
+                      setToast({
+                        message: err instanceof Error ? err.message : "Failed to apply patch",
+                        type: "error",
+                      });
+                    }
+                  }}
+                  className="flex-1 rounded-2xl bg-emerald-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500"
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  onClick={() => editorState.discardProposal()}
+                  className="flex-1 rounded-2xl border border-slate-700 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 transition hover:border-slate-500"
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Toast */}

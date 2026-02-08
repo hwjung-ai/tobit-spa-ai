@@ -18,7 +18,7 @@ import {
 } from "../../components/cep-form-builder";
 
 type CenterTab = "definition" | "definition-form" | "test" | "logs";
-type TriggerType = "metric" | "event" | "schedule";
+type TriggerType = "metric" | "event" | "schedule" | "anomaly";
 
 interface CepRule {
   rule_id: string;
@@ -462,7 +462,7 @@ export default function CepBuilderPage() {
     setRuleDescription(draft.description ?? "");
     const triggerPayload = draft.trigger ?? {};
     const draftTriggerType = (triggerPayload as Record<string, unknown>).type;
-    if (draftTriggerType === "metric" || draftTriggerType === "event" || draftTriggerType === "schedule") {
+    if (draftTriggerType === "metric" || draftTriggerType === "event" || draftTriggerType === "schedule" || draftTriggerType === "anomaly") {
       setTriggerType(draftTriggerType);
     }
     setTriggerSpecText(JSON.stringify(triggerPayload ?? {}, null, 2));
@@ -913,7 +913,7 @@ export default function CepBuilderPage() {
         />
       </div>
       <div className="flex items-center gap-1 text-xs uppercase tracking-wider text-slate-500">
-        {(["metric", "event", "schedule"] as TriggerType[]).map((type) => (
+        {(["metric", "event", "schedule", "anomaly"] as TriggerType[]).map((type) => (
           <button
             key={type}
             onClick={() => setTriggerType(type)}

@@ -79,7 +79,7 @@ export default function Toast({ message, type = "success", onDismiss, duration =
                 width: "100%"
             }}
         >
-            <div className={`rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
+            <div role="alert" aria-live="assertive" className={`rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
                 <div className="flex items-start gap-3">
                     <div className={`${textColor} mt-1`}>{icon}</div>
                     <p className={`text-sm font-medium leading-snug ${textColor}`}>{message}</p>

@@ -19,7 +19,7 @@ export default function NavTabs() {
     process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
   return (
-    <nav className="flex gap-4 text-sm uppercase tracking-[0.3em]">
+    <nav className="flex gap-4 text-sm uppercase tracking-[0.3em]" aria-label="Main navigation">
       {NAV_ITEMS.filter((item) =>
         item.adminOnly ? enableAdmin : true
       ).map((item) => {
@@ -30,6 +30,7 @@ export default function NavTabs() {
           <Link
             key={item.label}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={`transition border-b-2 pb-1 ${isActive
               ? "border-sky-400 text-white"
               : "border-transparent text-slate-400 hover:border-slate-600 hover:text-white"

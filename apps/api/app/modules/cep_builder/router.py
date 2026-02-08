@@ -225,6 +225,65 @@ def get_rules_performance(
         )
 
 
+@router.get("/rules/{rule_id}/anomaly-status")
+async def get_anomaly_status(
+    rule_id: str, session: Session = Depends(get_session)
+) -> ResponseEnvelope:
+    """
+    Get anomaly detection baseline status for a rule.
+
+    Returns baseline value count, detection method, and last detection result.
+    Only applicable for rules with trigger_type='anomaly'.
+    """
+    rule = get_rule(session, rule_id)
+    if not rule:
+        raise HTTPException(status_code=404, detail="Rule not found")
+
+    if rule.trigger_type != "anomaly":
+        return ResponseEnvelope.success(
+            data={
+                "rule_id": str(rule.rule_id),
+                "trigger_type": rule.trigger_type,
+                "anomaly_enabled": False,
+                "message": "This rule does not use anomaly detection",
+            }
+        )
+
+    spec = rule.trigger_spec or {}
+    method = spec.get("anomaly_method", "zscore")
+    config = spec.get("anomaly_config", {})
+    baseline_values = spec.get("baseline_values", [])
+
+    # Try to get baseline from Redis
+    from .redis_state_manager import get_redis_state_manager
+    redis_mgr = get_redis_state_manager()
+    redis_baseline = None
+    try:
+        if await redis_mgr.is_available():
+            redis_baseline = await redis_mgr.get_baseline(rule_id)
+    except Exception:
+        pass
+
+    effective_baseline = redis_baseline or baseline_values
+
+    return ResponseEnvelope.success(
+        data={
+            "rule_id": str(rule.rule_id),
+            "trigger_type": "anomaly",
+            "anomaly_enabled": True,
+            "method": method,
+            "config": config,
+            "baseline_count": len(effective_baseline),
+            "baseline_source": "redis" if redis_baseline else "trigger_spec",
+            "baseline_summary": {
+                "min": round(min(effective_baseline), 4) if effective_baseline else None,
+                "max": round(max(effective_baseline), 4) if effective_baseline else None,
+                "mean": round(sum(effective_baseline) / len(effective_baseline), 4) if effective_baseline else None,
+            } if effective_baseline else None,
+        }
+    )
+
+
 @router.get("/rules/{rule_id}")
 def get_rule_endpoint(
     rule_id: str, session: Session = Depends(get_session)

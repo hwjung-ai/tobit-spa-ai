@@ -25,7 +25,9 @@ from core.db import get_session
 from app.modules.ops.schemas import OpsQueryRequest
 from app.modules.ops.services import handle_ops_query
 from app.modules.ops.services.observability_service import collect_observability_metrics
+from app.modules.ops.services.data_export import DataExporter
 from app.modules.ops.security import SecurityUtils
+from fastapi.responses import Response
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -154,3 +156,28 @@ def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvel
     """
     metrics = collect_observability_metrics(session)
     return ResponseEnvelope.success(data=metrics)
+
+
+@router.get("/observability/export", response_model=ResponseEnvelope)
+def export_observability_data(
+    format_type: str = "csv",
+    session: Session = Depends(get_session)
+) -> ResponseEnvelope:
+    """Export observability dashboard data.
+
+    Exports observability metrics, stats, timeline, and errors to CSV, JSON, or Excel format.
+
+    Args:
+        format_type: Export format (csv, json, excel)
+        session: Database session dependency
+
+    Returns:
+        ResponseEnvelope with export data (filename, content, content_type)
+    """
+    try:
+        metrics = collect_observability_metrics(session)
+        export_data = DataExporter.export_observability_data(metrics, format_type)
+        return ResponseEnvelope.success(data=export_data)
+    except Exception as e:
+        logger.error(f"Failed to export observability data: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=str(e))

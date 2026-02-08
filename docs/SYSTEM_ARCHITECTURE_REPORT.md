@@ -38,6 +38,8 @@ Tobit SPA AI는 복잡한 인프라 질문에 AI 기반으로 답변하고, 실�
 - ✅ Screen Editor 5 Phase 구현 완료 (UX Polish → Expression → Theme → RBAC → SSE)
 - ✅ API Engine 실행 엔진 완성 (SQL/HTTP/Python/Workflow)
 - ✅ Admin 관측성 버그 수정 (Logs, CEP Monitoring)
+- ✅ ML 기반 이상 탐지 구현 (Z-Score, IQR, EMA → CEP anomaly trigger)
+- ✅ AI Copilot 통합 (Screen Editor + CEP Builder)
 
 ### 1.2 시스템 규모
 
@@ -292,7 +294,7 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
      기반 실행        폴링 & 조건 체크          전송
 ```
 
-### 3.4 세 가지 Trigger 유형
+### 3.4 네 가지 Trigger 유형
 
 #### 1. Schedule Trigger
 - **목적**: 주기적 작업 실행
@@ -313,6 +315,13 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 - **목적**: 외부 이벤트에 즉시 반응
 - **예시**: API 호출로 즉시 트리거
 - **구현**: 폴링 없이 외부 API 호출로 즉시 실행
+
+#### 4. Anomaly Trigger (ML 이상 탐지)
+- **목적**: 통계적 이상치 자동 감지
+- **예시**: CPU 사용량이 학습된 패턴에서 벗어남
+- **구현**: Z-Score, IQR, EMA 3가지 탐지 알고리즘
+- **특징**: Redis 베이스라인 자동 학습 (max 1000 포인트, TTL 24h)
+- **파일**: `cep_builder/anomaly_detector.py`, `cep_builder/executor.py`
 
 ### 3.5 알림 시스템 (5채널)
 
@@ -336,8 +345,9 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 | **Leader Election** | 중복 방지 | PostgreSQL Advisory Lock으로 Leader 선출 |
 | **Metric Poll Loop** | 메트릭 폴링 | 주기적 메트릭 조회 및 조건 체크 |
 | **Notification Engine** | 알림 전송 | 5채널 알림 + 재시도 + 템플릿 |
-| **Executor** | 트리거 실행 | Trigger 평가 및 Action 실행 |
-| **Redis State Manager** | 분산 상태 | 재시도 기록, 규칙 상태, 템플릿 캐시 |
+| **Executor** | 트리거 실행 | Trigger 평가 및 Action 실행 (anomaly 포함) |
+| **Anomaly Detector** | 이상 탐지 | Z-Score, IQR, EMA 알고리즘 |
+| **Redis State Manager** | 분산 상태 | 재시도 기록, 규칙 상태, 템플릿 캐시, 베이스라인 |
 
 > 상세 설계: [CEP_ENGINE_BLUEPRINT.md](CEP_ENGINE_BLUEPRINT.md)
 
@@ -626,6 +636,7 @@ Editor (Web)                    Runtime (Server + Client)
 | **Template Gallery** | 템플릿 검색/복제, 태그 필터 |
 | **SSE Streaming** | 실시간 데이터 바인딩, 자동 재연결 |
 | **Direct API Endpoint** | REST API 직접 호출 (CEP Monitoring Screen 등) |
+| **AI Copilot** | 자연어 → JSON Patch 생성, Apply/Discard UI |
 
 ### 7.5 Screen Runtime (UIScreenRenderer)
 
@@ -767,7 +778,7 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 - [ ] Multi-tenant 지원 강화
 
 ### 10.2 CEP
-- [ ] 더 많은 Trigger 유형 지원
+- [x] ML 기반 이상 탐지 (anomaly trigger: Z-Score, IQR, EMA)
 - [ ] 알림 채널 확장
 - [ ] Rule 템플릿 제공
 - [ ] 대시보드 시각화 강화
@@ -798,7 +809,7 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 ### 10.6 Screen Editor
 - [x] 5 Phase 구현 완료 (UX/Expression/Theme/RBAC/SSE)
 - [ ] CRDT 기반 실시간 협업 편집
-- [ ] AI 지원 화면 생성 (자연어 → 화면 구성)
+- [x] AI Copilot (자연어 → JSON Patch 생성, BuilderCopilotPanel 통합)
 - [ ] 모바일 반응형 레이아웃
 - [ ] 컴포넌트 마켓플레이스
 
@@ -809,11 +820,11 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 | 모듈 | 목적 | 핵심 기능 | 상용 준비도 |
 |------|------|----------|------------|
 | **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, RCA | 90% |
-| **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 5채널 알림, Redis 분산 상태 | 90% |
+| **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 5채널 알림, Redis 분산 상태, ML 이상 탐지 | 93% |
 | **DOCS** | 문서 관리 | 하이브리드 검색, PDF 뷰어, OPS 통합 | 85% |
 | **API Engine** | 동적 API 관리 | SQL/HTTP/Python/WF 실행, 보안 검사, CEP 통합 | 80% |
 | **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성 | 85% |
-| **Screen Editor** | 시각적 UI 편집 | 15개 컴포넌트, Expression, Theme, RBAC | 95% |
+| **Screen Editor** | 시각적 UI 편집 | 15개 컴포넌트, Expression, Theme, RBAC, AI Copilot | 96% |
 
 ### 시스템 특징
 - **AI 기반**: LLM을 활용한 지능형 질의응답
@@ -961,6 +972,22 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 ## 14. 최근 업데이트
 
+### 2026-02-08: 장기 과제 구현 (ML 이상 탐지 + AI Copilot)
+
+**ML 기반 이상 탐지 (CEP Engine 확장)**:
+- ✅ `anomaly_detector.py`: Z-Score, IQR, EMA 3가지 탐지 알고리즘
+- ✅ `schemas.py`: trigger_type에 "anomaly" 추가 (4번째 트리거)
+- ✅ `executor.py`: `_evaluate_anomaly_trigger()` 함수 추가
+- ✅ `redis_state_manager.py`: 베이스라인 저장/조회/갱신 메서드
+- ✅ `router.py`: `/rules/{rule_id}/anomaly-status` 엔드포인트
+- ✅ `cep-builder/page.tsx`: anomaly 트리거 타입 UI 지원
+
+**AI Copilot (Screen Editor + CEP Builder)**:
+- ✅ `ScreenEditor.tsx`: BuilderCopilotPanel 통합, SCREEN_COPILOT_INSTRUCTION
+- ✅ JSON Patch 자동 추출 (AI 응답 코드 블록 → RFC 6902 패치)
+- ✅ Apply/Discard UI (제안된 패치 적용/거부)
+- ✅ CEP Builder: 기존 AI Copilot에 anomaly 트리거 지원 추가
+
 ### 2026-02-08: 외부 감사 (codepen) + Screen Editor 상용 고도화 + API Engine Blueprint + 문서 통합
 
 **외부 감사 (codepen) 결과 반영**:
@@ -1029,6 +1056,6 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 ---
 
 **작성**: Cline AI Agent + Claude Code
-**버전**: 1.6 (외부 감사 결과 반영 + API Engine 완료도 상향)
+**버전**: 1.7 (장기 과제 반영: ML 이상 탐지 + AI Copilot)
 **문서 위치**: `docs/SYSTEM_ARCHITECTURE_REPORT.md`
 **최종 갱신**: 2026-02-08

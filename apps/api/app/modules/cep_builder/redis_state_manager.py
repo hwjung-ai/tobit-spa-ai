@@ -263,6 +263,102 @@ class RedisStateManager:
             return None
 
     # ========================================================================
+    # Anomaly Detection Baseline Management
+    # ========================================================================
+
+    async def store_baseline(
+        self,
+        rule_id: str,
+        values: list[float],
+        expiry_hours: int = DEFAULT_EXPIRY_HOURS,
+    ) -> bool:
+        """
+        Store baseline values for anomaly detection.
+
+        Args:
+            rule_id: Rule ID
+            values: Baseline numeric values
+            expiry_hours: TTL in hours (default 24h)
+
+        Returns:
+            Whether the store succeeded
+        """
+        if not self.redis_client:
+            return False
+
+        try:
+            key = f"{self.prefix}:baseline:{rule_id}"
+            value = json.dumps(values)
+            expire_seconds = expiry_hours * 3600
+
+            await self.redis_client.setex(key, expire_seconds, value)
+            logger.debug(f"Stored baseline for rule {rule_id}: {len(values)} values")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to store baseline for rule {rule_id}: {e}")
+            return False
+
+    async def get_baseline(self, rule_id: str) -> Optional[list[float]]:
+        """
+        Retrieve baseline values for anomaly detection.
+
+        Args:
+            rule_id: Rule ID
+
+        Returns:
+            List of baseline values or None
+        """
+        if not self.redis_client:
+            return None
+
+        try:
+            key = f"{self.prefix}:baseline:{rule_id}"
+            value = await self.redis_client.get(key)
+
+            if value:
+                return json.loads(value)
+            return None
+
+        except Exception as e:
+            logger.error(f"Failed to get baseline for rule {rule_id}: {e}")
+            return None
+
+    async def append_baseline(
+        self,
+        rule_id: str,
+        new_value: float,
+        max_size: int = 1000,
+        expiry_hours: int = DEFAULT_EXPIRY_HOURS,
+    ) -> bool:
+        """
+        Append a value to the baseline, keeping at most max_size entries.
+
+        Args:
+            rule_id: Rule ID
+            new_value: New value to append
+            max_size: Maximum baseline size
+            expiry_hours: TTL in hours
+
+        Returns:
+            Whether the operation succeeded
+        """
+        if not self.redis_client:
+            return False
+
+        try:
+            existing = await self.get_baseline(rule_id)
+            values = existing or []
+            values.append(new_value)
+            if len(values) > max_size:
+                values = values[-max_size:]
+            return await self.store_baseline(rule_id, values, expiry_hours)
+
+        except Exception as e:
+            logger.error(f"Failed to append baseline for rule {rule_id}: {e}")
+            return False
+
+    # ========================================================================
     # Template Cache Management
     # ========================================================================
 

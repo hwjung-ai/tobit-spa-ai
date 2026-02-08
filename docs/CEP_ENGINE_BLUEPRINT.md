@@ -1,7 +1,7 @@
 # CEP Engine Blueprint (v2 Final)
 
 > 최종 업데이트: 2026-02-08
-> 상태: **Production Ready** (Phase 1-4 완료)
+> 상태: **Production Ready** (Phase 1-4 완료, Phase 6 ML 이상 탐지 완료)
 
 ## 1. 목적
 
@@ -13,6 +13,7 @@ Complex Event Processing (CEP) 엔진은 실시간 이벤트 스트림에서 패
 2. 7가지 집계 함수를 통한 메트릭 분석
 3. 5가지 채널을 통한 자동 알림 발송
 4. 분산 환경 지원 (Redis 상태 관리)
+5. ML 기반 이상 탐지 (Z-Score, IQR, EMA 알고리즘)
 
 ---
 
@@ -27,13 +28,15 @@ FilterProcessor (조건 필터링: AND/OR/NOT)
     ↓
 AggregationProcessor (메트릭 집계: count/sum/avg/min/max/std/percentile)
     ↓
+AnomalyDetector (ML 이상 탐지: Z-Score/IQR/EMA)  ← NEW
+    ↓
 WindowProcessor (시간 윈도우: tumbling/sliding/session)
     ↓
 EnrichmentProcessor (데이터 보강)
     ↓
 Notification System (5가지 채널 발송)
     ↓
-Redis State Manager (분산 상태 저장)
+Redis State Manager (분산 상태 저장 + 베이스라인 관리)
 ```
 
 ### 2.2 레이어 구성
@@ -43,7 +46,8 @@ Redis State Manager (분산 상태 저장)
 | **API** | 규칙 CRUD, 시뮬레이션, 통계 | `cep_builder/router.py` |
 | **Bytewax 통합** | 규칙 변환, 평가, 이벤트 처리 | `cep_builder/bytewax_executor.py` |
 | **엔진 코어** | 프로세서 체인, 규칙 평가 | `cep_builder/bytewax_engine.py` |
-| **기존 실행기** | 하위 호환 평가 로직 | `cep_builder/executor.py` |
+| **기존 실행기** | 하위 호환 평가 로직 (+ anomaly) | `cep_builder/executor.py` |
+| **이상 탐지** | ML 기반 이상 탐지 (3 알고리즘) | `cep_builder/anomaly_detector.py` |
 | **알림** | 5채널 발송, 재시도, 템플릿 | `cep_builder/notification_*.py` |
 | **상태 관리** | Redis 분산 상태 | `cep_builder/redis_state_manager.py` |
 | **폼 변환** | UI JSON ↔ 규칙 양방향 변환 | `cep_builder/form_converter.py` |
@@ -104,7 +108,16 @@ def evaluate_rule_with_bytewax(rule_id, trigger_type, trigger_spec, payload):
 
 `>`, `>=`, `<`, `<=`, `==`, `!=`, `contains`, `starts_with`, `ends_with`, `in`, `not_in`
 
-### 3.4 집계 함수 (7가지)
+### 3.4 Trigger 유형 (4가지)
+
+| 타입 | 설명 | 용도 |
+|------|------|------|
+| `metric` | 메트릭 임계값 기반 | CPU > 80%, Memory > 90% |
+| `event` | 외부 이벤트 기반 | API 호출, 웹훅 수신 |
+| `schedule` | 시간 기반 (Cron) | 매일 오전 9시, 매 30분 |
+| `anomaly` | ML 이상 탐지 기반 | 통계적 이상치 자동 감지 |
+
+### 3.5 집계 함수 (7가지)
 
 | 함수 | 설명 | 용도 |
 |------|------|------|
@@ -116,7 +129,7 @@ def evaluate_rule_with_bytewax(rule_id, trigger_type, trigger_spec, payload):
 | `std` | 표준편차 | 변동성 분석 |
 | `percentile` | 백분위수 | p95/p99 레이턴시 |
 
-### 3.5 윈도우 처리 (3가지)
+### 3.6 윈도우 처리 (3가지)
 
 | 타입 | 설명 | 용도 |
 |------|------|------|
@@ -126,7 +139,88 @@ def evaluate_rule_with_bytewax(rule_id, trigger_type, trigger_spec, payload):
 
 ---
 
-## 4. Notification 시스템
+## 4. ML 기반 이상 탐지 (Anomaly Detection)
+
+### 4.1 개요
+
+임계값 기반 규칙(metric trigger) 외에, 통계적 알고리즘으로 데이터의 이상치를 자동 감지하는 기능.
+`trigger_type: "anomaly"` 로 설정하면 베이스라인 데이터로부터 자동 학습 후 이상 여부를 판별한다.
+
+### 4.2 탐지 알고리즘 (3가지)
+
+| 알고리즘 | 설명 | 파라미터 | 적합 시나리오 |
+|----------|------|----------|--------------|
+| **Z-Score** | 이동 평균/표준편차 기반 | `threshold` (기본 3.0) | 정규 분포 메트릭 (CPU, 응답시간) |
+| **IQR** | 사분위 범위 기반 | `multiplier` (기본 1.5) | 편향된 분포, 아웃라이어 탐지 |
+| **EMA** | 지수 이동 평균 기반 | `alpha` (0.3), `threshold` (3.0) | 트렌드 추적, 점진적 변화 탐지 |
+
+### 4.3 동작 흐름
+
+```
+이벤트 수신
+    ↓
+trigger_type == "anomaly"?
+    ↓ Yes
+베이스라인 로드 (Redis: cep:anomaly:baseline:{rule_id})
+    ↓
+현재 값 추출 (value_path 기반)
+    ↓
+detect_anomaly(values, current, method, config)
+    ↓
+AnomalyResult(is_anomaly, score, method, details)
+    ↓
+is_anomaly == True → Action 실행 (알림 등)
+    ↓
+베이스라인 갱신 (append_baseline, max 1000 포인트)
+```
+
+### 4.4 AnomalyResult 구조
+
+```python
+@dataclass
+class AnomalyResult:
+    is_anomaly: bool        # 이상 여부
+    score: float            # 이상 점수 (Z-Score, IQR score 등)
+    method: str             # 사용된 알고리즘 ("zscore", "iqr", "ema")
+    details: Dict[str, Any] # 상세 정보 (mean, std, threshold, q1, q3 등)
+```
+
+### 4.5 Redis 베이스라인 관리
+
+| 메서드 | 설명 |
+|--------|------|
+| `store_baseline(rule_id, values)` | 전체 베이스라인 저장 (TTL 24h) |
+| `get_baseline(rule_id)` | 베이스라인 조회 |
+| `append_baseline(rule_id, value, max_size=1000)` | 새 값 추가 (FIFO, max 1000) |
+
+키 구조: `cep:anomaly:baseline:{rule_id}` (TTL: 24시간)
+
+### 4.6 API 엔드포인트
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| `GET` | `/cep/rules/{rule_id}/anomaly-status` | 베이스라인 상태 조회 (포인트 수, 알고리즘, 통계 요약) |
+
+### 4.7 Anomaly Trigger 설정 예시
+
+```json
+{
+  "trigger_type": "anomaly",
+  "trigger_spec": {
+    "anomaly_method": "zscore",
+    "anomaly_config": {
+      "threshold": 3.0
+    },
+    "value_path": "cpu_percent",
+    "baseline_window": 100,
+    "baseline_values": []
+  }
+}
+```
+
+---
+
+## 5. Notification 시스템
 
 ### 4.1 채널 (5가지)
 
@@ -156,7 +250,7 @@ def evaluate_rule_with_bytewax(rule_id, trigger_type, trigger_spec, payload):
 
 ---
 
-## 5. Redis 분산 상태 관리
+## 6. Redis 분산 상태 관리
 
 ### 5.1 키 구조
 
@@ -165,6 +259,7 @@ cep:retry:<notification_id>:<channel_id>  → 재시도 기록 (TTL: 24h)
 cep:rule:<rule_id>:state                  → 규칙 상태 (활성화, 통계)
 cep:template:<template_name>              → 템플릿 캐시 (TTL: 24h)
 cep:channel:<channel_name>                → Pub/Sub 채널
+cep:anomaly:baseline:<rule_id>            → 이상 탐지 베이스라인 (TTL: 24h, max 1000)
 ```
 
 ### 5.2 기능
@@ -175,6 +270,7 @@ cep:channel:<channel_name>                → Pub/Sub 채널
 | 규칙 상태 | 활성화 여부, 실행 통계 |
 | 템플릿 캐싱 | 렌더링 성능 최적화 |
 | Pub/Sub | 이벤트 발행/구독 (알림 큐) |
+| 이상 탐지 베이스라인 | 시계열 데이터 저장/갱신 (max 1000, FIFO) |
 | 자동 폴백 | Redis 불가 시 메모리 기반 운영 |
 
 ### 5.3 메모리 vs Redis
@@ -189,7 +285,7 @@ cep:channel:<channel_name>                → Pub/Sub 채널
 
 ---
 
-## 6. API 엔드포인트
+## 7. API 엔드포인트
 
 ### 6.1 규칙 관리
 
@@ -217,6 +313,7 @@ cep:channel:<channel_name>                → Pub/Sub 채널
 |--------|------|------|
 | `GET` | `/cep/stats/summary` | 전체 통계 |
 | `GET` | `/cep/rules/performance` | 규칙 성능 |
+| `GET` | `/cep/rules/{rule_id}/anomaly-status` | 이상 탐지 베이스라인 상태 |
 | `POST` | `/cep/form` | 폼 데이터 변환 |
 
 ### 6.4 알림 채널
@@ -229,7 +326,7 @@ cep:channel:<channel_name>                → Pub/Sub 채널
 
 ---
 
-## 7. 성능 특성
+## 8. 성능 특성
 
 ### 7.1 처리 성능
 
@@ -259,7 +356,7 @@ cep:channel:<channel_name>                → Pub/Sub 채널
 
 ---
 
-## 8. 프론트엔드 컴포넌트
+## 9. 프론트엔드 컴포넌트
 
 ### 8.1 Notification Channel Builder
 
@@ -299,7 +396,7 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 
 ---
 
-## 9. 파일 맵
+## 10. 파일 맵
 
 ### 9.1 Backend
 
@@ -308,11 +405,12 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 | `cep_builder/router.py` | ~1,500 | API 엔드포인트 |
 | `cep_builder/bytewax_executor.py` | 420 | Bytewax 통합 실행기 |
 | `cep_builder/bytewax_engine.py` | 410 | Bytewax CEP 엔진 코어 |
-| `cep_builder/executor.py` | 760 | 기존 CEP 실행기 |
+| `cep_builder/executor.py` | 840 | 기존 CEP 실행기 (+ anomaly 평가) |
+| `cep_builder/anomaly_detector.py` | 190 | ML 이상 탐지 (Z-Score, IQR, EMA) |
 | `cep_builder/notification_channels.py` | 800 | 5채널 알림 |
 | `cep_builder/notification_retry.py` | 360 | 재시도 메커니즘 |
 | `cep_builder/notification_templates.py` | 440 | 템플릿 시스템 |
-| `cep_builder/redis_state_manager.py` | 450 | Redis 상태 관리 |
+| `cep_builder/redis_state_manager.py` | 500 | Redis 상태 관리 (+ 베이스라인) |
 | `cep_builder/form_converter.py` | 250 | 폼-JSON 변환 |
 
 ### 9.2 Frontend
@@ -330,7 +428,7 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 
 ---
 
-## 10. 마이그레이션 로드맵
+## 11. 마이그레이션 로드맵
 
 | Phase | 상태 | 내용 |
 |-------|------|------|
@@ -339,11 +437,11 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 | **Phase 3** | 완료 | Bytewax 하이브리드 통합 |
 | **Phase 4** | 완료 | Redis 분산 상태 관리 |
 | **Phase 5** | 예정 | 완전 Bytewax 마이그레이션 (기존 executor 제거) |
-| **Phase 6** | 예정 | ML 기반 이상 탐지, 자동 규칙 생성 |
+| **Phase 6** | ✅ 완료 | ML 기반 이상 탐지 (Z-Score, IQR, EMA), anomaly trigger 타입 |
 
 ---
 
-## 13. 외부 감사 결과 (codepen, 2026-02-08)
+## 14. 외부 감사 결과 (codepen, 2026-02-08)
 
 **전체 완료도**: 90% (상용 가능)
 
@@ -361,7 +459,7 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 
 ---
 
-## 11. 배포 구성
+## 12. 배포 구성
 
 ### Docker Compose (기본)
 
@@ -384,13 +482,13 @@ Redis Master + 2 Slave + Sentinel 구성 지원.
 
 ---
 
-## 12. 코드 통계
+## 13. 코드 통계
 
 | 영역 | 줄 수 |
 |------|-------|
-| Backend (Python) | ~5,400 |
+| Backend (Python) | ~5,700 |
 | Frontend (React) | ~1,115 |
 | 테스트 | ~300 |
-| **총합** | **~6,800** |
+| **총합** | **~7,100** |
 
-15개 커밋, 2026-02-06 완료.
+17개 커밋, 2026-02-08 최종 업데이트 (ML 이상 탐지 추가).

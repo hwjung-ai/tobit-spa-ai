@@ -434,6 +434,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                     <div className="flex gap-1">
                       <button
                         type="button"
+                        aria-label="Download as CSV"
                         className="rounded border border-slate-700 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-400 transition hover:border-slate-500 hover:text-white"
                         onClick={() => downloadTableAsCSV(columns, rows, block.title)}
                       >
@@ -441,6 +442,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       </button>
                       <button
                         type="button"
+                        aria-label="Download as JSON"
                         className="rounded border border-slate-700 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-400 transition hover:border-slate-500 hover:text-white"
                         onClick={() => downloadTableAsJSON(columns, rows, block.title)}
                       >
@@ -456,13 +458,14 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                         {columns.map((column) => (
                           <th
                             key={column}
+                            scope="col"
                             className="border-b border-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400"
                           >
                             {column}
                           </th>
                         ))}
                         {isCandidateTable ? (
-                          <th className="border-b border-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                          <th scope="col" className="border-b border-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                             Action
                           </th>
                         ) : null}
@@ -554,7 +557,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                 })
                 .join(" ");
               chartContent = (
-                <svg viewBox={`0 0 ${width} ${height}`} className="w-full">
+                <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={block.title || "Chart"}>
                   <polyline
                     fill="none"
                     stroke="#38bdf8"
@@ -1023,9 +1026,9 @@ function renderNodeTable(nodes: NetworkNode[], heading = "Nodes") {
       <table className="min-w-full text-left text-[11px] text-slate-200">
         <thead>
           <tr>
-            <th className="px-2 py-1 text-slate-500">ID</th>
-            <th className="px-2 py-1 text-slate-500">Type</th>
-            <th className="px-2 py-1 text-slate-500">Subtype</th>
+            <th scope="col" className="px-2 py-1 text-slate-500">ID</th>
+            <th scope="col" className="px-2 py-1 text-slate-500">Type</th>
+            <th scope="col" className="px-2 py-1 text-slate-500">Subtype</th>
           </tr>
         </thead>
         <tbody>
@@ -1049,9 +1052,9 @@ function renderEdgeTable(edges: NetworkEdge[]) {
       <table className="min-w-full text-left text-[11px] text-slate-200">
         <thead>
           <tr>
-            <th className="px-2 py-1 text-slate-500">Source</th>
-            <th className="px-2 py-1 text-slate-500">Target</th>
-            <th className="px-2 py-1 text-slate-500">Type</th>
+            <th scope="col" className="px-2 py-1 text-slate-500">Source</th>
+            <th scope="col" className="px-2 py-1 text-slate-500">Target</th>
+            <th scope="col" className="px-2 py-1 text-slate-500">Type</th>
           </tr>
         </thead>
         <tbody>

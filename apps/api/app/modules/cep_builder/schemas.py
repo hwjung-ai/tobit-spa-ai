@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, validator
 
 class CepRuleBase(BaseModel):
     rule_name: str
-    trigger_type: Literal["metric", "event", "schedule"]
+    trigger_type: Literal["metric", "event", "schedule", "anomaly"]
     trigger_spec: Dict[str, Any] = Field(default_factory=dict)
     action_spec: Dict[str, Any] = Field(default_factory=dict)
     is_active: bool = True
@@ -30,7 +30,7 @@ class CepRuleCreate(CepRuleBase):
 
 class CepRuleUpdate(BaseModel):
     rule_name: str | None = None
-    trigger_type: Literal["metric", "event", "schedule"] | None = None
+    trigger_type: Literal["metric", "event", "schedule", "anomaly"] | None = None
     trigger_spec: Dict[str, Any] | None = None
     action_spec: Dict[str, Any] | None = None
     is_active: bool | None = None
@@ -278,7 +278,7 @@ class CepRuleFormData(BaseModel):
     rule_name: str
     description: str | None = None
     is_active: bool = True
-    trigger_type: Literal["metric", "event", "schedule"]
+    trigger_type: Literal["metric", "event", "schedule", "anomaly"]
     trigger_spec: Dict[str, Any]
 
     # 복합 조건 (선택사항)
