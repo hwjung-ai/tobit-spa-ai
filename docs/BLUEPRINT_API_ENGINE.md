@@ -783,38 +783,6 @@ pytest tests/test_api_manager_executor.py -v
 
 ---
 
-## 📈 개선 제안
-
-### 우선순위 1 (옵션, 3-5일)
-
-1. **Workflow Executor 완전 구현** (3-5일)
-   - 노드 실행 순서 설정 (현재는 순차 실행만 지원)
-   - 파라미터 매핑 완전 구현
-   - 에러 처리 및 롤백
-   - 타임아웃 처리
-   - 병렬 실행 지원 (선택 사항)
-
-### 우선순위 2 (옵션, 2-3일)
-
-2. **Redis 기반 캐싱 강화** (2-3일)
-   - Redis로 캐시 저장소 변경 (현재는 In-memory)
-   - 분산 캐싱 지원
-   - 캐시 통계/모니터링 UI
-
-### 우선순위 3 (옵션, 3-5일)
-
-3. **Rate Limiting 구현** (2-3일)
-   - API 실행 속도 제한
-   - 사용자별 제한
-   - API별 제한
-
-4. **Python Sandbox 강화** (3-5일)
-   - Docker 컨테이너 실행 (현재는 기본 샌드박스만 지원)
-   - 라이브러리 제한
-   - 리소스 제한
-
----
-
 ## 🎯 사용자 편의성 평가
 
 | 기능 | 점수 | 비고 |
@@ -1016,9 +984,11 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 
 1. **Workflow Executor 고도화**: 고급 DAG 스케줄링/부분 재시도/노드별 세밀한 복구 정책
 2. **Redis 캐싱 강화**: In-memory → Redis로 변경 (2-3일 예상)
+3. **Rate Limiting 구현**: API 실행 속도 제한, 사용자별/API별 제한
+4. **Python Sandbox 강화**: 컨테이너 기반 격리, 라이브러리/리소스 제한
 
 ---
 
 **작성일**: 2026-02-08
 **상태**: ✅ COMPLETE
-**다음 단계**: Workflow Executor 완전 구현 또는 Redis 캐싱 강화
+**다음 단계**: Workflow Executor 고도화 및 Redis 캐싱 강화
