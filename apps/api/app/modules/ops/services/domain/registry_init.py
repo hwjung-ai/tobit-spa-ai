@@ -1,8 +1,8 @@
 """
 Domain Registry Initialization.
 
-This module initializes and registers all domain planners when imported.
-Import this module early in your application startup to initialize all domains.
+This module provides domain planner registration helpers.
+Call ``initialize_domain_planners()`` explicitly during application startup.
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 
 from app.modules.ops.services.ci.planner.ci_planner import get_ci_planner
-from app.modules.ops.services.domain import register_domain_planner, get_domain_registry
+from app.modules.ops.services.domain import get_domain_registry, register_domain_planner
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,3 @@ def initialize_domain_planners() -> None:
         metadata = get_domain_registry().get_metadata(domain)
         if metadata:
             logger.info(f"  - {domain}: {metadata.description}")
-
-
-# Auto-initialize domains when this module is imported
-initialize_domain_planners()

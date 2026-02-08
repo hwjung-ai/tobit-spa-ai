@@ -7,7 +7,8 @@ from typing import Optional
 
 from core.auth import get_current_user
 from core.db import get_session
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.routing import APIRoute
 from models.api_definition import (
     ApiDefinition,
     ApiDefinitionVersion,
@@ -153,6 +154,69 @@ async def list_apis(
 
     except Exception as e:
         logger.error(f"List APIs failed: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/system/endpoints", response_model=ResponseEnvelope)
+async def list_discovered_endpoints(request: Request):
+    """Discover all API endpoints from the current FastAPI app."""
+    try:
+        openapi = request.app.openapi() or {}
+        paths = openapi.get("paths") or {}
+        if not isinstance(paths, dict):
+            paths = {}
+
+        discovered: dict[tuple[str, str], dict] = {}
+        for path, operations in paths.items():
+            if not isinstance(operations, dict):
+                continue
+            for method, operation in operations.items():
+                method_upper = str(method).upper()
+                if method_upper in {"HEAD", "OPTIONS"}:
+                    continue
+                if not isinstance(operation, dict):
+                    continue
+                discovered[(method_upper, path)] = {
+                    "method": method_upper,
+                    "path": path,
+                    "operationId": operation.get("operationId"),
+                    "summary": operation.get("summary"),
+                    "description": operation.get("description"),
+                    "tags": operation.get("tags") or [],
+                    "parameters": operation.get("parameters") or [],
+                    "requestBody": operation.get("requestBody"),
+                    "responses": operation.get("responses") or {},
+                    "source": "openapi",
+                }
+
+        if not discovered:
+            for route in request.app.routes:
+                if not isinstance(route, APIRoute):
+                    continue
+                methods = sorted((route.methods or set()) - {"HEAD", "OPTIONS"})
+                for method in methods:
+                    discovered[(method, route.path)] = {
+                        "method": method,
+                        "path": route.path,
+                        "operationId": route.operation_id,
+                        "summary": route.summary,
+                        "description": route.description,
+                        "tags": route.tags or [],
+                        "parameters": [],
+                        "requestBody": None,
+                        "responses": {},
+                        "source": "router",
+                    }
+
+        endpoints = [
+            discovered[key]
+            for key in sorted(discovered.keys(), key=lambda item: (item[1], item[0]))
+        ]
+        return ResponseEnvelope.success(
+            data={"endpoints": endpoints, "count": len(endpoints)}
+        )
+    except Exception as e:
+        logger.error(f"Discover endpoints failed: {str(e)}")
         raise HTTPException(500, str(e))
 
 
@@ -899,3 +963,4 @@ async def dry_run(request: dict, session: Session = Depends(get_session)):
     except Exception as e:
         logger.error(f"Dry-run failed: {str(e)}")
         raise HTTPException(500, str(e))
+

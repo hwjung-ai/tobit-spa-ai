@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from datetime import datetime
@@ -13,8 +14,8 @@ from api.routes.health import router as health_router
 from api.routes.hello import router as hello_router
 from api.routes.history import router as history_router
 from api.routes.threads import router as thread_router
-from app.modules.admin_dashboard.router import router as admin_dashboard_router
 from app.modules.admin.routes.logs import router as admin_logs_router
+from app.modules.admin_dashboard.router import router as admin_dashboard_router
 from app.modules.api_keys.router import router as api_keys_router
 from app.modules.api_manager.router import router as api_manager_router
 from app.modules.api_manager.runtime_router import runtime_router
@@ -24,23 +25,22 @@ from app.modules.audit_log.router import router as audit_log_router
 from app.modules.auth.router import router as auth_router
 from app.modules.cep_builder import router as cep_builder_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
+from app.modules.ci_management.router import router as ci_management_router
 from app.modules.data_explorer import router as data_explorer_router
 from app.modules.inspector.router import router as inspector_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.ops.router import router as ops_router
+from app.modules.ops.services.ci.mappings.registry_init import (
+    initialize_mappings,  # noqa: E402
+)
 
 # Initialize OPS tool registry
 from app.modules.ops.services.ci.tools.registry_init import (
     initialize_tools,  # noqa: E402
 )
-from app.modules.ops.services.ci.mappings.registry_init import (
-    initialize_mappings,  # noqa: E402
-)
 from app.modules.ops.services.domain.registry_init import (
     initialize_domain_planners,  # noqa: E402
 )
-
-from app.modules.ci_management.router import router as ci_management_router
 from app.modules.permissions.router import router as permissions_router
 from app.shared import config_loader
 from core.config import get_settings
@@ -91,69 +91,134 @@ app.include_router(runtime_router)
 app.include_router(inspector_router)
 app.include_router(history_router)
 
+_startup_task: asyncio.Task | None = None
+_startup_ready = False
+_startup_error: str | None = None
 
-@app.on_event("startup")
-async def on_startup() -> None:
-    import logging
-    logger = logging.getLogger(__name__)
 
-    # Initialize OPS domain registry (before tools, as tools may depend on domains)
+def _is_truthy(value: str | None, default: bool = False) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _should_defer_heavy_startup() -> bool:
+    # In dev, prioritize fast reload/startup unless explicitly disabled.
+    env_flag = os.environ.get("DEFER_HEAVY_STARTUP")
+    if env_flag is not None:
+        return _is_truthy(env_flag, default=False)
+    app_env = os.environ.get("APP_ENV", "dev").strip().lower()
+    return app_env in {"dev", "local"}
+
+
+def _run_migrations(logger) -> None:
+    # Load .env file into os.environ for secret resolution
+    from dotenv import load_dotenv
+
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+    enable_auto_migrate = _is_truthy(
+        os.environ.get("ENABLE_AUTO_MIGRATE"), default=True
+    )
+    if not enable_auto_migrate:
+        logger.info("Auto-migration disabled (ENABLE_AUTO_MIGRATE=false)")
+        return
+    try:
+        from alembic import command
+        from alembic.config import Config as AlembicConfig
+
+        alembic_cfg = AlembicConfig("alembic.ini")
+        alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
+        try:
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Database migrations completed successfully")
+        except Exception as upgrade_error:
+            logger.warning(
+                "Migration upgrade failed (non-fatal): %s",
+                upgrade_error,
+            )
+            logger.info("Proceeding with current database schema")
+    except Exception as migration_error:
+        logger.error(
+            "Failed to initialize migrations: %s", migration_error, exc_info=True
+        )
+
+
+def _run_heavy_startup_sync(logger) -> None:
     logger.info("Startup: Initializing OPS domain planners...")
     initialize_domain_planners()
     logger.info("Startup: OPS domain planners initialized.")
 
-    # Initialize OPS tool registry
     logger.info("Startup: Initializing OPS tools...")
     initialize_tools()
     logger.info("Startup: OPS tools initialized.")
 
-    # Initialize OPS mapping registry
     logger.info("Startup: Initializing OPS mappings...")
     initialize_mappings()
     logger.info("Startup: OPS mappings initialized.")
 
-    # Load .env file into os.environ for secret resolution
-    from dotenv import load_dotenv
-    load_dotenv(Path(__file__).resolve().parent / ".env")
-    # Run database migrations (auto-upgrade on startup)
-    enable_auto_migrate = os.environ.get("ENABLE_AUTO_MIGRATE", "true").lower() == "true"
-    if enable_auto_migrate:
-        try:
-            from alembic import command
-            from alembic.config import Config as AlembicConfig
+    _run_migrations(logger)
 
-            alembic_cfg = AlembicConfig("alembic.ini")
-            alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
-
-            try:
-                command.upgrade(alembic_cfg, "head")
-                logger.info("Database migrations completed successfully")
-            except Exception as upgrade_error:
-                logger.warning(
-                    f"Migration upgrade failed (non-fatal): {upgrade_error}"
-                )
-                logger.info("Proceeding with current database schema")
-        except Exception as e:
-            logger.error(f"Failed to initialize migrations: {e}", exc_info=True)
-    else:
-        logger.info("Auto-migration disabled (ENABLE_AUTO_MIGRATE=false)")
-
-    # Start CEP scheduler
     logger.info("Startup: Starting CEP scheduler...")
     start_scheduler()
     logger.info("Startup: CEP scheduler started.")
 
-    # Start resource watcher
-    enable_watcher = os.environ.get("ENABLE_RESOURCE_WATCHER", "true").lower() == "true"
-    logger.info(f"Startup: Starting resource watcher (enabled={enable_watcher})...")
+    enable_watcher = _is_truthy(
+        os.environ.get("ENABLE_RESOURCE_WATCHER"), default=True
+    )
+    logger.info("Startup: Starting resource watcher (enabled=%s)...", enable_watcher)
     config_loader.start_watching(enable_watcher)
     logger.info("Startup: Resource watcher started.")
 
 
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
+async def _run_heavy_startup(logger) -> None:
+    global _startup_ready, _startup_error
+    try:
+        await asyncio.to_thread(_run_heavy_startup_sync, logger)
+        _startup_ready = True
+        _startup_error = None
+        logger.info("Startup: Heavy initialization completed.")
+    except Exception as startup_error:
+        _startup_ready = False
+        _startup_error = str(startup_error)
+        logger.error(
+            "Startup: Heavy initialization failed: %s", startup_error, exc_info=True
+        )
+
+
+@app.on_event("startup")
+async def on_startup() -> None:
+    global _startup_task, _startup_ready, _startup_error
+
     import logging
     logger = logging.getLogger(__name__)
+    _startup_ready = False
+    _startup_error = None
+
+    if _should_defer_heavy_startup():
+        logger.info(
+            "Startup: Deferring heavy initialization to background task (DEFER_HEAVY_STARTUP=true)."
+        )
+        _startup_task = asyncio.create_task(_run_heavy_startup(logger))
+    else:
+        logger.info("Startup: Running heavy initialization synchronously.")
+        await _run_heavy_startup(logger)
+
+
+@app.on_event("shutdown")
+async def on_shutdown() -> None:
+    global _startup_task
+
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if _startup_task and not _startup_task.done():
+        logger.info("Shutdown: Cancelling pending startup task...")
+        _startup_task.cancel()
+        try:
+            await _startup_task
+        except asyncio.CancelledError:
+            pass
+        _startup_task = None
 
     logger.info("Shutdown: Stopping CEP scheduler...")
     # Stop CEP scheduler (now async)
@@ -174,7 +239,14 @@ def health():
         "time": datetime.utcnow().isoformat(),
         "code": 0,
         "message": "OK",
-        "data": {"status": "up"},
+        "data": {
+            "status": "up",
+            "startup": {
+                "ready": _startup_ready,
+                "in_progress": _startup_task is not None and not _startup_task.done(),
+                "error": _startup_error,
+            },
+        },
     }
 
 

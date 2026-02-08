@@ -3,8 +3,7 @@ Tool registry initialization module.
 
 This module initializes the tool registry from Asset Registry (database).
 All tools are now defined as Tool Assets and dynamically loaded at runtime.
-
-Import this module early in your application startup to initialize tools.
+Call ``initialize_tools()`` explicitly during application startup.
 """
 
 from __future__ import annotations
@@ -28,8 +27,8 @@ def initialize_tools() -> None:
     try:
         from app.modules.asset_registry.loader import load_all_published_tools
         from app.modules.ops.services.ci.tools.base import get_tool_registry
-        from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
         from app.modules.ops.services.ci.tools.direct_query_tool import DirectQueryTool
+        from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
 
         registry = get_tool_registry()
 
@@ -64,7 +63,3 @@ def initialize_tools() -> None:
 
     except Exception as e:
         logger.error(f"Failed to initialize tools from Asset Registry: {e}")
-
-
-# Auto-initialize tools when this module is imported
-initialize_tools()

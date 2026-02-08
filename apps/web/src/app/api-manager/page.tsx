@@ -11,6 +11,9 @@ import {
   HttpFormBuilder,
   type HttpSpec,
 } from "../../components/api-manager";
+import SQLQueryBuilder from "../../components/api-manager/SQLQueryBuilder";
+import PythonBuilder from "../../components/api-manager/PythonBuilder";
+import WorkflowBuilder from "../../components/api-manager/WorkflowBuilder";
 import DraftAssistantPanel from "../../components/api-manager/DraftAssistantPanel";
 import type {
   ScopeType, CenterTab, LogicType, SystemView,
@@ -499,10 +502,13 @@ export default function ApiManagerPage() {
     setDiscoveredFetchStatus("idle");
     setDiscoveredFetchAt(new Date().toISOString());
     try {
-      // Note: Currently, there is no distinct /api-manager/system/endpoints endpoint
-      // System APIs are fetched via /api-manager/apis?scope=system
-      // For now, we'll show an empty list or fetch from the main API list
-      setDiscoveredEndpoints([]);
+      const response = await fetch(buildApiUrl("/api-manager/system/endpoints", apiBaseUrl));
+      if (!response.ok) {
+        throw new Error("Failed to load discovered endpoints");
+      }
+      const payload = await response.json();
+      const items = (payload.data?.endpoints ?? []) as DiscoveredEndpoint[];
+      setDiscoveredEndpoints(items);
       setDiscoveredFetchStatus("ok");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load discovered endpoints";
@@ -510,7 +516,7 @@ export default function ApiManagerPage() {
       setDiscoveredFetchStatus("error");
       setDiscoveredEndpoints([]);
     }
-  }, [isSystemScope]);
+  }, [isSystemScope, apiBaseUrl]);
 
   const fetchExecLogs = useCallback(async () => {
     if (!selectedId || selectedId === "applied-draft-temp" || selectedId.startsWith("local") || selectedId.startsWith("system:")) {
@@ -1565,6 +1571,30 @@ export default function ApiManagerPage() {
                   value={httpSpec}
                   onChange={setHttpSpec}
                   isReadOnly={isSystemScope}
+                />
+              </div>
+            ) : logicType === "sql" ? (
+              <div className="p-4">
+                <SQLQueryBuilder
+                  query={logicBody}
+                  onChange={setLogicBody}
+                  readOnly={isSystemScope}
+                />
+              </div>
+            ) : logicType === "python" ? (
+              <div className="p-4">
+                <PythonBuilder
+                  code={logicBody}
+                  onChange={setLogicBody}
+                  readOnly={isSystemScope}
+                />
+              </div>
+            ) : logicType === "workflow" ? (
+              <div className="p-4">
+                <WorkflowBuilder
+                  workflow={logicBody}
+                  onChange={setLogicBody}
+                  readOnly={isSystemScope}
                 />
               </div>
             ) : (
