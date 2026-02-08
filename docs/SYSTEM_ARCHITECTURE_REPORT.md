@@ -239,7 +239,7 @@ Golden Query → Baseline Trace 저장 → 정기적 재실행 → 비교 분석
 "CPU > 80%"   [기준 결과]            [현재 결과]      [차이 분석]    [알림]
 ```
 
-> 상세 설계: [OPS_QUERY_BLUEPRINT.md](OPS_QUERY_BLUEPRINT.md)
+> 상세 설계: [BLUEPRINT_OPS_QUERY.md](BLUEPRINT_OPS_QUERY.md)
 
 ---
 
@@ -349,7 +349,7 @@ CEP이 실시간으로 작동하려면 **지속적인 폴링(Polling) 메커니�
 | **Anomaly Detector** | 이상 탐지 | Z-Score, IQR, EMA 알고리즘 |
 | **Redis State Manager** | 분산 상태 | 재시도 기록, 규칙 상태, 템플릿 캐시, 베이스라인 |
 
-> 상세 설계: [CEP_ENGINE_BLUEPRINT.md](CEP_ENGINE_BLUEPRINT.md)
+> 상세 설계: [BLUEPRINT_CEP_ENGINE.md](BLUEPRINT_CEP_ENGINE.md)
 
 ---
 
@@ -541,7 +541,7 @@ API 정의 조회 → API Executor 실행 → 실행 로그 기록 → 결과 �
 | **SQL Validator** | SQL 검증 | 보안 체크, 인젝션 감지 |
 | **HttpFormBuilder** | HTTP UI | Form/JSON 이중 모드 빌더 |
 
-> 상세 설계: [API_ENGINE_BLUEPRINT.md](API_ENGINE_BLUEPRINT.md)
+> 상세 설계: [BLUEPRINT_API_ENGINE.md](BLUEPRINT_API_ENGINE.md)
 
 ---
 
@@ -662,7 +662,7 @@ UIScreenRenderer
 | **ThemeProvider** | 테마 관리 | Light/Dark/Brand 테마 전환 |
 | **UIScreenRenderer** | 런타임 렌더링 | 저장된 스크린을 실제 실행 |
 
-> 상세 설계: [SCREEN_EDITOR_BLUEPRINT.md](SCREEN_EDITOR_BLUEPRINT.md)
+> 상세 설계: [BLUEPRINT_SCREEN_EDITOR.md](BLUEPRINT_SCREEN_EDITOR.md)
 
 ---
 
@@ -1039,10 +1039,10 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 - ✅ 향후 UI 구현 로드맵 수립
 
 **문서 통합**:
-- ✅ CEP 관련 4개 문서 → `CEP_ENGINE_BLUEPRINT.md` 통합
-- ✅ OPS 관련 5개 문서 → `OPS_QUERY_BLUEPRINT.md` 통합
-- ✅ Screen Editor 문서 → `SCREEN_EDITOR_BLUEPRINT.md` 정리
-- ✅ API Engine 문서 → `API_ENGINE_BLUEPRINT.md` 신규
+- ✅ CEP 관련 4개 문서 → `BLUEPRINT_CEP_ENGINE.md` 통합
+- ✅ OPS 관련 5개 문서 → `BLUEPRINT_OPS_QUERY.md` 통합
+- ✅ Screen Editor 문서 → `BLUEPRINT_SCREEN_EDITOR.md` 정리
+- ✅ API Engine 문서 → `BLUEPRINT_API_ENGINE.md` 신규
 - ✅ 이전 문서 10개 → `docs/history/` 아카이브
 
 ### 2026-02-07: OPS Real Mode + DOCS 뷰어 개선
@@ -1068,10 +1068,10 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 | 문서 | 설명 |
 |------|------|
-| [CEP_ENGINE_BLUEPRINT.md](CEP_ENGINE_BLUEPRINT.md) | CEP 엔진 상세 설계 (Trigger-Action, 5채널 알림, Redis) |
-| [OPS_QUERY_BLUEPRINT.md](OPS_QUERY_BLUEPRINT.md) | OPS 쿼리 시스템 상세 설계 (6개 모드, CI Orchestrator, Document Search) |
-| [API_ENGINE_BLUEPRINT.md](API_ENGINE_BLUEPRINT.md) | API Engine 상세 설계 (SQL/HTTP/Python/WF 실행기, 보안, CEP 통합) |
-| [SCREEN_EDITOR_BLUEPRINT.md](SCREEN_EDITOR_BLUEPRINT.md) | Screen Editor 상세 설계 (15 컴포넌트, Expression, Theme, RBAC) |
+| [BLUEPRINT_CEP_ENGINE.md](BLUEPRINT_CEP_ENGINE.md) | CEP 엔진 상세 설계 (Trigger-Action, 5채널 알림, Redis) |
+| [BLUEPRINT_OPS_QUERY.md](BLUEPRINT_OPS_QUERY.md) | OPS 쿼리 시스템 상세 설계 (6개 모드, CI Orchestrator, Document Search) |
+| [BLUEPRINT_API_ENGINE.md](BLUEPRINT_API_ENGINE.md) | API Engine 상세 설계 (SQL/HTTP/Python/WF 실행기, 보안, CEP 통합) |
+| [BLUEPRINT_SCREEN_EDITOR.md](BLUEPRINT_SCREEN_EDITOR.md) | Screen Editor 상세 설계 (15 컴포넌트, Expression, Theme, RBAC) |
 | [DEV_ENV.md](DEV_ENV.md) | 개발 환경 설정 가이드 |
 | [FEATURES.md](FEATURES.md) | 기능 명세서 |
 | [PRODUCT_OVERVIEW.md](PRODUCT_OVERVIEW.md) | 제품 개요 |

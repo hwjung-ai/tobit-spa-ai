@@ -14,11 +14,11 @@
 3. **AI 에이전트 규칙**: 루트 `AGENTS.md` **필독**
 
 ### 아키텍처 이해
-1. **시스템 전체 개요**: `SYSTEM_ARCHITECTURE_REPORT.md` (v1.6)
-2. **OPS 쿼리 설계**: `OPS_QUERY_BLUEPRINT.md`
-3. **CEP 엔진 설계**: `CEP_ENGINE_BLUEPRINT.md`
-4. **API Engine 설계**: `API_ENGINE_BLUEPRINT.md`
-5. **Screen Editor 설계**: `SCREEN_EDITOR_BLUEPRINT.md`
+1. **시스템 전체 개요**: `SYSTEM_ARCHITECTURE_REPORT.md` (v1.8)
+2. **OPS 쿼리 설계**: `BLUEPRINT_OPS_QUERY.md`
+3. **CEP 엔진 설계**: `BLUEPRINT_CEP_ENGINE.md`
+4. **API Engine 설계**: `BLUEPRINT_API_ENGINE.md`
+5. **Screen Editor 설계**: `BLUEPRINT_SCREEN_EDITOR.md`
 6. **개발 환경 설정**: 루트 `DEV_ENV.md`
 
 ### 기능 구현
@@ -40,12 +40,13 @@ tobit-spa-ai/
 │   ├── INDEX.md                     # 문서 인덱스 (이 파일)
 │   └── DEV_ENV.md                   # 개발 환경 설정
 │   │
-│   ├── 아키텍처 Blueprint (5개)
-│   │   ├── SYSTEM_ARCHITECTURE_REPORT.md  # 시스템 전체 아키텍처 (v1.6)
-│   │   ├── OPS_QUERY_BLUEPRINT.md         # OPS 쿼리 시스템
-│   │   ├── CEP_ENGINE_BLUEPRINT.md        # CEP 엔진
-│   │   ├── API_ENGINE_BLUEPRINT.md        # API Engine
-│   │   └── SCREEN_EDITOR_BLUEPRINT.md     # Screen Editor
+│   ├── 아키텍처 & Blueprint (7개)
+│   │   ├── SYSTEM_ARCHITECTURE_REPORT.md      # 시스템 전체 아키텍처 (v1.8)
+│   │   ├── BLUEPRINT_PRODUCT_COMPLETENESS.md  # 제품 완성도 평가
+│   │   ├── BLUEPRINT_OPS_QUERY.md             # OPS 쿼리 시스템
+│   │   ├── BLUEPRINT_CEP_ENGINE.md            # CEP 엔진
+│   │   ├── BLUEPRINT_API_ENGINE.md            # API Engine
+│   │   └── BLUEPRINT_SCREEN_EDITOR.md         # Screen Editor
 │   │
 │   ├── 기능/운영 (2개)
 │   │   ├── FEATURES.md                    # 기능 명세서
@@ -71,18 +72,18 @@ tobit-spa-ai/
 | **Admin** | 86% | ✅ 상용 가능 | Assets, Catalogs, Explorer, Observability |
 | **CEP Events** | 85% | ✅ 상용 가능 | 이벤트 목록, 필터링, SSE 스트리밍 |
 | **Chat** | 0% | ❌ 미구현 | 백엔드 모듈만 존재 |
-| **전체 평균** | **87%** | ✅ 상용 가능 | 상세: `PRODUCT_COMPLETENESS_REPORT.md` |
+| **전체 평균** | **87%** | ✅ 상용 가능 | 상세: `BLUEPRINT_PRODUCT_COMPLETENESS.md` |
 
 ## 6개 모듈별 문서 매핑
 
 | 모듈 | Blueprint | 상용 준비도 | 완성도 |
 |------|-----------|------------|---------|
-| **OPS** | `OPS_QUERY_BLUEPRINT.md` | ✅ 상용 가능 | 88% |
-| **CEP** | `CEP_ENGINE_BLUEPRINT.md` | ✅ 상용 가능 | 90% |
+| **OPS** | `BLUEPRINT_OPS_QUERY.md` | ✅ 상용 가능 | 88% |
+| **CEP** | `BLUEPRINT_CEP_ENGINE.md` | ✅ 상용 가능 | 90% |
 | **DOCS** | (SYSTEM_ARCHITECTURE_REPORT 내) | ✅ 상용 가능 | 85% |
-| **API Engine** | `API_ENGINE_BLUEPRINT.md` | ✅ 상용 가능 | 85% |
+| **API Engine** | `BLUEPRINT_API_ENGINE.md` | ✅ 상용 가능 | 85% |
 | **ADMIN** | (SYSTEM_ARCHITECTURE_REPORT 내) | ✅ 상용 가능 | 86% |
-| **Screen Editor** | `SCREEN_EDITOR_BLUEPRINT.md` | ✅ 상용 가능 | 94% |
+| **Screen Editor** | `BLUEPRINT_SCREEN_EDITOR.md` | ✅ 상용 가능 | 94% |
 
 ---
 

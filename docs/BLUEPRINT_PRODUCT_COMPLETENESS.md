@@ -874,10 +874,10 @@ Tobit SPA AI는 **91% 완성도**로 상용 제품으로 배포 가능한 수준
 
 - `docs/PRODUCT_OVERVIEW.md` - 제품 비전
 - `docs/SYSTEM_ARCHITECTURE_REPORT.md` - 시스템 아키텍처
-- `docs/OPS_QUERY_BLUEPRINT.md` - OPS Query System
-- `docs/CEP_ENGINE_BLUEPRINT.md` - CEP Engine
-- `docs/API_ENGINE_BLUEPRINT.md` - API Engine
-- `docs/SCREEN_EDITOR_BLUEPRINT.md` - Screen Editor
+- `docs/BLUEPRINT_OPS_QUERY.md` - OPS Query System
+- `docs/BLUEPRINT_CEP_ENGINE.md` - CEP Engine
+- `docs/BLUEPRINT_API_ENGINE.md` - API Engine
+- `docs/BLUEPRINT_SCREEN_EDITOR.md` - Screen Editor
 - `docs/FEATURES.md` - 기능 상세
 - `AGENTS.md` - 개발 규칙
 
