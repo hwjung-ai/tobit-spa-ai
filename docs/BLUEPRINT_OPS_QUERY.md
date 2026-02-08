@@ -11,7 +11,7 @@ OPS Query System은 운영 환경의 구성/수치/이력/연결/문서 데이�
 핵심 목표:
 1. 6가지 질의 모드로 운영 데이터 접근
 2. Document Search (BM25 + pgvector) 통합
-3. CI Orchestrator 기반 Plan-Execute 파이프라인
+3. OPS Orchestrator 기반 Plan-Execute 파이프라인
 4. 전체(all) 모드에서 LLM 종합 분석
 
 ---
@@ -33,7 +33,7 @@ User Question
 │
 └─ POST /ops/ask (전체 모드)
     ↓
-    CI Orchestrator / LangGraph
+    OPS Orchestrator / LangGraph
     ↓
     Multi-tool Execution
     ↓
@@ -59,7 +59,7 @@ User Question
 
 **용도**: Configuration Item (CI) 정보 조회 (서버, 앱, DB 구성)
 
-**실행 흐름**: `run_config_executor()` → `execute_universal("config")` → CI Orchestrator
+**실행 흐름**: `run_config_executor()` → `execute_universal("config")` → OPS Orchestrator
 
 **Plan**:
 ```python
@@ -76,7 +76,7 @@ Plan(intent=LOOKUP, view=SUMMARY, mode=CI,
 
 **용도**: CPU, 메모리, 디스크, 네트워크 등 성능 지표 조회
 
-**실행 흐름**: `run_metric()` → `execute_universal("metric")` → CI Orchestrator
+**실행 흐름**: `run_metric()` → `execute_universal("metric")` → OPS Orchestrator
 
 **Plan**:
 ```python
@@ -92,7 +92,7 @@ Plan(intent=AGGREGATE, view=SUMMARY, mode=CI,
 
 **용도**: 이벤트, 장애, 변경 이력 조회
 
-**실행 흐름**: `run_hist()` → `execute_universal("hist")` → CI Orchestrator
+**실행 흐름**: `run_hist()` → `execute_universal("hist")` → OPS Orchestrator
 
 **Plan**:
 ```python
@@ -108,7 +108,7 @@ Plan(intent=LIST, view=SUMMARY, mode=CI,
 
 **용도**: 서비스 의존성, 네트워크 연결, 데이터 흐름 시각화
 
-**실행 흐름**: `run_graph()` → `execute_universal("graph")` → CI Orchestrator
+**실행 흐름**: `run_graph()` → `execute_universal("graph")` → OPS Orchestrator
 
 **Plan**:
 ```python
@@ -124,7 +124,7 @@ Plan(intent=EXPAND, view=NEIGHBORS, mode=CI,
 
 **용도**: 업로드된 문서에서 키워드/의미 검색
 
-**실행 흐름**: `run_document()` → DocumentSearchService (CI Orchestrator 미사용)
+**실행 흐름**: `run_document()` → DocumentSearchService (OPS Orchestrator 미사용)
 
 **특이점**: RAG 패턴 - 검색 → 컨텍스트 구성 → LLM 답변 생성
 
@@ -157,7 +157,7 @@ Plan(intent=EXPAND, view=NEIGHBORS, mode=CI,
 
 ---
 
-## 4. CI Orchestrator
+## 4. OPS Orchestrator
 
 ### 4.1 실행 단계 (Stage Pipeline)
 
@@ -233,7 +233,7 @@ ON documents (tenant_id, deleted_at) INCLUDE (id, filename);
 ### 5.4 Tool Asset 통합
 
 DynamicTool `http_api` 타입으로 Asset Registry에 등록:
-- OPS CI Ask에서 자동 발견 및 호출
+- OPS Ask에서 자동 발견 및 호출
 - 테넌트별 독립 구성 가능
 - 설정 기반 (코드 변경 없이 검색 엔진 교체 가능)
 
@@ -295,7 +295,7 @@ DynamicTool `http_api` 타입으로 Asset Registry에 등록:
 | 파일 | 역할 |
 |------|------|
 | `ops/services/__init__.py` | 모드별 Executor 라우팅 |
-| `ops/services/ci/orchestrator/runner.py` | CI Orchestrator 실행 엔진 |
+| `ops/services/ci/orchestrator/runner.py` | OPS Orchestrator 실행 엔진 (구현 경로: `ci/*`) |
 | `ops/services/ci/planner/plan_schema.py` | Plan 데이터 모델 |
 | `ops/services/langgraph.py` | LangGraph All Runner |
 | `ops/services/action_registry.py` | UI Action 핸들러 레지스트리 |
