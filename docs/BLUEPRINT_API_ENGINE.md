@@ -1,6 +1,6 @@
 # API Engine Blueprint
 
-## 📋 문서 개요
+## 1. 문서 개요
 
 이 문서는 Tobit SPA AI 프로젝트의 **API Engine**에 대한 청사진(Blueprint)입니다. API Engine은 사용자가 정의한 커스텀 API를 생성, 관리, 실행하는 통합 시스템입니다.
 
@@ -10,9 +10,9 @@
 
 ---
 
-## 🎯 시스템 개요
+## 2. 시스템 개요
 
-### API Engine이란?
+### 2.1 API Engine이란?
 
 API Engine은 사용자가 다음과 같은 기능을 수행할 수 있는 플랫폼입니다:
 
@@ -21,7 +21,7 @@ API Engine은 사용자가 다음과 같은 기능을 수행할 수 있는 플�
 3. **API 관리**: API 버전 관리, 권한 제어, 실행 로그 추적
 4. **API 테스트**: API 테스트 및 디버깅
 
-### 핵심 구성 요소
+### 2.2 핵심 구성 요소
 
 ```
 API Engine
@@ -45,7 +45,7 @@ API Engine
 
 ---
 
-## 📊 전체 완료도
+## 3. 전체 완료도
 
 | 모듈 | 완료도 | 상용 수준 | 비고 |
 |------|--------|----------|------|
@@ -58,11 +58,11 @@ API Engine
 
 ---
 
-## 🏗️ 아키텍처
+## 4. 아키텍처
 
-### 1. 데이터 모델
+### 4.1 데이터 모델
 
-#### 1.1 API Definition (`tb_api_definition`)
+#### 4.1.1 API Definition (`tb_api_definition`)
 
 ```python
 class TbApiDefinition(SQLModel, table=True):
@@ -80,7 +80,7 @@ class TbApiDefinition(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-#### 1.2 API Execution Log (`tb_api_execution_log`)
+#### 4.1.2 API Execution Log (`tb_api_execution_log`)
 
 ```python
 class TbApiExecutionLog(SQLModel, table=True):
@@ -99,9 +99,9 @@ class TbApiExecutionLog(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 2. 실행 엔진
+### 4.2 실행 엔진
 
-#### 2.1 SQL Executor (`execute_sql_api`)
+#### 4.2.1 SQL Executor (`execute_sql_api`)
 
 **기능:**
 - PostgreSQL 쿼리 실행
@@ -142,7 +142,7 @@ def validate_select_sql(sql: str) -> tuple[bool, Optional[str]]:
     return True, None
 ```
 
-#### 2.2 HTTP Executor (`execute_http_api`)
+#### 4.2.2 HTTP Executor (`execute_http_api`)
 
 **기능:**
 - 외부 HTTP 요청 실행
@@ -175,7 +175,7 @@ result = execute_http_api(
 )
 ```
 
-#### 2.3 Python Executor (`execute_python_api`)
+#### 4.2.3 Python Executor (`execute_python_api`)
 
 **기능:**
 - Python 스크립트 실행
@@ -208,7 +208,7 @@ def main(params, input_payload):
 )
 ```
 
-#### 2.4 Workflow Executor (`execute_workflow_api`)
+#### 4.2.4 Workflow Executor (`execute_workflow_api`)
 
 **기능:**
 - 여러 API를 순차적으로 실행
@@ -246,11 +246,11 @@ def main(params, input_payload):
 
 ---
 
-## 🎨 프론트엔드 UI
+## 5. 프론트엔드 UI
 
-### 1. Asset Registry (`/admin/assets`)
+### 5.1 Asset Registry (`/admin/assets`)
 
-#### 1.1 완료된 기능 (90%)
+#### 5.1.1 완료된 기능 (90%)
 
 **파일:** `apps/web/src/app/admin/assets/page.tsx`, `assets-content.tsx`
 
@@ -278,7 +278,7 @@ def main(params, input_payload):
   - 버전 관리
   - 상태 변경 (draft → published)
 
-#### 1.2 사용성 평가
+#### 5.1.2 사용성 평가
 
 | 기능 | 점수 | 비고 |
 |------|------|------|
@@ -290,9 +290,9 @@ def main(params, input_payload):
 
 ---
 
-### 2. API Manager (95% 완료)
+### 5.2 API Manager (95% 완료)
 
-#### 2.1 실제 구현 상태
+#### 5.2.1 실제 구현 상태
 
 **경로:** `/api-manager/page.tsx` (Top-level route)
 
@@ -329,7 +329,7 @@ def main(params, input_payload):
   - Python Builder (PythonBuilder, Monaco Editor)
   - Workflow Builder (WorkflowBuilder, React Flow)
 
-#### 2.2 구성 요소 (완료됨)
+#### 5.2.2 구성 요소 (완료됨)
 
 **파일:** `apps/web/src/components/api-manager/`
 
@@ -359,7 +359,7 @@ def main(params, input_payload):
 
 **총 컴포넌트:** 4개 (541 lines)
 
-#### 2.3 HttpFormBuilder 상세
+#### 5.2.3 HttpFormBuilder 상세
 
 **기능:**
 ```typescript
@@ -409,9 +409,9 @@ type HttpSpec = {
 
 ---
 
-### 3. API Builder (100% 완료)
+### 5.3 API Builder (100% 완료)
 
-#### 3.1 실제 구현 상태
+#### 5.3.1 실제 구현 상태
 
 **HTTP Builder**: ✅ 완료 (HttpFormBuilder)
 - Method 선택 (GET, POST, PUT, DELETE, PATCH)
@@ -435,7 +435,7 @@ type HttpSpec = {
 
 **전체 완료도**: 100% (SQL/Python/HTTP/Workflow Builder 통합 완료)
 
-#### 3.2 추천 라이브러리
+#### 5.3.2 추천 라이브러리
 
 **SQL Builder:**
 - `react-querybuilder` - Visual Query Builder
@@ -455,11 +455,11 @@ type HttpSpec = {
 
 ---
 
-## 🔧 백엔드 API
+## 6. 백엔드 API
 
-### 1. Asset Registry API
+### 6.1 Asset Registry API
 
-#### 1.1 엔드포인트
+#### 6.1.1 엔드포인트
 
 **목록 조회:**
 ```http
@@ -509,7 +509,7 @@ POST /asset-registry/assets/{asset_id}/publish
 POST /asset-registry/assets/{asset_id}/rollback
 ```
 
-#### 1.2 응답 형식
+#### 6.1.2 응답 형식
 
 **ResponseEnvelope:**
 ```json
@@ -525,9 +525,9 @@ POST /asset-registry/assets/{asset_id}/rollback
 
 ---
 
-### 2. API Manager API (95% 완료)
+### 6.2 API Manager API (95% 완료)
 
-#### 2.1 구현된 엔드포인트 (13개)
+#### 6.2.1 구현된 엔드포인트 (13개)
 
 - ✅ **CRUD**: GET/POST/PUT/DELETE `/api-manager/apis`
 - ✅ **실행**: POST `/api-manager/{api_id}/execute`
@@ -605,9 +605,9 @@ GET /api-manager/apis/{api_id}/logs?limit=10
 
 ---
 
-### 3. API Executor
+### 6.3 API Executor
 
-#### 3.1 실행 함수
+#### 6.3.1 실행 함수
 
 **SQL API 실행:**
 ```python
@@ -667,9 +667,9 @@ result = execute_workflow_api(
 
 ---
 
-## 🔒 보안
+## 7. 보안
 
-### 1. SQL 보안
+### 7.1 SQL 보안
 
 **허용된 문장:**
 - `SELECT` - 데이터 조회
@@ -686,7 +686,7 @@ result = execute_workflow_api(
 - UNION 주입 (`UNION SELECT`)
 - 주석 주입 (`--`, `/* */`)
 
-### 2. HTTP 보안
+### 7.2 HTTP 보안
 
 **허용된 메서드:**
 - `GET`, `POST`, `PUT`, `DELETE`, `PATCH`
@@ -699,7 +699,7 @@ result = execute_workflow_api(
 - `{{params.X}}` - 사용자 파라미터
 - `{{input.X}}` - 입력 페이로드
 
-### 3. Python 보안
+### 7.3 Python 보안
 
 **샌드박스 환경:**
 - 임시 파일 시스템 사용
@@ -712,9 +712,9 @@ result = execute_workflow_api(
 
 ---
 
-## 📊 성능
+## 8. 성능
 
-### 1. 실행 제한
+### 8.1 실행 제한
 
 | 타입 | 최대 행 수 | 타임아웃 |
 |------|-----------|----------|
@@ -723,13 +723,13 @@ result = execute_workflow_api(
 | Python | N/A | 5초 |
 | Workflow | N/A | 30초 |
 
-### 2. 로그 크기
+### 8.2 로그 크기
 
 - **request_params**: 최대 1MB
 - **response_data**: 최대 1MB
 - **error_stacktrace**: 최대 10KB
 
-### 3. 캐싱
+### 8.3 캐싱
 
 **구현된 기능:**
 - APICacheService 클래스 (Redis 우선 + In-memory fallback)
@@ -740,9 +740,9 @@ result = execute_workflow_api(
 
 ---
 
-## 🧪 테스트
+## 9. 테스트
 
-### 1. 단위 테스트
+### 9.1 단위 테스트
 
 **파일:** `apps/api/tests/test_api_cache_service.py`, `apps/api/tests/unit/test_api_manager.py`
 
@@ -760,7 +760,7 @@ cd apps/api
 pytest tests/unit/test_api_manager.py tests/test_api_cache_service.py -v
 ```
 
-### 2. 통합 테스트
+### 9.2 통합 테스트
 
 **현재 상태:**
 - API 생성 → 실행 → 로그 확인
@@ -771,7 +771,7 @@ pytest tests/unit/test_api_manager.py tests/test_api_cache_service.py -v
 
 API Engine 전용 시나리오를 묶은 통합 테스트 패키지는 추가 보강이 필요하다.
 
-### 3. E2E 테스트
+### 9.3 E2E 테스트
 
 **현재 상태:**
 - API Manager UI 접근
@@ -784,7 +784,7 @@ Playwright 스위트는 존재하지만 API Engine 중심의 회귀 시나리오
 
 ---
 
-## 🎯 사용자 편의성 평가
+## 10. 사용자 편의성 평가
 
 | 기능 | 점수 | 비고 |
 |------|------|------|
@@ -794,9 +794,9 @@ Playwright 스위트는 존재하지만 API Engine 중심의 회귀 시나리오
 | **API Builder UI** | ⭐⭐⭐⭐⭐ | 100% 완료, SQL/Python/HTTP/Workflow Builder 모두 완료 |
 | **전체** | ⭐⭐⭐⭐⭐ | 98% 완료 |
 
-## 🔗 통합
+## 11. 통합
 
-### 1. CEP Builder 통합
+### 11.1 CEP Builder 통합
 
 **Action Spec 예시:**
 ```json
@@ -832,7 +832,7 @@ Playwright 스위트는 존재하지만 API Engine 중심의 회귀 시나리오
 6. 실행 로그 기록 (`tb_api_execution_log`)
 7. 결과 반환 (CEP exec log에 포함)
 
-### 2. UI Screen 통합
+### 11.2 UI Screen 통합
 
 **UIScreenBlock 예시:**
 ```json
@@ -875,16 +875,16 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 
 ---
 
-## 📚 참고 문서
+## 12. 참고 문서
 
-### 1. 관련 문서
+### 12.1 관련 문서
 
 - **API Manager UX Improvements**: `docs/API_MANAGER_UX_IMPROVEMENTS.md`
 - **API Manager Executor**: `docs/history/API_MANAGER_EXECUTOR.md`
 - **API Manager Deliverables**: `docs/history/API_MANAGER_DELIVERABLES.md`
 - **CEP API Manager Integration**: `docs/history/CEP_API_MANAGER_INTEGRATION.md`
 
-### 2. 소스 파일
+### 12.2 소스 파일
 
 - **Executor**: `apps/api/app/modules/api_manager/executor.py`
 - **Workflow Executor**: `apps/api/app/modules/api_manager/workflow_executor.py`
@@ -893,7 +893,7 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 - **API Manager Components**: `apps/web/src/components/api-manager/`
 - **Asset Registry UI**: `apps/web/src/app/admin/assets/`
 
-## ✅ 결론
+## 13. 결론
 
 **상용 수준: 95% 완료**
 
@@ -905,7 +905,7 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 | **API Manager UI** | 95% | ✅ 가능 | `/api-manager/page.tsx` 3,000+ 줄, 모든 Builder 통합 완료 |
 | **API Builder UI** | 100% | ✅ 완료 | SQL, Python, HTTP, Workflow Builder 모두 완료 및 통합 |
 
-### 강점 ✅
+### 13.1 강점
 
 1. **API Executor**: 완전 구현, 보안 강화, 다양한 타입 지원
 2. **API Manager Backend**: 13개 엔드포인트 완전 구현
@@ -917,7 +917,7 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 8. **HttpFormBuilder**: 이중 모드 (Form/JSON), 자동 변환
 9. **보안**: SQL SELECT/WITH만 허용, SQL 인젝션 감지, Python 샌드박스
 
-### 개선 필요 ⚠️
+### 13.2 개선 필요
 
 1. **Workflow Executor 고도화**: 고급 DAG 스케줄링/부분 재시도/노드별 세밀한 복구 정책
 2. **캐시 운영성 강화**: Redis 캐시 무효화 전략/통계 대시보드/운영 정책 보강
