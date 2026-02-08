@@ -12,18 +12,24 @@ class ResponseEnvelope(BaseModel, Generic[T]):
     time: datetime
     code: int = 0
     message: str = "OK"
-    data: dict[str, Any] | None = None
+    data: T | dict[str, Any] | list | None = None
+    metadata: dict[str, Any] | None = None
 
     @classmethod
     def success(
         cls,
-        data: dict[str, Any] | None = None,
+        data: Any = None,
         *,
         message: str = "OK",
         code: int = 0,
+        metadata: dict[str, Any] | None = None,
     ) -> "ResponseEnvelope":
         return cls(
-            time=datetime.now(timezone.utc), code=code, message=message, data=data
+            time=datetime.now(timezone.utc),
+            code=code,
+            message=message,
+            data=data,
+            metadata=metadata,
         )
 
     @classmethod
@@ -32,7 +38,7 @@ class ResponseEnvelope(BaseModel, Generic[T]):
         message: str,
         *,
         code: int = 1,
-        data: dict[str, Any] | None = None,
+        data: Any = None,
     ) -> "ResponseEnvelope":
         return cls(
             time=datetime.now(timezone.utc), code=code, message=message, data=data

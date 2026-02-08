@@ -23,7 +23,7 @@ class AppSettings(BaseSettings):
     ops_mode: Literal["mock", "real"] = "mock"
     ops_enable_langgraph: bool = False
     enable_system_apis: bool = False
-    enable_data_explorer: bool = False
+    enable_data_explorer: bool = True
     ops_default_source_asset: str | None = None
     ops_default_schema_asset: str | None = None
     ops_default_resolver_asset: str | None = None

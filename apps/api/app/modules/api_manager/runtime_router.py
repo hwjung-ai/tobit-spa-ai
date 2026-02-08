@@ -132,7 +132,7 @@ async def handle_runtime_request(
             params=params,
             input_payload=input_payload,
             executed_by=executed_by,
-            runtime_policy={},
+            runtime_policy=getattr(api, "runtime_policy", None),
         )
         return ResponseEnvelope.success(
             data={

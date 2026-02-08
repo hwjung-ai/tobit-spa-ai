@@ -549,7 +549,7 @@ async def execute_api(
                 params=request.params or None,
                 input_payload=None,
                 executed_by=executed_by,
-                runtime_policy=None,
+                runtime_policy=getattr(api, "runtime_policy", None),
             )
             return {
                 "status": "ok",

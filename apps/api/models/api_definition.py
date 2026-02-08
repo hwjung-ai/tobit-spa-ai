@@ -34,6 +34,7 @@ class ApiDefinition(SQLModel, table=True):
     tags: list[str] = Field(default_factory=list, sa_column=Column(JSON, default=list))
     mode: ApiMode | None = Field(default=ApiMode.sql)
     logic: str | None = Field(default=None, sa_column=Column(Text))
+    runtime_policy: dict | None = Field(default_factory=dict, sa_column=Column(JSON, default=dict))
     is_enabled: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

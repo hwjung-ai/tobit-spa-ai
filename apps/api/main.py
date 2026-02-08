@@ -40,7 +40,7 @@ from app.modules.ops.services.domain.registry_init import (
     initialize_domain_planners,  # noqa: E402
 )
 
-# from app.modules.ci_management.router import router as ci_management_router  # Temporarily disabled due to ResponseEnvelope[T] type issues
+from app.modules.ci_management.router import router as ci_management_router
 from app.modules.permissions.router import router as permissions_router
 from app.shared import config_loader
 from core.config import get_settings
@@ -83,7 +83,7 @@ app.include_router(asset_registry_router)
 app.include_router(tool_router)
 app.include_router(operation_settings_router)
 app.include_router(cep_builder_router)
-# app.include_router(ci_management_router)  # Temporarily disabled
+app.include_router(ci_management_router)
 app.include_router(data_explorer_router)
 app.include_router(audit_log_router)
 app.include_router(api_manager_router)
@@ -115,34 +115,28 @@ async def on_startup() -> None:
     # Load .env file into os.environ for secret resolution
     from dotenv import load_dotenv
     load_dotenv(Path(__file__).resolve().parent / ".env")
-    # Run database migrations
-    # Disabled to prevent startup crash due to broken migration history
-    if False:
+    # Run database migrations (auto-upgrade on startup)
+    enable_auto_migrate = os.environ.get("ENABLE_AUTO_MIGRATE", "true").lower() == "true"
+    if enable_auto_migrate:
         try:
             from alembic import command
             from alembic.config import Config as AlembicConfig
 
-            logger = logging.getLogger(__name__)
             alembic_cfg = AlembicConfig("alembic.ini")
-
-            # Set the actual database URL from settings instead of hardcoded alembic.ini
             alembic_cfg.set_main_option("sqlalchemy.url", settings.postgres_dsn)
 
-            # Try to upgrade migrations - skip if alembic has conflicts
             try:
-                # Try with explicit target first (upgrade to latest)
                 command.upgrade(alembic_cfg, "head")
                 logger.info("Database migrations completed successfully")
             except Exception as upgrade_error:
-                # If explicit target fails, try current version
                 logger.warning(
-                    f"Migration with explicit target failed: {upgrade_error}"
+                    f"Migration upgrade failed (non-fatal): {upgrade_error}"
                 )
                 logger.info("Proceeding with current database schema")
         except Exception as e:
-            logging.getLogger(__name__).error(
-                f"Failed to initialize migrations: {e}", exc_info=True
-            )
+            logger.error(f"Failed to initialize migrations: {e}", exc_info=True)
+    else:
+        logger.info("Auto-migration disabled (ENABLE_AUTO_MIGRATE=false)")
 
     # Start CEP scheduler
     logger.info("Startup: Starting CEP scheduler...")
