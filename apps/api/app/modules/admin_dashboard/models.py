@@ -13,7 +13,7 @@ class TbAdminSetting(SQLModel, table=True):
     __tablename__ = "tb_admin_setting"
     __table_args__ = ({"extend_existing": True},)
 
-    setting_key: str = Field(primary_key=True, sa_column=Column(Text, nullable=False))
+    setting_key: str = Field(sa_column=Column(Text, primary_key=True, nullable=False))
     setting_value: dict[str, Any] = Field(
         default_factory=dict, sa_column=Column(JSONB, nullable=False)
     )

@@ -27,7 +27,7 @@ from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
 from app.modules.data_explorer import router as data_explorer_router
 from app.modules.inspector.router import router as inspector_router
 from app.modules.operation_settings.router import router as operation_settings_router
-from app.modules.ops import router as ops_router
+from app.modules.ops.router import router as ops_router
 
 # Initialize OPS tool registry
 from app.modules.ops.services.ci.tools.registry_init import (
