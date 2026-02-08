@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
 import type { ColDef, GridApi, RowClickedEvent } from "ag-grid-community";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 
@@ -112,8 +112,52 @@ const normalizeError = (error: unknown) => {
   }
 };
 
+const allowedAckFilter = new Set(["all", "acked", "unacked"]);
+const allowedSeverityFilter = new Set(["all", "info", "warn", "critical"]);
+
+const toCsv = (rows: CepEventSummary[]): string => {
+  if (!rows.length) {
+    return "event_id,triggered_at,status,summary,severity,ack,ack_at,rule_id,rule_name,notification_id";
+  }
+  const columns = [
+    "event_id",
+    "triggered_at",
+    "status",
+    "summary",
+    "severity",
+    "ack",
+    "ack_at",
+    "rule_id",
+    "rule_name",
+    "notification_id",
+  ] as const;
+  const header = columns.join(",");
+  const lines = rows.map((row) =>
+    columns
+      .map((key) => {
+        const value = row[key];
+        const str = value == null ? "" : String(value);
+        return `"${str.replace(/"/g, '""')}"`;
+      })
+      .join(",")
+  );
+  return [header, ...lines].join("\n");
+};
+
+const downloadBlob = (filename: string, content: string, type: string) => {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+};
+
 function CepEventBrowserContent() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const router = useRouter();
+  const pathname = usePathname();
   const [selectedEvent, setSelectedEvent] = useState<CepEventDetail | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [ackedFilter, setAckedFilter] = useState<"all" | "acked" | "unacked">("unacked");
@@ -121,6 +165,7 @@ function CepEventBrowserContent() {
   const [ruleFilter, setRuleFilter] = useState<string>("");
   const [sinceFilter, setSinceFilter] = useState<string>("");
   const [untilFilter, setUntilFilter] = useState<string>("");
+  const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
   const [leftWidth, setLeftWidth] = useState<number | null>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [isUserSized, setIsUserSized] = useState(false);
@@ -132,6 +177,53 @@ function CepEventBrowserContent() {
   const [runDetail, setRunDetail] = useState<CepRunDetail | null>(null);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ackParam = searchParams.get("ack");
+    if (ackParam && allowedAckFilter.has(ackParam)) {
+      setAckedFilter(ackParam as "all" | "acked" | "unacked");
+    }
+    const sevParam = searchParams.get("severity");
+    if (sevParam && allowedSeverityFilter.has(sevParam)) {
+      setSeverityFilter(sevParam);
+    }
+    setRuleFilter(searchParams.get("rule_id") ?? "");
+    setSinceFilter(searchParams.get("since") ?? "");
+    setUntilFilter(searchParams.get("until") ?? "");
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (ackedFilter !== "all") params.set("ack", ackedFilter);
+    else params.delete("ack");
+
+    if (severityFilter !== "all") params.set("severity", severityFilter);
+    else params.delete("severity");
+
+    if (ruleFilter.trim()) params.set("rule_id", ruleFilter.trim());
+    else params.delete("rule_id");
+
+    if (sinceFilter) params.set("since", sinceFilter);
+    else params.delete("since");
+
+    if (untilFilter) params.set("until", untilFilter);
+    else params.delete("until");
+
+    const current = searchParams.toString();
+    const next = params.toString();
+    if (current !== next) {
+      router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+    }
+  }, [
+    ackedFilter,
+    pathname,
+    router,
+    ruleFilter,
+    searchParams,
+    severityFilter,
+    sinceFilter,
+    untilFilter,
+  ]);
 
   const columnDefs = useMemo<ColDef[]>(
     () => [
@@ -332,6 +424,22 @@ function CepEventBrowserContent() {
       setDetailError(normalizeError(error));
     }
   }, [apiBaseUrl, fetchEventDetail, selectedEvent]);
+
+  const handleExport = useCallback(() => {
+    const rows = eventsQuery.data ?? [];
+    if (!rows.length) {
+      setDetailError("내보낼 이벤트가 없습니다.");
+      return;
+    }
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    if (exportFormat === "json") {
+      const payload = JSON.stringify(rows, null, 2);
+      downloadBlob(`cep-events-${ts}.json`, payload, "application/json");
+      return;
+    }
+    const csv = toCsv(rows);
+    downloadBlob(`cep-events-${ts}.csv`, csv, "text/csv;charset=utf-8");
+  }, [eventsQuery.data, exportFormat]);
 
   useEffect(() => {
     if (leftWidth === null) {
@@ -652,6 +760,32 @@ function CepEventBrowserContent() {
               className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-200 transition hover:border-slate-600 tracking-normal"
             >
               Refresh
+            </button>
+            <button
+              onClick={() => {
+                setAckedFilter("unacked");
+                setSeverityFilter("all");
+                setRuleFilter("");
+                setSinceFilter("");
+                setUntilFilter("");
+              }}
+              className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-200 transition hover:border-slate-600 tracking-normal"
+            >
+              Reset
+            </button>
+            <select
+              value={exportFormat}
+              onChange={(event) => setExportFormat(event.target.value as "csv" | "json")}
+              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+            >
+              <option value="csv">CSV</option>
+              <option value="json">JSON</option>
+            </select>
+            <button
+              onClick={handleExport}
+              className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-200 transition hover:border-slate-600 tracking-normal"
+            >
+              Export
             </button>
           </div>
           {eventsQuery.error ? (

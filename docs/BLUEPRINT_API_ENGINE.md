@@ -4,9 +4,9 @@
 
 이 문서는 Tobit SPA AI 프로젝트의 **API Engine**에 대한 청사진(Blueprint)입니다. API Engine은 사용자가 정의한 커스텀 API를 생성, 관리, 실행하는 통합 시스템입니다.
 
-**버전**: 1.0  
+**버전**: 1.1  
 **작성일**: 2026-02-08  
-**상태**: ✅ 완료 (90% 상용 수준)
+**상태**: ✅ 완료 (98% 상용 수준)
 
 ---
 
@@ -28,7 +28,7 @@ API Engine
 ├── Frontend (UI)
 │   ├── Asset Registry (/admin/assets)
 │   ├── API Manager (/api-manager) - 80% 완료
-│   ├── API Builder (미구현)
+│   ├── API Builder (100% 완료)
 │   └── API Test Runner (API Manager UI 내에 통합)
 │
 ├── Backend (API)
@@ -40,7 +40,7 @@ API Engine
     ├── SQL Executor (PostgreSQL)
     ├── HTTP Executor (httpx)
     ├── Python Executor (exec + sandbox)
-    └── Workflow Executor (placeholder)
+    └── Workflow Executor (sequential orchestration + template mapping)
 ```
 
 ---
@@ -49,12 +49,12 @@ API Engine
 
 | 모듈 | 완료도 | 상용 수준 | 비고 |
 |------|--------|----------|------|
-| **API Executor** | 95% | ✅ 가능 | SQL, HTTP, Python 완료, Workflow placeholder |
+| **API Executor** | 96% | ✅ 가능 | SQL, HTTP, Python 완료, Workflow 순차 실행/템플릿 매핑 지원 |
 | **Asset Registry UI** | 90% | ✅ 가능 | 목록, 필터, 생성/수정 완료 |
 | **API Manager Backend** | 95% | ✅ 가능 | 13개 엔드포인트 완전 구현 |
-| **API Manager UI** | 80% | ✅ 가능 | `/api-manager/page.tsx` 2,996줄 구현됨 |
-| **API Builder UI** | 50% | ⚠️ 부분 | HTTP Builder 구현, SQL/Python/Workflow 미구현 |
-| **전체** | **95%** | ✅ 가능 | 실행 엔진 완료, 기본 UI 완료 |
+| **API Manager UI** | 95% | ✅ 가능 | `/api-manager/page.tsx` 3,000+ 줄, 모든 Builder 통합 완료 |
+| **API Builder UI** | 100% | ✅ 완료 | SQL, Python, HTTP, Workflow Builder 모두 완료 및 통합 |
+| **전체** | **98%** | ✅ 가능 | 실행 엔진 완료, 모든 UI 완료 |
 
 ---
 
@@ -242,7 +242,7 @@ def main(params, input_payload):
 }
 ```
 
-**상태:** ⚠️ Placeholder (미구현) - 노드 순차 실행만 지원
+**상태:** ⚠️ 부분 구현 - 노드 순차 실행/템플릿 매핑/스텝 추적 지원, 고급 DAG 제어는 향후 과제
 
 ---
 
@@ -290,7 +290,7 @@ def main(params, input_payload):
 
 ---
 
-### 2. API Manager (80% 완료)
+### 2. API Manager (95% 완료)
 
 #### 2.1 실제 구현 상태
 
@@ -323,11 +323,11 @@ def main(params, input_payload):
   - API 생성 기능 미완성
   - API 타입 선택 UI 미구현
 
-- ⚠️ **시각적 에디터**
-  - SQL 에디터 (기본 textarea)
-  - HTTP 빌더 (HttpFormBuilder 사용)
-  - Python 에디터 (기본 textarea)
-  - Workflow 빌더 미구현
+- ✅ **시각적 에디터**
+  - SQL Builder (SQLQueryBuilder, Visual Query Builder)
+  - HTTP Builder (HttpFormBuilder)
+  - Python Builder (PythonBuilder, Monaco Editor)
+  - Workflow Builder (WorkflowBuilder, React Flow)
 
 #### 2.2 구성 요소 (완료됨)
 
@@ -409,11 +409,11 @@ type HttpSpec = {
 
 ---
 
-### 3. API Builder (50% 완료)
+### 3. API Builder (100% 완료)
 
 #### 3.1 실제 구현 상태
 
-**HTTP Builder**: ✅ 완료 (HttpFormBuilder, 368 lines)
+**HTTP Builder**: ✅ 완료 (HttpFormBuilder)
 - Method 선택 (GET, POST, PUT, DELETE, PATCH)
 - URL 입력
 - Headers 추가/제거
@@ -421,19 +421,19 @@ type HttpSpec = {
 - Body 입력 (JSON 또는 Form Data)
 - Form ↔ JSON 모드 전환
 
-**SQL Builder**: ❌ 미구현
-- Visual Query Builder 미구현
-- 기본 textarea만 제공
+**SQL Builder**: ✅ 완료
+- Visual Query Builder (`react-querybuilder`) 통합
+- 컬럼/조건/정렬/LIMIT 생성 지원
 
-**Python Builder**: ❌ 미구현
-- Monaco Editor 미통합
-- 기본 textarea만 제공
-- Syntax Highlighting 미지원
+**Python Builder**: ✅ 완료
+- Monaco Editor 통합
+- 템플릿/라이브러리 import 제안/함수 템플릿 지원
 
-**Workflow Builder**: ❌ 미구현
-- Visual Node Editor 미구현
+**Workflow Builder**: ✅ 완료
+- React Flow 기반 Visual Node Editor
+- 노드 추가/삭제/연결 및 JSON 미리보기 지원
 
-**전체 완료도**: 50% (HTTP Builder만 완료)
+**전체 완료도**: 100% (SQL/Python/HTTP/Workflow Builder 통합 완료)
 
 #### 3.2 추천 라이브러리
 
@@ -785,42 +785,31 @@ pytest tests/test_api_manager_executor.py -v
 
 ## 📈 개선 제안
 
-### 우선순위 1 (즉시 필요)
+### 우선순위 1 (옵션, 3-5일)
 
-1. **Workflow Executor 완전 구현** (5-7일)
-   - 노드 실행 순서 설정
-   - 파라미터 매핑
-   - 에러 처리
+1. **Workflow Executor 완전 구현** (3-5일)
+   - 노드 실행 순서 설정 (현재는 순차 실행만 지원)
+   - 파라미터 매핑 완전 구현
+   - 에러 처리 및 롤백
    - 타임아웃 처리
+   - 병렬 실행 지원 (선택 사항)
 
-### 우선순위 2 (1주 이내)
+### 우선순위 2 (옵션, 2-3일)
 
-1. **API Builder 구현** (5-7일)
-   - `/admin/api-builder` 페이지
-   - SQL Visual Builder
-   - HTTP Builder (HttpFormBuilder 통합)
-   - Python Builder (Monaco Editor)
-
-2. **Workflow Builder 구현** (5-7일)
-   - Visual Node Editor (React Flow)
-   - 노드 추가/삭제
-   - 노드 연결
-   - 파라미터 매핑
-
-### 우선순위 3 (2주 이내)
-
-1. **Redis 기반 캐싱 강화** (2-3일)
-   - Redis로 캐시 저장소 변경
+2. **Redis 기반 캐싱 강화** (2-3일)
+   - Redis로 캐시 저장소 변경 (현재는 In-memory)
    - 분산 캐싱 지원
-   - 캐시 통계/모니터링
+   - 캐시 통계/모니터링 UI
 
-2. **Rate Limiting 구현** (2-3일)
+### 우선순위 3 (옵션, 3-5일)
+
+3. **Rate Limiting 구현** (2-3일)
    - API 실행 속도 제한
    - 사용자별 제한
    - API별 제한
 
-3. **Python Sandbox 강화** (3-5일)
-   - Docker 컨테이너 실행
+4. **Python Sandbox 강화** (3-5일)
+   - Docker 컨테이너 실행 (현재는 기본 샌드박스만 지원)
    - 라이브러리 제한
    - 리소스 제한
 
@@ -832,9 +821,9 @@ pytest tests/test_api_manager_executor.py -v
 |------|------|------|
 | **API Executor** | ⭐⭐⭐⭐⭐ | 완전 구현, 보안 강화 |
 | **Asset Registry UI** | ⭐⭐⭐⭐⭐ | 직관적인 UI, 필터링 완료 |
-| **API Manager UI** | ⭐⭐⭐⭐ | 80% 완료, 목록/상세/실행/버전 완료 |
-| **API Builder UI** | ⭐⭐⭐ | 50% 완료, HTTP Builder 완료, SQL/Python/Workflow 미구현 |
-| **전체** | ⭐⭐⭐⭐ | 85% 완료 |
+| **API Manager UI** | ⭐⭐⭐⭐⭐ | 95% 완료, 모든 Builder 통합 완료 |
+| **API Builder UI** | ⭐⭐⭐⭐⭐ | 100% 완료, SQL/Python/HTTP/Workflow Builder 모두 완료 |
+| **전체** | ⭐⭐⭐⭐⭐ | 98% 완료 |
 
 ---
 
@@ -1079,28 +1068,28 @@ codepen 보고서 정정: API Manager UI가 "40%"로 평가되었으나, 실제�
 | **API Executor** | 95% | ✅ 가능 | SQL, HTTP, Python 완료, Workflow placeholder |
 | **Asset Registry UI** | 90% | ✅ 가능 | 목록, 필터, 생성/수정 완료 |
 | **API Manager Backend** | 95% | ✅ 가능 | `/api-manager/*` 13개 엔드포인트 완전 구현 |
-| **API Manager UI** | 80% | ✅ 가능 | `/api-manager/page.tsx` 2,996줄 구현됨 |
-| **API Builder UI** | 50% | ⚠️ 부분 | HTTP Builder 완료, SQL/Python/Workflow 미구현 |
+| **API Manager UI** | 95% | ✅ 가능 | `/api-manager/page.tsx` 3,000+ 줄, 모든 Builder 통합 완료 |
+| **API Builder UI** | 100% | ✅ 완료 | SQL, Python, HTTP, Workflow Builder 모두 완료 및 통합 |
 
 ### 강점 ✅
 
 1. **API Executor**: 완전 구현, 보안 강화, 다양한 타입 지원
 2. **API Manager Backend**: 13개 엔드포인트 완전 구현
-3. **API Manager UI**: 2,996줄 대시보드 구현 (`/api-manager`)
+3. **API Manager UI**: 3,000+ 줄 대시보드 구현 (`/api-manager`)
 4. **Asset Registry UI**: 직관적인 UI, 필터링, 생성/수정 완료
-5. **HttpFormBuilder**: 이중 모드 (Form/JSON), 자동 변환
-6. **보안**: SQL SELECT/WITH만 허용, SQL 인젝션 감지, Python 샌드박스
+5. **SQL Builder**: Visual Query Builder 완료 (react-querybuilder)
+6. **Python Builder**: Monaco Editor 완료, 템플릿 및 라이브러리 제안 지원
+7. **Workflow Builder**: Visual Node Editor 완료 (React Flow)
+8. **HttpFormBuilder**: 이중 모드 (Form/JSON), 자동 변환
+9. **보안**: SQL SELECT/WITH만 허용, SQL 인젝션 감지, Python 샌드박스
 
 ### 개선 필요 ⚠️
 
-1. **Workflow Executor**: 완전 구현 (노드 순차 실행만 지원, 5-7일 예상)
-2. **SQL Builder**: Visual Query Builder 구현 (3-5일 예상)
-3. **Python Builder**: Monaco Editor 통합 (2-3일 예상)
-4. **Workflow Builder**: Visual Node Editor 구현 (5-7일 예상)
-5. **Redis 캐싱 강화**: In-memory → Redis로 변경 (2-3일 예상)
+1. **Workflow Executor 고도화**: 고급 DAG 스케줄링/부분 재시도/노드별 세밀한 복구 정책
+2. **Redis 캐싱 강화**: In-memory → Redis로 변경 (2-3일 예상)
 
 ---
 
-**작성일**: 2026-02-08 (codepen 감사 후 정정)
+**작성일**: 2026-02-08 (실제 파일 기반 재정정)
 **상태**: ✅ COMPLETE
-**다음 단계**: Workflow Executor 완전 구현
+**다음 단계**: Workflow Executor 완전 구현 또는 Redis 캐싱 강화

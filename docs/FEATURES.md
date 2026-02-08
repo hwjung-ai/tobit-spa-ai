@@ -17,7 +17,7 @@
 | **Screens** | 94% | ✅ 상용 가능 |
 | **CEP Builder** | 100% | ✅ 상용 완료 |
 | **Admin** | 100% | ✅ 상용 완료 |
-| **CEP Events** | 85% | ✅ 상용 가능 |
+| **CEP Events** | 92% | ✅ 상용 가능 |
 | **Chat** | 85% | ✅ 상용 가능 |
 
 
@@ -50,6 +50,7 @@
   - Metric polling/telemetry, 스냅샷, 알림
 - CEP Event Browser UI (`/cep-events`)
   - 이벤트 목록/상세/ACK, SSE 스트림
+  - 필터 상태 URL 동기화, CSV/JSON 내보내기
   - Event run 조회(`/cep/events/run`)
 - OPS/CI UI (`/ops`)
   - CI 디스커버리/정책 + `/ops/ci/ask` 질문/답변
@@ -396,6 +397,8 @@ curl -s http://localhost:8000/cep/rules/<rule_id>/exec-logs
 - ACK 처리: `tb_cep_notification_log.ack`, `ack_at`, `ack_by` (마이그레이션 0019)
 - UI 진입: 헤더 알림 아이콘 → `/cep-events`
 - 갱신: SSE(`/cep/events/stream`)로 summary/new_event/ack_event 수신 (DB polling 없음)
+- 필터 공유: `ack`, `severity`, `rule_id`, `since`, `until` 쿼리스트링 유지
+- 내보내기: 현재 필터 결과를 CSV/JSON으로 다운로드
 - 주의: SSE 브로드캐스터는 단일 프로세스 메모리 기반입니다. 운영에서는 `uvicorn --workers 1` 권장 또는 Redis PubSub로 교체 필요.
 - SSE keepalive: 서버가 `ping` 이벤트를 주기적으로 전송.
 

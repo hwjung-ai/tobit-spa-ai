@@ -49,6 +49,9 @@ class AppSettings(BaseSettings):
     neo4j_password: Optional[str] = None
 
     redis_url: Optional[str] = None
+    api_cache_backend: Literal["auto", "memory", "redis"] = "auto"
+    api_cache_prefix: str = "api_cache:"
+    api_cache_default_ttl_seconds: int = 300
     data_pg_allow_schemas: str = "public"
     data_pg_allow_tables: str = "tb_cep_*,tb_api_*,ci,ci_ext,event_log"
     data_redis_allowed_prefixes: str = "cep:"
