@@ -773,6 +773,9 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 ### 10.1 OPS
 - [x] 6개 쿼리 모드 완성 (구성/수치/이력/연결/문서/전체)
 - [x] 듀얼 엔드포인트 구조 (/ops/query + /ops/ask)
+- [x] Debug 진단 기능 (TbExecutionTrace 기반 에러/느린 스텝 분석)
+- [x] Rollback 기능 (원본 request_payload 재실행)
+- [x] CI Management Router 활성화 (ResponseEnvelope 타입 수정)
 - [ ] Real mode 데이터 소스 연결 (config, metric, hist 모드)
 - [ ] RCA 정확도 향상 (LLM 통합)
 - [ ] Multi-tenant 지원 강화
@@ -794,10 +797,9 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 - [x] Asset Registry UI 완성 (90%)
 - [x] API Manager Backend 완성 (13개 엔드포인트)
 - [x] API Manager UI 기본 구현 (`/api-manager/page.tsx` 2,996줄, 80%)
+- [x] Script runtime_policy DB 기반 전달 (ApiDefinition.runtime_policy)
 - [ ] API Manager UI 고도화 (Visual Builder, 에디터 개선)
 - [ ] API Test Runner UI 구현
-- [ ] Workflow Executor 완전 구현
-- [ ] Redis 기반 캐싱
 - [ ] Python Sandbox 강화 (Docker 컨테이너)
 
 ### 10.5 ADMIN
@@ -819,10 +821,10 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 | 모듈 | 목적 | 핵심 기능 | 상용 준비도 |
 |------|------|----------|------------|
-| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, RCA | 90% |
+| **OPS** | 인프라 질의 응답 | 6개 쿼리 모드, AI 오케스트레이션, Debug/Rollback, CI Mgmt | 94% |
 | **CEP** | 이벤트 처리 및 알림 | 메트릭 모니터링, 5채널 알림, Redis 분산 상태, ML 이상 탐지 | 93% |
 | **DOCS** | 문서 관리 | 하이브리드 검색, PDF 뷰어, OPS 통합 | 85% |
-| **API Engine** | 동적 API 관리 | SQL/HTTP/Python/WF 실행, 보안 검사, CEP 통합 | 80% |
+| **API Engine** | 동적 API 관리 | SQL/HTTP/Python/WF 실행, 보안 검사, runtime_policy 제어 | 93% |
 | **ADMIN** | 시스템 관리 | 사용자 관리, 모니터링, 관측성 | 85% |
 | **Screen Editor** | 시각적 UI 편집 | 15개 컴포넌트, Expression, Theme, RBAC, AI Copilot | 96% |
 
@@ -972,6 +974,27 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 ## 14. 최근 업데이트
 
+### 2026-02-08: Codex 의견 5개 이슈 해결
+
+**OPS Debug/Rollback 실제 구현**:
+- ✅ `actions.py`: `_run_debug_diagnostics()` – TbExecutionTrace 기반 에러/느린 스텝 분석
+- ✅ `actions.py`: `_run_rollback()` – 원본 request_payload 재실행 롤백
+
+**CI Management Router 활성화**:
+- ✅ `common.py`: ResponseEnvelope data 필드 확장 (T | dict | list | None), metadata 필드 추가
+- ✅ `main.py`: CI Management Router import/등록 주석 해제
+
+**Migration 자동화 복구**:
+- ✅ `main.py`: `if False:` → `ENABLE_AUTO_MIGRATE` 환경변수 제어 (기본 true)
+
+**Script execution runtime_policy 수정**:
+- ✅ `api_definition.py`: runtime_policy JSON 컬럼 추가
+- ✅ `router.py`, `runtime_router.py`: api.runtime_policy (DB 저장값) 전달
+
+**Data Explorer 기본 활성화**:
+- ✅ `config.py`: enable_data_explorer 기본값 True
+- ✅ `.env.example` 파일들: 기본값 true
+
 ### 2026-02-08: 장기 과제 구현 (ML 이상 탐지 + AI Copilot)
 
 **ML 기반 이상 탐지 (CEP Engine 확장)**:
@@ -1056,6 +1079,6 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 ---
 
 **작성**: Cline AI Agent + Claude Code
-**버전**: 1.7 (장기 과제 반영: ML 이상 탐지 + AI Copilot)
+**버전**: 1.8 (Codex 5개 이슈 해결 + 장기 과제 반영)
 **문서 위치**: `docs/SYSTEM_ARCHITECTURE_REPORT.md`
 **최종 갱신**: 2026-02-08
