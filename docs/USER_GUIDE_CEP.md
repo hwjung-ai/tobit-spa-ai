@@ -503,3 +503,139 @@ Trigger 타입:
 4. 실패 유형 분류(권한/네트워크/설정)
 5. 임시 완화(비활성화/임계치 상향) 후 영구 수정
 
+
+---
+
+## 20. 완성 프로젝트 트랙 - 운영 CEP 룰팩 구축
+
+목표: 단일 룰이 아니라 운영에 필요한 룰 세트를 완성한다.
+
+룰팩 구성:
+1. Critical Metric Rule
+2. Error Event Rule
+3. Schedule Health Rule
+4. Anomaly Rule
+5. Escalation Rule
+
+### 20.1 룰 설계표 만들기
+
+| Rule | Trigger | 조건 | 액션 | 우선순위 |
+|---|---|---|---|---|
+| critical_cpu | metric | cpu > 90 | notify+webhook | P1 |
+| critical_error | event | severity=critical | webhook | P1 |
+| health_check | schedule | 5분 주기 | api call | P2 |
+| latency_anomaly | anomaly | zscore | notify | P2 |
+| escalation | event | retry>3 | pager channel | P1 |
+
+검증 포인트:
+- 중복 룰이 없다.
+- 룰 간 충돌(중복 알림)이 최소화된다.
+
+### 20.2 단계별 구축
+
+#### 단계 A: P1 룰 2개 먼저 배포
+
+1. critical_cpu
+2. critical_error
+
+실행 후 확인:
+- 이벤트 생성 여부
+- 채널 발송 성공률
+
+#### 단계 B: P2 룰 2개 배포
+
+1. health_check
+2. latency_anomaly
+
+실행 후 확인:
+- false positive 비율
+- scheduler 안정성
+
+#### 단계 C: escalation 룰 연계
+
+1. 기존 이벤트를 trigger로 연결
+2. 누적 실패 기준치 정의
+
+검증 포인트:
+- 중복 폭주 없이 escalation만 별도 동작
+
+### 20.3 실패 주입 테스트 세트
+
+아래 5개를 반드시 수행한다.
+
+1. 잘못된 threshold
+2. 잘못된 field path
+3. 채널 인증 실패
+4. webhook timeout
+5. anomaly baseline 부족
+
+기록표:
+
+| 시나리오 | 기대 실패 | 실제 실패 | 복구 조치 | 재검증 |
+|---|---|---|---|---|
+| threshold typo | no match |  |  |  |
+| field path error | eval fail |  |  |  |
+| channel auth fail | notify fail |  |  |  |
+| webhook timeout | retry |  |  |  |
+| baseline 부족 | anomaly disabled |  |  |  |
+
+### 20.4 운영 대시보드 점검 루틴
+
+매일 점검:
+1. events count
+2. ack backlog
+3. failed notifications
+4. scheduler health
+5. anomaly precision
+
+주간 점검:
+1. 룰별 발동 수 top5
+2. 오탐 룰 top5
+3. 채널 실패율
+4. 평균 복구 시간
+
+### 20.5 인수인계 산출물
+
+각 Rule마다 작성:
+1. 목적
+2. 트리거/조건
+3. 액션 경로
+4. 실패 시 조치
+5. 비활성화 기준
+
+### 20.6 완료 판정
+
+```text
+□ 룰 5개가 활성 상태에서 정상 동작
+□ 실패 주입 테스트 5개 완료
+□ 채널 테스트 성공률 기준 충족
+□ ack 운영 루틴 정착
+□ 룰 인수인계 문서 완성
+```
+
+---
+
+## 21. 실습 기록 시트
+
+```text
+[CEP 실습 기록]
+날짜:
+작성자:
+
+1) 생성 룰 수:
+2) simulate 성공률:
+3) false positive 관찰:
+4) channel 실패 건수:
+5) 개선 항목:
+```
+
+---
+
+## 22. 팀 운영 규칙 샘플
+
+1. Rule 배포 전 simulate 3회 이상
+2. 채널 테스트 통과 없는 배포 금지
+3. P1 룰은 owner/backup owner 필수
+4. anomaly 룰은 baseline 확보 전 활성화 금지
+5. 이벤트 ACK SLA를 운영 규칙으로 관리
+

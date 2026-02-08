@@ -492,3 +492,155 @@
 4. 임시 조치(버튼 비활성/조건 완화)
 5. rollback 또는 hotfix publish
 
+
+---
+
+## 21. 완성 프로젝트 트랙 - 운영 대시보드 화면 1개 완성
+
+목표: 실제 운영자가 사용하는 화면을 빈 상태에서 완성한다.
+
+완성 목표 화면:
+1. 상단 KPI 카드 3개
+2. 필터 영역 1개
+3. 메인 테이블 1개
+4. 상세 패널 1개
+5. 새로고침/진단 버튼 2개
+
+### 21.1 설계 초안 작성
+
+먼저 스케치를 글로 정의한다.
+
+```text
+- Header: Device Dashboard
+- Row 1: KPI(availability, avg_cpu, alert_count)
+- Row 2 Left: Filter (device_id, severity)
+- Row 2 Right: Table (latest events)
+- Footer: Action buttons (refresh, diagnose)
+```
+
+### 21.2 Visual 구현
+
+순서:
+1. Container 배치
+2. KPI Text/Badge 배치
+3. Filter input/select 배치
+4. Table 배치
+5. Button 배치
+
+검증 포인트:
+- 레이아웃만으로도 읽기 가능한 UI가 된다.
+
+### 21.3 상태 모델 정의
+
+`state` 최소 필드:
+
+```json
+{
+  "kpi": {"availability": 0, "avg_cpu": 0, "alert_count": 0},
+  "filters": {"device_id": "", "severity": "all"},
+  "events": [],
+  "selected_event": null,
+  "last_message": ""
+}
+```
+
+검증 포인트:
+- 모든 컴포넌트가 참조할 기본 state가 있다.
+
+### 21.4 바인딩 연결
+
+예시:
+- KPI 텍스트 <- `{{state.kpi.availability}}`
+- Table rows <- `{{state.events}}`
+- 상세패널 <- `{{state.selected_event}}`
+
+검증 포인트:
+- 미연결 컴포넌트가 남지 않는다.
+
+### 21.5 액션 체인 연결
+
+버튼 `refresh` 체인:
+1. 데이터 조회 액션
+2. state merge
+3. 성공 메시지 표시
+
+버튼 `diagnose` 체인:
+1. 선택 이벤트 검증
+2. 진단 API 호출
+3. 결과 상태 반영
+
+검증 포인트:
+- 두 버튼 모두 성공/실패 경로가 분리된다.
+
+### 21.6 Preview 종합 점검
+
+필수 점검:
+1. Desktop/Tablet/Mobile
+2. 필터 입력 동작
+3. 테이블 정렬/페이지
+4. 버튼 액션
+5. 실패 메시지
+
+### 21.7 Publish & Runtime 검증
+
+1. Diff 확인
+2. Publish Gate 통과
+3. Runtime 호출에서 동일 동작 확인
+
+### 21.8 Rollback 리허설
+
+1. 의도적 오류 변경
+2. publish 시도/실패 또는 런타임 오류 확인
+3. rollback 수행
+4. 정상 복귀 확인
+
+완료 판정:
+
+```text
+□ 운영 대시보드 1개를 빈 상태에서 완성
+□ 액션 체인 2개가 정상 동작
+□ publish/rollback 모두 검증
+□ 모바일 포함 사용성 확인 완료
+```
+
+---
+
+## 22. 인수인계 패키지 작성법
+
+화면 배포 후 아래 문서를 반드시 남긴다.
+
+1. 화면 목적
+2. 주요 컴포넌트 설명
+3. 필수 bindings 목록
+4. 액션 handler 목록
+5. 실패 시 복구 절차
+
+샘플 템플릿:
+
+```text
+[Screen 운영 인수인계]
+screen_id:
+owner:
+
+핵심 액션:
+- refresh_data
+- run_diagnosis
+
+주의사항:
+- selected_event 없으면 diagnose 실행 금지
+- API timeout 시 재시도 1회
+
+복구:
+- rollback to previous published
+```
+
+---
+
+## 23. 팀 운영 규칙 샘플
+
+1. Publish 전 Diff 검토 필수
+2. Binding 경로 검증 실패 상태에서 배포 금지
+3. 액션 실패 메시지 없는 화면 배포 금지
+4. 신규 화면은 모바일 체크 필수
+5. 주요 화면은 rollback 리허설 후 배포
+

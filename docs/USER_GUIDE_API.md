@@ -700,3 +700,192 @@ curl -X POST "http://localhost:8000/runtime/device-metrics-list" \
 4. tenant 경계가 깨질 여지가 없는가?
 5. 호출량이 늘었을 때 timeout/limit 정책이 충분한가?
 
+
+---
+
+## 20. 완성 프로젝트 트랙 - 현업용 API 세트 구축
+
+이 섹션은 단일 API가 아니라 실제 운영에 투입할 API 세트를 완성하는 실습이다.
+
+구축 목표:
+1. 조회 API 2개
+2. 집계 API 1개
+3. 워크플로우 API 1개
+4. 장애 대응용 보조 API 1개
+
+### 20.1 프로젝트 구조 설계
+
+먼저 아래 표를 그대로 만든다.
+
+| API Name | Type | Endpoint | 목적 |
+|---|---|---|---|
+| `device_metrics_list` | sql | `/runtime/device-metrics-list` | 원본 조회 |
+| `device_metrics_summary` | python | `/runtime/device-metrics-summary` | 집계 변환 |
+| `device_health_proxy` | http | `/runtime/device-health-proxy` | 외부 상태 연계 |
+| `device_pipeline` | workflow | `/runtime/device-pipeline` | 다단계 처리 |
+| `device_diag_helper` | script | `/runtime/device-diag-helper` | 장애 진단 보조 |
+
+검증 포인트:
+- Endpoint 네이밍이 일관된다.
+- 목적이 겹치지 않는다.
+
+### 20.2 공통 Definition 템플릿 적용
+
+모든 API에 공통으로 아래 정책을 적용한다.
+
+```json
+{
+  "timeout_ms": 5000,
+  "allow_runtime": true,
+  "max_rows": 300,
+  "audit_enabled": true
+}
+```
+
+공통 Param Schema 최소 구조:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "tenant_id": {"type": "string"},
+    "trace_id": {"type": "string"}
+  },
+  "required": ["tenant_id"]
+}
+```
+
+검증 포인트:
+- 팀 표준 정책이 API마다 누락되지 않는다.
+
+### 20.3 개발 순서 (권장)
+
+1. SQL API 먼저 완성
+2. Python/Script로 가공 API 완성
+3. HTTP API 완성
+4. Workflow로 통합
+
+왜 이 순서인가:
+- 데이터 소스 -> 가공 -> 외부연계 -> 통합 순으로 디버깅이 쉽다.
+
+### 20.4 단계별 구현
+
+#### 단계 A: `device_metrics_list` 생성
+
+1. Lab 1 절차대로 생성
+2. 샘플 입력 3종으로 실행
+   - 정상 장비
+   - 존재하지 않는 장비
+   - tenant 누락
+
+검증 포인트:
+- 정상/오류 응답이 구분된다.
+
+#### 단계 B: `device_metrics_summary` 생성
+
+입력은 `device_metrics_list` 결과를 가정한다.
+
+예시 코드:
+```python
+def main(params, input_payload):
+    rows = input_payload.get("rows", []) if input_payload else []
+    if not rows:
+        return {"count": 0, "avg": 0, "max": 0, "min": 0}
+
+    values = [float(r.get("metric_value", 0)) for r in rows]
+    return {
+        "count": len(values),
+        "avg": sum(values) / len(values),
+        "max": max(values),
+        "min": min(values)
+    }
+```
+
+검증 포인트:
+- 빈 배열/문자열 값에서도 예외 없이 반환.
+
+#### 단계 C: `device_health_proxy` 생성
+
+외부 API 장애를 고려해 timeout을 명시한다.
+
+검증 포인트:
+- 2xx/4xx/5xx 각각 로그가 남는다.
+
+#### 단계 D: `device_pipeline` 생성
+
+workflow 순서:
+1. SQL fetch
+2. Python summarize
+3. HTTP enrich
+
+검증 포인트:
+- steps 출력이 연쇄적으로 이어진다.
+- 중간 실패 지점을 식별 가능.
+
+### 20.5 프로젝트 통합 테스트
+
+아래 테스트 케이스를 순서대로 실행한다.
+
+1. 정상 흐름
+2. SQL 결과 없음
+3. Python 입력 비정상
+4. HTTP timeout
+5. workflow 중간 실패
+
+각 케이스 기록표:
+
+| Case | 기대 결과 | 실제 결과 | 조치 |
+|---|---|---|---|
+| 정상 | success |  |  |
+| SQL empty | graceful empty |  |  |
+| Python invalid | validation error |  |  |
+| HTTP timeout | timeout logged |  |  |
+| workflow fail | failed node identified |  |  |
+
+### 20.6 운영 인수인계 패키지 만들기
+
+각 API마다 아래를 남긴다.
+
+1. 목적
+2. 입력 예시
+3. 출력 예시
+4. 대표 에러 3개
+5. 복구 절차
+
+### 20.7 완료 판정
+
+```text
+□ API 5개가 모두 생성/저장/실행 가능
+□ 실패 케이스 재현 및 복구 확인
+□ rollback 1회 이상 수행
+□ 운영 인수인계 문서까지 작성 완료
+```
+
+---
+
+## 21. 튜토리얼 확장 - 실습 기록 시트
+
+아래 템플릿을 복사해서 실습할 때 채운다.
+
+```text
+[API 실습 기록]
+날짜:
+작성자:
+
+1) 생성 API:
+2) 테스트 케이스 수:
+3) 실패 재현 케이스:
+4) 복구 소요 시간:
+5) 잔여 이슈:
+```
+
+---
+
+## 22. 팀 운영 규칙 샘플
+
+1. API 생성 시 최소 테스트 3개 필수
+2. Update 전 baseline 로그 캡처
+3. Rollback 절차를 Release Note에 포함
+4. runtime_policy 없는 API 배포 금지
+5. tenant_id 필터 누락 SQL 배포 금지
+
