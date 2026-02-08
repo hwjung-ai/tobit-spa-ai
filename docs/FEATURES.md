@@ -104,6 +104,10 @@
 
 - `tb_api_def`는 `param_schema`, `runtime_policy`, `logic_spec` 3개의 JSON 컬럼을 노출한다. 기본값은 `'{}'::jsonb`이며 API 입력, 런타임 가드레일(timeout/limits), 워크플로/스크립트 메타데이터를 설명한다.
 - 초기에는 `logic_type = sql` 정의만 `/api-manager/apis/{api_id}/execute` 또는 `/runtime/{path}`로 실행되었고, workflow/script 정의는 Builder UI로 저장만 가능하며 실행은 비활성화되어 있었다.
+- API Definition 버전 이력은 `api_definition_versions` 테이블에 스냅샷(JSONB) 형태로 저장된다.
+  - 생성/수정 시 자동 스냅샷 기록
+  - 조회: `GET /api-manager/{api_id}/versions`
+  - 롤백: `POST /api-manager/{api_id}/rollback?version=<n>` (version 미지정 시 직전 버전)
 - 파라미터 스키마 예시:
   ```json
   {
@@ -189,6 +193,20 @@
     -d '{"params":{"tenant_id":"t1"},"limit":20,"input":{"extra":"value"}}'
   ```
 - Builder shell의 Test 탭은 워크플로 실행 성공 시 step 요약, 최종 출력, reference 개수를 표시한다.
+
+### Document Search (검색 제안/재색인)
+
+#### 소스 맵
+- Backend API: `apps/api/app/modules/document_processor/router.py`
+- Search Service: `apps/api/app/modules/document_processor/services/search_service.py`
+- 마이그레이션: `apps/api/alembic/versions/0048_add_p0_p1_foundation_tables.py`
+
+- 검색 로그는 `document_search_log`에 저장되며, 자동완성 제안 API에서 활용된다.
+  - 제안 조회: `GET /api/documents/search/suggestions?prefix=<text>&limit=5`
+- 문서 재색인(경량): 문서의 `version`과 청크 `chunk_version`을 증가시킨다.
+  - 재색인 실행: `POST /api/documents/{document_id}/reindex`
+- 문서 버전 체인 조회:
+  - 버전 조회: `GET /api/documents/{document_id}/versions`
 
 ## 4. UI Creator (UI 크리에이터)
 

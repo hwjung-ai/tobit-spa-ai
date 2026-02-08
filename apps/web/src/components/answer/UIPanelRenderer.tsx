@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { UIPanelBlock, UIInput, UIAction } from "@/types/uiActions";
-import type { AnswerBlock } from "@/lib/apiClientTypes";
 import { substituteTemplate } from "@/lib/templateUtils";
 import { fetchApi } from "@/lib/adminUtils";
 import BlockRenderer from "./BlockRenderer";
+import type { AnswerBlock } from "./BlockRenderer";
 
 interface UIPanelRendererProps {
   block: UIPanelBlock;
@@ -28,7 +28,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
     return defaults;
   });
 
-  const [resultBlocks, setResultBlocks] = useState<unknown[]>([]);
+  const [resultBlocks, setResultBlocks] = useState<AnswerBlock[]>([]);
   const [actionTraceId, setActionTraceId] = useState<string | null>(null);
 
   const executeMutation = useMutation({
@@ -40,19 +40,19 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
       });
 
       const endpoint = action.endpoint || "/ops/ui-actions";
-      const response = await fetchApi<unknown>(endpoint, {
+      const response = await fetchApi<any>(endpoint, {
         method: action.method || "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      return response.data as { trace_id?: string; blocks?: unknown[] };
+      return response.data as { trace_id?: string; blocks?: AnswerBlock[] };
     },
     onSuccess: (data) => {
       setActionTraceId(data.trace_id || null);
-      setResultBlocks((data.blocks || []) as unknown[]);
+      setResultBlocks(data.blocks || []);
       if (onResult) {
-        onResult((data.blocks || []) as unknown[]);
+        onResult(data.blocks || []);
       }
     },
   });
@@ -154,7 +154,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
         <Input
           id={input.id}
           type="text"
-          value={value || ""}
+          value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder={input.placeholder}
           className="bg-slate-950/50 border-slate-700 text-white"
@@ -166,7 +166,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
         <Input
           id={input.id}
           type="number"
-          value={value || ""}
+          value={(value as string | number) || ""}
           onChange={(e) => onChange(parseFloat(e.target.value) || "")}
           placeholder={input.placeholder}
           className="bg-slate-950/50 border-slate-700 text-white"
@@ -178,7 +178,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
         <Input
           id={input.id}
           type="date"
-          value={value || ""}
+          value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           className="bg-slate-950/50 border-slate-700 text-white"
         />
@@ -189,7 +189,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
         <Input
           id={input.id}
           type="datetime-local"
-          value={value || ""}
+          value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           className="bg-slate-950/50 border-slate-700 text-white"
         />
@@ -208,13 +208,13 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
 
     case "select":
       return (
-        <Select value={value || ""} onValueChange={onChange}>
+        <Select value={(value as string) || ""} onValueChange={onChange}>
           <SelectTrigger className="bg-slate-950/50 border-slate-700 text-white">
             <SelectValue placeholder={input.placeholder || "Select..."} />
           </SelectTrigger>
           <SelectContent>
             {input.options?.map((option) => (
-              <SelectItem key={option.value} value={String(option.value)}>
+              <SelectItem key={String(option.value)} value={String(option.value)}>
                 {option.label}
               </SelectItem>
             ))}

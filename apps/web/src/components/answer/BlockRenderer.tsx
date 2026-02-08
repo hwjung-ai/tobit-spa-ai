@@ -17,10 +17,55 @@ import { type NextAction } from "../../app/ops/nextActions";
 import UIPanelRenderer from "./UIPanelRenderer";
 import UIScreenRenderer from "./UIScreenRenderer";
 import type { UIPanelBlock } from "@/types/uiActions";
+import type {
+  AnswerBlock,
+  ChartPoint,
+  GraphBlock,
+  NetworkEdge,
+  NetworkBlock,
+  NetworkNode,
+  PathBlock,
+  ReferencesBlock,
+  ReferenceEntry,
+  TableBlock,
+  TimeSeriesSeries,
+  TimeSeriesBlock,
+  UIScreenBlock,
+} from "./block-types";
+export type {
+  AnswerBlock,
+  AnswerEnvelope,
+  AnswerMeta,
+  ChartBlock,
+  ChartPoint,
+  ChartSeries,
+  GraphBlock,
+  GraphEdge,
+  GraphNode,
+  MarkdownBlock,
+  NetworkBlock,
+  NetworkEdge,
+  NetworkNode,
+  NumberBlock,
+  PathBlock,
+  ReferenceEntry,
+  ReferenceLink,
+  ReferencesBlock,
+  TableBlock,
+  TextBlock,
+  TimeSeriesBlock,
+  TimeSeriesPoint,
+  TimeSeriesSeries,
+  UIScreenBlock,
+} from "./block-types";
 
 // ── Table download helpers ──
 
-function downloadTableAsCSV(columns: string[], rows: string[][], title?: string) {
+function downloadTableAsCSV(
+  columns: string[],
+  rows: Array<Array<string | number | boolean | null>>,
+  title?: string
+) {
   const escapeCsv = (val: string) => {
     if (val.includes(",") || val.includes('"') || val.includes("\n")) {
       return `"${val.replace(/"/g, '""')}"`;
@@ -28,17 +73,21 @@ function downloadTableAsCSV(columns: string[], rows: string[][], title?: string)
     return val;
   };
   const header = columns.map(escapeCsv).join(",");
-  const body = rows.map((row) => row.map(escapeCsv).join(",")).join("\n");
+  const body = rows.map((row) => row.map((cell) => escapeCsv(String(cell ?? ""))).join(",")).join("\n");
   const csv = `${header}\n${body}`;
   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   triggerDownload(blob, `${title || "table"}.csv`);
 }
 
-function downloadTableAsJSON(columns: string[], rows: string[][], title?: string) {
+function downloadTableAsJSON(
+  columns: string[],
+  rows: Array<Array<string | number | boolean | null>>,
+  title?: string
+) {
   const data = rows.map((row) => {
     const obj: Record<string, string> = {};
     columns.forEach((col, i) => {
-      obj[col] = row[i] ?? "";
+      obj[col] = String(row[i] ?? "");
     });
     return obj;
   });
@@ -56,201 +105,6 @@ function triggerDownload(blob: Blob, filename: string) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-export type AnswerBlock =
-  | MarkdownBlock
-  | TableBlock
-  | TimeSeriesBlock
-  | ChartBlock
-  | GraphBlock
-  | ReferencesBlock
-  | TextBlock
-  | NumberBlock
-  | NetworkBlock
-  | PathBlock
-  | UIPanelBlock
-  | UIScreenBlock
-  & { [key: string]: unknown }
-  & { references?: ReferenceEntry[]; payload_summary?: string | null };
-
-export interface AnswerEnvelope {
-  meta: AnswerMeta;
-  blocks: AnswerBlock[];
-}
-
-export interface AnswerMeta {
-  route: string;
-  route_reason: string;
-  timing_ms: number;
-  summary?: string;
-  used_tools?: string[];
-  fallback?: boolean;
-  error?: string;
-  trace_id?: string;
-}
-
-type BlockId = string;
-
-export interface MarkdownBlock {
-  type: "markdown";
-  content: string;
-  title?: string;
-  id?: BlockId;
-}
-
-export interface TableBlock {
-  type: "table";
-  title?: string;
-  columns: string[];
-  rows: string[][];
-  id?: BlockId;
-}
-
-export interface TextBlock {
-  type: "text";
-  title?: string;
-  text: string;
-  id?: BlockId;
-}
-
-export interface NumberBlock {
-  type: "number";
-  title?: string;
-  label: string;
-  value: number;
-  id?: BlockId;
-}
-
-export interface NetworkNode {
-  id: string;
-  label?: string;
-  ci_type?: string;
-  ci_subtype?: string;
-}
-
-export interface NetworkEdge {
-  source?: string;
-  target?: string;
-  type?: string;
-}
-
-export interface NetworkBlock {
-  type: "network";
-  title?: string;
-  nodes: NetworkNode[];
-  edges: NetworkEdge[];
-  meta: { truncated?: boolean };
-  id?: BlockId;
-}
-
-export interface PathBlock {
-  type: "path";
-  title?: string;
-  nodes: NetworkNode[];
-  edges: NetworkEdge[];
-  hop_count: number;
-  meta: { truncated?: boolean };
-  id?: BlockId;
-}
-export interface TimeSeriesSeries {
-  name?: string;
-  data: TimeSeriesPoint[];
-}
-
-export interface TimeSeriesPoint {
-  timestamp: string;
-  value: number;
-}
-
-export interface TimeSeriesBlock {
-  type: "timeseries";
-  title?: string;
-  series: TimeSeriesSeries[];
-  id?: BlockId;
-}
-
-export interface ChartPoint {
-  timestamp: string;
-  value: number;
-}
-
-export interface ChartSeries {
-  name?: string;
-  points: [string, number][];
-}
-
-export interface ChartBlock {
-  type: "chart";
-  title?: string;
-  chart_type: "line";
-  x: string;
-  series: ChartSeries[];
-  meta: {
-    ci_id?: string;
-    metric_name: string;
-    time_range: string;
-  };
-  id?: BlockId;
-}
-
-export interface GraphNode {
-  id: string;
-  data: { label: string };
-  position: { x: number; y: number };
-  type?: string;
-}
-
-export interface GraphEdge {
-  id: string;
-  source: string;
-  target: string;
-  label?: string;
-}
-
-export interface GraphBlock {
-  type: "graph";
-  title?: string;
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  id?: BlockId;
-}
-
-export interface ReferenceLink {
-  title: string;
-  url?: string;
-  snippet?: string;
-  payload?: unknown;
-  kind?: string;
-}
-
-export interface ReferencesBlock {
-  type: "references";
-  title?: string;
-  payload_summary?: string | null;
-  references?: ReferenceEntry[];
-  items?: ReferenceLink[];
-  id?: BlockId;
-}
-
-export interface ReferenceEntry {
-  ref_type: string;
-  name: string;
-  engine?: string | null;
-  statement?: string | null;
-  params?: Record<string, unknown> | null;
-  row_count?: number | null;
-  latency_ms?: number | null;
-  source_id?: string | null;
-}
-
-export interface UIScreenBlock {
-  type: "ui_screen";
-  screen_id: string;
-  params?: Record<string, unknown>;
-  bindings?: Record<string, string>;
-  id?: BlockId;
-  title?: string;
 }
 
 interface BlockRendererProps {
@@ -419,8 +273,9 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
             );
 
           case "table": {
-            const columns = block.columns ?? block.content?.headers ?? [];
-            const rows = block.rows ?? block.content?.rows ?? [];
+            const tableBlock = block as TableBlock & { content?: { headers?: string[]; rows?: (string | number | boolean | null)[][] } };
+            const columns = tableBlock.columns ?? tableBlock.content?.headers ?? [];
+            const rows = tableBlock.rows ?? tableBlock.content?.rows ?? [];
             const isCandidateTable = (block.id ?? "").startsWith("ci-candidates");
             const ciIdIndex = columns.findIndex((column) => column === "ci_id");
             return (
@@ -474,9 +329,10 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                     <tbody>
                       {rows.map((row, rowIndex) => {
                         const candidateId = ciIdIndex >= 0 ? row[ciIdIndex] : undefined;
+                        const candidateKey = candidateId != null ? String(candidateId) : undefined;
                         const candidateAction =
-                          candidateId && candidateActionMap.has(candidateId)
-                            ? candidateActionMap.get(candidateId)
+                          candidateKey && candidateActionMap.has(candidateKey)
+                            ? candidateActionMap.get(candidateKey)
                             : undefined;
                         return (
                           <tr

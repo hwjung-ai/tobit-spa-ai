@@ -44,5 +44,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "tests-e2e", "tests"]
+  "exclude": ["node_modules", "tests-e2e", "tests", "**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"]
 }

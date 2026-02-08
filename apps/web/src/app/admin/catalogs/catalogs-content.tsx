@@ -33,7 +33,7 @@ export default function CatalogsContent() {
   const { data: catalogsData, isLoading, refetch } = useQuery({
     queryKey: ["admin-catalogs"],
     queryFn: async () => {
-      const response = await fetchApi("/asset-registry/catalogs");
+      const response = await fetchApi<{ assets: CatalogAsset[] }>("/asset-registry/catalogs");
       return response.data?.assets || [];
     },
     staleTime: 5 * 60 * 1000,
@@ -157,10 +157,10 @@ export default function CatalogsContent() {
             </div>
 
             {/* Scan Panel */}
-            <CatalogScanPanel schema={selectedCatalog} onScanComplete={refetch} />
+            <CatalogScanPanel schema={selectedCatalog} onScanComplete={() => { void refetch(); }} />
 
             {/* Catalog Viewer */}
-            <CatalogViewerPanel schema={selectedCatalog} onRefresh={refetch} />
+            <CatalogViewerPanel schema={selectedCatalog} onRefresh={() => { void refetch(); }} />
           </>
         ) : (
           <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-8 text-center">

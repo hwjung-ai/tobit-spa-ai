@@ -4,7 +4,7 @@ import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface SchemaViewerPanelProps {
-  catalog: any;
+  schema: any;
   onRefresh: () => void;
 }
 
@@ -36,7 +36,7 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
         }
       );
 
-      if (response.success) {
+      if (response.code === 0) {
         onRefresh();
       } else {
         throw new Error(response.message || "Failed to toggle table");

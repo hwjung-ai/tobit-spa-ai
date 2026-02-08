@@ -70,11 +70,8 @@ export default function AssetOverrideDrawer({
       const assetsByType: Record<string, AssetSummary[]> = {};
 
       for (const assetType of ASSET_TYPES.map((a) => a.value)) {
-        const response = await fetchApi<{ data: { [assetType: string]: AssetSummary[] } }>(`/api/assets/registry?type=${assetType}`);
-        if (response.ok) {
-          const data = response.data;
-          assetsByType[assetType] = data.data || [];
-        }
+        const response = await fetchApi<{ [key: string]: AssetSummary[] }>(`/api/assets/registry?type=${assetType}`);
+        assetsByType[assetType] = (response.data?.[assetType] || []) as AssetSummary[];
       }
 
       setAvailableAssets(assetsByType);
@@ -96,7 +93,7 @@ export default function AssetOverrideDrawer({
             assetType,
             assetId,
             name: `${assetType}:${assetId}`,
-            version: asset.version,
+            version: typeof asset.version === "number" ? asset.version : Number(asset.version || 0),
           });
         }
       }
@@ -128,21 +125,15 @@ export default function AssetOverrideDrawer({
 
     try {
       setLoading(true);
-      const response = await fetchApi("/ops/stage-test", {
+      const response = await fetchApi<{ trace_id: string }>("/ops/stage-test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        // Open results in a new tab or modal
-        window.open(`/admin/inspector?trace_id=${result.data.trace_id}`, "_blank");
-      } else {
-        alert("Test run failed");
-      }
+      if (!response.trace_id) throw new Error("Missing trace_id");
+      window.open(`/admin/inspector?trace_id=${response.trace_id}`, "_blank");
     } catch (error) {
       console.error("Test run failed:", error);
       alert("Test run failed");

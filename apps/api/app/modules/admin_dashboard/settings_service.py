@@ -3,6 +3,11 @@
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
+
+from sqlmodel import Session, select
+
+from .models import TbAdminSetting, TbAdminSettingAudit
 
 logger = logging.getLogger(__name__)
 
@@ -94,12 +99,29 @@ class AdminSettingsService:
             "maintenance_log_retention_days": 30,
         }
 
-    def get_setting(self, key: str) -> Optional[Any]:
+    def _load_from_db(self, session: Session) -> Dict[str, Any]:
+        merged = self._default_settings()
+        rows = session.exec(select(TbAdminSetting)).all()
+        for row in rows:
+            merged[row.setting_key] = row.setting_value.get("value")
+        return merged
+
+    def get_setting(self, key: str, session: Session | None = None) -> Optional[Any]:
         """Get a single setting"""
+        if session:
+            return self.get_settings(keys=[key], session=session).get(key)
         return self.settings.get(key)
 
-    def get_settings(self, keys: Optional[List[str]] = None) -> Dict[str, Any]:
+    def get_settings(
+        self, keys: Optional[List[str]] = None, session: Session | None = None
+    ) -> Dict[str, Any]:
         """Get multiple settings or all if no keys specified"""
+        if session:
+            merged = self._load_from_db(session)
+            if keys is None:
+                return merged
+            return {k: merged.get(k) for k in keys if k in merged}
+
         if keys is None:
             return self.settings.copy()
 
@@ -111,32 +133,55 @@ class AdminSettingsService:
         value: Any,
         admin_id: str,
         reason: Optional[str] = None,
+        session: Session | None = None,
     ) -> bool:
         """Update a setting"""
 
-        if key not in self.settings:
+        current_settings = self.get_settings(session=session)
+        if key not in current_settings:
             logger.warning(f"Unknown setting key: {key}")
             return False
 
-        old_value = self.settings[key]
+        old_value = current_settings[key]
 
         # Validate setting value
         if not self._validate_setting(key, value):
             logger.error(f"Invalid value for setting {key}: {value}")
             return False
 
-        # Update setting
-        self.settings[key] = value
+        if session:
+            row = session.get(TbAdminSetting, key)
+            if not row:
+                row = TbAdminSetting(setting_key=key, setting_value={"value": value}, updated_by=admin_id)
+            else:
+                row.setting_value = {"value": value}
+                row.updated_by = admin_id
+                row.updated_at = datetime.utcnow()
+            session.add(row)
+            session.add(
+                TbAdminSettingAudit(
+                    id=uuid4(),
+                    setting_key=key,
+                    old_value={"value": old_value},
+                    new_value={"value": value},
+                    admin_id=admin_id,
+                    reason=reason,
+                )
+            )
+            session.commit()
+        else:
+            # Update setting
+            self.settings[key] = value
 
-        # Record audit
-        audit = SettingAudit(
-            setting_key=key,
-            old_value=old_value,
-            new_value=value,
-            admin_id=admin_id,
-            reason=reason,
-        )
-        self.audit_logs.append(audit)
+            # Record audit
+            audit = SettingAudit(
+                setting_key=key,
+                old_value=old_value,
+                new_value=value,
+                admin_id=admin_id,
+                reason=reason,
+            )
+            self.audit_logs.append(audit)
 
         logger.info(f"Updated setting {key}: {old_value} -> {value}")
 
@@ -147,12 +192,13 @@ class AdminSettingsService:
         updates: Dict[str, Any],
         admin_id: str,
         reason: Optional[str] = None,
+        session: Session | None = None,
     ) -> Dict[str, bool]:
         """Update multiple settings"""
         results = {}
 
         for key, value in updates.items():
-            results[key] = self.update_setting(key, value, admin_id, reason)
+            results[key] = self.update_setting(key, value, admin_id, reason, session=session)
 
         return results
 
@@ -195,8 +241,26 @@ class AdminSettingsService:
         self,
         key: Optional[str] = None,
         limit: int = 100,
+        session: Session | None = None,
     ) -> List[Dict[str, Any]]:
         """Get settings change audit log"""
+        if session:
+            stmt = select(TbAdminSettingAudit).order_by(TbAdminSettingAudit.created_at.desc()).limit(limit)
+            if key:
+                stmt = stmt.where(TbAdminSettingAudit.setting_key == key)
+            rows = session.exec(stmt).all()
+            return [
+                {
+                    "setting_key": row.setting_key,
+                    "old_value": row.old_value.get("value") if row.old_value else None,
+                    "new_value": row.new_value.get("value") if row.new_value else None,
+                    "admin_id": row.admin_id,
+                    "reason": row.reason,
+                    "created_at": row.created_at.isoformat() if row.created_at else None,
+                }
+                for row in rows
+            ]
+
         logs = self.audit_logs
 
         if key:
@@ -207,15 +271,18 @@ class AdminSettingsService:
 
         return [log.to_dict() for log in logs[:limit]]
 
-    def reset_to_defaults(self, admin_id: str, reason: Optional[str] = None) -> int:
+    def reset_to_defaults(
+        self, admin_id: str, reason: Optional[str] = None, session: Session | None = None
+    ) -> int:
         """Reset all settings to defaults"""
         default_settings = self._default_settings()
         count = 0
 
         for key, default_value in default_settings.items():
-            if self.settings.get(key) != default_value:
+            current = self.get_setting(key, session=session)
+            if current != default_value:
                 self.update_setting(
-                    key, default_value, admin_id, reason or "Reset to defaults"
+                    key, default_value, admin_id, reason or "Reset to defaults", session=session
                 )
                 count += 1
 
@@ -250,8 +317,11 @@ class AdminSettingsService:
 
         return results
 
-    def get_settings_by_category(self) -> Dict[str, Dict[str, Any]]:
+    def get_settings_by_category(
+        self, session: Session | None = None
+    ) -> Dict[str, Dict[str, Any]]:
         """Get settings grouped by category"""
+        source_settings = self.get_settings(session=session)
         categories = {
             "api": {},
             "document": {},
@@ -264,7 +334,7 @@ class AdminSettingsService:
             "maintenance": {},
         }
 
-        for key, value in self.settings.items():
+        for key, value in source_settings.items():
             for category in categories:
                 if key.startswith(category):
                     categories[category][key] = value

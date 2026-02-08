@@ -11,8 +11,8 @@ import type { NextAction } from "../app/ops/nextActions";
 
 export type { ReplanEvent, NextAction };
 
-export type BackendMode = "config" | "all" | "metric" | "hist" | "graph";
-export type UiMode = "ci" | "metric" | "history" | "relation" | "all";
+export type BackendMode = "config" | "all" | "metric" | "hist" | "graph" | "document";
+export type UiMode = "ci" | "metric" | "history" | "relation" | "document" | "all";
 
 /**
  * Standard API response wrapper
@@ -26,12 +26,16 @@ export interface ApiResponse<T = unknown> {
  * ResponseEnvelope - alternative API response format
  * Used by some admin endpoints
  */
-export interface ResponseEnvelope<T = unknown> {
-  ok: boolean;
+export interface ResponseEnvelope<T = any> {
+  time?: string;
+  code?: number;
+  ok?: boolean;
+  success?: boolean;
   data?: T;
   json?: unknown;
   message?: string;
   statusCode?: number;
+  detail?: string;
 }
 
 /**
@@ -262,6 +266,7 @@ export interface FlowSpan {
 export interface StageInput {
   stage: string;
   input?: Record<string, unknown> | null;
+  applied_assets?: Record<string, unknown> | null;
 }
 
 export interface StageOutput {
@@ -540,11 +545,7 @@ export interface LocalOpsHistoryEntry {
   };
   summary?: string;
   errorDetails?: string;
-  trace?: {
-    plan_validated?: unknown;
-    policy_decisions?: unknown;
-    [key: string]: unknown;
-  };
+  trace?: Record<string, any>;
   nextActions?: NextAction[];
   next_actions?: NextAction[];
 }

@@ -220,8 +220,9 @@ class DocumentSearchService:
             if not self.db:
                 return results
 
-            from sqlalchemy import text
             import json
+
+            from sqlalchemy import text
 
             # Build WHERE clauses
             where_clauses = [
@@ -350,8 +351,9 @@ class DocumentSearchService:
 
         try:
             if self.db:
-                from sqlalchemy import text
                 import uuid
+
+                from sqlalchemy import text
 
                 # Check if document_search_log table exists
                 # If not, just log to logger
@@ -386,7 +388,9 @@ class DocumentSearchService:
         except Exception as e:
             self.logger.error(f"Failed to log search: {str(e)}")
 
-    def get_search_suggestions(self, query_prefix: str, limit: int = 5) -> List[str]:
+    def get_search_suggestions(
+        self, query_prefix: str, limit: int = 5, tenant_id: str | None = None
+    ) -> List[str]:
         """
         Get search suggestions based on previous queries
 
@@ -398,6 +402,31 @@ class DocumentSearchService:
             List of suggested queries
         """
 
-        # Would query search log for matching queries
-        # For now, return empty
-        return []
+        if not self.db or not query_prefix.strip():
+            return []
+
+        try:
+            from sqlalchemy import text
+
+            params = {
+                "prefix": f"{query_prefix.strip()}%",
+                "limit": max(1, min(limit, 20)),
+            }
+            where = ["query ILIKE :prefix", "created_at > NOW() - INTERVAL '30 days'"]
+            if tenant_id:
+                where.append("tenant_id = :tenant_id")
+                params["tenant_id"] = tenant_id
+
+            sql = f"""
+                SELECT query, COUNT(*) as freq
+                FROM document_search_log
+                WHERE {' AND '.join(where)}
+                GROUP BY query
+                ORDER BY freq DESC, MAX(created_at) DESC
+                LIMIT :limit
+            """
+            rows = self.db.execute(text(sql), params).fetchall()
+            return [str(row[0]) for row in rows if row and row[0]]
+        except Exception as e:
+            self.logger.warning(f"Failed to get search suggestions: {str(e)}")
+            return []

@@ -10,8 +10,12 @@ export interface FilterState {
 }
 
 export interface TraceDetailResponse {
-  trace: ExecutionTraceDetail;
+  trace?: ExecutionTraceDetail;
   audit_logs?: import("../adminUtils").AuditLog[];
+  data?: {
+    trace?: ExecutionTraceDetail;
+    audit_logs?: import("../adminUtils").AuditLog[];
+  };
 }
 
 export const PER_PAGE = 20;

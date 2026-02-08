@@ -36,7 +36,7 @@ export function extractOrchestrationTrace(stageOutput: any): OrchestrationTrace 
  */
 function constructTraceFromStepMetadata(results: any[]): OrchestrationTrace {
   const groups: Map<number, Tool[]> = new Map();
-  let strategy = 'serial' as const;
+  let strategy: OrchestrationTrace["strategy"] = "serial";
   const tools = new Set<string>();
 
   for (const result of results) {

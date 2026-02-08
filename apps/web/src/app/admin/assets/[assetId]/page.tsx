@@ -166,9 +166,7 @@ export default function AssetDetailPage() {
                             href={
                                 asset.asset_type === "source"
                                     ? `/data/sources?asset_id=${asset.asset_id}`
-                                    : asset.asset_type === "catalog"
-                                        ? `/data/catalog?asset_id=${asset.asset_id}`
-                                        : `/data/resolvers?asset_id=${asset.asset_id}`
+                                    : `/data/resolvers?asset_id=${asset.asset_id}`
                             }
                             className="px-5 py-2.5 bg-slate-900/40 hover:bg-slate-800/60 text-slate-200 border border-slate-700 rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest hover:border-slate-500"
                         >

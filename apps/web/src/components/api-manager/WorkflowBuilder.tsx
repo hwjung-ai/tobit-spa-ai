@@ -458,7 +458,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <p>• Connect nodes by dragging from one node's handle to another</p>
           <p>• Click on a node to configure its properties</p>
           <p>• Press <span className="font-mono text-sky-400">Delete</span> key to remove selected node</p>
-          <p>• Use <span className="font-mono text-sky-400">{{steps.node_id.rows}}</span> for parameter mapping</p>
+          <p>• Use <span className="font-mono text-sky-400">{"{{steps.node_id.rows}}"}</span> for parameter mapping</p>
           <p>• Available node types: SQL, HTTP, Python</p>
         </div>
       </div>

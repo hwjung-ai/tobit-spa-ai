@@ -13,6 +13,7 @@ import httpx
 from core.config import get_settings
 from core.db import engine, get_session_context
 from fastapi import HTTPException
+from models.api_definition import ApiDefinition, ApiMode
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 from sqlmodel import Session
@@ -26,6 +27,17 @@ DEFAULT_SCRIPT_TIMEOUT_MS = 5000
 DEFAULT_OUTPUT_BYTES = 1_048_576
 RULE_LOCK_BASE = 424_200_000
 RULE_LOCK_MOD = 100_000
+
+_api_cache = None
+
+
+def _get_api_cache():
+    global _api_cache
+    if _api_cache is None:
+        from app.modules.api_manager.cache_service import APICacheService
+
+        _api_cache = APICacheService()
+    return _api_cache
 
 
 def _runtime_base_url() -> str:
@@ -459,6 +471,7 @@ def execute_action(
     Supported action types:
     - "webhook": HTTP webhook call (existing behavior)
     - "api_script": Execute API Manager script
+    - "api_call": Execute API Manager API by mode (sql/http/workflow/script)
     - "trigger_rule": Trigger another CEP rule
 
     Args:
@@ -479,6 +492,13 @@ def execute_action(
                 detail="Database session required for api_script action"
             )
         return _execute_api_script_action(action_spec, session)
+    elif action_type == "api_call":
+        if not session:
+            raise HTTPException(
+                status_code=400,
+                detail="Database session required for api_call action"
+            )
+        return _execute_api_action(action_spec, session)
     elif action_type == "trigger_rule":
         if not session:
             raise HTTPException(
@@ -491,6 +511,102 @@ def execute_action(
             status_code=400,
             detail=f"Unsupported action type: {action_type}"
         )
+
+
+def _execute_api_action(
+    action_spec: Dict[str, Any],
+    session: Session,
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Execute API Manager API action.
+    Supports sql/http/workflow/script modes with optional cache.
+    """
+    from app.modules.api_manager.executor import execute_http_api, execute_sql_api
+    from app.modules.api_manager.script_executor import execute_script_api
+    from app.modules.api_manager.workflow_executor import execute_workflow_api
+
+    api_id = action_spec.get("api_id")
+    if not api_id:
+        raise HTTPException(status_code=400, detail="api_id is required for api_call action")
+
+    api_def = session.get(ApiDefinition, api_id)
+    if not api_def or api_def.deleted_at:
+        raise HTTPException(status_code=404, detail=f"API not found: {api_id}")
+
+    params = action_spec.get("params") or {}
+    input_payload = action_spec.get("input")
+    use_cache = bool(action_spec.get("cache", False))
+    cache_ttl = int(action_spec.get("cache_ttl_seconds", 300))
+
+    cache_service = _get_api_cache()
+    if use_cache:
+        cached = cache_service.get(str(api_id), params)
+        if cached is not None:
+            refs = {
+                "action_type": "api_call",
+                "api_id": str(api_id),
+                "api_name": api_def.name,
+                "mode": api_def.mode.value if api_def.mode else "sql",
+                "cache": "hit",
+            }
+            return cached, refs
+
+    mode = api_def.mode.value if api_def.mode else "sql"
+    payload: Dict[str, Any]
+    refs: Dict[str, Any] = {
+        "action_type": "api_call",
+        "api_id": str(api_id),
+        "api_name": api_def.name,
+        "mode": mode,
+        "cache": "miss" if use_cache else "disabled",
+    }
+
+    if mode == ApiMode.sql.value:
+        result = execute_sql_api(
+            session=session,
+            api_id=str(api_def.id),
+            logic_body=api_def.logic or "",
+            params=params,
+            limit=params.get("limit") if isinstance(params, dict) else None,
+            executed_by="cep-action",
+        )
+        payload = {"result": ApiExecuteResponse(**result.model_dump()).model_dump()}
+    elif mode == ApiMode.http.value:
+        result = execute_http_api(
+            session=session,
+            api_id=str(api_def.id),
+            logic_body=api_def.logic or "",
+            params=params,
+            executed_by="cep-action",
+        )
+        payload = {"result": ApiExecuteResponse(**result.model_dump()).model_dump()}
+    elif mode == ApiMode.workflow.value:
+        wf = execute_workflow_api(
+            session=session,
+            workflow_api=api_def,
+            params=params,
+            input_payload=input_payload,
+            executed_by="cep-action",
+            limit=params.get("limit") if isinstance(params, dict) else None,
+        )
+        payload = {"result": wf.model_dump()}
+    elif mode in (ApiMode.script.value, ApiMode.python.value):
+        sc = execute_script_api(
+            session=session,
+            api_id=str(api_def.id),
+            logic_body=api_def.logic or "",
+            params=params,
+            input_payload=input_payload,
+            executed_by="cep-action",
+            runtime_policy=getattr(api_def, "runtime_policy", None),
+        )
+        payload = {"result": sc.model_dump()}
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported API mode: {mode}")
+
+    if use_cache:
+        cache_service.set(str(api_id), params, payload, ttl_seconds=cache_ttl)
+    return payload, refs
 
 
 def _execute_webhook_action(

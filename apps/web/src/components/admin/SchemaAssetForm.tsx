@@ -114,9 +114,9 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
       description: asset.description,
       source_ref: catalog.source_ref,
       tables: catalog.tables,
-      last_scanned_at: (catalog as Record<string, unknown>).last_scanned_at,
+      last_scanned_at: catalog.last_scanned_at,
       scan_status: catalog.scan_status,
-      scan_metadata: (catalog as Record<string, unknown>).scan_metadata,
+      scan_metadata: catalog.scan_metadata,
     };
   }, [asset, catalog]);
 
@@ -134,9 +134,9 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
           <div>Status: {catalog.scan_status}</div>
           <div>Tables: {catalog.table_count ?? 0}</div>
           <div>Columns: {catalog.column_count ?? 0}</div>
-          {(catalog as Record<string, unknown>).last_scanned_at && (
+          {catalog.last_scanned_at && (
             <div>
-              Last scanned: {new Date((catalog as Record<string, unknown>).last_scanned_at as string).toLocaleString()}
+              Last scanned: {new Date(catalog.last_scanned_at).toLocaleString()}
             </div>
           )}
         </CardContent>

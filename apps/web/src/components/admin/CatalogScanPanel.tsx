@@ -4,7 +4,7 @@ import { useState } from "react";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface SchemaScanPanelProps {
-  catalog: any;
+  schema: any;
   onScanComplete: () => void;
 }
 
@@ -32,7 +32,7 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
         }
       );
 
-      if (response.success) {
+      if (response.code === 0) {
         alert("Schema scan completed successfully!");
         onScanComplete();
       } else {

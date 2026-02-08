@@ -52,7 +52,7 @@ interface AssetOverrideModalProps {
 
 interface AssetTypeConfig {
   label: string;
-  icon: React.ComponentType<unknown>;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 

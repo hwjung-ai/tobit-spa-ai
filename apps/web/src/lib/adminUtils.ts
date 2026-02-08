@@ -1,15 +1,17 @@
 // Admin UI shared types and utilities
 
-export interface ResponseEnvelope<T = unknown> {
+export interface ResponseEnvelope<T = any> {
   time: string;
   code: number;
   message: string;
   data: T;
+  ok?: boolean;
+  success?: boolean;
 }
 
 export interface Asset {
   asset_id: string;
-  asset_type: "prompt" | "mapping" | "policy" | "query" | "source" | "resolver";
+  asset_type: "prompt" | "mapping" | "policy" | "query" | "source" | "resolver" | "catalog" | "screen";
   name: string;
   description: string | null;
   version: number;
@@ -103,7 +105,7 @@ export interface FetchApiOptions extends RequestInit {
   timeout?: number; // Timeout in milliseconds
 }
 
-export async function fetchApi<T = unknown>(
+export async function fetchApi<T = any>(
   endpoint: string,
   options?: FetchApiOptions
 ): Promise<ResponseEnvelope<T>> {
@@ -260,7 +262,13 @@ export async function fetchApi<T = unknown>(
     throw error;
   }
 
-  return response.json();
+  const payload = await response.json();
+  if (payload && typeof payload === "object" && "code" in payload) {
+    const envelope = payload as ResponseEnvelope<T>;
+    const ok = (envelope.code ?? 1) === 0;
+    return { ...envelope, ok, success: ok };
+  }
+  return payload as ResponseEnvelope<T>;
 }
 
 export function formatTimestamp(value: string | null): string {

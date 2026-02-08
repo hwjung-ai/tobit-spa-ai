@@ -1,17 +1,24 @@
 """API Manager routes for dynamic API management"""
 
 import logging
+import uuid
 from datetime import datetime
 from typing import Optional
 
-from app.modules.auth.models import TbUser
 from core.auth import get_current_user
 from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
-from models.api_definition import ApiDefinition, ApiMode, ApiScope
+from models.api_definition import (
+    ApiDefinition,
+    ApiDefinitionVersion,
+    ApiMode,
+    ApiScope,
+)
 from pydantic import BaseModel
 from schemas import ResponseEnvelope
 from sqlmodel import Session, select
+
+from app.modules.auth.models import TbUser
 
 from .crud import DRY_RUN_API_ID, list_exec_logs
 from .executor import execute_http_api, execute_sql_api
@@ -23,6 +30,57 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api-manager", tags=["api-manager"])
 
 sql_validator = SQLValidator()
+
+
+def _api_snapshot(api: ApiDefinition) -> dict:
+    return {
+        "id": str(api.id),
+        "scope": api.scope.value if hasattr(api.scope, "value") else str(api.scope),
+        "name": api.name,
+        "method": api.method,
+        "path": api.path,
+        "description": api.description,
+        "tags": api.tags or [],
+        "mode": api.mode.value if api.mode else None,
+        "logic": api.logic,
+        "runtime_policy": api.runtime_policy or {},
+        "is_enabled": api.is_enabled,
+        "created_at": api.created_at.isoformat() if api.created_at else None,
+        "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+    }
+
+
+def _next_version(session: Session, api_id: uuid.UUID) -> int:
+    statement = (
+        select(ApiDefinitionVersion)
+        .where(ApiDefinitionVersion.api_id == api_id)
+        .order_by(ApiDefinitionVersion.version.desc())
+        .limit(1)
+    )
+    latest = session.exec(statement).first()
+    return (latest.version + 1) if latest else 1
+
+
+def _record_api_version(
+    session: Session,
+    api: ApiDefinition,
+    *,
+    change_type: str,
+    created_by: str | None,
+    change_summary: str | None = None,
+) -> ApiDefinitionVersion:
+    version_row = ApiDefinitionVersion(
+        api_id=api.id,
+        version=_next_version(session, api.id),
+        change_type=change_type,
+        change_summary=change_summary,
+        snapshot=_api_snapshot(api),
+        created_by=created_by,
+    )
+    session.add(version_row)
+    session.commit()
+    session.refresh(version_row)
+    return version_row
 
 
 class CreateApiRequest(BaseModel):
@@ -172,6 +230,13 @@ async def create_or_update_api(
 
         session.commit()
         session.refresh(api)
+        _record_api_version(
+            session,
+            api,
+            change_type="update" if api_id else "create",
+            created_by=getattr(current_user, "id", None),
+            change_summary="Saved from /api-manager/apis",
+        )
 
         return ResponseEnvelope.success(data={
             "api": {
@@ -233,6 +298,13 @@ async def create_api(
         session.add(api)
         session.commit()
         session.refresh(api)
+        _record_api_version(
+            session,
+            api,
+            change_type="create",
+            created_by=getattr(current_user, "id", None),
+            change_summary="Created from legacy /api-manager/create",
+        )
 
         return ResponseEnvelope.success(data={
             "id": str(api.id),
@@ -321,6 +393,13 @@ async def update_api(
         session.add(api)
         session.commit()
         session.refresh(api)
+        _record_api_version(
+            session,
+            api,
+            change_type="update",
+            created_by=getattr(current_user, "id", None),
+            change_summary="Updated from PUT /api-manager/apis/{api_id}",
+        )
 
         return ResponseEnvelope.success(data={
             "api": {
@@ -355,53 +434,76 @@ async def rollback_api(
     session: Session = Depends(get_session),
     current_user: TbUser = Depends(get_current_user),
 ):
-    """
-    Rollback API to a previous version snapshot.
-    Saves current state as a new version before rolling back.
-    """
+    """Rollback API to a previous version snapshot."""
     try:
         api = session.get(ApiDefinition, api_id)
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
-        # Save current state as snapshot before rollback
-        snapshot_before = {
-            "name": api.name,
-            "method": api.method,
-            "path": api.path,
-            "mode": api.mode.value if api.mode else None,
-            "logic": api.logic,
-            "is_enabled": api.is_enabled,
-            "rolled_back_at": datetime.utcnow().isoformat(),
-        }
+        version_statement = (
+            select(ApiDefinitionVersion)
+            .where(ApiDefinitionVersion.api_id == api.id)
+            .order_by(ApiDefinitionVersion.version.desc())
+        )
+        rows = session.exec(version_statement).all()
+        if not rows:
+            raise HTTPException(status_code=404, detail="No version history found")
 
-        # For now, rollback resets updated_at to signal the change was reverted.
-        # A full version-history table would allow selecting a specific snapshot.
+        current_version = rows[0]
+        target = None
+        if version is not None:
+            target = next((row for row in rows if row.version == version), None)
+            if not target:
+                raise HTTPException(status_code=404, detail=f"Version {version} not found")
+        else:
+            target = rows[1] if len(rows) > 1 else rows[0]
+
+        snapshot = target.snapshot or {}
+        try:
+            api.scope = ApiScope(snapshot.get("scope", api.scope.value if hasattr(api.scope, "value") else str(api.scope)))
+        except ValueError:
+            pass
+        api.name = snapshot.get("name", api.name)
+        api.method = snapshot.get("method", api.method)
+        api.path = snapshot.get("path", api.path)
+        api.description = snapshot.get("description")
+        api.tags = snapshot.get("tags", api.tags)
+        mode_value = snapshot.get("mode")
+        if mode_value:
+            try:
+                api.mode = ApiMode(mode_value)
+            except ValueError:
+                pass
+        api.logic = snapshot.get("logic", api.logic)
+        api.runtime_policy = snapshot.get("runtime_policy", api.runtime_policy)
+        api.is_enabled = bool(snapshot.get("is_enabled", api.is_enabled))
         api.updated_at = datetime.utcnow()
+
         session.add(api)
         session.commit()
         session.refresh(api)
 
+        new_version = _record_api_version(
+            session,
+            api,
+            change_type="rollback",
+            created_by=getattr(current_user, "id", None),
+            change_summary=f"Rolled back from v{current_version.version} to v{target.version}",
+        )
+
         return ResponseEnvelope.success(
             data={
                 "api_id": api_id,
-                "status": "rollback_completed",
-                "snapshot_before": snapshot_before,
-                "current": {
-                    "name": api.name,
-                    "mode": api.mode.value if api.mode else None,
-                    "logic": api.logic,
-                    "updated_at": api.updated_at.isoformat() if api.updated_at else None,
-                },
-            },
-            message="Rollback completed. Note: Full version-history rollback requires api_definition_versions table.",
+                "rolled_back_to_version": target.version,
+                "new_version": new_version.version,
+                "snapshot": _api_snapshot(api),
+            }
         )
-
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Rollback failed: {str(e)}")
-        raise HTTPException(500, str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{api_id}/versions", response_model=ResponseEnvelope)
@@ -409,27 +511,30 @@ async def get_versions(
     api_id: str,
     session: Session = Depends(get_session),
 ):
-    """Get version history from execution logs as a proxy for changes"""
+    """Get API version history."""
     try:
         api = session.get(ApiDefinition, api_id)
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
-        # Return current version info since we don't have a separate versions table
+        statement = (
+            select(ApiDefinitionVersion)
+            .where(ApiDefinitionVersion.api_id == api.id)
+            .order_by(ApiDefinitionVersion.version.desc())
+        )
+        rows = session.exec(statement).all()
+        current = rows[0].version if rows else None
         versions = [
             {
-                "version": 1,
-                "created_at": api.created_at.isoformat() if api.created_at else None,
-                "updated_at": api.updated_at.isoformat() if api.updated_at else None,
-                "is_current": True,
-                "snapshot": {
-                    "name": api.name,
-                    "method": api.method,
-                    "path": api.path,
-                    "mode": api.mode.value if api.mode else None,
-                    "logic": api.logic,
-                },
+                "version": row.version,
+                "change_type": row.change_type,
+                "change_summary": row.change_summary,
+                "created_by": row.created_by,
+                "created_at": row.created_at.isoformat() if row.created_at else None,
+                "is_current": row.version == current,
+                "snapshot": row.snapshot,
             }
+            for row in rows
         ]
 
         return ResponseEnvelope.success(data={"api_id": api_id, "versions": versions})
@@ -584,7 +689,6 @@ async def run_tests(
             raise HTTPException(status_code=400, detail="API has no logic defined")
 
         mode = api.mode.value if api.mode else "sql"
-        executed_by = getattr(current_user, "id", "anonymous") if current_user else "anonymous"
 
         # Extract test params from param_schema if available
         test_params = {}

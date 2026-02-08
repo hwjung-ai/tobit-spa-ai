@@ -144,7 +144,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
     }
   };
 
-  const handleFunctionInsert = (func: { name: string; signature: string }) => {
+  const handleFunctionInsert = (func: { name: string; signature: string; description: string }) => {
     const functionBody = `\n\n${func.signature}\n    """${func.description}"""\n    # TODO: Implement\n    pass\n`;
     const updatedCode = pythonCode + functionBody;
     setPythonCode(updatedCode);

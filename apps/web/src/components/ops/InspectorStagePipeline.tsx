@@ -5,6 +5,8 @@ import { AlertTriangle, CheckCircle, Clock, Star, FileText, Shield, Map, Databas
 import { cn } from "@/lib/utils";
 import type { StageStatus as StageStatusType, StageSnapshot as StageSnapshotType } from "@/lib/apiClientTypes";
 
+export type StageStatus = StageStatusType;
+
 interface AppliedAssets {
   prompt?: string | null;
   policy?: string | null;

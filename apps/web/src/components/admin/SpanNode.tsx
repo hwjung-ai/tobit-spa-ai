@@ -51,4 +51,5 @@ function SpanNode({ data, selected }: NodeProps<SpanNodeData>) {
   );
 }
 
+export { SpanNode };
 export default memo(SpanNode);

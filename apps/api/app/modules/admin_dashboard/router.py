@@ -3,11 +3,14 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from app.modules.auth.models import TbUser
 from core.auth import get_current_user
+from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from schemas.common import ResponseEnvelope
+from sqlmodel import Session
+
+from app.modules.auth.models import TbUser
 
 from .settings_service import AdminSettingsService
 from .system_monitor import SystemMonitor
@@ -65,6 +68,7 @@ async def list_users(
     active_only: bool = Query(False),
     search: Optional[str] = Query(None),
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """
     List users with filtering and pagination
@@ -85,6 +89,7 @@ async def list_users(
             per_page=per_page,
             active_only=active_only,
             search=search,
+            session=session,
         )
 
         return ResponseEnvelope.success(data=result)
@@ -95,17 +100,21 @@ async def list_users(
 
 
 @router.get("/users/{user_id}")
-async def get_user(user_id: str, current_user: TbUser = Depends(get_current_user)):
+async def get_user(
+    user_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
     """Get user details and permissions"""
 
     try:
         logger.info(f"Getting user details: {user_id}")
 
-        user = user_service.get_user(user_id)
+        user = user_service.get_user(user_id, session=session)
         if not user:
             raise HTTPException(404, f"User not found: {user_id}")
 
-        permissions = user_service.get_user_permissions(user_id)
+        permissions = user_service.get_user_permissions(user_id, session=session)
 
         return ResponseEnvelope.success(data={
             "user": user.to_dict(),
@@ -124,13 +133,14 @@ async def update_user_status(
     user_id: str,
     request: UserStatusUpdateRequest,
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Update user active status"""
 
     try:
         logger.info(f"Updating user {user_id} status: is_active={request.is_active}")
 
-        user = user_service.update_user_status(user_id, request.is_active)
+        user = user_service.update_user_status(user_id, request.is_active, session=session)
         if not user:
             raise HTTPException(404, f"User not found: {user_id}")
 
@@ -151,6 +161,7 @@ async def grant_permission(
     user_id: str,
     request: PermissionRequest,
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Grant permission to user"""
 
@@ -165,6 +176,7 @@ async def grant_permission(
             permission=request.permission,
             admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
+            session=session,
         )
 
         if not success:
@@ -174,7 +186,7 @@ async def grant_permission(
 
         return ResponseEnvelope.success(data={
             "message": f"Permission '{request.permission}' granted to user {user_id}",
-            "permissions": user_service.get_user_permissions(user_id),
+            "permissions": user_service.get_user_permissions(user_id, session=session),
         })
 
     except Exception as e:
@@ -187,6 +199,7 @@ async def revoke_permission(
     user_id: str,
     request: PermissionRequest,
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Revoke permission from user"""
 
@@ -201,6 +214,7 @@ async def revoke_permission(
             permission=request.permission,
             admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
+            session=session,
         )
 
         if not success:
@@ -210,7 +224,7 @@ async def revoke_permission(
 
         return ResponseEnvelope.success(data={
             "message": f"Permission '{request.permission}' revoked from user {user_id}",
-            "permissions": user_service.get_user_permissions(user_id),
+            "permissions": user_service.get_user_permissions(user_id, session=session),
         })
 
     except Exception as e:
@@ -223,13 +237,14 @@ async def get_user_audit_log(
     user_id: str,
     limit: int = Query(50, ge=1, le=500),
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Get permission audit log for a user"""
 
     try:
         logger.info(f"Getting audit log for user {user_id}")
 
-        logs = user_service.get_permission_audit_log(user_id=user_id, limit=limit)
+        logs = user_service.get_permission_audit_log(user_id=user_id, limit=limit, session=session)
 
         return ResponseEnvelope.success(data={
             "user_id": user_id,
@@ -243,13 +258,16 @@ async def get_user_audit_log(
 
 
 @router.get("/users/activity-summary")
-async def get_user_activity_summary(current_user: TbUser = Depends(get_current_user)):
+async def get_user_activity_summary(
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
     """Get user activity summary"""
 
     try:
         logger.info("Getting user activity summary")
 
-        summary = user_service.get_user_activity_summary()
+        summary = user_service.get_user_activity_summary(session=session)
 
         return ResponseEnvelope.success(data={"summary": summary})
 
@@ -323,13 +341,14 @@ async def get_system_alerts(
 async def get_settings(
     keys: Optional[List[str]] = Query(None),
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Get system settings"""
 
     try:
         logger.info(f"Getting settings (keys={keys})")
 
-        settings = settings_service.get_settings(keys=keys)
+        settings = settings_service.get_settings(keys=keys, session=session)
 
         return ResponseEnvelope.success(data={"settings": settings})
 
@@ -343,6 +362,7 @@ async def update_setting(
     key: str,
     request: SettingUpdateRequest,
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Update a single setting"""
 
@@ -354,6 +374,7 @@ async def update_setting(
             value=request.value,
             admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
+            session=session,
         )
 
         if not success:
@@ -374,7 +395,9 @@ async def update_setting(
 
 @router.patch("/settings")
 async def update_settings_batch(
-    request: SettingsBatchUpdateRequest, current_user: TbUser = Depends(get_current_user)
+    request: SettingsBatchUpdateRequest,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Update multiple settings"""
 
@@ -385,6 +408,7 @@ async def update_settings_batch(
             updates=request.settings,
             admin_id=getattr(current_user, "id", "anonymous"),
             reason=request.reason,
+            session=session,
         )
 
         successful = sum(1 for v in results.values() if v)
@@ -402,7 +426,10 @@ async def update_settings_batch(
 
 
 @router.post("/settings/reset-defaults")
-async def reset_settings_to_defaults(current_user: TbUser = Depends(get_current_user)):
+async def reset_settings_to_defaults(
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
     """Reset all settings to defaults"""
 
     try:
@@ -411,6 +438,7 @@ async def reset_settings_to_defaults(current_user: TbUser = Depends(get_current_
         count = settings_service.reset_to_defaults(
             admin_id=getattr(current_user, "id", "anonymous"),
             reason="Admin reset to defaults",
+            session=session,
         )
 
         return ResponseEnvelope.success(data={
@@ -424,13 +452,16 @@ async def reset_settings_to_defaults(current_user: TbUser = Depends(get_current_
 
 
 @router.get("/settings/categories")
-async def get_settings_by_category(current_user: TbUser = Depends(get_current_user)):
+async def get_settings_by_category(
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
     """Get settings grouped by category"""
 
     try:
         logger.info("Getting settings by category")
 
-        categories = settings_service.get_settings_by_category()
+        categories = settings_service.get_settings_by_category(session=session)
 
         return ResponseEnvelope.success(data={"categories": categories})
 
@@ -444,13 +475,14 @@ async def get_settings_audit_log(
     key: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
     """Get settings change audit log"""
 
     try:
         logger.info(f"Getting settings audit log (key={key}, limit={limit})")
 
-        logs = settings_service.get_settings_audit_log(key=key, limit=limit)
+        logs = settings_service.get_settings_audit_log(key=key, limit=limit, session=session)
 
         return ResponseEnvelope.success(data={
             "log_count": len(logs),
@@ -464,4 +496,5 @@ async def get_settings_audit_log(
 
 # Include logs router
 from app.modules.admin.routes.logs import router as logs_router
+
 router.include_router(logs_router)
