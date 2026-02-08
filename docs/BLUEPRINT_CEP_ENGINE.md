@@ -370,7 +370,7 @@ cep:anomaly:baseline:<rule_id>            → 이상 탐지 베이스라인 (TTL
 
 ### 8.2 Database Catalogs (`/admin/catalogs`)
 
-Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
+Schema 스캔 및 뷰어 (100% 완료):
 - `CatalogScanPanel` - Postgres/Neo4j 자동 스캔, 실시간 상태 표시
 - `CatalogViewerPanel` - 테이블 구조 시각화, 컬럼 타입/제약조건 표시
 - `CreateCatalogModal` - 새 Catalog 생성
@@ -379,7 +379,7 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 
 ### 8.3 Data Explorer (`/admin/explorer`)
 
-다중 데이터 소스 탐색기 (codepen 감사: 95% 완료):
+다중 데이터 소스 탐색기 (95% 완료):
 - **Postgres**: 테이블 브라우징, SQL 쿼리, AG Grid 결과
 - **Neo4j**: 라벨 브라우징, Cypher 쿼리, `Neo4jGraphFlow` 그래프 시각화
 - **Redis**: Key 스캔 (prefix, pattern), cursor 기반 페이징, Command 실행
@@ -438,48 +438,6 @@ Schema 스캔 및 뷰어 (codepen 감사: 100% 완료):
 | **Phase 4** | 완료 | Redis 분산 상태 관리 |
 | **Phase 5** | 예정 | 완전 Bytewax 마이그레이션 (기존 executor 제거) |
 | **Phase 6** | ✅ 완료 | ML 기반 이상 탐지 (Z-Score, IQR, EMA), anomaly trigger 타입 |
-
----
-
-## 14. P0/P1 완료 및 외부 감사 결과 (2026-02-08)
-
-**전체 완료도**: 100% (상용 완료)
-
-### P0 완료 상태
-
-**CEP Engine은 P0 완료 대상이 아니므로 완성도 유지**
-
-### P1 완료 상태
-
-**✅ CEP→API 범용 트리거 구현 (완료)**
-
-`executor.py`에 다음 4가지 action type 지원:
-- `api`: API Engine의 ApiDefinition 실행 (sql/http/script/workflow)
-- `api_script`: Python 스크립트 실행 (main 함수 패턴)
-- `api_trigger_rule`: 다른 CEP 규칙 트리거 (Rule chaining)
-- `api_workflow`: Workflow 실행 (다중 노드 순차 실행)
-
-관련 파일:
-- `executor.py`: `_execute_api_action()`, `_execute_api_script_action()`, `_execute_trigger_rule_action()`, `_execute_api_workflow_action()`
-- `app/modules/api_manager/router.py`: API 실행 엔드포인트
-- `app/modules/api_manager/executor.py`: SQL/HTTP/Python/Workflow 실행기
-
-### 외부 감사 결과 (codepen, 2026-02-08)
-**전체 완료도**: 100% (상용 완료)
-
-| 영역 | 완료도 | 평가 |
-|------|--------|------|
-| Database Catalogs | 100% | 직관적 UI, 데모 모드, 실시간 스캔 |
-| Data Explorer | 95% | 다중 데이터 소스, 그래프 시각화, Inspector |
-| CEP Builder | 85% | 규칙 편집/알림/테스트/이력 완료, 시각적 빌더 미구현 |
-| 보안 | 100% | Read-only 제한, 환경변수 활성화, 위험 명령 차단 |
-
-**개선 제안 (우선순위순)**:
-1. 쿼리 히스토리 - 자주 사용하는 쿼리 저장/재사용 (1일)
-2. 쿼리 자동 완성 - 테이블/컬럼 자동 완성 제안 (2~3일)
-3. 시각적 규칙 빌더 - 드래그 앤 드롭 규칙 편집 UI (5~7일)
-
----
 
 ## 12. 배포 구성
 

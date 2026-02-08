@@ -729,7 +729,7 @@ result = execute_workflow_api(
 - **response_data**: 최대 1MB
 - **error_stacktrace**: 최대 10KB
 
-### 3. 캐싱 (P1 완료)
+### 3. 캐싱
 
 **구현된 기능:**
 - APICacheService 클래스 (In-memory 캐시)
@@ -988,77 +988,6 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
 - **API Manager Components**: `apps/web/src/components/api-manager/`
 - **Asset Registry UI**: `apps/web/src/app/admin/assets/`
 
----
-
-## 14. P0/P1 완료 상태 (2026-02-08)
-
-**전체 완료도**: 95% (상용 가능)
-
-### P0 완료 (100%)
-
-**✅ API 버전/롤백 시스템 완전 구현**
-
-관련 파일:
-- `router.py`: 버전 스냅샷 생성, 버전 이력 조회, 롤백 기능
-- `api_definition.py`: `current_version`, `version_history` 필드 추가
-- Migration: `0047_add_api_version_fields.py`
-
-엔드포인트:
-- `GET /api-manager/{api_id}/versions` - 버전 이력 조회
-- `POST /api-manager/{api_id}/rollback/{version_id}` - 버전 롤백
-
-**✅ API Manager Backend 13개 엔드포인트 완전 구현**
-
-codepen 보고서 정정: API Manager Backend가 "미구현"로 평가되었으나, 실제로는 95% 완료됨
-
-구현된 엔드포인트:
-- CRUD: GET/POST/PUT/DELETE `/api-manager/apis`
-- 실행: POST `/api-manager/{api_id}/execute`
-- 검증: POST `/api-manager/validate-sql`
-- 테스트: POST `/api-manager/{api_id}/test`
-- 버전 관리: GET `/api-manager/{api_id}/versions`, POST `/api-manager/{api_id}/rollback/{version_id}`
-- Dry-run: POST `/api-manager/{api_id}/dry-run`
-
-**✅ API Manager UI 2,996줄 구현 완료**
-
-codepen 보고서 정정: API Manager UI가 "40%"로 평가되었으나, 실제로는 80% 완료됨
-
-실제 구현:
-- 경로: `/api-manager/page.tsx` (Top-level route, `/admin/api-manager` 아님)
-- 코드량: 2,996줄
-- 기능: API 목록, 상세, 편집, 실행 로그, 버전 관리
-
-**✅ DOCS 모든 엔드포인트 실제 DB 연동 완료**
-- (API Engine은 DOCS와 직접 관련 없으므로 생략)
-
-**✅ Admin 영속화 테이블 생성 완료**
-- (API Engine은 Admin과 직접 관련 없으므로 생략)
-
-### P1 완료 (100%)
-
-**✅ API 캐싱 서비스 구현 (완료)**
-
-파일: `cache_service.py` (APICacheService 클래스)
-- In-memory 캐시 구현 (Redis로 확장 가능)
-- SHA256 기반 키 생성
-- TTL 지원 (default 300초)
-- Cache hit/miss 기록
-
-기능:
-- `get_cache(key)` - 캐시 조회
-- `set_cache(key, value, ttl)` - 캐시 저장
-- `clear_cache(pattern)` - 캐시 삭제
-
-**✅ CEP→API 범용 트리거 구현 (완료)**
-
-`executor.py`에 다음 4가지 action type 지원:
-- `api`: API Engine의 ApiDefinition 실행 (sql/http/script/workflow)
-- `api_script`: Python 스크립트 실행 (main 함수 패턴)
-- `api_trigger_rule`: 다른 CEP 규칙 트리거 (Rule chaining)
-- `api_workflow`: Workflow 실행 (다중 노드 순차 실행)
-
----
-
 ## ✅ 결론
 
 **상용 수준: 95% 완료**
@@ -1090,6 +1019,6 @@ codepen 보고서 정정: API Manager UI가 "40%"로 평가되었으나, 실제�
 
 ---
 
-**작성일**: 2026-02-08 (실제 파일 기반 재정정)
+**작성일**: 2026-02-08
 **상태**: ✅ COMPLETE
 **다음 단계**: Workflow Executor 완전 구현 또는 Redis 캐싱 강화

@@ -605,9 +605,9 @@ def test_tenant_isolation():
 
 ---
 
-## 10. 상용 서비스 완료 상태 (P0/P1 완료)
+## 10. 상용 서비스 현재 상태
 
-### P0 완료 항목 (100%)
+### 완료 항목
 
 1. **API 버전/롤백 시스템 완전 구현**
    - 파일: `apps/api/app/modules/api_manager/router.py`
@@ -633,24 +633,22 @@ def test_tenant_isolation():
    - 테이블: `tb_admin_setting`, `tb_admin_setting_audit`, `tb_user_activity_log`
    - 상태: ✅ 완료 (마이그레이션 적용)
 
-### P1 완료 항목 (100%)
-
-1. **문서 검색 제안 (Suggestions) 구현**
+4. **문서 검색 제안 (Suggestions) 구현**
    - 파일: `apps/api/app/modules/document_processor/router.py`
    - 기능: `GET /api/documents/search/suggestions`
    - 상태: ✅ 완료 (실제 DB 쿼리)
 
-2. **문서 재색인 (Reindex) 구현**
+5. **문서 재색인 (Reindex) 구현**
    - 파일: `apps/api/app/modules/document_processor/router.py`
    - 기능: `POST /api/documents/{document_id}/reindex`
    - 상태: ✅ 완료 (SQL 직접 실행)
 
-3. **문서 버전 관리 (Versioning) 구현**
+6. **문서 버전 관리 (Versioning) 구현**
    - 파일: `apps/api/app/modules/document_processor/router.py`
    - 기능: `GET /api/documents/{document_id}/versions` (재귀 CTE)
    - 상태: ✅ 완료 (버전 체인 조회)
 
-4. **CEP→API 범용 트리거 구현**
+7. **CEP→API 범용 트리거 구현**
    - 파일: `apps/api/app/modules/cep_builder/executor.py`
    - 기능:
      - `execute_action()`: 4가지 action type 지원
@@ -659,7 +657,7 @@ def test_tenant_isolation():
      - `_execute_trigger_rule_action()`: Rule chaining
    - 상태: ✅ 완료 (모든 action type 구현)
 
-5. **API 캐싱 서비스 구현**
+8. **API 캐싱 서비스 구현**
    - 파일: `apps/api/app/modules/api_manager/cache_service.py`
    - 기능:
      - `APICacheService` 클래스 (in-memory 캐시)

@@ -1,7 +1,7 @@
 # Tobit SPA AI - 문서 인덱스
 
 **최종 정리**: 2026-02-08
-**전체 완성도**: 94% (P0/P1 완료)
+**전체 완성도**: 94%
 **활성 문서**: 11개 (docs/) + 3개 (root)
 **아카이브**: docs/history/ (완료된 Phase 및 설계 문서)
 
@@ -95,22 +95,6 @@ tobit-spa-ai/
 4. **중복 제거**: 분석용/임시 문서는 `docs/history/`로 이동
 
 ---
-
-## 상용 서비스 준비 상태 (P0/P1 완료)
-
-### P0 완료 (100%)
-- ✅ API 버전/롤백 시스템 완전 구현
-- ✅ DOCS 모든 엔드포인트 실제 DB 연동 완료
-  - POST /api/documents/{document_id}/share (실제 구현)
-  - GET /api/documents/{document_id}/export (실제 구현)
-- ✅ Admin 영속화 테이블 생성 완료
-
-### P1 완료 (100%)
-- ✅ 문서 검색 제안 (Suggestions) 구현
-- ✅ 문서 재색인 (Reindex) 구현
-- ✅ 문서 버전 관리 (Versioning) 구현
-- ✅ CEP→API 범용 트리거 구현 (4가지 action type)
-- ✅ API 캐싱 서비스 구현 (APICacheService)
 
 ## 향후 개선 방안
 

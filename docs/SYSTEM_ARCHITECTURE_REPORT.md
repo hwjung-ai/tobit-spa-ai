@@ -802,9 +802,9 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 - [x] API Manager Backend 완성 (13개 엔드포인트)
 - [x] API Manager UI 기본 구현 (`/api-manager/page.tsx` 2,996줄, 80%)
 - [x] Script runtime_policy DB 기반 전달 (ApiDefinition.runtime_policy)
-- [x] API 버전/롤백 시스템 완전 구현 (P0 완료)
-- [x] API 캐싱 서비스 구현 (APICacheService, P1 완료)
-- [x] CEP→API 범용 트리거 구현 (4가지 action type, P1 완료)
+- [x] API 버전/롤백 시스템 완전 구현
+- [x] API 캐싱 서비스 구현 (APICacheService)
+- [x] CEP→API 범용 트리거 구현 (4가지 action type)
 - [ ] API Manager UI 고도화 (Visual Builder, 에디터 개선)
 - [ ] API Test Runner UI 구현
 - [ ] Python Sandbox 강화 (Docker 컨테이너)
@@ -812,7 +812,7 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 ### 10.5 ADMIN
 - [x] Logs 페이지 라우팅 수정
 - [x] CEP Monitoring 엔드포인트 수정
-- [x] Admin 영속화 테이블 생성 완료 (P0 완료)
+- [x] Admin 영속화 테이블 생성 완료
   - tb_admin_setting (시스템 설정)
   - tb_admin_setting_audit (설정 변경 이력)
   - tb_user_activity_log (사용자 활동 로그)
@@ -1021,40 +1021,6 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 - ✅ JSON Patch 자동 추출 (AI 응답 코드 블록 → RFC 6902 패치)
 - ✅ Apply/Discard UI (제안된 패치 적용/거부)
 - ✅ CEP Builder: 기존 AI Copilot에 anomaly 트리거 지원 추가
-
-### 2026-02-08: 외부 감사 (codepen) + Screen Editor 상용 고도화 + API Engine Blueprint + 문서 통합
-
-**외부 감사 (codepen) 결과 반영**:
-- ✅ CEP 엔진: 90% 상용 준비 확인 (Database Catalogs 100%, Data Explorer 95%, CEP Builder 85%)
-- ✅ OPS 쿼리: 85% 상용 준비 확인 (엔드포인트 명칭 오류 3건 정정)
-- ✅ API Engine: 80%로 상향 조정 (codepen 70% 평가 → Backend 95%, UI 80% 실제 확인)
-- ✅ Screen Editor: 95% 상용 준비 확인
-- ⚠️ codepen 보고서 오류 정정: API Manager "미구현" → 실제 13개 엔드포인트 완성, UI 2,996줄 존재
-- ⚠️ codepen 보고서 오류 정정: `/ops/trace`, `/ops/metrics`, `/ops/history` 엔드포인트 존재하지 않음
-- 📋 우선순위별 개선 과제 도출 (6개 항목, 각 Blueprint에 반영)
-
-
-
-**Screen Editor 5 Phase 완료**:
-- ✅ Phase 1: UX Polish (Undo/Redo, Multi-Select, Copy/Paste, 단축키)
-- ✅ Phase 2: Expression Engine v2 (재귀 하강 파서, 45+ 화이트리스트 함수)
-- ✅ Phase 3: Theme System (Light/Dark/Brand, CSS 변수)
-- ✅ Phase 4: RBAC + Template Gallery (5개 권한, 태그 기반 필터)
-- ✅ Phase 5: SSE Real-time Streaming (자동 재연결, 백프레셔)
-- ✅ 상용 준비도 95% (codepen 독립 감사 기준)
-
-**API Engine Blueprint 작성**:
-- ✅ 4가지 실행 엔진 문서화 (SQL/HTTP/Python/Workflow)
-- ✅ 보안 모델 정리 (SQL Validator, Python Sandbox)
-- ✅ CEP Builder 통합 흐름 정리
-- ✅ 향후 UI 구현 로드맵 수립
-
-**문서 통합**:
-- ✅ CEP 관련 4개 문서 → `BLUEPRINT_CEP_ENGINE.md` 통합
-- ✅ OPS 관련 5개 문서 → `BLUEPRINT_OPS_QUERY.md` 통합
-- ✅ Screen Editor 문서 → `BLUEPRINT_SCREEN_EDITOR.md` 정리
-- ✅ API Engine 문서 → `BLUEPRINT_API_ENGINE.md` 신규
-- ✅ 이전 문서 10개 → `docs/history/` 아카이브
 
 ### 2026-02-07: OPS Real Mode + DOCS 뷰어 개선
 

@@ -369,35 +369,3 @@ API_BASE_URL=http://localhost:8000
 | 다언어 BM25 | 중 | 한국어 형태소 분석 지원 |
 | 검색 캐싱 (Redis) | 낮 | 반복 검색 성능 최적화 |
 | 실시간 문서 인덱싱 | 낮 | 문서 업로드 시 즉시 검색 가능 |
-
----
-
-## 13. P0/P1 완료 및 외부 감사 결과 (2026-02-08)
-
-**전체 완료도**: 88% (상용 가능)
-
-### P0/P1 완료 상태
-
-**OPS Query System은 P0/P1 완료 대상이 아니므로 완성도 유지**
-
-### 외부 감사 결과 (codepen, 2026-02-08)
-
-| 영역 | 완료도 | 평가 |
-|------|--------|------|
-| Observability Dashboard | 90% | 이중 대시보드, 7개 위젯, 자동 새로고침 |
-| Regression Watch | 85% | 회귀 모니터링, 이력 조회, Diff 표시 |
-| Backend OPS Module | 90% | router.py, services/, schemas.py 완전 구현 |
-
-**Observability 위젯 확인** (전수 검증 완료):
-- SystemHealthChart, AlertChannelStatus, RuleStatsCard,
-  ExecutionTimeline, ErrorDistribution, PerformanceMetrics, RecentErrors
-
-**엔드포인트 정정** (codepen 보고서 오류):
-- `/ops/trace` → 실제 존재하지 않음 (trace는 `/ops/observability/kpis`로 제공)
-- `/ops/metrics` → 실제 존재하지 않음 (metrics는 `/ops/observability/kpis`로 제공)
-- `/ops/history` → 실제 존재하지 않음 (history는 `/golden-queries`, `/regression-runs`로 제공)
-
-**개선 제안 (우선순위순)**:
-1. 대시보드 데이터 CSV/JSON 다운로드 (1일)
-2. 자동 회귀 테스트 스케줄링 - CEP Scheduler 재활용 가능 (3~5일)
-3. 커스텀 위젯 추가 - 사용자 정의 대시보드 (5~7일, 낮은 우선순위)
