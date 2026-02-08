@@ -1296,15 +1296,86 @@ def ask_all(
 
 
 @router.get("/ui-actions/catalog", response_model=ResponseEnvelope)
-def list_ui_actions_catalog() -> ResponseEnvelope:
+def list_ui_actions_catalog(
+    include_api_manager: bool = Query(False, description="Include API Manager APIs in catalog"),
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
     """
     Return deterministic UI action catalog for screen editor.
 
-    The catalog is sourced from ActionRegistry metadata and used by admin
-    screen editors to render validated handler choices.
+    The catalog is sourced from ActionRegistry metadata and optionally includes
+    user-defined APIs from API Manager. Used by admin screen editors to render
+    validated handler choices with metadata, input schemas, and sample output.
+
+    Query params:
+        include_api_manager: If true, also returns active API Manager APIs as
+            selectable action sources with handler "api_manager.execute".
     """
     actions = list_registered_actions()
-    return ResponseEnvelope.success(data={"actions": actions, "count": len(actions)})
+
+    # Mark built-in actions with source
+    for action in actions:
+        if "source" not in action:
+            action["source"] = "builtin"
+
+    api_manager_items: list[dict] = []
+    if include_api_manager:
+        try:
+            from models.api_definition import ApiDefinition
+            from sqlmodel import select as sql_select
+
+            statement = sql_select(ApiDefinition).where(
+                ApiDefinition.deleted_at.is_(None),
+                ApiDefinition.is_enabled == True,  # noqa: E712
+            )
+            apis = session.exec(statement).all()
+            for api in apis:
+                mode = api.mode.value if api.mode else "sql"
+                api_manager_items.append({
+                    "action_id": f"api_manager:{api.id}",
+                    "label": f"[API] {api.name}",
+                    "description": api.description or f"{api.method} {api.path}",
+                    "source": "api_manager",
+                    "mode": mode,
+                    "tags": (api.tags or []) + [mode],
+                    "input_schema": {
+                        "type": "object",
+                        "required": ["api_id"],
+                        "properties": {
+                            "api_id": {
+                                "type": "string",
+                                "title": "API ID",
+                                "default": str(api.id),
+                            },
+                            "params": {
+                                "type": "object",
+                                "title": "Execution Parameters",
+                            },
+                        },
+                    },
+                    "output": {"state_patch_keys": ["api_result"]},
+                    "required_context": [],
+                    "sample_output": None,
+                    "api_manager_meta": {
+                        "api_id": str(api.id),
+                        "method": api.method,
+                        "path": api.path,
+                        "mode": mode,
+                    },
+                })
+        except Exception as e:
+            logger.warning(
+                "Failed to load API Manager APIs for catalog",
+                extra={"error": str(e)},
+            )
+
+    all_items = actions + api_manager_items
+    return ResponseEnvelope.success(data={
+        "actions": all_items,
+        "count": len(all_items),
+        "builtin_count": len(actions),
+        "api_manager_count": len(api_manager_items),
+    })
 
 
 @router.post("/ui-editor/presence/heartbeat", response_model=ResponseEnvelope)
@@ -1616,21 +1687,21 @@ async def execute_ui_action(
                     "inputs": mask_sensitive_inputs(payload.inputs),
                     "context": payload.context,
                 },
-                applied_assets=None,
                 plan_raw=None,
                 plan_validated=None,
-                tool_calls=executor_result.get("tool_calls", []),
-                references=executor_result.get("references", []),
-                answer_envelope={
-                    "meta": {
-                        "route": payload.action_id,
-                        "route_reason": "UI action execution",
-                        "timing_ms": duration_ms,
-                        "trace_id": trace_id,
-                        "parent_trace_id": parent_trace_id,
-                    },
-                    "blocks": executor_result["blocks"],
+                trace_payload={
+                    "route": payload.action_id,
+                    "tool_calls": executor_result.get("tool_calls", []),
+                    "references": executor_result.get("references", []),
                 },
+                answer_meta={
+                    "route": payload.action_id,
+                    "route_reason": "UI action execution",
+                    "timing_ms": duration_ms,
+                    "trace_id": trace_id,
+                    "parent_trace_id": parent_trace_id,
+                },
+                blocks=executor_result["blocks"],
                 flow_spans=all_spans,
             )
 
@@ -1692,22 +1763,22 @@ async def execute_ui_action(
                     "inputs": mask_sensitive_inputs(payload.inputs),
                     "context": payload.context,
                 },
-                applied_assets=None,
                 plan_raw=None,
                 plan_validated=None,
-                tool_calls=[],
-                references=[],
-                answer_envelope={
-                    "meta": {
-                        "route": payload.action_id,
-                        "route_reason": "UI action execution",
-                        "timing_ms": duration_ms,
-                        "trace_id": trace_id,
-                        "parent_trace_id": parent_trace_id,
-                        "error": str(exc),
-                    },
-                    "blocks": error_blocks,
+                trace_payload={
+                    "route": payload.action_id,
+                    "tool_calls": [],
+                    "references": [],
                 },
+                answer_meta={
+                    "route": payload.action_id,
+                    "route_reason": "UI action execution",
+                    "timing_ms": duration_ms,
+                    "trace_id": trace_id,
+                    "parent_trace_id": parent_trace_id,
+                    "error": str(exc),
+                },
+                blocks=error_blocks,
                 flow_spans=all_spans,
             )
 

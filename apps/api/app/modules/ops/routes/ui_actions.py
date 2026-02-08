@@ -113,21 +113,21 @@ async def execute_ui_action(
                     "inputs": mask_sensitive_inputs(payload.inputs),
                     "context": payload.context,
                 },
-                applied_assets=None,
                 plan_raw=None,
                 plan_validated=None,
-                tool_calls=executor_result.get("tool_calls", []),
-                references=executor_result.get("references", []),
-                answer_envelope={
-                    "meta": {
-                        "route": payload.action_id,
-                        "route_reason": "UI action execution",
-                        "timing_ms": duration_ms,
-                        "trace_id": trace_id,
-                        "parent_trace_id": parent_trace_id,
-                    },
-                    "blocks": executor_result["blocks"],
+                trace_payload={
+                    "route": payload.action_id,
+                    "tool_calls": executor_result.get("tool_calls", []),
+                    "references": executor_result.get("references", []),
                 },
+                answer_meta={
+                    "route": payload.action_id,
+                    "route_reason": "UI action execution",
+                    "timing_ms": duration_ms,
+                    "trace_id": trace_id,
+                    "parent_trace_id": parent_trace_id,
+                },
+                blocks=executor_result["blocks"],
                 flow_spans=all_spans,
             )
 
@@ -189,22 +189,22 @@ async def execute_ui_action(
                     "inputs": mask_sensitive_inputs(payload.inputs),
                     "context": payload.context,
                 },
-                applied_assets=None,
                 plan_raw=None,
                 plan_validated=None,
-                tool_calls=[],
-                references=[],
-                answer_envelope={
-                    "meta": {
-                        "route": payload.action_id,
-                        "route_reason": "UI action execution",
-                        "timing_ms": duration_ms,
-                        "trace_id": trace_id,
-                        "parent_trace_id": parent_trace_id,
-                        "error": str(exc),
-                    },
-                    "blocks": error_blocks,
+                trace_payload={
+                    "route": payload.action_id,
+                    "tool_calls": [],
+                    "references": [],
                 },
+                answer_meta={
+                    "route": payload.action_id,
+                    "route_reason": "UI action execution",
+                    "timing_ms": duration_ms,
+                    "trace_id": trace_id,
+                    "parent_trace_id": parent_trace_id,
+                    "error": str(exc),
+                },
+                blocks=error_blocks,
                 flow_spans=all_spans,
             )
 

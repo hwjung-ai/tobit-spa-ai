@@ -103,20 +103,30 @@ def create_screen_asset_impl(
         raise HTTPException(status_code=400, detail="asset_type must be 'screen'")
 
     # Check permission
-    permission_result = check_permission(
-        session=session,
-        user_id=current_user.id,
-        role=current_user.role,
-        permission=ResourcePermission.SCREEN_CREATE,
-        resource_type="screen",
-        resource_id=None,
-    )
-
-    if not permission_result.granted:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Permission denied: {permission_result.reason}",
+    try:
+        permission_result = check_permission(
+            session=session,
+            user_id=current_user.id,
+            role=current_user.role,
+            permission=ResourcePermission.SCREEN_CREATE,
+            resource_type="screen",
+            resource_id=None,
         )
+        if not permission_result.granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Permission denied: {permission_result.reason}",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        session.rollback()
+        from app.modules.auth.models import UserRole
+        if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER, UserRole.DEVELOPER):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Permission denied: insufficient role",
+            )
 
     try:
         asset = TbAssetRegistry(
@@ -535,19 +545,33 @@ def update_asset(
 
         # Permission check for screen assets
         if asset.asset_type == "screen":
-            permission_result = check_permission(
-                session=session,
-                user_id=current_user.id,
-                role=current_user.role,
-                permission=ResourcePermission.SCREEN_EDIT,
-                resource_type="screen",
-                resource_id=str(asset.asset_id),
-            )
-            if not permission_result.granted:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied: {permission_result.reason}",
+            try:
+                permission_result = check_permission(
+                    session=session,
+                    user_id=current_user.id,
+                    role=current_user.role,
+                    permission=ResourcePermission.SCREEN_EDIT,
+                    resource_type="screen",
+                    resource_id=str(asset.asset_id),
                 )
+                if not permission_result.granted:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Permission denied: {permission_result.reason}",
+                    )
+            except HTTPException:
+                raise
+            except Exception:
+                session.rollback()
+                from app.modules.auth.models import UserRole
+                if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Permission check unavailable; admin role required",
+                    )
+                asset = session.get(TbAssetRegistry, uuid.UUID(asset_id))
+                if not asset:
+                    raise HTTPException(status_code=404, detail="asset not found")
 
         if asset.status != "draft":
             raise HTTPException(
@@ -673,19 +697,34 @@ def publish_asset(
 
         # Permission check for screen publish
         if asset.asset_type == "screen":
-            permission_result = check_permission(
-                session=session,
-                user_id=current_user.id,
-                role=current_user.role,
-                permission=ResourcePermission.SCREEN_PUBLISH,
-                resource_type="screen",
-                resource_id=str(asset.asset_id),
-            )
-            if not permission_result.granted:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied: {permission_result.reason}",
+            try:
+                permission_result = check_permission(
+                    session=session,
+                    user_id=current_user.id,
+                    role=current_user.role,
+                    permission=ResourcePermission.SCREEN_PUBLISH,
+                    resource_type="screen",
+                    resource_id=str(asset.asset_id),
                 )
+                if not permission_result.granted:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Permission denied: {permission_result.reason}",
+                    )
+            except HTTPException:
+                raise
+            except Exception:
+                session.rollback()
+                from app.modules.auth.models import UserRole
+                if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Permission denied: insufficient role",
+                    )
+                # Re-fetch asset after rollback
+                asset = session.get(TbAssetRegistry, uuid.UUID(asset_id)) if asset_id else None
+                if not asset:
+                    raise HTTPException(status_code=404, detail="asset not found")
 
         # Run validation before publish
         try:
@@ -918,19 +957,35 @@ def delete_asset(
 
         # Permission check for screen delete
         if asset.asset_type == "screen":
-            permission_result = check_permission(
-                session=session,
-                user_id=current_user.id,
-                role=current_user.role,
-                permission=ResourcePermission.SCREEN_DELETE,
-                resource_type="screen",
-                resource_id=str(asset.asset_id),
-            )
-            if not permission_result.granted:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Permission denied: {permission_result.reason}",
+            try:
+                permission_result = check_permission(
+                    session=session,
+                    user_id=current_user.id,
+                    role=current_user.role,
+                    permission=ResourcePermission.SCREEN_DELETE,
+                    resource_type="screen",
+                    resource_id=str(asset.asset_id),
                 )
+                if not permission_result.granted:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Permission denied: {permission_result.reason}",
+                    )
+            except HTTPException:
+                raise
+            except Exception:
+                # Permission table may not exist yet; rollback and fall back to role check
+                session.rollback()
+                from app.modules.auth.models import UserRole
+                if current_user.role not in (UserRole.ADMIN, UserRole.MANAGER):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Permission denied: insufficient role",
+                    )
+                # Re-fetch the asset after rollback
+                asset = session.get(TbAssetRegistry, uuid.UUID(asset_id)) if asset_id else None
+                if not asset:
+                    raise HTTPException(status_code=404, detail="asset not found")
 
         if asset.status != "draft":
             raise HTTPException(

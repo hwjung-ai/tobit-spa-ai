@@ -2,8 +2,8 @@
   "id": "system_monitoring",
   "screen_id": "system_monitoring",
   "name": "System Monitoring",
-  "version": "1.0",
-  "description": "Real-time system monitoring dashboard with CPU, memory, disk, and network metrics",
+  "version": "2.0",
+  "description": "Real-time system monitoring dashboard with CPU, memory, disk, OPS stats, regression analysis, and alerts",
   "layout": {
     "type": "dashboard",
     "direction": "vertical",
@@ -27,39 +27,42 @@
             }
           },
           {
+            "id": "sys_status_badge",
+            "type": "badge",
+            "label": "System Status",
+            "props": {
+              "label": "{{state.system_status}}",
+              "conditional_styles": [
+                { "field": "label", "operator": "eq", "value": "healthy", "color": "#ffffff", "bg_color": "#22c55e" },
+                { "field": "label", "operator": "eq", "value": "warning", "color": "#1f2937", "bg_color": "#f59e0b" },
+                { "field": "label", "operator": "eq", "value": "critical", "color": "#ffffff", "bg_color": "#ef4444" }
+              ]
+            }
+          },
+          {
             "id": "sys_refresh_btn",
             "type": "button",
-            "label": "Refresh Now",
+            "label": "Refresh",
             "props": {
               "label": "Refresh Now",
-              "variant": "default"
+              "variant": "default",
+              "auto_refresh": {
+                "enabled": true,
+                "interval_ms": 30000,
+                "max_failures": 3,
+                "backoff_ms": 5000
+              }
             },
             "actions": [
               {
-                "id": "action_refresh_health",
+                "id": "action_refresh_system",
                 "handler": "fetch_system_health",
-                "endpoint": "/admin/system/health",
-                "method": "GET",
-                "response_mapping": {
-                  "cpu_usage": "health.resource.cpu_percent",
-                  "memory_usage": "health.resource.memory_percent",
-                  "memory_available_gb": "health.resource.memory_available_gb",
-                  "disk_usage": "health.resource.disk_percent",
-                  "disk_available_gb": "health.resource.disk_available_gb",
-                  "system_status": "health.status"
-                },
-                "continue_on_error": true
-              },
-              {
-                "id": "action_refresh_alerts",
-                "handler": "fetch_system_alerts",
-                "endpoint": "/admin/system/alerts?limit=20",
-                "method": "GET",
-                "response_mapping": {
-                  "system_alerts": "alerts",
-                  "alert_count": "alert_count"
-                },
-                "continue_on_error": true
+                "label": "Refresh System Health",
+                "payload_template": {},
+                "continue_on_error": false,
+                "stop_on_error": true,
+                "retry_count": 1,
+                "retry_delay_ms": 1000
               }
             ]
           }
@@ -69,75 +72,168 @@
     {
       "id": "sys_kpi_row",
       "type": "row",
-      "label": "KPI Metrics Row",
+      "label": "KPI Row",
       "props": {
         "gap": 3,
         "components": [
           {
             "id": "sys_kpi_cpu",
             "type": "keyvalue",
-            "label": "CPU Usage",
+            "label": "CPU",
             "props": {
               "items": [
-                {
-                  "key": "CPU Usage",
-                  "value": "{{state.cpu_usage}}%"
-                },
-                {
-                  "key": "Status",
-                  "value": "{{state.system_status}}"
-                }
+                { "key": "Usage", "value": "{{state.cpu_usage}}%" },
+                { "key": "Status", "value": "{{state.system_status}}" }
               ]
             }
           },
           {
             "id": "sys_kpi_memory",
             "type": "keyvalue",
-            "label": "Memory Usage",
+            "label": "Memory",
             "props": {
               "items": [
-                {
-                  "key": "Usage",
-                  "value": "{{state.memory_usage}}%"
-                },
-                {
-                  "key": "Available",
-                  "value": "{{state.memory_available_gb}}GB"
-                }
+                { "key": "Usage", "value": "{{state.memory_usage}}%" },
+                { "key": "Available", "value": "{{state.memory_available_gb}}GB" }
               ]
             }
           },
           {
             "id": "sys_kpi_disk",
             "type": "keyvalue",
-            "label": "Disk Usage",
+            "label": "Disk",
             "props": {
               "items": [
-                {
-                  "key": "Usage",
-                  "value": "{{state.disk_usage}}%"
-                },
-                {
-                  "key": "Available",
-                  "value": "{{state.disk_available_gb}}GB"
-                }
+                { "key": "Usage", "value": "{{state.disk_usage}}%" },
+                { "key": "Available", "value": "{{state.disk_available_gb}}GB" }
               ]
             }
           },
           {
-            "id": "sys_kpi_alerts",
+            "id": "sys_kpi_ops",
             "type": "keyvalue",
-            "label": "Alerts",
+            "label": "OPS",
             "props": {
               "items": [
-                {
-                  "key": "Total Alerts",
-                  "value": "{{state.alert_count}}"
-                }
+                { "key": "Queries (24h)", "value": "{{state.today_query_count}}" },
+                { "key": "Error Rate", "value": "{{state.today_error_rate}}%" }
               ]
             }
           }
         ]
+      }
+    },
+    {
+      "id": "sys_rates_row",
+      "type": "row",
+      "label": "Success/Failure/Latency",
+      "props": {
+        "gap": 3,
+        "components": [
+          {
+            "id": "sys_kpi_success",
+            "type": "keyvalue",
+            "label": "Success Rate",
+            "props": {
+              "items": [
+                { "key": "Success Rate", "value": "{{state.success_rate}}%" },
+                { "key": "Failure Rate", "value": "{{state.failure_rate}}%" }
+              ]
+            }
+          },
+          {
+            "id": "sys_kpi_latency",
+            "type": "keyvalue",
+            "label": "Latency",
+            "props": {
+              "items": [
+                { "key": "p50 Latency", "value": "{{state.latency_p50}}ms" },
+                { "key": "p95 Latency", "value": "{{state.latency_p95}}ms" }
+              ]
+            }
+          },
+          {
+            "id": "sys_kpi_nodata",
+            "type": "keyvalue",
+            "label": "No-data",
+            "props": {
+              "items": [
+                { "key": "No-data Ratio", "value": "{{state.no_data_ratio}}%" },
+                { "key": "Alerts", "value": "{{state.alert_count}}" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "sys_regression_chart",
+      "type": "chart",
+      "label": "Regression Trend (7d)",
+      "props": {
+        "chart_type": "bar",
+        "data": "{{state.regression_trend}}",
+        "x_key": "date",
+        "series": [
+          { "name": "PASS", "data_key": "PASS", "color": "#22c55e" },
+          { "name": "WARN", "data_key": "WARN", "color": "#f59e0b" },
+          { "name": "FAIL", "data_key": "FAIL", "color": "#ef4444" }
+        ],
+        "y_min": 0
+      }
+    },
+    {
+      "id": "sys_regression_kpi_row",
+      "type": "row",
+      "label": "Regression Totals",
+      "props": {
+        "gap": 3,
+        "components": [
+          {
+            "id": "sys_reg_pass",
+            "type": "keyvalue",
+            "label": "PASS",
+            "props": {
+              "items": [
+                { "key": "PASS", "value": "{{state.regression_totals.PASS}}" }
+              ]
+            }
+          },
+          {
+            "id": "sys_reg_warn",
+            "type": "keyvalue",
+            "label": "WARN",
+            "props": {
+              "items": [
+                { "key": "WARN", "value": "{{state.regression_totals.WARN}}" }
+              ]
+            }
+          },
+          {
+            "id": "sys_reg_fail",
+            "type": "keyvalue",
+            "label": "FAIL",
+            "props": {
+              "items": [
+                { "key": "FAIL", "value": "{{state.regression_totals.FAIL}}" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "sys_top_causes_table",
+      "type": "table",
+      "label": "RCA Top Causes",
+      "props": {
+        "rows": "{{state.top_causes}}",
+        "columns": [
+          { "field": "reason", "header": "Failure Reason", "sortable": true },
+          { "field": "count", "header": "Count", "sortable": true }
+        ],
+        "sortable": true,
+        "page_size": 5
       }
     },
     {
@@ -147,70 +243,20 @@
       "props": {
         "rows": "{{state.system_alerts}}",
         "columns": [
-          {
-            "field": "timestamp",
-            "header": "Time",
-            "sortable": true
-          },
-          {
-            "field": "severity",
-            "header": "Severity"
-          },
-          {
-            "field": "message",
-            "header": "Message"
-          },
-          {
-            "field": "type",
-            "header": "Type"
-          }
+          { "field": "timestamp", "header": "Time", "sortable": true },
+          { "field": "severity", "header": "Severity" },
+          { "field": "message", "header": "Message" },
+          { "field": "source", "header": "Source" },
+          { "field": "acknowledged", "header": "Ack" }
         ],
         "sortable": true,
         "page_size": 10,
-        "auto_refresh": {
-          "enabled": true,
-          "interval_ms": 15000,
-          "action_index": 0,
-          "max_failures": 3,
-          "backoff_ms": 5000
-        },
         "conditional_styles": [
-          {
-            "field": "severity",
-            "operator": "eq",
-            "value": "critical",
-            "color": "#ffffff",
-            "bg_color": "#ef4444"
-          },
-          {
-            "field": "severity",
-            "operator": "eq",
-            "value": "warning",
-            "color": "#1f2937",
-            "bg_color": "#f59e0b"
-          },
-          {
-            "field": "severity",
-            "operator": "eq",
-            "value": "info",
-            "color": "#1f2937",
-            "bg_color": "#3b82f6"
-          }
+          { "field": "severity", "operator": "eq", "value": "critical", "color": "#ffffff", "bg_color": "#ef4444" },
+          { "field": "severity", "operator": "eq", "value": "warning", "color": "#1f2937", "bg_color": "#f59e0b" },
+          { "field": "severity", "operator": "eq", "value": "info", "color": "#1f2937", "bg_color": "#3b82f6" }
         ]
-      },
-      "actions": [
-        {
-          "id": "action_auto_refresh_alerts",
-          "handler": "fetch_system_alerts",
-          "endpoint": "/admin/system/alerts?limit=20",
-          "method": "GET",
-          "response_mapping": {
-            "system_alerts": "alerts",
-            "alert_count": "alert_count"
-          },
-          "continue_on_error": true
-        }
-      ]
+      }
     }
   ],
   "state": {
@@ -222,7 +268,18 @@
       "disk_available_gb": 0,
       "system_status": "unknown",
       "system_alerts": [],
-      "alert_count": 0
+      "alert_count": 0,
+      "today_query_count": 0,
+      "today_error_count": 0,
+      "today_error_rate": 0,
+      "success_rate": 0,
+      "failure_rate": 0,
+      "latency_p50": null,
+      "latency_p95": null,
+      "regression_trend": [],
+      "regression_totals": { "PASS": 0, "WARN": 0, "FAIL": 0 },
+      "top_causes": [],
+      "no_data_ratio": 0
     },
     "schema": {
       "cpu_usage": { "type": "number" },
@@ -232,7 +289,18 @@
       "disk_available_gb": { "type": "number" },
       "system_status": { "type": "string" },
       "system_alerts": { "type": "array" },
-      "alert_count": { "type": "number" }
+      "alert_count": { "type": "number" },
+      "today_query_count": { "type": "number" },
+      "today_error_count": { "type": "number" },
+      "today_error_rate": { "type": "number" },
+      "success_rate": { "type": "number" },
+      "failure_rate": { "type": "number" },
+      "latency_p50": { "type": "number" },
+      "latency_p95": { "type": "number" },
+      "regression_trend": { "type": "array" },
+      "regression_totals": { "type": "object" },
+      "top_causes": { "type": "array" },
+      "no_data_ratio": { "type": "number" }
     }
   },
   "actions": [
@@ -240,36 +308,17 @@
       "id": "fetch_system_health",
       "label": "Fetch System Health",
       "handler": "fetch_system_health",
-      "endpoint": "/admin/system/health",
-      "method": "GET",
-      "response_mapping": {
-        "cpu_usage": "health.resource.cpu_percent",
-        "memory_usage": "health.resource.memory_percent",
-        "memory_available_gb": "health.resource.memory_available_gb",
-        "disk_usage": "health.resource.disk_percent",
-        "disk_available_gb": "health.resource.disk_available_gb",
-        "system_status": "health.status"
-      }
-    },
-    {
-      "id": "fetch_system_alerts",
-      "label": "Fetch System Alerts",
-      "handler": "fetch_system_alerts",
-      "endpoint": "/admin/system/alerts?limit=20",
-      "method": "GET",
-      "response_mapping": {
-        "system_alerts": "alerts",
-        "alert_count": "alert_count"
-      }
+      "payload_template": {}
     }
   ],
+  "bindings": null,
   "metadata": {
-    "author": "System Administrator",
-    "created_at": "2026-02-07",
-    "notes": "Real-time system monitoring dashboard using /admin/system/* API endpoints",
+    "author": "System",
+    "created_at": "2026-02-08",
+    "notes": "System monitoring dashboard using built-in handler fetch_system_health. Loads CPU/memory/disk from psutil, OPS stats from observability_service, and regression analysis data.",
     "tags": {
-      "category": "monitoring",
-      "type": "dashboard",
+      "category": "system",
+      "type": "monitoring",
       "auto_refresh": "true"
     }
   }

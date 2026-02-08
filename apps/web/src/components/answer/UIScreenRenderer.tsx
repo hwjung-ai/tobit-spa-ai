@@ -760,6 +760,21 @@ export default function UIScreenRenderer({
     const timers: number[] = [];
     let disposed = false;
 
+    // Execute all auto-refresh actions immediately on mount
+    configs.forEach((config) => {
+      void (async () => {
+        if (disposed) return;
+        try {
+          await executeActionWithPolicy(config.action, {
+            silent: true,
+            source: "auto_refresh",
+          });
+        } catch {
+          // ignore initial load errors
+        }
+      })();
+    });
+
     configs.forEach((config) => {
       const timer = window.setInterval(async () => {
         if (disposed) return;
