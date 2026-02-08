@@ -2,7 +2,7 @@
 
 **최종 정리**: 2026-02-08
 **전체 완성도**: 94%
-**활성 문서**: 11개 (docs/) + 3개 (root)
+**활성 문서**: 15개 (docs/) + 3개 (root)
 **아카이브**: docs/history/ (완료된 Phase 및 설계 문서)
 
 ---
@@ -25,6 +25,12 @@
 1. **기능 명세서**: `FEATURES.md`
 2. **테스트 표준**: `TESTIDS.md`, TESTING_STRUCTURE.md
 
+### 사용자 가이드
+1. **OPS 사용자 가이드**: `OPS_USER_GUIDE.md`
+2. **CEP 사용자 가이드**: `CEP_USER_GUIDE.md`
+3. **API 사용자 가이드**: `API_USER_GUIDE.md`
+4. **Screen Editor 사용자 가이드**: `SCREEN_EDITOR_USER_GUIDE.md`
+
 ---
 
 ## 문서 체계
@@ -36,7 +42,7 @@ tobit-spa-ai/
 │   ├── README.md                    # 프로젝트 개요, 빠른 시작
 │   ├── AGENTS.md                    # AI 에이전트 필독 규칙
 │
-├── docs/ (11개)
+├── docs/ (15개)
 │   ├── INDEX.md                     # 문서 인덱스 (이 파일)
 │   ├── DEV_ENV.md                   # 개발 환경 설정
 │   │
@@ -47,6 +53,12 @@ tobit-spa-ai/
 │   │   ├── BLUEPRINT_CEP_ENGINE.md            # CEP 엔진
 │   │   ├── BLUEPRINT_API_ENGINE.md            # API Engine
 │   │   └── BLUEPRINT_SCREEN_EDITOR.md         # Screen Editor
+│   │
+│   ├── 사용자 가이드 (4개)
+│   │   ├── OPS_USER_GUIDE.md                 # OPS 운영/학습 사용자 가이드
+│   │   ├── CEP_USER_GUIDE.md                 # CEP 규칙/이벤트 운영 가이드
+│   │   ├── API_USER_GUIDE.md                 # API Manager 사용자 가이드
+│   │   └── SCREEN_EDITOR_USER_GUIDE.md       # Screen Editor 사용자 가이드
 │   │
 │   ├── 기능/운영 (2개)
 │   │   ├── FEATURES.md                    # 기능 명세서
@@ -118,5 +130,5 @@ tobit-spa-ai/
 ---
 
 **마지막 정리**: 2026-02-08
-**활성 문서**: 11개 (docs/) + 3개 (root)
+**활성 문서**: 15개 (docs/) + 3개 (root)
 **전체 완성도**: 94% (상용 준비)
