@@ -28,6 +28,16 @@ const TEXT_PROPS: JsonSchema = {
     content: { type: "string" },
     variant: { type: "string" },
     color: { type: "string" },
+    fontSize: {
+      type: "string",
+      title: "Font Size",
+      description: "Text size (xs, sm, base, lg, xl, 2xl, 3xl, 4xl)"
+    },
+    fontWeight: {
+      type: "string",
+      title: "Font Weight",
+      description: "Font weight (normal, medium, semibold, bold)"
+    },
   },
 };
 
@@ -37,6 +47,11 @@ const BUTTON_PROPS: JsonSchema = {
     label: { type: "string" },
     variant: { type: "string" },
     disabled: { type: "boolean" },
+    fontSize: {
+      type: "string",
+      title: "Font Size",
+      description: "Button text size (xs, sm, base, lg)"
+    },
   },
 };
 
@@ -134,6 +149,11 @@ const KEYVALUE_PROPS: JsonSchema = {
   type: "object",
   properties: {
     items: { type: "array" },
+    fontSize: {
+      type: "string",
+      title: "Font Size",
+      description: "Text size (xs, sm, base, lg, xl)"
+    },
   },
 };
 

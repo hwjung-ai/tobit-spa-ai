@@ -2,6 +2,26 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+
+// Font size mapping from prop values to Tailwind classes
+const FONT_SIZE_MAP: Record<string, string> = {
+  xs: "text-xs",
+  sm: "text-sm",
+  base: "text-base",
+  lg: "text-lg",
+  xl: "text-xl",
+  "2xl": "text-2xl",
+  "3xl": "text-3xl",
+  "4xl": "text-4xl",
+};
+
+// Font weight mapping from prop values to Tailwind classes
+const FONT_WEIGHT_MAP: Record<string, string> = {
+  normal: "font-normal",
+  medium: "font-medium",
+  semibold: "font-semibold",
+  bold: "font-bold",
+};
 import {
   Area,
   AreaChart,
@@ -926,8 +946,10 @@ export default function UIScreenRenderer({
 
     if (comp.type === "text") {
       const content = (props.content as string) || String(boundValue || comp.label || "");
+      const fontSize = FONT_SIZE_MAP[(props.fontSize as string) || "sm"] || "text-sm";
+      const fontWeight = FONT_WEIGHT_MAP[(props.fontWeight as string) || "normal"] || "font-normal";
       return (
-        <div key={comp.id} className="text-sm text-slate-100" data-testid={`component-text-${comp.id}`}>
+        <div key={comp.id} className={`${fontSize} ${fontWeight} text-slate-100`} data-testid={`component-text-${comp.id}`}>
           {content}
         </div>
       );

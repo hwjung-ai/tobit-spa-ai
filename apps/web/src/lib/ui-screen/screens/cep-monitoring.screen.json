@@ -23,7 +23,9 @@
             "label": "Title",
             "props": {
               "content": "CEP Monitoring Dashboard",
-              "variant": "heading"
+              "variant": "heading",
+              "fontSize": "lg",
+              "fontWeight": "semibold"
             }
           },
           {
