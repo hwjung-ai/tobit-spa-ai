@@ -26,10 +26,10 @@
 2. **테스트 표준**: `TESTIDS.md`, TESTING_STRUCTURE.md
 
 ### 사용자 가이드
-1. **OPS 사용자 가이드**: `OPS_USER_GUIDE.md`
-2. **CEP 사용자 가이드**: `CEP_USER_GUIDE.md`
-3. **API 사용자 가이드**: `API_USER_GUIDE.md`
-4. **Screen Editor 사용자 가이드**: `SCREEN_EDITOR_USER_GUIDE.md`
+1. **OPS 사용자 가이드**: `USER_GUIDE_OPS.md`
+2. **CEP 사용자 가이드**: `USER_GUIDE_CEP.md`
+3. **API 사용자 가이드**: `USER_GUIDE_API.md`
+4. **Screen Editor 사용자 가이드**: `USER_GUIDE_SCREEN_EDITOR.md`
 
 ---
 
@@ -55,10 +55,10 @@ tobit-spa-ai/
 │   │   └── BLUEPRINT_SCREEN_EDITOR.md         # Screen Editor
 │   │
 │   ├── 사용자 가이드 (4개)
-│   │   ├── OPS_USER_GUIDE.md                 # OPS 운영/학습 사용자 가이드
-│   │   ├── CEP_USER_GUIDE.md                 # CEP 규칙/이벤트 운영 가이드
-│   │   ├── API_USER_GUIDE.md                 # API Manager 사용자 가이드
-│   │   └── SCREEN_EDITOR_USER_GUIDE.md       # Screen Editor 사용자 가이드
+│   │   ├── USER_GUIDE_OPS.md                 # OPS 운영/학습 사용자 가이드
+│   │   ├── USER_GUIDE_CEP.md                 # CEP 규칙/이벤트 운영 가이드
+│   │   ├── USER_GUIDE_API.md                 # API Manager 사용자 가이드
+│   │   └── USER_GUIDE_SCREEN_EDITOR.md       # Screen Editor 사용자 가이드
 │   │
 │   ├── 기능/운영 (2개)
 │   │   ├── FEATURES.md                    # 기능 명세서
