@@ -107,13 +107,16 @@ def execute_script_api(
             logs=logs,
         )
     finally:
-        record_exec_log(
-            session=session,
-            api_id=api_id,
-            status=status,
-            duration_ms=duration_ms,
-            row_count=0,
-            params=params or {},
-            executed_by=executed_by,
-            error_message=error_message,
-        )
+        try:
+            record_exec_log(
+                session=session,
+                api_id=api_id,
+                status=status,
+                duration_ms=duration_ms,
+                row_count=0,
+                params=params or {},
+                executed_by=executed_by,
+                error_message=error_message,
+            )
+        except Exception:
+            session.rollback()

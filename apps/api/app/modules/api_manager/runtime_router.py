@@ -124,7 +124,7 @@ async def handle_runtime_request(
                 "references": workflow_result.references,
             }
         )
-    if api.mode == "script":
+    if api.mode in {"script", "python"}:
         script_result = execute_script_api(
             session=session,
             api_id=str(api.id),

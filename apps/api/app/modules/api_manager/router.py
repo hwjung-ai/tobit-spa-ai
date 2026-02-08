@@ -220,6 +220,82 @@ async def list_discovered_endpoints(request: Request):
         raise HTTPException(500, str(e))
 
 
+@router.post("/system/endpoints/register", response_model=ResponseEnvelope)
+async def register_discovered_endpoints(
+    request: Request,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Discover FastAPI endpoints and upsert them as system APIs."""
+    try:
+        discovery_response = await list_discovered_endpoints(request)
+        discovered = (
+            (discovery_response.data or {}).get("endpoints", [])
+            if hasattr(discovery_response, "data")
+            else []
+        )
+        created = 0
+        updated = 0
+        skipped = 0
+        for endpoint in discovered:
+            path = endpoint.get("path")
+            method = str(endpoint.get("method") or "").upper()
+            if not path or not method:
+                skipped += 1
+                continue
+            existing = session.exec(
+                select(ApiDefinition)
+                .where(ApiDefinition.path == path)
+                .where(ApiDefinition.method == method)
+                .where(ApiDefinition.deleted_at.is_(None))
+                .limit(1)
+            ).first()
+            if existing:
+                existing.scope = ApiScope.system
+                existing.name = existing.name or endpoint.get("operationId") or f"{method} {path}"
+                existing.description = existing.description or endpoint.get("summary")
+                existing.tags = endpoint.get("tags") or existing.tags or []
+                existing.updated_at = datetime.utcnow()
+                session.add(existing)
+                updated += 1
+                continue
+            api = ApiDefinition(
+                scope=ApiScope.system,
+                name=endpoint.get("operationId") or endpoint.get("summary") or f"{method} {path}",
+                method=method,
+                path=path,
+                description=endpoint.get("summary") or endpoint.get("description"),
+                tags=endpoint.get("tags") or [],
+                mode=ApiMode.http,
+                logic='{"method":"GET","url":"http://127.0.0.1:8000/health"}',
+                is_enabled=True,
+            )
+            session.add(api)
+            session.flush()
+            _record_api_version(
+                session,
+                api,
+                change_type="create",
+                created_by=getattr(current_user, "id", None),
+                change_summary="Auto-registered from OpenAPI discovery",
+            )
+            created += 1
+        session.commit()
+        return ResponseEnvelope.success(
+            data={
+                "discovered": len(discovered),
+                "created": created,
+                "updated": updated,
+                "skipped": skipped,
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Register discovered endpoints failed: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
 class SaveApiRequest(BaseModel):
     """Request to save/create API from frontend"""
 
@@ -818,6 +894,52 @@ async def run_tests(
                     "duration_ms": result.duration_ms,
                     "row_count": result.row_count,
                 })
+            elif mode in {"script", "python"}:
+                result = execute_script_api(
+                    session=session,
+                    api_id=DRY_RUN_API_ID,
+                    logic_body=api.logic,
+                    params=test_params or None,
+                    input_payload=None,
+                    executed_by="test-runner",
+                    runtime_policy=getattr(api, "runtime_policy", None),
+                )
+                test_results.append({
+                    "test_id": "execution",
+                    "status": "pass",
+                    "error": "",
+                    "duration_ms": result.duration_ms,
+                    "output_keys": sorted((result.output or {}).keys()),
+                })
+            elif mode == "workflow":
+                import json as _json
+
+                class _WfAdapter:
+                    def __init__(self, ad: ApiDefinition):
+                        self.id = ad.id
+                        self.api_id = ad.id
+                        self.logic_spec = {}
+                        self.logic = ad.logic
+                        try:
+                            self.logic_spec = _json.loads(ad.logic or "{}")
+                        except (ValueError, TypeError):
+                            pass
+
+                result = execute_workflow_api(
+                    session=session,
+                    workflow_api=_WfAdapter(api),
+                    params=test_params or {},
+                    input_payload=None,
+                    executed_by="test-runner",
+                    limit=10,
+                )
+                test_results.append({
+                    "test_id": "execution",
+                    "status": "pass",
+                    "error": "",
+                    "duration_ms": sum(step.duration_ms for step in result.steps),
+                    "steps": len(result.steps),
+                })
             else:
                 test_results.append({
                     "test_id": "execution",
@@ -859,23 +981,32 @@ async def get_logs(
     limit: int = Query(50, ge=1, le=500),
     session: Session = Depends(get_session),
 ):
-    """Get API execution history from tb_api_exec_log table"""
+    """Get API execution history from available execution log table(s)."""
     try:
         logs = list_exec_logs(session, api_id, limit)
-        log_list = [
-            {
-                "exec_id": str(log.exec_id),
-                "api_id": str(log.api_id),
-                "executed_at": log.executed_at.isoformat() if log.executed_at else None,
-                "executed_by": log.executed_by,
-                "status": log.status,
-                "duration_ms": log.duration_ms,
-                "row_count": log.row_count,
-                "request_params": log.request_params,
-                "error_message": log.error_message,
-            }
-            for log in logs
-        ]
+        log_list = []
+        for log in logs:
+            exec_id = getattr(log, "exec_id", None) or getattr(log, "id", None)
+            executed_at = getattr(log, "executed_at", None) or getattr(
+                log, "execution_time", None
+            )
+            status = getattr(log, "status", None) or getattr(log, "response_status", None)
+            row_count = getattr(log, "row_count", None)
+            if row_count is None:
+                row_count = getattr(log, "rows_affected", 0)
+            log_list.append(
+                {
+                    "exec_id": str(exec_id) if exec_id else None,
+                    "api_id": str(log.api_id),
+                    "executed_at": executed_at.isoformat() if executed_at else None,
+                    "executed_by": log.executed_by,
+                    "status": status,
+                    "duration_ms": log.duration_ms,
+                    "row_count": row_count,
+                    "request_params": log.request_params,
+                    "error_message": log.error_message,
+                }
+            )
         return ResponseEnvelope.success(data={"api_id": api_id, "logs": log_list})
     except Exception as e:
         logger.error(f"Get logs failed: {str(e)}")
@@ -963,4 +1094,3 @@ async def dry_run(request: dict, session: Session = Depends(get_session)):
     except Exception as e:
         logger.error(f"Dry-run failed: {str(e)}")
         raise HTTPException(500, str(e))
-

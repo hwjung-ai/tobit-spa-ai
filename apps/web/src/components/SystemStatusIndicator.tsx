@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Server, Database, Network } from "lucide-react";
+import { Activity, Server, Database, Network } from "lucide-react";
 import { authenticatedFetch } from "@/lib/apiClient/index";
 
 interface HealthEntry {
@@ -10,6 +10,7 @@ interface HealthEntry {
 }
 
 const DEFAULT_HEALTH: Record<string, HealthEntry> = {
+  api: { status: "checking", detail: "" },
   service: { status: "ok", detail: "" },
   database: { status: "ok", detail: "" },
   network: { status: "ok", detail: "" },
@@ -18,7 +19,31 @@ const DEFAULT_HEALTH: Record<string, HealthEntry> = {
 export default function SystemStatusIndicator() {
   const [health, setHealth] = useState<Record<string, HealthEntry>>(DEFAULT_HEALTH);
 
+  // Lightweight backend connectivity check via /health
+  const checkApi = useCallback(async () => {
+    try {
+      const res = await fetch("/health", { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const json = await res.json();
+        const up = json?.data?.status === "up";
+        return { status: up ? "ok" : "error", detail: up ? "Backend API 정상" : "Backend 응답 비정상" };
+      }
+      return { status: "error", detail: `HTTP ${res.status}` };
+    } catch {
+      return { status: "error", detail: "Backend 연결 불가" };
+    }
+  }, []);
+
+  // Full health check via /ops/summary/stats
   const fetchHealth = useCallback(async () => {
+    const apiResult = await checkApi();
+
+    let serviceHealth: Record<string, HealthEntry> = {
+      service: { status: "ok", detail: "" },
+      database: { status: "ok", detail: "" },
+      network: { status: "ok", detail: "" },
+    };
+
     try {
       const response = await authenticatedFetch<{
         data?: { health?: Record<string, HealthEntry | string> };
@@ -26,7 +51,6 @@ export default function SystemStatusIndicator() {
       const data = (response as { data?: { health?: Record<string, HealthEntry | string> } })
         ?.data;
       if (data?.health) {
-        // Normalise: accept both old "ok"/"error" strings and new {status, detail} objects
         const normalised: Record<string, HealthEntry> = {};
         for (const [k, v] of Object.entries(data.health)) {
           if (typeof v === "string") {
@@ -35,12 +59,17 @@ export default function SystemStatusIndicator() {
             normalised[k] = v;
           }
         }
-        setHealth(normalised);
+        serviceHealth = { ...serviceHealth, ...normalised };
       }
     } catch {
-      // Silently ignore — status stays at last known state
+      // If /ops/summary/stats fails but /health succeeded, keep service entries at defaults
     }
-  }, []);
+
+    setHealth({
+      api: apiResult,
+      ...serviceHealth,
+    });
+  }, [checkApi]);
 
   useEffect(() => {
     fetchHealth();
@@ -49,9 +78,10 @@ export default function SystemStatusIndicator() {
   }, [fetchHealth]);
 
   const color = (status: string) =>
-    status === "ok" ? "text-green-400" : "text-rose-400";
+    status === "ok" ? "text-green-400" : status === "checking" ? "text-slate-500" : "text-rose-400";
 
   const items: { icon: typeof Server; key: string; label: string }[] = [
+    { icon: Activity, key: "api", label: "API" },
     { icon: Server, key: "service", label: "서비스" },
     { icon: Database, key: "database", label: "DB" },
     { icon: Network, key: "network", label: "네트워크" },
@@ -61,7 +91,7 @@ export default function SystemStatusIndicator() {
     <div className="flex items-center gap-2">
       {items.map(({ icon: Icon, key, label }) => {
         const entry = health[key] ?? { status: "ok", detail: "" };
-        const statusText = entry.status === "ok" ? "정상" : "장애";
+        const statusText = entry.status === "ok" ? "정상" : entry.status === "checking" ? "확인중" : "장애";
         const tooltipLines = [
           `${label}: ${statusText}`,
           ...(entry.detail ? [entry.detail] : []),

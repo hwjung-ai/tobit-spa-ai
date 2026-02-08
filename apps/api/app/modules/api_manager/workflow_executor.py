@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import json
 import re
+import uuid
 from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Dict
 
 from fastapi import HTTPException
+from models.api_definition import ApiDefinition
 from sqlmodel import Session
 
 from .crud import record_exec_log, record_exec_step
@@ -34,7 +37,7 @@ class _WorkflowStepRecord:
 
 def execute_workflow_api(
     session: Session,
-    workflow_api: TbApiDef,
+    workflow_api: Any,
     params: Dict[str, Any] | None,
     input_payload: Any | None,
     executed_by: str,
@@ -44,7 +47,7 @@ def execute_workflow_api(
     workflow_params = dict(params)
     if input_payload is not None:
         workflow_params["input"] = input_payload
-    spec = workflow_api.logic_spec or {}
+    spec = _extract_workflow_spec(workflow_api)
     if not isinstance(spec, dict):
         raise HTTPException(
             status_code=400, detail="Workflow spec must be a dictionary"
@@ -90,7 +93,7 @@ def execute_workflow_api(
                 raise HTTPException(
                     status_code=400, detail=f"Node '{node_id}' missing api_id"
                 )
-            node_api = session.get(TbApiDef, node_api_id)
+            node_api = _get_node_api(session, str(node_api_id))
             if not node_api:
                 raise HTTPException(
                     status_code=404, detail=f"Node API '{node_api_id}' not found"
@@ -111,10 +114,12 @@ def execute_workflow_api(
             node_start = perf_counter()
             try:
                 if node_type == "sql":
+                    node_api_id_value = _node_api_id(node_api)
+                    node_logic = _node_logic(node_api)
                     sql_result = execute_sql_api(
                         session=session,
-                        api_id=str(node_api.api_id),
-                        logic_body=node_api.logic_body,
+                        api_id=node_api_id_value,
+                        logic_body=node_logic,
                         params=node_params,
                         limit=node_limit,
                         executed_by=executed_by,
@@ -128,19 +133,21 @@ def execute_workflow_api(
                     step_refs = {
                         "node_id": node_id,
                         "node_type": "sql",
-                        "sql_template": node_api.logic_body,
+                        "sql_template": node_logic,
                         "params": node_params,
                         "limit": node_limit,
                     }
                 else:
+                    node_api_id_value = _node_api_id(node_api)
+                    node_logic = _node_logic(node_api)
                     script_result = execute_script_api(
                         session=session,
-                        api_id=str(node_api.api_id),
-                        logic_body=node_api.logic_body,
+                        api_id=node_api_id_value,
+                        logic_body=node_logic,
                         params=node_params,
                         input_payload=node_input,
                         executed_by=executed_by,
-                        runtime_policy=node_api.runtime_policy,
+                        runtime_policy=_node_runtime_policy(node_api),
                     )
                     step_output = script_result.output
                     step_rows = []
@@ -211,9 +218,10 @@ def execute_workflow_api(
     finally:
         duration_ms = int((perf_counter() - start) * 1000)
         exec_row_count = step_records[-1].row_count if step_records else 0
+        workflow_api_id = _node_api_id(workflow_api)
         log = record_exec_log(
             session=session,
-            api_id=str(workflow_api.api_id),
+            api_id=workflow_api_id,
             status=status,
             duration_ms=duration_ms,
             row_count=exec_row_count,
@@ -221,10 +229,11 @@ def execute_workflow_api(
             executed_by=executed_by,
             error_message=error_message,
         )
+        log_exec_id = _log_exec_id(log)
         for step in step_records:
             record_exec_step(
                 session=session,
-                exec_id=str(log.exec_id),
+                exec_id=log_exec_id,
                 node_id=step.node_id,
                 node_type=step.node_type,
                 status=step.status,
@@ -233,6 +242,58 @@ def execute_workflow_api(
                 references=step.references,
                 error_message=step.error_message,
             )
+
+
+def _extract_workflow_spec(workflow_api: Any) -> dict[str, Any]:
+    logic_spec = getattr(workflow_api, "logic_spec", None)
+    if isinstance(logic_spec, dict):
+        return logic_spec
+    logic = getattr(workflow_api, "logic", None) or getattr(workflow_api, "logic_body", None)
+    if isinstance(logic, str):
+        try:
+            parsed = json.loads(logic)
+            if isinstance(parsed, dict):
+                return parsed
+        except (TypeError, ValueError):
+            pass
+    return {}
+
+
+def _get_node_api(session: Session, node_api_id: str) -> ApiDefinition | TbApiDef | None:
+    try:
+        api_uuid = uuid.UUID(node_api_id)
+        api = session.get(ApiDefinition, api_uuid)
+        if api:
+            return api
+        legacy = session.get(TbApiDef, api_uuid)
+        if legacy:
+            return legacy
+    except ValueError:
+        pass
+    api = session.get(ApiDefinition, node_api_id)
+    if api:
+        return api
+    return session.get(TbApiDef, node_api_id)
+
+
+def _node_api_id(node_api: Any) -> str:
+    return str(getattr(node_api, "id", None) or getattr(node_api, "api_id"))
+
+
+def _node_logic(node_api: Any) -> str:
+    return getattr(node_api, "logic", None) or getattr(node_api, "logic_body", "")
+
+
+def _node_runtime_policy(node_api: Any) -> dict[str, Any]:
+    value = getattr(node_api, "runtime_policy", None)
+    return value if isinstance(value, dict) else {}
+
+
+def _log_exec_id(log: Any) -> str | None:
+    if not log:
+        return None
+    exec_id = getattr(log, "exec_id", None) or getattr(log, "id", None)
+    return str(exec_id) if exec_id else None
 
 
 def _render_templates(
