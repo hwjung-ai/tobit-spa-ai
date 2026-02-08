@@ -188,14 +188,33 @@ function DocumentViewerContent() {
       removeHighlightClasses();
       return;
     }
-    const timeout = window.setTimeout(() => {
-      highlightSnippet();
-    }, 100);
+
+    // Retry highlighting up to 5 times with exponential backoff
+    // This accounts for slow PDF rendering
+    let retries = 0;
+    const maxRetries = 5;
+    const attemptHighlight = () => {
+      const textLayer = document.querySelector(
+        `.react-pdf__Page[data-page-number="${currentPage}"] .react-pdf__Page__textContent`
+      );
+      if (textLayer) {
+        highlightSnippet();
+        return true;
+      }
+      if (retries < maxRetries) {
+        retries += 1;
+        const delay = Math.min(100 * Math.pow(1.5, retries), 1000);
+        window.setTimeout(attemptHighlight, delay);
+      }
+      return false;
+    };
+
+    const timeout = window.setTimeout(attemptHighlight, 100);
     return () => {
       window.clearTimeout(timeout);
       removeHighlightClasses();
     };
-  }, [chunkInfo, highlightSnippet, highlightVisible, removeHighlightClasses]);
+  }, [chunkInfo, highlightSnippet, highlightVisible, removeHighlightClasses, currentPage]);
 
   useEffect(() => {
     const fetchDocument = async () => {
