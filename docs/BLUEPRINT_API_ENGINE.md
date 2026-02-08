@@ -319,9 +319,9 @@ def main(params, input_payload):
   - 버전 비교
   - 버전 롤백
 
-- ⚠️ **API 생성**
-  - API 생성 기능 미완성
-  - API 타입 선택 UI 미구현
+- ✅ **API 생성**
+  - API 생성/수정 저장 동작 구현
+  - API 타입 선택 UI 구현 (sql/workflow/python/script/http)
 
 - ✅ **시각적 에디터**
   - SQL Builder (SQLQueryBuilder, Visual Query Builder)
