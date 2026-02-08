@@ -1024,7 +1024,7 @@ API Definition → Logic Type 분기 → Executor 실행 → 결과 + 로그 기
 
 ### 2026-02-07: OPS Real Mode + DOCS 뷰어 개선
 
-**OPS 모듈 (Phase 9-10)**:
+**OPS 모듈 업데이트**:
 - ✅ 6개 쿼리 모드 전체 완성
 - ✅ Real mode에서 가짜 데이터 제거 → 명시적 에러 표시
 - ✅ Hist/Graph 모드 실제 데이터 연결 (work_history + Neo4j)

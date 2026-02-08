@@ -1,7 +1,7 @@
 # CEP Engine Blueprint (v2 Final)
 
 > 최종 업데이트: 2026-02-08
-> 상태: **Production Ready** (Phase 1-4 완료, Phase 6 ML 이상 탐지 완료)
+> 상태: **Production Ready** (핵심 기능 운영 중, ML 이상 탐지 포함)
 
 ## 1. 목적
 
@@ -58,11 +58,11 @@ Redis State Manager (분산 상태 저장 + 베이스라인 관리)
 
 ```python
 def evaluate_rule_with_bytewax(rule_id, trigger_type, trigger_spec, payload):
-    # Phase 1 (현재): 기존 executor 로직 사용 + Bytewax에 규칙 등록
+    # 현재 운영: 기존 executor 로직 사용 + Bytewax에 규칙 등록
     matched, refs = evaluate_trigger(trigger_type, trigger_spec, payload)
     return matched, refs
 
-    # Phase 2 (향후): Bytewax 엔진으로 직접 평가
+    # 목표 구조: Bytewax 엔진으로 직접 평가
     # results = engine.process_event(rule_id, event)
 ```
 
@@ -428,16 +428,16 @@ Schema 스캔 및 뷰어 (100% 완료):
 
 ---
 
-## 11. 마이그레이션 로드맵
+## 11. 현재 범위와 향후 확장
 
-| Phase | 상태 | 내용 |
-|-------|------|------|
-| **Phase 1** | 완료 | Notification 시스템 (5채널, 재시도, 템플릿) |
-| **Phase 2** | 완료 | CEP 엔진 강화 (복합 조건, 집계 함수) |
-| **Phase 3** | 완료 | Bytewax 하이브리드 통합 |
-| **Phase 4** | 완료 | Redis 분산 상태 관리 |
-| **Phase 5** | 예정 | 완전 Bytewax 마이그레이션 (기존 executor 제거) |
-| **Phase 6** | ✅ 완료 | ML 기반 이상 탐지 (Z-Score, IQR, EMA), anomaly trigger 타입 |
+| 항목 | 상태 | 내용 |
+|------|------|------|
+| Notification 시스템 | 완료 | 5채널, 재시도, 템플릿 |
+| CEP 엔진 코어 | 완료 | 복합 조건, 집계 함수 |
+| Bytewax 통합 | 운영 중 | 하이브리드 실행 구조 |
+| Redis 분산 상태 | 완료 | 상태 저장/폴백 지원 |
+| ML 이상 탐지 | 완료 | Z-Score, IQR, EMA, anomaly trigger |
+| Bytewax 직접 평가 전환 | 확장 예정 | 기존 executor 의존 경로 축소 |
 
 ## 12. 배포 구성
 
