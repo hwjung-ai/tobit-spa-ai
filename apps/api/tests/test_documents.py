@@ -175,3 +175,14 @@ async def test_document_stream_done_contains_references(
     assert references
     assert references[0]["document_title"] == "report.pdf"
     assert references[0]["chunk_id"] == chunk_id
+
+
+def test_json_default_serializes_numpy_float32():
+    np = pytest.importorskip("numpy")
+    from api.routes.documents import _json_default
+
+    value = np.float32(0.75)
+    serialized = _json_default(value)
+
+    assert isinstance(serialized, float)
+    assert serialized == pytest.approx(0.75)

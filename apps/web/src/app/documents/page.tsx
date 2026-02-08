@@ -445,9 +445,11 @@ export default function DocumentsPage() {
 
     try {
       const token = localStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+      const tenantId = localStorage.getItem("tenant_id");
+      const userId = localStorage.getItem("user_id");
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
       const url = baseUrl
-        ? `${baseUrl}/api/documents/${selectedDocument.id}/query/stream`
+        ? `${baseUrl.replace(/\/+$/, "")}/api/documents/${selectedDocument.id}/query/stream`
         : `/api/documents/${selectedDocument.id}/query/stream`;
       const response = await fetch(url, {
         method: "POST",
@@ -455,6 +457,8 @@ export default function DocumentsPage() {
           Accept: "text/event-stream",
           "Content-Type": "application/json",
           ...(token && { Authorization: `Bearer ${token}` }),
+          ...(tenantId && { "X-Tenant-Id": tenantId }),
+          ...(userId && { "X-User-Id": userId }),
         },
         body: JSON.stringify({ query: queryValue.trim(), top_k: topK }),
         signal: controller.signal,
@@ -462,7 +466,14 @@ export default function DocumentsPage() {
 
       if (!response.ok) {
         const body = await response.text();
-        throw new Error(body || "Document stream failed");
+        let message = body || "Document stream failed";
+        try {
+          const parsed = JSON.parse(body);
+          message = parsed?.detail || parsed?.message || message;
+        } catch {
+          // Keep raw body when parsing fails.
+        }
+        throw new Error(message);
       }
 
       const reader = response.body?.getReader();
@@ -606,8 +617,8 @@ export default function DocumentsPage() {
     formData.append("file", file);
     try {
       const token = localStorage.getItem("access_token");
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-      const url = baseUrl ? `${baseUrl}/api/documents/upload` : "/api/documents/upload";
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      const url = baseUrl ? `${baseUrl.replace(/\/+$/, "")}/api/documents/upload` : "/api/documents/upload";
       const response = await fetch(url, {
         method: "POST",
         body: formData,

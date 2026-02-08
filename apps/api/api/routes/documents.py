@@ -51,6 +51,13 @@ def _truncate_snippet(text: str, limit: int = 200) -> str:
     return normalized[: limit - 1].rstrip() + "…"
 
 
+def _json_default(value):
+    """Serialize scalar-like third-party numeric types (e.g., numpy.float32)."""
+    if hasattr(value, "item"):
+        return value.item()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def upload_document(
     file: UploadFile = File(...),
@@ -248,13 +255,20 @@ async def query_document_stream(
     orchestrator = OpenAIOrchestrator(settings)
     references = []
     for chunk in chunks:
+        raw_score = search_service.score_chunk(chunk, embedding)
+        score = None
+        if raw_score is not None:
+            try:
+                score = float(raw_score)
+            except (TypeError, ValueError):
+                score = None
         references.append(
             {
                 "document_id": document.id,
                 "document_title": document.filename,
                 "chunk_id": chunk.id,
                 "page": chunk.page,
-                "score": search_service.score_chunk(chunk, embedding),
+                "score": score,
                 "snippet": _truncate_snippet(chunk.text),
             }
         )
@@ -267,7 +281,7 @@ async def query_document_stream(
                 if chunk.get("type") == "done":
                     payload["meta"]["references"] = references
                 payload["document_id"] = document.id
-                yield json.dumps(payload)
+                yield json.dumps(payload, default=_json_default)
         except Exception as exc:
             error_payload = {
                 "type": "error",
@@ -275,6 +289,6 @@ async def query_document_stream(
                 "document_id": document.id,
                 "meta": {"document_id": document.id, "chunks": chunk_meta},
             }
-            yield json.dumps(error_payload)
+            yield json.dumps(error_payload, default=_json_default)
 
     return EventSourceResponse(event_generator())
