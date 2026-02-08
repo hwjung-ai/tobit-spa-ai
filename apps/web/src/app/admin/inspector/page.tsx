@@ -42,75 +42,15 @@ import {
   ReferenceEntry,
   UIRenderedBlock,
 } from "../../../lib/apiClient/index";
-
-const PER_PAGE = 20;
-
-const STAGE_ORDER = ["route_plan", "validate", "execute", "compose", "present"];
-const STAGE_LABELS: Record<string, string> = {
-  route_plan: "ROUTE+PLAN",
-  validate: "VALIDATE",
-  execute: "EXECUTE",
-  compose: "COMPOSE",
-  present: "PRESENT",
-};
-
-interface FilterState {
-  q: string;
-  feature: string;
-  status: string;
-  from: string;
-  to: string;
-  assetId: string;
-}
-
-interface TraceDetailResponse {
-  trace: ExecutionTraceDetail;
-  audit_logs?: AuditLog[];
-}
-
-const createPlaceholderTraceDetail = (traceId: string): ExecutionTraceDetail => ({
-  trace_id: traceId,
-  parent_trace_id: null,
-  created_at: new Date().toISOString(),
-  feature: "test",
-  endpoint: "/ops/query",
-  method: "POST",
-  ops_mode: "ci",
-  question: "Test trace",
-  status: "unknown",
-  duration_ms: 0,
-  request_payload: null,
-  route: "orch",
-  applied_assets: {
-    prompt: null,
-    policy: null,
-    mapping: null,
-    queries: [],
-    screens: [],
-  },
-  asset_versions: [],
-  fallbacks: {},
-  plan_raw: null,
-  plan_validated: null,
-  execution_steps: [],
-  references: [],
-  answer: { envelope_meta: null, blocks: [] },
-  ui_render: { rendered_blocks: [], warnings: [] },
-  audit_links: {},
-  flow_spans: [],
-  stage_inputs: [],
-  stage_outputs: [],
-  replan_events: [],
-});
-
-const initialFilters: FilterState = {
-  q: "",
-  feature: "",
-  status: "",
-  from: "",
-  to: "",
-  assetId: "",
-};
+import type { FilterState, TraceDetailResponse } from "../../../lib/inspector/types";
+import {
+  PER_PAGE, STAGE_ORDER, STAGE_LABELS, initialFilters,
+  createPlaceholderTraceDetail,
+} from "../../../lib/inspector/types";
+import {
+  getStatusBadgeClass, formatDuration, formatAppliedAssetSummary,
+  summarizeStepPayload, summarizeBlockPayload, normalizeStageStatus,
+} from "../../../lib/inspector/utils";
 
 function InspectorContent() {
   const router = useRouter();
@@ -459,20 +399,6 @@ function InspectorContent() {
     );
   };
 
-  const formatAppliedAssetSummary = (trace: TraceSummaryRow) => {
-    if (!trace.applied_asset_versions.length) {
-      return "Assets: none";
-    }
-    const preview = trace.applied_asset_versions.slice(0, 3).join(" / ");
-    const extra = trace.applied_asset_versions.length - 3;
-    return extra > 0 ? `${preview} / +${extra} more` : preview;
-  };
-
-  const getStatusBadgeClass = (status: string) =>
-    status === "success" ? "bg-emerald-900/60 text-emerald-200" : "bg-rose-900/60 text-rose-200";
-
-  const formatDuration = (ms: number) => `${ms}ms`;
-
   const highlightFallbacks = (fallbacks: Record<string, boolean> | null | undefined) => {
     if (!fallbacks) return null;
     return (
@@ -499,39 +425,6 @@ function InspectorContent() {
         <pre className="mt-2 text-[11px] text-slate-200 overflow-x-auto max-h-48">{JSON.stringify(payload, null, 2)}</pre>
       </details>
     );
-  };
-
-  const summarizeStepPayload = (payload: Record<string, unknown> | null) => {
-    if (!payload) {
-      return "";
-    }
-    try {
-      const text = JSON.stringify(payload, null, 2);
-      return text.length > 120 ? `${text.slice(0, 120)}…` : text;
-    } catch {
-      return String(payload);
-    }
-  };
-
-  const summarizeBlockPayload = (block: AnswerBlock) => {
-    const candidate = block.payload_summary ?? block.title ?? block.type;
-    if (typeof candidate === "string") {
-      return candidate.length > 120 ? `${candidate.slice(0, 120)}…` : candidate;
-    }
-    try {
-      const text = JSON.stringify(candidate);
-      return text.length > 120 ? `${text.slice(0, 120)}…` : text;
-    } catch {
-      return String(candidate);
-    }
-  };
-
-  const normalizeStageStatus = (stageOutput?: StageOutput | null): StageStatus => {
-    if (!stageOutput) return "pending";
-    if ((stageOutput.result as Record<string, unknown> | null)?.skipped) return "skipped";
-    const status = stageOutput.diagnostics?.status;
-    if (status === "warning" || status === "error" || status === "ok") return status as StageStatus;
-    return "ok";
   };
 
   const stageSnapshots: StageSnapshot[] = useMemo(() => {

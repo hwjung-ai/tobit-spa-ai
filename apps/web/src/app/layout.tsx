@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavTabs from "../components/NavTabs";
+import MobileBottomNav from "../components/MobileBottomNav";
 import CepEventBell from "../components/CepEventBell";
 import SystemStatusIndicator from "../components/SystemStatusIndicator";
 import Providers from "./providers";
@@ -50,13 +51,16 @@ export default function RootLayout({
                 </div>
               <nav className="flex items-center gap-6">
                 <CepEventBell />
-                <NavTabs />
+                <div className="hidden md:block">
+                  <NavTabs />
+                </div>
                 <HeaderUserMenu />
               </nav>
             </header>
-            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full px-4 py-4 md:px-6">
+            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full px-4 pb-16 pt-4 md:px-6 md:pb-4">
               {children}
             </main>
+            <MobileBottomNav />
           </div>
         </Providers>
       </body>
