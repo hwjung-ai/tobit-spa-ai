@@ -10,7 +10,7 @@
 
 | Category | Success | Total | Accuracy |
 |----------|---------|-------|----------|
-| CI (Relation) | 25      | 25    | 100%     |
+| Config (Relation) | 25      | 25    | 100%     |
 | Graph       | 24      | 24    | 100%     |
 | Metric      | 25      | 25    | 100%     |
 | History     | 25      | 25    | 100%     |
@@ -246,6 +246,22 @@ Asset List 화면에서 Asset을 선택하면:
 **주요 파일**:
 - Asset Override Drawer: [apps/web/src/components/ops/AssetOverrideDrawer.tsx](apps/web/src/components/ops/AssetOverrideDrawer.tsx)
 
+### 3.3 Admin 운영 탭 (현재 기준)
+
+현재 Admin 탭은 다음 순서로 구성된다:
+
+`Assets`, `Tools`, `Catalogs`, `Screens`, `Explorer`, `Settings`, `Inspector`, `Regression`, `Observability`, `Logs`
+
+OPS 운영에서 자주 사용하는 탭:
+
+1. `Assets`: Prompt/Policy/Query/Mapping/Source/Resolver/Screen 자산 관리
+2. `Tools`: 실행 도구 생성, 입력 스키마 정의, 테스트, 발행
+3. `Catalogs`: DB 스키마 스캔/조회(도구의 SQL 정확도 보조)
+4. `Inspector`: trace/stage/tool_calls/references 분석
+5. `Regression`: Golden Query 기반 회귀 실행
+6. `Observability`: 처리량/지연/오류율 관측
+7. `Logs`: query history/execution trace/audit/file logs 확인
+
 ---
 
 ## 4. 실습: 첫 질의 실행과 분석
@@ -267,12 +283,13 @@ Asset List 화면에서 Asset을 선택하면:
 #### 단계
 
 1. **Mode 선택** (하단 Run OPS query 섹션)
-   - 5개 모드 중 **"전체 (all)"** 선택
+   - 6개 모드 중 **"전체 (all)"** 선택
    - 모드별 차이:
-     - **구성 (ci)**: CI 정보만 조회 (ROUTE+PLAN에서 intent=config 결정)
+     - **구성 (config)**: 구성 정보 조회
      - **수치 (metric)**: 메트릭 데이터만 조회 (intent=metric)
      - **이력 (history)**: 이벤트 이력 조회 (intent=history)
      - **연결 (relation)**: 관계 그래프 조회 (intent=graph)
+     - **문서 (document)**: 문서 검색/요약
      - **전체 (all)**: LLM이 자동 판단
 
 2. **질문 입력**
@@ -1099,6 +1116,71 @@ PRESENT Stage에서 AnswerBlocks를 UI 레이아웃으로 변환
 ✅ POLICY: 기본 OPS 정책 (v1, published)
 ✅ SCREEN: default (v1, published) - 기본 제공
 ```
+
+---
+
+### 5.11 Tool Asset 생성/테스트/발행 (현재 운영 핵심)
+
+`Tool`은 EXECUTE 단계에서 실제 조회/호출을 수행하는 실행 단위다.
+
+**경로**: Admin → Tools (`/admin/tools`)
+
+#### Step 1: Tool 생성
+
+1. `+ New Tool` 클릭
+2. 필수 입력:
+   - Name: `device_metric_tool`
+   - Tool Type: `database_query` (또는 `http_api`, `graph_query`, `python_script`)
+   - Description: 검색 키워드 포함 설명(LLM 도구 선택 품질에 직접 영향)
+3. 필요 시 `tool_catalog_ref` 연결
+
+#### Step 2: 입력 스키마/설정 정의
+
+1. `tool_config` JSON 작성
+2. `tool_input_schema` JSON 작성
+3. 문법 오류가 없도록 저장 전 JSON validation 확인
+
+#### Step 3: Tool 테스트
+
+1. 목록에서 Tool 선택
+2. 우측 `ToolTestPanel`에서 테스트 payload 입력
+3. 실행 결과/오류/응답시간 확인
+
+#### Step 4: 발행
+
+1. 테스트 통과 후 `Publish`
+2. 이후 trace에서 해당 Tool 호출 여부 확인
+
+**검증 포인트**:
+- Tool 테스트가 동일 입력에서 안정적으로 성공한다.
+- Inspector의 `tool_calls`에 신규 Tool명이 노출된다.
+
+---
+
+### 5.12 Catalog 점검 (Tool 품질 보정)
+
+도구가 DB 질의를 수행하는 경우 Catalog 최신성은 정확도에 직접 영향을 준다.
+
+**경로**: Admin → Catalogs (`/admin/catalogs`)
+
+#### Step 1: Catalog 선택
+
+1. source_ref가 올바른 Catalog 선택
+2. 상태(`scan_status`) 확인
+
+#### Step 2: 스캔 실행
+
+1. `Scan` 실행
+2. table/column 메타데이터 갱신 확인
+
+#### Step 3: 테이블 사용 가능 여부 점검
+
+1. 필요한 테이블이 catalog에 존재하는지 확인
+2. 비활성 테이블이면 toggle 상태 점검
+
+**검증 포인트**:
+- 도구가 존재하지 않는 테이블/컬럼을 참조하지 않는다.
+- 도구 수정 없이도 catalog 갱신 후 질의 정확도가 개선된다.
 
 ---
 
@@ -2290,5 +2372,8 @@ async def test_question(question: str, mode: str):
 
 ### 관련 문서
 
-- [PIPELINE_AND_ASSETS](PIPELINE_AND_ASSETS.md) - 기술 아키텍처 상세 가이드
+- [BLUEPRINT_OPS_QUERY](BLUEPRINT_OPS_QUERY.md) - OPS 시스템 설계 문서
+- [USER_GUIDE_API](USER_GUIDE_API.md) - API 연동 사용자 가이드
+- [USER_GUIDE_CEP](USER_GUIDE_CEP.md) - CEP 연동 사용자 가이드
+- [USER_GUIDE_SCREEN_EDITOR](USER_GUIDE_SCREEN_EDITOR.md) - Screen 연동 사용자 가이드
 - [INDEX](INDEX.md) - 전체 문서 인덱스
