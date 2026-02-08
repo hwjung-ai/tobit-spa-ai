@@ -280,9 +280,34 @@ DynamicTool `http_api` 타입으로 Asset Registry에 등록:
 
 ---
 
-## 9. 파일 맵
+## 9. Admin 연계 기능
 
-### 9.1 Backend (Routes)
+OPS 운영 흐름은 `/admin`의 여러 탭과 직접 연결된다.
+
+| Admin 탭 | OPS 연계 역할 | 주요 연계 API/자원 |
+|----------|---------------|---------------------|
+| `assets` | OPS가 참조하는 Prompt/Policy/Query/Source/Tool 자산 관리 | `/asset-registry/assets`, `ops/services/ci/*` |
+| `tools` | OPS Orchestrator에서 실행할 도구 등록/수정/검증 | `/asset-registry/tools`, DynamicTool |
+| `catalogs` | OPS 질의 대상 스키마/메타데이터 관리 | `/admin/catalogs`, Catalog Asset |
+| `inspector` | OPS 실행 trace, stage, reference, span 분석 | `/admin/inspector`, execution trace |
+| `regression` | Golden Query 기반 회귀 검증 및 기준선 비교 | `/ops/golden-queries/*`, regression jobs |
+| `screen` | OPS 응답 블록과 연동되는 Screen Asset 편집/배포 | `ui_screen`, `/admin/screens` |
+| `explorer` | OPS 데이터 소스 점검용 읽기 전용 탐색 | `/admin/explorer` |
+| `observability` | OPS KPI/품질/지연 지표 확인 | `/ops/observability/kpis`, summary stats |
+| `logs` | OPS 오류/실행 로그 운영 점검 | `api.log`, `/admin/logs` |
+| `setting` | OPS 포함 전체 운영 정책/토글 설정 | operation settings / admin settings |
+
+### 9.1 연계 원칙
+
+1. 도메인 기능은 OPS 문서에서 정의하고, Admin 탭은 운영/관리 진입점으로 연결한다.
+2. OPS 런타임 계약(Answer Block, Tool Contract, Reference)은 Admin UI 변경과 독립적으로 유지한다.
+3. Admin 탭에서 변경한 자산/설정은 OPS Orchestrator 실행에 즉시 반영되도록 자산 조회 경로를 단일화한다.
+
+---
+
+## 10. 파일 맵
+
+### 10.1 Backend (Routes)
 
 | 파일 | 역할 |
 |------|------|
@@ -290,7 +315,7 @@ DynamicTool `http_api` 타입으로 Asset Registry에 등록:
 | `ops/routes/ci_ask.py` | `/ops/ask` 엔드포인트 (전체 모드) |
 | `ops/routes/ui_actions.py` | `/ops/ui-actions` 엔드포인트 |
 
-### 9.2 Backend (Services)
+### 10.2 Backend (Services)
 
 | 파일 | 역할 |
 |------|------|
@@ -303,7 +328,7 @@ DynamicTool `http_api` 타입으로 Asset Registry에 등록:
 | `ops/services/binding_engine.py` | 서버사이드 바인딩 엔진 |
 | `ops/schemas.py` | OPS Request/Response 스키마 |
 
-### 9.3 Document Search
+### 10.3 Document Search
 
 | 파일 | 역할 |
 |------|------|
@@ -312,14 +337,14 @@ DynamicTool `http_api` 타입으로 Asset Registry에 등록:
 | `tools/init_document_search_tool.py` | Tool Asset 등록 스크립트 |
 | `alembic/versions/0045_*.py` | 검색 인덱스 마이그레이션 |
 
-### 9.4 Frontend
+### 10.4 Frontend
 
 | 파일 | 역할 |
 |------|------|
 | `app/ops/page.tsx` | OPS 메인 페이지 (모드 선택/질의) |
 | `components/ops/OpsSummaryStrip.tsx` | 요약 스트립 |
 
-### 9.5 테스트
+### 10.5 테스트
 
 | 파일 | 역할 |
 |------|------|
@@ -328,7 +353,7 @@ DynamicTool `http_api` 타입으로 Asset Registry에 등록:
 
 ---
 
-## 10. 환경 변수
+## 11. 환경 변수
 
 ```bash
 # OPS Mode
@@ -345,7 +370,7 @@ API_BASE_URL=http://localhost:8000
 
 ---
 
-## 11. 향후 과제
+## 12. 향후 과제
 
 | 항목 | 우선순위 | 설명 |
 |------|----------|------|
