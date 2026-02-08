@@ -53,7 +53,7 @@ API Engine
 | **Asset Registry UI** | 90% | ✅ 가능 | 목록, 필터, 생성/수정 완료 |
 | **API Manager Backend** | 95% | ✅ 가능 | 13개 엔드포인트 완전 구현 |
 | **API Manager UI** | 80% | ✅ 가능 | `/api-manager/page.tsx` 2,996줄 구현됨 |
-| **API Builder UI** | 0% | ❌ 미구현 | 시각적 빌더 미구현 |
+| **API Builder UI** | 50% | ⚠️ 부분 | HTTP Builder 구현, SQL/Python/Workflow 미구현 |
 | **전체** | **95%** | ✅ 가능 | 실행 엔진 완료, 기본 UI 완료 |
 
 ---
@@ -409,41 +409,31 @@ type HttpSpec = {
 
 ---
 
-### 3. API Builder (미구현)
+### 3. API Builder (50% 완료)
 
-#### 3.1 필요한 기능
+#### 3.1 실제 구현 상태
 
-**경로:** `/admin/api-builder` (미구현)
+**HTTP Builder**: ✅ 완료 (HttpFormBuilder, 368 lines)
+- Method 선택 (GET, POST, PUT, DELETE, PATCH)
+- URL 입력
+- Headers 추가/제거
+- Query Parameters 추가/제거
+- Body 입력 (JSON 또는 Form Data)
+- Form ↔ JSON 모드 전환
 
-- ❌ **SQL Builder**
-  - Visual Query Builder
-  - 테이블 선택
-  - 컬럼 선택
-  - WHERE 조건 추가
-  - JOIN 지원
-  - ORDER BY, GROUP BY
-  - LIMIT
+**SQL Builder**: ❌ 미구현
+- Visual Query Builder 미구현
+- 기본 textarea만 제공
 
-- ❌ **HTTP Builder**
-  - Method 선택
-  - URL 입력 (변수 치환)
-  - Headers 추가
-  - Query Parameters 추가
-  - Body 입력 (JSON/Form)
+**Python Builder**: ❌ 미구현
+- Monaco Editor 미통합
+- 기본 textarea만 제공
+- Syntax Highlighting 미지원
 
-- ❌ **Python Builder**
-  - Code Editor (Monaco Editor)
-  - Syntax Highlighting
-  - 함수 템플릿
-  - 라이브러리 임포트 제안
-  - 실행 테스트
+**Workflow Builder**: ❌ 미구현
+- Visual Node Editor 미구현
 
-- ❌ **Workflow Builder**
-  - Visual Node Editor
-  - 노드 추가 (SQL, HTTP, Python)
-  - 노드 연결
-  - 파라미터 매핑
-  - 실행 순서 설정
+**전체 완료도**: 50% (HTTP Builder만 완료)
 
 #### 3.2 추천 라이브러리
 
@@ -843,7 +833,7 @@ pytest tests/test_api_manager_executor.py -v
 | **API Executor** | ⭐⭐⭐⭐⭐ | 완전 구현, 보안 강화 |
 | **Asset Registry UI** | ⭐⭐⭐⭐⭐ | 직관적인 UI, 필터링 완료 |
 | **API Manager UI** | ⭐⭐⭐⭐ | 80% 완료, 목록/상세/실행/버전 완료 |
-| **API Builder UI** | ⭐ | 미구현 (시각적 빌더) |
+| **API Builder UI** | ⭐⭐⭐ | 50% 완료, HTTP Builder 완료, SQL/Python/Workflow 미구현 |
 | **전체** | ⭐⭐⭐⭐ | 85% 완료 |
 
 ---
@@ -1090,7 +1080,7 @@ codepen 보고서 정정: API Manager UI가 "40%"로 평가되었으나, 실제�
 | **Asset Registry UI** | 90% | ✅ 가능 | 목록, 필터, 생성/수정 완료 |
 | **API Manager Backend** | 95% | ✅ 가능 | `/api-manager/*` 13개 엔드포인트 완전 구현 |
 | **API Manager UI** | 80% | ✅ 가능 | `/api-manager/page.tsx` 2,996줄 구현됨 |
-| **API Builder UI** | 0% | ❌ 미구현 | 시각적 빌더 미구현 |
+| **API Builder UI** | 50% | ⚠️ 부분 | HTTP Builder 완료, SQL/Python/Workflow 미구현 |
 
 ### 강점 ✅
 
@@ -1104,8 +1094,10 @@ codepen 보고서 정정: API Manager UI가 "40%"로 평가되었으나, 실제�
 ### 개선 필요 ⚠️
 
 1. **Workflow Executor**: 완전 구현 (노드 순차 실행만 지원, 5-7일 예상)
-2. **API Builder**: 시각적 빌더 구현 (5-7일 예상)
-3. **Redis 캐싱 강화**: In-memory → Redis로 변경 (2-3일 예상)
+2. **SQL Builder**: Visual Query Builder 구현 (3-5일 예상)
+3. **Python Builder**: Monaco Editor 통합 (2-3일 예상)
+4. **Workflow Builder**: Visual Node Editor 구현 (5-7일 예상)
+5. **Redis 캐싱 강화**: In-memory → Redis로 변경 (2-3일 예상)
 
 ---
 
