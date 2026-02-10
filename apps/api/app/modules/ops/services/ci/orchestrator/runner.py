@@ -526,6 +526,103 @@ class CIOrchestratorRunner:
             "ci.metric.blocks_debug", extra={"types": types, "count": len(blocks)}
         )
 
+    async def _execute_tool_asset_async(
+        self,
+        tool_name: str,
+        params: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Execute a Tool Asset from the Tool Registry.
+
+        This is the explicit entry point for Tool Asset execution in the orchestrator.
+        All data operations should route through this method to enable:
+        - Clear tool_calls tracking
+        - Consistent error handling
+        - Caching and performance optimization
+        - LLM visibility into used tools
+
+        Args:
+            tool_name: Name of the Tool Asset to execute (e.g., 'metric_query')
+            params: Parameters for the tool (tenant_id, ci_code, etc.)
+
+        Returns:
+            Dict with 'success', 'data', and optional 'error' keys
+
+        Raises:
+            ValueError: If tool is not registered
+        """
+        # Add tenant_id to params if not present
+        if "tenant_id" not in params:
+            params["tenant_id"] = self.tenant_id
+
+        # Create tool context
+        tool_context = ToolContext(tenant_id=self.tenant_id)
+
+        self.logger.info(
+            f"Executing tool asset: {tool_name}",
+            extra={
+                "tool_name": tool_name,
+                "tenant_id": self.tenant_id,
+                "param_keys": list(params.keys()),
+            },
+        )
+
+        try:
+            # Execute the tool
+            result = await self._tool_executor.execute_async(tool_name, tool_context, params)
+
+            # Track the tool call
+            tool_call = ToolCall(
+                id=str(uuid.uuid4()),
+                tool_name=tool_name,
+                input_params=params,
+                success=result.get("success", False),
+                result_size=len(str(result.get("data", {}))) if result.get("data") else 0,
+                execution_time_ms=result.get("execution_time_ms", 0),
+            )
+            self.tool_calls.append(tool_call)
+
+            self.logger.info(
+                f"Tool asset executed: {tool_name}",
+                extra={
+                    "tool_name": tool_name,
+                    "success": result.get("success"),
+                    "data_keys": list(result.get("data", {}).keys()) if result.get("data") else [],
+                },
+            )
+
+            return result
+
+        except Exception as e:
+            error_msg = f"Tool asset execution failed: {tool_name} - {str(e)}"
+            self.logger.error(
+                error_msg,
+                extra={
+                    "tool_name": tool_name,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
+            )
+
+            # Track failed tool call
+            tool_call = ToolCall(
+                id=str(uuid.uuid4()),
+                tool_name=tool_name,
+                input_params=params,
+                success=False,
+                result_size=0,
+                execution_time_ms=0,
+            )
+            self.tool_calls.append(tool_call)
+
+            # Return error result
+            return {
+                "success": False,
+                "error": error_msg,
+                "error_type": type(e).__name__,
+                "data": None,
+            }
+
     def _ci_search(
         self,
         keywords: Iterable[str] | None = None,
