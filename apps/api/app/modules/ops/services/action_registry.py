@@ -37,6 +37,7 @@ def _default_action_metadata(action_id: str) -> Dict[str, Any]:
         "tags": [],
         "version": "v1",
         "experimental": False,
+        "sample_output": None,
     }
 
 
@@ -203,6 +204,18 @@ async def execute_action(
                 },
             },
         },
+        "sample_output": {
+            "state_patch": {
+                "device_detail": {
+                    "device_id": "DEV-001",
+                    "name": "MES Server 06",
+                    "status": "online",
+                    "cpu_usage": 45.2,
+                    "memory_usage": 62.1,
+                    "last_heartbeat": "2026-02-08T10:30:00Z",
+                }
+            }
+        },
     },
 )
 async def handle_fetch_device_detail(
@@ -251,6 +264,15 @@ async def handle_fetch_device_detail(
                 "offset": {"type": "integer", "default": 0, "title": "Offset"},
                 "limit": {"type": "integer", "default": 20, "title": "Limit"},
             },
+        },
+        "sample_output": {
+            "state_patch": {
+                "maintenance_list": [
+                    {"id": "M001", "device_id": "DEV-001", "type": "Preventive", "status": "Completed", "date": "2026-02-01"},
+                    {"id": "M002", "device_id": "DEV-002", "type": "Corrective", "status": "Scheduled", "date": "2026-02-10"},
+                ],
+                "pagination": {"offset": 0, "limit": 20, "total": 2},
+            }
         },
     },
 )
@@ -401,6 +423,19 @@ async def handle_list_maintenance_filtered(
                 },
             },
         },
+        "sample_output": {
+            "state_patch": {
+                "last_created_ticket": {
+                    "id": "MAINT-ABC12345",
+                    "device_id": "DEV-001",
+                    "type": "Preventive",
+                    "scheduled_date": "2026-03-01",
+                    "assigned_to": "admin",
+                    "status": "Scheduled",
+                },
+                "modal_open": False,
+            }
+        },
     },
 )
 async def handle_create_maintenance_ticket(
@@ -549,6 +584,7 @@ async def handle_create_maintenance_ticket(
         "output": {"state_patch_keys": ["modal_open"]},
         "tags": ["ui", "modal", "state"],
         "input_schema": {"type": "object", "properties": {}},
+        "sample_output": {"state_patch": {"modal_open": True}},
     },
 )
 async def handle_open_maintenance_modal(
@@ -577,6 +613,7 @@ async def handle_open_maintenance_modal(
         "output": {"state_patch_keys": ["modal_open"]},
         "tags": ["ui", "modal", "state"],
         "input_schema": {"type": "object", "properties": {}},
+        "sample_output": {"state_patch": {"modal_open": False}},
     },
 )
 async def handle_close_maintenance_modal(
@@ -606,6 +643,10 @@ async def handle_close_maintenance_modal(
                 "key": {"type": "string", "title": "State Path (dotted)"},
                 "value": {"title": "Value"},
             },
+        },
+        "sample_output": {
+            "state_patch": {"<key>": "<value>"},
+            "_note": "key/value are dynamic - state_patch key matches the 'key' input",
         },
     },
 )
@@ -641,6 +682,10 @@ async def handle_state_set(
                 "patch": {"type": "object", "title": "State Patch"},
             },
         },
+        "sample_output": {
+            "state_patch": {"<patch keys>": "<patch values>"},
+            "_note": "patch object is merged directly into state",
+        },
     },
 )
 async def handle_state_merge(
@@ -670,6 +715,9 @@ async def handle_state_merge(
                 "to": {"type": "string", "title": "Route"},
                 "query": {"type": "object", "title": "Query Params"},
             },
+        },
+        "sample_output": {
+            "state_patch": {"__nav": {"to": "/admin/screens/my_screen", "query": {}}}
         },
     },
 )
@@ -702,6 +750,16 @@ async def handle_nav_go_to(
                 "workflow_id": {"type": "string", "title": "Workflow ID"},
                 "inputs": {"type": "object", "title": "Workflow Inputs"},
             },
+        },
+        "sample_output": {
+            "state_patch": {
+                "workflow_last_run": {
+                    "workflow_id": "wf_daily_check",
+                    "inputs": {},
+                    "status": "triggered",
+                    "triggered_at": "2026-02-08T10:00:00Z",
+                }
+            }
         },
     },
 )
@@ -751,6 +809,15 @@ async def handle_workflow_run(
                 "payload": {"type": "object", "title": "Form Payload"},
             },
         },
+        "sample_output": {
+            "state_patch": {
+                "form_last_submission": {
+                    "form_id": "ticket_form",
+                    "payload": {"device_id": "DEV-001", "note": "Routine check"},
+                    "submitted_at": "2026-02-08T10:00:00Z",
+                }
+            }
+        },
     },
 )
 async def handle_form_submit(
@@ -799,6 +866,17 @@ async def handle_form_submit(
                 "body": {"title": "Request body"},
                 "timeout_ms": {"type": "integer", "default": 10000},
             },
+        },
+        "sample_output": {
+            "state_patch": {
+                "api_last_response": {
+                    "url": "https://api.example.com/data",
+                    "method": "GET",
+                    "status_code": 200,
+                    "ok": True,
+                    "data": {"items": [], "total": 0},
+                }
+            }
         },
     },
 )
@@ -878,3 +956,585 @@ async def handle_api_call(
             "ok": response.is_success,
         },
     )
+
+
+@register_action_with_meta(
+    "api_manager.execute",
+    metadata={
+        "label": "Execute API Manager API",
+        "description": "Execute a user-defined API from API Manager (SQL/HTTP/Script/Workflow).",
+        "output": {"state_patch_keys": ["api_result"]},
+        "tags": ["api_manager", "dynamic", "integration"],
+        "input_schema": {
+            "type": "object",
+            "required": ["api_id"],
+            "properties": {
+                "api_id": {"type": "string", "title": "API Manager API ID"},
+                "params": {"type": "object", "title": "Execution Parameters", "default": {}},
+            },
+        },
+        "sample_output": {
+            "state_patch": {
+                "api_result": {
+                    "columns": ["id", "name", "status"],
+                    "rows": [["1", "Server A", "online"]],
+                    "row_count": 1,
+                    "duration_ms": 42,
+                }
+            }
+        },
+    },
+)
+async def handle_api_manager_execute(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    """
+    Execute a user-defined API from API Manager.
+
+    Routes to the appropriate executor (SQL, HTTP, Script, Workflow) based on API mode.
+
+    Inputs:
+        - api_id: str (API Manager API UUID)
+        - params: dict (execution parameters)
+
+    Returns:
+        ExecutorResult with API execution result in state_patch.api_result
+    """
+    import json as _json
+
+    from models.api_definition import ApiDefinition
+
+    from app.modules.api_manager.executor import execute_http_api, execute_sql_api
+    from app.modules.api_manager.script_executor import execute_script_api
+    from app.modules.api_manager.workflow_executor import execute_workflow_api
+
+    api_id = str(inputs.get("api_id", "")).strip()
+    if not api_id:
+        raise ValueError("api_id required")
+
+    params = inputs.get("params") or {}
+    if not isinstance(params, dict):
+        params = {}
+
+    api = session.get(ApiDefinition, api_id)
+    if not api or api.deleted_at:
+        raise ValueError(f"API not found: {api_id}")
+    if not api.logic:
+        raise ValueError(f"API has no logic defined: {api.name}")
+
+    mode = api.mode.value if api.mode else "sql"
+    executed_by = context.get("user_id", "screen_action")
+
+    def _result_dict(result):
+        return {
+            "columns": getattr(result, "columns", []),
+            "rows": getattr(result, "rows", []),
+            "row_count": getattr(result, "row_count", 0),
+            "duration_ms": getattr(result, "duration_ms", 0),
+        }
+
+    if mode == "sql":
+        result = execute_sql_api(
+            session=session,
+            api_id=api_id,
+            logic_body=api.logic,
+            params=params or None,
+            limit=params.get("limit"),
+            executed_by=executed_by,
+        )
+        result_data = _result_dict(result)
+    elif mode == "http":
+        result = execute_http_api(
+            session=session,
+            api_id=api_id,
+            logic_body=api.logic,
+            params=params or None,
+            executed_by=executed_by,
+        )
+        result_data = _result_dict(result)
+    elif mode == "workflow":
+        class _WfAdapter:
+            def __init__(self, ad):
+                self.api_id = ad.id
+                self.logic_spec = {}
+                self.logic = ad.logic
+                try:
+                    self.logic_spec = _json.loads(ad.logic or "{}")
+                except (ValueError, TypeError):
+                    pass
+
+        wf_result = execute_workflow_api(
+            session=session,
+            workflow_api=_WfAdapter(api),
+            params=params,
+            input_payload=None,
+            executed_by=executed_by,
+            limit=params.get("limit"),
+        )
+        result_data = wf_result.model_dump() if hasattr(wf_result, "model_dump") else {}
+    elif mode in ("script", "python"):
+        sc_result = execute_script_api(
+            session=session,
+            api_id=api_id,
+            logic_body=api.logic,
+            params=params or None,
+            input_payload=None,
+            executed_by=executed_by,
+            runtime_policy=getattr(api, "runtime_policy", None),
+        )
+        result_data = sc_result.model_dump() if hasattr(sc_result, "model_dump") else {}
+    else:
+        raise ValueError(f"Unsupported API mode: {mode}")
+
+    return ExecutorResult(
+        blocks=[
+            {
+                "type": "markdown",
+                "content": f"API `{api.name}` ({mode}) executed successfully",
+            }
+        ],
+        state_patch={"api_result": result_data},
+        summary={
+            "api_id": api_id,
+            "api_name": api.name,
+            "mode": mode,
+            "row_count": result_data.get("row_count", 0),
+        },
+    )
+
+
+# ============================================================================
+# Monitoring Action Handlers (CEP + System)
+# ============================================================================
+
+
+@register_action_with_meta(
+    "fetch_cep_stats",
+    metadata={
+        "label": "Fetch CEP Stats",
+        "description": "Fetch CEP monitoring data: stats summary, channels status, rules performance, and error timeline.",
+        "output": {
+            "state_patch_keys": [
+                "total_rules", "active_rules", "today_execution_count",
+                "today_error_count", "today_error_rate", "today_avg_duration_ms",
+                "last_24h_execution_count", "no_data_ratio",
+                "cep_rules", "cep_events", "channels",
+                "error_timeline", "error_distribution", "recent_errors",
+            ]
+        },
+        "tags": ["cep", "monitoring", "dashboard"],
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "period": {
+                    "type": "string",
+                    "default": "24h",
+                    "enum": ["1h", "6h", "24h", "7d"],
+                    "title": "Error Timeline Period",
+                },
+            },
+        },
+        "sample_output": {
+            "state_patch": {
+                "total_rules": 5,
+                "active_rules": 3,
+                "today_execution_count": 142,
+                "today_error_count": 3,
+                "today_error_rate": 0.02,
+                "today_avg_duration_ms": 45.2,
+                "last_24h_execution_count": 340,
+                "cep_rules": [
+                    {"rule_name": "High CPU Alert", "is_active": True, "execution_count": 50, "error_rate": 0.02, "avg_duration_ms": 30.5},
+                ],
+                "channels": [
+                    {"type": "slack", "display_name": "Slack", "active": 2, "total_sent": 10, "failure_rate": 0.0},
+                ],
+            }
+        },
+    },
+)
+async def handle_fetch_cep_stats(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    """
+    Fetch all CEP monitoring data by calling internal CEP endpoints.
+
+    Aggregates data from:
+        - /cep/stats/summary
+        - /cep/channels/status
+        - /cep/rules/performance
+        - /cep/errors/timeline
+    """
+    from datetime import timedelta
+
+    from sqlmodel import select as sql_select
+
+    from app.modules.cep_builder.models import TbCepExecLog, TbCepRule
+
+    period = inputs.get("period", "24h")
+
+    try:
+        # 1. Stats summary
+        from datetime import datetime as dt, timezone as tz
+        now = dt.now(tz.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        all_rules = session.exec(sql_select(TbCepRule)).all()
+        total_rules = len(all_rules)
+        active_rules = sum(1 for r in all_rules if r.is_active)
+
+        today_logs = session.exec(
+            sql_select(TbCepExecLog).where(TbCepExecLog.triggered_at >= today_start)
+        ).all()
+        today_exec_count = len(today_logs)
+        today_errors = sum(1 for log in today_logs if log.status == "fail")
+        avg_duration = (sum(log.duration_ms for log in today_logs) / len(today_logs)) if today_logs else 0
+        error_rate = (today_errors / len(today_logs)) if today_logs else 0
+
+        last_24h = now - timedelta(hours=24)
+        logs_24h = session.exec(
+            sql_select(TbCepExecLog).where(TbCepExecLog.triggered_at >= last_24h)
+        ).all()
+        last_24h_count = len(logs_24h)
+
+        # no_data_ratio: ratio of rules with 0 executions today
+        rules_with_exec = set()
+        for log in today_logs:
+            rules_with_exec.add(str(log.rule_id))
+        no_data_ratio = round(
+            (total_rules - len(rules_with_exec)) / total_rules, 3
+        ) if total_rules else 0
+
+        # 2. Rules performance (top 10)
+        last_7d = now - timedelta(days=7)
+        cep_rules_perf = []
+        for rule in all_rules:
+            rule_logs = session.exec(
+                sql_select(TbCepExecLog).where(
+                    (TbCepExecLog.rule_id == rule.rule_id) &
+                    (TbCepExecLog.triggered_at >= last_7d)
+                )
+            ).all()
+            if rule_logs:
+                exec_count = len(rule_logs)
+                err_count = sum(1 for l in rule_logs if l.status == "fail")
+                avg_dur = sum(l.duration_ms for l in rule_logs) / exec_count
+                cep_rules_perf.append({
+                    "rule_name": str(rule.rule_name),
+                    "trigger_type": str(getattr(rule, "trigger_type", "event")),
+                    "is_active": bool(rule.is_active),
+                    "execution_count": exec_count,
+                    "error_count": err_count,
+                    "error_rate": round(err_count / exec_count, 3),
+                    "avg_duration_ms": round(avg_dur, 2),
+                    "updated_at": str(getattr(rule, "updated_at", "")),
+                })
+        cep_rules_perf.sort(key=lambda x: x["execution_count"], reverse=True)
+
+        # 3. Error timeline
+        period_mapping = {
+            "1h": timedelta(hours=1),
+            "6h": timedelta(hours=6),
+            "24h": timedelta(hours=24),
+            "7d": timedelta(days=7),
+        }
+        lookback = period_mapping.get(period, timedelta(hours=24))
+        cutoff = now - lookback
+
+        error_logs = session.exec(
+            sql_select(TbCepExecLog).where(
+                (TbCepExecLog.triggered_at >= cutoff) &
+                (TbCepExecLog.status == "fail")
+            ).order_by(TbCepExecLog.triggered_at.desc())
+        ).all()
+
+        timeline_dict: Dict[str, int] = {}
+        cur = cutoff.replace(minute=0, second=0, microsecond=0)
+        while cur <= now:
+            timeline_dict[cur.isoformat()] = 0
+            cur += timedelta(hours=1)
+
+        error_types: Dict[str, int] = {}
+        for log in error_logs:
+            hour_key = log.triggered_at.replace(minute=0, second=0, microsecond=0).isoformat()
+            if hour_key in timeline_dict:
+                timeline_dict[hour_key] += 1
+            err_type = "other"
+            if log.error_message:
+                msg = log.error_message.lower()
+                if "timeout" in msg:
+                    err_type = "timeout"
+                elif "connection" in msg:
+                    err_type = "connection"
+                elif "validation" in msg:
+                    err_type = "validation"
+                elif "authentication" in msg:
+                    err_type = "authentication"
+            error_types[err_type] = error_types.get(err_type, 0) + 1
+
+        # Recent errors as CEP events table
+        cep_events = []
+        for log in error_logs[:20]:
+            rule = next((r for r in all_rules if str(r.rule_id) == str(log.rule_id)), None)
+            severity = "critical" if log.duration_ms > 5000 else "high" if log.duration_ms > 2000 else "medium"
+            cep_events.append({
+                "triggered_at": log.triggered_at.isoformat(),
+                "severity": severity,
+                "rule_name": rule.rule_name if rule else "Unknown",
+                "summary": log.error_message or "Execution failed",
+                "status": log.status,
+                "ack": "No",
+            })
+
+        # 4. Channels status
+        channels = []
+        try:
+            from app.modules.cep_builder.models import TbCepNotification, TbCepNotificationLog
+
+            notifications = session.exec(sql_select(TbCepNotification)).all()
+            channels_map: Dict[str, Dict[str, Any]] = {}
+            lookback_24h = now - timedelta(hours=24)
+
+            for notif in notifications:
+                ch_type = notif.channel
+                if ch_type not in channels_map:
+                    channels_map[ch_type] = {
+                        "type": ch_type,
+                        "display_name": {"slack": "Slack", "email": "Email", "sms": "SMS", "webhook": "Webhook", "pagerduty": "PagerDuty"}.get(ch_type, ch_type),
+                        "active": 0, "inactive": 0,
+                        "total_sent": 0, "total_failed": 0,
+                        "failure_rate": 0, "last_sent_at": None,
+                    }
+                if notif.is_active:
+                    channels_map[ch_type]["active"] += 1
+                else:
+                    channels_map[ch_type]["inactive"] += 1
+
+                try:
+                    notif_logs = session.exec(
+                        sql_select(TbCepNotificationLog).where(
+                            (TbCepNotificationLog.notification_id == notif.notification_id) &
+                            (TbCepNotificationLog.fired_at >= lookback_24h)
+                        )
+                    ).all()
+                    for nl in notif_logs:
+                        channels_map[ch_type]["total_sent"] += 1
+                        if nl.status != "success":
+                            channels_map[ch_type]["total_failed"] += 1
+                except Exception:
+                    pass
+
+            for ch_data in channels_map.values():
+                if ch_data["total_sent"] > 0:
+                    ch_data["failure_rate"] = round(ch_data["total_failed"] / ch_data["total_sent"], 3)
+                channels.append(ch_data)
+        except Exception as ch_err:
+            logger.warning(f"fetch_cep_stats: channels lookup skipped: {ch_err}")
+
+        error_timeline = [
+            {"timestamp": k, "error_count": v}
+            for k, v in sorted(timeline_dict.items())
+        ]
+
+        state_patch = {
+            "total_rules": total_rules,
+            "active_rules": active_rules,
+            "today_execution_count": today_exec_count,
+            "today_error_count": today_errors,
+            "today_error_rate": round(error_rate, 3),
+            "today_avg_duration_ms": round(avg_duration, 2),
+            "last_24h_execution_count": last_24h_count,
+            "no_data_ratio": no_data_ratio,
+            "cep_rules": cep_rules_perf[:10],
+            "cep_events": cep_events,
+            "channels": channels,
+            "error_timeline": error_timeline,
+            "error_distribution": error_types,
+            "recent_errors": cep_events[:10],
+            "total_errors": len(error_logs),
+        }
+
+        return ExecutorResult(
+            blocks=[{"type": "markdown", "content": "CEP stats loaded"}],
+            state_patch=state_patch,
+            summary={"total_rules": total_rules, "today_executions": today_exec_count},
+        )
+
+    except Exception as e:
+        logger.error(f"fetch_cep_stats.error: {e}", exc_info=True)
+        return ExecutorResult(
+            blocks=[{"type": "markdown", "content": f"## CEP Stats Error\n\n{str(e)}"}],
+            state_patch={},
+            summary={"error": str(e)},
+        )
+
+
+@register_action_with_meta(
+    "fetch_system_health",
+    metadata={
+        "label": "Fetch System Health",
+        "description": "Fetch system monitoring data: CPU, memory, disk, network, OPS query stats, and alerts.",
+        "output": {
+            "state_patch_keys": [
+                "cpu_usage", "memory_usage", "memory_available_gb",
+                "disk_usage", "disk_available_gb", "system_status",
+                "system_alerts", "alert_count",
+                "today_query_count", "today_error_count", "today_error_rate",
+                "success_rate", "failure_rate", "latency_p50", "latency_p95",
+                "regression_trend", "regression_totals", "top_causes", "no_data_ratio",
+            ]
+        },
+        "tags": ["system", "monitoring", "dashboard", "health"],
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+        },
+        "sample_output": {
+            "state_patch": {
+                "cpu_usage": 32.5,
+                "memory_usage": 58.0,
+                "memory_available_gb": 6.8,
+                "disk_usage": 45.0,
+                "disk_available_gb": 120.5,
+                "system_status": "healthy",
+                "system_alerts": [],
+                "today_query_count": 156,
+                "today_error_rate": 0.02,
+            }
+        },
+    },
+)
+async def handle_fetch_system_health(
+    inputs: Dict[str, Any], context: Dict[str, Any], session: Session
+) -> ExecutorResult:
+    """
+    Fetch system health metrics by combining psutil data with OPS observability metrics.
+
+    Sources:
+        - psutil: CPU, memory, disk
+        - observability_service: OPS query stats, regression data
+        - SystemMonitor: service health checks
+    """
+    import psutil
+
+    try:
+        # 1. System resource metrics via psutil
+        cpu_usage = psutil.cpu_percent(interval=0.5)
+        mem = psutil.virtual_memory()
+        memory_usage = mem.percent
+        memory_available_gb = round(mem.available / (1024 ** 3), 1)
+        disk = psutil.disk_usage("/")
+        disk_usage = disk.percent
+        disk_available_gb = round(disk.free / (1024 ** 3), 1)
+
+        # Determine system status
+        if cpu_usage > 90 or memory_usage > 90 or disk_usage > 95:
+            system_status = "critical"
+        elif cpu_usage > 70 or memory_usage > 80 or disk_usage > 85:
+            system_status = "warning"
+        else:
+            system_status = "healthy"
+
+        # 2. OPS observability metrics
+        from app.modules.ops.services.observability_service import collect_observability_metrics
+        obs_metrics = collect_observability_metrics(session)
+
+        success_rate = obs_metrics.get("success_rate", 0)
+        failure_rate = obs_metrics.get("failure_rate", 0)
+        total_recent_requests = obs_metrics.get("total_recent_requests", 0)
+        latency = obs_metrics.get("latency", {})
+        regression_trend = obs_metrics.get("regression_trend", [])
+        regression_totals = obs_metrics.get("regression_totals", {"PASS": 0, "WARN": 0, "FAIL": 0})
+        top_causes = obs_metrics.get("top_causes", [])
+        no_data_ratio = obs_metrics.get("no_data_ratio", 0)
+
+        today_error_count = int(total_recent_requests * failure_rate)
+        today_error_rate_pct = round(failure_rate * 100, 1)
+
+        # 3. Build system alerts from various sources
+        system_alerts = []
+        from datetime import datetime as dt, timezone as tz
+        now_iso = dt.now(tz.utc).isoformat()
+
+        if cpu_usage > 80:
+            system_alerts.append({
+                "timestamp": now_iso,
+                "severity": "critical" if cpu_usage > 90 else "warning",
+                "message": f"CPU usage is {cpu_usage}%",
+                "source": "System",
+                "acknowledged": False,
+            })
+        if memory_usage > 80:
+            system_alerts.append({
+                "timestamp": now_iso,
+                "severity": "critical" if memory_usage > 90 else "warning",
+                "message": f"Memory usage is {memory_usage}% ({memory_available_gb}GB free)",
+                "source": "System",
+                "acknowledged": False,
+            })
+        if disk_usage > 85:
+            system_alerts.append({
+                "timestamp": now_iso,
+                "severity": "critical" if disk_usage > 95 else "warning",
+                "message": f"Disk usage is {disk_usage}% ({disk_available_gb}GB free)",
+                "source": "System",
+                "acknowledged": False,
+            })
+        if failure_rate > 0.1:
+            system_alerts.append({
+                "timestamp": now_iso,
+                "severity": "warning",
+                "message": f"OPS error rate is {today_error_rate_pct}% ({today_error_count} errors in 24h)",
+                "source": "OPS",
+                "acknowledged": False,
+            })
+
+        # Add top failure causes as info alerts
+        for cause in top_causes[:3]:
+            system_alerts.append({
+                "timestamp": now_iso,
+                "severity": "info",
+                "message": f"Top failure cause: {cause['reason']} ({cause['count']} occurrences)",
+                "source": "Regression",
+                "acknowledged": False,
+            })
+
+        state_patch = {
+            "cpu_usage": cpu_usage,
+            "memory_usage": memory_usage,
+            "memory_available_gb": memory_available_gb,
+            "disk_usage": disk_usage,
+            "disk_available_gb": disk_available_gb,
+            "system_status": system_status,
+            "system_alerts": system_alerts,
+            "alert_count": len(system_alerts),
+            "today_query_count": total_recent_requests,
+            "today_error_count": today_error_count,
+            "today_error_rate": today_error_rate_pct,
+            "success_rate": round(success_rate * 100, 1),
+            "failure_rate": round(failure_rate * 100, 1),
+            "latency_p50": latency.get("p50"),
+            "latency_p95": latency.get("p95"),
+            "regression_trend": regression_trend,
+            "regression_totals": regression_totals,
+            "top_causes": top_causes,
+            "no_data_ratio": round(no_data_ratio * 100, 1),
+        }
+
+        return ExecutorResult(
+            blocks=[{"type": "markdown", "content": "System health loaded"}],
+            state_patch=state_patch,
+            summary={
+                "cpu_usage": cpu_usage,
+                "memory_usage": memory_usage,
+                "system_status": system_status,
+            },
+        )
+
+    except Exception as e:
+        logger.error(f"fetch_system_health.error: {e}", exc_info=True)
+        return ExecutorResult(
+            blocks=[{"type": "markdown", "content": f"## System Health Error\n\n{str(e)}"}],
+            state_patch={},
+            summary={"error": str(e)},
+        )

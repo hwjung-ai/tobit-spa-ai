@@ -16,13 +16,16 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { PathTreeNode } from "@/components/admin/screen-editor/visual/BindingEditor";
+import { useActionCatalog, CatalogItem } from "./useActionCatalog";
 
 export type ActionType = "screen" | "component";
 
@@ -30,24 +33,6 @@ interface ActionTestResult {
   trace_id?: string;
   state_patch?: Record<string, unknown>;
   [key: string]: unknown;
-}
-
-interface ActionCatalogItem {
-  action_id: string;
-  label?: string;
-  description?: string;
-  output?: {
-    state_patch_keys?: string[];
-  };
-  required_context?: string[];
-  input_schema?: {
-    type?: string;
-    required?: string[];
-    properties?: Record<
-      string,
-      { type?: string; title?: string; default?: unknown; format?: string }
-    >;
-  };
 }
 
 interface ActionEditorModalProps {
@@ -60,14 +45,6 @@ interface ActionEditorModalProps {
   contextTree?: PathTreeNode[];
   inputsTree?: PathTreeNode[];
 }
-
-const FALLBACK_HANDLERS = [
-  { value: "fetch_device_detail", label: "Fetch Device Detail" },
-  { value: "list_maintenance_filtered", label: "List Maintenance Filtered" },
-  { value: "create_maintenance_ticket", label: "Create Maintenance Ticket" },
-  { value: "open_maintenance_modal", label: "Open Maintenance Modal" },
-  { value: "close_maintenance_modal", label: "Close Maintenance Modal" },
-];
 
 const CHAIN_POLICY_PRESETS = [
   {
@@ -102,7 +79,7 @@ const CHAIN_POLICY_PRESETS = [
   },
 ];
 
-function buildTemplateFromSchema(schema?: ActionCatalogItem["input_schema"]): Record<string, unknown> {
+function buildTemplateFromSchema(schema?: CatalogItem["input_schema"]): Record<string, unknown> {
   if (!schema || schema.type !== "object" || !schema.properties) {
     return {};
   }
@@ -135,7 +112,7 @@ function buildTemplateFromSchema(schema?: ActionCatalogItem["input_schema"]): Re
 }
 
 function getMissingRequiredFields(
-  schema: ActionCatalogItem["input_schema"] | undefined,
+  schema: CatalogItem["input_schema"] | undefined,
   template: Record<string, unknown> | undefined
 ): string[] {
   const required = schema?.required || [];
@@ -154,21 +131,7 @@ function getMissingRequiredFields(
  * ActionEditorModal Component
  *
  * Dialog for creating/editing actions (both screen-level and component-level).
- * Allows selection of:
- * - Action handler/type (HTTP, Workflow, State Update, etc.)
- * - Payload template with bindings
- * - Context requirements
- *
- * Used by: PropertiesPanel Actions section
- *
- * @param open - Whether the modal is open
- * @param onOpenChange - Callback when open state changes
- * @param action - Action to edit (null for new)
- * @param actionType - Whether this is a screen or component action
- * @param onSave - Callback when action is saved
- * @param stateTree - Hierarchical state paths
- * @param contextTree - Hierarchical context paths
- * @param inputsTree - Hierarchical inputs paths
+ * Uses shared useActionCatalog hook for handler discovery with API Manager integration.
  */
 export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorModalProps>(
   (
@@ -217,9 +180,15 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
     const [isTestingAction, setIsTestingAction] = useState(false);
     const [testResult, setTestResult] = useState<ActionTestResult | null>(null);
     const [testError, setTestError] = useState<string | null>(null);
-    const [handlerOptions, setHandlerOptions] = useState(FALLBACK_HANDLERS);
-    const [catalogActions, setCatalogActions] = useState<ActionCatalogItem[]>([]);
-    const [isCatalogLoading, setIsCatalogLoading] = useState(false);
+
+    // Shared catalog hook
+    const {
+      builtinOptions,
+      apiManagerOptions,
+      isLoading: isCatalogLoading,
+      error: catalogError,
+      findItem,
+    } = useActionCatalog(open);
 
     // Generate action ID if new
     useEffect(() => {
@@ -230,46 +199,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
       }
     }, [action, formData.id]);
 
-    useEffect(() => {
-      if (!open) {
-        return;
-      }
-
-      const loadCatalog = async () => {
-        try {
-          setIsCatalogLoading(true);
-          const response = await fetch("/ops/ui-actions/catalog");
-          if (!response.ok) {
-            return;
-          }
-
-          const envelope = await response.json();
-          const actions: ActionCatalogItem[] = envelope?.data?.actions ?? [];
-          if (!Array.isArray(actions) || actions.length === 0) {
-            return;
-          }
-          setCatalogActions(actions);
-
-          const nextOptions = actions.map((item) => ({
-            value: item.action_id,
-            label: item.label || item.action_id,
-          }));
-          if (formData.handler && !nextOptions.some((item) => item.value === formData.handler)) {
-            nextOptions.unshift({ value: formData.handler, label: formData.handler });
-          }
-          setHandlerOptions(nextOptions);
-        } catch {
-          // Keep fallback handlers when catalog API is unavailable.
-        } finally {
-          setIsCatalogLoading(false);
-        }
-      };
-
-      void loadCatalog();
-    }, [open, formData.handler]);
-
-    const selectedActionMeta =
-      catalogActions.find((item) => item.action_id === formData.handler) ?? null;
+    const selectedActionMeta = findItem(formData.handler || "");
     const missingRequiredFields = getMissingRequiredFields(
       selectedActionMeta?.input_schema,
       (formData.payload_template || {}) as Record<string, unknown>
@@ -293,7 +223,22 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
         return;
       }
 
-      onSave(formData);
+      // For API Manager items, set handler to "api_manager.execute"
+      // and ensure api_id is in payload
+      const apiMeta = selectedActionMeta?.api_manager_meta;
+      if (apiMeta) {
+        const finalAction = {
+          ...formData,
+          handler: "api_manager.execute",
+          payload_template: {
+            ...(formData.payload_template as Record<string, unknown>),
+            api_id: apiMeta.api_id,
+          },
+        };
+        onSave(finalAction);
+      } else {
+        onSave(formData);
+      }
       onOpenChange(false);
     };
 
@@ -312,15 +257,20 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
           return;
         }
 
-        // Prepare test request
+        // Determine the actual handler for testing
+        const apiMeta = selectedActionMeta?.api_manager_meta;
+        const testHandler = apiMeta ? "api_manager.execute" : formData.handler;
+        const testInputs = apiMeta
+          ? { api_id: apiMeta.api_id, params: formData.payload_template || {} }
+          : formData.payload_template || {};
+
         const testPayload = {
-          action_id: formData.handler,
-          inputs: formData.payload_template || {},
+          action_id: testHandler,
+          inputs: testInputs,
           context: { mode: "real", origin: "screen_editor_modal_test" },
           trace_id: `test-${Date.now()}`,
         };
 
-        // Call /ops/ui-actions endpoint
         const response = await fetch("/ops/ui-actions", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -355,7 +305,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+          <div className="space-y-4 max-h-[28rem] overflow-y-auto">
             {/* Action ID */}
             <div className="space-y-2">
               <Label htmlFor="action-id" className="text-xs font-medium">
@@ -409,13 +359,35 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {handlerOptions.map((handler) => (
-                    <SelectItem key={handler.value} value={handler.value}>
-                      {handler.label}
-                    </SelectItem>
-                  ))}
+                  <SelectGroup>
+                    <SelectLabel className="text-[10px] text-slate-400">Built-in Handlers</SelectLabel>
+                    {builtinOptions.map((handler) => (
+                      <SelectItem key={handler.value} value={handler.value}>
+                        {handler.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                  {apiManagerOptions.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className="text-[10px] text-slate-400">API Manager</SelectLabel>
+                      {apiManagerOptions.map((handler) => (
+                        <SelectItem key={handler.value} value={handler.value}>
+                          {handler.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
+
+              {/* Catalog error warning */}
+              {catalogError && (
+                <p className="text-xs text-amber-500">
+                  Catalog unavailable ({catalogError}) - showing fallback handlers
+                </p>
+              )}
+
+              {/* Handler metadata display */}
               {selectedActionMeta?.description && (
                 <p className="text-xs text-gray-500">{selectedActionMeta.description}</p>
               )}
@@ -437,6 +409,62 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     Required: {selectedActionMeta.input_schema.required.join(", ")}
                   </p>
                 )}
+
+              {/* Input schema parameters */}
+              {selectedActionMeta?.input_schema?.properties &&
+                Object.keys(selectedActionMeta.input_schema.properties).length > 0 && (
+                  <details className="mt-1">
+                    <summary className="text-xs cursor-pointer text-slate-400 hover:text-slate-300 font-medium">
+                      Input Parameters
+                    </summary>
+                    <div className="mt-1 rounded bg-slate-800 p-2 space-y-1">
+                      {Object.entries(selectedActionMeta.input_schema.properties).map(
+                        ([key, prop]) => (
+                          <div key={key} className="flex items-center gap-2 text-[11px]">
+                            <code
+                              className={`font-mono ${
+                                selectedActionMeta.input_schema?.required?.includes(key)
+                                  ? "text-rose-400"
+                                  : "text-slate-300"
+                              }`}
+                            >
+                              {key}
+                              {selectedActionMeta.input_schema?.required?.includes(key) && "*"}
+                            </code>
+                            <span className="text-slate-500">({prop.type})</span>
+                            {prop.title && (
+                              <span className="text-slate-400">- {prop.title}</span>
+                            )}
+                            {prop.default !== undefined && (
+                              <span className="text-slate-500">
+                                = {JSON.stringify(prop.default)}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </details>
+                )}
+
+              {/* Sample output preview */}
+              {selectedActionMeta?.sample_output && (
+                <details className="mt-1">
+                  <summary className="text-xs cursor-pointer text-emerald-400 hover:text-emerald-300 font-medium">
+                    Sample Output Preview
+                  </summary>
+                  <pre className="mt-1 p-2 rounded bg-slate-800 text-[11px] text-slate-300 overflow-x-auto max-h-32">
+                    {JSON.stringify(selectedActionMeta.sample_output, null, 2)}
+                  </pre>
+                </details>
+              )}
+
+              {/* API Manager meta */}
+              {selectedActionMeta?.api_manager_meta && (
+                <p className="text-xs text-sky-400">
+                  API: {selectedActionMeta.api_manager_meta.method} {selectedActionMeta.api_manager_meta.path} ({selectedActionMeta.api_manager_meta.mode})
+                </p>
+              )}
             </div>
 
             {/* Payload Template */}
@@ -658,26 +686,26 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
 
             {/* Test Result Display */}
             {testError && (
-              <div className="p-2 rounded bg-red-50 border border-red-200">
-                <p className="text-xs font-medium text-red-700">Test Error</p>
-                <p className="text-xs text-red-600 mt-1">{testError}</p>
+              <div className="p-2 rounded bg-red-950/50 border border-red-800">
+                <p className="text-xs font-medium text-red-400">Test Error</p>
+                <p className="text-xs text-red-300 mt-1">{testError}</p>
               </div>
             )}
 
             {testResult && (
-              <div className="p-2 rounded bg-green-50 border border-green-200">
-                <p className="text-xs font-medium text-green-700">Test Successful</p>
+              <div className="p-2 rounded bg-emerald-950/50 border border-emerald-800">
+                <p className="text-xs font-medium text-emerald-400">Test Successful</p>
                 {testResult.trace_id && (
-                  <p className="text-xs text-green-600 mt-1">
-                    Trace ID: <code className="bg-green-100 px-1 rounded">{testResult.trace_id}</code>
+                  <p className="text-xs text-emerald-300 mt-1">
+                    Trace ID: <code className="bg-emerald-900/50 px-1 rounded">{testResult.trace_id}</code>
                   </p>
                 )}
                 {testResult.state_patch && (
                   <details className="mt-2">
-                    <summary className="text-xs cursor-pointer text-green-600 font-medium">
+                    <summary className="text-xs cursor-pointer text-emerald-300 font-medium">
                       State changes
                     </summary>
-                    <pre className="text-xs bg-green-100 p-1 rounded mt-1 overflow-x-auto">
+                    <pre className="text-[11px] bg-emerald-900/30 p-1 rounded mt-1 overflow-x-auto max-h-32 text-slate-300">
                       {JSON.stringify(testResult.state_patch, null, 2)}
                     </pre>
                   </details>

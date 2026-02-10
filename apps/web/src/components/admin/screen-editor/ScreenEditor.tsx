@@ -239,6 +239,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             screenId={screen?.id}
             assetId={assetId}
             screenVersion={screen?.version ?? null}
+            screenName={screen?.name}
           />
 
           {/* Errors */}
@@ -324,7 +325,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         <div className="w-80 flex-shrink-0 flex flex-col border-l border-slate-800 bg-slate-950">
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">AI Copilot</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Schema</p>
               <p className="text-[11px] text-slate-300">{schemaSummary}</p>
             </div>
           </div>

@@ -262,6 +262,21 @@ export default function ApiManagerPage() {
   }, [buildDraftFromForm]);
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  const parseResponsePayload = useCallback(async (response: Response): Promise<Record<string, unknown>> => {
+    const rawText = await response.text();
+    if (!rawText) {
+      return {};
+    }
+    try {
+      const parsed = JSON.parse(rawText);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      return { data: parsed };
+    } catch {
+      return { detail: rawText };
+    }
+  }, []);
 
   const saveApiToServer = useCallback(
     async (payload: Record<string, unknown>, forceCreate = false) => {
@@ -276,7 +291,7 @@ export default function ApiManagerPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const result = await response.json().catch(() => ({}));
+        const result = await parseResponsePayload(response);
         if (!response.ok) {
           return { ok: false, error: result?.message ?? "Failed to save API definition", details: result };
         }
@@ -285,7 +300,7 @@ export default function ApiManagerPage() {
         return { ok: false, error: error instanceof Error ? error.message : "Network error", details: error };
       }
     },
-    [apiBaseUrl, selectedApi]
+    [apiBaseUrl, parseResponsePayload, selectedApi]
   );
   const draftStorageId = selectedId === "applied-draft-temp" ? "new" : (selectedId ?? "new");
   const finalStorageId = selectedId === "applied-draft-temp"
@@ -348,7 +363,7 @@ export default function ApiManagerPage() {
           if (!response.ok) {
             throw new Error("Failed to load system APIs");
           }
-          const payload = await response.json();
+          const payload = await parseResponsePayload(response);
           const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
           const normalized: ApiDefinitionItem[] = items.map((item) => ({
             api_id: item.id as string,
@@ -365,7 +380,7 @@ export default function ApiManagerPage() {
             created_at: (item.created_at as string) || new Date().toISOString(),
             updated_at: (item.updated_at as string) || new Date().toISOString(),
             param_schema: {},
-            runtime_policy: {},
+            runtime_policy: (item.runtime_policy as Record<string, unknown>) ?? {},
             logic_spec: {},
             source: "server" as const,
           }));
@@ -409,7 +424,7 @@ export default function ApiManagerPage() {
         if (!response.ok) {
           throw new Error("Failed to load API definitions");
         }
-        const payload = await response.json();
+        const payload = await parseResponsePayload(response);
         const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
         const normalized: SystemApiItem[] = items.map((item) => ({
           api_id: item.id as string,
@@ -426,7 +441,7 @@ export default function ApiManagerPage() {
           created_at: (item.created_at as string) || new Date().toISOString(),
           updated_at: (item.updated_at as string) || new Date().toISOString(),
           param_schema: {},
-          runtime_policy: {},
+          runtime_policy: (item.runtime_policy as Record<string, unknown>) ?? {},
           logic_spec: {},
           source: "server" as const,
         }));
@@ -439,10 +454,10 @@ export default function ApiManagerPage() {
             if (preferredId) {
               return preferredId;
             }
-            if (prev && items.some((item) => item.api_id === prev)) {
+            if (prev && normalized.some((item) => item.api_id === prev)) {
               return prev;
             }
-            return (items[0]?.api_id as string | undefined) || null;
+            return normalized[0]?.api_id ?? null;
           });
       } catch (error) {
         console.error("Unable to fetch APIs", error);
@@ -506,7 +521,7 @@ export default function ApiManagerPage() {
       if (!response.ok) {
         throw new Error("Failed to load discovered endpoints");
       }
-      const payload = await response.json();
+      const payload = await parseResponsePayload(response);
       const items = (payload.data?.endpoints ?? []) as DiscoveredEndpoint[];
       setDiscoveredEndpoints(items);
       setDiscoveredFetchStatus("ok");
@@ -529,7 +544,7 @@ export default function ApiManagerPage() {
       if (!response.ok) {
         throw new Error("Failed to load execution logs");
       }
-      const payload = await response.json();
+      const payload = await parseResponsePayload(response);
       setExecLogs(payload.data?.logs ?? []);
     } catch {
       // Silently fail - execution logs are optional
@@ -852,7 +867,7 @@ export default function ApiManagerPage() {
           runtime_policy: draftApi.runtime_policy || { allow_runtime: true }, // Ensure it can run during test
         })
       });
-      const body = await response.json();
+      const body = await parseResponsePayload(response);
       if (!response.ok) {
         throw new Error(body?.message || body?.detail || "Dry-run failed");
       }
@@ -1080,10 +1095,6 @@ export default function ApiManagerPage() {
       setTestError("선택된 API가 없습니다.");
       return;
     }
-    if (selectedApi.logic_type === "script") {
-      setTestError("Script APIs execution is not supported until MVP-5.");
-      return;
-    }
     let parsedParams: Record<string, unknown> = {};
     try {
       parsedParams = testParams.trim() ? JSON.parse(testParams) : {};
@@ -1120,7 +1131,7 @@ export default function ApiManagerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyPayload),
       });
-      const payload = await response.json();
+      const payload = await parseResponsePayload(response);
       if (!response.ok) {
         throw new Error(payload.detail ?? "Execution failed");
       }
@@ -1154,6 +1165,13 @@ export default function ApiManagerPage() {
     setIsExecuting(true);
     const start = Date.now();
     try {
+      if (logicType === "sql") {
+        const normalized = logicBody.trim().toUpperCase();
+        if (!(normalized.startsWith("SELECT") || normalized.startsWith("WITH"))) {
+          throw new Error("SQL dry-run은 SELECT/WITH 조회 쿼리만 지원합니다.");
+        }
+      }
+
       // For HTTP, logic_body is already updated by useEffect to be the spec JSON
       const dryPayload = {
         logic_type: logicType,
@@ -1167,7 +1185,7 @@ export default function ApiManagerPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dryPayload),
       });
-      const body = await response.json();
+      const body = await parseResponsePayload(response);
       if (!response.ok) {
         throw new Error(body.message ?? body.detail ?? "Dry-run failed");
       }
@@ -1190,6 +1208,11 @@ export default function ApiManagerPage() {
     }
   };
 
+  const executionColumns = Array.isArray(executionResult?.columns) ? executionResult.columns : [];
+  const executionRows = Array.isArray(executionResult?.rows) ? executionResult.rows : [];
+  const workflowSteps = Array.isArray(workflowResult?.steps) ? workflowResult.steps : [];
+  const workflowReferences = Array.isArray(workflowResult?.references) ? workflowResult.references : [];
+
   const testResultsArea = (
     <div className="space-y-4">
       <p className="text-xs uppercase tracking-normal text-slate-500">Execution result</p>
@@ -1197,7 +1220,7 @@ export default function ApiManagerPage() {
         workflowResult ? (
           <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
             <div className="space-y-2">
-              {workflowResult.steps.map((step) => (
+              {workflowSteps.map((step) => (
                 <div
                   key={step.node_id}
                   className="rounded-2xl border border-slate-800 bg-slate-950/30 p-3 text-xs text-slate-100"
@@ -1230,7 +1253,7 @@ export default function ApiManagerPage() {
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
               <p className="mt-2 text-[10px] uppercase tracking-normal text-slate-400">
-                References: {workflowResult.references.length}
+                References: {workflowReferences.length}
               </p>
             </div>
           </div>
@@ -1255,14 +1278,14 @@ export default function ApiManagerPage() {
             <pre className="max-h-60 overflow-auto rounded-xl bg-slate-950/70 p-3 text-xs text-slate-100 custom-scrollbar">
               {JSON.stringify(executionResult, null, 2)}
             </pre>
-          ) : executionResult.columns.length === 0 ? (
+          ) : executionColumns.length === 0 ? (
             <p className="text-xs text-slate-400">No columns returned.</p>
           ) : (
             <div className="overflow-auto custom-scrollbar">
               <table className="min-w-full text-left text-xs text-slate-200">
                 <thead>
                   <tr>
-                    {executionResult.columns.map((column) => (
+                    {executionColumns.map((column) => (
                       <th
                         key={column}
                         className="border-b border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
@@ -1273,12 +1296,12 @@ export default function ApiManagerPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {executionResult.rows.map((row, rowIndex) => (
+                  {executionRows.map((row, rowIndex) => (
                     <tr
                       key={`row-${rowIndex}`}
                       className={rowIndex % 2 === 0 ? "bg-slate-950/40" : "bg-slate-900/40"}
                     >
-                      {executionResult.columns.map((column) => (
+                      {executionColumns.map((column) => (
                         <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
                           <pre className="m-0 text-[12px] text-slate-100">{String(row[column] ?? "")}</pre>
                         </td>
@@ -1671,14 +1694,14 @@ export default function ApiManagerPage() {
                 <pre className="max-h-60 overflow-auto rounded-xl bg-slate-950/70 p-3 text-xs text-slate-100 custom-scrollbar">
                   {JSON.stringify(executionResult, null, 2)}
                 </pre>
-              ) : executionResult.columns.length === 0 ? (
+              ) : executionColumns.length === 0 ? (
                 <p className="text-xs text-slate-400">No columns returned.</p>
               ) : (
                 <div className="overflow-auto custom-scrollbar">
                   <table className="min-w-full text-left text-xs text-slate-200">
                     <thead>
                       <tr>
-                        {executionResult.columns.map((column) => (
+                        {executionColumns.map((column) => (
                           <th
                             key={column}
                             className="border-b border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
@@ -1689,12 +1712,12 @@ export default function ApiManagerPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {executionResult.rows.map((row, rowIndex) => (
+                      {executionRows.map((row, rowIndex) => (
                         <tr
                           key={`row-${rowIndex}`}
                           className={rowIndex % 2 === 0 ? "bg-slate-950/40" : "bg-slate-900/40"}
                         >
-                          {executionResult.columns.map((column) => (
+                          {executionColumns.map((column) => (
                             <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
                               <pre className="m-0 text-[12px] text-slate-100">{String(row[column] ?? "")}</pre>
                             </td>

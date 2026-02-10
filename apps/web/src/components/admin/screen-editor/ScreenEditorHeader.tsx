@@ -23,6 +23,7 @@ interface ScreenEditorHeaderProps {
   screenId?: string;
   assetId?: string;
   screenVersion?: string | null;
+  screenName?: string;
 }
 
 export default function ScreenEditorHeader({
@@ -42,6 +43,7 @@ export default function ScreenEditorHeader({
   screenId,
   assetId,
   screenVersion,
+  screenName,
 }: ScreenEditorHeaderProps) {
   const router = useRouter();
 
@@ -89,6 +91,12 @@ export default function ScreenEditorHeader({
             >
               ← Back to Screens
             </Link>
+
+            {screenName && (
+              <div className="flex items-center gap-2 border-r border-slate-700 pr-3 mr-1">
+                <h1 className="text-lg font-semibold text-slate-100">{screenName}</h1>
+              </div>
+            )}
 
             <div className="flex items-center gap-1 border-r border-slate-700 pr-3 mr-1">
               <Button

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextvars import ContextVar
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -167,3 +168,11 @@ def configure_logging(level: str | int = "INFO") -> None:
     # reduce noisy SSE heartbeat logs
     logging.getLogger("sse_starlette.sse").setLevel(logging.INFO)
     logging.getLogger("watchdog").setLevel(logging.WARNING)
+    # keep hot-reload logs readable by default (override with SQLALCHEMY_LOG_LEVEL=INFO/DEBUG)
+    sqlalchemy_level = os.getenv("SQLALCHEMY_LOG_LEVEL", "WARNING").upper()
+    logging.getLogger("sqlalchemy.engine").setLevel(
+        getattr(logging, sqlalchemy_level, logging.WARNING)
+    )
+    logging.getLogger("sqlalchemy.pool").setLevel(
+        getattr(logging, sqlalchemy_level, logging.WARNING)
+    )

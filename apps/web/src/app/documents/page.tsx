@@ -256,6 +256,16 @@ export default function DocumentsPage() {
     }
   }, []);
 
+  const deleteDocHistoryEntry = useCallback(async (id: string) => {
+    try {
+      await authenticatedFetch(`/history/${id}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Failed to delete document history entry", error);
+    }
+  }, []);
+
   const fetchDocumentDetail = useCallback(
     async (documentId: string) => {
       const payload = await authenticatedFetch(`/api/documents/${documentId}`) as { data?: { document: DocumentDetail } };
@@ -365,6 +375,15 @@ export default function DocumentsPage() {
       documentHistoryEntries[0]
     );
   }, [documentHistoryEntries, selectedDocHistoryId]);
+
+  const handleRemoveDocHistory = useCallback(
+    (id: string) => {
+      setDocHistory((prev) => prev.filter((entry) => entry.id !== id));
+      setSelectedDocHistoryId((prev) => (prev === id ? null : prev));
+      void deleteDocHistoryEntry(id);
+    },
+    [deleteDocHistoryEntry]
+  );
 
   const persistDocumentState = useCallback(() => {
     if (typeof window === "undefined") {
@@ -937,22 +956,38 @@ export default function DocumentsPage() {
                     documentHistoryEntries.map((entry) => {
                       const isSelected = entry.id === selectedDocHistoryId;
                       return (
-                        <button
-                          type="button"
+                        <div
                           key={entry.id}
-                          onClick={() => setSelectedDocHistoryId(entry.id)}
-                          className={`w-full rounded-2xl border px-4 py-3 text-left transition ${isSelected
+                          className={`group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition ${isSelected
                               ? "border-sky-500 bg-sky-500/10 text-white"
                               : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
                             }`}
                         >
-                          <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
-                            <span>{entry.status === "error" ? "Error" : "OK"}</span>
-                            <span>{formatTimestamp(entry.createdAt)}</span>
-                          </div>
-                          <p className="mt-2 text-sm font-semibold text-white">{entry.question}</p>
-                          <p className="text-[12px] text-slate-400">{entry.summary}</p>
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDocHistoryId(entry.id)}
+                            className="text-left"
+                          >
+                            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                              <span>{entry.status === "error" ? "Error" : "OK"}</span>
+                              <span>{formatTimestamp(entry.createdAt)}</span>
+                            </div>
+                            <p className="mt-2 text-sm font-semibold text-white">{entry.question}</p>
+                            <p className="text-[12px] text-slate-400">{entry.summary}</p>
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Delete history entry ${entry.question}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleRemoveDocHistory(entry.id);
+                            }}
+                            className="absolute right-3 bottom-2 flex h-5 w-5 pointer-events-none items-center justify-center rounded-full border border-red-400 text-[10px] text-red-400 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-red-500/10"
+                            title="Delete history"
+                          >
+                            X
+                          </button>
+                        </div>
                       );
                     })
                   )}

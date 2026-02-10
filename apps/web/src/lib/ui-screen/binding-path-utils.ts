@@ -6,7 +6,7 @@
   - Parse and format binding expressions
 */
 
-import { ScreenSchemaV1, StateSchema } from "./screen.schema";
+import { ScreenSchemaV1, StateSchema, StateSchemaPrimitive } from "./screen.schema";
 
 /**
  * Represents a hierarchical node in the path tree
@@ -69,27 +69,43 @@ export function extractStatePaths(schema?: StateSchema): string[] {
 
   const paths: string[] = [];
 
-  function traverse(obj: Record<string, unknown>, prefix: string = "") {
+  function traverse(obj: StateSchemaPrimitive | Record<string, unknown>, prefix: string = "") {
     if (!obj) return;
 
-    const type = obj.type as string;
-    const properties = obj.properties as Record<string, Record<string, unknown>> | undefined;
-    const items = obj.items as Record<string, unknown> | undefined;
-
-    if (type === "object" && properties) {
-      Object.keys(properties).forEach((key) => {
+    // Handle both StateSchemaPrimitive and Record<string, unknown>
+    // StateSchemaPrimitive has { type, properties, items }
+    // Record<string, unknown> is raw object from extractSchemaFromInitial
+    const schemaPrim = obj as StateSchemaPrimitive;
+    const type = schemaPrim.type;
+    
+    // Only traverse if it's a StateSchemaPrimitive with object or array type
+    if (type === "object" && schemaPrim.properties) {
+      Object.keys(schemaPrim.properties).forEach((key) => {
         const newPrefix = prefix ? `${prefix}.${key}` : key;
         paths.push(newPrefix);
-        traverse(properties[key], newPrefix);
+        traverse(schemaPrim.properties[key] as StateSchemaPrimitive | Record<string, unknown>, newPrefix);
       });
-    } else if (type === "array" && items) {
+    } else if (type === "array") {
       const newPrefix = prefix ? `${prefix}[]` : "[]";
       paths.push(newPrefix);
       // Don't traverse array items as they're typically data
+    } else if (!type) {
+      // This is a Record<string, unknown> from extractSchemaFromInitial
+      const record = obj as Record<string, unknown>;
+      Object.keys(record).forEach((key) => {
+        const newPrefix = prefix ? `${prefix}.${key}` : key;
+        paths.push(newPrefix);
+        traverse(record[key] as StateSchemaPrimitive | Record<string, unknown>, newPrefix);
+      });
     }
   }
 
-  traverse(schema);
+  // Schema is a Record<string, StateSchemaPrimitive>, traverse it directly
+  Object.keys(schema).forEach((key) => {
+    paths.push(key);
+    traverse(schema[key], key);
+  });
+  
   return paths;
 }
 
@@ -189,22 +205,39 @@ export function isValidPath(path: string, schema?: StateSchema): boolean {
   if (!schema || !path) return false;
 
   const parts = path.split(".");
-  let current: Record<string, unknown> = schema;
+  let current: StateSchemaPrimitive | undefined;
 
-  for (const part of parts) {
-    if (part === "[]") {
-      // Array indicator, continue
-      if (current.type !== "array") return false;
-      current = current.items as Record<string, unknown>;
-    } else {
-      if (current.type === "object" && current.properties) {
-        current = current.properties[part] as Record<string, unknown>;
-      } else {
-        return false;
-      }
-    }
+  // First, get the root key
+  const rootKey = parts[0];
+  if (!rootKey) return false;
+  
+  current = schema[rootKey];
+  if (!current) return false;
 
+  // Navigate through nested parts (if any)
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    
     if (!current) return false;
+    
+    if (current.type === "object" && current.properties) {
+      // For object type, look in properties
+      current = current.properties[part] as StateSchemaPrimitive | undefined;
+    } else if (current.type === "array" && current.items) {
+      // For array type, look in items (if items is an object)
+      // Handle case where items is a StateSchema or a direct StateSchemaPrimitive
+      if (typeof current.items === "object" && !Array.isArray(current.items)) {
+        // items is a StateSchema (nested object)
+        const itemsSchema = current.items as Record<string, StateSchemaPrimitive>;
+        current = itemsSchema[part] as StateSchemaPrimitive | undefined;
+      } else {
+        // items is a StateSchemaPrimitive (primitive array)
+        return false; // Can't index into primitive array
+      }
+    } else {
+      // Can't navigate further into primitive types
+      return false;
+    }
   }
 
   return true;
@@ -217,27 +250,36 @@ export function getPathType(path: string, schema?: StateSchema): string {
   if (!schema || !path) return "any";
 
   const parts = path.split(".");
-  let current: Record<string, unknown> = schema;
+  let current: StateSchemaPrimitive | undefined;
 
-  for (const part of parts) {
-    if (part === "[]") {
-      if (current.type === "array") {
-        current = current.items as Record<string, unknown>;
+  // Get root key
+  const rootKey = parts[0];
+  if (!rootKey) return "any";
+  
+  current = schema[rootKey];
+  if (!current) return "unknown";
+
+  // Navigate through nested parts (if any)
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i];
+    
+    if (!current) return "unknown";
+    
+    if (current.type === "object" && current.properties) {
+      current = current.properties[part] as StateSchemaPrimitive | undefined;
+    } else if (current.type === "array" && current.items) {
+      if (typeof current.items === "object" && !Array.isArray(current.items)) {
+        const itemsSchema = current.items as Record<string, StateSchemaPrimitive>;
+        current = itemsSchema[part] as StateSchemaPrimitive | undefined;
       } else {
-        return "unknown";
+        return "array";
       }
     } else {
-      if (current.type === "object" && current.properties) {
-        current = current.properties[part] as Record<string, unknown>;
-      } else {
-        return (current.type as string) || "any";
-      }
+      return current.type || "any";
     }
-
-    if (!current) return "unknown";
   }
 
-  return (current.type as string) || "any";
+  return current?.type || "any";
 }
 
 /**

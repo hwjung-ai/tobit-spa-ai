@@ -103,44 +103,45 @@ class DynamicTool(BaseTool):
                 error_details={"tool_type": tool_type},
             )
 
-    def _process_query_template(self, query_template: str, input_data: dict[str, Any]) -> str:
-        """Process query template to replace placeholders with actual values.
+    def _process_query_template(self, query_template: str, input_data: dict[str, Any]) -> tuple[str, list]:
+        """Process query template to replace placeholders with actual values using parameterized queries.
 
-        Supports two modes:
-        1. CI lookup mode (legacy): {where_clause}, {order_by}, {direction}, %s
-        2. Generic mode: Direct placeholder replacement from input_data
+        Returns tuple of (query, params) for safe parameterized execution.
 
         Args:
-            query_template: SQL query template with placeholders
+            query_template: SQL query template with {placeholders}
             input_data: Input parameters containing keywords, filters, etc.
 
         Returns:
-            Processed SQL query with actual values
+            Tuple of (processed_query, params_list) for parameterized execution
         """
         if not query_template:
-            return ""
+            return "", []
 
         processed_query = query_template
+        params = []
 
         # Check if this is CI lookup mode (has where_clause placeholder)
         if "{where_clause}" in query_template:
-            # Legacy CI lookup mode - build complex WHERE clause
+            # CI lookup mode - build safe WHERE clause with params
             where_conditions = []
-            order_by = "ci.ci_id"  # Default order
-            direction = "ASC"     # Default direction
-            limit_value = 10      # Default limit
+            order_by = "ci.ci_id"
+            direction = "ASC"
+            limit_value = 10
 
-            # Process keywords
+            # Process keywords - safe parameterization
             keywords = input_data.get("keywords", [])
             if keywords and len(keywords) > 0:
                 keyword_conditions = []
                 for keyword in keywords:
                     if keyword:
-                        keyword_conditions.append(f"(ci.ci_name ILIKE '%{keyword}%' OR ci.ci_code ILIKE '%{keyword}%')")
+                        # Use parameterized ILIKE instead of string interpolation
+                        keyword_conditions.append("(ci.ci_name ILIKE %s OR ci.ci_code ILIKE %s)")
+                        params.extend([f"%{keyword}%", f"%{keyword}%"])
                 if keyword_conditions:
                     where_conditions.append(" OR ".join(keyword_conditions))
 
-            # Process filters
+            # Process filters - safe parameterization
             filters = input_data.get("filters", [])
             if filters:
                 for filter_item in filters:
@@ -149,24 +150,33 @@ class DynamicTool(BaseTool):
                         operator = filter_item.get("operator", "=")
                         value = filter_item.get("value")
 
-                        if field and value:
-                            if operator.upper() == "ILIKE":
-                                where_conditions.append(f"{field} ILIKE '%{value}%'")
-                            elif operator.upper() == "IN":
-                                values_str = ", ".join([f"'{v}'" for v in value])
-                                where_conditions.append(f"{field} IN ({values_str})")
-                            else:
-                                where_conditions.append(f"{field} {operator} '{value}'")
+                        if field and value is not None:
+                            # Validate field name (whitelist approach)
+                            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_.]*$", field):
+                                logger.warning(f"Invalid field name: {field}")
+                                continue
 
-            # Add tenant_id filter
+                            if operator.upper() == "ILIKE":
+                                where_conditions.append(f"{field} ILIKE %s")
+                                params.append(f"%{value}%")
+                            elif operator.upper() == "IN" and isinstance(value, list):
+                                placeholders = ", ".join(["%s"] * len(value))
+                                where_conditions.append(f"{field} IN ({placeholders})")
+                                params.extend(value)
+                            else:
+                                where_conditions.append(f"{field} {operator} %s")
+                                params.append(value)
+
+            # Add tenant_id filter - parameterized
             tenant_id = input_data.get("tenant_id", "default")
-            where_conditions.append(f"ci.tenant_id = '{tenant_id}'")
+            where_conditions.append("ci.tenant_id = %s")
+            params.append(tenant_id)
             where_conditions.append("ci.deleted_at IS NULL")
 
             # Build WHERE clause
             where_clause = " AND ".join(where_conditions) if where_conditions else "1=1"
 
-            # Process sorting
+            # Process sorting (column names only, no parameterization needed)
             sort = input_data.get("sort")
             if sort:
                 if isinstance(sort, tuple) and len(sort) == 2:
@@ -175,79 +185,85 @@ class DynamicTool(BaseTool):
                 else:
                     order_by = str(sort)
 
-            # Process limit
+            # Validate order_by and direction
+            if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_.]*$", order_by):
+                order_by = "ci.ci_id"
+            if direction not in ("ASC", "DESC"):
+                direction = "ASC"
+
+            # Process limit - parameterized
             limit = input_data.get("limit", limit_value)
+            try:
+                limit = max(1, min(int(limit), 1000))  # Clamp between 1 and 1000
+            except (ValueError, TypeError):
+                limit = limit_value
 
             # Replace placeholders in template
             processed_query = processed_query.replace("{where_clause}", where_clause)
             processed_query = processed_query.replace("{order_by}", order_by)
             processed_query = processed_query.replace("{direction}", direction)
-            processed_query = processed_query.replace("%s", str(limit))
-            processed_query = processed_query.replace("{limit}", str(limit))
+            processed_query = processed_query.replace("{limit}", "%s")
+            params.append(limit)
 
         else:
-            # Generic mode - direct placeholder replacement
-
-            # DEBUG LOG (forced to stderr)
-            import sys
-            print(f"[DEBUG FORCED {self.name}] Input data keys: {list(input_data.keys())}", file=sys.stderr, flush=True)
-            print(f"[DEBUG FORCED {self.name}] Query template (first 200 chars): {processed_query[:200]}", file=sys.stderr, flush=True)
+            # Generic mode - safe placeholder replacement
 
             # Handle metric tool specific mappings
             if "{function}" in processed_query:
-                # Map 'agg' to 'function' for metric aggregation
                 agg = input_data.get("agg", "AVG")
                 if isinstance(agg, str):
                     agg = agg.upper()
+                # Validate agg function (whitelist approach)
+                if agg not in ("AVG", "MIN", "MAX", "SUM", "COUNT", "STDDEV"):
+                    agg = "AVG"
                 processed_query = processed_query.replace("{function}", agg)
 
-            # Handle ci_ids array placeholder
+            # Handle ci_ids array placeholder - parameterized
             if "{ci_ids}" in processed_query:
                 ci_ids = input_data.get("ci_ids", [])
                 if ci_ids and isinstance(ci_ids, list):
-                    # Format as PostgreSQL array values: ['id1', 'id2']
-                    # Template should have ARRAY{ci_ids}, so we just provide the bracket part
-                    escaped_ids = [str(cid).replace("'", "''") for cid in ci_ids]
-                    array_str = "['" + "', '".join(escaped_ids) + "']::uuid[]"
-                    processed_query = processed_query.replace("{ci_ids}", array_str)
+                    placeholders = ", ".join(["%s"] * len(ci_ids))
+                    processed_query = processed_query.replace("ARRAY{ci_ids}", f"ARRAY[{placeholders}]::uuid[]")
+                    params.extend(ci_ids)
                 else:
-                    # Empty array - remove the ci_id filter entirely to query all CIs
-                    # Find and remove the "AND mv.ci_id = ANY(ARRAY{ci_ids})" clause
+                    # Empty array - remove the ci_id filter
                     processed_query = re.sub(
-                        r"\s+AND\s+mv\.ci_id\s*=\s*ANY\s*\(\s*ARRAY\{ci_ids\}\s*\)",
+                        r"\s+AND\s+mv\.ci_id\s*=\s*ANY\s*\(\s*ARRAY\[.*?\]::uuid\[\]\s*\)",
                         "",
                         processed_query
                     )
 
-            # First handle special aggregate-specific placeholders
+            # Handle group_by (column names only)
             raw_group_by = input_data.get("group_by")
             group_by = raw_group_by if isinstance(raw_group_by, list) else []
             if not group_by:
                 group_by = ["ci_type"]
-                print(f"[DEBUG {self.name}] group_by was empty or missing, using default: {group_by}", file=sys.stderr, flush=True)
 
             if isinstance(group_by, list):
-                if "{select_field}" in processed_query:
-                    select_field = group_by[0] if group_by else "ci_type"
-                    processed_query = processed_query.replace("{select_field}", select_field)
-                if "{group_clause}" in processed_query:
-                    group_clause = ", ".join(group_by) if group_by else "ci_type"
-                    processed_query = processed_query.replace("{group_clause}", group_clause)
-                if "{group_field}" in processed_query:
-                    group_field = group_by[0] if group_by else "event_type"
-                    processed_query = processed_query.replace("{group_field}", group_field)
+                # Validate all group_by fields
+                validated_group_by = []
+                for field in group_by:
+                    if re.match(r"^[a-zA-Z_][a-zA-Z0-9_.]*$", field):
+                        validated_group_by.append(field)
+                group_by = validated_group_by if validated_group_by else ["ci_type"]
 
-            # Handle time_filter for event queries
+                if "{select_field}" in processed_query:
+                    processed_query = processed_query.replace("{select_field}", group_by[0])
+                if "{group_clause}" in processed_query:
+                    processed_query = processed_query.replace("{group_clause}", ", ".join(group_by))
+                if "{group_field}" in processed_query:
+                    processed_query = processed_query.replace("{group_field}", group_by[0])
+
+            # Handle time_filter
             if "{time_filter}" in processed_query:
                 time_range = input_data.get("time_range", "")
                 if time_range:
-                    # Simple time range placeholder - could be enhanced
-                    processed_query = processed_query.replace("{time_filter}", f"AND time > NOW() - INTERVAL '{time_range}'")
+                    processed_query = processed_query.replace("{time_filter}", f"AND time > NOW() - INTERVAL %s")
+                    params.append(time_range)
                 else:
                     processed_query = processed_query.replace("{time_filter}", "")
 
-            # Replace all other {key} placeholders with values from input_data
-            # Skip keys that were already processed above
+            # Replace all other {key} placeholders - parameterized
             skip_keys = {"group_by", "ci_ids", "agg"}
 
             for key, value in input_data.items():
@@ -257,45 +273,28 @@ class DynamicTool(BaseTool):
                 placeholder = f"{{{key}}}"
                 if placeholder in processed_query:
                     if value is None:
-                        # Handle NULL: remove the entire AND clause containing this placeholder
-                        # to avoid comparing UUID columns against string 'NULL'
+                        # Handle NULL - remove AND clause
                         null_pattern = rf"\s+AND\s+\w+(?:\.\w+)?\s*=\s*'{placeholder}'"
-                        cleaned = re.sub(null_pattern, "", processed_query)
-                        if cleaned != processed_query:
-                            processed_query = cleaned
-                        else:
-                            # Fallback: replace with SQL NULL (no quotes)
-                            processed_query = processed_query.replace(f"'{placeholder}'", "NULL")
-                            processed_query = processed_query.replace(placeholder, "NULL")
+                        processed_query = re.sub(null_pattern, "", processed_query)
                     elif isinstance(value, list):
-                        # Convert list to SQL array format
-                        escaped_values = [str(v).replace("'", "''") for v in value]
-                        array_values = "', '".join(escaped_values)
-                        array_str = f"ARRAY['{array_values}']"
-                        processed_query = processed_query.replace(placeholder, array_str)
+                        # Convert list to parameterized IN clause
+                        placeholders = ", ".join(["%s"] * len(value))
+                        processed_query = processed_query.replace(placeholder, f"({placeholders})")
+                        params.extend(value)
                     elif isinstance(value, dict):
-                        processed_query = processed_query.replace(placeholder, str(value))
+                        # Skip dict values
+                        continue
                     else:
-                        # Replace placeholder with value directly
-                        # Query templates should include quotes if needed (e.g., '{metric_name}' not {metric_name})
-                        escaped_value = str(value).replace("'", "''")
-                        processed_query = processed_query.replace(placeholder, escaped_value)
+                        # Replace with parameterized placeholder
+                        processed_query = processed_query.replace(placeholder, "%s")
+                        params.append(value)
 
-            # DEBUG LOG - Final check (forced to stderr)
-            if self.name in ["ci_aggregate", "metric"]:
-                import sys
-                print(f"[DEBUG FORCED {self.name}] Processed query (first 300 chars): {processed_query[:300]}", file=sys.stderr, flush=True)
-                # Check for remaining placeholders (re already imported at module level)
-                remaining = re.findall(r'\{[^}]+\}', processed_query)
-                if remaining:
-                    print(f"[DEBUG FORCED {self.name}] WARNING: Remaining placeholders: {set(remaining)}", file=sys.stderr, flush=True)
-
-        return processed_query
+        return processed_query, params
 
     async def _execute_database_query(
         self, context: ToolContext, input_data: dict[str, Any]
     ) -> ToolResult:
-        """Execute database query tool."""
+        """Execute database query tool with parameterized queries."""
         source_ref = self.tool_config.get("source_ref")
         query_template = self.tool_config.get("query_template")
 
@@ -317,26 +316,33 @@ class DynamicTool(BaseTool):
         # For history tool: override query_template based on source parameter
         source_param = input_data.get("source")
         if self.name == "history" and source_param and source_param != "event_log":
-            query = self._build_history_query_by_source(source_param, input_data)
+            query, params = self._build_history_query_by_source(source_param, input_data)
         else:
-            # Process query template to replace placeholders
-            query = self._process_query_template(query_template, input_data)
+            # Process query template to replace placeholders - now returns (query, params) tuple
+            query, params = self._process_query_template(query_template, input_data)
 
         # source_asset is a dict, not an object
-        connection_params = source_asset.get("connection", {})
         source_type = source_asset.get("source_type")
 
         if source_type == "postgres":
             from core.db import engine
             from sqlalchemy import text
 
-            # Use synchronous execution (engine is not async)
-            with engine.connect() as conn:
-                result = conn.execute(text(query))
-                rows = result.fetchall()
-                columns = result.keys()
-                output = [dict(zip(columns, row)) for row in rows]
-                return ToolResult(success=True, data={"rows": output})
+            try:
+                # Use parameterized query with bound parameters
+                with engine.connect() as conn:
+                    result = conn.execute(text(query), params)
+                    rows = result.fetchall()
+                    columns = result.keys()
+                    output = [dict(zip(columns, row)) for row in rows]
+                    return ToolResult(success=True, data={"rows": output})
+            except Exception as exc:
+                logger.error(f"Database query failed: {str(exc)}", extra={"query": query[:200]})
+                return ToolResult(
+                    success=False,
+                    error=f"Database query failed: {str(exc)}",
+                    error_details={"exception": str(exc)},
+                )
         else:
             return ToolResult(
                 success=False,
@@ -344,30 +350,28 @@ class DynamicTool(BaseTool):
                 error_details={"source_type": source_type},
             )
 
-    def _build_history_query_by_source(self, source: str, input_data: dict[str, Any]) -> str:
-        """Build history query based on source parameter.
+    def _build_history_query_by_source(self, source: str, input_data: dict[str, Any]) -> tuple[str, list]:
+        """Build history query based on source parameter with parameterized queries.
 
         Supports work_history, maintenance_history, and work_and_maintenance (UNION).
+
+        Returns:
+            Tuple of (query, params) for parameterized execution
         """
+        params = []
         tenant_id = input_data.get("tenant_id", "default")
         ci_id = input_data.get("ci_id")
         start_time = input_data.get("start_time")
         end_time = input_data.get("end_time")
         limit = input_data.get("limit", 30)
 
-        # Build filter clauses
-        time_filter = ""
-        if start_time:
-            time_filter += f" AND start_time >= '{start_time}'"
-        if end_time:
-            time_filter += f" AND start_time < '{end_time}'"
-
-        ci_filter = ""
-        if ci_id and ci_id != "None" and ci_id != "null":
-            ci_filter = f" AND ci_id = '{ci_id}'"
+        try:
+            limit = max(1, min(int(limit), 1000))
+        except (ValueError, TypeError):
+            limit = 30
 
         if source == "work_and_maintenance":
-            return f"""
+            query = """
             (
                 SELECT
                     '작업' AS history_type,
@@ -382,11 +386,11 @@ class DynamicTool(BaseTool):
                     c.ci_code
                 FROM work_history wh
                 LEFT JOIN ci c ON c.ci_id = wh.ci_id
-                WHERE wh.tenant_id = '{tenant_id}'
-                    {time_filter.replace('start_time', 'wh.start_time')}
-                    {ci_filter.replace('ci_id', 'wh.ci_id')}
+                WHERE wh.tenant_id = %s
+                    {wh_time_filter}
+                    {wh_ci_filter}
                 ORDER BY wh.start_time DESC
-                LIMIT {limit}
+                LIMIT %s
             )
             UNION ALL
             (
@@ -403,17 +407,69 @@ class DynamicTool(BaseTool):
                     c.ci_code
                 FROM maintenance_history mh
                 LEFT JOIN ci c ON c.ci_id = mh.ci_id
-                WHERE mh.tenant_id = '{tenant_id}'
-                    {time_filter.replace('start_time', 'mh.start_time')}
-                    {ci_filter.replace('ci_id', 'mh.ci_id')}
+                WHERE mh.tenant_id = %s
+                    {mh_time_filter}
+                    {mh_ci_filter}
                 ORDER BY mh.start_time DESC
-                LIMIT {limit}
+                LIMIT %s
             )
             ORDER BY start_time DESC
-            LIMIT {limit * 2}
+            LIMIT %s
             """
+
+            # Build parameterized filters
+            wh_time_filter = ""
+            mh_time_filter = ""
+            wh_ci_filter = ""
+            mh_ci_filter = ""
+
+            if start_time:
+                wh_time_filter = "AND wh.start_time >= %s"
+                mh_time_filter = "AND mh.start_time >= %s"
+            if end_time:
+                if start_time:
+                    wh_time_filter += " AND wh.start_time < %s"
+                    mh_time_filter += " AND mh.start_time < %s"
+                else:
+                    wh_time_filter = "AND wh.start_time < %s"
+                    mh_time_filter = "AND mh.start_time < %s"
+
+            if ci_id and ci_id not in ("None", "null"):
+                wh_ci_filter = "AND wh.ci_id = %s::uuid"
+                mh_ci_filter = "AND mh.ci_id = %s::uuid"
+
+            query = query.format(
+                wh_time_filter=wh_time_filter,
+                wh_ci_filter=wh_ci_filter,
+                mh_time_filter=mh_time_filter,
+                mh_ci_filter=mh_ci_filter
+            )
+
+            # Build params list
+            params = [tenant_id]
+            if start_time:
+                params.append(start_time)
+            if end_time:
+                params.append(end_time)
+            if ci_id and ci_id not in ("None", "null"):
+                params.append(ci_id)
+            params.append(limit)
+
+            # Second part (maintenance_history)
+            params.append(tenant_id)
+            if start_time:
+                params.append(start_time)
+            if end_time:
+                params.append(end_time)
+            if ci_id and ci_id not in ("None", "null"):
+                params.append(ci_id)
+            params.append(limit)
+
+            # Final LIMIT
+            params.append(limit * 2)
+
         elif source == "work_history":
-            return f"""
+            query = """
             SELECT
                 wh.start_time,
                 wh.work_type,
@@ -428,14 +484,40 @@ class DynamicTool(BaseTool):
                 c.ci_code
             FROM work_history wh
             LEFT JOIN ci c ON c.ci_id = wh.ci_id
-            WHERE wh.tenant_id = '{tenant_id}'
-                {time_filter.replace('start_time', 'wh.start_time')}
-                {ci_filter.replace('ci_id', 'wh.ci_id')}
+            WHERE wh.tenant_id = %s
+                {time_filter}
+                {ci_filter}
             ORDER BY wh.start_time DESC
-            LIMIT {limit}
+            LIMIT %s
             """
+
+            time_filter = ""
+            ci_filter = ""
+
+            if start_time:
+                time_filter += "AND wh.start_time >= %s"
+            if end_time:
+                if time_filter:
+                    time_filter += " AND wh.start_time < %s"
+                else:
+                    time_filter = "AND wh.start_time < %s"
+
+            if ci_id and ci_id not in ("None", "null"):
+                ci_filter = "AND wh.ci_id = %s::uuid"
+
+            query = query.format(time_filter=time_filter, ci_filter=ci_filter)
+
+            params = [tenant_id]
+            if start_time:
+                params.append(start_time)
+            if end_time:
+                params.append(end_time)
+            if ci_id and ci_id not in ("None", "null"):
+                params.append(ci_id)
+            params.append(limit)
+
         elif source == "maintenance_history":
-            return f"""
+            query = """
             SELECT
                 mh.start_time,
                 mh.maint_type,
@@ -448,17 +530,44 @@ class DynamicTool(BaseTool):
                 c.ci_code
             FROM maintenance_history mh
             LEFT JOIN ci c ON c.ci_id = mh.ci_id
-            WHERE mh.tenant_id = '{tenant_id}'
-                {time_filter.replace('start_time', 'mh.start_time')}
-                {ci_filter.replace('ci_id', 'mh.ci_id')}
+            WHERE mh.tenant_id = %s
+                {time_filter}
+                {ci_filter}
             ORDER BY mh.start_time DESC
-            LIMIT {limit}
+            LIMIT %s
             """
+
+            time_filter = ""
+            ci_filter = ""
+
+            if start_time:
+                time_filter += "AND mh.start_time >= %s"
+            if end_time:
+                if time_filter:
+                    time_filter += " AND mh.start_time < %s"
+                else:
+                    time_filter = "AND mh.start_time < %s"
+
+            if ci_id and ci_id not in ("None", "null"):
+                ci_filter = "AND mh.ci_id = %s::uuid"
+
+            query = query.format(time_filter=time_filter, ci_filter=ci_filter)
+
+            params = [tenant_id]
+            if start_time:
+                params.append(start_time)
+            if end_time:
+                params.append(end_time)
+            if ci_id and ci_id not in ("None", "null"):
+                params.append(ci_id)
+            params.append(limit)
         else:
             # Fallback to event_log
             return self._process_query_template(
                 self.tool_config.get("query_template", ""), input_data
             )
+
+        return query, params
 
     async def _execute_http_api(
         self, context: ToolContext, input_data: dict[str, Any]
@@ -632,18 +741,19 @@ class DynamicTool(BaseTool):
             pg_node_info = {}
 
             if node_ids_list:
-                # Query PostgreSQL for authoritative CI info
-                placeholders = ", ".join(f"'{nid}'" for nid in node_ids_list)
+                # Query PostgreSQL for authoritative CI info - use parameterized query
+                placeholders = ", ".join(["%s"] * len(node_ids_list))
                 pg_query = f"""
                 SELECT ci_id::text, ci_code, ci_name, ci_type::text,
                        ci_subtype::text, status
                 FROM ci
-                WHERE tenant_id = '{tenant_id}'
+                WHERE tenant_id = %s
                   AND ci_id::text IN ({placeholders})
                   AND deleted_at IS NULL
                 """
                 with engine.connect() as conn:
-                    result = conn.execute(text(pg_query))
+                    params = [tenant_id] + node_ids_list
+                    result = conn.execute(text(pg_query), params)
                     for row in result:
                         row_dict = dict(row._mapping)
                         pg_node_info[row_dict["ci_id"]] = row_dict

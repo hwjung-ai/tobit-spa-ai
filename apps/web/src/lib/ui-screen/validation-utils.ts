@@ -6,13 +6,45 @@
   - Generate user-friendly error messages
 */
 
-import { ScreenSchemaV1, ScreenAction, ComponentActionRef } from "./screen.schema";
+import { ScreenSchemaV1, ScreenAction, ComponentActionRef, StateSchema } from "./screen.schema";
 import {
   parseBindingExpression,
   isValidPath,
   detectCircularBindings,
   extractBindingsFromObject,
 } from "./binding-path-utils";
+
+/**
+ * Extract schema structure from initial state values
+ * This is used when state.schema is not defined but state.initial is available
+ */
+function extractSchemaFromInitial(initial: Record<string, unknown>): StateSchema {
+  const schema: StateSchema = {};
+  
+  for (const [key, value] of Object.entries(initial)) {
+    // Preserve type information based on value
+    if (value === null) {
+      schema[key] = { type: "string" };
+    } else if (Array.isArray(value)) {
+      // For arrays, try to infer item type from first element
+      schema[key] = { type: "array" };
+    } else if (typeof value === "object" && value !== null) {
+      // Nested object - recursively extract schema
+      const nestedSchema = extractSchemaFromInitial(value as Record<string, unknown>);
+      schema[key] = { type: "object", properties: nestedSchema };
+    } else if (typeof value === "string") {
+      schema[key] = { type: "string" };
+    } else if (typeof value === "number") {
+      schema[key] = { type: "number" };
+    } else if (typeof value === "boolean") {
+      schema[key] = { type: "boolean" };
+    } else {
+      schema[key] = { type: "any" };
+    }
+  }
+  
+  return schema;
+}
 
 /**
  * Validation error structure
@@ -126,11 +158,25 @@ export function validateBindingPath(
       return errors;
     }
 
-    if (schema?.state?.schema) {
-      if (!isValidPath(path, schema.state.schema)) {
+    // Check if schema exists, if not, try to extract from initial values
+    let stateSchema = schema?.state?.schema;
+    
+    // If schema is undefined but initial values exist, extract schema structure from initial values
+    if (!stateSchema && schema?.state?.initial) {
+      stateSchema = extractSchemaFromInitial(schema.state.initial);
+    }
+    
+    if (stateSchema) {
+      if (!isValidPath(path, stateSchema)) {
+        const availablePaths = Object.keys(stateSchema);
+        // Limit available paths display to avoid overwhelming error messages
+        const displayPaths = availablePaths.length > 10
+          ? [...availablePaths.slice(0, 10), `... and ${availablePaths.length - 10} more`].join(", ")
+          : availablePaths.join(", ");
+        
         errors.push({
           path: pathExpr,
-          message: `Path "${path}" not found in state schema. Available paths: ${Object.keys(schema.state.schema).join(", ")}`,
+          message: `Path "${path}" not found in state schema. Available paths: ${displayPaths}`,
           severity: "warning",
           type: "path-not-found",
         });
@@ -335,6 +381,16 @@ export function validateVisibilityExpression(
 ): ValidationError[] {
   if (!expr) return []; // No visibility rule is OK
 
+  // expr should be a string (the rule value)
+  if (typeof expr !== "string") {
+    return [{
+      path: "visibility.rule",
+      message: "Visibility rule must be a string",
+      severity: "error",
+      type: "invalid-visibility-rule-type",
+    }];
+  }
+
   return validateBindingPath(expr, schema).map((e) => ({
     ...e,
     type: "visibility-rule",
@@ -391,10 +447,13 @@ export function validateScreenBindings(
  * Validate component visibility settings
  */
 export function validateComponentVisibility(
-  rule: string | null | undefined,
+  visibility: { rule?: string | null } | null | undefined,
   schema?: ScreenSchemaV1,
   componentId?: string
 ): ValidationError[] {
+  if (!visibility) return [];
+
+  const rule = visibility.rule;
   if (!rule) return [];
 
   const errors = validateVisibilityExpression(rule, schema);
@@ -444,10 +503,10 @@ export function validateScreenSchema(
     }
 
     // Validate component visibility
-    if (component.visibility?.rule) {
+    if (component.visibility) {
       errors.push(
         ...validateComponentVisibility(
-          component.visibility.rule,
+          component.visibility,
           screen,
           component.id
         )

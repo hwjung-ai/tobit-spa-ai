@@ -13,7 +13,7 @@ from schemas.common import ResponseEnvelope
 from sqlalchemy import select
 from sqlmodel import Session
 
-from .executor import execute_http_api, execute_sql_api, normalize_limit
+from .executor import execute_http_api, execute_sql_api, normalize_limit, is_http_logic_body
 from .script_executor import execute_script_api
 from .workflow_executor import execute_workflow_api
 
@@ -73,6 +73,35 @@ async def handle_runtime_request(
     executed_by = request.headers.get("X-Executed-By") or "anonymous"
 
     if api.mode == "sql":
+        if is_http_logic_body(api.logic):
+            result = execute_http_api(
+                session=session,
+                api_id=str(api.id),
+                logic_body=api.logic,
+                params=params,
+                executed_by=executed_by,
+                internal_app=request.app,
+            )
+            return ResponseEnvelope.success(
+                data={
+                    "api": {
+                        "api_id": str(api.id),
+                        "api_name": api.name,
+                        "endpoint": api.path,
+                        "method": api.method,
+                    },
+                    "result": {
+                        "columns": result.columns,
+                        "rows": result.rows,
+                        "row_count": result.row_count,
+                        "duration_ms": result.duration_ms,
+                    },
+                    "references": {
+                        "http_spec": api.logic,
+                        "params": result.params,
+                    },
+                }
+            )
         result = execute_sql_api(
             session=session,
             api_id=str(api.id),
@@ -153,6 +182,7 @@ async def handle_runtime_request(
             logic_body=api.logic,
             params=params,
             executed_by=executed_by,
+            internal_app=request.app,
         )
         return ResponseEnvelope.success(
             data={

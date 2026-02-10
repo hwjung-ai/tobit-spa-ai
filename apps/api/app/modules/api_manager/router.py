@@ -1,9 +1,11 @@
 """API Manager routes for dynamic API management"""
 
+import json
 import logging
 import uuid
 from datetime import datetime
 from typing import Optional
+from urllib.parse import urlparse, urlunparse
 
 from core.auth import get_current_user
 from core.db import get_session
@@ -22,7 +24,7 @@ from sqlmodel import Session, select
 from app.modules.auth.models import TbUser
 
 from .crud import DRY_RUN_API_ID, list_exec_logs
-from .executor import execute_http_api, execute_sql_api
+from .executor import execute_http_api, execute_sql_api, is_http_logic_body
 from .script_executor import execute_script_api
 from .services.sql_validator import SQLValidator
 from .workflow_executor import execute_workflow_api
@@ -60,6 +62,47 @@ def _next_version(session: Session, api_id: uuid.UUID) -> int:
     )
     latest = session.exec(statement).first()
     return (latest.version + 1) if latest else 1
+
+
+def _rewrite_http_logic_for_request(logic_body: str, request: Request | None) -> str:
+    """Rewrite local HTTP targets to current API host for dry-run/execute stability."""
+    if request is None:
+        return logic_body
+    try:
+        spec = json.loads(logic_body or "{}")
+    except (ValueError, TypeError):
+        return logic_body
+    if not isinstance(spec, dict):
+        return logic_body
+
+    raw_url = spec.get("url")
+    if not isinstance(raw_url, str) or not raw_url.strip():
+        return logic_body
+    url = raw_url.strip()
+
+    base_url = str(request.base_url).rstrip("/")
+    parsed = urlparse(url)
+    rewritten = url
+
+    if url.startswith("/"):
+        rewritten = f"{base_url}{url}"
+    elif parsed.scheme in {"http", "https"} and parsed.hostname in {"127.0.0.1", "localhost"}:
+        current = urlparse(base_url)
+        rewritten = urlunparse(
+            (
+                current.scheme or parsed.scheme,
+                current.netloc,
+                parsed.path,
+                parsed.params,
+                parsed.query,
+                parsed.fragment,
+            )
+        )
+
+    if rewritten != url:
+        spec["url"] = rewritten
+        return json.dumps(spec, ensure_ascii=False)
+    return logic_body
 
 
 def _record_api_version(
@@ -143,6 +186,7 @@ async def list_apis(
                 "tags": api.tags or [],
                 "mode": api.mode.value if api.mode else None,
                 "logic": api.logic,
+                "runtime_policy": api.runtime_policy or {},
                 "is_enabled": api.is_enabled,
                 "created_at": api.created_at.isoformat() if api.created_at else None,
                 "updated_at": api.updated_at.isoformat() if api.updated_at else None,
@@ -255,6 +299,7 @@ async def register_discovered_endpoints(
                 existing.name = existing.name or endpoint.get("operationId") or f"{method} {path}"
                 existing.description = existing.description or endpoint.get("summary")
                 existing.tags = endpoint.get("tags") or existing.tags or []
+                existing.runtime_policy = existing.runtime_policy or {}
                 existing.updated_at = datetime.utcnow()
                 session.add(existing)
                 updated += 1
@@ -352,9 +397,15 @@ async def create_or_update_api(
                 if request.logic_type == "sql"
                 else request.logic_body
             )
+            api.runtime_policy = request.runtime_policy or {}
+            if api_mode in {ApiMode.script, ApiMode.python} and "allow_runtime" not in api.runtime_policy:
+                api.runtime_policy = {**api.runtime_policy, "allow_runtime": True}
             api.updated_at = datetime.utcnow()
         else:
             # Create new API
+            runtime_policy = request.runtime_policy or {}
+            if api_mode in {ApiMode.script, ApiMode.python} and "allow_runtime" not in runtime_policy:
+                runtime_policy = {**runtime_policy, "allow_runtime": True}
             api = ApiDefinition(
                 scope=api_scope,
                 name=request.api_name,
@@ -364,6 +415,7 @@ async def create_or_update_api(
                 tags=request.tags,
                 mode=api_mode,
                 logic=request.logic_body,
+                runtime_policy=runtime_policy,
                 is_enabled=request.is_active,
             )
             session.add(api)
@@ -389,6 +441,7 @@ async def create_or_update_api(
                 "tags": api.tags or [],
                 "mode": api.mode.value if api.mode else None,
                 "logic": api.logic,
+                "runtime_policy": api.runtime_policy or {},
                 "is_enabled": api.is_enabled,
                 "created_at": api.created_at.isoformat()
                 if api.created_at
@@ -433,6 +486,9 @@ async def create_api(
             description=request.description,
             mode=api_mode,
             logic=request.logic,
+            runtime_policy=(
+                {"allow_runtime": True} if api_mode in {ApiMode.script, ApiMode.python} else {}
+            ),
             is_enabled=True,
         )
         session.add(api)
@@ -454,6 +510,7 @@ async def create_api(
             "path": api.path,
             "mode": api.mode.value if api.mode else None,
             "logic": api.logic,
+            "runtime_policy": api.runtime_policy or {},
             "is_enabled": api.is_enabled,
             "version": 1,
         })
@@ -484,6 +541,7 @@ async def get_api(
             "tags": api.tags or [],
             "mode": api.mode.value if api.mode else None,
             "logic": api.logic,
+            "runtime_policy": api.runtime_policy or {},
             "is_enabled": api.is_enabled,
             "created_at": api.created_at.isoformat() if api.created_at else None,
             "updated_at": api.updated_at.isoformat() if api.updated_at else None,
@@ -527,6 +585,9 @@ async def update_api(
         api.tags = request.tags
         api.mode = api_mode
         api.logic = request.logic_body
+        api.runtime_policy = request.runtime_policy or {}
+        if api_mode in {ApiMode.script, ApiMode.python} and "allow_runtime" not in api.runtime_policy:
+            api.runtime_policy = {**api.runtime_policy, "allow_runtime": True}
         api.is_enabled = request.is_active
         api.updated_at = datetime.utcnow()
 
@@ -552,6 +613,7 @@ async def update_api(
                 "tags": api.tags or [],
                 "mode": api.mode.value if api.mode else None,
                 "logic": api.logic,
+                "runtime_policy": api.runtime_policy or {},
                 "is_enabled": api.is_enabled,
                 "created_at": api.created_at.isoformat()
                 if api.created_at
@@ -719,6 +781,7 @@ async def validate_sql(
 async def execute_api(
     api_id: str,
     request: ExecuteApiRequest,
+    http_request: Request,
     session: Session = Depends(get_session),
     current_user: TbUser = Depends(get_current_user),
 ):
@@ -747,6 +810,17 @@ async def execute_api(
             }
 
         if mode == "sql":
+            if is_http_logic_body(api.logic):
+                rewritten_logic_body = _rewrite_http_logic_for_request(api.logic, http_request)
+                result = execute_http_api(
+                    session=session,
+                    api_id=str(api.id),
+                    logic_body=rewritten_logic_body,
+                    params=request.params or None,
+                    executed_by=executed_by,
+                    internal_app=getattr(http_request, "app", None),
+                )
+                return ResponseEnvelope.success(data={"result": _result_dict(result)})
             result = execute_sql_api(
                 session=session,
                 api_id=str(api.id),
@@ -758,12 +832,14 @@ async def execute_api(
             return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
         if mode == "http":
+            rewritten_logic_body = _rewrite_http_logic_for_request(api.logic, http_request)
             result = execute_http_api(
                 session=session,
                 api_id=str(api.id),
-                logic_body=api.logic,
+                logic_body=rewritten_logic_body,
                 params=request.params or None,
                 executed_by=executed_by,
+                internal_app=getattr(http_request, "app", None),
             )
             return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
@@ -814,6 +890,7 @@ async def execute_api(
 @router.post("/{api_id}/test", response_model=ResponseEnvelope)
 async def run_tests(
     api_id: str,
+    http_request: Request,
     session: Session = Depends(get_session),
     current_user: TbUser = Depends(get_current_user),
 ):
@@ -880,12 +957,16 @@ async def run_tests(
                     "columns": result.columns,
                 })
             elif mode == "http":
+                rewritten_logic_body = _rewrite_http_logic_for_request(
+                    api.logic, http_request
+                )
                 result = execute_http_api(
                     session=session,
                     api_id=DRY_RUN_API_ID,
-                    logic_body=api.logic,
+                    logic_body=rewritten_logic_body,
                     params=test_params or None,
                     executed_by="test-runner",
+                    internal_app=getattr(http_request, "app", None),
                 )
                 test_results.append({
                     "test_id": "execution",
@@ -1041,17 +1122,23 @@ async def delete_api(
 
 
 @router.post("/dry-run", response_model=ResponseEnvelope)
-async def dry_run(request: dict, session: Session = Depends(get_session)):
+async def dry_run(
+    request: dict,
+    http_request: Request,
+    session: Session = Depends(get_session),
+):
     """
     Execute query without saving to execution logs (dry-run/test).
     Uses DRY_RUN_API_ID so that record_exec_log() skips logging.
 
-    Supports: sql, http
+    Supports: sql, http, script/python, workflow
     """
     try:
         logic_type = request.get("logic_type", "sql")
         logic_body = request.get("logic_body", "")
         params = request.get("params", {})
+        input_payload = request.get("input")
+        runtime_policy = request.get("runtime_policy")
 
         if not logic_body:
             raise HTTPException(400, "logic_body is required")
@@ -1078,14 +1165,61 @@ async def dry_run(request: dict, session: Session = Depends(get_session)):
             return ResponseEnvelope.success(data={"result": _result_dict(result)})
 
         if logic_type == "http":
+            rewritten_logic_body = _rewrite_http_logic_for_request(
+                logic_body, http_request
+            )
             result = execute_http_api(
+                session=session,
+                api_id=DRY_RUN_API_ID,
+                logic_body=rewritten_logic_body,
+                params=params or None,
+                executed_by="dry-run",
+                internal_app=getattr(http_request, "app", None),
+            )
+            return ResponseEnvelope.success(data={"result": _result_dict(result)})
+
+        if logic_type in {"script", "python"}:
+            effective_policy = runtime_policy if isinstance(runtime_policy, dict) else {}
+            # Dry-run should be test-friendly: if not explicitly configured, allow runtime.
+            if "allow_runtime" not in effective_policy:
+                effective_policy = {
+                    **effective_policy,
+                    "allow_runtime": True,
+                }
+            result = execute_script_api(
                 session=session,
                 api_id=DRY_RUN_API_ID,
                 logic_body=logic_body,
                 params=params or None,
+                input_payload=input_payload,
                 executed_by="dry-run",
+                runtime_policy=effective_policy,
             )
-            return ResponseEnvelope.success(data={"result": _result_dict(result)})
+            return ResponseEnvelope.success(data={"result": result.model_dump()})
+
+        if logic_type == "workflow":
+            import json as _json
+
+            class _WfAdapter:
+                def __init__(self, workflow_logic: str):
+                    self.id = DRY_RUN_API_ID
+                    self.api_id = DRY_RUN_API_ID
+                    self.logic_spec = {}
+                    self.logic = workflow_logic
+                    try:
+                        self.logic_spec = _json.loads(workflow_logic or "{}")
+                    except (ValueError, TypeError):
+                        pass
+
+            result = execute_workflow_api(
+                session=session,
+                workflow_api=_WfAdapter(logic_body),
+                params=params or {},
+                input_payload=input_payload,
+                executed_by="dry-run",
+                limit=request.get("limit"),
+            )
+            return ResponseEnvelope.success(data={"result": result.model_dump()})
 
         raise HTTPException(400, f"Dry-run not supported for logic_type: {logic_type}")
 

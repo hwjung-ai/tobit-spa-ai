@@ -6,6 +6,7 @@ import json
 import re
 from time import perf_counter
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import HTTPException
@@ -39,6 +40,7 @@ HTTP_TIMEOUT = 5.0
 
 # Template pattern: {{params.field}} or {{params.nested.field}}
 PLACEHOLDER_PATTERN = re.compile(r"{{\s*([^}\s]+)\s*}}")
+BIND_PARAM_PATTERN = re.compile(r"(?<!:):([a-zA-Z_][a-zA-Z0-9_]*)")
 
 
 def _resolve_path(source: Any, keys: list[str], error_message: str) -> Any:
@@ -119,11 +121,35 @@ def normalize_limit(value: int | None) -> int:
     return min(value, MAX_LIMIT)
 
 
-def validate_select_sql(sql: str) -> None:
+def is_http_logic_body(logic_body: str) -> bool:
+    """Detect HTTP JSON spec accidentally stored under SQL mode."""
+    if not logic_body or not isinstance(logic_body, str):
+        return False
+    raw = logic_body.strip()
+    if not raw.startswith("{"):
+        return False
+    try:
+        spec = json.loads(raw)
+    except json.JSONDecodeError:
+        return False
+    if not isinstance(spec, dict):
+        return False
+    return isinstance(spec.get("url"), str) and bool(spec.get("url").strip())
+
+
+def _normalize_sql_for_execution(sql: str) -> str:
+    """Allow a single trailing semicolon but reject multi-statement SQL."""
     normalized = sql.strip()
+    if ";" not in normalized:
+        return normalized
+    if normalized.endswith(";") and ";" not in normalized[:-1]:
+        return normalized[:-1].rstrip()
+    raise HTTPException(status_code=400, detail="Semicolons are not allowed")
+
+
+def validate_select_sql(sql: str) -> str:
+    normalized = _normalize_sql_for_execution(sql)
     upper = normalized.upper()
-    if ";" in sql:
-        raise HTTPException(status_code=400, detail="Semicolons are not allowed")
     if not (upper.startswith("SELECT") or upper.startswith("WITH")):
         raise HTTPException(
             status_code=400, detail="Only SELECT/WITH statements are allowed"
@@ -134,6 +160,7 @@ def validate_select_sql(sql: str) -> None:
             status_code=400,
             detail=f"Forbidden keyword detected: {match.group(0)}",
         )
+    return normalized
 
 
 def execute_sql_api(
@@ -144,10 +171,14 @@ def execute_sql_api(
     limit: int | None,
     executed_by: str,
 ) -> ApiExecuteResponse:
-    validate_select_sql(logic_body)
+    normalized_sql = validate_select_sql(logic_body)
     final_limit = normalize_limit(limit)
-    bind_params = {**(params or {}), "_limit": final_limit}
-    wrapped_sql = f"SELECT * FROM ({logic_body}) AS api_exec_limit LIMIT :_limit"
+    bind_params = dict(params or {})
+    # Fill missing named binds with None so optional SQL params can be omitted in dry-run/execute.
+    for name in set(BIND_PARAM_PATTERN.findall(normalized_sql)):
+        bind_params.setdefault(name, None)
+    bind_params["_limit"] = final_limit
+    wrapped_sql = f"SELECT * FROM ({normalized_sql}) AS api_exec_limit LIMIT :_limit"
     start = perf_counter()
     status = "success"
     error_message: str | None = None
@@ -188,7 +219,7 @@ def execute_sql_api(
             # Reset session state to avoid PendingRollbackError
             session.rollback()
     return ApiExecuteResponse(
-        executed_sql=logic_body,
+        executed_sql=normalized_sql,
         params=params or {},
         columns=columns,
         rows=rows,
@@ -203,6 +234,7 @@ def execute_http_api(
     logic_body: str,
     params: dict[str, Any] | None,
     executed_by: str,
+    internal_app: Any | None = None,
 ) -> ApiExecuteResponse:
     try:
         spec = json.loads(logic_body) if logic_body else {}
@@ -224,19 +256,40 @@ def execute_http_api(
     status = "success"
     error_message: str | None = None
     try:
-        response = httpx.request(
-            method,
-            url,
-            params=query_params,
-            headers=headers,
-            json=data,
-            timeout=HTTP_TIMEOUT,
+        parsed = urlparse(url)
+        is_local_target = (
+            (parsed.scheme in {"http", "https"} and parsed.hostname in {"127.0.0.1", "localhost", "testserver"})
+            or (not parsed.scheme and url.startswith("/"))
         )
+        if internal_app is not None and is_local_target:
+            from starlette.testclient import TestClient  # lazy import to avoid reload deadlock
+
+            internal_path = parsed.path or "/"
+            if parsed.query:
+                internal_path = f"{internal_path}?{parsed.query}"
+            with TestClient(internal_app) as client:
+                response = client.request(
+                    method,
+                    internal_path,
+                    params=query_params,
+                    headers=headers,
+                    json=data,
+                    timeout=HTTP_TIMEOUT,
+                )
+        else:
+            response = httpx.request(
+                method,
+                url,
+                params=query_params,
+                headers=headers,
+                json=data,
+                timeout=HTTP_TIMEOUT,
+            )
     except Exception as exc:
         status = "fail"
         error_message = str(exc)
         raise HTTPException(
-            status_code=502, detail="External HTTP request failed"
+            status_code=502, detail=f"External HTTP request failed: {str(exc)}"
         ) from exc
     finally:
         duration_ms = int((perf_counter() - start) * 1000)

@@ -10,11 +10,14 @@ import pytest
 from app.modules.api_manager.executor import (
     _render_http_templates,
     execute_http_api,
+    execute_sql_api,
+    is_http_logic_body,
     normalize_limit,
     validate_select_sql,
 )
 from app.modules.api_manager.router import (
     ExecuteApiRequest,
+    dry_run,
     execute_api,
     get_logs,
     get_versions,
@@ -35,9 +38,18 @@ def _api_stub(mode: str, logic: str = "SELECT 1", runtime_policy: dict | None = 
     )
 
 
+def _http_request_stub(base_url: str = "http://testserver/"):
+    return SimpleNamespace(base_url=base_url)
+
+
 def test_validate_select_sql_valid_select_and_with():
     validate_select_sql("SELECT id FROM users")
     validate_select_sql("WITH t AS (SELECT 1) SELECT * FROM t")
+
+
+def test_validate_select_sql_allows_single_trailing_semicolon():
+    normalized = validate_select_sql("SELECT 1;")
+    assert normalized == "SELECT 1"
 
 
 @pytest.mark.parametrize(
@@ -67,6 +79,11 @@ def test_validate_select_sql_rejects_unsafe(sql: str, expected: str):
 )
 def test_normalize_limit(value: int | None, expected: int):
     assert normalize_limit(value) == expected
+
+
+def test_is_http_logic_body_detects_http_json():
+    assert is_http_logic_body('{"method":"GET","url":"https://example.com"}') is True
+    assert is_http_logic_body("SELECT 1") is False
 
 
 def test_render_http_templates_nested_success():
@@ -127,6 +144,33 @@ def test_execute_http_api_success(mock_request: Mock, mock_log: Mock):
 
 
 @patch("app.modules.api_manager.executor.record_exec_log")
+@patch("app.modules.api_manager.executor.httpx.request")
+def test_execute_http_api_local_target_uses_internal_app(mock_request: Mock, mock_log: Mock):
+    from fastapi import FastAPI
+
+    app = FastAPI()
+
+    @app.get("/health")
+    def _health():
+        return {"status": "ok"}
+
+    session = Mock(spec=Session)
+    result = execute_http_api(
+        session=session,
+        api_id="api-1",
+        logic_body=json.dumps({"method": "GET", "url": "http://127.0.0.1:8000/health"}),
+        params={},
+        executed_by="tester",
+        internal_app=app,
+    )
+
+    assert result.row_count == 1
+    assert result.rows[0]["status"] == "ok"
+    mock_request.assert_not_called()
+    mock_log.assert_called_once()
+
+
+@patch("app.modules.api_manager.executor.record_exec_log")
 def test_execute_http_api_invalid_json(mock_log: Mock):
     session = Mock(spec=Session)
     with pytest.raises(HTTPException) as exc:
@@ -178,6 +222,7 @@ async def test_router_execute_api_sql_dispatch(mock_exec: Mock):
     envelope = await execute_api(
         api_id="api-1",
         request=ExecuteApiRequest(params={}),
+        http_request=_http_request_stub(),
         session=session,
         current_user=SimpleNamespace(id="u1"),
     )
@@ -185,6 +230,39 @@ async def test_router_execute_api_sql_dispatch(mock_exec: Mock):
     assert envelope.code == 0
     assert envelope.data["result"]["row_count"] == 1
     mock_exec.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.modules.api_manager.router.execute_http_api")
+@patch("app.modules.api_manager.router.execute_sql_api")
+async def test_router_execute_api_sql_mode_http_logic_fallback(
+    mock_sql_exec: Mock, mock_http_exec: Mock
+):
+    mock_http_exec.return_value = ApiExecuteResponse(
+        executed_sql="HTTP GET https://api.example.com",
+        params={},
+        columns=["ok"],
+        rows=[{"ok": True}],
+        row_count=1,
+        duration_ms=1,
+    )
+    session = Mock(spec=Session)
+    session.get.return_value = _api_stub(
+        "sql", json.dumps({"method": "GET", "url": "http://127.0.0.1:8000/health"})
+    )
+
+    envelope = await execute_api(
+        api_id="api-1",
+        request=ExecuteApiRequest(params={}),
+        http_request=_http_request_stub(),
+        session=session,
+        current_user=SimpleNamespace(id="u1"),
+    )
+
+    assert envelope.code == 0
+    assert envelope.data["result"]["rows"][0]["ok"] is True
+    mock_http_exec.assert_called_once()
+    mock_sql_exec.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -200,12 +278,13 @@ async def test_router_execute_api_http_dispatch(mock_exec: Mock):
     )
     session = Mock(spec=Session)
     session.get.return_value = _api_stub(
-        "http", json.dumps({"method": "GET", "url": "https://api.example.com"})
+        "http", json.dumps({"method": "GET", "url": "http://127.0.0.1:8000/health"})
     )
 
     envelope = await execute_api(
         api_id="api-1",
         request=ExecuteApiRequest(params={}),
+        http_request=_http_request_stub(),
         session=session,
         current_user=SimpleNamespace(id="u1"),
     )
@@ -213,6 +292,33 @@ async def test_router_execute_api_http_dispatch(mock_exec: Mock):
     assert envelope.code == 0
     assert envelope.data["result"]["rows"][0]["ok"] is True
     mock_exec.assert_called_once()
+    assert "http://testserver/health" in mock_exec.call_args.kwargs["logic_body"]
+
+
+@patch("app.modules.api_manager.executor.record_exec_log")
+def test_execute_sql_api_fills_missing_named_bind_with_none(mock_log: Mock):
+    session = Mock(spec=Session)
+    result_proxy = Mock()
+    result_proxy.keys.return_value = ["value"]
+    row = Mock()
+    row._mapping = {"value": 1}
+    result_proxy.__iter__ = Mock(return_value=iter([row]))
+    session.exec.side_effect = [None, result_proxy]
+
+    result = execute_sql_api(
+        session=session,
+        api_id="api-1",
+        logic_body="SELECT COALESCE(:name, 'default') AS value",
+        params={},
+        limit=10,
+        executed_by="tester",
+    )
+
+    assert result.row_count == 1
+    call_params = session.exec.call_args_list[1].kwargs["params"]
+    assert call_params["name"] is None
+    assert call_params["_limit"] == 10
+    mock_log.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -238,6 +344,7 @@ async def test_router_execute_api_script_dispatch(mock_exec: Mock):
     envelope = await execute_api(
         api_id="api-1",
         request=ExecuteApiRequest(params={}),
+        http_request=_http_request_stub(),
         session=session,
         current_user=SimpleNamespace(id="u1"),
     )
@@ -259,6 +366,7 @@ async def test_router_execute_api_workflow_dispatch(mock_exec: Mock):
     envelope = await execute_api(
         api_id="api-1",
         request=ExecuteApiRequest(params={}),
+        http_request=_http_request_stub(),
         session=session,
         current_user=SimpleNamespace(id="u1"),
     )
@@ -266,6 +374,118 @@ async def test_router_execute_api_workflow_dispatch(mock_exec: Mock):
     assert envelope.code == 0
     assert envelope.data["result"]["final_output"]["ok"] is True
     mock_exec.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.modules.api_manager.router.execute_script_api")
+async def test_router_dry_run_script_dispatch(mock_exec: Mock):
+    mock_exec.return_value = SimpleNamespace(
+        model_dump=lambda: {
+            "output": {"ok": True},
+            "params": {"x": 1},
+            "input": None,
+            "duration_ms": 3,
+            "references": {},
+            "logs": [],
+        }
+    )
+    session = Mock(spec=Session)
+
+    envelope = await dry_run(
+        request={
+            "logic_type": "script",
+            "logic_body": "def main(params, input_payload, ctx): return {'ok': True}",
+            "params": {"x": 1},
+            "runtime_policy": {"allow_runtime": True},
+        },
+        http_request=_http_request_stub(),
+        session=session,
+    )
+
+    assert envelope.code == 0
+    assert envelope.data["result"]["output"]["ok"] is True
+    mock_exec.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.modules.api_manager.router.execute_script_api")
+async def test_router_dry_run_script_defaults_allow_runtime(mock_exec: Mock):
+    mock_exec.return_value = SimpleNamespace(
+        model_dump=lambda: {
+            "output": {"ok": True},
+            "params": {},
+            "input": None,
+            "duration_ms": 1,
+            "references": {},
+            "logs": [],
+        }
+    )
+    session = Mock(spec=Session)
+
+    envelope = await dry_run(
+        request={
+            "logic_type": "script",
+            "logic_body": "def main(params, input_payload, ctx): return {'ok': True}",
+            "params": {},
+        },
+        http_request=_http_request_stub(),
+        session=session,
+    )
+
+    assert envelope.code == 0
+    assert envelope.data["result"]["output"]["ok"] is True
+    assert mock_exec.call_args.kwargs["runtime_policy"]["allow_runtime"] is True
+
+
+@pytest.mark.asyncio
+@patch("app.modules.api_manager.router.execute_workflow_api")
+async def test_router_dry_run_workflow_dispatch(mock_exec: Mock):
+    mock_exec.return_value = SimpleNamespace(
+        model_dump=lambda: {"steps": [], "final_output": {"ok": True}, "references": []}
+    )
+    session = Mock(spec=Session)
+
+    envelope = await dry_run(
+        request={
+            "logic_type": "workflow",
+            "logic_body": '{"version":1,"nodes":[]}',
+            "params": {},
+        },
+        http_request=_http_request_stub(),
+        session=session,
+    )
+
+    assert envelope.code == 0
+    assert envelope.data["result"]["final_output"]["ok"] is True
+    mock_exec.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.modules.api_manager.router.execute_http_api")
+async def test_router_dry_run_http_rewrites_localhost(mock_exec: Mock):
+    mock_exec.return_value = ApiExecuteResponse(
+        executed_sql="HTTP GET http://testserver/health",
+        params={},
+        columns=["status"],
+        rows=[{"status": "ok"}],
+        row_count=1,
+        duration_ms=2,
+    )
+    session = Mock(spec=Session)
+
+    envelope = await dry_run(
+        request={
+            "logic_type": "http",
+            "logic_body": '{"method":"GET","url":"http://127.0.0.1:8000/health"}',
+            "params": {},
+        },
+        http_request=_http_request_stub("http://testserver/"),
+        session=session,
+    )
+
+    assert envelope.code == 0
+    assert envelope.data["result"]["row_count"] == 1
+    assert "http://testserver/health" in mock_exec.call_args.kwargs["logic_body"]
 
 
 @pytest.mark.asyncio
@@ -277,6 +497,7 @@ async def test_router_execute_api_unsupported_mode():
         await execute_api(
             api_id="api-1",
             request=ExecuteApiRequest(params={}),
+            http_request=_http_request_stub(),
             session=session,
             current_user=SimpleNamespace(id="u1"),
         )
