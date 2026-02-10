@@ -8,7 +8,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
 
@@ -622,6 +622,188 @@ class CIOrchestratorRunner:
                 "error_type": type(e).__name__,
                 "data": None,
             }
+
+    def _build_metric_blocks_from_data(
+        self,
+        data: Dict[str, Any],
+        metric_name: str,
+        detail: Dict[str, Any],
+    ) -> List[Block]:
+        """Convert metric_query Tool Asset output to display blocks."""
+        rows = data.get("rows", [])
+
+        if not rows:
+            ci_code = detail.get("ci_code") or detail.get("ci_id") or "unknown"
+            return [
+                text_block(
+                    f"{metric_name} ({metric_name}) returned no data for CI {ci_code}",
+                    title="Metric data unavailable",
+                ),
+            ]
+
+        blocks: List[Block] = []
+
+        # Create time series chart if we have multiple data points
+        if len(rows) > 1:
+            try:
+                times = [str(r.get("time", ""))[:10] for r in rows]
+                values = [float(r.get("value", 0)) for r in rows]
+
+                chart = self._series_chart_block(
+                    detail,
+                    MetricSpec(
+                        metric_name=metric_name,
+                        agg="AVG",
+                        time_range={"days": 7},
+                    ),
+                    [[times[i], values[i]] for i in range(len(times))],
+                )
+                if chart:
+                    blocks.append(chart)
+            except Exception as e:
+                self.logger.debug(f"Failed to create chart: {str(e)}")
+
+        # Create summary table
+        table_rows = [
+            [
+                str(r.get("time", ""))[:19],
+                str(round(float(r.get("value", 0)), 2)) if r.get("value") else "null",
+                r.get("unit", ""),
+            ]
+            for r in rows
+        ]
+
+        blocks.append(
+            table_block(
+                ["Time", "Value", "Unit"],
+                table_rows,
+                title=f"{metric_name} Details",
+            )
+        )
+
+        # Store context for later use
+        if rows:
+            latest = rows[0]
+            self.metric_context = {
+                "metric_name": metric_name,
+                "time_range": {"days": 7},
+                "agg": "AVG",
+                "value": float(latest.get("value", 0)) if latest.get("value") else None,
+            }
+
+        return blocks
+
+    def _build_history_blocks_from_data(
+        self,
+        data: Dict[str, Any],
+        history_type: str,
+    ) -> List[Block]:
+        """Convert work/maintenance history Tool Asset output to display blocks."""
+        rows = data.get("rows", [])
+
+        if not rows:
+            return [
+                text_block(
+                    f"No {history_type} records found",
+                    title=f"{history_type.capitalize()} History",
+                ),
+            ]
+
+        blocks: List[Block] = []
+
+        # Create summary text
+        blocks.append(
+            text_block(
+                f"Found {len(rows)} {history_type} records",
+                title=f"{history_type.capitalize()} History",
+            )
+        )
+
+        # Create detailed table
+        table_rows = [
+            [
+                rows[i].get("work_type", rows[i].get("maint_type", ""))[:20],
+                rows[i].get("summary", "")[:50],
+                str(rows[i].get("start_time", ""))[:10],
+                str(rows[i].get("duration_min", 0)),
+                rows[i].get("result", ""),
+            ]
+            for i in range(len(rows))
+        ]
+
+        blocks.append(
+            table_block(
+                ["Type", "Summary", "Start Date", "Duration (min)", "Result"],
+                table_rows,
+                title=f"{history_type.capitalize()} Details",
+            )
+        )
+
+        return blocks
+
+    def _build_graph_payload_from_tool_data(
+        self,
+        data: Dict[str, Any],
+        detail: Dict[str, Any],
+        view: View,
+    ) -> Dict[str, Any]:
+        """Convert ci_graph_query Tool Asset output to graph visualization payload."""
+        rows = data.get("rows", [])
+
+        # Build nodes set
+        nodes_set = {detail["ci_id"]}  # Start with source CI
+        edges = []
+        node_info_map = {detail["ci_id"]: detail}
+
+        for row in rows:
+            from_id = row.get("from_ci_id")
+            to_id = row.get("to_ci_id")
+
+            if from_id:
+                nodes_set.add(from_id)
+                if from_id not in node_info_map:
+                    node_info_map[from_id] = {
+                        "ci_id": from_id,
+                        "ci_code": row.get("from_ci_code", ""),
+                        "ci_name": row.get("from_ci_name", ""),
+                    }
+
+            if to_id:
+                nodes_set.add(to_id)
+                if to_id not in node_info_map:
+                    node_info_map[to_id] = {
+                        "ci_id": to_id,
+                        "ci_code": row.get("to_ci_code", ""),
+                        "ci_name": row.get("to_ci_name", ""),
+                    }
+
+            if from_id and to_id:
+                edges.append({
+                    "from": from_id,
+                    "to": to_id,
+                    "type": row.get("relationship_type", ""),
+                    "strength": row.get("strength", 1.0),
+                })
+
+        # Build nodes
+        nodes = [
+            {
+                "id": node_id,
+                "label": node_info_map.get(node_id, {}).get("ci_name", node_id),
+            }
+            for node_id in nodes_set
+        ]
+
+        return {
+            "nodes": nodes,
+            "edges": edges,
+            "meta": {
+                "depth": 1,
+                "view": view.value if hasattr(view, "value") else str(view),
+            },
+            "ids": [detail.get("ci_code", "")],
+            "truncated": len(rows) >= 500,  # Assume truncated if at limit
+        }
 
     def _ci_search(
         self,
@@ -4119,193 +4301,128 @@ class CIOrchestratorRunner:
     async def _metric_blocks_async(
         self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None
     ) -> List[Dict[str, Any]]:
+        """
+        Execute metric blocks using Tool Assets.
+
+        This refactored handler uses explicit Tool Asset calls:
+        - metric_query: Query metric data
+        - ci_aggregation: Aggregate metric values across CIs
+        """
         metric_spec = self.plan.metric
         if not metric_spec:
             return []
+
         metric_trace = self.plan_trace.setdefault("metric", {})
-        # NOTE: metric_tools.metric_exists removed for generic orchestration
-        if True:  # Treat metrics as unavailable until Tool Assets are created
-            metric_trace.update({"status": "missing", "requested": metric_spec.dict()})
-            # NOTE: metric_tools.list_metric_names removed for generic orchestration
-            candidates = []  # Should retrieve from Tool Assets instead
-            rows = [[name] for name in candidates]
-            blocks = [
-                text_block(
-                    f"Metric '{metric_spec.metric_name}' not found",
-                    title="Metric lookup",
-                ),
-                table_block(["metric_name"], rows, title="Available metrics"),
-            ]
-            self._log_metric_blocks_return(blocks)
-            return blocks
+        metric_trace["requested"] = metric_spec.dict()
+
+        # Handle graph scope metrics
         if metric_spec.scope == "graph":
-            return await self._graph_metric_blocks_async(
+            return await self._graph_metric_blocks_via_tools_async(
                 detail, metric_spec, metric_trace, graph_payload=graph_payload
             )
-        if metric_spec.mode == "series":
-            series = await self._metric_series_table_async(
-                detail["ci_id"],
-                metric_spec.metric_name,
-                metric_spec.time_range,
-            )
-            rows = [list(row) for row in series["rows"]]
-            metric_trace.update(
-                {
-                    "status": "series",
-                    "requested": metric_spec.dict(),
-                    "rows": len(rows),
-                }
-            )
-            self.next_actions.extend(self._metric_next_actions(metric_spec.time_range))
-            if not rows:
-                ci_code = detail.get("ci_code") or detail.get("ci_id") or "unknown"
-                reason = (
-                    f"{metric_spec.metric_name} ({metric_spec.time_range}) returned no data "
-                    f"for CI {ci_code}"
-                )
-                blocks = [
-                    text_block(reason, title="Metric data unavailable"),
-                    table_block(
-                        ["metric", "time_range", "ci_code"],
-                        [[metric_spec.metric_name, metric_spec.time_range, ci_code]],
-                        title="Metric request details",
-                    ),
-                ]
-                self._log_metric_blocks_return(blocks)
-                return blocks
-            table_block_rows = table_block(["ts", "value"], rows, title="Metric series")
-            chart = None
-            try:
-                chart = self._series_chart_block(detail, metric_spec, rows)
-                if chart:
-                    metric_trace.setdefault("chart", {})["rendered"] = True
-            except Exception as exc:  # pragma: no cover
-                metric_trace.setdefault("chart", {}).setdefault("warnings", []).append(
-                    str(exc)
-                )
-                chart = None
-            blocks: List[Dict[str, Any]] = []
-            if chart:
-                blocks.append(chart)
-            blocks.append(table_block_rows)
-            if rows:
-                latest = rows[0]
-                self.metric_context = {
-                    "metric_name": metric_spec.metric_name,
-                    "time_range": metric_spec.time_range,
-                    "agg": metric_spec.agg,
-                    "value": float(latest[1])
-                    if len(latest) > 1 and latest[1] not in (None, "<null>")
-                    else None,
-                }
-            return blocks
-        aggregate = await self._metric_aggregate_async(
-            metric_spec.metric_name,
-            metric_spec.agg,
-            metric_spec.time_range,
-            detail["ci_id"],
-        )
-        metric_trace.update(
-            {
-                "status": "aggregate",
-                "requested": metric_spec.dict(),
-                "result": aggregate,
-            }
-        )
-        self.next_actions.extend(self._metric_next_actions(metric_spec.time_range))
-        rows = [
-            [
-                aggregate["metric_name"],
-                aggregate["agg"],
-                aggregate["time_from"],
-                aggregate["time_to"],
-                str(aggregate["value"]) if aggregate["value"] is not None else "<null>",
-            ]
-        ]
-        self.metric_context = {
-            "metric_name": aggregate["metric_name"],
-            "time_range": aggregate["time_range"],
-            "agg": aggregate["agg"],
-            "value": aggregate.get("value"),
+
+        # Execute metric_query Tool Asset
+        metric_params = {
+            "tenant_id": self.tenant_id,
+            "ci_code": detail.get("ci_code", ""),
+            "ci_id": detail.get("ci_id", ""),
+            "metric_name": metric_spec.metric_name,
+            "time_range": metric_spec.time_range or "last_24h",
+            "agg": metric_spec.agg or "AVG",
         }
-        blocks = [
-            table_block(
-                ["metric_name", "agg", "time_from", "time_to", "value"],
-                rows,
-                title="Metric aggregate",
-            )
-        ]
+
+        result = await self._execute_tool_asset_async("metric_query", metric_params)
+
+        if not result.get("success"):
+            error_msg = result.get("error", "Failed to retrieve metric data")
+            metric_trace.update({"status": "error", "error": error_msg})
+            self._log_metric_blocks_return([text_block(error_msg, title="Metric query")])
+            return [text_block(error_msg, title="Metric query")]
+
+        data = result.get("data", {})
+        metric_trace.update({"status": "success", "data_rows": len(data.get("rows", []))})
+
+        # Build blocks from metric data
+        blocks = self._build_metric_blocks_from_data(data, metric_spec.metric_name, detail)
+
+        # Add next actions
+        self.next_actions.extend(self._metric_next_actions(metric_spec.time_range or "last_24h"))
+
         self._log_metric_blocks_return(blocks)
         return blocks
 
-    def _graph_metric_blocks(
+    async def _graph_metric_blocks_via_tools_async(
         self,
         detail: Dict[str, Any],
-        metric_spec: MetricSpec,
+        metric_spec: Any,
         metric_trace: Dict[str, Any],
         graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
-        return asyncio.run(
-            self._graph_metric_blocks_async(
-                detail, metric_spec, metric_trace, graph_payload
-            )
-        )
-
-    async def _graph_metric_blocks_async(
-        self,
-        detail: Dict[str, Any],
-        metric_spec: MetricSpec,
-        metric_trace: Dict[str, Any],
-        graph_payload: Dict[str, Any] | None = None,
-    ) -> List[Dict[str, Any]]:
+        """Execute metric blocks for graph scope using Tool Assets."""
         graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
         graph_depth = self.plan.graph.depth
         graph_limits = self.plan.graph.limits.dict()
+
+        # Expand graph if not provided
         if not graph_payload:
             graph_payload = await self._graph_expand_async(
                 detail["ci_id"], graph_view.value, graph_depth, graph_limits
             )
+
+        # Get node IDs from graph
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
-        aggregate = await self._metric_aggregate_async(
-            metric_spec.metric_name,
-            metric_spec.agg,
-            metric_spec.time_range,
-            ci_ids=node_ids,
-        )
+
+        # Execute ci_aggregation Tool Asset for multiple CIs
+        agg_params = {
+            "tenant_id": self.tenant_id,
+            "ci_ids": node_ids,
+            "metric_name": metric_spec.metric_name,
+            "agg": metric_spec.agg or "AVG",
+            "time_range": metric_spec.time_range or "last_24h",
+        }
+
+        result = await self._execute_tool_asset_async("ci_aggregation", agg_params)
+
+        if not result.get("success"):
+            error_msg = result.get("error", "Failed to aggregate metrics")
+            metric_trace.update({"status": "error", "error": error_msg})
+            return [text_block(error_msg, title="Graph metric aggregation")]
+
+        data = result.get("data", {})
         graph_meta = graph_payload.get("meta", {})
         graph_summary = graph_payload.get("summary", {})
         depth_applied = graph_meta.get("depth", graph_depth)
         truncated = graph_payload.get("truncated", False)
-        metric_trace.update(
-            {
-                "status": "graph_aggregate",
-                "requested": metric_spec.dict(),
-                "scope": metric_spec.scope,
-                "graph_expand": {
-                    "view": graph_view.value,
-                    "depth_requested": graph_depth,
-                    "depth_applied": depth_applied,
-                    "node_count": graph_summary.get("node_count"),
-                    "edge_count": graph_summary.get("edge_count"),
-                    "rel_types": graph_meta.get("rel_types"),
-                    "truncated": truncated,
-                },
-                "result": aggregate,
-            }
-        )
+
+        metric_trace.update({
+            "status": "graph_aggregate",
+            "scope": metric_spec.scope,
+            "graph_expand": {
+                "view": graph_view.value,
+                "depth_requested": graph_depth,
+                "depth_applied": depth_applied,
+                "node_count": graph_summary.get("node_count"),
+                "edge_count": graph_summary.get("edge_count"),
+                "rel_types": graph_meta.get("rel_types"),
+                "truncated": truncated,
+            },
+            "data_rows": len(data.get("rows", [])),
+        })
+
         rows = [
             [
                 "graph",
                 graph_view.value,
                 str(depth_applied),
-                str(aggregate.get("ci_count_used")),
-                aggregate["metric_name"],
-                aggregate["agg"],
-                aggregate["time_from"],
-                aggregate["time_to"],
-                str(aggregate["value"]) if aggregate["value"] is not None else "<null>",
+                str(len(node_ids)),
+                metric_spec.metric_name,
+                metric_spec.agg or "AVG",
+                data.get("time_from", ""),
+                data.get("time_to", ""),
+                str(data.get("value", "")) if data.get("value") is not None else "<null>",
             ]
         ]
+
         self.next_actions.extend(
             self._graph_metric_next_actions(
                 graph_view.value,
@@ -4314,6 +4431,7 @@ class CIOrchestratorRunner:
                 metric_spec,
             )
         )
+
         title = f"Graph metric ({metric_spec.metric_name})"
         return [
             table_block(
@@ -4524,124 +4642,109 @@ class CIOrchestratorRunner:
     async def _history_blocks_async(
         self, detail: Dict[str, Any], graph_payload: Dict[str, Any] | None = None
     ) -> List[Dict[str, Any]]:
+        """
+        Execute history blocks using Tool Assets.
+
+        This refactored handler uses explicit Tool Asset calls:
+        - work_history_query: Query work history
+        - history_combined_union: Get combined history data
+        """
         history_spec = self.plan.history
         if not history_spec or not history_spec.enabled:
             return []
+
         history_trace = self.plan_trace.setdefault("history", {})
         history_trace["requested"] = history_spec.dict()
+
+        # Handle graph scope history
         if history_spec.scope == "graph":
-            return await self._graph_history_blocks_async(
+            return await self._graph_history_blocks_via_tools_async(
                 detail, history_spec, history_trace, graph_payload=graph_payload
             )
-        return await self._ci_history_blocks_async(detail, history_spec, history_trace)
 
-    def _ci_history_blocks(
-        self,
-        detail: Dict[str, Any],
-        history_spec: Any,
-        history_trace: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        return asyncio.run(
-            self._ci_history_blocks_async(detail, history_spec, history_trace)
-        )
-
-    async def _ci_history_blocks_async(
-        self,
-        detail: Dict[str, Any],
-        history_spec: Any,
-        history_trace: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
-        result = await self._history_recent_async(
-            history_spec,
-            {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
-        )
-        if not result.get("available"):
-            history_trace["available"] = False
-            warnings = result.get("warnings", [])
-            if warnings:
-                history_trace.setdefault("warnings", []).extend(warnings)
-            message = (
-                f"event_log unavailable: {'; '.join(warnings)}"
-                if warnings
-                else "event_log unavailable"
-            )
-            return [text_block(message, title="History")]
-        history_trace["available"] = True
-        history_meta = result.get("meta", {})
-        history_trace["meta"] = history_meta
-        history_trace["rows"] = len(result.get("rows", []))
-        self.history_context = {
-            "time_range": history_spec.time_range,
-            "source": history_spec.source,
-            "rows": len(result.get("rows", [])),
-            "recent": self._format_history_recent(result.get("rows", [])),
+        # Execute work_history_query Tool Asset
+        history_params = {
+            "tenant_id": self.tenant_id,
+            "ci_code": detail.get("ci_code", ""),
+            "ci_id": detail.get("ci_id", ""),
+            "time_range": history_spec.time_range or "last_24h",
+            "source": history_spec.source or "all",
         }
-        self.next_actions.extend(self._history_time_actions(history_spec.time_range))
-        title = f"Recent events ({history_spec.time_range})"
-        return [table_block(result["columns"], result["rows"], title=title)]
 
-    def _graph_history_blocks(
+        result = await self._execute_tool_asset_async("work_history_query", history_params)
+
+        if not result.get("success"):
+            error_msg = result.get("error", "Failed to retrieve history data")
+            history_trace.update({"status": "error", "error": error_msg})
+            return [text_block(error_msg, title="History")]
+
+        data = result.get("data", {})
+        history_trace.update({"status": "success", "data_rows": len(data.get("rows", []))})
+
+        # Build blocks from history data
+        blocks = self._build_history_blocks_from_data(data, history_spec.source or "work")
+
+        # Add next actions
+        self.next_actions.extend(self._history_time_actions(history_spec.time_range or "last_24h"))
+
+        return blocks
+
+    async def _graph_history_blocks_via_tools_async(
         self,
         detail: Dict[str, Any],
         history_spec: Any,
         history_trace: Dict[str, Any],
         graph_payload: Dict[str, Any] | None = None,
     ) -> List[Dict[str, Any]]:
-        return asyncio.run(
-            self._graph_history_blocks_async(
-                detail, history_spec, history_trace, graph_payload
-            )
-        )
-
-    async def _graph_history_blocks_async(
-        self,
-        detail: Dict[str, Any],
-        history_spec: Any,
-        history_trace: Dict[str, Any],
-        graph_payload: Dict[str, Any] | None = None,
-    ) -> List[Dict[str, Any]]:
+        """Execute history blocks for graph scope using Tool Assets."""
         graph_view = self.plan.graph.view or (self.plan.view or View.DEPENDENCY)
         graph_depth = self.plan.graph.depth
         graph_limits = self.plan.graph.limits.dict()
+
+        # Expand graph if not provided
         if not graph_payload:
             graph_payload = await self._graph_expand_async(
                 detail["ci_id"], graph_view.value, graph_depth, graph_limits
             )
+
+        # Get node IDs from graph
         node_ids = graph_payload.get("ids") or [detail["ci_id"]]
-        result = await self._history_recent_async(
-            history_spec,
-            {"ci_id": detail["ci_id"], "ci_code": detail.get("ci_code")},
-            ci_ids=node_ids,
-        )
-        if not result.get("available"):
-            history_trace["available"] = False
-            warnings = result.get("warnings", [])
-            if warnings:
-                history_trace.setdefault("warnings", []).extend(warnings)
-            message = (
-                f"event_log unavailable: {'; '.join(warnings)}"
-                if warnings
-                else "event_log unavailable"
-            )
-            return [text_block(message, title="History")]
-        history_trace["available"] = True
-        history_trace["scope"] = "graph"
-        history_meta = result.get("meta", {})
-        depth_applied = graph_payload.get("meta", {}).get("depth", graph_depth)
-        truncated = graph_payload.get("truncated", False)
-        history_trace["meta"] = history_meta
-        history_trace["graph"] = {
-            "view": graph_view.value,
-            "depth_requested": graph_depth,
-            "depth_applied": depth_applied,
-            "truncated": truncated,
-            "node_count": graph_payload.get("summary", {}).get("node_count"),
-            "edge_count": graph_payload.get("summary", {}).get("edge_count"),
+
+        # Execute history_combined_union Tool Asset for multiple CIs
+        hist_params = {
+            "tenant_id": self.tenant_id,
+            "ci_ids": node_ids,
+            "time_range": history_spec.time_range or "last_24h",
+            "source": history_spec.source or "all",
         }
-        history_trace["rows"] = len(result.get("rows", []))
-        ci_count_used = history_meta.get("ci_count_used")
-        history_trace["ci_ids_used"] = ci_count_used
-        history_trace["ci_ids_truncated"] = history_meta.get("ci_ids_truncated")
+
+        result = await self._execute_tool_asset_async("history_combined_union", hist_params)
+
+        if not result.get("success"):
+            error_msg = result.get("error", "Failed to retrieve graph history data")
+            history_trace.update({"status": "error", "error": error_msg})
+            return [text_block(error_msg, title="Graph History")]
+
+        data = result.get("data", {})
+        graph_meta = graph_payload.get("meta", {})
+        graph_summary = graph_payload.get("summary", {})
+        depth_applied = graph_meta.get("depth", graph_depth)
+        truncated = graph_payload.get("truncated", False)
+
+        history_trace.update({
+            "status": "graph_success",
+            "scope": "graph",
+            "graph_expand": {
+                "view": graph_view.value,
+                "depth_requested": graph_depth,
+                "depth_applied": depth_applied,
+                "node_count": graph_summary.get("node_count"),
+                "edge_count": graph_summary.get("edge_count"),
+                "truncated": truncated,
+            },
+            "data_rows": len(data.get("rows", [])),
+        })
+
         self.next_actions.extend(
             self._graph_history_next_actions(
                 history_spec,
@@ -4650,14 +4753,12 @@ class CIOrchestratorRunner:
                 truncated,
             )
         )
+
         title = f"Recent events (graph scope, {graph_view.value}, depth={depth_applied}, {history_spec.time_range})"
-        self.history_context = {
-            "time_range": history_spec.time_range,
-            "source": self._history_context_source(history_spec),
-            "rows": len(result.get("rows", [])),
-            "recent": self._format_history_recent(result.get("rows", [])),
-        }
-        return [table_block(result["columns"], result["rows"], title=title)]
+        columns = data.get("columns", ["timestamp", "event_type", "summary"])
+        rows = data.get("rows", [])
+
+        return [table_block(columns, rows, title=title)]
 
     def _cep_blocks(self, detail: Dict[str, Any]) -> List[Dict[str, Any]]:
         cep_spec = self.plan.cep

@@ -40,6 +40,22 @@ class ApiDefinition(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     deleted_at: datetime | None = Field(default=None)
+    
+    # Tools export linkage (to be completed after Tools refactor)
+    linked_to_tool_id: uuid.UUID | None = Field(
+        default=None,
+        foreign_key="asset_registry.asset_id",
+        description="Linked Tool Asset ID when exported to Tools"
+    )
+    linked_to_tool_name: str | None = Field(
+        default=None,
+        sa_column=Column(Text),
+        description="Name of linked Tool Asset"
+    )
+    linked_at: datetime | None = Field(
+        default=None,
+        description="Timestamp when API was linked to Tool"
+    )
 
 
 class ApiDefinitionVersion(SQLModel, table=True):
