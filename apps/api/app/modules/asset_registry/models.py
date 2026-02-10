@@ -93,6 +93,33 @@ class TbAssetRegistry(SQLModel, table=True):
         default=None, sa_column=Column(JSONB, nullable=True)
     )
 
+    # API Manager linkage (for tools imported from API Manager)
+    linked_from_api_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=Column(UUID(as_uuid=True), nullable=True),
+        description="Source API Definition ID when imported from API Manager"
+    )
+    linked_from_api_name: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+        description="Source API name when imported from API Manager"
+    )
+    linked_from_api_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(TIMESTAMP(timezone=True), nullable=True),
+        description="Timestamp when tool was imported from API Manager"
+    )
+    import_mode: str | None = Field(
+        default=None,
+        sa_column=Column(Text, nullable=True),
+        description="Import mode: 'api_to_tool' | 'standalone'"
+    )
+    last_synced_at: datetime | None = Field(
+        default=None,
+        sa_column=Column(TIMESTAMP(timezone=True), nullable=True),
+        description="Last sync timestamp from source API"
+    )
+
     # Metadata
     created_by: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
     published_by: str | None = Field(

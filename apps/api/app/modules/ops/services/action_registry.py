@@ -307,7 +307,7 @@ async def handle_list_maintenance_filtered(
 
         # Get PostgreSQL connection
         settings = get_settings()
-        conn = get_pg_connection(settings)
+        conn = get_pg_connection(settings, use_source_asset=True)
 
         try:
             # Execute query with device filter (if provided)
@@ -471,7 +471,7 @@ async def handle_create_maintenance_ticket(
     try:
         # Get PostgreSQL connection
         settings = get_settings()
-        conn = get_pg_connection(settings)
+        conn = get_pg_connection(settings, use_source_asset=True)
 
         try:
             # Find CI ID for the device_id (ci_code)

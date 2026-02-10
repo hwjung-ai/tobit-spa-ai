@@ -30,7 +30,7 @@ router = APIRouter(prefix="/asset-registry/tools", tags=["tool-assets"])
 
 def _serialize_tool_asset(asset: TbAssetRegistry) -> dict[str, Any]:
     """Serialize tool asset to dict."""
-    return {
+    data = {
         "asset_id": str(asset.asset_id),
         "asset_type": asset.asset_type,
         "name": asset.name,
@@ -48,6 +48,19 @@ def _serialize_tool_asset(asset: TbAssetRegistry) -> dict[str, Any]:
         "created_at": asset.created_at,
         "updated_at": asset.updated_at,
     }
+    
+    # API Manager linkage info
+    if asset.linked_from_api_id:
+        data["linked_from_api"] = {
+            "api_id": str(asset.linked_from_api_id),
+            "api_name": asset.linked_from_api_name,
+            "linked_at": asset.linked_from_api_at.isoformat() if asset.linked_from_api_at else None,
+            "import_mode": asset.import_mode,
+            "last_synced_at": asset.last_synced_at.isoformat() if asset.last_synced_at else None,
+            "is_internal_api": True  # Flag to indicate this is imported from internal API
+        }
+    
+    return data
 
 
 @router.get("", response_model=ResponseEnvelope)
@@ -567,3 +580,353 @@ def reload_tools(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to reload tools: {e}")
+
+
+# ============================================================================
+# API Manager Integration Endpoints
+# ============================================================================
+
+
+@router.get("/available-api-exports", response_model=ResponseEnvelope)
+def get_available_api_exports(
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """
+    Get list of APIs marked for export from API Manager.
+    
+    Returns APIs that are ready for import as Tools.
+    Only includes APIs with linked_to_tool_name set but linked_to_tool_id is NULL.
+    """
+    from models.api_definition import ApiDefinition
+    
+    with get_session_context() as db_session:
+        # Query APIs marked for export (ready for import)
+        apis = db_session.exec(
+            select(ApiDefinition)
+            .where(ApiDefinition.linked_to_tool_name.is_not(None))
+            .where(ApiDefinition.linked_to_tool_id.is_(None))  # Not yet imported
+            .where(ApiDefinition.deleted_at.is_(None))
+            .order_by(ApiDefinition.linked_at.desc())
+        ).all()
+        
+        export_list = []
+        for api in apis:
+            export_list.append({
+                "api_id": str(api.id),
+                "api_name": api.name,
+                "api_description": api.description,
+                "api_mode": api.mode.value if api.mode else None,
+                "api_method": api.method,
+                "api_path": api.path,
+                "linked_at": api.linked_at.isoformat() if api.linked_at else None,
+                "is_imported": bool(api.linked_to_tool_id)
+            })
+        
+        return ResponseEnvelope.success(data={
+            "exports": export_list,
+            "total": len(export_list)
+        })
+
+
+@router.post("/import-from-api-manager/{api_id}", response_model=ResponseEnvelope)
+async def import_from_api_manager(
+    api_id: str,
+    body: dict[str, Any] = Body(default={}),
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """
+    Import an API from API Manager as a Tool.
+    
+    Creates a Tool Asset from an API Definition and establishes
+    bidirectional linkage between API and Tool.
+    """
+    from models.api_definition import ApiDefinition
+    
+    with get_session_context() as db_session:
+        # 1. Fetch the source API
+        api = db_session.get(ApiDefinition, api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(404, "API not found")
+        
+        # 2. Check if already imported
+        if api.linked_to_tool_id:
+            raise HTTPException(
+                400,
+                f"API already imported as tool: {api.linked_to_tool_name}"
+            )
+        
+        # 3. Prepare Tool Asset data
+        tool_name = body.get("name") or f"Tool from API: {api.name}"
+        tool_description = body.get("description") or (
+            f"Tool imported from API Manager API '{api.name}'. "
+            f"Mode: {api.mode.value}. "
+            f"Use when: {api.description or api.name}"
+        )
+        
+        # 4. Extract input_schema from API
+        input_schema = _extract_input_schema_from_api(api)
+        
+        # 5. Infer output_schema if requested
+        output_schema = None
+        if body.get("infer_output_schema", False):
+            output_schema = await _infer_output_schema_from_api(api, db_session)
+        
+        # 6. Create tool_config pointing to API endpoint
+        tool_config = {
+            "url": f"/api-manager/apis/{api.id}/execute",
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer {token}",
+                "X-Tenant-Id": "{tenant_id}"
+            }
+        }
+        
+        # 7. Check for existing tool with same name
+        existing = db_session.exec(
+            select(TbAssetRegistry)
+            .where(TbAssetRegistry.asset_type == "tool")
+            .where(TbAssetRegistry.name == tool_name)
+        ).first()
+        
+        if existing:
+            raise HTTPException(
+                409,
+                f"Tool with name '{tool_name}' already exists"
+            )
+        
+        # 8. Create Tool Asset
+        tool_asset = TbAssetRegistry(
+            asset_type="tool",
+            name=tool_name,
+            description=tool_description,
+            tool_type="http_api",
+            tool_config=tool_config,
+            tool_input_schema=input_schema,
+            tool_output_schema=output_schema,
+            tags={
+                "source": "api_manager",
+                "api_id": str(api.id),
+                "api_name": api.name,
+                "import_mode": "api_to_tool"
+            },
+            created_by=str(current_user.id),
+            status="draft",
+            version=1,
+            # API Manager linkage fields
+            linked_from_api_id=api.id,
+            linked_from_api_name=api.name,
+            linked_from_api_at=datetime.now(),
+            import_mode="api_to_tool",
+            last_synced_at=datetime.now()
+        )
+        
+        db_session.add(tool_asset)
+        db_session.commit()
+        db_session.refresh(tool_asset)
+        
+        # 9. Create version history
+        history = TbAssetVersionHistory(
+            asset_id=tool_asset.asset_id,
+            version=1,
+            snapshot={
+                "name": tool_asset.name,
+                "description": tool_asset.description,
+                "tool_type": tool_asset.tool_type,
+                "tool_config": tool_asset.tool_config,
+                "tool_input_schema": tool_asset.tool_input_schema,
+                "tool_output_schema": tool_asset.tool_output_schema,
+                "linked_from_api_id": str(tool_asset.linked_from_api_id),
+                "linked_from_api_name": tool_asset.linked_from_api_name,
+            },
+        )
+        db_session.add(history)
+        db_session.commit()
+        
+        # 10. Complete bidirectional linkage (update API side)
+        api.linked_to_tool_id = tool_asset.asset_id
+        api.linked_to_tool_name = tool_asset.name
+        db_session.add(api)
+        db_session.commit()
+        
+        return ResponseEnvelope.success(data={
+            "tool_id": str(tool_asset.asset_id),
+            "tool_name": tool_asset.name,
+            "api_id": str(api.id),
+            "api_name": api.name,
+            "status": "imported",
+            "message": "Tool created successfully from API Manager",
+            "asset": _serialize_tool_asset(tool_asset)
+        })
+
+
+@router.post("/{tool_id}/sync-from-api", response_model=ResponseEnvelope)
+async def sync_tool_from_api(
+    tool_id: str,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """
+    Sync Tool with latest changes from API Manager.
+    
+    Updates Tool's input_schema and description based on source API.
+    Only works for Tools imported from API Manager.
+    """
+    from models.api_definition import ApiDefinition
+    
+    with get_session_context() as db_session:
+        # 1. Fetch the Tool
+        tool_uuid = uuid.UUID(tool_id)
+        tool = db_session.get(TbAssetRegistry, tool_uuid)
+        if not tool or tool.asset_type != "tool":
+            raise HTTPException(404, "Tool not found")
+        
+        # 2. Check if this tool was imported from API Manager
+        if not tool.linked_from_api_id:
+            raise HTTPException(
+                400,
+                "This tool was not imported from API Manager. "
+                "Manual sync not available."
+            )
+        
+        # 3. Fetch the source API
+        api = db_session.get(ApiDefinition, tool.linked_from_api_id)
+        if not api or api.deleted_at:
+            raise HTTPException(404, "Linked API not found or deleted")
+        
+        # 4. Only draft tools can be synced
+        if tool.status != "draft":
+            raise HTTPException(
+                400,
+                "Only draft tools can be synced. "
+                "Create a new version or rollback to draft first."
+            )
+        
+        # 5. Update Tool fields
+        tool.tool_input_schema = _extract_input_schema_from_api(api)
+        tool.description = (
+            f"Tool imported from API Manager API '{api.name}'. "
+            f"Mode: {api.mode.value}. "
+            f"Use when: {api.description or api.name}"
+        )
+        tool.updated_at = datetime.now()
+        tool.last_synced_at = datetime.now()
+        
+        db_session.add(tool)
+        db_session.commit()
+        db_session.refresh(tool)
+        
+        return ResponseEnvelope.success(data={
+            "tool_id": str(tool.asset_id),
+            "tool_name": tool.name,
+            "synced_at": tool.last_synced_at.isoformat(),
+            "api_version": api.updated_at.isoformat() if api.updated_at else None,
+            "message": "Tool synced successfully from API Manager",
+            "asset": _serialize_tool_asset(tool_asset=tool)
+        })
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+
+def _extract_input_schema_from_api(api: ApiDefinition) -> dict:
+    """Extract input_schema from API's param_schema."""
+    if not api.param_schema:
+        return {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    
+    properties = {}
+    required = []
+    
+    param_schema = api.param_schema if isinstance(api.param_schema, dict) else {}
+    
+    for param_name, param_info in (param_schema.get("properties") or {}).items():
+        properties[param_name] = {
+            "type": param_info.get("type", "string"),
+            "description": param_info.get("description", f"Parameter: {param_name}")
+        }
+        if param_info.get("required", False):
+            required.append(param_name)
+    
+    return {
+        "type": "object",
+        "properties": properties,
+        "required": required
+    }
+
+
+async def _infer_output_schema_from_api(
+    api: ApiDefinition,
+    session: Session
+) -> dict | None:
+    """
+    Infer output_schema by executing the API with sample data.
+    
+    Returns schema based on actual execution results.
+    """
+    try:
+        if api.mode == ApiMode.sql:
+            from app.modules.api_manager.executor import execute_sql_api
+            
+            result = execute_sql_api(
+                session=session,
+                api_id=str(api.id),
+                logic_body=api.logic,
+                params={},
+                limit=1,
+                executed_by="schema_inference"
+            )
+            
+            if result.columns:
+                properties = {}
+                for col in result.columns:
+                    properties[col["name"]] = {
+                        "type": _map_column_type(col["type"]),
+                        "description": col.get("description", f"Column: {col['name']}")
+                    }
+                
+                return {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": properties,
+                        "required": list(properties.keys())
+                    }
+                }
+    except Exception as e:
+        import logging
+        logging.warning(f"Failed to infer output schema: {e}")
+    
+    return None
+
+
+def _map_column_type(db_type: str) -> str:
+    """Map database type to JSON Schema type."""
+    type_mapping = {
+        "integer": "integer",
+        "bigint": "integer",
+        "smallint": "integer",
+        "numeric": "number",
+        "decimal": "number",
+        "real": "number",
+        "float": "number",
+        "double precision": "number",
+        "text": "string",
+        "varchar": "string",
+        "char": "string",
+        "boolean": "boolean",
+        "date": "string",
+        "timestamp": "string",
+        "timestamptz": "string",
+        "json": "object",
+        "jsonb": "object",
+        "uuid": "string",
+    }
+    return type_mapping.get(db_type.lower(), "string")

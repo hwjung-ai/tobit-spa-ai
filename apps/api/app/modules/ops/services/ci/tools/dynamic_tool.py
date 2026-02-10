@@ -9,10 +9,13 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from core.config import get_settings
 from core.logging import get_logger
 
-from .base import BaseTool, ToolContext, ToolResult
 from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
+
+from .base import BaseTool, ToolContext, ToolResult
 
 logger = get_logger(__name__)
 
@@ -259,7 +262,9 @@ class DynamicTool(BaseTool):
             if "{time_filter}" in processed_query:
                 time_range = input_data.get("time_range", "")
                 if time_range:
-                    processed_query = processed_query.replace("{time_filter}", f"AND time > NOW() - INTERVAL %s")
+                    processed_query = processed_query.replace(
+                        "{time_filter}", "AND time > NOW() - INTERVAL %s"
+                    )
                     params.append(time_range)
                 else:
                     processed_query = processed_query.replace("{time_filter}", "")
@@ -322,38 +327,35 @@ class DynamicTool(BaseTool):
             # Process query template to replace placeholders - now returns (query, params) tuple
             query, params = self._process_query_template(query_template, input_data)
 
-        # source_asset is a dict, not an object
-        source_type = source_asset.get("source_type")
-
-        if source_type == "postgres":
-            from core.db import engine
-
-            try:
-                # Use direct psycopg connection for parameterized queries with %s placeholders
-                psycopg_conn = engine.raw_connection()
-                try:
-                    cur = psycopg_conn.cursor()
-                    cur.execute(query, params)
-                    columns = [desc[0] for desc in cur.description] if cur.description else []
-                    rows = cur.fetchall()
-                    output = [dict(zip(columns, row)) for row in rows]
-                    cur.close()
-                    return ToolResult(success=True, data={"rows": output})
-                finally:
-                    psycopg_conn.close()
-            except Exception as exc:
-                logger.error(f"Database query failed: {str(exc)}", extra={"query": query[:200]})
-                return ToolResult(
-                    success=False,
-                    error=f"Database query failed: {str(exc)}",
-                    error_details={"exception": str(exc)},
-                )
-        else:
+        source_type = str(source_asset.get("source_type", "")).lower()
+        if source_type not in {"postgres", "postgresql", "mysql", "bigquery", "snowflake"}:
             return ToolResult(
                 success=False,
                 error=f"Unsupported database type: {source_type}",
                 error_details={"source_type": source_type},
             )
+
+        connection = None
+        try:
+            connection = ConnectionFactory.create(source_asset)
+            output = connection.execute(query, params)
+            return ToolResult(success=True, data={"rows": output})
+        except Exception as exc:
+            logger.error(
+                f"Database query failed: {str(exc)}",
+                extra={"query": query[:200], "source_ref": source_ref},
+            )
+            return ToolResult(
+                success=False,
+                error=f"Database query failed: {str(exc)}",
+                error_details={"exception": str(exc), "source_ref": source_ref},
+            )
+        finally:
+            if connection:
+                try:
+                    connection.close()
+                except Exception:
+                    pass
 
     def _build_history_query_by_source(self, source: str, input_data: dict[str, Any]) -> tuple[str, list]:
         """Build history query based on source parameter with parameterized queries.
@@ -639,14 +641,34 @@ class DynamicTool(BaseTool):
         - Relationships (edges): from Neo4j (COMPOSED_OF, DEPLOYED_ON, RUNS_ON, etc.)
         - CI node basic info (label, type, status): from PostgreSQL ci table
         """
-        from core.db import engine
-        from core.db_neo4j import get_neo4j_driver
-        from sqlalchemy import text
-
         tenant_id = input_data.get("tenant_id", "default")
-        depth = input_data.get("depth", 2)
         limit = input_data.get("limit", 50)
         ci_ids = input_data.get("ci_ids", [])
+        try:
+            limit = max(1, min(int(limit), 1000))
+        except (ValueError, TypeError):
+            limit = 50
+        if not isinstance(ci_ids, list):
+            ci_ids = []
+
+        neo4j_source_ref = self.tool_config.get("source_ref")
+        postgres_source_ref = (
+            self.tool_config.get("postgres_source_ref")
+            or get_settings().ops_default_source_asset
+        )
+        if not neo4j_source_ref:
+            return ToolResult(
+                success=False,
+                error="source_ref not provided in tool_config for graph_query",
+                error_details=self.tool_config,
+            )
+        neo4j_source_asset = load_source_asset(name=neo4j_source_ref)
+        if not neo4j_source_asset:
+            return ToolResult(
+                success=False,
+                error=f"Neo4j source asset not found: {neo4j_source_ref}",
+                error_details={"source_ref": neo4j_source_ref},
+            )
 
         # Relationship type → Korean label mapping
         rel_label_map = {
@@ -659,9 +681,18 @@ class DynamicTool(BaseTool):
             "CONNECTED_TO": "연결",
         }
 
+        neo4j_connection = None
+        postgres_connection = None
         try:
             # --- Step 1: Query Neo4j for relationships ---
-            driver = get_neo4j_driver()
+            neo4j_connection = ConnectionFactory.create(neo4j_source_asset)
+            driver = getattr(neo4j_connection, "driver", None)
+            if driver is None:
+                return ToolResult(
+                    success=False,
+                    error=f"Source '{neo4j_source_ref}' does not provide a Neo4j driver",
+                    error_details={"source_type": neo4j_source_asset.get("source_type")},
+                )
             neo4j_nodes = {}  # ci_id -> node properties from Neo4j
             edges = []
 
@@ -739,13 +770,11 @@ class DynamicTool(BaseTool):
                             "label": rel_label_map.get(rel_type, rel_type),
                         })
 
-            driver.close()
-
             # --- Step 2: Enrich node info from PostgreSQL ---
             node_ids_list = list(neo4j_nodes.keys())
             pg_node_info = {}
 
-            if node_ids_list:
+            if node_ids_list and postgres_source_ref:
                 # Query PostgreSQL for authoritative CI info - use parameterized query
                 placeholders = ", ".join(["%s"] * len(node_ids_list))
                 pg_query = f"""
@@ -756,12 +785,23 @@ class DynamicTool(BaseTool):
                   AND ci_id::text IN ({placeholders})
                   AND deleted_at IS NULL
                 """
-                with engine.connect() as conn:
-                    params = [tenant_id] + node_ids_list
-                    result = conn.execute(text(pg_query), params)
-                    for row in result:
-                        row_dict = dict(row._mapping)
-                        pg_node_info[row_dict["ci_id"]] = row_dict
+                postgres_source_asset = load_source_asset(name=postgres_source_ref)
+                if postgres_source_asset and str(
+                    postgres_source_asset.get("source_type", "")
+                ).lower() in {"postgres", "postgresql", "mysql", "bigquery", "snowflake"}:
+                    postgres_connection = ConnectionFactory.create(postgres_source_asset)
+                    raw_conn = getattr(postgres_connection, "connection", None)
+                    if raw_conn:
+                        with raw_conn.cursor() as cur:
+                            cur.execute(pg_query, [tenant_id, *node_ids_list])
+                            columns = (
+                                [desc[0] for desc in cur.description]
+                                if cur.description
+                                else []
+                            )
+                            for row in cur.fetchall():
+                                row_dict = dict(zip(columns, row))
+                                pg_node_info[row_dict["ci_id"]] = row_dict
 
             # --- Step 3: Build final nodes (PostgreSQL preferred, Neo4j fallback) ---
             nodes = []
@@ -803,6 +843,17 @@ class DynamicTool(BaseTool):
                 error=f"Graph query failed: {str(exc)}",
                 error_details={"exception": str(exc)},
             )
+        finally:
+            if neo4j_connection:
+                try:
+                    neo4j_connection.close()
+                except Exception:
+                    pass
+            if postgres_connection:
+                try:
+                    postgres_connection.close()
+                except Exception:
+                    pass
 
     async def _execute_custom(
         self, context: ToolContext, input_data: dict[str, Any]

@@ -10,8 +10,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict
 
-from core.db import get_session_context
-from sqlalchemy import text
+from core.config import get_settings
+
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 
 from .base import BaseTool, ToolContext, ToolResult
 
@@ -71,42 +73,64 @@ class DirectQueryTool(BaseTool):
                 error_details={"param": "sql"}
             )
 
+        source_ref = params.get("source_ref")
+        if not source_ref:
+            source_ref = get_settings().ops_default_source_asset
+        if not source_ref:
+            return ToolResult(
+                success=False,
+                error="source_ref is required or ops_default_source_asset must be configured",
+                error_details={"param": "source_ref"},
+            )
+
+        source_asset = load_source_asset(source_ref)
+        if not source_asset:
+            return ToolResult(
+                success=False,
+                error=f"Source asset not found: {source_ref}",
+                error_details={"source_ref": source_ref},
+            )
+
+        connection = None
         try:
-            logger.info(f"Executing direct query: {sql_query[:100]}...")
-
-            # Execute query using session context
-            with get_session_context() as session:
-                result = session.exec(text(sql_query))
-                rows = result.fetchall()
-
-            # Format results
+            logger.info(
+                f"Executing direct query via source '{source_ref}': {sql_query[:100]}..."
+            )
+            connection = ConnectionFactory.create(source_asset)
+            query_params = params.get("query_params")
+            rows = connection.execute(sql_query, query_params)
+            count = len(rows) if isinstance(rows, list) else 0
             data = {
                 "rows": rows,
-                "count": len(rows),
-                "sql": sql_query
+                "count": count,
+                "sql": sql_query,
+                "source_ref": source_ref,
             }
-
-            logger.info(f"Query executed successfully, {len(rows)} rows returned")
-
             return ToolResult(
                 success=True,
                 data=data,
                 metadata={
                     "references": [],
-                    "row_count": len(rows),
-                    "query_type": "direct_sql"
-                }
+                    "row_count": count,
+                    "query_type": "direct_sql",
+                    "source_ref": source_ref,
+                },
             )
-
         except Exception as e:
             error_msg = str(e)
             logger.error(f"Query execution failed: {error_msg}")
-
             return ToolResult(
                 success=False,
                 error=error_msg,
                 error_details={
                     "exception_type": type(e).__name__,
-                    "sql": sql_query[:100]
-                }
+                    "sql": sql_query[:100],
+                    "source_ref": source_ref,
+                },
             )
+        finally:
+            if connection:
+                try:
+                    connection.close()
+                except Exception:
+                    pass

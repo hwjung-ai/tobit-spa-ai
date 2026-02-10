@@ -371,6 +371,7 @@ class ConnectionFactory:
     """
 
     _creators: Dict[str, type[SourceConnection]] = {
+        "postgres": PostgreSQLConnection,  # Legacy alias
         "postgresql": PostgreSQLConnection,
         "mysql": PostgreSQLConnection,  # Reuse PostgreSQL connection for MySQL
         "bigquery": PostgreSQLConnection,  # Can be specialized later
