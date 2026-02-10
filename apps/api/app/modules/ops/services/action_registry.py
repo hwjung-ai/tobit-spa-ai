@@ -312,13 +312,11 @@ async def handle_list_maintenance_filtered(
         try:
             # Execute query with device filter (if provided)
             if device_id:
-                # Query with device_id filter
-                query_with_filter = f"""
-                {query_sql}
-                AND h.ci_id IN (
-                    SELECT ci_id FROM ci WHERE tenant_id = %s AND ci_code = %s
+                # Query with device_id filter - use parameterized subquery
+                query_with_filter = (
+                    query_sql
+                    + " AND h.ci_id IN (SELECT ci_id FROM ci WHERE tenant_id = %s AND ci_code = %s)"
                 )
-                """
                 rows = conn.execute(
                     query_with_filter,
                     (tenant_id, device_id, "2099-01-01", "2024-01-01"),
