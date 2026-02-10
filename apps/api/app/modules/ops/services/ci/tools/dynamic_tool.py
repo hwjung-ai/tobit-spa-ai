@@ -210,7 +210,8 @@ class DynamicTool(BaseTool):
 
             # Handle metric tool specific mappings
             if "{function}" in processed_query:
-                agg = input_data.get("agg", "AVG")
+                # Support both "function" and "agg" parameters
+                agg = input_data.get("function") or input_data.get("agg", "AVG")
                 if isinstance(agg, str):
                     agg = agg.upper()
                 # Validate agg function (whitelist approach)
@@ -326,16 +327,20 @@ class DynamicTool(BaseTool):
 
         if source_type == "postgres":
             from core.db import engine
-            from sqlalchemy import text
 
             try:
-                # Use parameterized query with bound parameters
-                with engine.connect() as conn:
-                    result = conn.execute(text(query), params)
-                    rows = result.fetchall()
-                    columns = result.keys()
+                # Use direct psycopg connection for parameterized queries with %s placeholders
+                psycopg_conn = engine.raw_connection()
+                try:
+                    cur = psycopg_conn.cursor()
+                    cur.execute(query, params)
+                    columns = [desc[0] for desc in cur.description] if cur.description else []
+                    rows = cur.fetchall()
                     output = [dict(zip(columns, row)) for row in rows]
+                    cur.close()
                     return ToolResult(success=True, data={"rows": output})
+                finally:
+                    psycopg_conn.close()
             except Exception as exc:
                 logger.error(f"Database query failed: {str(exc)}", extra={"query": query[:200]})
                 return ToolResult(
