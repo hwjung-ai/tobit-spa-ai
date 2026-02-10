@@ -282,6 +282,235 @@ TOOL_ASSETS: List[Dict[str, Any]] = [
         },
         "tags": {"category": "history", "operation": "union", "phase": "2"},
     },
+    # Phase 1 Orchestrator Refactoring: New Tool Assets
+    {
+        "name": "metric_query",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Query metrics for a specific CI (CPU, memory, latency, etc.)",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("metric/metric_query.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id", "ci_code", "metric_name", "start_time", "end_time", "limit"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+                "ci_code": {"type": "string", "description": "CI code to query metrics for"},
+                "metric_name": {
+                    "type": "string",
+                    "description": "Name of the metric (cpu_usage, memory_usage, latency, etc.)",
+                },
+                "start_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start of time range",
+                },
+                "end_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End of time range",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum number of results to return",
+                },
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "metric_id": {"type": "string"},
+                            "metric_name": {"type": "string"},
+                            "ci_id": {"type": "string"},
+                            "ci_code": {"type": "string"},
+                            "ci_name": {"type": "string"},
+                            "time": {"type": "string", "format": "date-time"},
+                            "value": {"type": "number"},
+                            "unit": {"type": "string"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "metric", "operation": "query", "phase": "3"},
+    },
+    {
+        "name": "ci_aggregation",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Aggregate CI statistics including counts by status",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("ci/ci_aggregation.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "total_count": {"type": "integer"},
+                            "ci_type_count": {"type": "integer"},
+                            "ci_subtype_count": {"type": "integer"},
+                            "active_count": {"type": "integer"},
+                            "inactive_count": {"type": "integer"},
+                            "error_count": {"type": "integer"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "ci", "operation": "aggregate", "phase": "3"},
+    },
+    {
+        "name": "work_history_query",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Query work history records for a CI with optional time range filtering",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("history/work_history_query.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+                "ci_code": {
+                    "type": ["string", "null"],
+                    "description": "Filter by CI code (optional)",
+                },
+                "start_time": {
+                    "type": ["string", "null"],
+                    "format": "date-time",
+                    "description": "Filter by start time (optional)",
+                },
+                "end_time": {
+                    "type": ["string", "null"],
+                    "format": "date-time",
+                    "description": "Filter by end time (optional)",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum number of results to return",
+                },
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "work_id": {"type": "string"},
+                            "work_type": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "detail": {"type": "string"},
+                            "start_time": {"type": "string", "format": "date-time"},
+                            "end_time": {"type": "string", "format": "date-time"},
+                            "duration_min": {"type": "integer"},
+                            "result": {"type": "string"},
+                            "ci_code": {"type": "string"},
+                            "ci_name": {"type": "string"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "history", "operation": "work", "phase": "3"},
+    },
+    {
+        "name": "ci_graph_query",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Query CI relationships and dependencies for graph visualization",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("ci/ci_graph_query.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id", "relationship_types"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+                "ci_code": {
+                    "type": ["string", "null"],
+                    "description": "Filter by source CI code (optional)",
+                },
+                "ci_id": {
+                    "type": ["string", "null"],
+                    "description": "Filter by source CI ID (optional)",
+                },
+                "relationship_types": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Types of relationships to include (depends, impacts, composition, etc.)",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5000,
+                    "default": 500,
+                    "description": "Maximum number of relationships to return",
+                },
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "from_ci_id": {"type": "string"},
+                            "from_ci_code": {"type": "string"},
+                            "from_ci_name": {"type": "string"},
+                            "relationship_type": {"type": "string"},
+                            "to_ci_id": {"type": "string"},
+                            "to_ci_code": {"type": "string"},
+                            "to_ci_name": {"type": "string"},
+                            "strength": {"type": "number"},
+                            "created_at": {"type": "string", "format": "date-time"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "ci", "operation": "graph", "phase": "3"},
+    },
 ]
 
 
