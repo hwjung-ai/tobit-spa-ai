@@ -268,7 +268,18 @@ def _call_output_parser_llm(
     schema_context: dict[str, Any] | None = None,
     source_context: dict[str, Any] | None = None,
 ) -> dict | None:
+    """
+    Call LLM for query planning with native function calling support.
+
+    First tries to use native function calling (tool_use) for structured output.
+    Falls back to JSON extraction from text if function calling unavailable.
+    """
     try:
+        from app.modules.ops.services.ci.planner.tool_schema_converter import (
+            build_tools_for_llm_prompt,
+            extract_tool_call_from_response,
+        )
+
         messages = _build_output_parser_messages(
             text, schema_context=schema_context, source_context=source_context
         )
@@ -277,35 +288,87 @@ def _call_output_parser_llm(
 
         llm = get_llm_client()
         start = perf_counter()
-        response = llm.create_response(
-            model=OUTPUT_PARSER_MODEL,
-            input=messages,
-            temperature=0,
-        )
-        elapsed = int((perf_counter() - start) * 1000)
-        content = llm.get_output_text(response)
-        logger.debug(
-            "ci.planner.llm_response",
-            extra={"model": OUTPUT_PARSER_MODEL, "response_preview": content[:400]},
-        )
-        logger.info(
-            "ci.planner.llm_call",
-            extra={
-                "model": OUTPUT_PARSER_MODEL,
-                "elapsed_ms": elapsed,
-                "status": "ok",
-            },
-        )
-        json_text = _extract_json_block(content)
-        if not json_text:
-            raise ValueError(f"LLM response missing JSON block: {content[:400]!r}")
+
+        # Try native function calling first
+        response = None
+        tool_call = None
+        use_function_calling = True
+
         try:
-            payload = json.loads(json_text)
-        except json.JSONDecodeError as exc:
-            raise ValueError(
-                f"LLM JSON parse error: {exc} | raw={json_text[:400]}"
-            ) from exc
-        return payload
+            # Build tools list for function calling
+            tools, _ = build_tools_for_llm_prompt(include_planner=True)
+
+            logger.debug(
+                "ci.planner.function_calling",
+                extra={"num_tools": len(tools), "model": OUTPUT_PARSER_MODEL},
+            )
+
+            response = llm.create_response(
+                model=OUTPUT_PARSER_MODEL,
+                input=messages,
+                tools=tools if tools else None,  # Only pass if tools available
+                temperature=0,
+            )
+
+            # Try to extract tool call
+            tool_call = extract_tool_call_from_response(response)
+            if tool_call and tool_call.get("name") == "create_execution_plan":
+                payload = tool_call.get("input", {})
+                if payload:
+                    elapsed = int((perf_counter() - start) * 1000)
+                    logger.info(
+                        "ci.planner.llm_call",
+                        extra={
+                            "model": OUTPUT_PARSER_MODEL,
+                            "elapsed_ms": elapsed,
+                            "method": "function_calling",
+                            "status": "ok",
+                        },
+                    )
+                    return payload
+
+        except Exception as fc_exc:
+            # Function calling failed, will fallback to text parsing
+            logger.debug(
+                "ci.planner.function_calling_failed",
+                extra={"error": str(fc_exc)},
+            )
+            use_function_calling = False
+
+        # Fallback: Extract JSON from response text
+        if not tool_call or not use_function_calling:
+            logger.debug("ci.planner.fallback_to_text_parsing")
+            content = llm.get_output_text(response) if response else ""
+            logger.debug(
+                "ci.planner.llm_response",
+                extra={"model": OUTPUT_PARSER_MODEL, "response_preview": content[:400]},
+            )
+
+            json_text = _extract_json_block(content)
+            if not json_text:
+                raise ValueError(f"LLM response missing JSON block: {content[:400]!r}")
+
+            try:
+                payload = json.loads(json_text)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    f"LLM JSON parse error: {exc} | raw={json_text[:400]}"
+                ) from exc
+
+            elapsed = int((perf_counter() - start) * 1000)
+            logger.info(
+                "ci.planner.llm_call",
+                extra={
+                    "model": OUTPUT_PARSER_MODEL,
+                    "elapsed_ms": elapsed,
+                    "method": "text_parsing",
+                    "status": "ok",
+                },
+            )
+            return payload
+
+        return None
+
     except Exception as exc:
         logger.warning("ci.planner.llm_fallback", extra={"error": str(exc)})
         return None
