@@ -225,7 +225,30 @@ export const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEn
   const normalizedResponse = normalizeHistoryResponse(response);
   if (!normalizedResponse) return null;
   const envelope: AnswerEnvelope | CiAnswerPayload = normalizedResponse;
-  const blocks = (envelope as AnswerEnvelope).blocks ?? (envelope as CiAnswerPayload).blocks;
+  let blocks = (envelope as AnswerEnvelope).blocks ?? (envelope as CiAnswerPayload).blocks;
+
+  // Fix document URLs: replace old /documents/ URLs with /api/documents/
+  // This is a defensive fix for historical data with wrong URLs
+  if (blocks && Array.isArray(blocks)) {
+    blocks = blocks.map((block: any) => {
+      if (block?.type === "references" && Array.isArray(block.items)) {
+        return {
+          ...block,
+          items: block.items.map((item: any) => {
+            if (item?.url && item.url.includes("/documents/") && !item.url.includes("/api/documents/")) {
+              return {
+                ...item,
+                url: item.url.replace("/documents/", "/api/documents/"),
+              };
+            }
+            return item;
+          }),
+        };
+      }
+      return block;
+    });
+  }
+
   if (!blocks || !Array.isArray(blocks)) return null;
   const uiMode = (metadata?.uiMode ?? metadata?.ui_mode ?? "ci") as UiMode;
   const status = entry.status === "error" ? "error" : "ok";
@@ -248,7 +271,8 @@ export const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEn
     uiMode,
     backendMode: backendMode as BackendMode,
     question: entry.question,
-    response: envelope,
+    thread_id: entry.thread_id ?? metadata?.thread_id ?? null,
+    response: { ...envelope, blocks },
     status,
     summary: (entry.summary ?? extractSummary(envelope as AnswerEnvelope, entry.question)) ?? "",
     errorDetails: metadata?.errorDetails ?? metadata?.error_details,
