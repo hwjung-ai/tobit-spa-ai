@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import random
 import sys
 import uuid
@@ -13,6 +14,7 @@ if str(ROOT) not in sys.path:
 from scripts.seed.utils import get_postgres_conn
 
 random.seed(2)
+DEFAULT_TENANT_ID = os.getenv("DEFAULT_TENANT_ID", "default")
 
 MAINT_TYPES = ["patch", "inspection", "capacity", "reboot"]
 WORK_TYPES = ["deployment", "integration", "audit", "upgrade"]
@@ -60,7 +62,7 @@ def main() -> None:
                 maint_rows.append(
                     (
                         str(uuid.uuid4()),
-                        "t1",
+                        DEFAULT_TENANT_ID,
                         str(ci_id),
                         random.choice(MAINT_TYPES),
                         "Routine maintenance",
@@ -82,7 +84,7 @@ def main() -> None:
                 work_rows.append(
                     (
                         str(uuid.uuid4()),
-                        "t1",
+                        DEFAULT_TENANT_ID,
                         str(ci_id),
                         random.choice(WORK_TYPES),
                         "Scheduled change",

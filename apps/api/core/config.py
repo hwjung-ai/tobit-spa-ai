@@ -85,6 +85,7 @@ class AppSettings(BaseSettings):
     # Authentication settings
     enable_auth: bool = False  # Toggle authentication on/off for debugging
     enable_permission_check: bool = True  # Toggle RBAC permission checks on/off
+    default_tenant_id: str = "default"
     jwt_secret_key: str = "your-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

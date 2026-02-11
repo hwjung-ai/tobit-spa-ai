@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 from datetime import datetime, timedelta, timezone
@@ -13,6 +14,7 @@ if str(ROOT) not in sys.path:
 from scripts.seed.utils import get_postgres_conn
 
 random.seed(1)
+DEFAULT_TENANT_ID = os.getenv("DEFAULT_TENANT_ID", "default")
 
 EVENT_TYPES = [
     "threshold_alarm",
@@ -57,7 +59,7 @@ def main() -> None:
                     rows.append(
                         (
                             ts,
-                            "t1",
+                            DEFAULT_TENANT_ID,
                             str(ci_id),
                             event_type,
                             severity,

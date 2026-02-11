@@ -12,9 +12,12 @@ from core.config import get_settings
 from core.logging import get_logger
 from neo4j import Driver
 
-from app.modules.asset_registry.loader import load_policy_asset, load_source_asset
+from app.modules.asset_registry.loader import (
+    load_policy_asset,
+    load_query_asset,
+    load_source_asset,
+)
 from app.modules.ops.services.connections import ConnectionFactory
-from app.shared.config_loader import load_text
 
 logger = get_logger(__name__)
 
@@ -26,9 +29,6 @@ EXPECTED_CI_PROPERTIES = {"ci_id", "ci_code", "tenant_id"}
 
 # Cache for discovery config loaded from DB
 _DISCOVERY_CONFIG_CACHE: Dict[str, Any] | None = None
-
-_QUERY_BASE = "queries/neo4j/discovery"
-
 
 def _get_discovery_config() -> Dict[str, Any]:
     """
@@ -68,9 +68,14 @@ def _get_discovery_config() -> Dict[str, Any]:
 
 
 def _load_query(name: str) -> str:
-    query = load_text(f"{_QUERY_BASE}/{name}")
+    # Discovery queries are served from query assets in DB.
+    query_name = Path(name).stem
+    asset, _ = load_query_asset("discovery", query_name)
+    query = None
+    if asset:
+        query = asset.get("cypher") or asset.get("sql")
     if not query:
-        raise ValueError(f"Neo4j catalog query '{name}' not found")
+        raise ValueError(f"Neo4j catalog query '{name}' not found in Asset Registry")
     return query
 
 

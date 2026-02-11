@@ -17,6 +17,8 @@ from fastapi import APIRouter, Depends, Query
 from schemas import ResponseEnvelope
 from sqlmodel import Session
 
+from app.modules.admin import crud as admin_crud
+
 router = APIRouter(prefix="/logs", tags=["admin-logs"])
 
 
@@ -44,63 +46,15 @@ def get_query_history(
     Returns:
         ResponseEnvelope with query history records
     """
-    from sqlalchemy import text
-
-    # Build SQL query (avoid SQLModel Row mapping issues)
-    sql = """
-        SELECT
-            id, tenant_id, user_id, feature, question, summary,
-            status, trace_id, created_at, response, metadata
-        FROM query_history
-        WHERE 1=1
-    """
-    params: dict[str, Any] = {}
-
-    if feature:
-        sql += " AND feature = :feature"
-        params["feature"] = feature
-    if status:
-        sql += " AND status = :status"
-        params["status"] = status
-    if date_from:
-        sql += " AND created_at >= :date_from"
-        params["date_from"] = date_from
-    if date_to:
-        sql += " AND created_at <= :date_to"
-        params["date_to"] = date_to
-
-    # Get total count
-    count_sql = "SELECT COUNT(*) FROM query_history WHERE 1=1"
-    if feature:
-        count_sql += " AND feature = :feature"
-    if status:
-        count_sql += " AND status = :status"
-    if date_from:
-        count_sql += " AND created_at >= :date_from"
-    if date_to:
-        count_sql += " AND created_at <= :date_to"
-
-    total = session.execute(text(count_sql), params).scalar()
-
-    sql += " ORDER BY created_at DESC"
-    sql += f" LIMIT {limit} OFFSET {offset}"
-
-    result = session.execute(text(sql), params)
-    records = []
-    for row in result:
-        records.append({
-            "id": str(row[0]),
-            "tenant_id": row[1],
-            "user_id": row[2],
-            "feature": row[3],
-            "question": row[4],
-            "summary": row[5],
-            "status": row[6],
-            "trace_id": row[7],
-            "created_at": row[8].isoformat() if row[8] else None,
-            "response": row[9],
-            "metadata": row[10],
-        })
+    records, total = admin_crud.list_query_history(
+        session,
+        feature=feature,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+    )
 
     return ResponseEnvelope.success(
         data={
@@ -136,74 +90,15 @@ def get_execution_trace(
     Returns:
         ResponseEnvelope with execution trace records
     """
-    # Import here to avoid circular dependency
-    from sqlalchemy import text
-
-    # Build SQL query
-    sql = """
-        SELECT
-            trace_id,
-            parent_trace_id,
-            feature,
-            endpoint,
-            method,
-            ops_mode,
-            question,
-            status,
-            duration_ms,
-            route,
-            created_at
-        FROM tb_execution_trace
-        WHERE 1=1
-    """
-    params: dict[str, Any] = {}
-
-    if feature:
-        sql += " AND feature = :feature"
-        params["feature"] = feature
-    if status:
-        sql += " AND status = :status"
-        params["status"] = status
-    if date_from:
-        sql += " AND created_at >= :date_from"
-        params["date_from"] = date_from
-    if date_to:
-        sql += " AND created_at <= :date_to"
-        params["date_to"] = date_to
-
-    sql += " ORDER BY created_at DESC"
-    sql += f" LIMIT {limit} OFFSET {offset}"
-
-    # Execute query
-    result = session.execute(text(sql), params)
-    records = []
-    for row in result:
-        records.append({
-            "trace_id": row[0],
-            "parent_trace_id": row[1],
-            "feature": row[2],
-            "endpoint": row[3],
-            "method": row[4],
-            "ops_mode": row[5],
-            "question": row[6],
-            "status": row[7],
-            "duration_ms": row[8],
-            "route": row[9],
-            "created_at": row[10].isoformat() if row[10] else None,
-        })
-
-    # Get total count
-    count_sql = "SELECT COUNT(*) FROM tb_execution_trace WHERE 1=1"
-    if feature:
-        count_sql += " AND feature = :feature"
-    if status:
-        count_sql += " AND status = :status"
-    if date_from:
-        count_sql += " AND created_at >= :date_from"
-    if date_to:
-        count_sql += " AND created_at <= :date_to"
-
-    total = session.execute(text(count_sql), params).scalar()
+    records, total = admin_crud.list_execution_traces(
+        session,
+        feature=feature,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+    )
 
     return ResponseEnvelope.success(
         data={
@@ -239,62 +134,15 @@ def get_audit_logs(
     Returns:
         ResponseEnvelope with audit log records
     """
-    from sqlalchemy import text
-
-    try:
-        sql = """
-            SELECT
-                audit_id, trace_id, resource_type, resource_id,
-                action, user_id, timestamp, details
-            FROM tb_audit_log
-            WHERE 1=1
-        """
-        params: dict[str, Any] = {}
-
-        if resource_type:
-            sql += " AND resource_type = :resource_type"
-            params["resource_type"] = resource_type
-        if action:
-            sql += " AND action = :action"
-            params["action"] = action
-        if date_from:
-            sql += " AND timestamp >= :date_from"
-            params["date_from"] = date_from
-        if date_to:
-            sql += " AND timestamp <= :date_to"
-            params["date_to"] = date_to
-
-        count_sql = "SELECT COUNT(*) FROM tb_audit_log WHERE 1=1"
-        if resource_type:
-            count_sql += " AND resource_type = :resource_type"
-        if action:
-            count_sql += " AND action = :action"
-        if date_from:
-            count_sql += " AND timestamp >= :date_from"
-        if date_to:
-            count_sql += " AND timestamp <= :date_to"
-
-        total = session.execute(text(count_sql), params).scalar()
-
-        sql += " ORDER BY timestamp DESC"
-        sql += f" LIMIT {limit} OFFSET {offset}"
-
-        result = session.execute(text(sql), params)
-        records = []
-        for row in result:
-            records.append({
-                "audit_id": str(row[0]),
-                "trace_id": row[1],
-                "resource_type": row[2],
-                "resource_id": row[3],
-                "action": row[4],
-                "user_id": row[5],
-                "timestamp": row[6].isoformat() if row[6] else None,
-                "details": row[7],
-            })
-    except Exception:
-        records = []
-        total = 0
+    records, total = admin_crud.list_audit_logs(
+        session,
+        resource_type=resource_type,
+        action=action,
+        date_from=date_from,
+        date_to=date_to,
+        limit=limit,
+        offset=offset,
+    )
 
     return ResponseEnvelope.success(
         data={
@@ -370,62 +218,15 @@ def get_log_stats(
     Returns:
         ResponseEnvelope with log statistics
     """
-    from sqlalchemy import text
-
-    try:
-        query_stats = session.exec(
-            text("""
-                SELECT feature, status, COUNT(*) as count
-                FROM query_history
-                WHERE created_at >= NOW() - INTERVAL '24 hours'
-                GROUP BY feature, status
-            """)
-        ).all()
-    except Exception:
-        query_stats = []
-
-    try:
-        trace_stats = session.exec(
-            text("""
-                SELECT feature, status, COUNT(*) as count, AVG(duration_ms) as avg_duration
-                FROM tb_execution_trace
-                WHERE created_at >= NOW() - INTERVAL '24 hours'
-                GROUP BY feature, status
-            """)
-        ).all()
-    except Exception:
-        trace_stats = []
-
-    try:
-        audit_stats = session.exec(
-            text("""
-                SELECT resource_type, action, COUNT(*) as count
-                FROM tb_audit_log
-                WHERE timestamp >= NOW() - INTERVAL '24 hours'
-                GROUP BY resource_type, action
-            """)
-        ).all()
-    except Exception:
-        audit_stats = []
+    # Use CRUD functions for stats
+    query_stats = admin_crud.get_query_history_stats(session)
+    trace_stats = admin_crud.get_execution_trace_stats(session)
+    audit_stats = admin_crud.get_audit_log_stats(session)
 
     return ResponseEnvelope.success(
         data={
-            "query_history": [
-                {"feature": row[0], "status": row[1], "count": row[2]}
-                for row in query_stats
-            ],
-            "execution_trace": [
-                {
-                    "feature": row[0],
-                    "status": row[1],
-                    "count": row[2],
-                    "avg_duration_ms": float(row[3]) if row[3] else 0,
-                }
-                for row in trace_stats
-            ],
-            "audit_log": [
-                {"resource_type": row[0], "action": row[1], "count": row[2]}
-                for row in audit_stats
-            ],
+            "query_history": query_stats,
+            "execution_trace": trace_stats,
+            "audit_log": audit_stats,
         }
     )

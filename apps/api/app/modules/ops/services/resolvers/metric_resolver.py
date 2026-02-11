@@ -4,7 +4,6 @@ from core.config import get_settings
 
 from app.modules.asset_registry.loader import load_query_asset, load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
-from app.shared.config_loader import load_text
 
 from .types import MetricHit
 
@@ -35,12 +34,13 @@ def resolve_metric(question: str) -> MetricHit | None:
 
 
 def _fetch_metric(metric_name: str) -> MetricHit | None:
-    # Load query with DB priority fallback to file
+    # Query assets must be managed in Asset Registry (DB).
     asset, _ = load_query_asset("metric", "metric_resolver")
     query = asset.get("sql") if asset else None
-    query = query or load_text("queries/postgres/metric/metric_resolver.sql")
     if not query:
-        raise ValueError("Metric resolver query not found")
+        raise ValueError(
+            "Metric resolver query not found in Asset Registry: metric/metric_resolver"
+        )
     connection = _get_connection()
     try:
         conn = connection.connection if hasattr(connection, 'connection') else connection

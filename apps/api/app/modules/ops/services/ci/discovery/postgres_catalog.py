@@ -10,9 +10,8 @@ from pathlib import Path
 from core.config import get_settings
 from psycopg import Connection
 
-from app.modules.asset_registry.loader import load_source_asset
+from app.modules.asset_registry.loader import load_query_asset, load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
-from app.shared.config_loader import load_text
 
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "postgres_catalog.json"
@@ -26,11 +25,6 @@ AGG_COLUMNS = [
     "owner",
 ]
 
-_QUERY_BASE = "queries/postgres/discovery"
-
-
-
-
 def _get_connection():
     """Get connection using source asset."""
     settings = get_settings()
@@ -39,9 +33,14 @@ def _get_connection():
 
 
 def _load_query(name: str) -> str:
-    query = load_text(f"{_QUERY_BASE}/{name}")
+    # Discovery queries are served from query assets in DB.
+    query_name = Path(name).stem
+    asset, _ = load_query_asset("discovery", query_name)
+    query = asset.get("sql") if asset else None
     if not query:
-        raise ValueError(f"Postgres catalog query '{name}' not found")
+        raise ValueError(
+            f"Postgres catalog query '{name}' not found in Asset Registry"
+        )
     return query
 
 

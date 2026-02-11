@@ -18,6 +18,18 @@ from sqlmodel import Session, select
 
 from app.modules.auth.models import TbUser
 
+from .crud import (
+    count_chunks_by_document,
+    create_chunk,
+    create_chunks,
+    create_document,
+    get_document,
+    get_document_version_chain,
+    get_document_with_lock,
+    increment_document_version,
+    list_chunks_by_document,
+    list_documents,
+)
 from .services import (
     ChunkingStrategy,
     DocumentExportService,
@@ -181,22 +193,17 @@ async def upload_document(
             f"Uploading document: {file.filename} ({file_size} bytes, user: {user_id}, tenant: {tenant_id})"
         )
 
-        document = Document(
+        # Use CRUD to create document
+        document = create_document(
+            session,
             tenant_id=tenant_id,
             user_id=user_id,
             filename=file.filename,
             content_type=file.content_type or "application/octet-stream",
-            size=file_size,
-            status=DocumentStatus.processing,
-            format=file_ext,
-            processing_progress=0,
-            total_chunks=0,
-            created_by=user_id,
-            doc_metadata={},
+            file_size=file_size,
+            file_format=file_ext,
+            metadata={},
         )
-        session.add(document)
-        session.commit()
-        session.refresh(document)
 
         storage_path = _storage_path_for(document.id, tenant_id, file.filename)
         storage_path.parent.mkdir(parents=True, exist_ok=True)
@@ -632,47 +639,18 @@ async def reindex_document(
     Current implementation increments chunk_version and updates document timestamp.
     """
     try:
-        from sqlalchemy import text
-
         tenant_id = _tenant_id_from_user(current_user)
 
-        doc_row = session.execute(
-            text(
-                """
-                SELECT id, version
-                FROM documents
-                WHERE id = :document_id AND tenant_id = :tenant_id AND deleted_at IS NULL
-                """
-            ),
-            {"document_id": document_id, "tenant_id": tenant_id},
-        ).fetchone()
+        # Check document exists
+        doc_row = get_document_with_lock(session, document_id, tenant_id)
         if not doc_row:
             raise HTTPException(status_code=404, detail="Document not found")
 
-        session.execute(
-            text(
-                """
-                UPDATE document_chunks
-                SET chunk_version = COALESCE(chunk_version, 1) + 1
-                WHERE document_id = :document_id
-                """
-            ),
-            {"document_id": document_id},
-        )
-        session.execute(
-            text(
-                """
-                UPDATE documents
-                SET version = COALESCE(version, 1) + 1,
-                    updated_at = NOW()
-                WHERE id = :document_id
-                """
-            ),
-            {"document_id": document_id},
-        )
-        session.commit()
+        # Increment version using CRUD
+        new_version = increment_document_version(session, document_id, tenant_id)
+        if new_version is None:
+            raise HTTPException(status_code=404, detail="Document not found")
 
-        new_version = int(doc_row[1] or 1) + 1
         return ResponseEnvelope.success(
             data={
                 "document_id": document_id,
@@ -695,47 +673,18 @@ async def get_document_versions(
 ):
     """Return document version chain (parent + current)."""
     try:
-        from sqlalchemy import text
-
         tenant_id = _tenant_id_from_user(current_user)
 
-        rows = session.execute(
-            text(
-                """
-                WITH RECURSIVE chain AS (
-                    SELECT id, parent_id, version, version_comment, created_at, updated_at
-                    FROM documents
-                    WHERE id = :document_id AND tenant_id = :tenant_id
-                    UNION ALL
-                    SELECT d.id, d.parent_id, d.version, d.version_comment, d.created_at, d.updated_at
-                    FROM documents d
-                    JOIN chain c ON c.parent_id = d.id
-                )
-                SELECT id, parent_id, version, version_comment, created_at, updated_at
-                FROM chain
-                ORDER BY version DESC
-                """
-            ),
-            {"document_id": document_id, "tenant_id": tenant_id},
-        ).fetchall()
+        # Use CRUD to get version chain
+        versions = get_document_version_chain(session, document_id, tenant_id)
 
-        if not rows:
+        if not versions:
             raise HTTPException(status_code=404, detail="Document not found")
 
         return ResponseEnvelope.success(
             data={
                 "document_id": document_id,
-                "versions": [
-                    {
-                        "id": str(row[0]),
-                        "parent_id": str(row[1]) if row[1] else None,
-                        "version": int(row[2] or 1),
-                        "version_comment": row[3],
-                        "created_at": row[4].isoformat() if row[4] else None,
-                        "updated_at": row[5].isoformat() if row[5] else None,
-                    }
-                    for row in rows
-                ],
+                "versions": versions,
             }
         )
     except HTTPException:
@@ -767,27 +716,16 @@ async def get_document_chunks(
         tenant_id = _tenant_id_from_user(current_user)
         offset = (page - 1) * per_page
 
-        document = session.exec(
-            select(Document)
-            .where(Document.id == document_id)
-            .where(Document.tenant_id == tenant_id)
-            .where(Document.deleted_at.is_(None))
-        ).first()
+        # Use CRUD to check document exists
+        document = get_document(session, document_id, tenant_id)
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
 
-        chunks = session.exec(
-            select(DocumentChunk)
-            .where(DocumentChunk.document_id == document_id)
-            .order_by(DocumentChunk.chunk_index.asc())
-            .offset(offset)
-            .limit(per_page)
-        ).all()
-        total_chunks = len(
-            session.exec(
-                select(DocumentChunk).where(DocumentChunk.document_id == document_id)
-            ).all()
+        # Use CRUD to get chunks
+        chunks = list_chunks_by_document(
+            session, document_id, tenant_id, limit=per_page, offset=offset
         )
+        total_chunks = count_chunks_by_document(session, document_id, tenant_id)
 
         return ResponseEnvelope.success(
             data={

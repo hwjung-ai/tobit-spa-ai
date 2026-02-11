@@ -66,9 +66,9 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
 
     # Mock external dependencies
     with (
-        patch("core.db_pg.get_pg_connection") as mock_pg_func,
+        patch("app.modules.ops.services.action_registry.get_pg_connection") as mock_pg_func,
         patch("core.config.get_settings"),
-        patch("app.shared.config_loader.load_text") as mock_load,
+        patch("app.modules.ops.services.action_registry.load_query_asset") as mock_load_query,
     ):
         # Setup mocks
         mock_pg_conn = MagicMock()
@@ -77,8 +77,9 @@ async def test_list_maintenance_filtered_with_state_patch(mock_session):
             ("2024-01-10", "Corrective", 180, "Completed", "Bearing"),
         ]
         mock_pg_func.return_value = mock_pg_conn
-        mock_load.return_value = (
-            "SELECT * FROM maintenance_history WHERE tenant_id = %s"
+        mock_load_query.return_value = (
+            {"sql": "SELECT * FROM maintenance_history WHERE tenant_id = %s"},
+            "query-asset-id:v1",
         )
 
         # Execute
@@ -139,7 +140,7 @@ async def test_create_maintenance_ticket_with_state_patch(mock_session):
     }
 
     with (
-        patch("core.db_pg.get_pg_connection") as mock_pg_func,
+        patch("app.modules.ops.services.action_registry.get_pg_connection") as mock_pg_func,
         patch("core.config.get_settings"),
     ):
         # Setup mocks

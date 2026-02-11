@@ -114,7 +114,7 @@ export default function AssetOverrideDrawer({
 
     const payload = {
       question: selectedQuestion,
-      tenant_id: "t1", // Should come from auth context
+      tenant_id: localStorage.getItem("tenant_id") || process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || "default",
       asset_overrides: overrides.reduce((acc, override) => {
         acc[`${override.assetType}:${DEFAULT_ASSETS[override.assetType as keyof typeof DEFAULT_ASSETS]}`] = override.assetId;
         return acc;

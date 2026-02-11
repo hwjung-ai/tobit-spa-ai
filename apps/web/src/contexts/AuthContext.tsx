@@ -31,6 +31,7 @@ const buildAuthUrl = (endpoint: string): string => {
 };
 
 const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
+const DEFAULT_TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || "default";
 
 // Default debug user for development mode
 const DEBUG_USER: User = {
@@ -38,7 +39,7 @@ const DEBUG_USER: User = {
   email: "debug@dev",
   username: "debug@dev",
   role: "ADMIN",
-  tenant_id: "t1",
+  tenant_id: DEFAULT_TENANT_ID,
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

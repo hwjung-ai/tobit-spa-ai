@@ -196,6 +196,7 @@ def get_current_user(
             select(TbUser).where(TbUser.username == "admin@tobit.local")
         ).first()
         if debug_user:
+            debug_user.tenant_id = settings.default_tenant_id
             return debug_user
         # If no admin user exists, create a minimal user object for dev mode
         # This is a fallback for development without authentication setup
@@ -204,7 +205,7 @@ def get_current_user(
             username="debug@dev",
             password_hash="",
             role=UserRole.ADMIN,
-            tenant_id="dev-tenant",
+            tenant_id=settings.default_tenant_id,
             is_active=True,
         )
 

@@ -304,7 +304,10 @@ export default function ScreenEditorTabs() {
 
   useEffect(() => {
     if (disableRealtime || !screenId || typeof window === "undefined") return;
-    const tenantId = localStorage.getItem("tenant_id") || "t1";
+    const tenantId =
+      localStorage.getItem("tenant_id") ||
+      process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID ||
+      "default";
     const userId = localStorage.getItem("user_id") || `local-${tabSessionId}`;
     const userLabel = localStorage.getItem("username") || userId;
 

@@ -20,7 +20,7 @@ from core.db_pg import get_pg_connection
 from core.logging import get_logger
 from sqlalchemy.orm import Session
 
-from app.modules.asset_registry.loader import load_source_asset
+from app.modules.asset_registry.loader import load_query_asset, load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
 
 logger = get_logger(__name__)
@@ -292,18 +292,19 @@ async def handle_list_maintenance_filtered(
     """
     from core.config import get_settings
     
-    from app.shared.config_loader import load_text
-
     device_id = inputs.get("device_id", "").strip()
     offset = inputs.get("offset", 0)
     limit = inputs.get("limit", 20)
-    tenant_id = context.get("tenant_id", "t1")
+    tenant_id = context.get("tenant_id") or get_settings().default_tenant_id
 
     try:
-        # Load query SQL for maintenance history
-        query_sql = load_text("queries/postgres/history/maintenance_history.sql")
+        # Load query SQL for maintenance history from query asset
+        query_asset, _ = load_query_asset("history", "maintenance_history")
+        query_sql = query_asset.get("sql") if query_asset else None
         if not query_sql:
-            raise ValueError("maintenance_history query not found")
+            raise ValueError(
+                "maintenance_history query not found in Asset Registry: history/maintenance_history"
+            )
 
         # Get PostgreSQL connection
         settings = get_settings()
@@ -460,7 +461,7 @@ async def handle_create_maintenance_ticket(
     maint_type = inputs.get("maintenance_type", "").strip()
     scheduled_date = inputs.get("scheduled_date", "").strip()
     assigned_to = inputs.get("assigned_to", "Unknown").strip()
-    tenant_id = context.get("tenant_id", "t1")
+    tenant_id = context.get("tenant_id") or get_settings().default_tenant_id
 
     # Validate inputs
     if not all([device_id, maint_type, scheduled_date]):
@@ -1216,8 +1217,11 @@ async def handle_fetch_cep_stats(
             ).all()
             if rule_logs:
                 exec_count = len(rule_logs)
-                err_count = sum(1 for l in rule_logs if l.status == "fail")
-                avg_dur = sum((l.duration_ms or 0) for l in rule_logs) / exec_count
+                err_count = sum(1 for log_item in rule_logs if log_item.status == "fail")
+                avg_dur = (
+                    sum((log_item.duration_ms or 0) for log_item in rule_logs)
+                    / exec_count
+                )
                 cep_rules_perf.append({
                     "rule_name": str(rule.rule_name),
                     "trigger_type": str(getattr(rule, "trigger_type", "event")),

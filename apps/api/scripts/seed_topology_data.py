@@ -3,7 +3,7 @@
 Neo4j 토폴로지 시드 데이터 생성 스크립트
 
 사용법:
-    python scripts/seed_topology_data.py --tenant-id t1
+    python scripts/seed_topology_data.py --tenant-id default
 """
 
 import argparse
@@ -26,7 +26,7 @@ class Neo4jTopologySeeder:
             auth=(settings.neo4j_user, settings.neo4j_password)
         )
     
-    def seed_topology(self, tenant_id="t1"):
+    def seed_topology(self, tenant_id="default"):
         """
         토폴로지 데이터 시드 생성
         
@@ -123,8 +123,8 @@ def main():
     parser.add_argument(
         "--tenant-id",
         type=str,
-        default="t1",
-        help="Tenant ID (default: t1)"
+        default=get_settings().default_tenant_id,
+        help="Tenant ID (default: DEFAULT_TENANT_ID env)"
     )
     parser.add_argument(
         "--clear",

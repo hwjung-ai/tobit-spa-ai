@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import random
 import sys
 import uuid
@@ -15,6 +16,7 @@ if str(ROOT) not in sys.path:
 from scripts.seed.utils import get_postgres_conn
 
 random.seed(0)
+DEFAULT_TENANT_ID = os.getenv("DEFAULT_TENANT_ID", "default")
 
 METRIC_DEFINITIONS = [
     {
@@ -128,7 +130,7 @@ def main() -> None:
                             copier.write_row(
                                 (
                                     current,
-                                    "t1",
+                                    DEFAULT_TENANT_ID,
                                     str(ci_id),
                                     str(metric_map[metric["name"]]),
                                     value,

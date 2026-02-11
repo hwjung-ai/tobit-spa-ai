@@ -168,12 +168,12 @@ class SQLTemplateProcessor:
 
         Examples:
             >>> sql = "SELECT * FROM ci WHERE ci.tenant_id = %s AND {where_clause}"
-            >>> params = {"tenant_id": "t1", "filters": [{"field": "status", "op": "=", "value": "active"}]}
+            >>> params = {"tenant_id": "default", "filters": [{"field": "status", "op": "=", "value": "active"}]}
             >>> processed_sql, params_tuple = process_template(sql, params)
             >>> processed_sql
             'SELECT * FROM ci WHERE ci.tenant_id = %s AND status = %s'
             >>> params_tuple
-            ('t1', 'active')
+            ('default', 'active')
         """
         processed_sql = sql
         all_params = []

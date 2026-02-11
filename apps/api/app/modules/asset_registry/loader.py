@@ -350,9 +350,9 @@ def load_query_asset(
     scope: str, name: str, version: int | None = None
 ) -> dict[str, Any] | None:
     """
-    Load query asset with fallback priority:
-    1. Specific version from DB (if version specified) or Published asset from DB
-    2. File from resources/queries/
+    Load query asset from Asset Registry (DB):
+    1. Specific version from DB (if version specified), or
+    2. Published asset from DB
 
     Args:
         scope: Query scope (e.g., "ops")
@@ -403,7 +403,6 @@ def load_query_asset(
                 asset_identifier,
             )
 
-    # Fallback to file (only in test/dev mode)
     if _is_real_mode():
         raise ValueError(
             f"[REAL MODE] Query asset not found in Asset Registry: {name} (scope={scope}). "
@@ -411,31 +410,11 @@ def load_query_asset(
             f"Please create and publish the asset in Admin → Assets."
         )
 
-    file_path = f"queries/{scope}/{name}.sql"
-    query_text = config_loader.load_text(file_path)
-
-    if query_text:
-        logger.warning(f"Using fallback file for query '{name}': resources/{file_path}")
-        track_query_asset(
-            {
-                "asset_id": None,
-                "name": name,
-                "scope": scope,
-                "source": "file_fallback",
-                "version": None,
-            }
-        )
-        return (
-            {
-                "sql": query_text,
-                "params": {},
-                "metadata": {"seed_file": file_path},
-                "source": "file_fallback",
-            },
-            None,
-        )
-
-    logger.warning(f"Query asset not found: {name} (scope={scope})")
+    logger.warning(
+        "Query asset not found in Asset Registry (dev mode): %s (scope=%s)",
+        name,
+        scope,
+    )
     return None, None
 
 

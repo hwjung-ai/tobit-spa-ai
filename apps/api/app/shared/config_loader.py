@@ -95,7 +95,7 @@ def load_text(path: str) -> str | None:
     """
     Loads a text file (e.g., .sql, .cypher) from the resources directory under apps/api.
     The path should be relative to `resources/`.
-    Example: `load_text("queries/postgres/ci/resolve_ci.sql")`
+    Example: `load_text("prompts/ops/system.txt")`
     """
     return _load_file(path, lambda content: content)
 

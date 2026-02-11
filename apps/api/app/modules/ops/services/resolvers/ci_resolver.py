@@ -5,20 +5,14 @@ from typing import Iterable
 
 from core.config import get_settings
 
-from app.modules.asset_registry.loader import load_source_asset
+from app.modules.asset_registry.loader import load_query_asset, load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
-from app.shared.config_loader import load_text
 
 from .types import CIHit
 
 CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app|mes)-[a-z0-9-]+\b", re.IGNORECASE
 )
-
-_QUERY_BASE = "queries/postgres/ci"
-
-
-
 
 def _get_connection():
     """Get connection using source asset."""
@@ -28,13 +22,17 @@ def _get_connection():
 
 
 def _load_query(name: str) -> str:
-    query = load_text(f"{_QUERY_BASE}/{name}")
+    # Query assets must be managed in Asset Registry (DB).
+    asset, _ = load_query_asset("ci", name.replace(".sql", ""))
+    query = asset.get("sql") if asset else None
     if not query:
-        raise ValueError(f"CI resolver query '{name}' not found")
+        raise ValueError(f"CI resolver query '{name}' not found in Asset Registry")
     return query
 
 
-def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIHit]:
+def resolve_ci(
+    question: str, tenant_id: str | None = None, limit: int = 5
+) -> list[CIHit]:
     """
     CI 해석: 3단계 검색 (우선도 기반)
 
@@ -47,6 +45,7 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
     - ci_code 패턴 검색 (score 0.8)
     - ci_name 패턴 검색 (score 0.6)
     """
+    resolved_tenant_id = tenant_id or get_settings().default_tenant_id
     codes = _extract_codes(question)
     hits: list[CIHit] = []
     seen_codes: set[str] = set()
@@ -59,7 +58,7 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
                 # 단계 1: 명시 CI코드의 정확 매칭만 수행
                 exact_query = _load_query("ci_resolver_exact.sql")
                 for code in dict.fromkeys(codes):
-                    cur.execute(exact_query, (code, tenant_id, limit))
+                    cur.execute(exact_query, (code, resolved_tenant_id, limit))
                     for row in cur.fetchall():
                         hits.append(_row_to_hit(row, 1.0))
                         seen_codes.add(row[1])
@@ -79,7 +78,7 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
             remaining = limit - len(hits)
             if remaining > 0:
                 for row in _query_pattern(
-                    cur, tenant_id, question, "ci_code", remaining
+                    cur, resolved_tenant_id, question, "ci_code", remaining
                 ):
                     if row[1] in seen_codes:
                         continue
@@ -92,7 +91,7 @@ def resolve_ci(question: str, tenant_id: str = "t1", limit: int = 5) -> list[CIH
             remaining = limit - len(hits)
             if remaining > 0:
                 for row in _query_pattern(
-                    cur, tenant_id, question, "ci_name", remaining
+                    cur, resolved_tenant_id, question, "ci_name", remaining
                 ):
                     if row[1] in seen_codes:
                         continue

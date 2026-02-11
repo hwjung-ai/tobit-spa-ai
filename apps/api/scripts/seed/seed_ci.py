@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 import uuid
@@ -15,6 +16,7 @@ if str(ROOT) not in sys.path:
 from scripts.seed.utils import get_postgres_conn
 
 random.seed(0)
+DEFAULT_TENANT_ID = os.getenv("DEFAULT_TENANT_ID", "default")
 
 SYSTEM_DEFINITIONS = [
     {
@@ -142,7 +144,7 @@ def main() -> None:
         ci_rows.append(
             build_ci_row(
                 system_id,
-                tenant_id="t1",
+                tenant_id=DEFAULT_TENANT_ID,
                 ci_type="SYSTEM",
                 ci_subtype=system["subtype"],
                 ci_code=f"sys-{system['code']}",
@@ -175,7 +177,7 @@ def main() -> None:
             ci_rows.append(
                 build_ci_row(
                     server_id,
-                    tenant_id="t1",
+                    tenant_id=DEFAULT_TENANT_ID,
                     ci_type="HW",
                     ci_subtype="server",
                     ci_code=server_code,
@@ -205,7 +207,7 @@ def main() -> None:
             ci_rows.append(
                 build_ci_row(
                     os_id,
-                    tenant_id="t1",
+                    tenant_id=DEFAULT_TENANT_ID,
                     ci_type="SW",
                     ci_subtype="os",
                     ci_code=os_code,
@@ -282,7 +284,7 @@ def _maybe_create_db(
     db_id = uuid.uuid4()
     ci_row = build_ci_row(
         db_id,
-        tenant_id="t1",
+        tenant_id=DEFAULT_TENANT_ID,
         ci_type="SW",
         ci_subtype="db",
         ci_code=f"db-{system['code']}-{server_idx:02d}",
@@ -317,7 +319,7 @@ def _build_was(
     code = f"was-{system['code']}-{server_idx:02d}"
     ci_row = build_ci_row(
         was_id,
-        tenant_id="t1",
+        tenant_id=DEFAULT_TENANT_ID,
         ci_type="SW",
         ci_subtype="was",
         ci_code=code,
@@ -353,7 +355,7 @@ def _maybe_create_web(
     web_id = uuid.uuid4()
     ci_row = build_ci_row(
         web_id,
-        tenant_id="t1",
+        tenant_id=DEFAULT_TENANT_ID,
         ci_type="SW",
         ci_subtype="web",
         ci_code=f"web-{system['code']}-{server_idx:02d}",
@@ -392,7 +394,7 @@ def _build_apps(
         ci_code = f"app-{system['code']}-{name}-{server_idx:02d}-{idx}"
         ci_row = build_ci_row(
             app_id,
-            tenant_id="t1",
+            tenant_id=DEFAULT_TENANT_ID,
             ci_type="SW",
             ci_subtype="app",
             ci_code=ci_code,
@@ -433,7 +435,7 @@ def _build_network_segments(
         ci_rows.append(
             build_ci_row(
                 net_id,
-                tenant_id="t1",
+                tenant_id=DEFAULT_TENANT_ID,
                 ci_type="HW",
                 ci_subtype="network",
                 ci_code=code,
@@ -460,7 +462,7 @@ def _build_network_segments(
     ci_rows.append(
         build_ci_row(
             storage_id,
-            tenant_id="t1",
+            tenant_id=DEFAULT_TENANT_ID,
             ci_type="HW",
             ci_subtype="storage",
             ci_code=f"storage-{system['code']}",
@@ -486,7 +488,7 @@ def _build_network_segments(
     ci_rows.append(
         build_ci_row(
             security_id,
-            tenant_id="t1",
+            tenant_id=DEFAULT_TENANT_ID,
             ci_type="HW",
             ci_subtype="security",
             ci_code=f"sec-{system['code']}",
