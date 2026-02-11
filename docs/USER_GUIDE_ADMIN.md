@@ -1,6 +1,6 @@
 # Admin System - 사용자 가이드
 
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-11
 
 ## 문서의 성격
 
@@ -204,7 +204,7 @@
 4. Test Payload 입력:
    ```json
    {
-     "tenant_id": "t1",
+     "tenant_id": "default",
      "device_id": "DEV-001",
      "limit": 10
    }
@@ -668,5 +668,17 @@
 
 ---
 
-**마지막 정리**: 2026-02-10
-**전체 완성도**: 100% (상용 완료)
+## 12. 향후 작업 (미완료)
+
+```text
+[ ] API Key 기반 외부 API 접근 정책을 Admin > Settings에서 엔드포인트 단위로 관리
+[ ] 메뉴/권한(RBAC) 매트릭스를 Admin UI에서 시각화하고 역할별 권한 변경 지원
+[ ] Tenant/User 운영 관리 화면(생성/비활성화/역할 변경) 추가
+[ ] Audit Log 필터를 tenant/user/action 기준으로 저장 가능한 프리셋으로 확장
+[ ] Regression 실패 결과를 이슈 트래킹(예: 티켓)과 자동 연계
+```
+
+---
+
+**마지막 정리**: 2026-02-11
+**상태**: 상용 운영 가능 (핵심 기능 완료, 고도화 진행 중)

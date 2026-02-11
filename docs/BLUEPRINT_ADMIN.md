@@ -1,8 +1,8 @@
 # Admin System Blueprint
 
-**Last Updated**: 2026-02-10
+**Last Updated**: 2026-02-11
 **Version**: 1.0
-**Status**: Production Ready
+**Status**: Production (Core Complete)
 
 ---
 
@@ -609,5 +609,27 @@ class AuditLog(SQLModel, table=True):
 
 ---
 
-**마지막 정리**: 2026-02-10
-**전체 완성도**: 100% (상용 완료)
+## 16. 향후 작업 (미완료)
+
+### 16.1 인증/접근 제어 고도화
+
+- [ ] `Admin > Settings`에서 JWT 전용 / API Key 전용 / Hybrid 모드 전환 지원
+- [ ] API Key 스코프를 엔드포인트 그룹(예: `/ops/*`, `/sim/*`) 단위로 정책화
+- [ ] `tb_api_key` 사용 현황(마지막 사용 시각, 호출량, 실패율) 대시보드 제공
+
+### 16.2 멀티 테넌트/사용자 운영
+
+- [ ] Tenant/User/Role 관리 UI 통합 (`Admin > Settings` 또는 `Admin > IAM`)
+- [ ] tenant/user 정합성 검사 배치 및 경고 알림 추가
+- [ ] 메뉴 가시성(프론트)과 API 권한(백엔드) 매핑 테이블 단일화
+
+### 16.3 운영 자동화/품질
+
+- [ ] Regression 실패 시 자동 재현 실행 및 원인 분류(데이터/정책/코드)
+- [ ] Audit 로그 이상 징후 탐지(권한 상승, 비정상 다량 변경) 룰 엔진 추가
+- [ ] Settings 변경 이력에 승인 워크플로(2인 승인) 선택 적용
+
+---
+
+**마지막 정리**: 2026-02-11
+**상태**: 상용 운영 가능 (핵심 완료, 고도화 과제 진행)
