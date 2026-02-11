@@ -265,8 +265,8 @@ AFTER:  query_with_filter = query_sql + " AND h.ci_id IN (...)"
 
 ## 📚 참고 문서
 
-1. **최종 리팩토링 보고서**: `/docs/TOOLS_SYSTEM_REFACTORING_FINAL_REPORT.md`
-2. **완전한 리팩토링 완료**: `/docs/TOOLS_SYSTEM_REFACTORING_COMPLETE.md`
+1. **최종 리팩토링 보고서**: `/docs/history/TOOLS_SYSTEM_REFACTORING_FINAL_REPORT.md`
+2. **완전한 리팩토링 완료**: `/docs/history/TOOLS_SYSTEM_REFACTORING_COMPLETE.md`
 3. **테스트 파일**: `/apps/api/tests/test_sql_injection_prevention.py`
 4. **Tool Asset 등록**: `/apps/api/scripts/register_ops_tools.py`
 

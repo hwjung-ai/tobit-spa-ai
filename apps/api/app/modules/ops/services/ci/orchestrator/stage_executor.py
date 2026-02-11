@@ -1893,17 +1893,15 @@ class StageExecutor:
 
             self.logger.info(f"🔍 [QUERY ASSET] Executing Query Assets for question: {question[:100]}")
 
-            # Load Query Assets from database
+            # Load Query Assets from database using CRUD
+            from app.modules.asset_registry.crud import list_assets
+
             with get_session_context() as session:
-                from sqlmodel import select
-
-                from app.modules.asset_registry.models import TbAssetRegistry
-
-                query = select(TbAssetRegistry).where(
-                    TbAssetRegistry.asset_type == "query",
-                    TbAssetRegistry.status == "published"
+                query_assets = list_assets(
+                    session=session,
+                    asset_type="query",
+                    status="published"
                 )
-                query_assets = session.exec(query).all()
 
             self.logger.info(f"🔍 [QUERY ASSET] Found {len(query_assets)} Query Assets in database")
 

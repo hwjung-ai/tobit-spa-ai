@@ -14,6 +14,15 @@ const buildUrl = (endpoint: string): string => {
   return `${baseUrl.replace(/\/+$/, "")}${endpoint}`;
 };
 
+const DEFAULT_TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || "default";
+
+function normalizeTenantId(rawTenantId: string | null): string {
+  if (!rawTenantId || rawTenantId === "t1") {
+    return DEFAULT_TENANT_ID;
+  }
+  return rawTenantId;
+}
+
 export interface FetchOptions extends RequestInit {
   headers?: HeadersInit;
   timeout?: number; // Timeout in milliseconds
@@ -25,7 +34,7 @@ export interface FetchOptions extends RequestInit {
  */
 export function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("access_token");
-  const tenantId = localStorage.getItem("tenant_id") || "default";
+  const tenantId = normalizeTenantId(localStorage.getItem("tenant_id"));
   const userId = localStorage.getItem("user_id") || "default";
 
   const headers: HeadersInit = {
@@ -109,7 +118,7 @@ export async function authenticatedFetch<T = any>(
   options?: FetchOptions
 ): Promise<T> {
   const token = localStorage.getItem("access_token");
-  const tenantId = localStorage.getItem("tenant_id");
+  const tenantId = normalizeTenantId(localStorage.getItem("tenant_id"));
   const userId = localStorage.getItem("user_id");
   const timeout = options?.timeout || 120000; // Default 120 seconds
 

@@ -1,6 +1,0 @@
-This is a sample document about machine learning.
-It contains information about AI technologies and their applications.
-Machine learning is a subset of artificial intelligence.
-It enables systems to learn and improve from experience.
-Common algorithms include neural networks, decision trees, and support vector machines.
-Applications range from image recognition to natural language processing.

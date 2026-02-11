@@ -108,8 +108,8 @@ def execute_universal(
     logger.info(f"Executing universal mode '{mode}' for question: {question[:100]}")
 
     try:
-        # Create plan for the mode
-        plan = _create_simple_plan(mode)
+        # Create plan for the mode (pass question for document mode keyword extraction)
+        plan = _create_simple_plan(mode, question)
         policy_trace = {
             "mode": mode,
             "source": "execute_universal",
@@ -217,7 +217,7 @@ def execute_universal(
         )
 
 
-def _create_simple_plan(mode: str) -> Any:
+def _create_simple_plan(mode: str, question: str = "") -> Any:
     """Create a simple plan based on mode."""
     from app.modules.ops.services.ci.planner.plan_schema import (
         AggregateSpec,
@@ -278,9 +278,12 @@ def _create_simple_plan(mode: str) -> Any:
         # Document mode: Document search and RAG
         intent = Intent.LOOKUP
         view = View.SUMMARY
+        # Extract keywords from question for document search
+        doc_keywords = [question] if question else []
         primary = PrimarySpec(
             limit=5,
-            tool_type="document_search"
+            tool_type="document_search",
+            keywords=doc_keywords
         )
         # Add document-specific specs if needed
         aggregate = AggregateSpec()
@@ -518,6 +521,25 @@ def _convert_runner_blocks(runner_blocks: list, mode: str) -> list[AnswerBlock]:
                     points = [TimeSeriesPoint(timestamp=p["timestamp"], value=p["value"]) for p in s.get("data", [])]
                     series_list.append(TimeSeriesSeries(name=s.get("name"), data=points))
                 blocks.append(TimeSeriesBlock(type="timeseries", title=blk.get("title"), series=series_list))
+            elif btype == "references":
+                # Convert references block for document search results
+                reference_items = []
+                for item in blk.get("items", []):
+                    if isinstance(item, dict):
+                        reference_items.append(ReferenceItem(
+                            title=item.get("title", ""),
+                            kind=item.get("kind", "unknown"),
+                            snippet=item.get("snippet", ""),
+                            url=item.get("url"),
+                            payload=item.get("payload", {}),
+                        ))
+                    elif isinstance(item, ReferenceItem):
+                        reference_items.append(item)
+                blocks.append(ReferencesBlock(
+                    type="references",
+                    title=blk.get("title"),
+                    items=reference_items,
+                ))
             else:
                 # Unknown type: wrap as markdown
                 _log.warning(f"Unknown runner block type '{btype}', wrapping as markdown")
@@ -1501,11 +1523,10 @@ def _timeseries_point(
 
 
 def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBlock], list[str]]:
-    """Fallback document search using direct SQL query."""
+    """Fallback document search using search_crud."""
     import logging
     _log = logging.getLogger(__name__)
     from core.db import get_session
-    from sqlmodel import Session, select
 
     blocks = []
     used_tools = []
@@ -1513,35 +1534,27 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
     try:
         session = next(get_session())
 
-        # Search for documents matching the question
-        search_term = f"%{question}%"
+        # Use search_crud for text search
+        from app.modules.document_processor.search_crud import search_chunks_by_text
 
-        # Use SQLModel select instead of raw text
-        from models.document import Document, DocumentChunk
-
-        statement = select(Document, DocumentChunk).join(
-            DocumentChunk, Document.id == DocumentChunk.document_id
-        ).where(
-            Document.tenant_id == tenant_id
-        ).where(
-            (DocumentChunk.text.ilike(search_term)) | (Document.filename.ilike(search_term))
-        ).order_by(
-            Document.filename, DocumentChunk.page_number
-        ).limit(5)
-
-        results = session.exec(statement).all()
+        results = search_chunks_by_text(
+            session=session,
+            query=question,
+            tenant_id=tenant_id,
+            top_k=5,
+        )
 
         if results:
             # Build references block
             reference_items = []
-            for document, chunk in results:
-                document_id = document.id
-                chunk_id = chunk.id
-                page_number = chunk.page_number
-                content = chunk.text
+            for row in results:
+                document_id = row["document_id"]
+                chunk_id = row["id"]
+                page_number = row["page_number"]
+                content = row["text"]
                 snippet = content[:200] + "..." if len(content) > 200 else content
 
-                _log.info(f"Document search result: {document.filename}, snippet length: {len(snippet)}")
+                _log.info(f"Document search result: {row['filename']}, snippet length: {len(snippet)}")
 
                 # Generate URL - use /api/documents/... for actual file serving
                 url = f"/api/documents/{document_id}/viewer"
@@ -1554,12 +1567,12 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
                     url += f"?{'&'.join(params)}"
 
                 reference_items.append({
-                    "title": document.filename,
+                    "title": row["filename"],
                     "kind": "document",
                     "snippet": snippet,
                     "url": url,
                     "payload": {
-                        "relevance_score": 0.8,  # Default score
+                        "relevance_score": row["score"],
                         "chunk_id": chunk_id,
                         "document_id": document_id,
                         "page_number": page_number
@@ -1573,6 +1586,14 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
             })
 
             used_tools.append("document_search")
+        else:
+            # No results found - provide helpful message
+            _log.info(f"No document search results for query: {question[:100]}")
+            blocks.append({
+                "type": "markdown",
+                "title": "검색 결과 없음",
+                "content": f"'{question}'와 일치하는 문서를 찾을 수 없습니다.\n\n검색 팁:\n- 검색어를 간단하게 줄여보세요\n- 다른 키워드로 검색해보세요\n- 오타가 없는지 확인하세요"
+            })
 
         session.close()
 

@@ -80,6 +80,15 @@ const nextConfig: NextConfig = {
         source: "/api/settings/:path*",
         destination: `${API_BASE_URL}/settings/:path*`,
       },
+      // Proxy /api/history to /history (must come before /api/:path*)
+      {
+        source: "/api/history",
+        destination: `${API_BASE_URL}/history/`,
+      },
+      {
+        source: "/api/history/:path*",
+        destination: `${API_BASE_URL}/history/:path*`,
+      },
       // Proxy all other API requests to backend
       {
         source: "/api/:path*",

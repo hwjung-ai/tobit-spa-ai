@@ -1686,3 +1686,69 @@ workflow 순서:
 4. runtime_policy 없는 API 배포 금지
 5. tenant_id 필터 누락 SQL 배포 금지
 
+---
+
+## 23. API Manager와 Tools 연동 운영 기준
+
+### 23.1 API를 사용하는 대표 경로
+
+1. Runtime API: `/runtime/{path}` 직접 호출
+2. Screen/UI 액션: 화면 액션 핸들러에서 API 실행
+3. OPS UI-Actions: 운영 액션 플로우에서 API 실행
+
+### 23.2 API 등록 방식
+
+1. 방식 A (권장): `API Manager`에서 API 정의 후 `Tools`로 등록
+2. 방식 B: `Admin > Tools`에서 HTTP Tool 직접 생성
+
+권장 기준:
+1. 재사용/표준화가 중요한 API는 방식 A 사용
+2. 외부 단일 HTTP 연동은 방식 B 허용
+3. 운영 배포 전에는 Tool 연결 상태와 실행 로그를 반드시 검증
+
+### 23.3 API-Key/JWT 인증 운영 포인트
+
+1. 기본은 JWT 기반 내부 호출
+2. 외부 공개 API는 정책에 따라 API Key 스코프를 분리
+3. API Key는 키 발급/폐기/스코프를 운영 정책으로 관리
+4. 인증 모드(JWT 전용/API Key 전용/Hybrid)는 Admin 설정 기준으로 통제
+
+---
+
+## 24. Tool 등록 필수 정보 체크리스트
+
+API를 Tool로 등록할 때는 아래 항목을 반드시 점검한다.
+
+1. `name`
+- 호출 의도가 드러나는 동사형 이름 사용
+- 예: `get_device_status`, `search_documents`
+
+2. `description`
+- Tool 선택 근거가 되므로 목적/입력/출력을 명확히 기술
+- 모호한 문구(`tool1`, `helper`) 사용 금지
+
+3. `tool_type`
+- `http_api`, `database_query`, `graph_query`, `python_script`, `builtin` 중 목적에 맞게 선택
+
+4. `tool_config`
+- 실제 호출 정보(url/method/headers/body_template/timeout/retry) 지정
+- 동적 값은 템플릿 치환 규칙을 사용
+
+5. `tool_input_schema`
+- JSON Schema로 입력 타입/필수값/범위를 선언
+- `description`, `required`, `enum/default/min/max`를 구체화
+
+6. `tool_output_schema`
+- 응답 형태를 JSON Schema로 명시
+- LLM/상위 모듈이 결과 구조를 예측 가능하도록 유지
+
+7. `tags` / `created_by` (권장)
+- 분류/추적/감사 대응을 위해 메타데이터 포함
+
+운영 규칙:
+1. Tool 등록 후 반드시 dry-run/test 실행
+2. 실행 로그에서 latency/error를 확인한 뒤 발행
+3. 인증/tenant 정책을 충족하지 않으면 배포 금지
+
+관련 상세 문서:
+1. `docs/history/TOOLS_REGISTRATION_DETAILED_INFO.md`

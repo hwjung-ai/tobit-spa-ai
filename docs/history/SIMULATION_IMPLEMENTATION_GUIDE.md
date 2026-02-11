@@ -1,7 +1,7 @@
 # Simulation Implementation Guide (OPS What-If)
 
 > 최종 업데이트: 2026-02-11  
-> 상태: Draft for Implementation  
+> 상태: Implemented (Archived)  
 > 요구사항 매핑: 26. 시뮬레이션
 
 ## 1. 목적

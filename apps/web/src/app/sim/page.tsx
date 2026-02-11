@@ -161,8 +161,21 @@ const calculateChangePct = (item: KpiResult): number => {
 export default function SimPage() {
   const [templates, setTemplates] = useState<SimulationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  // 기본 샘플 서비스 목록 (Neo4j 데이터가 없을 때 사용)
+  const DEFAULT_SAMPLE_SERVICES = [
+    "api-gateway",
+    "order-service",
+    "payment-service",
+    "user-service",
+    "product-service",
+    "inventory-service",
+    "frontend-web",
+    "notification-service",
+  ];
+
   const [services, setServices] = useState<string[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
+  const [useSampleServices, setUseSampleServices] = useState(false);
   const [question, setQuestion] = useState("트래픽이 20% 증가하면 서비스 지표가 어떻게 변하나?");
   const [scenarioType, setScenarioType] = useState<ScenarioType>("what_if");
   const [strategy, setStrategy] = useState<Strategy>("rule");
@@ -186,12 +199,22 @@ export default function SimPage() {
       try {
         const response = await authenticatedFetch<Envelope<{ services: string[] }>>("/api/sim/services");
         const loaded = response.data?.services ?? [];
-        setServices(loaded);
         if (loaded.length > 0) {
+          setServices(loaded);
           setService(loaded[0]);
+          setUseSampleServices(false);
+        } else {
+          // Neo4j 데이터가 없으면 샘플 서비스 사용
+          setServices(DEFAULT_SAMPLE_SERVICES);
+          setService(DEFAULT_SAMPLE_SERVICES[0]);
+          setUseSampleServices(true);
         }
       } catch (err) {
         console.error("Failed to load simulation services", err);
+        // 오류 발생 시 샘플 서비스 사용
+        setServices(DEFAULT_SAMPLE_SERVICES);
+        setService(DEFAULT_SAMPLE_SERVICES[0]);
+        setUseSampleServices(true);
       } finally {
         setServicesLoading(false);
       }
@@ -461,28 +484,21 @@ export default function SimPage() {
 
           <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
             Service
-            {services.length > 0 ? (
-              <select
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-                value={service}
-                onChange={(event) => setService(event.target.value)}
-              >
-                {services.map((svc) => (
-                  <option key={svc} value={svc}>
-                    {svc}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
-                value={service}
-                onChange={(event) => setService(event.target.value)}
-                placeholder="예: api-gateway"
-              />
-            )}
-            {services.length === 0 ? (
-              <p className="mt-1 text-[11px] text-amber-300">자동 감지된 서비스가 없어 수동 입력 모드입니다.</p>
+            <select
+              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              value={service}
+              onChange={(event) => setService(event.target.value)}
+            >
+              {services.map((svc) => (
+                <option key={svc} value={svc}>
+                  {svc}
+                </option>
+              ))}
+            </select>
+            {useSampleServices ? (
+              <p className="mt-1 text-[11px] text-amber-300">
+                ※ 샘플 서비스 목록입니다. 직접 서비스명을 입력하여 테스트할 수 있습니다.
+              </p>
             ) : null}
           </label>
 
@@ -758,11 +774,14 @@ export default function SimPage() {
         type={
           statusMessage?.includes("토폴로지 데이터가 없습니다")
             ? "warning"
-            : statusMessage?.includes("실패")
+            : statusMessage?.includes("찾을 수 없습니다")
               ? "error"
-              : "info"
+              : statusMessage?.includes("실패")
+                ? "error"
+                : "info"
         }
         onDismiss={() => setStatusMessage(null)}
+        duration={3000}
       />
     </div>
   );

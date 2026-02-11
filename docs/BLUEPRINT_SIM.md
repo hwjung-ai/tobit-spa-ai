@@ -298,9 +298,38 @@ npx playwright test tests-e2e/simulation.spec.ts
 
 ---
 
-## 12. 관련 문서
+## 12. Topology Data Schema (Neo4j)
+
+### 12.1 노드 모델
+
+필수 속성:
+1. `name`: 컴포넌트 이름
+2. `type`: `service | server | db | network | storage`
+3. `baseline_load`: 기준 부하율(0~100)
+4. `tenant_id`: 테넌트 식별자
+
+### 12.2 관계 모델
+
+지원 관계:
+1. `DEPENDS_ON`
+2. `HOSTS`
+3. `TRAFFIC`
+
+관계 공통 속성:
+1. `baseline_traffic` (req/s)
+
+### 12.3 운영 기준
+
+1. SIM 모듈은 실데이터 기반을 원칙으로 하며, 토폴로지 데이터가 없으면 명시적 오류를 반환한다.
+2. 조회 쿼리는 반드시 `tenant_id` 기준으로 제한한다.
+3. 토폴로지 수집 파이프라인은 주기 동기화 작업으로 관리한다.
+
+---
+
+## 13. 관련 문서
 
 1. `docs/USER_GUIDE_SIM.md`
-2. `docs/SIMULATION_IMPLEMENTATION_GUIDE.md`
+2. `docs/history/SIMULATION_IMPLEMENTATION_GUIDE.md`
 3. `docs/FEATURES.md`
-4. `docs/SIMULATION_BENCHMARK_ANALYSIS.md`
+4. `docs/history/SIMULATION_BENCHMARK_ANALYSIS.md`
+5. `docs/history/SIMULATION_TOPOLOGY_NEO4J_SCHEMA.md`

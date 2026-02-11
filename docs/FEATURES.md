@@ -124,7 +124,7 @@
 ### 문서
 - 사용자 가이드: `docs/USER_GUIDE_SIM.md`
 - 아키텍처/설계: `docs/BLUEPRINT_SIM.md`
-- 구현 상세: `docs/SIMULATION_IMPLEMENTATION_GUIDE.md`
+- 구현 상세: `docs/history/SIMULATION_IMPLEMENTATION_GUIDE.md`
 
 ## 3. API Manager (API 매니저)
 

@@ -496,9 +496,9 @@ def test_unlink_api_from_tool():
 
 ### 업데이트 필요한 문서
 
-- [x] `docs/API_TOOLS_INTEGRATION.md` (본 문서)
+- [x] `docs/history/API_TOOLS_INTEGRATION.md` (본 문서)
 - [ ] `docs/FEATURES.md` (기능 설명 추가)
-- [ ] `docs/API_MANAGER_VS_TOOLS_ARCHITECTURE.md` (아키텍처 업데이트)
+- [ ] `docs/history/API_MANAGER_VS_TOOLS_ARCHITECTURE.md` (아키텍처 업데이트)
 
 ## 향후 작업
 

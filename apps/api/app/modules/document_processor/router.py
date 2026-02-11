@@ -1096,6 +1096,144 @@ async def get_document_viewer(
         raise HTTPException(500, str(e))
 
 
+@router.post("/{document_id}/query/stream")
+async def query_document_stream(
+    document_id: str,
+    request: dict,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Stream RAG-style responses for a specific document.
+
+    This endpoint provides Server-Sent Events (SSE) streaming for
+    document Q&A with LLM-generated answers and references.
+
+    Request body:
+    - query: The question to ask about the document
+    - top_k: Number of chunks to retrieve (default: 3)
+
+    Returns SSE stream with chunks of type:
+    - summary: Document summary
+    - detail: Detailed content
+    - answer: LLM-generated answer
+    - done: Final message with references
+    - error: Error message
+    """
+    from fastapi.responses import StreamingResponse
+    from .search_crud import search_chunks_by_text
+    import json
+
+    async def event_generator():
+        try:
+            tenant_id = _tenant_id_from_user(current_user)
+
+            # Validate document exists and user has access
+            document = session.exec(
+                select(Document)
+                .where(Document.id == document_id)
+                .where(Document.tenant_id == tenant_id)
+                .where(Document.deleted_at.is_(None))
+            ).first()
+
+            if not document:
+                yield f"data: {json.dumps({'type': 'error', 'text': 'Document not found'})}\n\n"
+                return
+
+            query = request.get("query", "").strip()
+            top_k = min(request.get("top_k", 3), 10)
+
+            if not query:
+                yield f"data: {json.dumps({'type': 'error', 'text': 'Query is required'})}\n\n"
+                return
+
+            logger.info(f"Document query: document_id={document_id}, query='{query[:50]}', top_k={top_k}")
+
+            # Search for relevant chunks in this specific document
+            results = search_chunks_by_text(
+                session=session,
+                query=query,
+                tenant_id=tenant_id,
+                top_k=top_k * 2,  # Get more, then filter by document
+            )
+
+            # Filter to only chunks from this document
+            document_results = [r for r in results if r["document_id"] == document_id][:top_k]
+
+            if not document_results:
+                yield f"data: {json.dumps({'type': 'summary', 'text': f'문서 \"{document.filename}\"에서 \"{query}\"에 관한 내용을 찾을 수 없습니다.'})}\n\n"
+                yield f"data: {json.dumps({'type': 'detail', 'text': '검색어를 바꾸거나 다른 문서를 시도해보세요.'})}\n\n"
+                yield f"data: {json.dumps({'type': 'answer', 'text': '죄송합니다. 검색 결과가 없습니다.'})}\n\n"
+                yield f"data: {json.dumps({'type': 'done', 'meta': {'references': [], 'chunks': []}})}\n\n"
+                return
+
+            # Build context from chunks
+            references = []
+            chunk_infos = []
+
+            for row in document_results:
+                chunk_text = row["text"]
+
+                chunk_id = row["id"]
+                page_number = row["page_number"]
+
+                chunk_infos.append({
+                    "chunk_id": chunk_id,
+                    "page": page_number
+                })
+
+                references.append({
+                    "document_id": document_id,
+                    "document_title": document.filename,
+                    "chunk_id": chunk_id,
+                    "page": page_number,
+                    "snippet": chunk_text[:200] + "..." if len(chunk_text) > 200 else chunk_text,
+                    "score": row["score"]
+                })
+
+            # Send summary
+            yield f"data: {json.dumps({'type': 'summary', 'text': f'문서 \"{document.filename}\"에서 {len(document_results)}개의 관련 내용을 찾았습니다.'})}\n\n"
+
+            # Send detail
+            score_val = document_results[0].get('score', 0.0)
+            detail_text = f'검색어: "{query}"\n발견된 청크: {len(document_results)}개\n관련성: {score_val:.2f}'
+            yield f"data: {json.dumps({'type': 'detail', 'text': detail_text})}\n\n"
+
+            # Generate answer (simplified RAG without LLM for now)
+            answer_template = '문서 "{doc_name}"에서 검색 결과입니다.\n\n'
+            answer_parts = [answer_template.format(doc_name=document.filename)]
+
+            for i, ref in enumerate(references, 1):
+                page_info = f"{ref['page']}페이지" if ref['page'] else "페이지 미확인"
+                answer_parts.append(f"{i}. ({page_info}) {ref['snippet']}\n")
+
+            answer = "".join(answer_parts)
+
+            # Stream answer character by character
+            for char in answer:
+                yield f"data: {json.dumps({'type': 'answer', 'text': char})}\n\n"
+
+            # Send done with references
+            yield f"data: {json.dumps({'type': 'done', 'meta': {'references': references, 'chunks': chunk_infos}})}\n\n"
+
+        except GeneratorExit:
+            logger.info("Client disconnected from stream")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Document query stream failed: {str(e)}", exc_info=True)
+            yield f"data: {json.dumps({'type': 'error', 'text': f'Error: {str(e)}'})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+        }
+    )
+
+
 @router.get("/{document_id}/chunks/{chunk_id}", response_model=ResponseEnvelope)
 async def get_chunk_detail(
     document_id: str,

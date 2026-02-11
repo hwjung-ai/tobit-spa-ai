@@ -14,6 +14,7 @@ from apps.api.core.logging import (
     set_request_context,
 )
 from core.config import get_settings
+from core.tenant import normalize_tenant_id
 
 logger = get_logger(__name__)
 
@@ -22,7 +23,8 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         settings = get_settings()
         request_id = request.headers.get("x-request-id") or str(uuid4())
-        tenant_id = request.headers.get("x-tenant-id") or settings.default_tenant_id
+        raw_tenant_id = request.headers.get("x-tenant-id") or settings.default_tenant_id
+        tenant_id = normalize_tenant_id(raw_tenant_id)
         # trace_id: 클라이언트에서 전달하거나 새로 생성. 하이픈 포함 표준 UUID 형식 사용
         provided_trace_id = request.headers.get("x-trace-id")
         if provided_trace_id:

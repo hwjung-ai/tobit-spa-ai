@@ -873,13 +873,35 @@ def handle_dashboard_data(params: dict, context: dict) -> ExecutorResult:
     )
 ```
 
+### 11.3 API Manager ↔ Tools 하이브리드 표준
+
+운영 원칙:
+1. API 정의의 단일 출처는 `API Manager`
+2. 오케스트레이션 재사용 단위는 `Tool`
+3. API를 Tool로 연결할 때 연결 메타데이터를 양방향으로 유지
+
+권장 플로우:
+1. API Manager에서 API 정의/테스트/발행
+2. API를 Tool로 등록(Export/Import)
+3. OPS/Screen/Workflow에서 Tool로 재사용
+4. 실패 시 API 실행 로그 + Tool 호출 이력을 함께 추적
+
+인증 정책:
+1. 내부 호출 기본은 JWT
+2. 외부 공개가 필요한 엔드포인트만 API Key 허용
+3. JWT/API Key 하이브리드 정책은 Admin 설정에서 관리
+4. API Key는 엔드포인트 그룹 단위 스코프 정책을 권장
+
 ---
 
 ## 12. 참고 문서
 
 ### 12.1 관련 문서
 
-- **API Manager UX Improvements**: `docs/API_MANAGER_UX_IMPROVEMENTS.md`
+- **API Manager Current Usage**: `docs/history/API_MANAGER_CURRENT_USAGE.md`
+- **API Manager vs Tools Architecture**: `docs/history/API_MANAGER_VS_TOOLS_ARCHITECTURE.md`
+- **API Tools Integration**: `docs/history/API_TOOLS_INTEGRATION.md`
+- **API to Tools Two Approaches**: `docs/history/API_TO_TOOLS_TWO_APPROACHES.md`
 - **API Manager Executor**: `docs/history/API_MANAGER_EXECUTOR.md`
 - **API Manager Deliverables**: `docs/history/API_MANAGER_DELIVERABLES.md`
 - **CEP API Manager Integration**: `docs/history/CEP_API_MANAGER_INTEGRATION.md`

@@ -125,6 +125,7 @@ export default function OpsSummaryStrip({
     )}>
       {/* Overview Stats */}
       <div className="flex items-center gap-2">
+        <span className="text-[10px] text-slate-500">최근 24시간</span>
         <div className="flex items-center gap-1 rounded-full border border-slate-700 px-2 py-1 bg-slate-900/50">
           <BarChart3 className="h-3 w-3 text-sky-400" />
           <span className="text-xs text-slate-300 font-medium">

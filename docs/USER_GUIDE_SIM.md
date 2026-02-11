@@ -195,5 +195,57 @@ npx playwright test tests-e2e/simulation.spec.ts
 ## 10. 관련 문서
 
 1. `docs/BLUEPRINT_SIM.md`
-2. `docs/SIMULATION_IMPLEMENTATION_GUIDE.md`
+2. `docs/history/SIMULATION_IMPLEMENTATION_GUIDE.md`
 3. `docs/FEATURES.md`
+
+---
+
+## 11. 운영 시나리오 예시
+
+### 11.1 용량 계획 (Capacity Planning)
+
+권장 입력:
+1. 시나리오 타입: `capacity`
+2. 서비스: 핵심 트랜잭션 서비스 (예: `order-service`)
+3. 가정값: `traffic +80%`, `cpu +50%`, `memory +30%`
+4. 전략: `ml`
+
+확인 포인트:
+1. `Topology Map`에서 `critical` 노드 발생 여부
+2. `KPI Summary`에서 임계치 초과 가능성
+3. `Algorithm & Evidence`의 권장 액션
+
+### 11.2 장애 대응 (Stress Test)
+
+권장 입력:
+1. 시나리오 타입: `stress_test`
+2. 서비스: 진입점 서비스 (예: `api-gateway`)
+3. 가정값: `traffic +150%`, `cpu +100%`, `memory +80%`
+4. 전략: `rule`
+
+확인 포인트:
+1. 연쇄 영향 경로(업스트림/다운스트림) 확인
+2. 경고 메시지와 위험 노드 우선순위 확인
+3. 즉시 대응 항목(스케일아웃/스로틀링) 도출
+
+### 11.3 최적화 효과 검증 (What-if)
+
+권장 입력:
+1. 시나리오 타입: `what_if`
+2. 서비스: 최적화 대상 서비스
+3. 가정값: `cpu -30%`, `memory -20%`
+4. 전략: `stat`
+
+확인 포인트:
+1. 이전 실행 대비 개선 폭(`Previous vs Current`)
+2. `confidence` 상승 여부
+3. 백테스트 지표(`MAPE`, `RMSE`) 개선 여부
+
+---
+
+## 12. 개발자 확장 포인트
+
+1. 템플릿 확장: `apps/api/app/modules/simulation/services/simulation/scenario_templates.py`
+2. 전략 확장: `apps/api/app/modules/simulation/services/simulation/strategies/`
+3. 결과 렌더링 확장: `apps/api/app/modules/simulation/services/simulation/presenter.py`
+4. 화면 확장: `apps/web/src/app/sim/page.tsx`

@@ -73,8 +73,8 @@ class SmartToolSelector:
         self, tool_name: str, strategy: SelectionStrategy
     ) -> float:
         adjustments = {
-            SelectionStrategy.FASTEST: {"CI_SEARCH": 0.05, "METRIC_AGGREGATE": 0.03},
-            SelectionStrategy.MOST_ACCURATE: {"CI_GET": 0.05, "GRAPH_EXPAND": 0.04},
+            SelectionStrategy.FASTEST: {"CI_SEARCH": 0.05, "METRIC_AGGREGATE": 0.03, "DOCUMENT_SEARCH": 0.04},
+            SelectionStrategy.MOST_ACCURATE: {"CI_GET": 0.05, "GRAPH_EXPAND": 0.04, "DOCUMENT_SEARCH": 0.03},
             SelectionStrategy.MOST_COMPLETE: {"GRAPH_PATH": 0.05, "CEP_SIMULATE": 0.04},
             SelectionStrategy.LEAST_LOAD: {},
         }
@@ -82,8 +82,8 @@ class SmartToolSelector:
 
     def _get_candidate_tools(self, intent: Intent) -> List[str]:
         mapping = {
-            Intent.SEARCH: ["CI_SEARCH", "CI_GET"],
-            Intent.LOOKUP: ["CI_GET", "CI_GET_BY_CODE"],
+            Intent.SEARCH: ["CI_SEARCH", "CI_GET", "DOCUMENT_SEARCH"],
+            Intent.LOOKUP: ["CI_GET", "CI_GET_BY_CODE", "DOCUMENT_SEARCH"],
             Intent.AGGREGATE: ["CI_AGGREGATE", "METRIC_AGGREGATE"],
             Intent.EXPAND: ["GRAPH_EXPAND"],
             Intent.PATH: ["GRAPH_PATH"],
@@ -93,8 +93,8 @@ class SmartToolSelector:
 
     def _get_intent_bonus(self, tool_name: str, intent: Intent) -> float:
         intent_map = {
-            Intent.SEARCH: {"CI_SEARCH": 0.2},
-            Intent.LOOKUP: {"CI_GET": 0.2, "CI_GET_BY_CODE": 0.15},
+            Intent.SEARCH: {"CI_SEARCH": 0.2, "DOCUMENT_SEARCH": 0.18},
+            Intent.LOOKUP: {"CI_GET": 0.2, "CI_GET_BY_CODE": 0.15, "DOCUMENT_SEARCH": 0.12},
             Intent.AGGREGATE: {"CI_AGGREGATE": 0.2, "METRIC_AGGREGATE": 0.15},
             Intent.EXPAND: {"GRAPH_EXPAND": 0.2},
             Intent.PATH: {"GRAPH_PATH": 0.2},
@@ -115,6 +115,7 @@ class SmartToolSelector:
             "GRAPH_PATH": {"accuracy": 0.8, "base_time": 190.0},
             "HISTORY_EVENT_LOG": {"accuracy": 0.78, "base_time": 120.0},
             "CEP_SIMULATE": {"accuracy": 0.79, "base_time": 200.0},
+            "DOCUMENT_SEARCH": {"accuracy": 0.82, "base_time": 100.0},
         }
 
     @property

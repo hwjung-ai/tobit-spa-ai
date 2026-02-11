@@ -432,7 +432,7 @@ def my_endpoint(
 ```python
 # middleware.py에서 자동 설정
 # ↓ request.headers에서 'x-tenant-id' 추출
-# ↓ 없으면 기본값 't1' 사용
+# ↓ 없으면 기본값 'default' 사용
 # ↓ request.state.tenant_id 에 저장
 
 # Router에서 접근
@@ -487,7 +487,7 @@ def get_users(
 // apps/web/src/lib/api.ts
 fetch("/api/endpoint", {
     headers: {
-        "x-tenant-id": "t1",  // ← 테넌트 ID 추가
+        "x-tenant-id": "default",  // ← 테넌트 ID 추가
         "Authorization": "Bearer <token>"
     }
 })
@@ -499,7 +499,7 @@ const queryClient = new QueryClient({
             queryFn: async ({ queryKey }) => {
                 const response = await fetch(queryKey[0], {
                     headers: {
-                        "x-tenant-id": localStorage.getItem("tenant_id") || "t1"
+                        "x-tenant-id": localStorage.getItem("tenant_id") || "default"
                     }
                 });
                 return response.json();
@@ -529,7 +529,7 @@ JWT_ALGORITHM=HS256
 JWT_EXPIRATION_MINUTES=60
 
 # 기본 테넌트
-DEFAULT_TENANT_ID=t1
+DEFAULT_TENANT_ID=default
 ```
 
 **개발 모드 활성화 확인**:
@@ -562,16 +562,16 @@ def test_authenticated_endpoint():
     # (enable_auth=False일 때 자동으로 debug 사용자 사용)
     response = client.get(
         "/api/endpoint",
-        headers={"x-tenant-id": "t1"}  # 테넌트 ID 추가
+        headers={"x-tenant-id": "default"}  # 테넌트 ID 추가
     )
     assert response.status_code == 200
 
 def test_tenant_isolation():
     """테넌트 격리 테스트"""
-    # t1 테넌트 데이터
+    # default 테넌트 데이터
     response1 = client.get(
         "/api/users",
-        headers={"x-tenant-id": "t1"}
+        headers={"x-tenant-id": "default"}
     )
 
     # t2 테넌트 데이터

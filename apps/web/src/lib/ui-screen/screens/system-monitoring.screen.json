@@ -442,7 +442,18 @@
         "type": "array"
       },
       "regression_totals": {
-        "type": "object"
+        "type": "object",
+        "properties": {
+          "PASS": {
+            "type": "number"
+          },
+          "WARN": {
+            "type": "number"
+          },
+          "FAIL": {
+            "type": "number"
+          }
+        }
       },
       "top_causes": {
         "type": "array"

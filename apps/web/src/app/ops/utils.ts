@@ -227,47 +227,20 @@ export const hydrateServerEntry = (entry: ServerHistoryEntry): LocalOpsHistoryEn
   const envelope: AnswerEnvelope | CiAnswerPayload = normalizedResponse;
   let blocks = (envelope as AnswerEnvelope).blocks ?? (envelope as CiAnswerPayload).blocks;
 
-  // Mapping of old t1 tenant document IDs to default tenant document IDs
-  // This handles historical data where documents were referenced from wrong tenant
-  const documentIdMapping: Record<string, string> = {
-    "50d99b61-ada2-4f2c-a9cb-029cc53f62fb": "204afbc4-0847-4e70-a231-fadb05b67970",
-  };
-
-  // Fix document references: replace old document IDs and fix URLs
+  // Fix document URLs: replace old /documents/ URLs with /api/documents/
   if (blocks && Array.isArray(blocks)) {
     blocks = blocks.map((block: any) => {
       if (block?.type === "references" && Array.isArray(block.items)) {
         return {
           ...block,
           items: block.items.map((item: any) => {
-            let updatedItem = { ...item };
-
-            // Fix URL path
-            if (updatedItem.url && updatedItem.url.includes("/documents/") && !updatedItem.url.includes("/api/documents/")) {
-              updatedItem.url = updatedItem.url.replace("/documents/", "/api/documents/");
-            }
-
-            // Fix document_id in payload
-            if (updatedItem.payload?.document_id && documentIdMapping[updatedItem.payload.document_id]) {
-              const oldDocId = updatedItem.payload.document_id;
-              const newDocId = documentIdMapping[oldDocId];
-              updatedItem = {
-                ...updatedItem,
-                payload: {
-                  ...updatedItem.payload,
-                  document_id: newDocId,
-                },
+            if (item?.url && item.url.includes("/documents/") && !item.url.includes("/api/documents/")) {
+              return {
+                ...item,
+                url: item.url.replace("/documents/", "/api/documents/"),
               };
-
-              // Also update URL if it contains the old document_id
-              if (updatedItem.url && updatedItem.url.includes(oldDocId)) {
-                updatedItem.url = updatedItem.url.replace(oldDocId, newDocId);
-              }
-
-              console.log(`[hydrateServerEntry] Mapped document ID: ${oldDocId.slice(0, 8)}... -> ${newDocId.slice(0, 8)}...`);
             }
-
-            return updatedItem;
+            return item;
           }),
         };
       }

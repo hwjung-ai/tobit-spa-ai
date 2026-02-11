@@ -14,6 +14,107 @@ class TopologyData:
     links: list[dict[str, Any]]
 
 
+# 샘플 서비스에 대한 기본 토폴로지 데이터 (Neo4j 데이터가 없을 때 사용)
+SAMPLE_TOPOLOGY_DATA: dict[str, dict[str, Any]] = {
+    "api-gateway": {
+        "service": "api-gateway",
+        "nodes": [
+            {"id": "api-gateway", "name": "API Gateway", "type": "service", "baseline_load": 40.0},
+            {"id": "order-service", "name": "Order Service", "type": "service", "baseline_load": 35.0},
+            {"id": "payment-service", "name": "Payment Service", "type": "service", "baseline_load": 30.0},
+            {"id": "user-service", "name": "User Service", "type": "service", "baseline_load": 25.0},
+            {"id": "product-db", "name": "Product DB", "type": "db", "baseline_load": 45.0},
+        ],
+        "links": [
+            {"source": "api-gateway", "target": "order-service", "type": "depends_on", "baseline_traffic": 120.0},
+            {"source": "api-gateway", "target": "payment-service", "type": "depends_on", "baseline_traffic": 80.0},
+            {"source": "api-gateway", "target": "user-service", "type": "depends_on", "baseline_traffic": 60.0},
+            {"source": "order-service", "target": "product-db", "type": "depends_on", "baseline_traffic": 100.0},
+        ],
+    },
+    "order-service": {
+        "service": "order-service",
+        "nodes": [
+            {"id": "order-service", "name": "Order Service", "type": "service", "baseline_load": 35.0},
+            {"id": "product-service", "name": "Product Service", "type": "service", "baseline_load": 30.0},
+            {"id": "inventory-service", "name": "Inventory Service", "type": "service", "baseline_load": 40.0},
+            {"id": "order-db", "name": "Order DB", "type": "db", "baseline_load": 50.0},
+        ],
+        "links": [
+            {"source": "order-service", "target": "product-service", "type": "depends_on", "baseline_traffic": 90.0},
+            {"source": "order-service", "target": "inventory-service", "type": "depends_on", "baseline_traffic": 70.0},
+            {"source": "order-service", "target": "order-db", "type": "depends_on", "baseline_traffic": 110.0},
+        ],
+    },
+    "payment-service": {
+        "service": "payment-service",
+        "nodes": [
+            {"id": "payment-service", "name": "Payment Service", "type": "service", "baseline_load": 30.0},
+            {"id": "payment-gateway", "name": "Payment Gateway", "type": "service", "baseline_load": 25.0},
+            {"id": "transaction-db", "name": "Transaction DB", "type": "db", "baseline_load": 55.0},
+        ],
+        "links": [
+            {"source": "payment-service", "target": "payment-gateway", "type": "depends_on", "baseline_traffic": 85.0},
+            {"source": "payment-service", "target": "transaction-db", "type": "depends_on", "baseline_traffic": 95.0},
+        ],
+    },
+    "user-service": {
+        "service": "user-service",
+        "nodes": [
+            {"id": "user-service", "name": "User Service", "type": "service", "baseline_load": 25.0},
+            {"id": "auth-service", "name": "Auth Service", "type": "service", "baseline_load": 20.0},
+            {"id": "user-db", "name": "User DB", "type": "db", "baseline_load": 40.0},
+        ],
+        "links": [
+            {"source": "user-service", "target": "auth-service", "type": "depends_on", "baseline_traffic": 65.0},
+            {"source": "user-service", "target": "user-db", "type": "depends_on", "baseline_traffic": 75.0},
+        ],
+    },
+    "product-service": {
+        "service": "product-service",
+        "nodes": [
+            {"id": "product-service", "name": "Product Service", "type": "service", "baseline_load": 30.0},
+            {"id": "product-db", "name": "Product DB", "type": "db", "baseline_load": 45.0},
+        ],
+        "links": [
+            {"source": "product-service", "target": "product-db", "type": "depends_on", "baseline_traffic": 100.0},
+        ],
+    },
+    "inventory-service": {
+        "service": "inventory-service",
+        "nodes": [
+            {"id": "inventory-service", "name": "Inventory Service", "type": "service", "baseline_load": 40.0},
+            {"id": "inventory-db", "name": "Inventory DB", "type": "db", "baseline_load": 50.0},
+        ],
+        "links": [
+            {"source": "inventory-service", "target": "inventory-db", "type": "depends_on", "baseline_traffic": 85.0},
+        ],
+    },
+    "frontend-web": {
+        "service": "frontend-web",
+        "nodes": [
+            {"id": "frontend-web", "name": "Frontend Web", "type": "service", "baseline_load": 30.0},
+            {"id": "api-gateway", "name": "API Gateway", "type": "service", "baseline_load": 40.0},
+        ],
+        "links": [
+            {"source": "frontend-web", "target": "api-gateway", "type": "depends_on", "baseline_traffic": 150.0},
+        ],
+    },
+    "notification-service": {
+        "service": "notification-service",
+        "nodes": [
+            {"id": "notification-service", "name": "Notification Service", "type": "service", "baseline_load": 20.0},
+            {"id": "email-gateway", "name": "Email Gateway", "type": "service", "baseline_load": 15.0},
+            {"id": "sms-gateway", "name": "SMS Gateway", "type": "service", "baseline_load": 10.0},
+        ],
+        "links": [
+            {"source": "notification-service", "target": "email-gateway", "type": "depends_on", "baseline_traffic": 50.0},
+            {"source": "notification-service", "target": "sms-gateway", "type": "depends_on", "baseline_traffic": 30.0},
+        ],
+    },
+}
+
+
 def list_available_services(tenant_id: str) -> list[str]:
     settings = get_settings()
     driver = get_neo4j_driver(settings)
@@ -40,12 +141,17 @@ def get_topology_data(
 ) -> TopologyData:
     assumptions = assumptions or {}
     base_topology = _get_real_topology(tenant_id, service, get_settings())
+    
+    # Neo4j에 데이터가 없으면 샘플 토폴로지 사용
     if not base_topology["nodes"]:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No topology data found for service='{service}' tenant='{tenant_id}'. Please ensure Neo4j has topology data for this service.",
-        )
+        base_topology = _get_sample_topology(service)
+    
     return _apply_simulation(base_topology, assumptions, scenario_type)
+
+
+def _get_sample_topology(service: str) -> dict[str, Any]:
+    """서비스에 해당하는 샘플 토폴로지 데이터를 반환합니다."""
+    return SAMPLE_TOPOLOGY_DATA.get(service, SAMPLE_TOPOLOGY_DATA.get("api-gateway", {"service": service, "nodes": [], "links": []}))
 
 
 def _get_real_topology(tenant_id: str, service: str, settings: AppSettings) -> dict[str, Any]:

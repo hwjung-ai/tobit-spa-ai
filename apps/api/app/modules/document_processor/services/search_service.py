@@ -6,6 +6,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
 
+from ..search_crud import (
+    get_popular_searches,
+    get_search_suggestions,
+    log_search,
+    search_chunks_by_text,
+    search_chunks_by_vector,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,7 +98,7 @@ class DocumentSearchService:
 
             # Log search
             execution_time_ms = int((time.time() - start_time) * 1000)
-            await self._log_search(query, filters, len(results), execution_time_ms)
+            await self._log_search(query, filters, len(results), execution_time_ms, search_type)
 
             return results[:top_k]
 
@@ -114,79 +122,27 @@ class DocumentSearchService:
             return results
 
         try:
-            from sqlalchemy import text
-
-            # Common filter clauses
-            base_where = ["d.tenant_id = :tenant_id", "d.deleted_at IS NULL"]
-            if filters.date_from:
-                base_where.append("dc.created_at >= :date_from")
-            if filters.date_to:
-                base_where.append("dc.created_at <= :date_to")
-            if filters.document_types:
-                base_where.append("dc.chunk_type = ANY(:doc_types)")
-
-            params = {
-                "tenant_id": filters.tenant_id,
-                "query": query,
-                "top_k": top_k,
-            }
-            if filters.date_from:
-                params["date_from"] = filters.date_from
-            if filters.date_to:
-                params["date_to"] = filters.date_to
-            if filters.document_types:
-                params["doc_types"] = filters.document_types
-
-            # 1) Try tsvector with 'simple' analyzer (supports CJK)
-            ts_where = base_where + [
-                "to_tsvector('simple', dc.text) @@ plainto_tsquery('simple', :query)"
-            ]
-            query_sql = f"""
-            SELECT dc.id, dc.document_id, d.filename, dc.text,
-                   dc.page_number, dc.chunk_type,
-                   ts_rank(to_tsvector('simple', dc.text),
-                           plainto_tsquery('simple', :query)) as score
-            FROM document_chunks dc
-            JOIN documents d ON d.id = dc.document_id
-            WHERE {' AND '.join(ts_where)}
-            ORDER BY score DESC
-            LIMIT :top_k
-            """
-            rows = self.db.execute(text(query_sql), params).fetchall()
-
-            # 2) Fallback to ILIKE if tsvector returns nothing
-            if not rows:
-                # Split query into keywords for ILIKE search
-                keywords = [kw.strip() for kw in query.split() if len(kw.strip()) >= 2]
-                if keywords:
-                    ilike_conditions = " OR ".join(
-                        [f"dc.text ILIKE :kw{i}" for i in range(len(keywords))]
-                    )
-                    ilike_where = base_where + [f"({ilike_conditions})"]
-                    ilike_sql = f"""
-                    SELECT dc.id, dc.document_id, d.filename, dc.text,
-                           dc.page_number, dc.chunk_type,
-                           0.5 as score
-                    FROM document_chunks dc
-                    JOIN documents d ON d.id = dc.document_id
-                    WHERE {' AND '.join(ilike_where)}
-                    LIMIT :top_k
-                    """
-                    ilike_params = dict(params)
-                    for i, kw in enumerate(keywords):
-                        ilike_params[f"kw{i}"] = f"%{kw}%"
-                    rows = self.db.execute(text(ilike_sql), ilike_params).fetchall()
+            # Use CRUD for text search
+            rows = search_chunks_by_text(
+                session=self.db,
+                query=query,
+                tenant_id=filters.tenant_id,
+                top_k=top_k * 2,  # Get more for ranking
+                document_types=filters.document_types or None,
+                date_from=filters.date_from,
+                date_to=filters.date_to,
+            )
 
             # Map results
             for row in rows:
                 result = SearchResult(
-                    chunk_id=row[0],
-                    document_id=row[1],
-                    document_name=row[2],
-                    chunk_text=row[3],
-                    page_number=row[4],
-                    chunk_type=row[5],
-                    relevance_score=float(row[6]) if row[6] else 0.0,
+                    chunk_id=row["id"],
+                    document_id=row["document_id"],
+                    document_name=row["filename"],
+                    chunk_text=row["text"],
+                    page_number=row["page_number"],
+                    chunk_type=row["chunk_type"],
+                    relevance_score=row["score"],
                     created_at=None,
                 )
                 results.append(result)
@@ -220,70 +176,27 @@ class DocumentSearchService:
             if not self.db:
                 return results
 
-            import json
-
-            from sqlalchemy import text
-
-            # Build WHERE clauses
-            where_clauses = [
-                "d.tenant_id = :tenant_id",
-                "d.deleted_at IS NULL",
-                "1 - (dc.embedding <=> :embedding) > :min_similarity",
-            ]
-
-            # Add date filters
-            if filters.date_from:
-                where_clauses.append("dc.created_at >= :date_from")
-            if filters.date_to:
-                where_clauses.append("dc.created_at <= :date_to")
-
-            # Add document type filter
-            if filters.document_types:
-                where_clauses.append("dc.chunk_type = ANY(:doc_types)")
-
-            where_clause = " AND ".join(where_clauses)
-
-            # pgvector similarity search query
-            query_sql = f"""
-            SELECT dc.id, dc.document_id, d.filename, dc.text,
-                   dc.page_number, dc.chunk_type,
-                   1 - (dc.embedding <=> :embedding::vector) as similarity
-            FROM document_chunks dc
-            JOIN documents d ON d.id = dc.document_id
-            WHERE {where_clause}
-            ORDER BY similarity DESC
-            LIMIT :top_k
-            """
-
-            # Build parameters
-            params = {
-                "tenant_id": filters.tenant_id,
-                "embedding": json.dumps(query_embedding),
-                "min_similarity": 1 - 0.75,  # Convert to distance (lower is better)
-                "top_k": top_k,
-            }
-
-            if filters.date_from:
-                params["date_from"] = filters.date_from
-            if filters.date_to:
-                params["date_to"] = filters.date_to
-            if filters.document_types:
-                params["doc_types"] = filters.document_types
-
-            # Execute query
-            statement = text(query_sql)
-            rows = self.db.execute(statement, params).fetchall()
+            # Use CRUD for vector search
+            rows = search_chunks_by_vector(
+                session=self.db,
+                query_embedding=query_embedding,
+                tenant_id=filters.tenant_id,
+                top_k=top_k,
+                document_types=filters.document_types or None,
+                date_from=filters.date_from,
+                date_to=filters.date_to,
+            )
 
             # Map results
             for row in rows:
                 result = SearchResult(
-                    chunk_id=row[0],
-                    document_id=row[1],
-                    document_name=row[2],
-                    chunk_text=row[3],
-                    page_number=row[4],
-                    chunk_type=row[5],
-                    relevance_score=float(row[6]) if row[6] else 0.0,
+                    chunk_id=row["id"],
+                    document_id=row["document_id"],
+                    document_name=row["filename"],
+                    chunk_text=row["text"],
+                    page_number=row["page_number"],
+                    chunk_type=row["chunk_type"],
+                    relevance_score=row["score"],
                     created_at=None,
                 )
                 results.append(result)
@@ -346,39 +259,22 @@ class DocumentSearchService:
         filters: SearchFilters,
         results_count: int,
         execution_time_ms: int,
+        search_type: str = "hybrid",
     ) -> None:
         """Log search query for analytics and suggestions"""
 
         try:
             if self.db:
-                import uuid
-
-                from sqlalchemy import text
-
-                # Check if document_search_log table exists
-                # If not, just log to logger
-                try:
-                    insert_sql = """
-                    INSERT INTO document_search_log
-                    (search_id, tenant_id, query, results_count, execution_time_ms, created_at)
-                    VALUES (:search_id, :tenant_id, :query, :results_count, :execution_time_ms, NOW())
-                    """
-
-                    params = {
-                        "search_id": str(uuid.uuid4()),
-                        "tenant_id": filters.tenant_id,
-                        "query": query,
-                        "results_count": results_count,
-                        "execution_time_ms": execution_time_ms,
-                    }
-
-                    statement = text(insert_sql)
-                    self.db.execute(statement, params)
-                    self.db.commit()
-
-                except Exception as table_error:
-                    # Table may not exist, just log to logger
-                    self.logger.warning(f"Could not log to DB: {str(table_error)}")
+                # Use CRUD for search logging
+                log_search(
+                    session=self.db,
+                    tenant_id=filters.tenant_id,
+                    user_id="",  # Not tracking user_id in current implementation
+                    query=query,
+                    search_type=search_type,
+                    result_count=results_count,
+                    execution_time_ms=execution_time_ms,
+                )
 
             self.logger.info(
                 f"Search completed: query={query[:50]}, "
@@ -406,27 +302,13 @@ class DocumentSearchService:
             return []
 
         try:
-            from sqlalchemy import text
-
-            params = {
-                "prefix": f"{query_prefix.strip()}%",
-                "limit": max(1, min(limit, 20)),
-            }
-            where = ["query ILIKE :prefix", "created_at > NOW() - INTERVAL '30 days'"]
-            if tenant_id:
-                where.append("tenant_id = :tenant_id")
-                params["tenant_id"] = tenant_id
-
-            sql = f"""
-                SELECT query, COUNT(*) as freq
-                FROM document_search_log
-                WHERE {' AND '.join(where)}
-                GROUP BY query
-                ORDER BY freq DESC, MAX(created_at) DESC
-                LIMIT :limit
-            """
-            rows = self.db.execute(text(sql), params).fetchall()
-            return [str(row[0]) for row in rows if row and row[0]]
+            # Use CRUD for search suggestions
+            return get_search_suggestions(
+                session=self.db,
+                query_prefix=query_prefix,
+                limit=limit,
+                tenant_id=tenant_id,
+            )
         except Exception as e:
             self.logger.warning(f"Failed to get search suggestions: {str(e)}")
             return []

@@ -33,6 +33,13 @@ const buildAuthUrl = (endpoint: string): string => {
 const ENABLE_AUTH = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
 const DEFAULT_TENANT_ID = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || "default";
 
+function normalizeTenantId(rawTenantId: string | null): string {
+  if (!rawTenantId || rawTenantId === "t1") {
+    return DEFAULT_TENANT_ID;
+  }
+  return rawTenantId;
+}
+
 // Default debug user for development mode
 const DEBUG_USER: User = {
   id: "default",
@@ -58,11 +65,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing token on mount
   useEffect(() => {
+    const savedTenantId = localStorage.getItem("tenant_id");
+    const normalizedTenantId = normalizeTenantId(savedTenantId);
+    if (savedTenantId !== normalizedTenantId) {
+      localStorage.setItem("tenant_id", normalizedTenantId);
+    }
+
     // If authentication is disabled, auto-login with debug user
     if (!ENABLE_AUTH) {
       setUser(DEBUG_USER);
       localStorage.setItem("user_id", DEBUG_USER.id);
-      localStorage.setItem("tenant_id", DEBUG_USER.tenant_id);
+      localStorage.setItem("tenant_id", normalizeTenantId(DEBUG_USER.tenant_id));
       setIsLoading(false);
       return;
     }
@@ -86,9 +99,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
+        const tenantId = normalizeTenantId(data.data.user.tenant_id);
         setUser(data.data.user);
         localStorage.setItem("user_id", data.data.user.id);
-        localStorage.setItem("tenant_id", data.data.user.tenant_id);
+        localStorage.setItem("tenant_id", tenantId);
       } else {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
@@ -126,11 +140,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const data = await response.json();
+    const tenantId = normalizeTenantId(data.data.user.tenant_id);
     localStorage.setItem("access_token", data.data.access_token);
     localStorage.setItem("refresh_token", data.data.refresh_token);
     localStorage.setItem("user_id", data.data.user.id);
-    localStorage.setItem("tenant_id", data.data.user.tenant_id);
-    setUser(data.data.user);
+    localStorage.setItem("tenant_id", tenantId);
+    setUser({ ...data.data.user, tenant_id: tenantId });
   }
 
   async function logout() {

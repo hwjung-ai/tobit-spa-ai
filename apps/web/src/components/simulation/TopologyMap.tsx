@@ -319,43 +319,67 @@ export default function TopologyMap({
   );
 }
 
-// 유틸리티 함수: 노드 위치 계산 (간단한 계층형 레이아웃)
+// 유틸리티 함수: 노드 위치 계산 (링크 기반 계층형 레이아웃)
 function calculateNodePositions(topology: TopologyData): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
-  
-  // 노드 타입별 그룹화
-  const groups: Record<string, string[]> = {
-    network: [],
-    service: [],
-    server: [],
-    db: [],
-    storage: [],
-  };
+  const nodeIds = topology.nodes.map(n => n.id);
+  const linkMap = new Map<string, string[]>(); // source -> targets
 
-  topology.nodes.forEach((node) => {
-    if (groups[node.type]) {
-      groups[node.type].push(node.id);
+  // 링크 정보를 인접 리스트로 변환
+  topology.links.forEach(link => {
+    if (!linkMap.has(link.source)) {
+      linkMap.set(link.source, []);
     }
+    linkMap.get(link.source)?.push(link.target);
   });
 
-  // 계층별 Y 위치
-  const layerY: Record<string, number> = {
-    network: 80,
-    service: 200,
-    server: 280,
-    db: 360,
-    storage: 440,
-  };
+  // 진입차수(in-degree) 계산
+  const inDegree: Record<string, number> = {};
+  nodeIds.forEach(id => inDegree[id] = 0);
+  topology.links.forEach(link => {
+    inDegree[link.target] = (inDegree[link.target] || 0) + 1;
+  });
 
-  // 각 레이어에 노드 배치
-  Object.entries(groups).forEach(([type, nodeIds]) => {
-    const y = layerY[type];
-    const totalWidth = 700;
-    const step = totalWidth / (nodeIds.length + 1);
+  // 위상 정렬 (Topological Sort)을 통한 계층(layer) 계산
+  const layers: string[][] = [];
+  const visited = new Set<string>();
+  const remaining = [...nodeIds];
 
-    nodeIds.forEach((nodeId, index) => {
+  // 반복적으로 진입차수가 0인 노드들을 찾아 레이어에 배치
+  while (remaining.length > 0) {
+    // 진입차수가 0이거나, 방문되지 않은 노드들 중 가장 적게 참조되는 것들 선택
+    const currentLayer = remaining.filter(id => {
+      const incomingLinks = topology.links.filter(l => l.target === id && visited.has(l.source));
+      return incomingLinks.length === 0 || visited.size === 0;
+    });
+
+    if (currentLayer.length === 0 && remaining.length > 0) {
+      // 사이클이 있거나 모든 노드가 연결되지 않은 경우
+      currentLayer.push(remaining[0]);
+    }
+
+    layers.push(currentLayer);
+    currentLayer.forEach(id => {
+      visited.add(id);
+      const idx = remaining.indexOf(id);
+      if (idx > -1) remaining.splice(idx, 1);
+    });
+  }
+
+  // 노드 위치 계산
+  const svgWidth = 800;
+  const svgHeight = 500;
+  const margin = { top: 40, bottom: 40, left: 40, right: 40 };
+  const availableHeight = svgHeight - margin.top - margin.bottom;
+
+  layers.forEach((layer, layerIndex) => {
+    const y = margin.top + (availableHeight / (layers.length + 1)) * (layerIndex + 1);
+    const availableWidth = svgWidth - margin.left - margin.right;
+    const step = availableWidth / (layer.length + 1);
+
+    layer.forEach((nodeId, nodeIndex) => {
       positions[nodeId] = {
-        x: step * (index + 1) + 50,
+        x: margin.left + step * (nodeIndex + 1),
         y,
       };
     });

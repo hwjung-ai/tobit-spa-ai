@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authenticatedFetch, getAuthHeaders } from "@/lib/apiClient/index";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -178,6 +178,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const selectedDocumentFromUrl = searchParams?.get("documentId") || undefined;
   const [selectedDocument, setSelectedDocument] = useState<DocumentDetail | null>(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
   const [queryValue, setQueryValue] = useState("");
@@ -194,6 +195,14 @@ export default function DocumentsPage() {
   const [selectedDocHistoryId, setSelectedDocHistoryId] = useState<string | null>(null);
   const [docHistoryLoading, setDocHistoryLoading] = useState(false);
   const [docHistoryError, setDocHistoryError] = useState<string | null>(null);
+
+  // PDF Viewer modal state
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string>("document.pdf");
+  const [pdfInitialPage, setPdfInitialPage] = useState<number>(1);
+  const [pdfViewerHref, setPdfViewerHref] = useState<string | undefined>(undefined);
+  const [pdfHighlightSnippet, setPdfHighlightSnippet] = useState<string | undefined>(undefined);
 
   const selectedDocumentRef = useRef<DocumentDetail | null>(null);
 
@@ -277,7 +286,11 @@ export default function DocumentsPage() {
   const fetchDocumentDetail = useCallback(
     async (documentId: string) => {
       const payload = await authenticatedFetch(`/api/documents/${documentId}`) as { data?: { document: DocumentDetail } };
-      setSelectedDocument(payload?.data?.document || null);
+      const detail = payload?.data?.document || null;
+      setSelectedDocument(detail);
+      if (detail?.id) {
+        setSelectedDocumentId(detail.id);
+      }
     },
     []
   );
@@ -317,6 +330,21 @@ export default function DocumentsPage() {
   }, [authLoading, fetchDocuments, user?.id]);
 
   useEffect(() => {
+    if (!selectedDocumentId) {
+      return;
+    }
+    // When list is temporarily empty (e.g. backend unavailable), keep current selection
+    // to avoid URL-init/select/clear loops.
+    if (documents.length === 0) {
+      return;
+    }
+    if (!documents.some((doc) => doc.id === selectedDocumentId)) {
+      setSelectedDocumentId(null);
+      setSelectedDocument(null);
+    }
+  }, [documents, selectedDocumentId]);
+
+  useEffect(() => {
     if (authLoading) {
       return;
     }
@@ -325,9 +353,10 @@ export default function DocumentsPage() {
 
   const selectDocument = useCallback(
     (documentId: string) => {
-      if (selectedDocument?.id === documentId) {
+      if (selectedDocumentId === documentId) {
         return;
       }
+      setSelectedDocumentId(documentId);
       setSelectedDocument(null);
       fetchDocumentDetail(documentId).catch(console.error);
       setReferences([]);
@@ -340,15 +369,18 @@ export default function DocumentsPage() {
       params.set("documentId", documentId);
       router.replace(`/documents?${params.toString()}`);
     },
-    [fetchDocumentDetail, router, selectedDocument]
+    [fetchDocumentDetail, router, selectedDocumentId]
   );
 
   // Initialize from URL
   useEffect(() => {
-    if (selectedDocumentFromUrl && !selectedDocument) {
+    // URL-based auto selection should run only when there is no active selection.
+    // Otherwise it can override user's click while detail is still loading.
+    // Also require at least one loaded document to avoid retry loops while backend is down.
+    if (selectedDocumentFromUrl && !selectedDocumentId && documents.length > 0) {
       selectDocument(selectedDocumentFromUrl);
     }
-  }, [selectedDocumentFromUrl, selectDocument, selectedDocument]);
+  }, [selectedDocumentFromUrl, selectDocument, selectedDocumentId, documents.length]);
 
   // Restore URL state when document is selected
   const restoreUrlState = useCallback(() => {
@@ -383,7 +415,9 @@ export default function DocumentsPage() {
     if (docHistory.length === 0 || documents.length === 0) {
       return;
     }
-    if (selectedDocument && documentHistoryEntries.length > 0) {
+    // Respect user's current selection. Auto-select from recent history
+    // only when no document is selected yet.
+    if (selectedDocumentId) {
       return;
     }
     const recentHistory = docHistory
@@ -397,7 +431,7 @@ export default function DocumentsPage() {
       return;
     }
     selectDocument(targetDoc.id);
-  }, [docHistory, documents, selectedDocument, documentHistoryEntries.length, selectDocument]);
+  }, [docHistory, documents, selectedDocumentId, selectDocument]);
 
   useEffect(() => {
     if (documentHistoryEntries.length === 0) {
@@ -487,8 +521,10 @@ export default function DocumentsPage() {
     }
     const stored = persistedStateRef.current;
     if (stored?.selectedDocumentId) {
+      setSelectedDocumentId(stored.selectedDocumentId);
       selectDocument(stored.selectedDocumentId);
     } else if (!selectedDocument) {
+      setSelectedDocumentId(documents[0].id);
       fetchDocumentDetail(documents[0].id).catch(console.error);
     }
     if (stored?.references && stored.references.length > 0) {
@@ -684,8 +720,18 @@ export default function DocumentsPage() {
         params.set("page", reference.page.toString());
       }
       const query = params.toString();
-      // Use /api/documents/... for PDF file serving (opens in new tab)
-      return `/api/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
+      return `/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
+    },
+    [selectedDocument]
+  );
+
+  const buildReferencePdfHref = useCallback(
+    (reference: Reference) => {
+      const documentId = reference.document_id ?? selectedDocument?.id;
+      if (!documentId) {
+        return undefined;
+      }
+      return `/api/documents/${documentId}/viewer`;
     },
     [selectedDocument]
   );
@@ -733,6 +779,7 @@ export default function DocumentsPage() {
       setDocuments((prev) => prev.filter((doc) => doc.id !== documentId));
       if (selectedDocument?.id === documentId) {
         setSelectedDocument(null);
+        setSelectedDocumentId(null);
         clearStream();
       }
     } catch (error: unknown) {
@@ -812,7 +859,7 @@ export default function DocumentsPage() {
             {documents.map((document) => (
               <div
                 key={document.id}
-                className={`group flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${selectedDocument?.id === document.id
+                className={`group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${selectedDocumentId === document.id
                     ? "border-sky-400 bg-sky-500/10 text-white"
                     : "border-slate-800 bg-slate-900 hover:border-slate-600"
                   }`}
@@ -834,13 +881,15 @@ export default function DocumentsPage() {
                 </div>
                 <p className="text-xs text-slate-500">{formatTimestamp(document.updated_at)}</p>
                 <button
-                  className="self-end rounded-full border border-rose-400 px-2 py-0.5 text-[10px] uppercase tracking-[0.3em] text-rose-400 hover:bg-rose-500/10"
+                  type="button"
+                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
                   onClick={(event) => {
                     event.stopPropagation();
                     deleteDocument(document.id);
                   }}
+                  aria-label="Delete document"
                 >
-                  Delete
+                  ✕
                 </button>
               </div>
             ))}
@@ -848,7 +897,7 @@ export default function DocumentsPage() {
         </aside>
 
         <div className="space-y-6">
-          <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+          <section className="group rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
@@ -858,11 +907,21 @@ export default function DocumentsPage() {
                   {selectedDocument ? selectedDocument.filename : "Select a document to view metadata"}
                 </p>
               </div>
-              {selectedDocument ? (
-                <span className={`rounded-full border px-3 py-1 text-[10px] ${badgeStyles[selectedDocument.status]}`}>
-                  {selectedDocument.status}
-                </span>
-              ) : null}
+              <div className="flex items-center gap-2">
+                {selectedDocument ? (
+                  <span className={`rounded-full border px-3 py-1 text-[10px] ${badgeStyles[selectedDocument.status]}`}>
+                    {selectedDocument.status}
+                  </span>
+                ) : null}
+                <button
+                  type="button"
+                  className="hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                  onClick={handleDeleteSelectedDocument}
+                  aria-label="Delete document"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             {selectedDocument ? (
               <>
@@ -878,14 +937,6 @@ export default function DocumentsPage() {
                       <p className="text-rose-400">Error: {selectedDocument.error_message}</p>
                     ) : null}
                   </div>
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <button
-                    className="rounded-2xl border border-rose-400 px-4 py-2 text-[10px] uppercase tracking-[0.3em] text-rose-400 transition hover:bg-rose-500/10"
-                    onClick={handleDeleteSelectedDocument}
-                  >
-                    Delete document
-                  </button>
                 </div>
               </>
             ) : null}
@@ -973,7 +1024,8 @@ export default function DocumentsPage() {
                   </div>
                   <div className="space-y-3">
                     {references.map((reference, index) => {
-                      const href = buildReferenceViewerHref(reference);
+                      const href = buildReferencePdfHref(reference);
+                      const viewerHref = buildReferenceViewerHref(reference);
                       const containerClass =
                         "block rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90 cursor-pointer";
                       const content = (
@@ -998,13 +1050,19 @@ export default function DocumentsPage() {
                               const { fetchWithAuth } = await import("@/lib/apiClient");
                               const response = await fetchWithAuth(href);
 
+                              console.log("PDF response status:", response.status, response.statusText);
+                              console.log("PDF response headers:", Object.fromEntries(response.headers.entries()));
+
                               const blob = await response.blob();
-                              const blobUrl = URL.createObjectURL(blob);
-                              const newWindow = window.open(blobUrl, '_blank');
-                              if (newWindow) {
-                                newWindow.opener = null;
-                              }
-                              setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                              console.log("PDF blob type:", blob.type, "size:", blob.size);
+
+                              // Open PDF in modal - pass blob directly
+                              setPdfBlob(blob);
+                              setPdfFilename(reference.document_title || "document.pdf");
+                              setPdfInitialPage(reference.page || 1);
+                              setPdfHighlightSnippet(reference.snippet || undefined);
+                              setPdfViewerHref(viewerHref);
+                              setPdfModalOpen(true);
                             } catch (error) {
                               console.error('Failed to open document:', error);
                             }
@@ -1053,38 +1111,53 @@ export default function DocumentsPage() {
                               : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
                             }`}
                         >
-                          <button
-                            type="button"
+                          <div
                             onClick={() => setSelectedDocHistoryId(entry.id)}
-                            className="text-left"
+                            className="cursor-pointer text-left"
                           >
                             <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
                               <span>{entry.status === "error" ? "Error" : "OK"}</span>
-                              <span>{formatTimestamp(entry.createdAt)}</span>
+                              <div className="flex items-center gap-2">
+                                <span>{formatTimestamp(entry.createdAt)}</span>
+                                <button
+                                  type="button"
+                                  aria-label={`Delete history entry ${entry.question}`}
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    handleRemoveDocHistory(entry.id);
+                                  }}
+                                  className="hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                                  title="Delete history"
+                                >
+                                  ✕
+                                </button>
+                              </div>
                             </div>
                             <p className="mt-2 text-sm font-semibold text-white">{entry.question}</p>
                             <p className="text-[12px] text-slate-400">{entry.summary}</p>
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={`Delete history entry ${entry.question}`}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleRemoveDocHistory(entry.id);
-                            }}
-                            className="absolute right-3 bottom-2 flex h-5 w-5 pointer-events-none items-center justify-center rounded-full border border-red-400 text-[10px] text-red-400 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-red-500/10"
-                            title="Delete history"
-                          >
-                            X
-                          </button>
+                          </div>
                         </div>
                       );
                     })
                   )}
                 </div>
                 {selectedDocHistoryEntry ? (
-                  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Answer</p>
+                  <div className="group relative mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Answer</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] text-slate-400">{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
+                        <button
+                          type="button"
+                          aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
+                          onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
+                          className="hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                          title="Delete history"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
                     <p className="mt-2 whitespace-pre-wrap text-sm text-white">
                       {selectedDocHistoryEntry.answer || "No answer recorded."}
                     </p>
@@ -1093,12 +1166,8 @@ export default function DocumentsPage() {
                         <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">References</p>
                         <div className="mt-2 space-y-2">
                           {selectedDocHistoryEntry.references.map((reference) => {
-                            // Build viewer URL
-                            const documentId = reference.document_id ?? selectedDocument?.id;
-                            const viewerUrl = documentId
-                              ? `/api/documents/${documentId}/viewer` +
-                                (reference.chunk_id ? `?chunkId=${reference.chunk_id}` : "")
-                              : null;
+                            const viewerHref = buildReferenceViewerHref(reference);
+                            const viewerUrl = buildReferencePdfHref(reference);
 
                             const content = (
                               <>
@@ -1121,15 +1190,15 @@ export default function DocumentsPage() {
                                     const { fetchWithAuth } = await import('@/lib/apiClient');
                                     const response = await fetchWithAuth(viewerUrl);
                                     const blob = await response.blob();
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    const newWindow = window.open(blobUrl, '_blank');
-                                    if (newWindow) {
-                                      newWindow.opener = null;
-                                    }
-                                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                                    // Open PDF in modal - pass blob directly
+                                    setPdfBlob(blob);
+                                    setPdfFilename(reference.document_title || "document.pdf");
+                                    setPdfInitialPage(reference.page || 1);
+                                    setPdfHighlightSnippet(reference.snippet || undefined);
+                                    setPdfViewerHref(viewerHref);
+                                    setPdfModalOpen(true);
                                   } catch (error) {
                                     console.error('Failed to open document:', error);
-                                    window.open(viewerUrl, '_blank');
                                   }
                                 }}
                                 className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
@@ -1155,6 +1224,22 @@ export default function DocumentsPage() {
           </section>
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        isOpen={pdfModalOpen}
+        onClose={() => {
+          setPdfModalOpen(false);
+          setPdfBlob(null);
+          setPdfHighlightSnippet(undefined);
+          setPdfViewerHref(undefined);
+        }}
+        pdfBlob={pdfBlob}
+        filename={pdfFilename}
+        initialPage={pdfInitialPage}
+        viewerHref={pdfViewerHref}
+        highlightSnippet={pdfHighlightSnippet}
+      />
     </div>
   );
 }
