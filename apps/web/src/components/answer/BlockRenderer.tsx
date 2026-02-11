@@ -753,46 +753,59 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       </>
                     );
 
-                    // Handle document URLs - use <a> tag for external API URLs
+                    // Handle document URLs - use button with authenticated fetch
                     if (reference.url && reference.kind === "document") {
                       console.log('[Reference] Document URL:', reference.url);
 
-                      // Check if this is an API URL (starts with /api/documents/)
-                      const isApiUrl = reference.url.startsWith('/api/documents/');
+                      const handleDocumentClick = async () => {
+                        try {
+                          // Use authenticatedFetch to get the PDF with auth headers
+                          const response = await fetch(reference.url, {
+                            headers: {
+                              'X-Tenant-Id': window.localStorage.getItem('tenant_id') || 'default',
+                              'X-User-Id': window.localStorage.getItem('user_id') || 'default',
+                            },
+                          });
 
-                      if (isApiUrl) {
-                        // API URLs should open in new tab for PDF files
-                        return (
-                          <a
-                            key={`${reference.title}-${refIndex}`}
-                            href={reference.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
-                            data-testid="reference-item"
-                          >
-                            {cardContent}
-                          </a>
-                        );
-                      } else {
-                        // Internal routing URLs (e.g., /documents/...)
-                        const handleClick = () => {
-                          console.log('[Reference] Clicking document, navigating to:', reference.url);
-                          router.push(reference.url);
-                        };
+                          if (!response.ok) {
+                            console.error('Failed to fetch document:', response.statusText);
+                            // Fallback: open in new tab
+                            window.open(reference.url, '_blank');
+                            return;
+                          }
 
-                        return (
-                          <button
-                            key={`${reference.title}-${refIndex}`}
-                            type="button"
-                            onClick={handleClick}
-                            className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
-                            data-testid="reference-item"
-                          >
-                            {cardContent}
-                          </button>
-                        );
-                      }
+                          // Get PDF blob and create object URL
+                          const blob = await response.blob();
+                          const blobUrl = URL.createObjectURL(blob);
+
+                          // Open in new tab
+                          const newWindow = window.open(blobUrl, '_blank');
+                          if (newWindow) {
+                            newWindow.opener = null; // Security
+                          }
+
+                          // Clean up blob URL after a delay
+                          setTimeout(() => {
+                            URL.revokeObjectURL(blobUrl);
+                          }, 60000);
+                        } catch (error) {
+                          console.error('Error opening document:', error);
+                          // Fallback: open in new tab
+                          window.open(reference.url, '_blank');
+                        }
+                      };
+
+                      return (
+                        <button
+                          key={`${reference.title}-${refIndex}`}
+                          type="button"
+                          onClick={handleDocumentClick}
+                          className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
+                          data-testid="reference-item"
+                        >
+                          {cardContent}
+                        </button>
+                      );
                     }
 
                     // Use <a> for external URLs

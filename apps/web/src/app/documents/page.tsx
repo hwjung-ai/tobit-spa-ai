@@ -980,10 +980,10 @@ export default function DocumentsPage() {
                     <span>근거 문서 ({references.length}건)</span>
                   </div>
                   <div className="space-y-3">
-                    {references.map((reference) => {
+                    {references.map((reference, index) => {
                       const href = buildReferenceViewerHref(reference);
                       const containerClass =
-                        "block rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90";
+                        "block rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90 cursor-pointer";
                       const content = (
                         <>
                           <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
@@ -997,15 +997,38 @@ export default function DocumentsPage() {
                         </>
                       );
                       return href ? (
-                        <a
-                          key={`${reference.document_id}-${reference.chunk_id}`}
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          key={`${reference.document_id}-${reference.chunk_id}-${index}`}
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              // Use authenticated fetch with headers
+                              const response = await fetch(href, {
+                                headers: {
+                                  'X-Tenant-Id': window.localStorage.getItem('tenant_id') || 'default',
+                                  'X-User-Id': window.localStorage.getItem('user_id') || 'default',
+                                },
+                              });
+                              if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                              }
+                              const blob = await response.blob();
+                              const blobUrl = URL.createObjectURL(blob);
+                              const newWindow = window.open(blobUrl, '_blank');
+                              if (newWindow) {
+                                newWindow.opener = null;
+                              }
+                              setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                            } catch (error) {
+                              console.error('Failed to open document:', error);
+                              // Fallback: try opening directly
+                              window.open(href, '_blank');
+                            }
+                          }}
                           className={containerClass}
                         >
                           {content}
-                        </a>
+                        </button>
                       ) : (
                         <div
                           key={`${reference.document_id}-${reference.chunk_id}`}
@@ -1106,15 +1129,36 @@ export default function DocumentsPage() {
                             );
 
                             return viewerUrl ? (
-                              <a
+                              <button
                                 key={`${reference.document_id}-${reference.chunk_id}`}
-                                href={viewerUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer"
+                                type="button"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(viewerUrl, {
+                                      headers: {
+                                        'X-Tenant-Id': window.localStorage.getItem('tenant_id') || 'default',
+                                        'X-User-Id': window.localStorage.getItem('user_id') || 'default',
+                                      },
+                                    });
+                                    if (!response.ok) {
+                                      throw new Error(`HTTP ${response.status}`);
+                                    }
+                                    const blob = await response.blob();
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    const newWindow = window.open(blobUrl, '_blank');
+                                    if (newWindow) {
+                                      newWindow.opener = null;
+                                    }
+                                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                                  } catch (error) {
+                                    console.error('Failed to open document:', error);
+                                    window.open(viewerUrl, '_blank');
+                                  }
+                                }}
+                                className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
                               >
                                 {content}
-                              </a>
+                              </button>
                             ) : (
                               <div
                                 key={`${reference.document_id}-${reference.chunk_id}`}
