@@ -21,6 +21,7 @@ import {
 } from "@/lib/apiClientTypes";
 import OpsSummaryStrip from "@/components/ops/OpsSummaryStrip";
 import Toast from "@/components/admin/Toast";
+import ConversationSummaryModal from "@/components/ops/ConversationSummaryModal";
 import InspectorStagePipeline from "@/components/ops/InspectorStagePipeline";
 import ReplanTimeline, { type ReplanEvent } from "@/components/ops/ReplanTimeline";
 import { type OpsHistoryEntry } from "@/components/ops/types/opsTypes";
@@ -63,6 +64,10 @@ export default function OpsPage() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [traceOpen, setTraceOpen] = useState(false);
   const [traceCopyStatus, setTraceCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false);
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
   const router = useRouter();
 
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
@@ -345,6 +350,92 @@ export default function OpsPage() {
     }
   }, [currentModeDefinition, isRunning, question, fetchHistory]);
 
+  // Fetch conversation summary for modal preview
+  const fetchConversationSummary = useCallback(async () => {
+    if (!history.length) {
+      setStatusMessage("대화 내용이 없습니다.");
+      return;
+    }
+
+    setSummaryLoading(true);
+    try {
+      // Use the first (latest) entry's thread_id to get the full conversation
+      const latestEntry = history[0];
+      const threadId = latestEntry.threadId;
+
+      const response = await authenticatedFetch<any>("/ops/conversation/summary", {
+        method: "POST",
+        body: JSON.stringify({
+          thread_id: threadId,
+          title: latestEntry.question.substring(0, 50),
+          topic: "OPS 분석",
+        }),
+      });
+
+      if (response?.data) {
+        setSummaryData(response.data);
+        setSummaryModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch conversation summary:", error);
+      setStatusMessage("요약을 가져오지 못했습니다.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [history]);
+
+  // Export conversation as PDF
+  const exportConversationPdf = useCallback(async () => {
+    if (!history.length) {
+      setStatusMessage("대화 내용이 없습니다.");
+      return;
+    }
+
+    setPdfExporting(true);
+    try {
+      const latestEntry = history[0];
+      const threadId = latestEntry.threadId;
+
+      const response = await authenticatedFetch<any>("/ops/conversation/export/pdf", {
+        method: "POST",
+        body: JSON.stringify({
+          thread_id: threadId,
+          title: latestEntry.question.substring(0, 40),
+          topic: "OPS 분석",
+        }),
+      });
+
+      if (response?.data) {
+        const { filename, content, content_type } = response.data;
+
+        // Decode base64 content
+        const binaryString = atob(content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        // Create blob and download
+        const blob = new Blob([bytes], { type: content_type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        setStatusMessage("PDF 리포트가 다운로드되었습니다.");
+      }
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+      setStatusMessage("PDF 내보내기에 실패했습니다.");
+    } finally {
+      setPdfExporting(false);
+    }
+  }, [history]);
+
   const handleNextAction = useCallback(
     async (action: NextAction) => {
       if (!selectedEntry) {
@@ -460,15 +551,141 @@ export default function OpsPage() {
 
   return (
     <>
+    {/* Summary Modal */}
+    {summaryModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="relative w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-900/95 shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📋</span>
+              <div>
+                <h2 className="text-lg font-semibold text-white">대화 요약</h2>
+                <p className="text-xs text-slate-400">
+                  {summaryData?.question_count || history.length}개의 질문
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setSummaryModalOpen(false)}
+              className="rounded-full border border-slate-600 px-3 py-1 text-sm text-slate-300 hover:border-slate-500 hover:text-white"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="max-h-[60vh] overflow-y-auto px-6 py-4 custom-scrollbar">
+            {summaryLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <span className="animate-spin text-2xl">⏳</span>
+              </div>
+            ) : summaryData ? (
+              <>
+                {/* Metadata */}
+                <div className="mb-4 rounded-2xl border border-slate-700 bg-slate-950/60 p-4">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-xs text-slate-500">제목</span>
+                      <p className="font-semibold text-white">{summaryData.title}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-slate-500">일자</span>
+                      <p className="text-slate-300">{summaryData.date}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-xs text-slate-500">주제</span>
+                      <p className="text-slate-300">{summaryData.topic}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Q&A Summary */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-slate-400">질의-응답 요약</h3>
+                  {summaryData.questions_and_answers?.slice(0, 5).map((qa: any, idx: number) => (
+                    <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-300">
+                          Q{idx + 1}
+                        </span>
+                        {qa.mode && (
+                          <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+                            {qa.mode}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mb-2 text-sm font-medium text-white">{qa.question}</p>
+                      {qa.summary && (
+                        <p className="text-xs text-slate-400 line-clamp-3">{qa.summary}</p>
+                      )}
+                    </div>
+                  ))}
+                  {summaryData.questions_and_answers?.length > 5 && (
+                    <p className="text-center text-xs text-slate-500">
+                      ... 그 외 {summaryData.questions_and_answers.length - 5}개의 질문
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="py-12 text-center text-slate-400">
+                요약 데이터가 없습니다.
+              </div>
+            )}
+          </div>
+
+          {/* Footer - PDF Export */}
+          <div className="flex justify-end border-t border-slate-700 px-6 py-4">
+            <button
+              onClick={exportConversationPdf}
+              disabled={pdfExporting || summaryLoading}
+              className="flex items-center gap-2 rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+            >
+              {pdfExporting ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  <span>생성 중...</span>
+                </>
+              ) : (
+                <>
+                  <span>📄</span>
+                  <span>PDF 리포트 내보내기</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <div className="py-6">
-      {/* OPS Summary Strip */}
-      <div className="mb-6">
-        <OpsSummaryStrip
-          selectedEntry={selectedEntry as OpsHistoryEntry | null}
-          onUpdateData={() => {
-            // Handle summary data updates if needed
+      {/* OPS Summary Strip + Summary Button */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex-1">
+          <OpsSummaryStrip
+            selectedEntry={selectedEntry as OpsHistoryEntry | null}
+            onUpdateData={() => {
+              // Handle summary data updates if needed
+            }}
+          />
+        </div>
+        {/* Summary Icon Button */}
+        <button
+          onClick={() => {
+            setSummaryModalOpen(true);
+            if (!summaryData && history.length > 0) {
+              fetchConversationSummary();
+            }
           }}
-        />
+          disabled={!selectedEntry}
+          className="ml-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 shadow-lg transition hover:border-blue-500 hover:bg-slate-700 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-700 disabled:hover:bg-slate-800 disabled:hover:text-slate-300"
+          title="대화 요약 보기"
+        >
+          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </button>
       </div>
 
       <div className={`grid gap-6 ${gridColsClass}`}>
@@ -756,6 +973,13 @@ export default function OpsPage() {
       type={statusMessage?.includes("trace_id가 없습니다") ? "warning" : statusMessage?.includes("찾을 수 없습니다") ? "error" : "info"}
       onDismiss={() => setStatusMessage(null)}
       duration={3000}
+    />
+
+    <ConversationSummaryModal
+      isOpen={summaryModalOpen}
+      onClose={() => setSummaryModalOpen(false)}
+      threadId={selectedEntry?.threadId ?? null}
+      historyId={selectedEntry?.id ?? null}
     />
     </>
   );

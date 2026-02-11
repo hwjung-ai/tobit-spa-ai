@@ -11,24 +11,24 @@ Endpoints:
 from __future__ import annotations
 
 import uuid
-from typing import Any
+from datetime import datetime, timezone
 
-from core.db import get_session_context
+from core.db import get_session, get_session_context
 from core.logging import get_logger, set_request_context
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from models.history import QueryHistory
 from schemas import ResponseEnvelope
 from sqlmodel import Session
-from core.db import get_session
 
 from app.modules.ops.schemas import OpsQueryRequest
-from app.modules.ops.services import handle_ops_query
-from app.modules.ops.services.observability_service import collect_observability_metrics
-from app.modules.ops.services.data_export import DataExporter
 from app.modules.ops.security import SecurityUtils
+from app.modules.ops.services import handle_ops_query
+from app.modules.ops.services.data_export import DataExporter
+from app.modules.ops.services.observability_service import collect_observability_metrics
+from app.modules.ops.services.report_service import pdf_report_service
+
 from .utils import _tenant_id
-from fastapi.responses import Response
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -66,7 +66,7 @@ def query_ops(
     # 로깅을 위해 요청 데이터 마스킹
     masked_payload = SecurityUtils.mask_dict(payload.model_dump())
     logger.debug(
-        f"ops.query.request_received",
+        "ops.query.request_received",
         extra={
             "question_length": len(payload.question),
             "mode": payload.mode,
@@ -180,4 +180,218 @@ def export_observability_data(
         return ResponseEnvelope.success(data=export_data)
     except Exception as e:
         logger.error(f"Failed to export observability data: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.post("/conversation/summary")
+def get_conversation_summary(
+    request_data: dict,
+    session: Session = Depends(get_session),
+    tenant_id: str = Depends(_tenant_id)
+) -> ResponseEnvelope:
+    """Get conversation summary for preview.
+
+    Returns a structured summary of the conversation including:
+    - Title, date, topic metadata
+    - Questions and answers
+    - Key insights
+
+    Args:
+        request_data: Dictionary containing:
+            - history_id: Optional specific history entry ID
+            - thread_id: Optional thread ID to get full conversation
+        session: Database session dependency
+
+    Returns:
+        ResponseEnvelope with summary data
+    """
+    try:
+        history_id = request_data.get("history_id")
+        thread_id = request_data.get("thread_id")
+
+        if not history_id and not thread_id:
+            return ResponseEnvelope.error(
+                message="Either history_id or thread_id is required"
+            )
+
+        # Fetch history entries
+        query = session.query(QueryHistory).filter(
+            QueryHistory.tenant_id == tenant_id
+        )
+
+        if history_id:
+            query = query.filter(QueryHistory.id == history_id)
+        elif thread_id:
+            query = query.filter(QueryHistory.thread_id == thread_id).order_by(
+                QueryHistory.created_at.asc()
+            )
+
+        entries = query.all()
+
+        if not entries:
+            return ResponseEnvelope.error(
+                message="No conversation history found"
+            )
+
+        # Build summary data
+        first_entry = entries[0]
+
+        # Extract title from first question
+        title = request_data.get("title")
+        if not title:
+            question_text = first_entry.question or ""
+            title = question_text[:50] + "..." if len(question_text) > 50 else question_text
+
+        # Build Q&A list
+        questions_and_answers = []
+        for entry in entries:
+            qa = {
+                "question": entry.question or "",
+                "timestamp": entry.created_at.isoformat() if entry.created_at else None,
+                "mode": entry.meta.get("mode", "unknown") if entry.meta else "unknown",
+            }
+
+            # Parse answer to extract summary and blocks
+            if entry.answer:
+                answer = entry.answer if isinstance(entry.answer, dict) else {}
+                qa["summary"] = answer.get("summary", "")
+                qa["blocks"] = answer.get("blocks", [])
+
+                # Extract references if available
+                meta = answer.get("meta", {})
+                if isinstance(meta, dict):
+                    refs = meta.get("references", [])
+                    if refs:
+                        qa["references"] = refs
+
+            questions_and_answers.append(qa)
+
+        summary_data = {
+            "title": title,
+            "topic": request_data.get("topic", "OPS 분석"),
+            "date": first_entry.created_at.strftime("%Y-%m-%d") if first_entry.created_at else "",
+            "created_at": datetime.now().isoformat(),
+            "question_count": len(entries),
+            "questions_and_answers": questions_and_answers,
+        }
+
+        return ResponseEnvelope.success(data=summary_data)
+
+    except Exception as e:
+        logger.error(f"Failed to get conversation summary: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.post("/conversation/export/pdf")
+def export_conversation_pdf(
+    request_data: dict,
+    session: Session = Depends(get_session),
+    tenant_id: str = Depends(_tenant_id)
+) -> ResponseEnvelope:
+    """Export conversation as PDF report.
+
+    Generates a professional PDF report from the conversation history.
+
+    Args:
+        request_data: Dictionary containing:
+            - history_id: Optional specific history entry ID
+            - thread_id: Optional thread ID to get full conversation
+            - title: Optional report title
+            - topic: Optional report topic
+        session: Database session dependency
+
+    Returns:
+        ResponseEnvelope with PDF content (base64 encoded) and metadata
+    """
+    try:
+        import base64
+        from datetime import datetime
+
+        history_id = request_data.get("history_id")
+        thread_id = request_data.get("thread_id")
+        title = request_data.get("title")
+        topic = request_data.get("topic", "OPS 분석")
+
+        if not history_id and not thread_id:
+            return ResponseEnvelope.error(
+                message="Either history_id or thread_id is required"
+            )
+
+        # Fetch history entries
+        query = session.query(QueryHistory).filter(
+            QueryHistory.tenant_id == tenant_id
+        )
+
+        if history_id:
+            query = query.filter(QueryHistory.id == history_id)
+        elif thread_id:
+            query = query.filter(QueryHistory.thread_id == thread_id).order_by(
+                QueryHistory.created_at.asc()
+            )
+
+        entries = query.all()
+
+        if not entries:
+            return ResponseEnvelope.error(
+                message="No conversation history found"
+            )
+
+        # Build conversation data for PDF
+        first_entry = entries[0]
+
+        if not title:
+            question_text = first_entry.question or ""
+            title = question_text[:40] + "..." if len(question_text) > 40 else question_text
+
+        # Build Q&A list for PDF
+        questions_and_answers = []
+        for entry in entries:
+            qa = {
+                "question": entry.question or "",
+                "timestamp": entry.created_at.strftime("%Y-%m-%d %H:%M:%S") if entry.created_at else "",
+                "mode": entry.meta.get("mode", "unknown") if entry.meta else "unknown",
+            }
+
+            # Parse answer to extract summary and blocks
+            if entry.answer:
+                answer = entry.answer if isinstance(entry.answer, dict) else {}
+                qa["summary"] = answer.get("summary", "")
+                qa["blocks"] = answer.get("blocks", [])
+
+                # Extract references if available
+                meta = answer.get("meta", {})
+                if isinstance(meta, dict):
+                    refs = meta.get("references", [])
+                    if refs:
+                        qa["references"] = refs
+
+            questions_and_answers.append(qa)
+
+        conversation_data = {
+            "title": title,
+            "topic": topic,
+            "date": first_entry.created_at.strftime("%Y-%m-%d") if first_entry.created_at else datetime.now().strftime("%Y-%m-%d"),
+            "questions_and_answers": questions_and_answers,
+        }
+
+        # Generate PDF
+        pdf_content = pdf_report_service.generate_conversation_report(conversation_data)
+
+        # Encode to base64 for JSON response
+        pdf_base64 = base64.b64encode(pdf_content).decode("utf-8")
+
+        # Generate filename
+        filename = f"ops_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+        return ResponseEnvelope.success(
+            data={
+                "filename": filename,
+                "content": pdf_base64,
+                "content_type": "application/pdf",
+                "size": len(pdf_content),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to export conversation PDF: {e}", exc_info=True)
         return ResponseEnvelope.error(message=str(e))

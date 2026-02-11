@@ -35,3 +35,5 @@ aiomysql>=0.2.0
 PyMySQL>=1.1.0
 oracledb>=2.0.0
 bytewax
+# PDF Report Generation
+reportlab>=4.0.0
