@@ -1543,8 +1543,8 @@ def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBl
 
                 _log.info(f"Document search result: {document.filename}, snippet length: {len(snippet)}")
 
-                # Generate URL
-                url = f"/documents/{document_id}/viewer"
+                # Generate URL - use /api/documents/... for actual file serving
+                url = f"/api/documents/{document_id}/viewer"
                 params = []
                 if chunk_id:
                     params.append(f"chunkId={chunk_id}")
