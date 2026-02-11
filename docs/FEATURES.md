@@ -1,6 +1,6 @@
 # Tobit SPA AI - 기능
 
-> 최종 업데이트: 2026-02-08  
+> 최종 업데이트: 2026-02-11  
 > **전체 완성도: 94%**
 
 ## 1. 문서 개요
@@ -12,6 +12,7 @@
 | 메뉴 | 완성도 | 상태 |
 |------|--------|------|
 | **Ops Query System** | 88% | ✅ 상용 가능 |
+| **SIM Workspace** | 91% | ✅ 상용 가능 |
 | **Docs** | 100% | ✅ 상용 완료 |
 | **API Manager** | 95% | ✅ 상용 가능 |
 | **Screens** | 94% | ✅ 상용 가능 |
@@ -59,11 +60,28 @@
   - CEP simulate 연계 + Event Browser 링크
   - CI 목록 미리보기
   - 선택적 Asset 바인딩: `source_asset`, `schema_asset`, `resolver_asset`를 통해 질문 정규화/trace 적용
+- SIM UI (`/sim`)
+  - 시나리오 빌더(질문/서비스/전략/가정값/기간)
+  - 전략 실행: Rule/Stat/ML/DL (`/api/sim/query`, `/api/sim/run`)
+  - 결과: KPI 요약, 비교 차트, 토폴로지 맵, 알고리즘 근거
+  - 부가 기능: 백테스트(`/api/sim/backtest`), CSV 내보내기(`/api/sim/export`)
+  - 서비스 자동 초기값: `/api/sim/services` 조회 후 데이터 존재 서비스 우선 선택
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
   - Settings: 운영 설정 편집 (restart_required 표시)
   - Inspector: Trace ID 검색/필터, parent_trace 연결, Applied Assets · Plan · Execution · References · Answer Blocks · UI Render 섹션으로 전체 흐름 확인, UI Render telemetry/동작 상태 보기, Audit Log 추적
   - 상세 명세: `docs/ADMIN_UI_SPEC.md`, `docs/QUERY_ASSET_OPERATION_GUIDE.md`
+
+### Copilot 안정화 (2026-02-10)
+- 공통 JSON 파싱 유틸 추가: `apps/web/src/lib/copilot/json-utils.ts`
+- 공통 Contract 검증/자동복구 유틸 추가: `apps/web/src/lib/copilot/contract-utils.ts`
+- Copilot 메트릭 로깅 유틸 추가: `apps/web/src/lib/copilot/metrics.ts`
+- API Manager/CEP 파서가 공통 유틸을 사용하도록 정리
+- CEP Copilot은 스트리밍 중간 chunk를 즉시 오류로 처리하지 않도록 개선
+- Screen Editor Copilot은 code-block 전용 파서에서 다중 JSON 후보 파싱으로 강화
+- Builder별 contract 강제(`api_draft`, `cep_draft`, `screen_patch`) 및 1회 자동 복구(repair prompt) 지원
+- Admin API 유틸은 non-JSON 응답(HTML/plain text)에서 JSON 강제 파싱을 피하도록 개선
+- 상세 계획 문서: `docs/AI_COPILOT_IMPLEMENTATION_PLAN.md`
 
 ## 2-1. 공통 UI 표준
 
@@ -73,6 +91,31 @@
 
 ### UI 스타일 (Styling)
 - **Scrollbar**: OS 기본 스크롤바 대신 프로젝트 전역 `custom-scrollbar` 스타일(얇은 디자인, 다크 테마)을 적용합니다. 모든 스크롤 가능한 영역(OPS 히스토리, 그리드, JSON 뷰어 등)에 일관되게 적용됩니다.
+
+## 2-2. SIM Workspace
+
+### 소스 맵
+- Frontend Page: `apps/web/src/app/sim/page.tsx`
+- Topology 컴포넌트: `apps/web/src/components/simulation/TopologyMap.tsx`
+- Backend Router: `apps/api/app/modules/simulation/api/router.py`
+- Simulation Executor: `apps/api/app/modules/simulation/services/simulation/simulation_executor.py`
+- Topology Loader: `apps/api/app/modules/simulation/services/topology_service.py`
+- Baseline Loader: `apps/api/app/modules/simulation/services/simulation/baseline_loader.py`
+- 테스트(Backend): `apps/api/tests/test_simulation_router.py`, `apps/api/tests/test_simulation_executor.py`, `apps/api/tests/test_simulation_rule_strategy.py`, `apps/api/tests/test_simulation_tenant_isolation.py`, `apps/api/tests/test_simulation_dl_strategy.py`
+- 테스트(Frontend): `apps/web/tests-e2e/simulation.spec.ts`
+
+### 제공 기능
+- 메인 메뉴 `SIM`에서 시나리오 기반 What-if/Stress/Capacity 분석
+- Rule/Stat/ML/DL 전략 선택 실행
+- KPI 결과(기준값/시뮬레이션값/변화율)와 confidence, confidence interval 표시
+- 토폴로지 맵에서 노드/링크 변화 시각화
+- 백테스트 지표(`R2`, `MAPE`, `RMSE`, `Coverage@90`) 조회
+- CSV export 제공
+
+### 문서
+- 사용자 가이드: `docs/USER_GUIDE_SIM.md`
+- 아키텍처/설계: `docs/BLUEPRINT_SIM.md`
+- 구현 상세: `docs/SIMULATION_IMPLEMENTATION_GUIDE.md`
 
 ## 3. API Manager (API 매니저)
 

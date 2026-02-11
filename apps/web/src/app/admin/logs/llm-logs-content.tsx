@@ -1,0 +1,584 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { fetchApi } from "@/lib/adminUtils";
+import { useQuery } from "@tanstack/react-query";
+
+// LLM Call Log interfaces
+export interface LlmCallLog {
+    id: string;
+    trace_id: string | null;
+    call_type: string;
+    call_index: number;
+    model_name: string;
+    provider: string | null;
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    duration_ms: number;
+    status: string;
+    feature: string | null;
+    ui_endpoint: string | null;
+    request_time: string;
+    response_time: string | null;
+    created_at: string;
+}
+
+export interface LlmLogDetail extends LlmCallLog {
+    system_prompt: string | null;
+    user_prompt: string | null;
+    raw_response: string | null;
+    parsed_response: Record<string, unknown> | null;
+    context: Record<string, unknown> | null;
+    error_message: string | null;
+    error_details: Record<string, unknown> | null;
+    user_id: string | null;
+    tags: Record<string, unknown> | null;
+}
+
+export interface LlmCallAnalytics {
+    total_calls: number;
+    successful_calls: number;
+    failed_calls: number;
+    total_input_tokens: number;
+    total_output_tokens: number;
+    total_tokens: number;
+    avg_latency_ms: number;
+    total_duration_ms: number;
+    model_breakdown: Record<string, number>;
+    feature_breakdown: Record<string, number>;
+    call_type_breakdown: Record<string, number>;
+}
+
+type FilterStatus = "all" | "success" | "error";
+type FilterCallType = "all" | "planner" | "output_parser" | "tool";
+type FilterFeature = "all" | "ops" | "docs" | "cep";
+type DateRangeOption = "1h" | "24h" | "7d" | "30d" | "all" | "custom";
+
+export default function LlmLogsContent() {
+    const llmLogsBasePath = "/admin/llm-logs";
+    const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
+    const [callTypeFilter, setCallTypeFilter] = useState<FilterCallType>("all");
+    const [featureFilter, setFeatureFilter] = useState<FilterFeature>("all");
+    const [dateRange, setDateRange] = useState<DateRangeOption>("24h");
+    const [customFromDate, setCustomFromDate] = useState<string>("");
+    const [customToDate, setCustomToDate] = useState<string>("");
+    const [selectedLog, setSelectedLog] = useState<LlmCallLog | null>(null);
+    const [logDetail, setLogDetail] = useState<LlmLogDetail | null>(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
+    const [analytics, setAnalytics] = useState<LlmCallAnalytics | null>(null);
+
+    // Fetch logs
+    const { data: logsResponse, isLoading, error, refetch } = useQuery({
+        queryKey: ["llm-logs", statusFilter, callTypeFilter, featureFilter, dateRange, customFromDate, customToDate],
+        queryFn: async () => {
+            const params = new URLSearchParams();
+            if (statusFilter !== "all") params.append("status", statusFilter);
+            if (callTypeFilter !== "all") params.append("call_type", callTypeFilter);
+            if (featureFilter !== "all") params.append("feature", featureFilter);
+
+            // Date range filter
+            const { fromDate, toDate } = getDateRangeFilter(dateRange, customFromDate, customToDate);
+            if (fromDate) params.append("from", fromDate);
+            if (toDate) params.append("to", toDate);
+
+            params.append("limit", "100");
+
+            const queryString = params.toString();
+            const endpoint = `${llmLogsBasePath}${queryString ? `?${queryString}` : ""}`;
+            return fetchApi<{ logs: LlmCallLog[]; total: number }>(endpoint);
+        },
+    });
+
+    const logs = logsResponse?.data?.logs || [];
+    const total = logsResponse?.data?.total || 0;
+
+    // Fetch analytics
+    const { data: analyticsResponse } = useQuery({
+        queryKey: ["llm-analytics"],
+        queryFn: async () => {
+            return fetchApi<LlmCallAnalytics>(`${llmLogsBasePath}/analytics`);
+        },
+        refetchInterval: 60000,
+    });
+
+    useEffect(() => {
+        if (analyticsResponse?.data) {
+            setAnalytics(analyticsResponse.data);
+        }
+    }, [analyticsResponse]);
+
+    const handleLogClick = async (log: LlmCallLog) => {
+        setSelectedLog(log);
+        setShowDetailModal(true);
+
+        try {
+            const response = await fetchApi<LlmLogDetail>(`${llmLogsBasePath}/${log.id}`);
+            setLogDetail(response.data);
+        } catch (err) {
+            console.error("Failed to fetch log detail:", err);
+        }
+    };
+
+    const handleCloseDetail = () => {
+        setShowDetailModal(false);
+        setSelectedLog(null);
+        setLogDetail(null);
+    };
+
+    const getStatusBadgeClass = (status: string) => {
+        switch (status) {
+            case "success":
+                return "bg-green-500/20 text-green-400 border-green-500/30";
+            case "error":
+                return "bg-red-500/20 text-red-400 border-red-500/30";
+            default:
+                return "bg-slate-500/20 text-slate-400 border-slate-500/30";
+        }
+    };
+
+    const getCallTypeBadgeClass = (callType: string) => {
+        const colors: Record<string, string> = {
+            planner: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+            output_parser: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+            tool: "bg-orange-500/20 text-orange-400 border-orange-500/30",
+            default: "bg-slate-500/20 text-slate-400 border-slate-500/30",
+        };
+        return colors[callType] || colors.default;
+    };
+
+    const formatNumber = (num: number) => {
+        return new Intl.NumberFormat().format(num);
+    };
+
+    const formatDuration = (ms: number) => {
+        if (ms < 1000) return `${ms}ms`;
+        return `${(ms / 1000).toFixed(2)}s`;
+    };
+
+    const formatTokens = (tokens: number) => {
+        if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`;
+        if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
+        return formatNumber(tokens);
+    };
+
+    const getDateRangeFilter = (
+        range: DateRangeOption,
+        customFrom: string,
+        customTo: string
+    ): { fromDate: string | null; toDate: string | null } => {
+        const now = new Date();
+
+        switch (range) {
+            case "1h":
+            case "24h":
+            case "7d":
+            case "30d":
+                const fromDate = new Date(now);
+                const toDate = new Date(now);
+
+                switch (range) {
+                    case "1h":
+                        fromDate.setHours(fromDate.getHours() - 1);
+                        break;
+                    case "24h":
+                        fromDate.setHours(fromDate.getHours() - 24);
+                        break;
+                    case "7d":
+                        fromDate.setDate(fromDate.getDate() - 7);
+                        break;
+                    case "30d":
+                        fromDate.setDate(fromDate.getDate() - 30);
+                        break;
+                }
+
+                return {
+                    fromDate: fromDate.toISOString(),
+                    toDate: now.toISOString()
+                };
+            case "all":
+                return { fromDate: null, toDate: null };
+            case "custom":
+                return {
+                    fromDate: customFrom ? new Date(customFrom).toISOString() : null,
+                    toDate: customTo ? new Date(customTo).toISOString() : null
+                };
+            default:
+                return { fromDate: null, toDate: null };
+        }
+    };
+
+    const formatDateForInput = (dateStr: string) => {
+        if (!dateStr) return "";
+        const date = new Date(dateStr);
+        return date.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+    };
+
+    const handleDateRangeChange = (newRange: DateRangeOption) => {
+        setDateRange(newRange);
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Analytics Cards */}
+            {analytics && (
+                <div className="grid grid-cols-4 gap-4">
+                    <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-4">
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Calls</div>
+                        <div className="text-2xl font-bold text-white">{formatNumber(analytics.total_calls)}</div>
+                        <div className="flex gap-4 mt-2 text-xs">
+                            <span className="text-green-400">{formatNumber(analytics.successful_calls)} success</span>
+                            <span className="text-red-400">{formatNumber(analytics.failed_calls)} error</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-4">
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Tokens</div>
+                        <div className="text-2xl font-bold text-white">{formatTokens(analytics.total_tokens)}</div>
+                        <div className="flex gap-4 mt-2 text-xs text-slate-500">
+                            <span>In: {formatTokens(analytics.total_input_tokens)}</span>
+                            <span>Out: {formatTokens(analytics.total_output_tokens)}</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-4">
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Avg Latency</div>
+                        <div className="text-2xl font-bold text-white">{formatDuration(analytics.avg_latency_ms)}</div>
+                        <div className="text-xs text-slate-500 mt-2">Total: {formatDuration(analytics.total_duration_ms)}</div>
+                    </div>
+
+                    <div className="bg-slate-900/50 rounded-xl border border-slate-800 p-4">
+                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Top Model</div>
+                        <div className="text-lg font-bold text-white truncate">
+                            {Object.entries(analytics.model_breakdown).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A"}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-2">
+                            {Object.keys(analytics.model_breakdown).length} models used
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Filters */}
+            <div className="flex gap-4 bg-slate-900/50 rounded-xl border border-slate-800 p-4">
+                {/* Date Range Filter */}
+                <div className="flex-1">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Date Range</label>
+                    <select
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value as DateRangeOption)}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm"
+                    >
+                        <option value="1h">Last 1 Hour</option>
+                        <option value="24h">Last 24 Hours</option>
+                        <option value="7d">Last 7 Days</option>
+                        <option value="30d">Last 30 Days</option>
+                        <option value="all">All Time</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+
+                {/* Custom Date Inputs (shown only when "custom" is selected) */}
+                {dateRange === "custom" && (
+                    <>
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">From</label>
+                            <input
+                                type="datetime-local"
+                                value={formatDateForInput(customFromDate)}
+                                onChange={(e) => setCustomFromDate(e.target.value)}
+                                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm"
+                            />
+                        </div>
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">To</label>
+                            <input
+                                type="datetime-local"
+                                value={formatDateForInput(customToDate)}
+                                onChange={(e) => setCustomToDate(e.target.value)}
+                                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm"
+                            />
+                        </div>
+                    </>
+                )}
+
+                <div className="flex-1">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Status</label>
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm"
+                    >
+                        <option value="all">All Status</option>
+                        <option value="success">Success</option>
+                        <option value="error">Error</option>
+                    </select>
+                </div>
+
+                <div className="flex-1">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Call Type</label>
+                    <select
+                        value={callTypeFilter}
+                        onChange={(e) => setCallTypeFilter(e.target.value as FilterCallType)}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm"
+                    >
+                        <option value="all">All Types</option>
+                        <option value="planner">Planner</option>
+                        <option value="output_parser">Output Parser</option>
+                        <option value="tool">Tool Call</option>
+                    </select>
+                </div>
+
+                <div className="flex-1">
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Feature</label>
+                    <select
+                        value={featureFilter}
+                        onChange={(e) => setFeatureFilter(e.target.value as FilterFeature)}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-200 text-sm"
+                    >
+                        <option value="all">All Features</option>
+                        <option value="ops">OPS</option>
+                        <option value="docs">Documents</option>
+                        <option value="cep">CEP</option>
+                    </select>
+                </div>
+            </div>
+
+            {/* Logs Table */}
+            <div className="bg-slate-900/50 rounded-xl border border-slate-800 overflow-hidden">
+                {isLoading ? (
+                    <div className="flex items-center justify-center py-20">
+                        <div className="w-8 h-8 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+                        <span className="ml-3 text-slate-400 text-sm">Loading logs...</span>
+                    </div>
+                ) : error ? (
+                    <div className="text-center py-20">
+                        <p className="text-red-400 text-sm">Failed to load logs</p>
+                        <button
+                            onClick={() => refetch()}
+                            className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                ) : logs.length === 0 ? (
+                    <div className="text-center py-20">
+                        <p className="text-slate-500 text-sm">No LLM call logs found</p>
+                        <p className="text-slate-600 text-xs mt-2">LLM calls will appear here once you make queries through OPS</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-slate-950/50">
+                                <tr>
+                                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Time</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Model</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">In</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Out</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Total</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Duration</th>
+                                    <th className="px-3 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Feature</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Provider</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Trace</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800">
+                                {logs.map((log) => (
+                                    <tr
+                                        key={log.id}
+                                        onClick={() => handleLogClick(log)}
+                                        className="hover:bg-slate-800/50 cursor-pointer transition-colors"
+                                    >
+                                        <td className="px-3 py-3 text-sm text-slate-300 whitespace-nowrap">
+                                            {new Date(log.created_at).toLocaleString()}
+                                        </td>
+                                        <td className="px-3 py-3">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium border ${getCallTypeBadgeClass(log.call_type)}`}>
+                                                {log.call_type}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-300 font-mono">
+                                            {log.model_name}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-300 text-right font-mono">
+                                            {formatTokens(log.input_tokens)}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-300 text-right font-mono">
+                                            {formatTokens(log.output_tokens)}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-300 text-right font-mono">
+                                            {formatTokens(log.total_tokens)}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-300 text-right font-mono">
+                                            {formatDuration(log.duration_ms)}
+                                        </td>
+                                        <td className="px-3 py-3 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusBadgeClass(log.status)}`}>
+                                                {log.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-400">
+                                            {log.feature || "-"}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-400">
+                                            {log.provider || "-"}
+                                        </td>
+                                        <td className="px-3 py-3 text-sm text-slate-500 font-mono">
+                                            {log.trace_id ? log.trace_id.slice(0, 8) + "..." : "-"}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Pagination Note */}
+                {total > 100 && (
+                    <div className="px-4 py-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+                        <span>Showing {Math.min(100, total)} of {formatNumber(total)} logs</span>
+                        <span className="text-slate-600">Add pagination controls for more results</span>
+                    </div>
+                )}
+            </div>
+
+            {/* Detail Modal */}
+            {showDetailModal && selectedLog && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+                    <div className="bg-slate-900 rounded-xl border border-slate-800 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                            <div>
+                                <h2 className="text-xl font-bold text-white">LLM Call Details</h2>
+                                <p className="text-slate-500 text-xs mt-1">
+                                    {new Date(selectedLog.created_at).toLocaleString()}
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleCloseDetail}
+                                className="text-slate-400 hover:text-white transition-colors"
+                            >
+                                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+                            {logDetail ? (
+                                <>
+                                    {/* Summary */}
+                                    <div className="grid grid-cols-4 gap-4">
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <div className="text-xs text-slate-500 mb-1">Model</div>
+                                            <div className="text-sm font-mono text-slate-200">{logDetail.model_name}</div>
+                                        </div>
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <div className="text-xs text-slate-500 mb-1">Tokens</div>
+                                            <div className="text-sm font-mono text-slate-200">
+                                                {formatTokens(logDetail.total_tokens)}
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <div className="text-xs text-slate-500 mb-1">Duration</div>
+                                            <div className="text-sm font-mono text-slate-200">
+                                                {formatDuration(logDetail.duration_ms)}
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <div className="text-xs text-slate-500 mb-1">Status</div>
+                                            <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusBadgeClass(logDetail.status)}`}>
+                                                {logDetail.status}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* User Prompt */}
+                                    {logDetail.user_prompt && (
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-400 mb-2">User Prompt</h3>
+                                            <div className="bg-slate-950 rounded-lg p-4 text-sm text-slate-300 whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+                                                {logDetail.user_prompt}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* System Prompt */}
+                                    {logDetail.system_prompt && (
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-400 mb-2">System Prompt</h3>
+                                            <div className="bg-slate-950 rounded-lg p-4 text-sm text-slate-300 whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">
+                                                {logDetail.system_prompt}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Response */}
+                                    {logDetail.raw_response && (
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-400 mb-2">LLM Response</h3>
+                                            <div className="bg-slate-950 rounded-lg p-4 text-sm text-slate-300 whitespace-pre-wrap font-mono max-h-60 overflow-y-auto">
+                                                {logDetail.raw_response}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Context */}
+                                    {logDetail.context && Object.keys(logDetail.context).length > 0 && (
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-400 mb-2">Context</h3>
+                                            <div className="bg-slate-950 rounded-lg p-4 text-sm text-slate-300 font-mono max-h-40 overflow-y-auto">
+                                                <pre>{JSON.stringify(logDetail.context, null, 2)}</pre>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Error Details */}
+                                    {logDetail.status === "error" && logDetail.error_message && (
+                                        <div className="bg-red-950/50 border border-red-900/50 rounded-lg p-4">
+                                            <h3 className="text-sm font-bold text-red-400 mb-2">Error</h3>
+                                            <p className="text-sm text-red-300">{logDetail.error_message}</p>
+                                            {logDetail.error_details && (
+                                                <pre className="mt-2 text-xs text-red-400">
+                                                    {JSON.stringify(logDetail.error_details, null, 2)}
+                                                </pre>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Metadata */}
+                                    <div className="grid grid-cols-2 gap-4 text-xs">
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <span className="text-slate-500">Trace ID: </span>
+                                            <span className="text-slate-300 font-mono">{logDetail.trace_id || "N/A"}</span>
+                                        </div>
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <span className="text-slate-500">UI Endpoint: </span>
+                                            <span className="text-slate-300 font-mono">{logDetail.ui_endpoint || "N/A"}</span>
+                                        </div>
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <span className="text-slate-500">Provider: </span>
+                                            <span className="text-slate-300">{logDetail.provider || "N/A"}</span>
+                                        </div>
+                                        <div className="bg-slate-950 rounded-lg p-3">
+                                            <span className="text-slate-500">Call Index: </span>
+                                            <span className="text-slate-300">{logDetail.call_index}</span>
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex items-center justify-center py-20">
+                                    <div className="w-6 h-6 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+                                    <span className="ml-3 text-slate-400 text-sm">Loading details...</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

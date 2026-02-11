@@ -1,8 +1,8 @@
 # Tobit SPA AI - 문서 인덱스
 
-**최종 정리**: 2026-02-08
+**최종 정리**: 2026-02-11
 **전체 완성도**: 94%
-**활성 문서**: 15개 (docs/) + 3개 (root)
+**활성 문서**: 19개 (docs/) + 3개 (root)
 **아카이브**: docs/history/ (완료된 Phase 및 설계 문서)
 
 ---
@@ -19,7 +19,8 @@
 3. **CEP 엔진 설계**: `BLUEPRINT_CEP_ENGINE.md`
 4. **API Engine 설계**: `BLUEPRINT_API_ENGINE.md`
 5. **Screen Editor 설계**: `BLUEPRINT_SCREEN_EDITOR.md`
-6. **개발 환경 설정**: 루트 `DEV_ENV.md`
+6. **SIM 설계**: `BLUEPRINT_SIM.md`
+7. **개발 환경 설정**: 루트 `DEV_ENV.md`
 
 ### 기능 구현
 1. **기능 명세서**: `FEATURES.md`
@@ -30,6 +31,7 @@
 2. **CEP 사용자 가이드**: `USER_GUIDE_CEP.md`
 3. **API 사용자 가이드**: `USER_GUIDE_API.md`
 4. **Screen Editor 사용자 가이드**: `USER_GUIDE_SCREEN_EDITOR.md`
+5. **SIM 사용자 가이드**: `USER_GUIDE_SIM.md`
 
 ---
 
@@ -42,23 +44,27 @@ tobit-spa-ai/
 │   ├── README.md                    # 프로젝트 개요, 빠른 시작
 │   ├── AGENTS.md                    # AI 에이전트 필독 규칙
 │
-├── docs/ (15개)
+├── docs/ (17개)
 │   ├── INDEX.md                     # 문서 인덱스 (이 파일)
 │   ├── DEV_ENV.md                   # 개발 환경 설정
 │   │
-│   ├── 아키텍처 & Blueprint (7개)
+│   ├── 아키텍처 & Blueprint (9개)
 │   │   ├── SYSTEM_ARCHITECTURE_REPORT.md      # 시스템 전체 아키텍처 (v1.8)
 │   │   ├── BLUEPRINT_PRODUCT_COMPLETENESS.md  # 제품 완성도 평가 (v1.6)
 │   │   ├── BLUEPRINT_OPS_QUERY.md             # OPS 쿼리 시스템
 │   │   ├── BLUEPRINT_CEP_ENGINE.md            # CEP 엔진
 │   │   ├── BLUEPRINT_API_ENGINE.md            # API Engine
-│   │   └── BLUEPRINT_SCREEN_EDITOR.md         # Screen Editor
+│   │   ├── BLUEPRINT_SCREEN_EDITOR.md         # Screen Editor
+│   │   ├── BLUEPRINT_ADMIN.md                # Admin System
+│   │   └── BLUEPRINT_SIM.md                  # SIM Workspace
 │   │
-│   ├── 사용자 가이드 (4개)
+│   ├── 사용자 가이드 (6개)
 │   │   ├── USER_GUIDE_OPS.md                 # OPS 운영/학습 사용자 가이드
 │   │   ├── USER_GUIDE_CEP.md                 # CEP 규칙/이벤트 운영 가이드
 │   │   ├── USER_GUIDE_API.md                 # API Manager 사용자 가이드
-│   │   └── USER_GUIDE_SCREEN_EDITOR.md       # Screen Editor 사용자 가이드
+│   │   ├── USER_GUIDE_SCREEN_EDITOR.md       # Screen Editor 사용자 가이드
+│   │   ├── USER_GUIDE_ADMIN.md               # Admin System 사용자 가이드
+│   │   └── USER_GUIDE_SIM.md                 # SIM Workspace 사용자 가이드
 │   │
 │   ├── 기능/운영 (2개)
 │   │   ├── FEATURES.md                    # 기능 명세서
@@ -77,6 +83,7 @@ tobit-spa-ai/
 | 메뉴 | 완성도 | 상태 | 상세 |
 |------|--------|------|------|
 | **Ops Query System** | 88% | ✅ 상용 가능 | 6가지 질의 모드, Document Search, LangGraph |
+| **SIM Workspace** | 91% | ✅ 상용 가능 | What-if/Stress/Capacity, Topology, Backtest, CSV Export |
 | **Docs** | 100% | ✅ 상용 완료 | BM25 + pgvector 하이브리드, share/export/reindex/versioning |
 | **API Manager** | 95% | ✅ 상용 가능 | SQL/HTTP/Python/Workflow Executor, 버전/롤백, 캐싱 |
 | **Screens** | 94% | ✅ 상용 가능 | 15종 컴포넌트, Drag & Drop, RBAC |
@@ -129,6 +136,6 @@ tobit-spa-ai/
 
 ---
 
-**마지막 정리**: 2026-02-08
-**활성 문서**: 15개 (docs/) + 3개 (root)
+**마지막 정리**: 2026-02-11
+**활성 문서**: 19개 (docs/) + 3개 (root)
 **전체 완성도**: 94% (상용 준비)

@@ -246,13 +246,37 @@ function ApiCard({ api }: { api: ApiDefinition }) {
 }
 ```
 
-## Tools 측 구현 (추후 작업)
+## Tools 측 구현 (완료)
 
 ### 1. 내보내기 준비된 API 목록 조회
 
 ```http
 GET /asset-registry/tools/available-api-exports
 Authorization: Bearer {token}
+```
+
+**응답 예시**:
+```json
+{
+  "time": "2026-02-10T15:30:00Z",
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "exports": [
+      {
+        "api_id": "123e4567-e89b-12d3-a456-426614174000",
+        "api_name": "Get Equipment Status",
+        "api_description": "Fetch equipment status from database",
+        "api_mode": "sql",
+        "api_method": "POST",
+        "api_path": "/equipment/status",
+        "linked_at": "2026-02-10T15:00:00Z",
+        "is_imported": false
+      }
+    ],
+    "total": 1
+  }
+}
 ```
 
 ### 2. API에서 Tool로 가져오기
@@ -269,11 +293,108 @@ Content-Type: application/json
 }
 ```
 
+**요청 파라미터**:
+- `name` (string, 선택): Tool 이름 (기본값: "Tool from API: {api_name}")
+- `description` (string, 선택): Tool 설명
+- `infer_output_schema` (boolean, 선택): output_schema 자동 추론 여부 (기본값: false)
+
+**응답 예시**:
+```json
+{
+  "time": "2026-02-10T15:30:00Z",
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "tool_id": "987e6543-e89b-12d3-a456-426614174999",
+    "tool_name": "Tool: Get Equipment Status",
+    "api_id": "123e4567-e89b-12d3-a456-426614174000",
+    "api_name": "Get Equipment Status",
+    "status": "imported",
+    "message": "Tool created successfully from API Manager",
+    "asset": {
+      "asset_id": "987e6543-e89b-12d3-a456-426614174999",
+      "asset_type": "tool",
+      "name": "Tool: Get Equipment Status",
+      "description": "Tool imported from API Manager API 'Get Equipment Status'. Mode: sql. Use when: Fetch equipment status from database",
+      "version": 1,
+      "status": "draft",
+      "tool_type": "http_api",
+      "tool_config": {
+        "url": "/api-manager/apis/123e4567-e89b-12d3-a456-426614174000/execute",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer {token}",
+          "X-Tenant-Id": "{tenant_id}"
+        }
+      },
+      "tool_input_schema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "linked_from_api": {
+        "api_id": "123e4567-e89b-12d3-a456-426614174000",
+        "api_name": "Get Equipment Status",
+        "linked_at": "2026-02-10T15:30:00Z",
+        "import_mode": "api_to_tool",
+        "last_synced_at": "2026-02-10T15:30:00Z",
+        "is_internal_api": true
+      },
+      "created_at": "2026-02-10T15:30:00Z",
+      "updated_at": "2026-02-10T15:30:00Z"
+    }
+  }
+}
+```
+
 ### 3. Tool과 API 동기화
 
 ```http
 POST /asset-registry/tools/{tool_id}/sync-from-api
 Authorization: Bearer {token}
+```
+
+**응답 예시**:
+```json
+{
+  "time": "2026-02-10T15:30:00Z",
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "tool_id": "987e6543-e89b-12d3-a456-426614174999",
+    "tool_name": "Tool: Get Equipment Status",
+    "synced_at": "2026-02-10T16:00:00Z",
+    "api_version": "2026-02-10T15:45:00Z",
+    "message": "Tool synced successfully from API Manager",
+    "asset": {
+      "asset_id": "987e6543-e89b-12d3-a456-426614174999",
+      "asset_type": "tool",
+      "name": "Tool: Get Equipment Status",
+      "description": "Tool imported from API Manager API 'Get Equipment Status'. Mode: sql. Use when: Fetch equipment status from database",
+      "version": 1,
+      "status": "draft",
+      "tool_type": "http_api",
+      "tool_input_schema": {
+        "type": "object",
+        "properties": {
+          "equipment_id": {"type": "string", "description": "Equipment ID"}
+        },
+        "required": ["equipment_id"]
+      },
+      "linked_from_api": {
+        "api_id": "123e4567-e89b-12d3-a456-426614174000",
+        "api_name": "Get Equipment Status",
+        "linked_at": "2026-02-10T15:30:00Z",
+        "import_mode": "api_to_tool",
+        "last_synced_at": "2026-02-10T16:00:00Z",
+        "is_internal_api": true
+      },
+      "created_at": "2026-02-10T15:30:00Z",
+      "updated_at": "2026-02-10T16:00:00Z"
+    }
+  }
+}
 ```
 
 ## 마이그레이션
