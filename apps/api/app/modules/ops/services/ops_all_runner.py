@@ -7,7 +7,7 @@ from core.config import AppSettings
 from pydantic import BaseModel, ValidationError
 from schemas import AnswerBlock, MarkdownBlock
 
-from app.llm.client import get_llm_client
+from app.llm.client import get_llm_client, is_llm_available
 from app.shared import config_loader
 
 
@@ -48,8 +48,8 @@ class OpsAllRunner:
     }
 
     def __init__(self, settings: AppSettings):
-        if not settings.openai_api_key:
-            raise ValueError("OpenAI API key is required for OPS ALL mode")
+        if not is_llm_available(settings):
+            raise ValueError("LLM provider is not configured for OPS ALL mode")
         self.settings = settings
         self._llm = get_llm_client()
 

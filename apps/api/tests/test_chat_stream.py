@@ -33,21 +33,32 @@ class _ContractGoodOrchestrator:
 
 
 async def test_chat_stream_returns_answer_chunk():
-    async with AsyncClient(app=app, base_url="http://testserver", timeout=10) as client:
-        async with client.stream(
-            "GET", "/chat/stream", params={"message": "test"}
-        ) as response:
-            assert response.status_code == 200
-            found_answer = False
-            async for line in response.aiter_lines():
-                if not line.strip().startswith("data:"):
-                    continue
-                payload = json.loads(line.strip()[len("data:") :].strip())
-                if payload.get("type") == "answer":
-                    found_answer = True
-                    break
-
-    assert found_answer
+    app.dependency_overrides[chat_router.get_orchestrator] = (
+        lambda: _ContractGoodOrchestrator()
+    )
+    app.dependency_overrides[chat_router.get_summary_service] = (
+        lambda: _StubSummaryService()
+    )
+    try:
+        async with AsyncClient(
+            app=app, base_url="http://testserver", timeout=10
+        ) as client:
+            async with client.stream(
+                "GET", "/chat/stream", params={"message": "test"}
+            ) as response:
+                assert response.status_code == 200
+                found_answer = False
+                async for line in response.aiter_lines():
+                    if not line.strip().startswith("data:"):
+                        continue
+                    payload = json.loads(line.strip()[len("data:") :].strip())
+                    if payload.get("type") == "answer":
+                        found_answer = True
+                        break
+        assert found_answer
+    finally:
+        app.dependency_overrides.pop(chat_router.get_orchestrator, None)
+        app.dependency_overrides.pop(chat_router.get_summary_service, None)
 
 
 async def test_chat_stream_emits_contract_error_when_invalid_output():

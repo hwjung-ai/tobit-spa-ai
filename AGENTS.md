@@ -328,6 +328,13 @@ AI 에이전트는 이 문서(`AGENTS.md`)만 참조하더라도 아래의 모�
 
 모든 API 엔드포인트에서 **반드시** 다음 규칙을 준수하세요. 이를 어기면 조회 오류, 권한 오류, 테넌트 데이터 누락 등이 발생합니다.
 
+### 0. 전역 인증 정책 (필수)
+
+- 기본 정책: 모든 API는 JWT 인증(`get_current_user`)을 적용합니다.
+- 공개 엔드포인트 예외: `POST /auth/login`, `POST /auth/refresh`만 인증 없이 허용합니다.
+- FastAPI 라우터를 추가할 때는 `apps/api/main.py`의 전역 인증 의존성 정책을 따라야 하며, 예외 엔드포인트를 임의로 늘리지 않습니다.
+- 개발 모드 예외: `ENABLE_AUTH=false`이면 JWT 검증을 우회하고 디버그 사용자 컨텍스트로 동작할 수 있습니다.
+
 ### 1. 로그인 세션 처리
 
 #### 1-1. 현재 사용자 정보 조회
@@ -513,6 +520,9 @@ ENABLE_AUTH=true
 # 인증 비활성화 (개발 모드 - 주의!)
 ENABLE_AUTH=false  # ← 개발 중에만 사용
 
+# 권한(RBAC) 검사 비활성화 (개발 모드 - 주의!)
+ENABLE_PERMISSION_CHECK=false  # ← 개발 중에만 사용
+
 # JWT 설정
 JWT_SECRET_KEY=your-secret-key-here
 JWT_ALGORITHM=HS256
@@ -592,7 +602,7 @@ def test_tenant_isolation():
 - [ ] DB 접근 시 `session: Session = Depends(get_session)` 추가?
 - [ ] Type hint 정확함? (`dict` 아닌 `TbUser`)
 - [ ] 테스트에서 `x-tenant-id` 헤더 추가?
-- [ ] `.env`에 `ENABLE_AUTH`, `JWT_SECRET_KEY` 설정?
+- [ ] `.env`에 `ENABLE_AUTH`, `ENABLE_PERMISSION_CHECK`, `JWT_SECRET_KEY` 설정?
 
 ---
 

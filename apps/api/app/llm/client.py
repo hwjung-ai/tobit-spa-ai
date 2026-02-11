@@ -6,23 +6,164 @@ from datetime import datetime
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 from uuid import UUID
 
-from core.config import get_settings
+from app.modules.operation_settings.crud import get_setting_effective_value
+from core.config import AppSettings, get_settings
+from core.db import get_session_context
 from openai import AsyncOpenAI, OpenAI
 from sqlmodel import Session
 
 
+def _as_bool(value: Any, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "on"}:
+            return True
+        if lowered in {"false", "0", "no", "off", ""}:
+            return False
+    return default
+
+
+def _get_runtime_llm_settings() -> dict[str, Any]:
+    settings = get_settings()
+    defaults = {
+        "provider": settings.llm_provider or "openai",
+        "base_url": settings.llm_base_url,
+        "default_model": settings.llm_default_model or settings.chat_model,
+        "fallback_model": settings.llm_fallback_model,
+        "timeout_seconds": settings.llm_timeout_seconds or 120,
+        "max_retries": settings.llm_max_retries or 2,
+        "enable_fallback": settings.llm_enable_fallback,
+        "routing_policy": settings.llm_routing_policy or "default",
+        "openai_api_key": settings.openai_api_key,
+        "internal_api_key": settings.llm_internal_api_key,
+    }
+    try:
+        with get_session_context() as session:
+            published_provider = get_setting_effective_value(
+                session,
+                "llm_provider",
+                default_value=defaults["provider"],
+                env_value=defaults["provider"],
+            )["value"]
+            published_base_url = get_setting_effective_value(
+                session,
+                "llm_base_url",
+                default_value=defaults["base_url"] or "",
+                env_value=defaults["base_url"] or "",
+            )["value"]
+            published_default_model = get_setting_effective_value(
+                session,
+                "llm_default_model",
+                default_value=defaults["default_model"],
+                env_value=defaults["default_model"],
+            )["value"]
+            published_fallback_model = get_setting_effective_value(
+                session,
+                "llm_fallback_model",
+                default_value=defaults["fallback_model"] or "",
+                env_value=defaults["fallback_model"] or "",
+            )["value"]
+            published_timeout = get_setting_effective_value(
+                session,
+                "llm_timeout_seconds",
+                default_value=defaults["timeout_seconds"],
+                env_value=defaults["timeout_seconds"],
+            )["value"]
+            published_retries = get_setting_effective_value(
+                session,
+                "llm_max_retries",
+                default_value=defaults["max_retries"],
+                env_value=defaults["max_retries"],
+            )["value"]
+            published_enable_fallback = get_setting_effective_value(
+                session,
+                "llm_enable_fallback",
+                default_value=defaults["enable_fallback"],
+                env_value=defaults["enable_fallback"],
+            )["value"]
+            published_routing_policy = get_setting_effective_value(
+                session,
+                "llm_routing_policy",
+                default_value=defaults["routing_policy"],
+                env_value=defaults["routing_policy"],
+            )["value"]
+    except Exception as exc:
+        logging.warning("Failed to load operation settings for LLM runtime: %s", exc)
+        return defaults
+
+    return {
+        "provider": str(published_provider or defaults["provider"]).strip().lower(),
+        "base_url": str(published_base_url).strip() or None,
+        "default_model": str(published_default_model or defaults["default_model"]).strip(),
+        "fallback_model": str(published_fallback_model).strip() or None,
+        "timeout_seconds": int(published_timeout or defaults["timeout_seconds"]),
+        "max_retries": int(published_retries or defaults["max_retries"]),
+        "enable_fallback": _as_bool(
+            published_enable_fallback, defaults["enable_fallback"]
+        ),
+        "routing_policy": str(published_routing_policy or defaults["routing_policy"]).strip(),
+        "openai_api_key": defaults["openai_api_key"],
+        "internal_api_key": defaults["internal_api_key"],
+    }
+
+
+def _settings_to_runtime(settings: AppSettings) -> dict[str, Any]:
+    return {
+        "provider": (settings.llm_provider or "openai").strip().lower(),
+        "base_url": settings.llm_base_url,
+        "default_model": settings.llm_default_model or settings.chat_model,
+        "fallback_model": settings.llm_fallback_model,
+        "timeout_seconds": settings.llm_timeout_seconds or 120,
+        "max_retries": settings.llm_max_retries or 2,
+        "enable_fallback": settings.llm_enable_fallback,
+        "routing_policy": settings.llm_routing_policy or "default",
+        "openai_api_key": settings.openai_api_key,
+        "internal_api_key": settings.llm_internal_api_key,
+    }
+
+
+def is_llm_available(settings: AppSettings | None = None) -> bool:
+    runtime = _settings_to_runtime(settings) if settings else _get_runtime_llm_settings()
+    provider = runtime["provider"]
+    if provider == "openai":
+        return bool(runtime["openai_api_key"])
+    if provider == "internal":
+        return True
+    return False
+
+
 class LlmClient:
     def __init__(self):
-        settings = get_settings()
-        self.api_key = settings.openai_api_key
-        self.default_model = settings.chat_model
-        if not self.api_key:
-            logging.warning("OpenAI API key is missing. LLM calls will fail.")
+        runtime = _get_runtime_llm_settings()
+        self.provider = runtime["provider"]
+        self.default_model = runtime["default_model"]
+        self.fallback_model = runtime["fallback_model"]
+        self.enable_fallback = runtime["enable_fallback"]
+        self.routing_policy = runtime["routing_policy"]
+        timeout_seconds = float(runtime["timeout_seconds"])
 
-        # Set reasonable timeout to prevent hanging indefinitely
-        # timeout: 60 seconds for connection, 120 seconds for read
-        self.client = OpenAI(api_key=self.api_key, timeout=120.0)
-        self.async_client = AsyncOpenAI(api_key=self.api_key, timeout=120.0)
+        api_key: str | None
+        if self.provider == "openai":
+            api_key = runtime["openai_api_key"]
+            if not api_key:
+                logging.warning("OpenAI API key is missing. LLM calls will fail.")
+        else:
+            # Many internal OpenAI-compatible gateways accept dummy keys.
+            api_key = runtime["internal_api_key"] or "internal-llm"
+
+        kwargs: dict[str, Any] = {"api_key": api_key, "timeout": timeout_seconds}
+        if runtime["base_url"]:
+            kwargs["base_url"] = runtime["base_url"]
+        kwargs["max_retries"] = int(runtime["max_retries"])
+
+        self.client = OpenAI(**kwargs)
+        self.async_client = AsyncOpenAI(**kwargs)
 
     def create_response(
         self,
@@ -38,13 +179,28 @@ class LlmClient:
         logging.debug(
             "LLM create_response: model=%s, input=%s", model, str(input)[:100]
         )
-        return self.client.responses.create(
-            model=model,
-            input=input,
-            tools=tools,
-            stream=False,
-            **kwargs,
-        )
+        try:
+            return self.client.responses.create(
+                model=model,
+                input=input,
+                tools=tools,
+                stream=False,
+                **kwargs,
+            )
+        except Exception:
+            if self.enable_fallback and self.fallback_model and model != self.fallback_model:
+                logging.warning(
+                    "LLM primary model failed, retrying with fallback model=%s",
+                    self.fallback_model,
+                )
+                return self.client.responses.create(
+                    model=self.fallback_model,
+                    input=input,
+                    tools=tools,
+                    stream=False,
+                    **kwargs,
+                )
+            raise
 
     async def acreate_response(
         self,
@@ -60,13 +216,28 @@ class LlmClient:
         logging.debug(
             "LLM acreate_response: model=%s, input=%s", model, str(input)[:100]
         )
-        return await self.async_client.responses.create(
-            model=model,
-            input=input,
-            tools=tools,
-            stream=False,
-            **kwargs,
-        )
+        try:
+            return await self.async_client.responses.create(
+                model=model,
+                input=input,
+                tools=tools,
+                stream=False,
+                **kwargs,
+            )
+        except Exception:
+            if self.enable_fallback and self.fallback_model and model != self.fallback_model:
+                logging.warning(
+                    "LLM async primary model failed, retrying with fallback model=%s",
+                    self.fallback_model,
+                )
+                return await self.async_client.responses.create(
+                    model=self.fallback_model,
+                    input=input,
+                    tools=tools,
+                    stream=False,
+                    **kwargs,
+                )
+            raise
 
     async def stream_response(
         self,
@@ -162,6 +333,11 @@ def get_llm_client() -> LlmClient:
     if _instance is None:
         _instance = LlmClient()
     return _instance
+
+
+def reset_llm_client() -> None:
+    global _instance
+    _instance = None
 
 
 # =============================================

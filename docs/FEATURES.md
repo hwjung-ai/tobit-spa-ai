@@ -21,6 +21,13 @@
 | **CEP Events** | 92% | ✅ 상용 가능 |
 | **Chat** | 85% | ✅ 상용 가능 |
 
+### 공통 인증 정책 (2026-02-11)
+- 기본 정책: 모든 API는 JWT 인증을 거친다.
+- 공개 엔드포인트: `POST /auth/login`, `POST /auth/refresh`만 허용한다.
+- 개발 예외: `ENABLE_AUTH=false`일 때는 `get_current_user`가 JWT를 우회하고 디버그 사용자로 동작한다.
+- 권한 개발 예외: `ENABLE_PERMISSION_CHECK=false`일 때는 RBAC 권한 검사(`check_permission`, `require_role`)를 우회한다.
+- 회귀 테스트: `apps/api/tests/test_api_auth_unification.py`에서 공개 엔드포인트 외 인증 누락을 차단한다.
+
 
 ### 문서 읽는 법
 - 각 기능 섹션 상단의 `소스 맵`은 프로젝트 루트 기준 경로를 제공합니다.
@@ -69,6 +76,8 @@
 - Admin UI (`/admin/assets`, `/settings/operations`, `/admin/inspector`)
   - Assets: Prompt/Mapping/Policy/Query 자산 관리 (draft, publish, rollback, SQL read-only 보기, thread-safe delete)
   - Settings: 운영 설정 편집 (restart_required 표시)
+  - LLM Settings 탭: provider(`openai|internal`), base URL, default/fallback model, timeout/retry, routing policy를 런타임 운영값으로 관리
+  - LLM Runtime: `app/llm/client.py`가 operation settings의 published value를 우선 사용하고, 미설정 시 `.env` 값을 fallback으로 사용
   - Inspector: Trace ID 검색/필터, parent_trace 연결, Applied Assets · Plan · Execution · References · Answer Blocks · UI Render 섹션으로 전체 흐름 확인, UI Render telemetry/동작 상태 보기, Audit Log 추적
   - 상세 명세: `docs/ADMIN_UI_SPEC.md`, `docs/QUERY_ASSET_OPERATION_GUIDE.md`
 

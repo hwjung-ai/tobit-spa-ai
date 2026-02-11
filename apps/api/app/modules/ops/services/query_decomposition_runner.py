@@ -15,7 +15,7 @@ from core.config import AppSettings
 from schemas import AnswerBlock, MarkdownBlock
 from typing_extensions import TypedDict
 
-from app.llm.client import get_llm_client
+from app.llm.client import get_llm_client, is_llm_available
 
 # ============================================================================
 # State Management
@@ -415,8 +415,8 @@ class QueryDecompositionRunner:
     """Advanced query decomposition runner with state management, recursion, and conditional branching."""
 
     def __init__(self, settings: AppSettings):
-        if not settings.openai_api_key:
-            raise ValueError("OpenAI API key is required")
+        if not is_llm_available(settings):
+            raise ValueError("LLM provider is not configured")
 
         self.settings = settings
         self.llm_client = get_llm_client()

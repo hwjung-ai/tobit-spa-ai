@@ -12,12 +12,15 @@ from __future__ import annotations
 import time
 import uuid
 
+from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_session_context
 from core.logging import get_logger
-from fastapi import APIRouter, Header
+from core.tenant import get_current_tenant
+from fastapi import APIRouter, Depends, HTTPException
 from schemas import ResponseEnvelope
 
+from app.modules.auth.models import TbUser
 from app.modules.inspector.service import persist_execution_trace
 from app.modules.inspector.span_tracker import (
     clear_spans,
@@ -34,7 +37,8 @@ logger = get_logger(__name__)
 @router.post("/ui-actions", response_model=ResponseEnvelope)
 async def execute_ui_action(
     payload: UIActionRequest,
-    x_tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Execute a deterministic UI action based on action_id.
 
@@ -73,6 +77,9 @@ async def execute_ui_action(
     action_span = start_span(f"ui_action:{payload.action_id}", "ui_action")
 
     try:
+        if get_settings().enable_auth and current_user.tenant_id != tenant_id:
+            raise HTTPException(status_code=403, detail="Tenant mismatch")
+
         # Validate OPS_MODE (no mock in real mode)
         mode = payload.context.get("mode", "real")
         if mode == "mock" and settings.OPS_MODE == "real":

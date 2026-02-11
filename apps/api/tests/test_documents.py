@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import tempfile
@@ -6,6 +7,9 @@ from pathlib import Path
 import core.db as core_db
 import pytest
 import workers.queue
+from app.modules.auth.models import TbUser, UserRole
+from core.auth import get_current_user
+from core.tenant import get_current_tenant
 from httpx import ASGITransport, AsyncClient
 
 # Storage root will be set per test
@@ -14,6 +18,7 @@ from models.document import Document, DocumentChunk, DocumentStatus
 from sqlalchemy import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Session, SQLModel, select
+from sse_starlette.sse import AppStatus
 
 
 def _patch_jsonb_for_sqlite():
@@ -40,8 +45,22 @@ def setup_test_environment(session, monkeypatch):
     def get_session_override():
         yield session
 
+    app.dependency_overrides[get_current_user] = lambda: TbUser(
+        id="default",
+        username="default@test.local",
+        password_hash="",
+        role=UserRole.ADMIN,
+        tenant_id="default",
+        is_active=True,
+        email_encrypted="",
+    )
+    app.dependency_overrides[get_current_tenant] = lambda: "default"
+
     with patch.object(core_db, "get_session", get_session_override):
         yield session
+
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(get_current_tenant, None)
 
 
 @pytest.mark.asyncio
@@ -62,7 +81,7 @@ async def test_upload_creates_metadata_and_list(
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         response = await client.post(
-            "/documents/upload",
+            "/api/documents/upload",
             files={"file": ("notes.txt", b"Hello world", "text/plain")},
             headers={"X-Tenant-Id": "default", "X-User-Id": "default"},
         )
@@ -150,12 +169,14 @@ async def test_document_stream_done_contains_references(
     session.close()
 
     stream_transport = ASGITransport(app=app)
+    # Reset global SSE app status event to the current test loop.
+    AppStatus.should_exit_event = asyncio.Event()
     async with AsyncClient(
         transport=stream_transport, base_url="http://testserver"
     ) as client:
         async with client.stream(
             "POST",
-            f"/documents/{document_id}/query/stream",
+            f"/api/documents/{document_id}/query/stream",
             json={"query": "test", "top_k": 1},
             headers={"X-Tenant-Id": "default", "X-User-Id": "default"},
             timeout=10,

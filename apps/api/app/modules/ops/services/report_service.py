@@ -1,11 +1,14 @@
 """PDF report generation service for OPS conversations.
 
 Generates professional PDF reports from OPS query results and conversations.
+Supports Korean text via WenQuanYi Zen Hei font.
 """
 
 import io
 import logging
+import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from reportlab.lib import colors
@@ -13,6 +16,8 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm, mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
     PageBreak,
     Paragraph,
@@ -23,6 +28,41 @@ from reportlab.platypus import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Try to register Korean font
+_KOREAN_FONT_REGISTERED = False
+_KOREAN_FONT_NAME = "WenQuanYiZenHei"
+
+try:
+    # Common font paths for WenQuanYi Zen Hei (supports Korean, Japanese, Chinese)
+    font_paths = [
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",  # Linux/Ubuntu
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttf",  # Alternative
+        "/System/Library/Fonts/WenQuanYi Zen Hei.ttc",  # macOS
+        "C:/Windows/Fonts/wqy-zenhei.ttc",  # Windows
+    ]
+
+    font_file = None
+    for path in font_paths:
+        if os.path.exists(path):
+            font_file = path
+            break
+
+    if font_file:
+        # Register the TTC font (TrueType Collection)
+        # For TTC files, we need to specify subfontIndex
+        pdfmetrics.registerFont(TTFont(_KOREAN_FONT_NAME, font_file, subfontIndex=0))
+
+        # Also register bold variant if available
+        pdfmetrics.registerFontFamily(_KOREAN_FONT_NAME, normal=_KOREAN_FONT_NAME, bold=_KOREAN_FONT_NAME)
+
+        _KOREAN_FONT_REGISTERED = True
+        logger.info(f"Registered Korean font: {font_file}")
+    else:
+        logger.warning("Korean font not found, will use default Helvetica (may not display Korean text properly)")
+
+except Exception as e:
+    logger.warning(f"Failed to register Korean font: {e}")
 
 
 class PDFReportService:
@@ -38,10 +78,19 @@ class PDFReportService:
     TEXT_COLOR = colors.HexColor("#1F2937")  # Dark gray
     BORDER_COLOR = colors.HexColor("#E5E7EB")  # Light gray
 
+    # Font names
+    FONT_FAMILY = _KOREAN_FONT_NAME if _KOREAN_FONT_REGISTERED else "Helvetica"
+    FONT_BOLD = _KOREAN_FONT_NAME if _KOREAN_FONT_REGISTERED else "Helvetica-Bold"
+
     @staticmethod
     def _create_styles() -> Dict[str, ParagraphStyle]:
         """Create custom paragraph styles for the report."""
         styles = getSampleStyleSheet()
+
+        # Use Korean font if registered, otherwise fallback to Helvetica
+        title_font = PDFReportService.FONT_BOLD
+        heading_font = PDFReportService.FONT_BOLD
+        body_font = PDFReportService.FONT_FAMILY
 
         return {
             "title": ParagraphStyle(
@@ -51,7 +100,7 @@ class PDFReportService:
                 textColor=colors.white,
                 spaceAfter=0.5 * cm,
                 alignment=TA_CENTER,
-                fontName="Helvetica-Bold",
+                fontName=title_font,
             ),
             "subtitle": ParagraphStyle(
                 "CustomSubtitle",
@@ -60,6 +109,7 @@ class PDFReportService:
                 textColor=colors.HexColor("#6B7280"),
                 spaceAfter=1 * cm,
                 alignment=TA_CENTER,
+                fontName=body_font,
             ),
             "heading2": ParagraphStyle(
                 "CustomHeading2",
@@ -68,7 +118,7 @@ class PDFReportService:
                 textColor=PDFReportService.PRIMARY_COLOR,
                 spaceBefore=0.8 * cm,
                 spaceAfter=0.3 * cm,
-                fontName="Helvetica-Bold",
+                fontName=heading_font,
             ),
             "heading3": ParagraphStyle(
                 "CustomHeading3",
@@ -77,7 +127,7 @@ class PDFReportService:
                 textColor=PDFReportService.TEXT_COLOR,
                 spaceBefore=0.5 * cm,
                 spaceAfter=0.2 * cm,
-                fontName="Helvetica-Bold",
+                fontName=heading_font,
             ),
             "normal": ParagraphStyle(
                 "CustomNormal",
@@ -86,6 +136,7 @@ class PDFReportService:
                 textColor=PDFReportService.TEXT_COLOR,
                 spaceAfter=0.3 * cm,
                 leading=14,
+                fontName=body_font,
             ),
             "small": ParagraphStyle(
                 "CustomSmall",
@@ -94,6 +145,7 @@ class PDFReportService:
                 textColor=colors.HexColor("#6B7280"),
                 spaceAfter=0.2 * cm,
                 leading=12,
+                fontName=body_font,
             ),
             "metadata": ParagraphStyle(
                 "Metadata",
@@ -101,6 +153,7 @@ class PDFReportService:
                 fontSize=10,
                 textColor=colors.HexColor("#374151"),
                 leftIndent=0.5 * cm,
+                fontName=body_font,
             ),
         }
 
@@ -109,6 +162,10 @@ class PDFReportService:
         """Create header and footer for each page."""
         # Save state
         canvas.saveState()
+
+        # Use Korean font if available
+        header_font = PDFReportService.FONT_BOLD if _KOREAN_FONT_REGISTERED else "Helvetica-Bold"
+        body_font = PDFReportService.FONT_FAMILY if _KOREAN_FONT_REGISTERED else "Helvetica"
 
         # Header - colored background bar
         canvas.setFillColor(PDFReportService.HEADER_BG)
@@ -123,14 +180,14 @@ class PDFReportService:
 
         # Header text
         canvas.setFillColor(colors.white)
-        canvas.setFont("Helvetica-Bold", 14)
+        canvas.setFont(header_font, 14)
         canvas.drawString(
             2 * cm,
             PDFReportService.PAGE_HEIGHT - 0.8 * cm,
             "TOBIT OPS Report",
         )
 
-        canvas.setFont("Helvetica", 9)
+        canvas.setFont(body_font, 9)
         canvas.drawString(
             PDFReportService.PAGE_WIDTH - 3 * cm,
             PDFReportService.PAGE_HEIGHT - 0.8 * cm,
@@ -149,7 +206,7 @@ class PDFReportService:
         )
 
         canvas.setFillColor(colors.HexColor("#6B7280"))
-        canvas.setFont("Helvetica", 8)
+        canvas.setFont(body_font, 8)
         page_num = canvas.getPageNumber()
         canvas.drawCentredString(
             PDFReportService.PAGE_WIDTH / 2,
@@ -175,7 +232,7 @@ class PDFReportService:
             TableStyle([
                 ("BACKGROUND", (0, 0), (0, -1), PDFReportService.BORDER_COLOR),
                 ("TEXTCOLOR", (0, 0), (0, -1), PDFReportService.TEXT_COLOR),
-                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                ("FONTNAME", (0, 0), (-1, -1), PDFReportService.FONT_FAMILY if _KOREAN_FONT_REGISTERED else "Helvetica"),
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("GRID", (0, 0), (-1, -1), 0.5, PDFReportService.BORDER_COLOR),
@@ -268,7 +325,7 @@ class PDFReportService:
                     TableStyle([
                         ("BACKGROUND", (0, 0), (-1, 0), PDFReportService.PRIMARY_COLOR),
                         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                        ("FONTNAME", (0, 0), (-1, -1), PDFReportService.FONT_FAMILY if _KOREAN_FONT_REGISTERED else "Helvetica"),
                         ("FONTSIZE", (0, 0), (-1, -1), 8),
                         ("GRID", (0, 0), (-1, -1), 0.5, PDFReportService.BORDER_COLOR),
                         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F9FAFB")]),

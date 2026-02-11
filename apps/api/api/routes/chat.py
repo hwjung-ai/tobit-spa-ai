@@ -3,10 +3,14 @@ from __future__ import annotations
 import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Optional, Tuple
+from typing import Any, AsyncGenerator
 
+from app.modules.auth.models import TbUser
+from core.auth import get_current_user
+from core.config import get_settings
 from core.db import Session, get_session
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from core.tenant import get_current_tenant
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models import ChatMessage, ChatThread
 from services import (
     BaseOrchestrator,
@@ -122,10 +126,13 @@ def _validate_contract(expected_contract: str | None, text: str) -> tuple[bool, 
 
 
 def _resolve_identity(
-    tenant_id: Optional[str] = Header(None, alias="X-Tenant-Id"),
-    user_id: Optional[str] = Header(None, alias="X-User-Id"),
-) -> Tuple[str, str]:
-    return tenant_id or "default", user_id or "default"
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> tuple[str, str]:
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    return tenant_id, str(current_user.id)
 
 
 def _derive_title(message: str) -> str:
@@ -137,12 +144,16 @@ def _get_or_create_thread(
     session: Session,
     tenant_id: str,
     user_id: str,
-    thread_id: Optional[str],
+    thread_id: str | None,
     message: str,
     builder: str | None = None,
 ) -> ChatThread:
     if thread_id:
-        statement = select(ChatThread).where(ChatThread.id == thread_id)
+        statement = select(ChatThread).where(
+            ChatThread.id == thread_id,
+            ChatThread.tenant_id == tenant_id,
+            ChatThread.user_id == user_id,
+        )
         thread = session.exec(statement).one_or_none()
         if not thread or thread.deleted_at:
             raise HTTPException(status_code=404, detail="Thread not found")
@@ -216,7 +227,7 @@ async def stream_chat(
         description="Optional JSON string context for builder-aware prompt",
     ),
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
     orchestrator: BaseOrchestrator = Depends(get_orchestrator),
     summary_service: ConversationSummaryService = Depends(get_summary_service),
 ) -> EventSourceResponse:

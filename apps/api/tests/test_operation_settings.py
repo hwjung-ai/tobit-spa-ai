@@ -38,6 +38,11 @@ def test_get_all_operation_settings(client):
         "ops_enable_langgraph",
         "enable_system_apis",
         "enable_data_explorer",
+        "llm_provider",
+        "llm_default_model",
+        "llm_timeout_seconds",
+        "api_auth_default_mode",
+        "api_auth_enforce_scopes",
     }
     for key in expected_keys:
         assert key in settings, f"Setting {key} should be present"
@@ -177,3 +182,42 @@ def test_setting_missing_value_field(client):
     )
     assert response.status_code == 400
     assert "must include 'value'" in response.json()["detail"]
+
+
+def test_update_llm_provider_setting(client):
+    """Test PUT /settings/operations/llm_provider updates enum-like string setting."""
+    response = client.put(
+        "/settings/operations/llm_provider",
+        json={"value": "internal"},
+        params={"updated_by": "test_user"},
+    )
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["key"] == "llm_provider"
+    assert payload["value"] == "internal"
+
+
+def test_update_llm_timeout_setting(client):
+    """Test PUT /settings/operations/llm_timeout_seconds updates int setting."""
+    response = client.put(
+        "/settings/operations/llm_timeout_seconds",
+        json={"value": 90},
+        params={"updated_by": "test_user"},
+    )
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["key"] == "llm_timeout_seconds"
+    assert payload["value"] == 90
+
+
+def test_update_api_auth_default_mode_setting(client):
+    """Test PUT /settings/operations/api_auth_default_mode updates mode setting."""
+    response = client.put(
+        "/settings/operations/api_auth_default_mode",
+        json={"value": "jwt_or_api_key"},
+        params={"updated_by": "test_user"},
+    )
+    assert response.status_code == 200
+    payload = response.json()["data"]
+    assert payload["key"] == "api_auth_default_mode"
+    assert payload["value"] == "jwt_or_api_key"

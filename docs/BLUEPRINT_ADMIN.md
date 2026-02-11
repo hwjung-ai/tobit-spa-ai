@@ -389,7 +389,7 @@ class RegressionResult(SQLModel, table=True):
 | 카테고리 | 설정 예시 | restart_required |
 |---------|----------|-----------------|
 | **Database** | connection_string, pool_size | Yes |
-| **LLM** | api_key, model, temperature | No |
+| **LLM** | provider, base_url, default/fallback_model, timeout/retry, routing_policy | Mixed |
 | **Cache** | redis_url, ttl | Yes |
 | **Security** | jwt_secret, encryption_key | Yes |
 | **Observability** | log_level, metrics_enabled | No |
@@ -406,6 +406,23 @@ interface Setting {
   restart_required: boolean;  // ⚠️ 표시
 }
 ```
+
+### 10.4 LLM Runtime 적용 우선순위
+
+LLM 관련 설정은 아래 우선순위로 해석됩니다.
+
+1. `tb_operation_settings`의 published 값
+2. `apps/api/.env` 또는 `.env.example` 기본값
+
+핵심 키:
+- `llm_provider` (`openai` | `internal`)
+- `llm_base_url` (internal/OpenAI-compatible endpoint)
+- `llm_default_model`, `llm_fallback_model`
+- `llm_timeout_seconds`, `llm_max_retries`, `llm_enable_fallback`, `llm_routing_policy`
+
+적용 지점:
+- `app/llm/client.py`에서 런타임 로드 및 provider별 클라이언트 초기화
+- OPS ALL / Query Decomposition 러너는 provider 가용성 검사 시 `is_llm_available(settings)`를 사용
 
 ---
 

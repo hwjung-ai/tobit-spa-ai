@@ -22,6 +22,12 @@ class ApiMode(str, enum.Enum):
     script = "script"
 
 
+class ApiAuthMode(str, enum.Enum):
+    jwt_only = "jwt_only"
+    jwt_or_api_key = "jwt_or_api_key"
+    api_key_only = "api_key_only"
+
+
 class ApiDefinition(SQLModel, table=True):
     __tablename__ = "api_definitions"
     __table_args__ = (UniqueConstraint("method", "path", name="uq_api_method_path"),)
@@ -36,6 +42,11 @@ class ApiDefinition(SQLModel, table=True):
     mode: ApiMode | None = Field(default=ApiMode.sql)
     logic: str | None = Field(default=None, sa_column=Column(Text))
     runtime_policy: dict | None = Field(default_factory=dict, sa_column=Column(JSON, default=dict))
+    auth_mode: ApiAuthMode = Field(default=ApiAuthMode.jwt_only, nullable=False)
+    required_scopes: list[str] = Field(
+        default_factory=list,
+        sa_column=Column(JSON, default=list, nullable=False),
+    )
     is_enabled: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -44,7 +55,7 @@ class ApiDefinition(SQLModel, table=True):
     # Tools export linkage (to be completed after Tools refactor)
     linked_to_tool_id: uuid.UUID | None = Field(
         default=None,
-        foreign_key="asset_registry.asset_id",
+        foreign_key="tb_asset_registry.asset_id",
         description="Linked Tool Asset ID when exported to Tools"
     )
     linked_to_tool_name: str | None = Field(

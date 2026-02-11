@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { authenticatedFetch } from "@/lib/apiClient/index";
+import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 
 interface AnswerBlock {
   type: string;
@@ -50,6 +51,11 @@ export default function ConversationSummaryModal({
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
+  // PDF viewer modal state
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string>("conversation_report.pdf");
+
   useEffect(() => {
     if (isOpen && (threadId || historyId)) {
       fetchSummary();
@@ -61,20 +67,22 @@ export default function ConversationSummaryModal({
     setError(null);
     try {
       const payload = await authenticatedFetch<{
-        data?: { data?: SummaryData };
+        code?: number;
+        message?: string;
+        data?: SummaryData;
       }>("/ops/conversation/summary", {
         method: "POST",
         body: JSON.stringify({
-          thread_id: threadId,
           history_id: historyId,
+          summary_type: "individual",
         }),
       });
 
-      const data = (payload as { data?: { data?: SummaryData } })?.data?.data;
+      const data = payload?.data;
       if (data) {
         setSummaryData(data);
       } else {
-        setError("요약 데이터를 가져올 수 없습니다.");
+        setError(payload?.message || "요약 데이터를 가져올 수 없습니다.");
       }
     } catch (err) {
       console.error("Failed to fetch conversation summary:", err);
@@ -86,24 +94,25 @@ export default function ConversationSummaryModal({
 
   const exportToPDF = async () => {
     setExporting(true);
+    setError(null);
     try {
       const payload = await authenticatedFetch<{
-        data?: {
-          data?: { filename: string; content: string; content_type: string };
-        };
+        code?: number;
+        message?: string;
+        data?: { filename: string; content: string; content_type: string };
       }>("/ops/conversation/export/pdf", {
         method: "POST",
         body: JSON.stringify({
-          thread_id: threadId,
           history_id: historyId,
           title: summaryData?.title,
           topic: summaryData?.topic,
+          summary_type: "individual",
         }),
       });
 
-      const result = (payload as { data?: { data?: { filename: string; content: string; content_type: string } } })?.data?.data;
+      const result = payload?.data;
       if (result?.content) {
-        // Decode base64 and download
+        // Decode base64 and show in viewer modal
         const binaryString = atob(result.content);
         const bytes = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
@@ -111,21 +120,28 @@ export default function ConversationSummaryModal({
         }
         const blob = new Blob([bytes], { type: result.content_type });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = result.filename || "conversation_report.pdf";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        setPdfBlobUrl(url);
+        setPdfFilename(result.filename || "conversation_report.pdf");
+        setPdfViewerOpen(true);
+      } else {
+        setError(payload?.message || "PDF 생성에 실패했습니다.");
       }
     } catch (err) {
       console.error("Failed to export PDF:", err);
-      setError("PDF 내보내기에 실패했습니다.");
+      setError("PDF 생성에 실패했습니다.");
     } finally {
       setExporting(false);
     }
   };
+
+  // Cleanup PDF blob URL when modal closes
+  const handleClosePdfViewer = useCallback(() => {
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+    }
+    setPdfViewerOpen(false);
+    setPdfBlobUrl(null);
+  }, [pdfBlobUrl]);
 
   if (!isOpen) return null;
 
@@ -282,6 +298,14 @@ export default function ConversationSummaryModal({
           )}
         </div>
       </div>
+
+      {/* PDF Viewer Modal */}
+      <PdfViewerModal
+        isOpen={pdfViewerOpen}
+        onClose={handleClosePdfViewer}
+        pdfBlobUrl={pdfBlobUrl}
+        filename={pdfFilename}
+      />
     </div>
   );
 }

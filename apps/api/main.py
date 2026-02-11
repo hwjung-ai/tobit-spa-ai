@@ -47,7 +47,8 @@ from app.modules.permissions.router import router as permissions_router
 from app.modules.simulation.router import router as simulation_router
 from app.shared import config_loader
 from core.config import get_settings
-from fastapi import FastAPI
+from core.auth import get_current_user
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from apps.api.core.cors_config import CORSConfig
@@ -71,31 +72,37 @@ app.add_middleware(
     CORSMiddleware,
     **cors_config.get_cors_config_dict(),
 )
-app.include_router(health_router)
-app.include_router(hello_router)
-app.include_router(admin_dashboard_router)
-app.include_router(admin_logs_router, prefix="/admin")
+
+# Unified API authentication dependency:
+# all business routes require JWT (or debug user when ENABLE_AUTH=false).
+auth_required = [Depends(get_current_user)]
+
+app.include_router(health_router, dependencies=auth_required)
+app.include_router(hello_router, dependencies=auth_required)
+# Keep public auth entrypoints (/auth/login, /auth/refresh) unauthenticated.
+app.include_router(admin_dashboard_router, dependencies=auth_required)
+app.include_router(admin_logs_router, prefix="/admin", dependencies=auth_required)
 app.include_router(auth_router)
-app.include_router(api_keys_router)
-app.include_router(permissions_router)
-app.include_router(simulation_router)
-app.include_router(chat_router)
-app.include_router(thread_router)
-app.include_router(document_router)
-app.include_router(document_processor_router)
-app.include_router(ops_router)
-app.include_router(asset_registry_router)
-app.include_router(tool_router)
-app.include_router(operation_settings_router)
-app.include_router(cep_builder_router)
-app.include_router(ci_management_router)
-app.include_router(data_explorer_router)
-app.include_router(audit_log_router)
-app.include_router(api_manager_router)
-app.include_router(runtime_router)
-app.include_router(inspector_router)
-app.include_router(llm_logs_router, prefix="/admin")
-app.include_router(history_router)
+app.include_router(api_keys_router, dependencies=auth_required)
+app.include_router(permissions_router, dependencies=auth_required)
+app.include_router(simulation_router, dependencies=auth_required)
+app.include_router(chat_router, dependencies=auth_required)
+app.include_router(thread_router, dependencies=auth_required)
+app.include_router(document_router, dependencies=auth_required)
+app.include_router(document_processor_router, dependencies=auth_required)
+app.include_router(ops_router, dependencies=auth_required)
+app.include_router(asset_registry_router, dependencies=auth_required)
+app.include_router(tool_router, dependencies=auth_required)
+app.include_router(operation_settings_router, dependencies=auth_required)
+app.include_router(cep_builder_router, dependencies=auth_required)
+app.include_router(ci_management_router, dependencies=auth_required)
+app.include_router(data_explorer_router, dependencies=auth_required)
+app.include_router(audit_log_router, dependencies=auth_required)
+app.include_router(api_manager_router, dependencies=auth_required)
+app.include_router(runtime_router, dependencies=auth_required)
+app.include_router(inspector_router, dependencies=auth_required)
+app.include_router(llm_logs_router, prefix="/admin", dependencies=auth_required)
+app.include_router(history_router, dependencies=auth_required)
 
 _startup_task: asyncio.Task | None = None
 _startup_ready = False
@@ -274,7 +281,7 @@ async def on_shutdown() -> None:
 
 
 @app.get("/health")
-def health():
+def health(_current_user=Depends(get_current_user)):
     return {
         "time": datetime.utcnow().isoformat(),
         "code": 0,
@@ -291,7 +298,7 @@ def health():
 
 
 @app.get("/hello")
-def hello():
+def hello(_current_user=Depends(get_current_user)):
     return {
         "time": datetime.utcnow().isoformat(),
         "code": 0,

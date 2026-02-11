@@ -8,10 +8,15 @@ from datetime import datetime, timedelta, timezone
 from time import perf_counter
 from typing import Any
 
+from core.auth import get_current_user
+from core.config import get_settings
 from core.db import get_session
+from core.tenant import get_current_tenant
+
+from app.modules.auth.models import TbUser
 
 logger = logging.getLogger(__name__)
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
 from sqlalchemy import desc, select
 from sqlmodel import Session
@@ -563,10 +568,13 @@ def list_events_endpoint(
 def get_run_endpoint(
     exec_log_id: str | None = Query(None),
     simulation_id: str | None = Query(None),
-    tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
     session: Session = Depends(get_session),
 ) -> ResponseEnvelope:
-    tenant = tenant_id or "default"
+    if get_settings().enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    tenant = tenant_id
     if not exec_log_id and not simulation_id:
         return ResponseEnvelope.success(
             data={

@@ -20,6 +20,85 @@ export interface FetchOptions extends RequestInit {
 }
 
 /**
+ * Get auth headers for API requests
+ * Returns a Headers object with Authorization, X-Tenant-Id, and X-User-Id
+ */
+export function getAuthHeaders(): HeadersInit {
+  const token = localStorage.getItem("access_token");
+  const tenantId = localStorage.getItem("tenant_id") || "default";
+  const userId = localStorage.getItem("user_id") || "default";
+
+  const headers: HeadersInit = {
+    "X-Tenant-Id": tenantId,
+    "X-User-Id": userId,
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+/**
+ * Make an authenticated fetch request (for PDF, images, or other non-JSON responses)
+ * Returns the raw Response object so caller can handle blobs, etc.
+ */
+export async function fetchWithAuth(
+  url: string,
+  options?: Omit<RequestInit, "headers"> & { headers?: HeadersInit }
+): Promise<Response> {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...(options?.headers ?? {}),
+    },
+  });
+
+  // Handle 401 Unauthorized
+  if (response.status === 401) {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (refreshToken) {
+      try {
+        const refreshUrl = buildUrl("/auth/refresh");
+        const refreshResponse = await fetch(refreshUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          localStorage.setItem("access_token", data.data.access_token);
+
+          // Retry with new token
+          return fetchWithAuth(url, options);
+        }
+      } catch (error) {
+        console.error("Token refresh failed:", error);
+      }
+    }
+
+    // Redirect to login
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
+    }
+
+    throw new Error("Authentication failed");
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `HTTP ${response.status}`);
+  }
+
+  return response;
+}
+
+/**
  * Make an authenticated API request with automatic token handling.
  * - Adds Authorization header with access token
  * - Automatically refreshes token on 401 response
@@ -111,7 +190,7 @@ export async function authenticatedFetch<T = any>(
 
     // Handle AbortError (timeout)
     if (error instanceof Error && error.name === "AbortError") {
-      throw new Error(`요청 시간이 초과되었습니다 (${timeout / 1000}초). 서버가 응답하지 않습니다.`);
+      throw new Error(`요청 시간이 초과되었습니다 (${timeout / 1000}초). 서버가 읔답하지 않습니다.`);
     }
 
     throw error;

@@ -20,10 +20,10 @@ def list_available_services(tenant_id: str) -> list[str]:
     try:
         with driver.session() as session:
             query = """
-            MATCH (n)
-            WHERE n.tenant_id = $tenant_id AND exists(n.name)
-              AND (toLower(coalesce(n.type, "")) = "service" OR n.kind = "service")
-            RETURN DISTINCT n.name AS service
+            MATCH (n:CI)
+            WHERE n.tenant_id = $tenant_id
+              AND (n.ci_type = "SERVICE" OR n.ci_subtype IN ["was", "web", "app"])
+            RETURN DISTINCT n.ci_code AS service
             ORDER BY service
             """
             rows = session.run(query, {"tenant_id": tenant_id})
@@ -43,7 +43,7 @@ def get_topology_data(
     if not base_topology["nodes"]:
         raise HTTPException(
             status_code=404,
-            detail=f"No topology data found for service='{service}' tenant='{tenant_id}'",
+            detail=f"No topology data found for service='{service}' tenant='{tenant_id}'. Please ensure Neo4j has topology data for this service.",
         )
     return _apply_simulation(base_topology, assumptions, scenario_type)
 
@@ -53,28 +53,30 @@ def _get_real_topology(tenant_id: str, service: str, settings: AppSettings) -> d
     try:
         with driver.session() as session:
             query = """
-            MATCH (s {name: $service, tenant_id: $tenant_id})
-            OPTIONAL MATCH path = (s)<-[:DEPENDS_ON|HOSTS|TRAFFIC*0..5]-(n)
+            MATCH (s:CI {ci_code: $service, tenant_id: $tenant_id})
+            OPTIONAL MATCH path = (s)<-[:DEPENDS_ON|RUNS_ON|DEPLOYED_ON|COMPOSED_OF*0..5]-(n:CI)
             WITH collect(DISTINCT n) + [s] AS raw_nodes
             UNWIND raw_nodes AS node
             WITH collect(DISTINCT node) AS all_nodes
             UNWIND all_nodes AS n1
-            OPTIONAL MATCH (n1)-[r:DEPENDS_ON|HOSTS|TRAFFIC]->(n2)
+            OPTIONAL MATCH (n1)-[r:DEPENDS_ON|RUNS_ON|DEPLOYED_ON|COMPOSED_OF]->(n2:CI)
             WHERE n2 IN all_nodes
             RETURN
               collect(DISTINCT {
-                id: toString(n1.id),
-                name: coalesce(n1.name, toString(n1.id)),
-                type: toLower(coalesce(n1.type, "service")),
-                baseline_load: toFloat(coalesce(n1.baseline_load, n1.load, 0))
+                id: toString(n1.ci_id),
+                name: coalesce(n1.ci_code, toString(n1.ci_id)),
+                type: toLower(coalesce(n1.ci_subtype, n1.ci_type, "service")),
+                ci_type: n1.ci_type,
+                ci_subtype: n1.ci_subtype,
+                baseline_load: toFloat(coalesce(n1.baseline_load, 50.0))
               }) AS nodes,
               collect(DISTINCT CASE
                 WHEN r IS NULL THEN NULL
                 ELSE {
-                  source: toString(startNode(r).id),
-                  target: toString(endNode(r).id),
+                  source: toString(startNode(r).ci_id),
+                  target: toString(endNode(r).ci_id),
                   type: toLower(type(r)),
-                  baseline_traffic: toFloat(coalesce(r.baseline_traffic, r.traffic, 0))
+                  baseline_traffic: toFloat(coalesce(r.baseline_traffic, 100.0))
                 }
               END) AS links
             """
@@ -98,10 +100,11 @@ def _apply_simulation(base_topology: dict[str, Any], assumptions: dict[str, Any]
     links: list[dict[str, Any]] = []
 
     for node_data in base_topology.get("nodes", []):
-        baseline_load = float(node_data.get("baseline_load", 0.0))
+        baseline_load = float(node_data.get("baseline_load", 50.0))
         node_type = str(node_data.get("type", "service")).lower()
 
-        if node_type == "service":
+        # ci_subtype mapping: was, web, app → service; db → db; server → server; os → server; network → network
+        if node_type in ("was", "web", "app", "service"):
             simulated_load = baseline_load * (1 + traffic_delta + cpu_delta * 0.5)
         elif node_type == "server":
             simulated_load = baseline_load * (1 + cpu_delta + memory_delta * 0.3)
@@ -109,8 +112,6 @@ def _apply_simulation(base_topology: dict[str, Any], assumptions: dict[str, Any]
             simulated_load = baseline_load * (1 + traffic_delta * 0.8 + cpu_delta * 0.4)
         elif node_type == "network":
             simulated_load = baseline_load * (1 + traffic_delta)
-        elif node_type == "storage":
-            simulated_load = baseline_load * (1 + traffic_delta * 0.3)
         else:
             simulated_load = baseline_load * (1 + traffic_delta * 0.5 + cpu_delta * 0.2)
 
@@ -135,8 +136,8 @@ def _apply_simulation(base_topology: dict[str, Any], assumptions: dict[str, Any]
         )
 
     for link_data in base_topology.get("links", []):
-        baseline_traffic = float(link_data.get("baseline_traffic", 0.0))
-        link_type = str(link_data.get("type", "dependency")).lower()
+        baseline_traffic = float(link_data.get("baseline_traffic", 100.0))
+        link_type = str(link_data.get("type", "depends_on")).lower()
         if link_type == "traffic":
             simulated_traffic = baseline_traffic * (1 + traffic_delta)
         else:

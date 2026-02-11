@@ -37,19 +37,27 @@ interface TopologyMapProps {
   service: string;
   scenarioType: string;
   assumptions: Record<string, number>;
+  enabled?: boolean;
 }
 
 export default function TopologyMap({
   service,
   scenarioType,
   assumptions,
+  enabled = false,
 }: TopologyMapProps) {
   const [topology, setTopology] = useState<TopologyData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<TopologyNode | null>(null);
 
   useEffect(() => {
+    if (!enabled || !service) {
+      setLoading(false);
+      setTopology(null);
+      return;
+    }
+
     const fetchTopology = async () => {
       setLoading(true);
       setError(null);
@@ -81,7 +89,7 @@ export default function TopologyMap({
     const timeoutId = setTimeout(fetchTopology, 300);
     
     return () => clearTimeout(timeoutId);
-  }, [service, scenarioType, assumptions]);
+  }, [enabled, service, scenarioType, assumptions]);
 
   if (loading) {
     return (
@@ -102,7 +110,7 @@ export default function TopologyMap({
   if (!topology) {
     return (
       <div className="flex items-center justify-center p-8 text-slate-400">
-        No topology data
+        {enabled ? "No topology data" : "Run Simulation to load topology"}
       </div>
     );
   }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pytest
+from importlib import import_module
 from app.modules.auth.models import TbUser, UserRole
 from core.auth import get_current_user
 from fastapi.testclient import TestClient
@@ -9,6 +10,8 @@ from main import app
 
 @pytest.fixture(autouse=True)
 def _mock_baseline_loader(monkeypatch):
+    router_module = import_module("app.modules.simulation.api.router")
+
     def _fake_loader(*, tenant_id, service, scenario_type, assumptions):
         _ = (tenant_id, service, scenario_type, assumptions)
         baseline = {
@@ -51,7 +54,8 @@ def _mock_baseline_loader(monkeypatch):
         },
     )
     monkeypatch.setattr(
-        "app.modules.simulation.api.router.execute_custom_function",
+        router_module,
+        "execute_custom_function",
         lambda function, params, input_payload: {
             "output": {"ok": True, "echo": input_payload},
             "duration_ms": 2,

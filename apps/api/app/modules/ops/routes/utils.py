@@ -9,26 +9,25 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from fastapi import Header
+from core.auth import get_current_user
+from core.config import get_settings
+from core.tenant import get_current_tenant
+from fastapi import Depends, HTTPException
 
+from app.modules.auth.models import TbUser
 from app.modules.ops.schemas import RerunPatch
 from app.modules.ops.services.ci.planner.plan_schema import Plan
 
 
-def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
-    """Extract tenant_id from request header.
-
-    Uses default tenant_id if not provided in header.
-
-    Args:
-        x_tenant_id: Tenant ID from X-Tenant-Id header
-
-    Returns:
-        Tenant ID string (default: "default")
-    """
-    if not x_tenant_id:
-        x_tenant_id = "default"
-    return x_tenant_id
+def _tenant_id(
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> str:
+    """Resolve tenant_id from request state and verify against authenticated user."""
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    return tenant_id
 
 
 def generate_references_from_tool_calls(

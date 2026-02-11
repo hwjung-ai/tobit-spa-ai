@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import uuid
-from typing import Tuple
 
+from app.modules.auth.models import TbUser
+from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_session
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from core.tenant import get_current_tenant
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from models.history import QueryHistory
 from schemas.common import ResponseEnvelope
 from schemas.history import HistoryCreate, HistoryRead
@@ -19,17 +21,20 @@ logger = get_logger(__name__)
 
 
 def _resolve_identity(
-    tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
-    user_id: str | None = Header(None, alias="X-User-Id"),
-) -> Tuple[str, str]:
-    return tenant_id or "default", user_id or "default"
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> tuple[str, str]:
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    return tenant_id, str(current_user.id)
 
 
 @router.post("/", response_model=ResponseEnvelope, status_code=status.HTTP_201_CREATED)
 def create_history(
     payload: HistoryCreate,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
     entry = QueryHistory(
@@ -55,16 +60,17 @@ def list_history(
     feature: str | None = Query(None),
     limit: int = Query(40, ge=1, le=200),
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
-    settings = get_settings()
     tenant_id, user_id = identity
     statement = select(QueryHistory)
-    if settings.enable_auth:
-        statement = statement.where(
-            QueryHistory.tenant_id == tenant_id,
-            QueryHistory.user_id == user_id,
-        )
+
+    # Always filter by authenticated identity for tenant/user isolation.
+    statement = statement.where(
+        QueryHistory.tenant_id == tenant_id,
+        QueryHistory.user_id == user_id,
+    )
+
     if feature:
         statement = statement.where(QueryHistory.feature == feature)
     statement = statement.order_by(QueryHistory.created_at.desc()).limit(limit)
@@ -79,7 +85,7 @@ def list_history(
 def delete_history(
     history_id: uuid.UUID,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
     entry = session.get(QueryHistory, history_id)
@@ -88,15 +94,9 @@ def delete_history(
             status_code=status.HTTP_404_NOT_FOUND, detail="History entry not found"
         )
     if entry.tenant_id != tenant_id or entry.user_id != user_id:
-        logger.warning(
-            "history.delete.identity_mismatch",
-            extra={
-                "requested_tenant_id": tenant_id,
-                "requested_user_id": user_id,
-                "entry_tenant_id": entry.tenant_id,
-                "entry_user_id": entry.user_id,
-                "history_id": str(history_id),
-            },
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="History entry not found",
         )
     session.delete(entry)
     session.commit()

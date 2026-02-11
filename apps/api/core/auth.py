@@ -1,12 +1,15 @@
 """Authentication and authorization dependencies."""
 
+import json
 from typing import Optional
 
-from app.modules.api_keys.crud import validate_api_key
+from app.modules.api_keys.crud import get_api_key_scopes, validate_api_key
 from app.modules.auth.models import TbUser, UserRole
-from fastapi import Depends, HTTPException, status
+from app.modules.operation_settings.crud import get_setting_effective_value
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
+from models.api_definition import ApiAuthMode, ApiDefinition
 from sqlmodel import Session, select
 
 from core.config import get_settings
@@ -16,7 +19,158 @@ from core.security import decode_token
 security = HTTPBearer(auto_error=False)
 
 
+def _unwrap_api_definition(result) -> ApiDefinition | None:
+    if isinstance(result, ApiDefinition):
+        return result
+    mapping = getattr(result, "_mapping", None)
+    if mapping is not None:
+        direct = mapping.get(ApiDefinition)
+        if isinstance(direct, ApiDefinition):
+            return direct
+        for value in mapping.values():
+            if isinstance(value, ApiDefinition):
+                return value
+    if isinstance(result, (tuple, list)) and result:
+        first = result[0]
+        if isinstance(first, ApiDefinition):
+            return first
+    return None
+
+
+def _resolve_runtime_api_policy(
+    session: Session, request: Request, settings
+) -> tuple[str, list[str], bool]:
+    """Resolve auth policy for /runtime/* request."""
+    default_mode_effective = get_setting_effective_value(
+        session=session,
+        setting_key="api_auth_default_mode",
+        default_value=settings.api_auth_default_mode,
+        env_value=settings.api_auth_default_mode,
+    )
+    enforce_scopes_effective = get_setting_effective_value(
+        session=session,
+        setting_key="api_auth_enforce_scopes",
+        default_value=settings.api_auth_enforce_scopes,
+        env_value=settings.api_auth_enforce_scopes,
+    )
+    default_mode = str(default_mode_effective.get("value") or "jwt_only")
+    enforce_scopes = bool(enforce_scopes_effective.get("value", True))
+
+    full_path = request.url.path
+    runtime_idx = full_path.find("/runtime/")
+    if runtime_idx >= 0:
+        full_path = full_path[runtime_idx:]
+    method = request.method.upper()
+    normalized = f"/{full_path.lstrip('/')}"
+    if normalized.startswith("/runtime/"):
+        normalized = normalized[len("/runtime") :]
+        normalized = f"/{normalized.lstrip('/')}"
+    candidates = [normalized, f"/runtime{normalized}", f"/{normalized.lstrip('/')}"]
+    api = _unwrap_api_definition(
+        session.exec(
+        select(ApiDefinition)
+        .where(ApiDefinition.path.in_(candidates))
+        .where(ApiDefinition.method == method)
+        .where(ApiDefinition.is_enabled)
+        .limit(1)
+    ).first()
+    )
+    if not api:
+        return default_mode, [], enforce_scopes
+
+    mode = str(getattr(api, "auth_mode", None) or default_mode)
+    scopes = getattr(api, "required_scopes", None) or []
+    if isinstance(scopes, str):
+        try:
+            scopes = json.loads(scopes)
+        except json.JSONDecodeError:
+            scopes = []
+    if not isinstance(scopes, list):
+        scopes = []
+    return mode, [str(scope) for scope in scopes], enforce_scopes
+
+
+def _authenticate_jwt_only(token: str, session: Session, settings) -> TbUser:
+    try:
+        payload = decode_token(
+            token,
+            settings.jwt_secret_key,
+            settings.jwt_algorithm,
+        )
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Could not validate credentials: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if payload.get("type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id: str = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing user ID",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = session.get(TbUser, user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+    return user
+
+
+def _authenticate_api_key_only(
+    token: str,
+    session: Session,
+    required_scopes: list[str] | None = None,
+    enforce_scopes: bool = True,
+) -> TbUser:
+    api_key = validate_api_key(session, token)
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user = session.get(TbUser, api_key.user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    scopes = get_api_key_scopes(api_key)
+    if enforce_scopes and required_scopes:
+        if "*" not in scopes and any(scope not in scopes for scope in required_scopes):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="API key does not have required scopes",
+            )
+
+    setattr(user, "_auth_mode", "api_key")
+    setattr(user, "_api_key_scopes", scopes)
+    return user
+
+
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     session: Session = Depends(get_session),
 ) -> TbUser:
@@ -64,49 +218,34 @@ def get_current_user(
     token = credentials.credentials
     settings = get_settings()
 
-    try:
-        payload = decode_token(
-            token,
-            settings.jwt_secret_key,
-            settings.jwt_algorithm,
+    # Runtime APIs can use policy-driven hybrid authentication.
+    if request is not None and "/runtime/" in request.url.path:
+        mode, required_scopes, enforce_scopes = _resolve_runtime_api_policy(
+            session=session,
+            request=request,
+            settings=settings,
         )
-    except JWTError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Could not validate credentials: {str(e)}",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        if mode == ApiAuthMode.api_key_only.value:
+            return _authenticate_api_key_only(
+                token=token,
+                session=session,
+                required_scopes=required_scopes,
+                enforce_scopes=enforce_scopes,
+            )
+        if mode == ApiAuthMode.jwt_or_api_key.value:
+            try:
+                return _authenticate_jwt_only(token, session, settings)
+            except HTTPException:
+                return _authenticate_api_key_only(
+                    token=token,
+                    session=session,
+                    required_scopes=required_scopes,
+                    enforce_scopes=enforce_scopes,
+                )
+        # Default and fallback to strict JWT-only.
+        return _authenticate_jwt_only(token, session, settings)
 
-    if payload.get("type") != "access":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token type",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    user_id: str = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token missing user ID",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    user = session.get(TbUser, user_id)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive",
-        )
-
-    return user
+    return _authenticate_jwt_only(token, session, settings)
 
 
 def get_current_active_user(
@@ -145,6 +284,10 @@ def require_role(*required_roles: UserRole):
 
     def role_checker(current_user: TbUser = Depends(get_current_user)) -> TbUser:
         """Check if user has one of the required roles."""
+        settings = get_settings()
+        if not settings.enable_permission_check:
+            return current_user
+
         # Role hierarchy: VIEWER (0) < DEVELOPER (1) < MANAGER (2) < ADMIN (3)
         role_hierarchy = {
             UserRole.VIEWER: 0,

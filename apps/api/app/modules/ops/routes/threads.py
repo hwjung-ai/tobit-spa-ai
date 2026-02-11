@@ -15,12 +15,16 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
+from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_session
 from core.logging import get_logger
-from fastapi import APIRouter, Depends, Header
+from core.tenant import get_current_tenant
+from fastapi import APIRouter, Depends, HTTPException
 from schemas import ResponseEnvelope
 from sqlmodel import Session
+
+from app.modules.auth.models import TbUser
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
@@ -29,7 +33,8 @@ logger = get_logger(__name__)
 @router.post("/stage-test", response_model=ResponseEnvelope)
 async def execute_isolated_stage_test(
     payload: dict[str, Any],
-    x_tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
 ) -> ResponseEnvelope:
     """Execute a single stage in isolation for testing and validation.
 
@@ -64,13 +69,8 @@ async def execute_isolated_stage_test(
     get_settings()
 
     # Setup
-    if not x_tenant_id:
-        from fastapi import HTTPException
-
-        raise HTTPException(
-            status_code=400, detail="X-Tenant-Id header is required"
-        )
-    tenant_id = x_tenant_id
+    if get_settings().enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
     trace_id = str(uuid.uuid4())
 
     # Validate stage

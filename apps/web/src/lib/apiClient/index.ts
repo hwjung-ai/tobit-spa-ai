@@ -30,5 +30,5 @@ export type {
   FetchOptions,
 } from '../apiClientTypes';
 export { hasApiResponseData, getApiResponseData, isApiError, isScanResult } from '../apiClientTypes';
-export { fetchApi, authenticatedFetch } from '../apiClient';
+export { fetchApi, authenticatedFetch, fetchWithAuth, getAuthHeaders } from '../apiClient';
 export { formatTimestamp, formatRelativeTime } from '../adminUtils';

@@ -14,6 +14,7 @@ from app.modules.permissions.models import (
     TbResourcePermission,
     TbRolePermission,
 )
+from core.config import get_settings
 
 # Default role permission sets
 ROLE_PERMISSION_DEFAULTS = {
@@ -183,6 +184,13 @@ def check_permission(
     Returns:
         PermissionCheck result with granted status and reason
     """
+    settings = get_settings()
+    if not settings.enable_permission_check:
+        return PermissionCheck(
+            granted=True,
+            reason="Permission checks disabled by ENABLE_PERMISSION_CHECK=false",
+        )
+
     # Check resource-specific permission first
     if resource_type and resource_id:
         stmt = select(TbResourcePermission).where(

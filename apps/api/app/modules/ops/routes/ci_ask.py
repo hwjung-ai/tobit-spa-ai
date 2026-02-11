@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_session_context
 from core.logging import get_logger, get_request_context
@@ -32,6 +33,7 @@ from app.modules.asset_registry.loader import (
     load_resolver_asset,
     load_source_asset,
 )
+from app.modules.auth.models import TbUser
 from app.modules.inspector.service import persist_execution_trace
 from app.modules.inspector.span_tracker import (
     clear_spans,
@@ -70,6 +72,7 @@ def ask_ops(
     payload: CiAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
+    current_user: TbUser = Depends(get_current_user),
 ):
     """Process OPS question with planning and execution.
 
@@ -102,7 +105,7 @@ def ask_ops(
             patch_keys = list(payload.rerun.patch.dict(exclude_none=True).keys())
 
     # Create history entry on request receipt
-    user_id = request.headers.get("X-User-Id", "default")
+    user_id = str(current_user.id)
     history_entry = QueryHistory(
         tenant_id=tenant_id,
         user_id=user_id,
@@ -258,7 +261,7 @@ def ask_ops(
             load_source_asset(source_asset_name) if source_asset_name else None
         )
         mapping_payload, _ = load_mapping_asset("graph_relation", scope="ops")
-        policy_payload = load_policy_asset("plan_budget", scope="ops")
+        _policy_payload = load_policy_asset("plan_budget", scope="ops")
 
         normalized_question, resolver_rules_applied = _apply_resolver_rules(
             payload.question, resolver_payload
@@ -677,4 +680,3 @@ def ask_ops(
 
     assert response_payload or error_response
     return response_payload or error_response
-

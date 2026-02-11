@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bar,
@@ -17,6 +16,7 @@ import {
 
 import { authenticatedFetch } from "@/lib/apiClient";
 import TopologyMap from "@/components/simulation/TopologyMap";
+import Toast from "@/components/admin/Toast";
 
 type Strategy = "rule" | "stat" | "ml" | "dl";
 type ScenarioType = "what_if" | "stress_test" | "capacity";
@@ -159,61 +159,41 @@ const calculateChangePct = (item: KpiResult): number => {
 };
 
 export default function SimPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
   const [templates, setTemplates] = useState<SimulationTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [services, setServices] = useState<string[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
   const [question, setQuestion] = useState("트래픽이 20% 증가하면 서비스 지표가 어떻게 변하나?");
   const [scenarioType, setScenarioType] = useState<ScenarioType>("what_if");
   const [strategy, setStrategy] = useState<Strategy>("rule");
   const [horizon, setHorizon] = useState("7d");
-  const [service, setService] = useState("api-gateway");
+  const [service, setService] = useState("");
   const [assumptions, setAssumptions] = useState<Record<string, number>>({
     traffic_change_pct: 20,
     cpu_change_pct: 10,
     memory_change_pct: 5,
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [plan, setPlan] = useState<SimulationPlan | null>(null);
   const [result, setResult] = useState<RunResponseData | null>(null);
   const [previousResult, setPreviousResult] = useState<RunResponseData | null>(null);
   const [backtest, setBacktest] = useState<BacktestResponseData["backtest"] | null>(null);
 
   useEffect(() => {
-    const scenario = searchParams.get("scenario");
-    const strategyParam = searchParams.get("strategy");
-    const horizonParam = searchParams.get("horizon");
-    const serviceParam = searchParams.get("service");
-    if (scenario === "what_if" || scenario === "stress_test" || scenario === "capacity") setScenarioType(scenario);
-    if (strategyParam === "rule" || strategyParam === "stat" || strategyParam === "ml" || strategyParam === "dl") {
-      setStrategy(strategyParam);
-    }
-    if (horizonParam) setHorizon(horizonParam);
-    if (serviceParam) setService(serviceParam);
-  }, [searchParams]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("scenario", scenarioType);
-    params.set("strategy", strategy);
-    params.set("horizon", horizon);
-    params.set("service", service);
-    router.replace(`/sim?${params.toString()}`);
-  }, [horizon, router, scenarioType, searchParams, service, strategy]);
-
-  useEffect(() => {
     const loadServices = async () => {
+      setServicesLoading(true);
       try {
         const response = await authenticatedFetch<Envelope<{ services: string[] }>>("/api/sim/services");
         const loaded = response.data?.services ?? [];
         setServices(loaded);
-        if (loaded.length > 0 && !searchParams.get("service")) {
+        if (loaded.length > 0) {
           setService(loaded[0]);
         }
       } catch (err) {
         console.error("Failed to load simulation services", err);
+      } finally {
+        setServicesLoading(false);
       }
     };
 
@@ -227,27 +207,52 @@ export default function SimPage() {
     };
     void loadServices();
     void loadTemplates();
-  }, [searchParams]);
+  }, []);
+
+  const getEffectiveService = () => {
+    const trimmed = service.trim();
+    if (!trimmed) {
+      throw new Error("Service를 입력하거나 선택해 주세요.");
+    }
+    if (services.length === 0) {
+      return trimmed;
+    }
+    if (!services.includes(trimmed)) {
+      const fallback = services[0];
+      setService(fallback);
+      return fallback;
+    }
+    return trimmed;
+  };
 
   const applyTemplate = (template: SimulationTemplate) => {
+    setSelectedTemplateId(template.id);
     setQuestion(template.question_example);
     setScenarioType(template.scenario_type);
     setStrategy(template.default_strategy);
     setAssumptions(template.assumptions);
   };
 
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === selectedTemplateId) ?? null,
+    [selectedTemplateId, templates]
+  );
+
   const handleRun = async () => {
     setLoading(true);
-    setError(null);
+    setStatusMessage(null);
     try {
-      const queryPayload = {
+      const effectiveService = getEffectiveService();
+      const buildPayload = (svc: string) => ({
         question,
         scenario_type: scenarioType,
         strategy,
         assumptions,
         horizon,
-        service,
-      };
+        service: svc,
+      });
+      let targetService = effectiveService;
+      let queryPayload = buildPayload(targetService);
 
       const queryResponse = await authenticatedFetch<Envelope<{ plan: SimulationPlan }>>("/api/sim/query", {
         method: "POST",
@@ -255,43 +260,78 @@ export default function SimPage() {
       });
       setPlan(queryResponse.data?.plan ?? null);
 
-      const runResponse = await authenticatedFetch<Envelope<RunResponseData>>("/api/sim/run", {
-        method: "POST",
-        body: JSON.stringify(queryPayload),
-      });
+      let runResponse: Envelope<RunResponseData> | null = null;
+      try {
+        runResponse = await authenticatedFetch<Envelope<RunResponseData>>("/api/sim/run", {
+          method: "POST",
+          body: JSON.stringify(queryPayload),
+        });
+      } catch (runError) {
+        const message = runError instanceof Error ? runError.message : "Simulation run failed";
+        const fallbackService = services[0];
+        const shouldRetry = message.includes("HTTP 404") && Boolean(fallbackService) && fallbackService !== targetService;
+        if (!shouldRetry) {
+          throw runError;
+        }
+        targetService = fallbackService;
+        setService(fallbackService);
+        queryPayload = buildPayload(targetService);
+        const fallbackQuery = await authenticatedFetch<Envelope<{ plan: SimulationPlan }>>("/api/sim/query", {
+          method: "POST",
+          body: JSON.stringify(queryPayload),
+        });
+        setPlan(fallbackQuery.data?.plan ?? null);
+        runResponse = await authenticatedFetch<Envelope<RunResponseData>>("/api/sim/run", {
+          method: "POST",
+          body: JSON.stringify(queryPayload),
+        });
+      }
+
       if (!runResponse.data) {
         throw new Error(runResponse.message || "Simulation response is empty");
       }
       setPreviousResult(result);
       setResult(runResponse.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Simulation run failed");
+      const message = err instanceof Error ? err.message : "Simulation run failed";
+      if (message.includes("HTTP 404")) {
+        setStatusMessage("선택한 서비스의 토폴로지 데이터가 없습니다. Service를 다시 선택해 주세요.");
+      } else {
+        setStatusMessage(message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleBacktest = async () => {
-    setError(null);
+    setStatusMessage(null);
     try {
+      const effectiveService = getEffectiveService();
       const response = await authenticatedFetch<Envelope<BacktestResponseData>>("/api/sim/backtest", {
         method: "POST",
         body: JSON.stringify({
           strategy,
-          service,
+          service: effectiveService,
           horizon: "30d",
           assumptions,
         }),
       });
       setBacktest(response.data?.backtest ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Backtest failed");
+      const message = err instanceof Error ? err.message : "Backtest failed";
+      if (message.includes("HTTP 404")) {
+        setStatusMessage("선택한 서비스의 토폴로지 데이터가 없습니다. Service를 다시 선택해 주세요.");
+      } else {
+        setStatusMessage(message);
+      }
     }
   };
 
   const handleExportCsv = async () => {
-    setError(null);
+    setStatusMessage(null);
     try {
+      const effectiveService = getEffectiveService();
       const csvText = await authenticatedFetch<string>("/api/sim/export", {
         method: "POST",
         body: JSON.stringify({
@@ -300,7 +340,7 @@ export default function SimPage() {
           strategy,
           assumptions,
           horizon,
-          service,
+          service: effectiveService,
         }),
         headers: {
           Accept: "text/csv",
@@ -316,7 +356,12 @@ export default function SimPage() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "CSV export failed");
+      const message = err instanceof Error ? err.message : "CSV export failed";
+      if (message.includes("HTTP 404")) {
+        setStatusMessage("선택한 서비스의 토폴로지 데이터가 없습니다. Service를 다시 선택해 주세요.");
+      } else {
+        setStatusMessage(message);
+      }
     }
   };
 
@@ -390,6 +435,15 @@ export default function SimPage() {
                 </button>
               ))}
             </div>
+            {selectedTemplate ? (
+              <div className="mt-3 rounded-xl border border-emerald-700/40 bg-emerald-950/20 px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Applied Template</p>
+                <p className="mt-1 text-sm text-slate-200">{selectedTemplate.name}</p>
+                <p className="text-xs text-slate-400">{selectedTemplate.description}</p>
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-slate-500">템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.</p>
+            )}
           </div>
 
           <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -424,8 +478,12 @@ export default function SimPage() {
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
                 value={service}
                 onChange={(event) => setService(event.target.value)}
+                placeholder="예: api-gateway"
               />
             )}
+            {services.length === 0 ? (
+              <p className="mt-1 text-[11px] text-amber-300">자동 감지된 서비스가 없어 수동 입력 모드입니다.</p>
+            ) : null}
           </label>
 
           <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -496,10 +554,12 @@ export default function SimPage() {
             data-testid="simulation-run-button"
             className="w-full rounded-2xl bg-emerald-500/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700"
             onClick={handleRun}
-            disabled={loading || !question.trim()}
+            disabled={loading || servicesLoading || !question.trim() || !service.trim()}
           >
-            {loading ? "Running..." : "Run Simulation"}
+            {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
           </button>
+          {!question.trim() ? <p className="text-[11px] text-slate-500">질문을 입력하면 실행할 수 있습니다.</p> : null}
+          {!service.trim() ? <p className="text-[11px] text-slate-500">Service를 입력 또는 선택하면 실행할 수 있습니다.</p> : null}
 
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -519,8 +579,6 @@ export default function SimPage() {
               Export CSV
             </button>
           </div>
-
-          {error ? <p data-testid="simulation-error-banner" className="text-sm text-rose-300">{error}</p> : null}
         </aside>
 
         <main className="space-y-4">
@@ -625,6 +683,7 @@ export default function SimPage() {
               service={service}
               scenarioType={scenarioType}
               assumptions={assumptions}
+              enabled={Boolean(result)}
             />
           </section>
 
@@ -693,6 +752,18 @@ export default function SimPage() {
           </section>
         </main>
       </section>
+
+      <Toast
+        message={statusMessage ?? ""}
+        type={
+          statusMessage?.includes("토폴로지 데이터가 없습니다")
+            ? "warning"
+            : statusMessage?.includes("실패")
+              ? "error"
+              : "info"
+        }
+        onDismiss={() => setStatusMessage(null)}
+      />
     </div>
   );
 }

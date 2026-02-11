@@ -8,6 +8,7 @@ import "react-pdf/dist/Page/TextLayer.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { getAuthHeaders } from "@/lib/apiClient/index";
 
 // Lazy-load react-pdf to avoid SSR issues (uses browser-only APIs)
 const ReactPdfDocument = dynamic(
@@ -23,17 +24,6 @@ const ReactPdfPage = dynamic(
 );
 
 const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
-
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("access_token");
-  const tenantId = localStorage.getItem("tenant_id");
-  const userId = localStorage.getItem("user_id");
-  return {
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...(tenantId ? { "X-Tenant-Id": tenantId } : { "X-Tenant-Id": "default" }),
-    ...(userId ? { "X-User-Id": userId } : { "X-User-Id": "default" }),
-  };
-}
 
 interface ChunkInfo {
   chunk_id: string;

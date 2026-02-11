@@ -528,6 +528,7 @@ export interface LocalOpsHistoryEntry {
   uiMode: UiMode;
   backendMode: BackendMode;
   question: string;
+  thread_id?: string | null;
   response: AnswerEnvelope | CiAnswerPayload;
   status: "ok" | "error";
   meta?: {
@@ -574,6 +575,7 @@ export interface AnswerEnvelope {
  */
 export interface ServerHistoryEntry {
   id: string;
+  thread_id?: string | null;
   created_at: string;
   question: string;
   status: "ok" | "error";
@@ -598,6 +600,7 @@ export interface ServerHistoryEntry {
       policy_decisions?: unknown;
       [key: string]: unknown;
     };
+    thread_id?: string | null;
     nextActions?: NextAction[];
     next_actions?: NextAction[];
   } | null;

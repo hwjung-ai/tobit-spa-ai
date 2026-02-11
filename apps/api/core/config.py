@@ -62,6 +62,17 @@ class AppSettings(BaseSettings):
     embed_model: Optional[str] = None
     chat_model: str = "gpt-5-nano"
     openai_api_key: Optional[str] = None
+    llm_provider: str = "openai"
+    llm_base_url: Optional[str] = None
+    llm_default_model: Optional[str] = None
+    llm_fallback_model: Optional[str] = None
+    llm_timeout_seconds: int = 120
+    llm_max_retries: int = 2
+    llm_enable_fallback: bool = True
+    llm_routing_policy: str = "default"
+    llm_internal_api_key: Optional[str] = None
+    api_auth_default_mode: str = "jwt_only"
+    api_auth_enforce_scopes: bool = True
     embedding_dimension: int = 1536
     document_storage_root: Optional[Path] = Field(
         default=None, env="DOCUMENT_STORAGE_ROOT"
@@ -73,6 +84,7 @@ class AppSettings(BaseSettings):
 
     # Authentication settings
     enable_auth: bool = False  # Toggle authentication on/off for debugging
+    enable_permission_check: bool = True  # Toggle RBAC permission checks on/off
     jwt_secret_key: str = "your-secret-key-change-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

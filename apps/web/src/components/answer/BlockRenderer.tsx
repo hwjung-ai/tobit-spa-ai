@@ -759,20 +759,9 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
 
                       const handleDocumentClick = async () => {
                         try {
-                          // Use authenticatedFetch to get the PDF with auth headers
-                          const response = await fetch(reference.url, {
-                            headers: {
-                              'X-Tenant-Id': window.localStorage.getItem('tenant_id') || 'default',
-                              'X-User-Id': window.localStorage.getItem('user_id') || 'default',
-                            },
-                          });
-
-                          if (!response.ok) {
-                            console.error('Failed to fetch document:', response.statusText);
-                            // Fallback: open in new tab
-                            window.open(reference.url, '_blank');
-                            return;
-                          }
+                          // Use fetchWithAuth to get the PDF with auth headers
+                          const { fetchWithAuth } = await import("@/lib/apiClient");
+                          const response = await fetchWithAuth(reference.url);
 
                           // Get PDF blob and create object URL
                           const blob = await response.blob();
@@ -790,8 +779,6 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                           }, 60000);
                         } catch (error) {
                           console.error('Error opening document:', error);
-                          // Fallback: open in new tab
-                          window.open(reference.url, '_blank');
                         }
                       };
 

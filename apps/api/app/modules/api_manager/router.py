@@ -12,6 +12,7 @@ from core.db import get_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.routing import APIRoute
 from models.api_definition import (
+    ApiAuthMode,
     ApiDefinition,
     ApiDefinitionVersion,
     ApiMode,
@@ -47,10 +48,41 @@ def _api_snapshot(api: ApiDefinition) -> dict:
         "mode": api.mode.value if api.mode else None,
         "logic": api.logic,
         "runtime_policy": api.runtime_policy or {},
+        "auth_mode": (
+            api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+        ),
+        "required_scopes": list(api.required_scopes or []),
         "is_enabled": api.is_enabled,
         "created_at": api.created_at.isoformat() if api.created_at else None,
         "updated_at": api.updated_at.isoformat() if api.updated_at else None,
     }
+
+
+def _parse_auth_mode(mode: str | None) -> ApiAuthMode:
+    if not mode:
+        return ApiAuthMode.jwt_only
+    try:
+        return ApiAuthMode(mode)
+    except ValueError:
+        return ApiAuthMode.jwt_only
+
+
+def _normalize_required_scopes(scopes: list[str] | None) -> list[str]:
+    if not scopes:
+        return []
+    normalized: list[str] = []
+    for scope in scopes:
+        text = str(scope).strip()
+        if text and text not in normalized:
+            normalized.append(text)
+    return normalized
+
+
+def _parse_api_uuid(api_id: str) -> uuid.UUID:
+    try:
+        return uuid.UUID(str(api_id))
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=400, detail="Invalid API ID format") from exc
 
 
 def _next_version(session: Session, api_id: uuid.UUID) -> int:
@@ -139,6 +171,8 @@ class CreateApiRequest(BaseModel):
     input_schema: dict = {}
     output_schema: dict = {}
     description: Optional[str] = None
+    auth_mode: str = ApiAuthMode.jwt_only.value
+    required_scopes: list[str] = []
 
 
 class UpdateApiRequest(BaseModel):
@@ -149,6 +183,8 @@ class UpdateApiRequest(BaseModel):
     input_schema: Optional[dict] = None
     output_schema: Optional[dict] = None
     description: Optional[str] = None
+    auth_mode: Optional[str] = None
+    required_scopes: Optional[list[str]] = None
 
 
 class ExecuteApiRequest(BaseModel):
@@ -167,7 +203,7 @@ class ExportApiToToolsRequest(BaseModel):
 async def list_apis(
     scope: Optional[str] = Query(None), session: Session = Depends(get_session)
 ):
-    """List all available APIs (public endpoint - no authentication required)"""
+    """List all available APIs."""
 
     try:
         statement = select(ApiDefinition).where(ApiDefinition.deleted_at.is_(None))
@@ -193,6 +229,10 @@ async def list_apis(
                 "mode": api.mode.value if api.mode else None,
                 "logic": api.logic,
                 "runtime_policy": api.runtime_policy or {},
+                "auth_mode": (
+                    api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+                ),
+                "required_scopes": list(api.required_scopes or []),
                 "is_enabled": api.is_enabled,
                 "created_at": api.created_at.isoformat() if api.created_at else None,
                 "updated_at": api.updated_at.isoformat() if api.updated_at else None,
@@ -363,6 +403,13 @@ class SaveApiRequest(BaseModel):
     logic_spec: dict = {}
     is_active: bool = True
     created_by: Optional[str] = None
+    auth_mode: str = ApiAuthMode.jwt_only.value
+    required_scopes: list[str] = []
+
+
+class UpdateApiAuthPolicyRequest(BaseModel):
+    auth_mode: str = ApiAuthMode.jwt_only.value
+    required_scopes: list[str] = []
 
 
 @router.post("/apis", response_model=ResponseEnvelope)
@@ -385,10 +432,12 @@ async def create_or_update_api(
             if request.logic_type in [m.value for m in ApiMode]
             else ApiMode.sql
         )
+        auth_mode = _parse_auth_mode(request.auth_mode)
+        required_scopes = _normalize_required_scopes(request.required_scopes)
 
         if api_id:
             # Update existing API
-            api = session.get(ApiDefinition, api_id)
+            api = session.get(ApiDefinition, _parse_api_uuid(api_id))
             if not api or api.deleted_at:
                 raise HTTPException(status_code=404, detail="API not found")
 
@@ -406,6 +455,8 @@ async def create_or_update_api(
             api.runtime_policy = request.runtime_policy or {}
             if api_mode in {ApiMode.script, ApiMode.python} and "allow_runtime" not in api.runtime_policy:
                 api.runtime_policy = {**api.runtime_policy, "allow_runtime": True}
+            api.auth_mode = auth_mode
+            api.required_scopes = required_scopes
             api.updated_at = datetime.utcnow()
         else:
             # Create new API
@@ -422,6 +473,8 @@ async def create_or_update_api(
                 mode=api_mode,
                 logic=request.logic_body,
                 runtime_policy=runtime_policy,
+                auth_mode=auth_mode,
+                required_scopes=required_scopes,
                 is_enabled=request.is_active,
             )
             session.add(api)
@@ -448,6 +501,10 @@ async def create_or_update_api(
                 "mode": api.mode.value if api.mode else None,
                 "logic": api.logic,
                 "runtime_policy": api.runtime_policy or {},
+                "auth_mode": (
+                    api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+                ),
+                "required_scopes": list(api.required_scopes or []),
                 "is_enabled": api.is_enabled,
                 "created_at": api.created_at.isoformat()
                 if api.created_at
@@ -483,6 +540,8 @@ async def create_api(
             if request.mode in [m.value for m in ApiMode]
             else ApiMode.sql
         )
+        auth_mode = _parse_auth_mode(request.auth_mode)
+        required_scopes = _normalize_required_scopes(request.required_scopes)
 
         api = ApiDefinition(
             scope=api_scope,
@@ -495,6 +554,8 @@ async def create_api(
             runtime_policy=(
                 {"allow_runtime": True} if api_mode in {ApiMode.script, ApiMode.python} else {}
             ),
+            auth_mode=auth_mode,
+            required_scopes=required_scopes,
             is_enabled=True,
         )
         session.add(api)
@@ -517,6 +578,10 @@ async def create_api(
             "mode": api.mode.value if api.mode else None,
             "logic": api.logic,
             "runtime_policy": api.runtime_policy or {},
+            "auth_mode": (
+                api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+            ),
+            "required_scopes": list(api.required_scopes or []),
             "is_enabled": api.is_enabled,
             "version": 1,
         })
@@ -533,7 +598,7 @@ async def get_api(
 ):
     """Get API definition by ID"""
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
@@ -548,6 +613,10 @@ async def get_api(
             "mode": api.mode.value if api.mode else None,
             "logic": api.logic,
             "runtime_policy": api.runtime_policy or {},
+            "auth_mode": (
+                api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+            ),
+            "required_scopes": list(api.required_scopes or []),
             "is_enabled": api.is_enabled,
             "created_at": api.created_at.isoformat() if api.created_at else None,
             "updated_at": api.updated_at.isoformat() if api.updated_at else None,
@@ -572,7 +641,7 @@ async def update_api(
     """
 
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
@@ -594,6 +663,8 @@ async def update_api(
         api.runtime_policy = request.runtime_policy or {}
         if api_mode in {ApiMode.script, ApiMode.python} and "allow_runtime" not in api.runtime_policy:
             api.runtime_policy = {**api.runtime_policy, "allow_runtime": True}
+        api.auth_mode = _parse_auth_mode(request.auth_mode)
+        api.required_scopes = _normalize_required_scopes(request.required_scopes)
         api.is_enabled = request.is_active
         api.updated_at = datetime.utcnow()
 
@@ -620,6 +691,10 @@ async def update_api(
                 "mode": api.mode.value if api.mode else None,
                 "logic": api.logic,
                 "runtime_policy": api.runtime_policy or {},
+                "auth_mode": (
+                    api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+                ),
+                "required_scopes": list(api.required_scopes or []),
                 "is_enabled": api.is_enabled,
                 "created_at": api.created_at.isoformat()
                 if api.created_at
@@ -635,6 +710,51 @@ async def update_api(
         raise HTTPException(500, str(e))
 
 
+@router.put("/apis/{api_id}/auth-policy", response_model=ResponseEnvelope)
+async def update_api_auth_policy(
+    api_id: str,
+    request: UpdateApiAuthPolicyRequest,
+    session: Session = Depends(get_session),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """Update only authentication policy for an API definition."""
+    try:
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
+        if not api or api.deleted_at:
+            raise HTTPException(status_code=404, detail="API not found")
+
+        api.auth_mode = _parse_auth_mode(request.auth_mode)
+        api.required_scopes = _normalize_required_scopes(request.required_scopes)
+        api.updated_at = datetime.utcnow()
+
+        session.add(api)
+        session.commit()
+        session.refresh(api)
+        _record_api_version(
+            session,
+            api,
+            change_type="update",
+            created_by=getattr(current_user, "id", None),
+            change_summary="Updated auth policy from /api-manager/apis/{api_id}/auth-policy",
+        )
+
+        return ResponseEnvelope.success(
+            data={
+                "api_id": str(api.id),
+                "auth_mode": (
+                    api.auth_mode.value if hasattr(api.auth_mode, "value") else str(api.auth_mode)
+                ),
+                "required_scopes": list(api.required_scopes or []),
+                "updated_at": api.updated_at.isoformat() if api.updated_at else None,
+            }
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Update API auth policy failed: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
 @router.post("/{api_id}/rollback", response_model=ResponseEnvelope)
 async def rollback_api(
     api_id: str,
@@ -644,7 +764,7 @@ async def rollback_api(
 ):
     """Rollback API to a previous version snapshot."""
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
@@ -684,6 +804,12 @@ async def rollback_api(
                 pass
         api.logic = snapshot.get("logic", api.logic)
         api.runtime_policy = snapshot.get("runtime_policy", api.runtime_policy)
+        auth_mode_value = snapshot.get("auth_mode")
+        if auth_mode_value:
+            api.auth_mode = _parse_auth_mode(str(auth_mode_value))
+        api.required_scopes = _normalize_required_scopes(
+            snapshot.get("required_scopes", api.required_scopes)
+        )
         api.is_enabled = bool(snapshot.get("is_enabled", api.is_enabled))
         api.updated_at = datetime.utcnow()
 
@@ -721,7 +847,7 @@ async def get_versions(
 ):
     """Get API version history."""
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
@@ -796,7 +922,7 @@ async def execute_api(
     Dispatches to sql/http/workflow/script based on API mode.
     """
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
         if not api.logic:
@@ -905,7 +1031,7 @@ async def run_tests(
     Validates that the API logic is executable without errors.
     """
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
         if not api.logic:
@@ -1109,7 +1235,7 @@ async def delete_api(
     """Delete API (soft delete)"""
 
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
 
@@ -1249,7 +1375,7 @@ async def get_api_export_options(
     and provides information about existing Tool linkage.
     """
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
         
@@ -1294,7 +1420,7 @@ async def export_api_to_tools(
     to complete the import process.
     """
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
         
@@ -1359,7 +1485,7 @@ async def unlink_api_from_tool(
     Both systems become independent again.
     """
     try:
-        api = session.get(ApiDefinition, api_id)
+        api = session.get(ApiDefinition, _parse_api_uuid(api_id))
         if not api or api.deleted_at:
             raise HTTPException(status_code=404, detail="API not found")
         

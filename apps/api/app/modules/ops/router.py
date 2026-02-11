@@ -116,16 +116,17 @@ def _generate_references_from_tool_calls(
 
 
 @router.post("/query", response_model=ResponseEnvelope)
-def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
+def query_ops(
+    payload: OpsQueryRequest,
+    request: Request,
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> ResponseEnvelope:
     # 요청 받을 때 history 생성 (상태: processing)
-    user_id = request.headers.get("X-User-Id", "default")
-    tenant_id = request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail="X-Tenant-Id header is required"
-        )
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    user_id = str(current_user.id)
 
     # Set request context for tenant_id to be available throughout the request
     from core.logging import set_request_context
@@ -206,6 +207,228 @@ def observability_kpis(session: Session = Depends(get_session)) -> ResponseEnvel
         return ResponseEnvelope.error(
             code=500, message=f"Observability service error: {str(e)}"
         )
+
+
+@router.post("/conversation/summary", response_model=ResponseEnvelope)
+def conversation_summary(
+    request_data: dict,
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """Get conversation summary for preview and PDF export.
+
+    Returns a structured summary of the conversation including:
+    - Title, date, topic metadata
+    - Questions and answers
+    - Overall summary (if requested)
+
+    Args:
+        request_data: Dictionary containing:
+            - history_id: The history entry ID to get summary for
+            - summary_type: "individual" or "overall"
+            - title: Optional report title
+            - topic: Optional report topic
+        session: Database session dependency
+
+    Returns:
+        ResponseEnvelope with summary data
+    """
+    from datetime import datetime
+
+    try:
+        from .routes.query import _generate_overall_summary
+
+        history_id = request_data.get("history_id")
+        summary_type = request_data.get("summary_type", "individual")
+
+        if not history_id:
+            return ResponseEnvelope.error(
+                message="history_id is required"
+            )
+
+        # Fetch the specific history entry (no tenant filter for summary access)
+        entry = session.get(QueryHistory, history_id)
+
+        if not entry:
+            return ResponseEnvelope.error(
+                message="History entry not found"
+            )
+
+        # Extract title from question
+        title = request_data.get("title")
+        if not title:
+            question_text = entry.question or ""
+            title = question_text[:50] + "..." if len(question_text) > 50 else question_text
+
+        # Get mode from metadata_info
+        mode = "unknown"
+        if entry.metadata_info:
+            mode = entry.metadata_info.get("mode", "unknown")
+
+        # Parse response to extract summary and blocks
+        summary = ""
+        blocks = []
+        references = []
+
+        if entry.response:
+            response = entry.response if isinstance(entry.response, dict) else {}
+            summary = response.get("summary", "")
+            blocks = response.get("blocks", [])
+
+            # Extract references if available
+            meta = response.get("meta", {})
+            if isinstance(meta, dict):
+                refs = meta.get("references", [])
+                if refs:
+                    references = refs
+
+        # Build Q&A entry
+        qa = {
+            "question": entry.question or "",
+            "timestamp": entry.created_at.isoformat() if entry.created_at else None,
+            "mode": mode,
+            "summary": summary,
+            "blocks": blocks,
+        }
+
+        if references:
+            qa["references"] = references
+
+        summary_data = {
+            "title": title,
+            "topic": request_data.get("topic", "OPS 분석"),
+            "date": entry.created_at.strftime("%Y-%m-%d") if entry.created_at else "",
+            "created_at": datetime.now().isoformat(),
+            "question_count": 1,
+            "summary_type": summary_type,
+            "questions_and_answers": [qa],
+        }
+
+        # If overall summary requested, generate it
+        if summary_type == "overall":
+            summary_data["overall_summary"] = _generate_overall_summary([qa])
+
+        return ResponseEnvelope.success(data=summary_data)
+
+    except Exception as e:
+        logger.error(f"Failed to get conversation summary: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=str(e))
+
+
+@router.post("/conversation/export/pdf", response_model=ResponseEnvelope)
+def conversation_export_pdf(
+    request_data: dict,
+    session: Session = Depends(get_session),
+) -> ResponseEnvelope:
+    """Export conversation as PDF report.
+
+    Generates a professional PDF report from the conversation history.
+
+    Args:
+        request_data: Dictionary containing:
+            - history_id: The history entry ID to export
+            - title: Optional report title
+            - topic: Optional report topic
+            - summary_type: "individual" or "overall"
+        session: Database session dependency
+
+    Returns:
+        ResponseEnvelope with PDF content (base64 encoded) and metadata
+    """
+    import base64
+    from datetime import datetime
+
+    from .services.report_service import pdf_report_service
+
+    try:
+        history_id = request_data.get("history_id")
+        title = request_data.get("title")
+        topic = request_data.get("topic", "OPS 분석")
+        summary_type = request_data.get("summary_type", "individual")
+
+        if not history_id:
+            return ResponseEnvelope.error(
+                message="history_id is required"
+            )
+
+        # Fetch the specific history entry (no tenant filter for export access)
+        entry = session.get(QueryHistory, history_id)
+
+        if not entry:
+            return ResponseEnvelope.error(
+                message="History entry not found"
+            )
+
+        if not title:
+            question_text = entry.question or ""
+            title = question_text[:40] + "..." if len(question_text) > 40 else question_text
+
+        # Get mode from metadata_info
+        mode = "unknown"
+        if entry.metadata_info:
+            mode = entry.metadata_info.get("mode", "unknown")
+
+        # Parse response to extract summary and blocks
+        summary = ""
+        blocks = []
+        references = []
+
+        if entry.response:
+            response = entry.response if isinstance(entry.response, dict) else {}
+            summary = response.get("summary", "")
+            blocks = response.get("blocks", [])
+
+            # Extract references if available
+            meta = response.get("meta", {})
+            if isinstance(meta, dict):
+                refs = meta.get("references", [])
+                if refs:
+                    references = refs
+
+        # Build Q&A entry for PDF
+        qa = {
+            "question": entry.question or "",
+            "timestamp": entry.created_at.strftime("%Y-%m-%d %H:%M:%S") if entry.created_at else "",
+            "mode": mode,
+            "summary": summary,
+            "blocks": blocks,
+        }
+
+        if references:
+            qa["references"] = references
+
+        conversation_data = {
+            "title": title,
+            "topic": topic,
+            "date": entry.created_at.strftime("%Y-%m-%d") if entry.created_at else datetime.now().strftime("%Y-%m-%d"),
+            "questions_and_answers": [qa],
+        }
+
+        # Add overall summary if requested
+        if summary_type == "overall":
+            from .routes.query import _generate_overall_summary
+            conversation_data["overall_summary"] = _generate_overall_summary([qa])
+
+        # Generate PDF
+        pdf_content = pdf_report_service.generate_conversation_report(conversation_data)
+
+        # Encode to base64 for JSON response
+        pdf_base64 = base64.b64encode(pdf_content).decode("utf-8")
+
+        # Generate filename
+        filename = f"ops_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+        return ResponseEnvelope.success(
+            data={
+                "filename": filename,
+                "content": pdf_base64,
+                "content_type": "application/pdf",
+                "size": len(pdf_content),
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to export conversation PDF: {e}", exc_info=True)
+        return ResponseEnvelope.error(message=str(e))
 
 
 @router.get("/summary/stats", response_model=ResponseEnvelope)
@@ -354,11 +577,14 @@ def rca_analyze_regression(
 # --- CI OPS (Ask CI) ---
 
 
-def _tenant_id(x_tenant_id: str | None = Header(None, alias="X-Tenant-Id")) -> str:
-    # Use default tenant_id if not provided in header
-    if not x_tenant_id:
-        x_tenant_id = "default"
-    return x_tenant_id
+def _tenant_id(
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> str:
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    return tenant_id
 
 
 def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
@@ -448,6 +674,7 @@ def ask_ops(
     payload: CiAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
+    current_user: TbUser = Depends(get_current_user),
 ):
     start = time.perf_counter()
     status = "ok"
@@ -462,7 +689,10 @@ def ask_ops(
             patch_keys = list(payload.rerun.patch.dict(exclude_none=True).keys())
 
     # 요청 받을 때 history 생성 (상태: processing)
-    user_id = request.headers.get("X-User-Id", "default")
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    user_id = str(current_user.id)
     history_entry = QueryHistory(
         tenant_id=tenant_id,
         user_id=user_id,
@@ -1594,7 +1824,8 @@ async def ui_editor_collab_websocket(websocket: WebSocket) -> None:
 @router.post("/ui-actions", response_model=ResponseEnvelope)
 async def execute_ui_action(
     payload: UIActionRequest,
-    x_tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
+    tenant_id: str = Depends(get_current_tenant),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     """
     Execute deterministic UI action based on action_id.
@@ -1621,6 +1852,9 @@ async def execute_ui_action(
     action_span = start_span(f"ui_action:{payload.action_id}", "ui_action")
 
     try:
+        if get_settings().enable_auth and current_user.tenant_id != tenant_id:
+            raise HTTPException(status_code=403, detail="Tenant mismatch")
+
         # Validate OPS_MODE (no mock in real mode)
         mode = payload.context.get("mode", "real")
         if mode == "mock" and settings.OPS_MODE == "real":
@@ -2484,7 +2718,8 @@ def execute_action(
 @router.post("/stage-test", response_model=ResponseEnvelope)
 async def execute_isolated_stage_test(
     payload: IsolatedStageTestRequest,
-    x_tenant_id: str | None = Header(None, alias="X-Tenant-Id"),
+    tenant_id: str = Depends(get_current_tenant),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     """
     Execute a single stage in isolation for testing and validation.
@@ -2503,13 +2738,8 @@ async def execute_isolated_stage_test(
     get_settings()
 
     # Setup
-    if not x_tenant_id:
-        from fastapi import HTTPException
-        raise HTTPException(
-            status_code=400,
-            detail="X-Tenant-Id header is required"
-        )
-    tenant_id = x_tenant_id
+    if get_settings().enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
     trace_id = str(uuid.uuid4())
 
     # Validate stage
@@ -2780,9 +3010,6 @@ async def tool_discovery_webhook(
         # Get discovery instance
         from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
         discovery = get_runtime_discovery()
-
-        # Use header secret if provided, otherwise use configured secret
-        webhook_secret = x_webhook_secret or discovery.webhook_secret
 
         # Process webhook
         success = await discovery.handle_webhook(

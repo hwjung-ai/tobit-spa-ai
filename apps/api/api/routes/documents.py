@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
-from typing import AsyncGenerator, Tuple
+from typing import AsyncGenerator
 
+from app.modules.auth.models import TbUser
+from core.auth import get_current_user
 from core.config import AppSettings, get_settings
 from core.db import Session, get_session
+from core.tenant import get_current_tenant
 from fastapi import (
     APIRouter,
     Depends,
@@ -35,9 +38,17 @@ from sqlalchemy import delete, func, select
 from sse_starlette.sse import EventSourceResponse
 from workers.queue import enqueue_parse_document
 
-from api.routes.chat import _resolve_identity  # reuse identity resolver
-
 router = APIRouter(prefix="/api/documents", tags=["documents"])
+
+
+def _resolve_identity(
+    current_user: TbUser = Depends(get_current_user),
+    tenant_id: str = Depends(get_current_tenant),
+) -> tuple[str, str]:
+    settings = get_settings()
+    if settings.enable_auth and current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant mismatch")
+    return tenant_id, str(current_user.id)
 
 
 def _document_payload(document: Document) -> DocumentItem:
@@ -62,7 +73,7 @@ def _json_default(value):
 async def upload_document(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
     settings: AppSettings = Depends(get_settings),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
@@ -94,11 +105,13 @@ async def list_documents(
     tenant_filter: str | None = Query(None, alias="tenant_id"),
     user_filter: str | None = Query(None, alias="user_id"),
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
     tenant = tenant_filter or tenant_id
     user = user_filter or user_id
+    if tenant != tenant_id or user != user_id:
+        raise HTTPException(status_code=403, detail="Document access denied")
 
     try:
         statement = (
@@ -123,7 +136,7 @@ async def list_documents(
 def get_document(
     document_id: str,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
     document = session.get(Document, document_id)
@@ -146,7 +159,7 @@ def get_document(
 def delete_document(
     document_id: str,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
     settings: AppSettings = Depends(get_settings),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
@@ -168,7 +181,7 @@ def delete_document(
 def document_viewer(
     document_id: str,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
     settings: AppSettings = Depends(get_settings),
 ) -> FileResponse:
     tenant_id, user_id = identity
@@ -195,7 +208,7 @@ def chunk_detail(
     document_id: str,
     chunk_id: str,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
 ) -> ResponseEnvelope:
     tenant_id, user_id = identity
     document = session.get(Document, document_id)
@@ -221,7 +234,7 @@ async def query_document_stream(
     document_id: str,
     request: DocumentQueryRequest,
     session: Session = Depends(get_session),
-    identity: Tuple[str, str] = Depends(_resolve_identity),
+    identity: tuple[str, str] = Depends(_resolve_identity),
     settings: AppSettings = Depends(get_settings),
 ) -> EventSourceResponse:
     tenant_id, user_id = identity

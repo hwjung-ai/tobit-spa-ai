@@ -491,20 +491,32 @@
 | 카테고리 | 설정 예시 | restart_required |
 |---------|----------|-----------------|
 | **Database** | connection_string, pool_size | Yes |
-| **LLM** | api_key, model, temperature | No |
+| **LLM** | provider, base_url, default/fallback_model, timeout/retry | Mixed |
 | **Cache** | redis_url, ttl | Yes |
 | **Security** | jwt_secret, encryption_key | Yes |
 | **Observability** | log_level, metrics_enabled | No |
 
 ### Step 3. 설정 변경 (No Restart)
 
-1. **LLM** 카테고리 확장
-2. **model** 변경 (예: `gpt-4` → `gpt-4-turbo`)
+1. **LLM** 탭 선택
+2. `llm_timeout_seconds` 변경 (예: `120` → `90`)
 3. **"Save"** 클릭
 
 검증 포인트:
 - **restart_required**: `false`로 표시
 - 즉시 적용된다.
+
+### Step 3-1. LLM Provider 전환 (Restart Required)
+
+1. **LLM** 탭 선택
+2. `llm_provider`를 `openai` 또는 `internal`로 변경
+3. 내부 LLM 사용 시 `llm_base_url`, `llm_default_model`을 함께 설정
+4. **"Save"** 클릭
+
+검증 포인트:
+- `llm_provider`, `llm_base_url`, `llm_default_model`, `llm_fallback_model`은 `restart_required=true`
+- 서비스 재시작 이후 새 provider/model이 반영된다.
+- `openai` provider는 `OPENAI_API_KEY`가 필요하고, `internal` provider는 OpenAI-compatible base URL이 필요하다.
 
 ### Step 4. 설정 변경 (Restart Required)
 

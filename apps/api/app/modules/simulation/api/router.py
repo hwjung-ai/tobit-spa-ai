@@ -225,6 +225,4 @@ def get_simulation_services(
         raise HTTPException(status_code=403, detail="Tenant mismatch")
 
     services = list_available_services(tenant_id=tenant_id)
-    if not services:
-        raise HTTPException(status_code=404, detail="No simulation services found in topology data")
     return ResponseEnvelope.success(data={"services": services})

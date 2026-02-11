@@ -15,7 +15,7 @@ def _derive_kpis(topology: Any) -> dict[str, float]:
     nodes = topology.nodes if topology else []
     links = topology.links if topology else []
     if not nodes:
-        raise HTTPException(status_code=404, detail="No nodes found for simulation baseline")
+        raise HTTPException(status_code=404, detail="No topology nodes found for KPI derivation. Ensure Neo4j has topology data.")
 
     avg_load = _safe_mean([float(n.get("simulated_load", 0.0)) for n in nodes])
     traffic_links = [float(link.get("simulated_traffic", 0.0)) for link in links if link.get("type") == "traffic"]

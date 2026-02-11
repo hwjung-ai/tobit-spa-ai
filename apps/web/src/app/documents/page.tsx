@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { authenticatedFetch } from "@/lib/apiClient/index";
+import { authenticatedFetch, getAuthHeaders } from "@/lib/apiClient/index";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -534,9 +534,6 @@ export default function DocumentsPage() {
     let accumulatedAnswer = "";
 
     try {
-      const token = localStorage.getItem("access_token");
-      const tenantId = localStorage.getItem("tenant_id");
-      const userId = localStorage.getItem("user_id");
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
       const url = baseUrl
         ? `${baseUrl.replace(/\/+$/, "")}/api/documents/${selectedDocument.id}/query/stream`
@@ -546,9 +543,7 @@ export default function DocumentsPage() {
         headers: {
           Accept: "text/event-stream",
           "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-          ...(tenantId && { "X-Tenant-Id": tenantId }),
-          ...(userId && { "X-User-Id": userId }),
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ query: queryValue.trim(), top_k: topK }),
         signal: controller.signal,
@@ -707,15 +702,12 @@ export default function DocumentsPage() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const token = localStorage.getItem("access_token");
       const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
       const url = baseUrl ? `${baseUrl.replace(/\/+$/, "")}/api/documents/upload` : "/api/documents/upload";
       const response = await fetch(url, {
         method: "POST",
         body: formData,
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
+        headers: getAuthHeaders(),
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -1002,16 +994,10 @@ export default function DocumentsPage() {
                           type="button"
                           onClick={async () => {
                             try {
-                              // Use authenticated fetch with headers
-                              const response = await fetch(href, {
-                                headers: {
-                                  'X-Tenant-Id': window.localStorage.getItem('tenant_id') || 'default',
-                                  'X-User-Id': window.localStorage.getItem('user_id') || 'default',
-                                },
-                              });
-                              if (!response.ok) {
-                                throw new Error(`HTTP ${response.status}`);
-                              }
+                              // Use fetchWithAuth for authenticated PDF fetch
+                              const { fetchWithAuth } = await import("@/lib/apiClient");
+                              const response = await fetchWithAuth(href);
+
                               const blob = await response.blob();
                               const blobUrl = URL.createObjectURL(blob);
                               const newWindow = window.open(blobUrl, '_blank');
@@ -1021,8 +1007,6 @@ export default function DocumentsPage() {
                               setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
                             } catch (error) {
                               console.error('Failed to open document:', error);
-                              // Fallback: try opening directly
-                              window.open(href, '_blank');
                             }
                           }}
                           className={containerClass}
@@ -1134,15 +1118,8 @@ export default function DocumentsPage() {
                                 type="button"
                                 onClick={async () => {
                                   try {
-                                    const response = await fetch(viewerUrl, {
-                                      headers: {
-                                        'X-Tenant-Id': window.localStorage.getItem('tenant_id') || 'default',
-                                        'X-User-Id': window.localStorage.getItem('user_id') || 'default',
-                                      },
-                                    });
-                                    if (!response.ok) {
-                                      throw new Error(`HTTP ${response.status}`);
-                                    }
+                                    const { fetchWithAuth } = await import('@/lib/apiClient');
+                                    const response = await fetchWithAuth(viewerUrl);
                                     const blob = await response.blob();
                                     const blobUrl = URL.createObjectURL(blob);
                                     const newWindow = window.open(blobUrl, '_blank');

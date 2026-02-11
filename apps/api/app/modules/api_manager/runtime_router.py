@@ -35,6 +35,24 @@ _last_cleanup = time.monotonic()
 _CLEANUP_INTERVAL = 300  # prune stale entries every 5 min
 
 
+def _unwrap_api_definition(result: Any) -> ApiDefinition | None:
+    if isinstance(result, ApiDefinition):
+        return result
+    mapping = getattr(result, "_mapping", None)
+    if mapping is not None:
+        direct = mapping.get(ApiDefinition)
+        if isinstance(direct, ApiDefinition):
+            return direct
+        for value in mapping.values():
+            if isinstance(value, ApiDefinition):
+                return value
+    if isinstance(result, (tuple, list)) and result:
+        first = result[0]
+        if isinstance(first, ApiDefinition):
+            return first
+    return None
+
+
 def _check_rate_limit(client_ip: str) -> None:
     global _last_cleanup
     now = time.monotonic()
@@ -238,20 +256,33 @@ def _find_runtime_api(
         .where(ApiDefinition.is_enabled)
         .limit(1)
     )
-    api = session.exec(statement).scalars().first()
+    first_row = session.exec(statement).first()
+    api = _unwrap_api_definition(first_row)
+    if api is None:
+        mapping = getattr(first_row, "_mapping", None)
+        if mapping is not None and "id" in mapping:
+            try:
+                api = session.get(ApiDefinition, mapping["id"])
+            except Exception:
+                api = None
     if api:
         return api
-    return (
-        session.exec(
-            select(ApiDefinition)
-            .where(ApiDefinition.path == cleaned.rstrip("/"))
-            .where(ApiDefinition.method == method)
-            .where(ApiDefinition.is_enabled)
-            .limit(1)
-        )
-        .scalars()
-        .first()
-    )
+    second_row = session.exec(
+        select(ApiDefinition)
+        .where(ApiDefinition.path == cleaned.rstrip("/"))
+        .where(ApiDefinition.method == method)
+        .where(ApiDefinition.is_enabled)
+        .limit(1)
+    ).first()
+    api = _unwrap_api_definition(second_row)
+    if api is None:
+        mapping = getattr(second_row, "_mapping", None)
+        if mapping is not None and "id" in mapping:
+            try:
+                api = session.get(ApiDefinition, mapping["id"])
+            except Exception:
+                api = None
+    return api
 
 
 def _normalize_endpoint(endpoint: str) -> str:

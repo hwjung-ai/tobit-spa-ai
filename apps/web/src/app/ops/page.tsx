@@ -24,6 +24,7 @@ import Toast from "@/components/admin/Toast";
 import ConversationSummaryModal from "@/components/ops/ConversationSummaryModal";
 import InspectorStagePipeline from "@/components/ops/InspectorStagePipeline";
 import ReplanTimeline, { type ReplanEvent } from "@/components/ops/ReplanTimeline";
+import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 import { type OpsHistoryEntry } from "@/components/ops/types/opsTypes";
 import {
   type BackendMode,
@@ -68,6 +69,13 @@ export default function OpsPage() {
   const [summaryData, setSummaryData] = useState<any>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
+  const [summaryType, setSummaryType] = useState<"individual" | "overall">("individual");
+
+  // PDF viewer modal state
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string>("document.pdf");
+
   const router = useRouter();
 
   const currentModeDefinition = UI_MODES.find((item) => item.id === uiMode) ?? UI_MODES[0];
@@ -361,14 +369,17 @@ export default function OpsPage() {
     try {
       // Use the first (latest) entry's thread_id to get the full conversation
       const latestEntry = history[0];
-      const threadId = latestEntry.threadId;
+      const threadId = latestEntry.thread_id;
+      const historyId = latestEntry.id;
 
       const response = await authenticatedFetch<any>("/ops/conversation/summary", {
         method: "POST",
         body: JSON.stringify({
-          thread_id: threadId,
+          ...(threadId ? { thread_id: threadId } : {}),
+          ...(threadId ? {} : { history_id: historyId }),
           title: latestEntry.question.substring(0, 50),
           topic: "OPS 분석",
+          summary_type: summaryType,  // "individual" or "overall"
         }),
       });
 
@@ -382,7 +393,7 @@ export default function OpsPage() {
     } finally {
       setSummaryLoading(false);
     }
-  }, [history]);
+  }, [history, summaryType]);
 
   // Export conversation as PDF
   const exportConversationPdf = useCallback(async () => {
@@ -394,14 +405,17 @@ export default function OpsPage() {
     setPdfExporting(true);
     try {
       const latestEntry = history[0];
-      const threadId = latestEntry.threadId;
+      const threadId = latestEntry.thread_id;
+      const historyId = latestEntry.id;
 
       const response = await authenticatedFetch<any>("/ops/conversation/export/pdf", {
         method: "POST",
         body: JSON.stringify({
-          thread_id: threadId,
+          ...(threadId ? { thread_id: threadId } : {}),
+          ...(threadId ? {} : { history_id: historyId }),
           title: latestEntry.question.substring(0, 40),
           topic: "OPS 분석",
+          summary_type: summaryType,  // "individual" or "overall"
         }),
       });
 
@@ -415,26 +429,29 @@ export default function OpsPage() {
           bytes[i] = binaryString.charCodeAt(i);
         }
 
-        // Create blob and download
+        // Create blob and show in viewer modal
         const blob = new Blob([bytes], { type: content_type });
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        setStatusMessage("PDF 리포트가 다운로드되었습니다.");
+        setPdfBlobUrl(url);
+        setPdfFilename(filename);
+        setPdfViewerOpen(true);
       }
     } catch (error) {
       console.error("Failed to export PDF:", error);
-      setStatusMessage("PDF 내보내기에 실패했습니다.");
+      setStatusMessage("PDF 생성에 실패했습니다.");
     } finally {
       setPdfExporting(false);
     }
-  }, [history]);
+  }, [history, summaryType]);
+
+  // Cleanup PDF blob URL when modal closes
+  const handleClosePdfViewer = useCallback(() => {
+    if (pdfBlobUrl) {
+      URL.revokeObjectURL(pdfBlobUrl);
+    }
+    setPdfViewerOpen(false);
+    setPdfBlobUrl(null);
+  }, [pdfBlobUrl]);
 
   const handleNextAction = useCallback(
     async (action: NextAction) => {
@@ -576,12 +593,64 @@ export default function OpsPage() {
 
           {/* Content */}
           <div className="max-h-[60vh] overflow-y-auto px-6 py-4 custom-scrollbar">
+            {/* Summary Type Selector */}
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/60 p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-slate-400">요약 방식:</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setSummaryType("individual");
+                      // Refetch data when summary type changes
+                      setTimeout(() => fetchConversationSummary(), 100);
+                    }}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
+                      summaryType === "individual"
+                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/50"
+                        : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                    }`}
+                  >
+                    개별 요약
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSummaryType("overall");
+                      // Refetch data when summary type changes
+                      setTimeout(() => fetchConversationSummary(), 100);
+                    }}
+                    className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
+                      summaryType === "overall"
+                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/50"
+                        : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                    }`}
+                  >
+                    전체 요약
+                  </button>
+                </div>
+              </div>
+              {summaryData?.summary_type && (
+                <span className="text-[10px] text-slate-500">
+                  {summaryData.summary_type === "individual" ? "개별" : "전체"}
+                </span>
+              )}
+            </div>
+
             {summaryLoading ? (
               <div className="flex items-center justify-center py-12">
                 <span className="animate-spin text-2xl">⏳</span>
               </div>
             ) : summaryData ? (
               <>
+                {/* Overall Summary Section (if available) */}
+                {summaryData.overall_summary && (
+                  <div className="mb-4 rounded-2xl border border-sky-700/50 bg-sky-950/30 p-4">
+                    <h3 className="mb-2 text-sm font-semibold text-sky-300">📝 전체 요약</h3>
+                    <pre className="whitespace-pre-wrap text-xs text-slate-300 font-sans">
+                      {summaryData.overall_summary}
+                    </pre>
+                  </div>
+                )}
+
                 {/* Metadata */}
                 <div className="mb-4 rounded-2xl border border-slate-700 bg-slate-950/60 p-4">
                   <div className="grid grid-cols-2 gap-3 text-sm">
@@ -978,8 +1047,15 @@ export default function OpsPage() {
     <ConversationSummaryModal
       isOpen={summaryModalOpen}
       onClose={() => setSummaryModalOpen(false)}
-      threadId={selectedEntry?.threadId ?? null}
+      threadId={selectedEntry?.thread_id ?? null}
       historyId={selectedEntry?.id ?? null}
+    />
+
+    <PdfViewerModal
+      isOpen={pdfViewerOpen}
+      onClose={handleClosePdfViewer}
+      pdfBlobUrl={pdfBlobUrl}
+      filename={pdfFilename}
     />
     </>
   );

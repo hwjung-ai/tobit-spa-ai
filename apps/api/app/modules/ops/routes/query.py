@@ -11,8 +11,9 @@ Endpoints:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
+from core.auth import get_current_user
 from core.db import get_session, get_session_context
 from core.logging import get_logger, set_request_context
 from fastapi import APIRouter, Depends, Request
@@ -21,6 +22,7 @@ from models.history import QueryHistory
 from schemas import ResponseEnvelope
 from sqlmodel import Session
 
+from app.modules.auth.models import TbUser
 from app.modules.ops.schemas import OpsQueryRequest
 from app.modules.ops.security import SecurityUtils
 from app.modules.ops.services import handle_ops_query
@@ -39,6 +41,7 @@ def query_ops(
     payload: OpsQueryRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
+    current_user: TbUser = Depends(get_current_user),
 ) -> ResponseEnvelope:
     """Process OPS query with specified mode.
 
@@ -53,11 +56,9 @@ def query_ops(
     Returns:
         ResponseEnvelope with query answer and trace data
 
-    Raises:
-        HTTPException: If X-Tenant-Id header is missing
     """
     # 요청 받을 때 history 생성 (상태: processing)
-    user_id = request.headers.get("X-User-Id", "default")
+    user_id = str(current_user.id)
 
     # Set request context for tenant_id to be available throughout the request
     request_id = str(uuid.uuid4())
@@ -200,6 +201,7 @@ def get_conversation_summary(
         request_data: Dictionary containing:
             - history_id: Optional specific history entry ID
             - thread_id: Optional thread ID to get full conversation
+            - summary_type: "individual" (개별 요약) or "overall" (전체 요약)
         session: Database session dependency
 
     Returns:
@@ -208,6 +210,7 @@ def get_conversation_summary(
     try:
         history_id = request_data.get("history_id")
         thread_id = request_data.get("thread_id")
+        summary_type = request_data.get("summary_type", "individual")  # individual | overall
 
         if not history_id and not thread_id:
             return ResponseEnvelope.error(
@@ -272,14 +275,55 @@ def get_conversation_summary(
             "date": first_entry.created_at.strftime("%Y-%m-%d") if first_entry.created_at else "",
             "created_at": datetime.now().isoformat(),
             "question_count": len(entries),
+            "summary_type": summary_type,
             "questions_and_answers": questions_and_answers,
         }
+
+        # If overall summary requested, generate it
+        if summary_type == "overall":
+            overall_summary = _generate_overall_summary(questions_and_answers)
+            summary_data["overall_summary"] = overall_summary
 
         return ResponseEnvelope.success(data=summary_data)
 
     except Exception as e:
         logger.error(f"Failed to get conversation summary: {e}", exc_info=True)
         return ResponseEnvelope.error(message=str(e))
+
+
+def _generate_overall_summary(questions_and_answers: list) -> str:
+    """Generate overall summary from Q&A list.
+
+    Creates a concise summary of the entire conversation.
+    """
+    if not questions_and_answers:
+        return "대화 내용이 없습니다."
+
+    # Extract key points from each Q&A
+    key_points = []
+
+    for qa in questions_and_answers:
+        if qa.get("summary"):
+            key_points.append(qa["summary"])
+        elif qa.get("question"):
+            key_points.append(f"질문: {qa['question']}")
+
+    if not key_points:
+        return f"{len(questions_and_answers)}개의 질문이 있으나 요약 내용이 없습니다."
+
+    # Create overall summary
+    overall = f"""전체 대화 요약 ({len(questions_and_answers)}개의 질문)
+
+주요 내용:
+"""
+
+    for i, point in enumerate(key_points[:5], 1):
+        overall += f"{i}. {point}\n"
+
+    if len(key_points) > 5:
+        overall += f"\n... 그 외 {len(key_points) - 5}개의 질문이 있습니다."
+
+    return overall
 
 
 @router.post("/conversation/export/pdf")
@@ -298,6 +342,7 @@ def export_conversation_pdf(
             - thread_id: Optional thread ID to get full conversation
             - title: Optional report title
             - topic: Optional report topic
+            - summary_type: "individual" (개별 요약) or "overall" (전체 요약)
         session: Database session dependency
 
     Returns:
@@ -311,6 +356,7 @@ def export_conversation_pdf(
         thread_id = request_data.get("thread_id")
         title = request_data.get("title")
         topic = request_data.get("topic", "OPS 분석")
+        summary_type = request_data.get("summary_type", "individual")
 
         if not history_id and not thread_id:
             return ResponseEnvelope.error(
@@ -373,6 +419,10 @@ def export_conversation_pdf(
             "date": first_entry.created_at.strftime("%Y-%m-%d") if first_entry.created_at else datetime.now().strftime("%Y-%m-%d"),
             "questions_and_answers": questions_and_answers,
         }
+
+        # Add overall summary if requested
+        if summary_type == "overall":
+            conversation_data["overall_summary"] = _generate_overall_summary(questions_and_answers)
 
         # Generate PDF
         pdf_content = pdf_report_service.generate_conversation_report(conversation_data)

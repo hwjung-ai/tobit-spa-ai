@@ -108,6 +108,69 @@ class OperationSettingsService:
             "restart_required": True,
             "description": "Enable CEP scheduler",
         },
+        "llm_provider": {
+            "type": str,
+            "default": "openai",
+            "allowed_values": ["openai", "internal"],
+            "restart_required": True,
+            "description": "Primary LLM provider",
+        },
+        "llm_base_url": {
+            "type": str,
+            "default": "",
+            "restart_required": True,
+            "description": "Base URL for internal/OpenAI-compatible LLM endpoint",
+        },
+        "llm_default_model": {
+            "type": str,
+            "default": "gpt-5-nano",
+            "restart_required": True,
+            "description": "Default chat model used by LLM gateway",
+        },
+        "llm_fallback_model": {
+            "type": str,
+            "default": "",
+            "restart_required": True,
+            "description": "Fallback model when primary model call fails",
+        },
+        "llm_timeout_seconds": {
+            "type": int,
+            "default": 120,
+            "restart_required": False,
+            "description": "LLM request timeout in seconds",
+        },
+        "llm_max_retries": {
+            "type": int,
+            "default": 2,
+            "restart_required": False,
+            "description": "Maximum retries for transient LLM failures",
+        },
+        "llm_enable_fallback": {
+            "type": bool,
+            "default": True,
+            "restart_required": False,
+            "description": "Enable automatic fallback model routing",
+        },
+        "llm_routing_policy": {
+            "type": str,
+            "default": "default",
+            "allowed_values": ["default", "latency", "cost", "quality"],
+            "restart_required": False,
+            "description": "Routing policy profile for model selection",
+        },
+        "api_auth_default_mode": {
+            "type": str,
+            "default": "jwt_only",
+            "allowed_values": ["jwt_only", "jwt_or_api_key", "api_key_only"],
+            "restart_required": False,
+            "description": "Default auth mode for runtime APIs when API-level mode is not set",
+        },
+        "api_auth_enforce_scopes": {
+            "type": bool,
+            "default": True,
+            "restart_required": False,
+            "description": "When true, API key scopes must satisfy runtime API required scopes",
+        },
     }
 
     @staticmethod
@@ -147,6 +210,17 @@ class OperationSettingsService:
             "cep_metric_poll_concurrency": current_app_settings.cep_metric_poll_concurrency,
             "cep_enable_notifications": current_app_settings.cep_enable_notifications,
             "cep_enable_cep_scheduler": current_app_settings.ops_enable_cep_scheduler,
+            "llm_provider": current_app_settings.llm_provider,
+            "llm_base_url": current_app_settings.llm_base_url or "",
+            "llm_default_model": current_app_settings.llm_default_model
+            or current_app_settings.chat_model,
+            "llm_fallback_model": current_app_settings.llm_fallback_model or "",
+            "llm_timeout_seconds": current_app_settings.llm_timeout_seconds,
+            "llm_max_retries": current_app_settings.llm_max_retries,
+            "llm_enable_fallback": current_app_settings.llm_enable_fallback,
+            "llm_routing_policy": current_app_settings.llm_routing_policy,
+            "api_auth_default_mode": current_app_settings.api_auth_default_mode,
+            "api_auth_enforce_scopes": current_app_settings.api_auth_enforce_scopes,
         }
 
         for (
@@ -201,6 +275,17 @@ class OperationSettingsService:
             "cep_metric_poll_concurrency": current_app_settings.cep_metric_poll_concurrency,
             "cep_enable_notifications": current_app_settings.cep_enable_notifications,
             "cep_enable_cep_scheduler": current_app_settings.ops_enable_cep_scheduler,
+            "llm_provider": current_app_settings.llm_provider,
+            "llm_base_url": current_app_settings.llm_base_url or "",
+            "llm_default_model": current_app_settings.llm_default_model
+            or current_app_settings.chat_model,
+            "llm_fallback_model": current_app_settings.llm_fallback_model or "",
+            "llm_timeout_seconds": current_app_settings.llm_timeout_seconds,
+            "llm_max_retries": current_app_settings.llm_max_retries,
+            "llm_enable_fallback": current_app_settings.llm_enable_fallback,
+            "llm_routing_policy": current_app_settings.llm_routing_policy,
+            "api_auth_default_mode": current_app_settings.api_auth_default_mode,
+            "api_auth_enforce_scopes": current_app_settings.api_auth_enforce_scopes,
         }
 
         env_value = env_values.get(setting_key)
