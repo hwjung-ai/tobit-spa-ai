@@ -1,3 +1,0 @@
-Requirement already satisfied: reportlab in ./.venv/lib/python3.12/site-packages (4.4.9)
-Requirement already satisfied: pillow>=9.0.0 in ./.venv/lib/python3.12/site-packages (from reportlab) (12.1.0)
-Requirement already satisfied: charset-normalizer in ./.venv/lib/python3.12/site-packages (from reportlab) (3.4.4)

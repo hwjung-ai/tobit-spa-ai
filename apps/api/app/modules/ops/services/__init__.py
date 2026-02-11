@@ -402,19 +402,16 @@ def _build_data_blocks_from_results(
                 url = None
                 if document_id:
                     # Create viewer URL with chunk ID for highlighting
-                    url = f"/documents/{document_id}/viewer"
+                    # Use /api/documents/... path for actual file serving
+                    url = f"/api/documents/{document_id}/viewer"
                     params = []
                     if chunk_id:
                         params.append(f"chunkId={chunk_id}")
                     if page_number:
                         params.append(f"page={page_number}")
 
-                    # Add references to sessionStorage for tracking
-                    if chunk_id:
-                        from fastapi import Request
-                        # Note: We'll need to handle this differently since we're not in a request context
-                        # For now, just create the URL
-                        url += f"?chunkId={chunk_id}" if not params else f"?{'&'.join(params)}"
+                    if params:
+                        url += f"?{'&'.join(params)}"
 
                 reference_items.append({
                     "title": doc_name,

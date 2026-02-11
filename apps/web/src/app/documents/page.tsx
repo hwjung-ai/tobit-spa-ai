@@ -688,15 +688,11 @@ export default function DocumentsPage() {
       if (reference.page != null) {
         params.set("page", reference.page.toString());
       }
-      // Add references to URL parameters
-      if (references.length > 0) {
-        params.set("references", encodeURIComponent(JSON.stringify(references)));
-      }
       const query = params.toString();
-      // Use absolute path with leading slash to avoid rewrite issues
-      return `/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
+      // Use /api/documents/... for PDF file serving (opens in new tab)
+      return `/api/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
     },
-    [selectedDocument, references]
+    [selectedDocument]
   );
 
   const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
@@ -1001,9 +997,15 @@ export default function DocumentsPage() {
                         </>
                       );
                       return href ? (
-                        <Link key={`${reference.document_id}-${reference.chunk_id}`} href={href} className={containerClass}>
+                        <a
+                          key={`${reference.document_id}-${reference.chunk_id}`}
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={containerClass}
+                        >
                           {content}
-                        </Link>
+                        </a>
                       ) : (
                         <div
                           key={`${reference.document_id}-${reference.chunk_id}`}
@@ -1083,15 +1085,45 @@ export default function DocumentsPage() {
                       <div className="mt-3 text-xs text-slate-400">
                         <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">References</p>
                         <div className="mt-2 space-y-2">
-                          {selectedDocHistoryEntry.references.map((reference) => (
-                            <div
-                              key={`${reference.document_id}-${reference.chunk_id}`}
-                              className="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px]"
-                            >
-                              <p className="text-white">{reference.document_title}</p>
-                              <p className="text-slate-400">{reference.snippet}</p>
-                            </div>
-                          ))}
+                          {selectedDocHistoryEntry.references.map((reference) => {
+                            // Build viewer URL
+                            const documentId = reference.document_id ?? selectedDocument?.id;
+                            const viewerUrl = documentId
+                              ? `/api/documents/${documentId}/viewer` +
+                                (reference.chunk_id ? `?chunkId=${reference.chunk_id}` : "")
+                              : null;
+
+                            const content = (
+                              <>
+                                <p className="text-white">{reference.document_title}</p>
+                                <p className="text-slate-400">{reference.snippet}</p>
+                                {reference.page != null ? (
+                                  <p className="mt-1 text-[10px] text-sky-400">
+                                    페이지 {reference.page}
+                                  </p>
+                                ) : null}
+                              </>
+                            );
+
+                            return viewerUrl ? (
+                              <a
+                                key={`${reference.document_id}-${reference.chunk_id}`}
+                                href={viewerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer"
+                              >
+                                {content}
+                              </a>
+                            ) : (
+                              <div
+                                key={`${reference.document_id}-${reference.chunk_id}`}
+                                className="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] opacity-60"
+                              >
+                                {content}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ) : null}

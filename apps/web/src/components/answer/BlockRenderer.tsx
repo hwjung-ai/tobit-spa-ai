@@ -753,26 +753,46 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       </>
                     );
 
-                    // Handle document URLs - use button with router.push for navigation
+                    // Handle document URLs - use <a> tag for external API URLs
                     if (reference.url && reference.kind === "document") {
                       console.log('[Reference] Document URL:', reference.url);
 
-                      const handleClick = () => {
-                        console.log('[Reference] Clicking document, navigating to:', reference.url);
-                        router.push(reference.url);
-                      };
+                      // Check if this is an API URL (starts with /api/documents/)
+                      const isApiUrl = reference.url.startsWith('/api/documents/');
 
-                      return (
-                        <button
-                          key={`${reference.title}-${refIndex}`}
-                          type="button"
-                          onClick={handleClick}
-                          className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
-                          data-testid="reference-item"
-                        >
-                          {cardContent}
-                        </button>
-                      );
+                      if (isApiUrl) {
+                        // API URLs should open in new tab for PDF files
+                        return (
+                          <a
+                            key={`${reference.title}-${refIndex}`}
+                            href={reference.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
+                            data-testid="reference-item"
+                          >
+                            {cardContent}
+                          </a>
+                        );
+                      } else {
+                        // Internal routing URLs (e.g., /documents/...)
+                        const handleClick = () => {
+                          console.log('[Reference] Clicking document, navigating to:', reference.url);
+                          router.push(reference.url);
+                        };
+
+                        return (
+                          <button
+                            key={`${reference.title}-${refIndex}`}
+                            type="button"
+                            onClick={handleClick}
+                            className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
+                            data-testid="reference-item"
+                          >
+                            {cardContent}
+                          </button>
+                        );
+                      }
                     }
 
                     // Use <a> for external URLs
