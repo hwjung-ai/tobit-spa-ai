@@ -4,19 +4,18 @@ LLM Call Log CRUD Operations
 
 from __future__ import annotations
 
-import json
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import func as sql_func
-from sqlmodel import Session, select, col
+from sqlmodel import Session, select
 
 from .models import (
+    LlmCallAnalytics,
     LlmCallLogCreate,
     LlmCallLogRead,
     LlmCallLogSummary,
-    LlmCallAnalytics,
     LlmCallLogUpdate,
     TbLlmCallLog,
 )

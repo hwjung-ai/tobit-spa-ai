@@ -1109,7 +1109,7 @@ export const useEditorState = create<EditorState>((set, get) => ({
       const newStack = [...state.historyStack.slice(0, state.historyIndex + 1), JSON.parse(JSON.stringify(state.screen))].slice(-MAX_HISTORY_SIZE);
 
       const newIds: string[] = [];
-      let newComponents = [...state.screen.components];
+      const newComponents = [...state.screen.components];
       for (const original of state.clipboard) {
         const cloned = deepCloneComponent(original, newComponents);
         newIds.push(cloned.id);

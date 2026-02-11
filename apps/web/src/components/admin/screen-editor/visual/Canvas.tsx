@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import CanvasComponent from "./CanvasComponent";
+import GridCanvas from "./GridCanvas";
 import { Button } from "@/components/ui/button";
 import { PALETTE_DRAG_TYPE } from "./ComponentPalette";
 import { ComponentType } from "@/lib/ui-screen/screen.schema";
@@ -13,6 +14,10 @@ export default function Canvas() {
   const [isDragOver, setIsDragOver] = useState(false);
 
   if (!screen) return null;
+
+  if (screen.layout.type === "dashboard" || screen.layout.type === "grid") {
+    return <GridCanvas />;
+  }
 
   const hasComponents = screen.components.length > 0;
 
@@ -31,7 +36,7 @@ export default function Canvas() {
     }
   };
 
-   const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     const typeData = e.dataTransfer.getData(PALETTE_DRAG_TYPE);
@@ -52,18 +57,16 @@ export default function Canvas() {
 
       {/* Component List */}
       <div
-        className={`flex-1 overflow-y-auto p-3 space-y-2 transition-colors ${
-          isDragOver ? "bg-sky-950/30 ring-2 ring-inset ring-sky-500/50" : ""
-        }`}
+        className={`flex-1 overflow-y-auto p-3 space-y-2 transition-colors ${isDragOver ? "bg-sky-950/30 ring-2 ring-inset ring-sky-500/50" : ""
+          }`}
         data-testid="canvas-list"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         {!hasComponents ? (
-          <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg ${
-            isDragOver ? "border-sky-500 bg-sky-950/20" : "border-slate-700"
-          }`}>
+          <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg ${isDragOver ? "border-sky-500 bg-sky-950/20" : "border-slate-700"
+            }`}>
             <div className="space-y-2 p-6">
               <p className={`text-sm ${isDragOver ? "text-sky-300" : "text-slate-400"}`}>
                 {isDragOver ? "Drop here to add" : "No components yet"}

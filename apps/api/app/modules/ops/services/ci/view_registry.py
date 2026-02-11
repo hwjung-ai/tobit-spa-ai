@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List
 
 from core.logging import get_logger
+
 from app.modules.asset_registry.loader import load_policy_asset
 
 logger = get_logger(__name__)

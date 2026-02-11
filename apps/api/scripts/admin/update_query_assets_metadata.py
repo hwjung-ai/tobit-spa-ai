@@ -8,12 +8,10 @@ to dynamically discover and use queries with their associated Source Assets.
 from __future__ import annotations
 
 import logging
-from uuid import UUID
-
-from core.db import get_session_context
-from sqlmodel import select
 
 from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
+from sqlmodel import select
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +222,7 @@ def update_query_asset_metadata(dry_run: bool = True) -> None:
             session.commit()
 
         logger.info("=" * 60)
-        logger.info(f"Summary:")
+        logger.info("Summary:")
         logger.info(f"  Updated: {updated_count}")
         logger.info(f"  Skipped: {skipped_count}")
         logger.info(f"  Not Found: {not_found_count}")

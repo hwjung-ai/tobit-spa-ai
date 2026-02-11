@@ -2,8 +2,10 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { authenticatedFetch } from "@/lib/apiClient";
+import { fetchApi } from "@/lib/adminUtils";
+import LlmLogsContent from "./llm-logs-content";
 
-type LogType = "query-history" | "execution-trace" | "audit" | "api-file" | "web-file";
+type LogType = "query-history" | "execution-trace" | "audit" | "api-file" | "web-file" | "llm-logs";
 
 interface LogRecord {
     [key: string]: any;
@@ -35,7 +37,7 @@ export default function LogsPage() {
 
         try {
             let endpoint = "";
-            let params = new URLSearchParams({
+            const params = new URLSearchParams({
                 limit: limit.toString(),
                 offset: (page * limit).toString(),
             });
@@ -56,14 +58,19 @@ export default function LogsPage() {
                 case "web-file":
                     endpoint = `/admin/logs/file/web/tail?lines=100`;
                     break;
+                case "llm-logs":
+                    // LLM logs are handled by separate component
+                    break;
             }
 
-            const response = await authenticatedFetch(endpoint);
+            if (logType !== "llm-logs" && endpoint) {
+                const response = await authenticatedFetch(endpoint);
 
-            if (response?.data) {
-                setData(response.data);
-            } else {
-                setError("No data received");
+                if (response?.data) {
+                    setData(response.data);
+                } else {
+                    setError("No data received");
+                }
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to fetch logs");
@@ -73,8 +80,10 @@ export default function LogsPage() {
     }, [logType, page, limit]);
 
     useEffect(() => {
-        fetchLogs();
-    }, [fetchLogs]);
+        if (logType !== "llm-logs") {
+            fetchLogs();
+        }
+    }, [fetchLogs, logType]);
 
     useEffect(() => {
         if (autoRefresh && (logType === "api-file" || logType === "web-file")) {
@@ -163,7 +172,7 @@ export default function LogsPage() {
             <div>
                 <h2 className="text-xl font-semibold text-white mb-2">System Logs</h2>
                 <p className="text-sm text-slate-400">
-                    View system logs including query history, execution traces, audit logs, and server logs.
+                    View system logs including query history, execution traces, audit logs, LLM calls, and server logs.
                 </p>
             </div>
 
@@ -198,6 +207,16 @@ export default function LogsPage() {
                     }`}
                 >
                     Audit Log
+                </button>
+                <button
+                    onClick={() => { setLogType("llm-logs"); setPage(0); }}
+                    className={`px-4 py-2 rounded text-xs font-semibold transition ${
+                        logType === "llm-logs"
+                            ? "bg-purple-500 text-white"
+                            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                    }`}
+                >
+                    LLM Calls
                 </button>
                 <button
                     onClick={() => { setLogType("api-file"); setPage(0); }}
@@ -237,62 +256,69 @@ export default function LogsPage() {
                 </div>
             )}
 
-            {/* Loading/Error State */}
-            {loading && (
-                <div className="text-center py-8 text-slate-400">
-                    Loading logs...
-                </div>
-            )}
-            {error && (
-                <div className="bg-red-900/20 border border-red-500/50 rounded p-4 text-red-300 text-sm">
-                    Error: {error}
-                </div>
-            )}
-
-            {/* Content */}
-            {!loading && !error && data && (
-                <div>
-                    {/* Database Logs */}
-                    {data.records && renderTable(data.records)}
-
-                    {/* File Logs */}
-                    {data.lines && renderFileLog(data.lines)}
-
-                    {/* File Info */}
-                    {data.file && (
-                        <div className="mt-4 text-xs text-slate-500">
-                            File: {data.file} | Exists: {data.exists ? "Yes" : "No"}
+            {/* LLM Logs Content */}
+            {logType === "llm-logs" ? (
+                <LlmLogsContent />
+            ) : (
+                <>
+                    {/* Loading/Error State */}
+                    {loading && (
+                        <div className="text-center py-8 text-slate-400">
+                            Loading logs...
+                        </div>
+                    )}
+                    {error && (
+                        <div className="bg-red-900/20 border border-red-500/50 rounded p-4 text-red-300 text-sm">
+                            Error: {error}
                         </div>
                     )}
 
-                    {/* Pagination */}
-                    {data.records && data.total > limit && (
-                        <div className="flex items-center justify-between mt-6 text-sm">
-                            <div className="text-slate-400">
-                                Showing {page * limit + 1} - {Math.min((page + 1) * limit, data.total)} of {data.total}
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setPage(Math.max(0, page - 1))}
-                                    disabled={page === 0}
-                                    className="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Previous
-                                </button>
-                                <div className="px-3 py-1 text-slate-400">
-                                    Page {page + 1} of {totalPages}
+                    {/* Content */}
+                    {!loading && !error && data && (
+                        <div>
+                            {/* Database Logs */}
+                            {data.records && renderTable(data.records)}
+
+                            {/* File Logs */}
+                            {data.lines && renderFileLog(data.lines)}
+
+                            {/* File Info */}
+                            {data.file && (
+                                <div className="mt-4 text-xs text-slate-500">
+                                    File: {data.file} | Exists: {data.exists ? "Yes" : "No"}
                                 </div>
-                                <button
-                                    onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-                                    disabled={page >= totalPages - 1}
-                                    className="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    Next
-                                </button>
-                            </div>
+                            )}
+
+                            {/* Pagination */}
+                            {data.records && data.total > limit && (
+                                <div className="flex items-center justify-between mt-6 text-sm">
+                                    <div className="text-slate-400">
+                                        Showing {page * limit + 1} - {Math.min((page + 1) * limit, data.total)} of {data.total}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setPage(Math.max(0, page - 1))}
+                                            disabled={page === 0}
+                                            className="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        <div className="px-3 py-1 text-slate-400">
+                                            Page {page + 1} of {totalPages}
+                                        </div>
+                                        <button
+                                            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                                            disabled={page >= totalPages - 1}
+                                            className="px-3 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
-                </div>
+                </>
             )}
         </div>
     );

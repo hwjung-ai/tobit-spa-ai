@@ -7,22 +7,20 @@ Create Date: 2026-02-10 15:41:00
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-import sqlmodel.sql.sqltypes
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '0051'
 down_revision: Union[str, None] = '0050'
 branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = '0050'
+depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """Add API Manager linkage fields to tb_asset_registry table."""
     op.add_column('tb_asset_registry',
-        sa.Column('linked_from_api_id', sqlmodel.sql.sqltypes.UUID(), nullable=True))
+        sa.Column('linked_from_api_id', sa.UUID(), nullable=True))
     op.add_column('tb_asset_registry',
         sa.Column('linked_from_api_name', sa.Text(), nullable=True))
     op.add_column('tb_asset_registry',
@@ -32,17 +30,12 @@ def upgrade() -> None:
     op.add_column('tb_asset_registry',
         sa.Column('last_synced_at', sa.TIMESTAMP(timezone=True), nullable=True))
     
-    # Add foreign key constraint to api_definitions
-    op.create_foreign_key(
-        'fk_asset_linked_from_api',
-        'tb_asset_registry', 'api_definitions',
-        ['linked_from_api_id'], ['id']
-    )
+    # No FK constraint - managed at application level to avoid bidirectional FK issues
+    # when unlinking. Linkage is enforced by business logic.
 
 
 def downgrade() -> None:
     """Remove API Manager linkage fields from tb_asset_registry table."""
-    op.drop_constraint('fk_asset_linked_from_api', 'tb_asset_registry', type_='foreignkey')
     op.drop_column('tb_asset_registry', 'last_synced_at')
     op.drop_column('tb_asset_registry', 'import_mode')
     op.drop_column('tb_asset_registry', 'linked_from_api_at')

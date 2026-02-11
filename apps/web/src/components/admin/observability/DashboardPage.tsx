@@ -12,6 +12,7 @@ import RecentErrors from "./RecentErrors";
 export default function DashboardPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [refreshInterval, setRefreshInterval] = useState(30);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     if (!autoRefresh) return;
@@ -25,7 +26,7 @@ export default function DashboardPage() {
   }, [autoRefresh, refreshInterval]);
 
   return (
-    <div className="space-y-6">
+    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-slate-950 p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -35,6 +36,17 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/60 text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors"
+            title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullScreen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+            )}
+          </button>
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 bg-slate-900/60">
             <input
               type="checkbox"

@@ -50,6 +50,7 @@ type ObservabilityResponse = {
 export default function ObservabilityDashboard() {
   const [payload, setPayload] = useState<ObservabilityPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -83,11 +84,11 @@ export default function ObservabilityDashboard() {
           // Validate KPI payload structure
           const kpis = json.data.kpis;
           if (typeof kpis.success_rate !== 'number' ||
-              typeof kpis.failure_rate !== 'number' ||
-              !kpis.latency ||
-              !Array.isArray(kpis.regression_trend) ||
-              !kpis.regression_totals ||
-              !Array.isArray(kpis.top_causes)) {
+            typeof kpis.failure_rate !== 'number' ||
+            !kpis.latency ||
+            !Array.isArray(kpis.regression_trend) ||
+            !kpis.regression_totals ||
+            !Array.isArray(kpis.top_causes)) {
             throw new Error("Invalid KPI payload structure");
           }
           setPayload(kpis);
@@ -136,13 +137,26 @@ export default function ObservabilityDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-slate-950 p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">Observability</h1>
           <p className="text-sm text-slate-400">Trace & Regression 핵심 KPI를 한 화면에서 파악합니다.</p>
         </div>
-        <span className="text-xs uppercase tracking-[0.3em] text-sky-400">realtime</span>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/80 text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors"
+            title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullScreen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+            )}
+          </button>
+          <span className="text-xs uppercase tracking-[0.3em] text-sky-400">realtime</span>
+        </div>
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

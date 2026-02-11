@@ -1,18 +1,17 @@
 """Unit tests for mapping registry."""
 import pytest
-
+from app.modules.ops.services.ci.mappings.compat import (
+    _get_agg_keywords,
+    _get_filterable_fields,
+    _get_list_keywords,
+    _get_metric_aliases,
+)
 from app.modules.ops.services.ci.mappings.registry import (
     MappingRegistry,
     get_mapping_registry,
 )
 from app.modules.ops.services.ci.mappings.registry_init import (
     initialize_mappings,
-)
-from app.modules.ops.services.ci.mappings.compat import (
-    _get_metric_aliases,
-    _get_agg_keywords,
-    _get_list_keywords,
-    _get_filterable_fields,
 )
 
 

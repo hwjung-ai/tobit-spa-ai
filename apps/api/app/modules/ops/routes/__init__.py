@@ -5,7 +5,7 @@ This package contains modularized routes for the OPS module, organized by functi
 
 Routes:
     - query: Standard OPS query processing (@router.post("/query"), @router.get("/observability/kpis"))
-    - ci_ask: CI asking and planning (@router.post("/ci/ask"))
+    - ask: OPS asking and planning (@router.post("/ask"))
     - ui_actions: UI action execution (@router.post("/ui-actions"))
     - rca: Root cause analysis (@router.post("/rca/analyze-trace"), @router.post("/rca/analyze-regression"))
     - regression: Golden queries and regression testing
@@ -15,13 +15,13 @@ Routes:
 
 from fastapi import APIRouter
 
+from .actions import router as actions_router
+from .ci_ask import router as ask_router
 from .query import router as query_router
-from .ci_ask import router as ci_ask_router
-from .ui_actions import router as ui_actions_router
 from .rca import router as rca_router
 from .regression import router as regression_router
-from .actions import router as actions_router
 from .threads import router as threads_router
+from .ui_actions import router as ui_actions_router
 
 
 def get_combined_router() -> APIRouter:
@@ -32,7 +32,7 @@ def get_combined_router() -> APIRouter:
     """
     combined = APIRouter(prefix="/ops", tags=["ops"])
     combined.include_router(query_router)
-    combined.include_router(ci_ask_router)
+    combined.include_router(ask_router)
     combined.include_router(ui_actions_router)
     combined.include_router(rca_router)
     combined.include_router(regression_router)
@@ -43,7 +43,7 @@ def get_combined_router() -> APIRouter:
 
 __all__ = [
     "query_router",
-    "ci_ask_router",
+    "ask_router",
     "ui_actions_router",
     "rca_router",
     "regression_router",

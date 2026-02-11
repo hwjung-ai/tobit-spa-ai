@@ -13,8 +13,8 @@ from pathlib import Path
 # Add apps/api to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
 from sqlmodel import select
 
 

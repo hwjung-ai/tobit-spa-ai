@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from fastapi.encoders import jsonable_encoder
-
 from sqlmodel import Session, select
 
 from app.modules.asset_registry.models import TbAssetRegistry

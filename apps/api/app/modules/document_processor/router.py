@@ -10,6 +10,7 @@ from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_session
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from models.document import Document, DocumentChunk, DocumentStatus
 from pydantic import BaseModel
 from schemas.common import ResponseEnvelope
@@ -387,6 +388,100 @@ async def get_document(
         raise HTTPException(500, str(e))
 
 
+@router.get("/documents/{document_id}/view")
+async def get_document_view(
+    document_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Serve document view page
+    """
+    try:
+        # Get document from database
+        document = session.exec(
+            select(Document).where(
+                Document.id == document_id,
+                Document.tenant_id == _tenant_id_from_user(current_user),
+                Document.deleted_at.is_(None),
+            )
+        ).first()
+
+        if not document:
+            raise HTTPException(404, "Document not found")
+
+        # Check if file exists
+        file_path = Path(document.file_path)
+        if not file_path.exists():
+            logger.error(f"Document file not found: {file_path}")
+            raise HTTPException(404, "Document file not found")
+
+        # Determine content type and appropriate viewer
+        if document.filename.lower().endswith('.pdf'):
+            # For PDF, return PDF viewer page
+            return {
+                "document_id": document_id,
+                "filename": document.filename,
+                "type": "pdf",
+                "url": f"/api/documents/{document_id}/pdf"
+            }
+        else:
+            # For other documents, return text content
+            return {
+                "document_id": document_id,
+                "filename": document.filename,
+                "type": "text",
+                "url": f"/api/documents/{document_id}/content"
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get document view: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/documents/{document_id}/pdf")
+async def get_pdf_document(
+    document_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Serve PDF documents for inline viewing
+    """
+    try:
+        # Get document from database
+        document = session.exec(
+            select(Document).where(
+                Document.id == document_id,
+                Document.tenant_id == _tenant_id_from_user(current_user),
+                Document.deleted_at.is_(None),
+            )
+        ).first()
+
+        if not document:
+            raise HTTPException(404, "Document not found")
+
+        # Return the PDF file
+        file_path = Path(document.file_path)
+        if not file_path.exists():
+            logger.error(f"PDF file not found: {file_path}")
+            raise HTTPException(404, "PDF file not found")
+
+        return FileResponse(
+            path=str(file_path),
+            media_type="application/pdf",
+            filename=document.filename,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get PDF document: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
 @router.post("/search", response_model=ResponseEnvelope)
 async def search_documents(
     request: SearchRequest,
@@ -449,9 +544,21 @@ async def search_documents(
         )
         execution_time_ms = int((time.time() - start_time) * 1000)
 
-        # Convert results to response format
-        result_list = [
-            SearchResultResponse(
+        # Convert results to response format with URLs
+        result_list = []
+        for r in results:
+            # Create document URL for the viewer (Next.js frontend route)
+            # Format: /documents/{document_id}/viewer?chunkId={chunk_id}&page={page_number}
+            document_url = f"/documents/{r.document_id}/viewer"
+            params = []
+            if r.chunk_id:
+                params.append(f"chunkId={r.chunk_id}")
+            if r.page_number:
+                params.append(f"page={r.page_number}")
+            if params:
+                document_url += f"?{'&'.join(params)}"
+
+            result_list.append(SearchResultResponse(
                 chunk_id=r.chunk_id,
                 document_id=r.document_id,
                 document_name=r.document_name,
@@ -459,9 +566,7 @@ async def search_documents(
                 page_number=r.page_number,
                 relevance_score=r.relevance_score,
                 chunk_type=r.chunk_type,
-            )
-            for r in results
-        ]
+            ).model_dump() | {"url": document_url})
 
         return ResponseEnvelope.success(
             data={
@@ -469,7 +574,7 @@ async def search_documents(
                 "search_type": request.search_type,
                 "total_count": len(result_list),
                 "execution_time_ms": execution_time_ms,
-                "results": [r.model_dump() for r in result_list],
+                "results": result_list,
             }
         )
 
@@ -876,8 +981,9 @@ async def export_document(
             raise HTTPException(404, detail="No chunks found for this document")
 
         # Export based on format
-        from fastapi.responses import StreamingResponse
         import io
+
+        from fastapi.responses import StreamingResponse
         
         if format == "json":
             # JSON format: structured export with metadata
@@ -1005,6 +1111,103 @@ async def export_document(
     except Exception as e:
         logger.error(f"Export failed: {str(e)}", exc_info=True)
         raise HTTPException(500, detail=f"Export failed: {str(e)}")
+
+
+@router.get("/{document_id}/viewer")
+async def get_document_viewer(
+    document_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Get document file for viewer
+
+    Returns the PDF file content for document viewing
+    """
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+
+        # Get document metadata
+        document = session.exec(
+            select(Document)
+            .where(Document.id == document_id)
+            .where(Document.tenant_id == tenant_id)
+            .where(Document.deleted_at.is_(None))
+        ).first()
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        # Check if file exists
+        storage_path = _storage_path_for(document.id, tenant_id, document.filename)
+        if not storage_path.exists():
+            raise HTTPException(status_code=404, detail="Document file not found")
+
+        # Return file as streaming response
+        from fastapi.responses import FileResponse
+
+        return FileResponse(
+            path=str(storage_path),
+            filename=document.filename,
+            media_type=document.content_type or "application/octet-stream"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get document viewer: {str(e)}")
+        raise HTTPException(500, str(e))
+
+
+@router.get("/{document_id}/chunks/{chunk_id}", response_model=ResponseEnvelope)
+async def get_chunk_detail(
+    document_id: str,
+    chunk_id: str,
+    current_user: TbUser = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Get detailed information for a specific chunk
+
+    Returns chunk details including text, position, and metadata
+    """
+    try:
+        tenant_id = _tenant_id_from_user(current_user)
+
+        # Get chunk with document validation
+        chunk = session.exec(
+            select(DocumentChunk)
+            .join(Document)
+            .where(DocumentChunk.id == chunk_id)
+            .where(Document.id == document_id)
+            .where(Document.tenant_id == tenant_id)
+            .where(Document.deleted_at.is_(None))
+        ).first()
+
+        if not chunk:
+            raise HTTPException(status_code=404, detail="Chunk not found")
+
+        return ResponseEnvelope.success(
+            data={
+                "chunk": {
+                    "chunk_id": chunk.id,
+                    "document_id": chunk.document_id,
+                    "chunk_index": chunk.chunk_index,
+                    "page": chunk.page,
+                    "page_number": chunk.page_number,
+                    "text": chunk.text,
+                    "snippet": chunk.text[:200] + "..." if len(chunk.text) > 200 else chunk.text,
+                    "chunk_type": chunk.chunk_type,
+                    "position_in_doc": chunk.position_in_doc,
+                    "created_at": chunk.created_at.isoformat() if chunk.created_at else None,
+                }
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get chunk detail: {str(e)}")
+        raise HTTPException(500, str(e))
 
 
 @router.delete("/{document_id}", response_model=ResponseEnvelope)

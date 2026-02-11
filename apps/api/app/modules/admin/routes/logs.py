@@ -9,7 +9,7 @@ Provides endpoints for viewing system logs including:
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Literal
 
 from core.db import get_session

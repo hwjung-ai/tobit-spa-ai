@@ -32,9 +32,9 @@ def test_ops_query_includes_trace_id(client):
 
 
 def test_ops_ci_ask_includes_trace_id(client):
-    """Test that /ops/ci/ask response includes trace_id headers"""
+    """Test that /ops/ask response includes trace_id headers"""
     response = client.post(
-        "/ops/ci/ask",
+        "/ops/ask",
         json={
             "question": "CI 테스트 질문",
         },

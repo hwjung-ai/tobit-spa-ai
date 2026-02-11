@@ -277,6 +277,7 @@ export default function UIScreenRenderer({
   const autoRefreshFailuresRef = useRef<Record<string, number>>({});
   const autoRefreshCooldownUntilRef = useRef<Record<string, number>>({});
   const autoRefreshControlsRef = useRef<Record<string, { paused: boolean; stopped: boolean }>>({});
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const lastNavigationRef = useRef<string>("");
 
   useEffect(() => {
@@ -407,8 +408,8 @@ export default function UIScreenRenderer({
     const query = nav.query && typeof nav.query === "object" ? (nav.query as Record<string, unknown>) : {};
     const queryString = Object.keys(query).length
       ? `?${new URLSearchParams(
-          Object.entries(query).map(([k, v]) => [k, String(v ?? "")])
-        ).toString()}`
+        Object.entries(query).map(([k, v]) => [k, String(v ?? "")])
+      ).toString()}`
       : "";
     const target = `${to}${queryString}`;
     if (!target || lastNavigationRef.current === target) {
@@ -476,11 +477,11 @@ export default function UIScreenRenderer({
         // Apply response_mapping if defined, or use state_patch, or apply entire data
         const statePatch = action.response_mapping
           ? Object.fromEntries(
-              Object.entries(action.response_mapping).map(([stateKey, dataPath]) => [
-                stateKey,
-                get(data, dataPath),
-              ])
-            )
+            Object.entries(action.response_mapping).map(([stateKey, dataPath]) => [
+              stateKey,
+              get(data, dataPath),
+            ])
+          )
           : (data.state_patch as Record<string, unknown>) || data;
 
         setState((prev) => {
@@ -1042,21 +1043,21 @@ export default function UIScreenRenderer({
       const columnsMeta =
         explicitColumns.length > 0
           ? explicitColumns.map((col) => {
-              if (typeof col === "string") {
-                return { key: col, label: col, sortable: true, format: "" };
-              }
-              const meta = col as Record<string, unknown>;
-              const key = String(meta.field || meta.key || "");
-              return {
-                key,
-                label: String(meta.header || meta.label || key),
-                sortable: meta.sortable !== false,
-                format: String(meta.format || ""),
-              };
-            })
+            if (typeof col === "string") {
+              return { key: col, label: col, sortable: true, format: "" };
+            }
+            const meta = col as Record<string, unknown>;
+            const key = String(meta.field || meta.key || "");
+            return {
+              key,
+              label: String(meta.header || meta.label || key),
+              sortable: meta.sortable !== false,
+              format: String(meta.format || ""),
+            };
+          })
           : (Array.isArray(rows[0]) ? [] : Object.keys((rows[0] as Record<string, unknown>) || {})).map(
-              (key) => ({ key, label: key, sortable: true, format: "" })
-            );
+            (key) => ({ key, label: key, sortable: true, format: "" })
+          );
       const conditionalRules = toConditionalStyleRules(props.conditional_styles);
       const resolveCellStyle = (field: string, cellValue: unknown): React.CSSProperties => {
         for (const rule of conditionalRules) {
@@ -1108,15 +1109,15 @@ export default function UIScreenRenderer({
       const processedRows =
         sortableEnabled && currentTableState.sortKey
           ? [...rows].sort((a, b) => {
-              const key = currentTableState.sortKey as string;
-              const av = (a as Record<string, unknown>)?.[key];
-              const bv = (b as Record<string, unknown>)?.[key];
-              const aNorm = av === null || av === undefined ? "" : String(av).toLowerCase();
-              const bNorm = bv === null || bv === undefined ? "" : String(bv).toLowerCase();
-              if (aNorm < bNorm) return currentTableState.sortDir === "asc" ? -1 : 1;
-              if (aNorm > bNorm) return currentTableState.sortDir === "asc" ? 1 : -1;
-              return 0;
-            })
+            const key = currentTableState.sortKey as string;
+            const av = (a as Record<string, unknown>)?.[key];
+            const bv = (b as Record<string, unknown>)?.[key];
+            const aNorm = av === null || av === undefined ? "" : String(av).toLowerCase();
+            const bNorm = bv === null || bv === undefined ? "" : String(bv).toLowerCase();
+            if (aNorm < bNorm) return currentTableState.sortDir === "asc" ? -1 : 1;
+            if (aNorm > bNorm) return currentTableState.sortDir === "asc" ? 1 : -1;
+            return 0;
+          })
           : [...rows];
 
       const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(processedRows.length / pageSize)) : 1;
@@ -1184,9 +1185,8 @@ export default function UIScreenRenderer({
               {pagedRows.map((row: unknown, index: number) => (
                 <tr
                   key={`${comp.id}-row-${index}`}
-                  className={`border border-slate-800 ${
-                    rowClickActionIndex >= 0 ? "cursor-pointer hover:bg-slate-800/40" : ""
-                  }`}
+                  className={`border border-slate-800 ${rowClickActionIndex >= 0 ? "cursor-pointer hover:bg-slate-800/40" : ""
+                    }`}
                   onClick={() => {
                     if (rowClickActionIndex < 0) return;
                     const rowAction = (comp.actions || [])[rowClickActionIndex];
@@ -1262,16 +1262,16 @@ export default function UIScreenRenderer({
       const seriesDefs =
         rawSeries.length > 0
           ? rawSeries.map((item, index) => {
-              const def = item as Record<string, unknown>;
-              const dataKey = String(
-                def.data_key || def.dataKey || def.key || (index === 0 ? "y" : `y${index + 1}`)
-              );
-              return {
-                dataKey,
-                stroke: String(def.color || def.stroke || "#38bdf8"),
-                name: String(def.name || dataKey),
-              };
-            })
+            const def = item as Record<string, unknown>;
+            const dataKey = String(
+              def.data_key || def.dataKey || def.key || (index === 0 ? "y" : `y${index + 1}`)
+            );
+            return {
+              dataKey,
+              stroke: String(def.color || def.stroke || "#38bdf8"),
+              name: String(def.name || dataKey),
+            };
+          })
           : [{ dataKey: "y", stroke: "#38bdf8", name: "y" }];
       const conditionalRules = toConditionalStyleRules(props.conditional_styles);
       const latestRow =
@@ -1478,17 +1478,17 @@ export default function UIScreenRenderer({
                   ((styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {}).dotFill ||
                     (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {}).dotStroke)
                     ? {
-                        r: 3,
-                        fill:
-                          (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {})
-                            .dotFill ||
-                          serie.stroke,
-                        stroke:
-                          (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {})
-                            .dotStroke ||
-                          serie.stroke,
-                        strokeWidth: 1,
-                      }
+                      r: 3,
+                      fill:
+                        (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {})
+                          .dotFill ||
+                        serie.stroke,
+                      stroke:
+                        (styleBySeries.get(serie.name) || styleBySeries.get(serie.dataKey) || {})
+                          .dotStroke ||
+                        serie.stroke,
+                      strokeWidth: 1,
+                    }
                     : false
                 }
                 name={serie.name}
@@ -1552,9 +1552,8 @@ export default function UIScreenRenderer({
                 <button
                   key={`${comp.id}-tab-${index}`}
                   type="button"
-                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${
-                    index === activeIndex ? "bg-slate-200 text-slate-900" : "border border-slate-700 text-slate-200"
-                  }`}
+                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${index === activeIndex ? "bg-slate-200 text-slate-900" : "border border-slate-700 text-slate-200"
+                    }`}
                   onClick={() => setActiveTabs((prev) => ({ ...prev, [comp.id]: index }))}
                 >
                   {(tabItem.label as string) || `Tab ${index + 1}`}
@@ -1728,8 +1727,47 @@ export default function UIScreenRenderer({
     const layout = screenSchema.layout;
     const components = screenSchema.components;
 
+
     // Determine layout type
     const layoutType = layout?.type || "stack";
+
+    // Handle dashboard layout (absolute grid positioning)
+    if (layoutType === "dashboard") {
+      const COLS = 12;
+      const ROW_HEIGHT = 60;
+
+      return (
+        <div className="relative min-h-[600px]" data-testid="layout-dashboard">
+          {components.map((comp) => {
+            const compLayout = (comp.props?.layout as { x: number; y: number; w: number; h: number }) || { x: 0, y: 0, w: 4, h: 2 };
+
+            // Calculate percentage-based positioning for responsiveness
+            const leftPercent = (compLayout.x / COLS) * 100;
+            const widthPercent = (compLayout.w / COLS) * 100;
+            const topPx = compLayout.y * ROW_HEIGHT;
+            const heightPx = compLayout.h * ROW_HEIGHT;
+
+            return (
+              <div
+                key={comp.id}
+                className="absolute"
+                style={{
+                  left: `${leftPercent}%`,
+                  width: `${widthPercent}%`,
+                  top: `${topPx}px`,
+                  height: `${heightPx}px`,
+                }}
+                data-testid={`dashboard-item-${comp.id}`}
+              >
+                <div className="w-full h-full p-2">
+                  {renderComponent(comp)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
 
     // Handle grid layout
     if (layoutType === "grid") {
@@ -1747,7 +1785,7 @@ export default function UIScreenRenderer({
     }
 
     // Handle stack (vertical/horizontal) layout
-    if (layoutType === "stack" || layoutType === "form" || layoutType === "dashboard") {
+    if (layoutType === "stack" || layoutType === "form") {
       const direction = (layout?.direction as string) || "vertical";
       const gap = (layout?.gap as number) || 4;
       const isVertical = direction === "vertical";
@@ -1803,10 +1841,30 @@ export default function UIScreenRenderer({
     );
   };
 
+  const hideDebugPanels = screenSchema.metadata?.tags?.hide_debug_panels === "true" || (screenSchema.metadata as any)?.hide_debug_panels === true;
+
   return (
     <UIScreenErrorBoundary>
-      <div data-testid={`screen-renderer-${screenId}`}>
-        {autoRefreshConfigs.length > 0 && (
+      <div
+        data-testid={`screen-renderer-${screenId}`}
+        className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-slate-950 p-6 animate-in fade-in zoom-in-95 duration-300" : "relative"}
+      >
+        {/* Fullscreen Toggle */}
+        <div className="absolute right-4 top-4 z-10 flex gap-2">
+          <button
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/80 text-slate-400 hover:border-slate-500 hover:text-slate-200"
+            title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          >
+            {isFullScreen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" /></svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+            )}
+          </button>
+        </div>
+
+        {!hideDebugPanels && autoRefreshConfigs.length > 0 && (
           <div
             className="mb-3 rounded-xl border border-slate-700/80 bg-slate-900/40 p-3 text-[11px] text-slate-200"
             data-testid="auto-refresh-panel"
@@ -1847,7 +1905,7 @@ export default function UIScreenRenderer({
             </div>
           </div>
         )}
-        {actionLogs.length > 0 && (
+        {!hideDebugPanels && actionLogs.length > 0 && (
           <div
             className="mb-3 rounded-xl border border-slate-700/80 bg-slate-900/30 p-3 text-[11px] text-slate-200"
             data-testid="action-log-panel"
@@ -1887,26 +1945,24 @@ export default function UIScreenRenderer({
             {Object.entries(streamStates).map(([id, ss]) => (
               <span
                 key={id}
-                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] ${
-                  ss.status === "connected"
-                    ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
-                    : ss.status === "connecting"
-                      ? "bg-sky-950/50 text-sky-300 border border-sky-800/50"
-                      : ss.status === "error"
-                        ? "bg-rose-950/50 text-rose-300 border border-rose-800/50"
-                        : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
-                }`}
+                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] ${ss.status === "connected"
+                  ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
+                  : ss.status === "connecting"
+                    ? "bg-sky-950/50 text-sky-300 border border-sky-800/50"
+                    : ss.status === "error"
+                      ? "bg-rose-950/50 text-rose-300 border border-rose-800/50"
+                      : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
+                  }`}
               >
                 <span
-                  className={`inline-block w-1.5 h-1.5 rounded-full ${
-                    ss.status === "connected"
-                      ? "bg-emerald-400"
-                      : ss.status === "connecting"
-                        ? "bg-sky-400 animate-pulse"
-                        : ss.status === "error"
-                          ? "bg-rose-400"
-                          : "bg-slate-500"
-                  }`}
+                  className={`inline-block w-1.5 h-1.5 rounded-full ${ss.status === "connected"
+                    ? "bg-emerald-400"
+                    : ss.status === "connecting"
+                      ? "bg-sky-400 animate-pulse"
+                      : ss.status === "error"
+                        ? "bg-rose-400"
+                        : "bg-slate-500"
+                    }`}
                 />
                 {id.replace("stream_", "")}
               </span>

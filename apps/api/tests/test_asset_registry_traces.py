@@ -26,7 +26,7 @@ def test_list_asset_traces_returns_traces(session: Session) -> None:
     trace = TbExecutionTrace(
         trace_id="trace-asset-001",
         feature="ci",
-        endpoint="/ops/ci/ask",
+        endpoint="/ops/ask",
         method="POST",
         ops_mode="real",
         question="What is the impact?",

@@ -33,6 +33,10 @@ const nextConfig: NextConfig = {
           source: "/ops/ask",
           destination: `${API_BASE_URL}/ops/ask`,
         },
+        {
+          source: "/api/sim/:path*",
+          destination: `${API_BASE_URL}/sim/:path*`,
+        },
       ],
       afterFiles: [
       // Admin API - proxy specific backend-only sub-paths
@@ -45,19 +49,31 @@ const nextConfig: NextConfig = {
         source: "/admin/system/:path*",
         destination: `${API_BASE_URL}/admin/system/:path*`,
       },
-      // Fix trailing slash for /api/documents (must come before /api/:path*)
+      {
+        source: "/admin/llm-logs/:path*",
+        destination: `${API_BASE_URL}/admin/llm-logs/:path*`,
+      },
+      // Proxy document viewer API endpoints
+      {
+        source: "/api/documents/:documentId/viewer",
+        destination: `${API_BASE_URL}/api/documents/:documentId/viewer`,
+      },
+      {
+        source: "/api/documents/:documentId/chunks/:chunkId",
+        destination: `${API_BASE_URL}/api/documents/:documentId/chunks/:chunkId`,
+      },
+      // Proxy document APIs (must come after specific routes)
       {
         source: "/api/documents",
         destination: `${API_BASE_URL}/api/documents/`,
       },
       {
-        source: "/api/documents/:path*/",  // add trailing slash for sub-paths
-        destination: `${API_BASE_URL}/api/documents/:path*`,  // but backend expects no trailing slash for :id
-      },
-      // Fix: also handle /api/documents/ directly
-      {
         source: "/api/documents/",
         destination: `${API_BASE_URL}/api/documents/`,
+      },
+      {
+        source: "/api/documents/:path*",
+        destination: `${API_BASE_URL}/api/documents/:path*`,
       },
       // Proxy /api/settings to /settings (must come before /api/:path*)
       {

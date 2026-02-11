@@ -48,7 +48,7 @@ def rca_analyze_trace(
 
     # 로깅을 위해 trace_id 마스킹
     logger.debug(
-        f"rca.analyze_trace.start",
+        "rca.analyze_trace.start",
         extra={"trace_id": SecurityUtils.mask_string(trace_id)},
     )
 

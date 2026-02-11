@@ -4,13 +4,12 @@ Performance utilities for CEP Builder
 Provides performance monitoring, metrics collection, and optimization helpers.
 """
 
-import time
 import logging
-from typing import Any, Dict, Optional, Callable
-from datetime import datetime, timedelta
+import time
 from contextlib import asynccontextmanager, contextmanager
+from datetime import datetime
 from functools import wraps
-import json
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -4,11 +4,15 @@ Integration tests for Orchestrator Tool Asset Refactoring
 Tests verify that handlers correctly use Tool Assets and produce expected blocks.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
-from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
-from app.modules.ops.services.ci.planner.plan_schema import Plan, MetricSpec, HistorySpec, View
+from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+from app.modules.ops.services.ci.planner.plan_schema import (
+    MetricSpec,
+    Plan,
+    View,
+)
 
 
 @pytest.mark.asyncio
@@ -26,7 +30,7 @@ async def test_metric_blocks_uses_metric_query_tool_asset():
     plan.graph = MagicMock(view=None)
 
     # Create runner with mocked dependencies
-    runner = MagicMock(spec=CIOrchestratorRunner)
+    runner = MagicMock(spec=OpsOrchestratorRunner)
     runner.plan = plan
     runner.tenant_id = "test_tenant"
     runner.plan_trace = {}
@@ -197,15 +201,14 @@ async def test_graph_blocks_uses_ci_graph_query_tool_asset():
 
 def test_helper_method_build_metric_blocks_from_data():
     """Test _build_metric_blocks_from_data() helper converts data correctly."""
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
 
-    runner = MagicMock(spec=CIOrchestratorRunner)
+    runner = MagicMock(spec=OpsOrchestratorRunner)
     runner.logger = MagicMock()
     runner.metric_context = None
     runner._series_chart_block = MagicMock(return_value={"type": "chart"})
 
     # Patch the method to be testable
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner as RealRunner
 
     # Test with actual method
     real_runner_instance = MagicMock()
@@ -238,7 +241,6 @@ def test_source_ref_in_all_sql_tool_assets():
 
     This ensures no direct database connections are used.
     """
-    import sys
     from pathlib import Path
 
     # Load the registration script

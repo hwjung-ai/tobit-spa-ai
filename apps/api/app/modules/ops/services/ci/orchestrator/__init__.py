@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from .runner import CIOrchestratorRunner
+from .runner import OpsOrchestratorRunner
 
-# Alias for backward compatibility
-Orchestrator = CIOrchestratorRunner
+Orchestrator = OpsOrchestratorRunner
 
-__all__ = ["Orchestrator", "CIOrchestratorRunner"]
+__all__ = ["Orchestrator", "OpsOrchestratorRunner"]

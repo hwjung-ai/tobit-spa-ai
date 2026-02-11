@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import {
   Line,
@@ -141,6 +142,7 @@ const BLOCK_COMPONENT_NAMES: Record<string, string> = {
 const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? "";
 
 export default function BlockRenderer({ blocks, nextActions, onAction, traceId }: BlockRendererProps) {
+  const router = useRouter();
   const [fullscreenGraph, setFullscreenGraph] = useState<GraphBlock | null>(null);
   const candidateActionMap = useMemo(() => {
     const map = new Map<string, NextAction>();
@@ -219,9 +221,141 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
     );
   }
 
+  // Separate reference blocks from answer blocks
+  const referenceBlocks = blocks.filter(block => block.type === "references");
+  const answerBlocks = blocks.filter(block => block.type !== "references") as AnswerBlock[];
+
   return (
     <div className="space-y-6">
-      {blocks.map((block, index) => {
+      {/* Render reference blocks first (at the top) */}
+      {referenceBlocks.map((block, index) => {
+        const title = block.title ? (
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+            {block.title}
+          </p>
+        ) : null;
+
+        return (
+          <section
+            key={`reference-${index}`}
+            className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
+          >
+            {title}
+            <div className="mt-4 space-y-3">
+              {block.items.map((reference, refIndex) => {
+                const cardClass = `block rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition ${
+                  reference.url
+                    ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-slate-950/80"
+                    : "hover:border-slate-700"
+                }`;
+                const cardContent = (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <p className="font-semibold">{reference.title}</p>
+                      <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                        {reference.kind ?? "reference"}
+                      </span>
+                    </div>
+                    {reference.snippet ? (
+                      <p className="mt-1 text-xs text-slate-400">{reference.snippet}</p>
+                    ) : null}
+                    {reference.url && reference.kind === "document" ? (
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                        📄 View document
+                      </p>
+                    ) : reference.url ? (
+                      <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                        🔗 View source
+                      </p>
+                    ) : null}
+                    {renderReferencePayload(reference.payload) ? (
+                      <pre className="mt-3 max-h-40 overflow-auto rounded-xl bg-slate-950/80 px-3 py-2 text-[11px] text-slate-100">
+                        {renderReferencePayload(reference.payload)}
+                      </pre>
+                    ) : null}
+                  </>
+                );
+
+                // Handle document URLs - create proper navigation
+                if (reference.url && reference.kind === "document") {
+                  // Check if it's a PDF URL
+                  const isPdf = reference.url.toLowerCase().endsWith('.pdf');
+
+                  if (isPdf) {
+                    // For PDF files, embed in iframe
+                    return (
+                      <div
+                        key={`${reference.title}-${refIndex}`}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                        <div className="mt-3">
+                          <iframe
+                            src={reference.url}
+                            className="w-full h-96 rounded-lg border border-slate-700"
+                            title={reference.title}
+                            onError={(e) => {
+                              // Fallback to direct link if iframe fails
+                              const iframe = e.target as HTMLIFrameElement;
+                              iframe.style.display = 'none';
+                              const fallbackLink = document.createElement('a');
+                              fallbackLink.href = reference.url;
+                              fallbackLink.target = '_blank';
+                              fallbackLink.rel = 'noopener noreferrer';
+                              fallbackLink.className = 'text-sky-400 hover:text-sky-300 text-sm underline';
+                              fallbackLink.textContent = 'PDF 파일 열기 (새 탭)';
+                              iframe.parentNode?.appendChild(fallbackLink);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  } else {
+                    // For other documents, use Next.js Link
+                    return (
+                      <Link
+                        key={`${reference.title}-${refIndex}`}
+                        href={reference.url}
+                        className={cardClass}
+                      >
+                        {cardContent}
+                      </Link>
+                    );
+                  }
+                }
+
+                // Use <a> for external URLs
+                if (reference.url) {
+                  return (
+                    <a
+                      key={`${reference.title}-${refIndex}`}
+                      href={reference.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cardClass}
+                    >
+                      {cardContent}
+                    </a>
+                  );
+                }
+
+                // No URL - static card
+                return (
+                  <div
+                    key={`${reference.title}-${refIndex}`}
+                    className={cardClass}
+                  >
+                    {cardContent}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+
+      {/* Render answer blocks after references */}
+      {answerBlocks.map((block, index) => {
         const title = block.title ? (
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
             {block.title}
@@ -579,15 +713,18 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
               <section
                 key={`${block.type}-${block.id ?? index}`}
                 className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"
+                data-testid="references-block"
               >
                 {title}
                 <div className="mt-4 space-y-3">
                   {block.items.map((reference, refIndex) => {
-                    const cardClass = `block rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition ${
+                    const cardClass = `rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200 transition ${
                       reference.url
                         ? "cursor-pointer hover:border-sky-500 hover:text-white hover:bg-slate-950/80"
                         : "hover:border-slate-700"
                     }`;
+
+                    console.log('[BlockRenderer] Rendering reference:', reference.title, 'URL:', reference.url);
                     const cardContent = (
                       <>
                         <div className="flex items-center justify-between">
@@ -604,8 +741,8 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                             📄 View document
                           </p>
                         ) : reference.url ? (
-                          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                            {reference.url}
+                          <p className="mt-1 text-[10px] uppercase tracking-[0.3em] text-sky-400 flex items-center gap-1">
+                            🔗 View source
                           </p>
                         ) : null}
                         {renderReferencePayload(reference.payload) ? (
@@ -616,16 +753,25 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       </>
                     );
 
-                    // Use Next.js Link for same-origin document references (client-side navigation)
+                    // Handle document URLs - use button with router.push for navigation
                     if (reference.url && reference.kind === "document") {
+                      console.log('[Reference] Document URL:', reference.url);
+
+                      const handleClick = () => {
+                        console.log('[Reference] Clicking document, navigating to:', reference.url);
+                        router.push(reference.url);
+                      };
+
                       return (
-                        <Link
+                        <button
                           key={`${reference.title}-${refIndex}`}
-                          href={reference.url}
-                          className={cardClass}
+                          type="button"
+                          onClick={handleClick}
+                          className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
+                          data-testid="reference-item"
                         >
                           {cardContent}
-                        </Link>
+                        </button>
                       );
                     }
 

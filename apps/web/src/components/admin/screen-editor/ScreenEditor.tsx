@@ -4,13 +4,24 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import BuilderCopilotPanel from "@/components/chat/BuilderCopilotPanel";
+import UIScreenRenderer from "@/components/answer/UIScreenRenderer";
+import type { UIScreenBlock } from "@/components/answer/BlockRenderer";
+import {
+  extractJsonCandidates,
+  stripCodeFences,
+  tryParseJson,
+} from "@/lib/copilot/json-utils";
+import { recordCopilotMetric } from "@/lib/copilot/metrics";
 import ScreenEditorHeader from "./ScreenEditorHeader";
 import ScreenEditorTabs from "./ScreenEditorTabs";
 import ScreenEditorErrors from "./common/ScreenEditorErrors";
 import Toast from "@/components/admin/Toast";
 import PublishGateModal from "./publish/PublishGateModal";
 
-const SCREEN_COPILOT_INSTRUCTION = `You are a Screen Editor AI assistant. You help users modify UI screens by generating JSON Patch (RFC 6902) operations.
+const SCREEN_COPILOT_INSTRUCTION = `You are Tobit Screen Schema V1 Copilot.
+You must generate JSON Patch (RFC 6902) operations to modify an existing screen.
+Return only one JSON payload compatible with contract type=screen_patch.
+Prefer minimal patch operations and stable paths.
 
 The screen follows ScreenSchemaV1 with these key paths:
 - /title - Screen title (string)
@@ -23,12 +34,50 @@ The screen follows ScreenSchemaV1 with these key paths:
 - /components/N/props/content - Content text (for text/markdown)
 - /components/N/bindings - Data bindings (key: binding expression)
 
-When the user asks to modify the screen, respond with a JSON Patch array wrapped in a code block:
-\`\`\`json
-[{"op": "replace", "path": "/title", "value": "New Title"}]
-\`\`\`
+When the user asks to modify the screen, respond with:
+{"type":"screen_patch","patch":[{"op":"replace","path":"/name","value":"New Name"}],"notes":"optional"}
 
 Always respond in the same language as the user's message.`;
+
+const ALLOWED_COMPONENT_TYPES = new Set([
+  "text", "table", "chart", "form", "button", "image", "card", "stat", "markdown",
+  "divider", "spacer", "container", "tabs", "badge", "alert", "row", "column",
+  "modal", "list", "accordion",
+]);
+
+function validatePatchArray(patchArray: unknown[]): string[] {
+  const errors: string[] = [];
+  patchArray.forEach((entry, index) => {
+    if (!entry || typeof entry !== "object") {
+      errors.push(`patch[${index}] must be an object`);
+      return;
+    }
+    const op = (entry as { op?: unknown }).op;
+    const path = (entry as { path?: unknown }).path;
+    const hasValue = Object.prototype.hasOwnProperty.call(entry, "value");
+
+    if (typeof op !== "string" || !["add", "remove", "replace", "move", "copy", "test"].includes(op)) {
+      errors.push(`patch[${index}].op is invalid`);
+    }
+    if (typeof path !== "string" || !path.startsWith("/")) {
+      errors.push(`patch[${index}].path must start with "/"`);
+    }
+    if ((op === "add" || op === "replace" || op === "test") && !hasValue) {
+      errors.push(`patch[${index}].value is required for ${op}`);
+    }
+
+    if (typeof path === "string" && path.includes("/components/") && hasValue) {
+      const value = (entry as { value?: unknown }).value;
+      if (value && typeof value === "object" && "type" in (value as Record<string, unknown>)) {
+        const candidate = (value as Record<string, unknown>).type;
+        if (typeof candidate === "string" && !ALLOWED_COMPONENT_TYPES.has(candidate)) {
+          errors.push(`patch[${index}] has unsupported component type: ${candidate}`);
+        }
+      }
+    }
+  });
+  return errors;
+}
 
 interface ScreenEditorProps {
   assetId: string;
@@ -161,20 +210,65 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   // AI Copilot: extract JSON Patch from assistant messages and apply
   const handleAssistantMessageComplete = useCallback(
     (text: string) => {
-      // Extract JSON patch from code blocks
-      const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      if (!codeBlockMatch) return;
+      const candidates = [stripCodeFences(text), text];
+      let patchArray: unknown[] | null = null;
 
-      try {
-        const parsed = JSON.parse(codeBlockMatch[1]);
-        const patchArray = Array.isArray(parsed) ? parsed : parsed?.patch;
-        if (!Array.isArray(patchArray) || patchArray.length === 0) return;
+      for (const candidate of candidates) {
+        const direct = tryParseJson(candidate);
+        if (Array.isArray(direct)) {
+          patchArray = direct;
+          break;
+        }
+        if (
+          direct &&
+          typeof direct === "object" &&
+          Array.isArray((direct as { patch?: unknown }).patch)
+        ) {
+          patchArray = (direct as { patch: unknown[] }).patch;
+          break;
+        }
 
-        editorState.setProposedPatch(JSON.stringify(patchArray));
-        editorState.previewPatch();
-      } catch {
-        // Not valid JSON patch, ignore
+        for (const extracted of extractJsonCandidates(candidate)) {
+          const parsed = tryParseJson(extracted);
+          if (Array.isArray(parsed)) {
+            patchArray = parsed;
+            break;
+          }
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            Array.isArray((parsed as { patch?: unknown }).patch)
+          ) {
+            patchArray = (parsed as { patch: unknown[] }).patch;
+            break;
+          }
+        }
+
+        if (patchArray) break;
       }
+
+      if (!Array.isArray(patchArray) || patchArray.length === 0) {
+        recordCopilotMetric("screen-editor", "parse_failure", "patch array not found");
+        setToast({
+          message: "AI 응답에서 JSON Patch를 찾지 못했습니다. 다시 시도해 주세요.",
+          type: "error",
+        });
+        return;
+      }
+
+      const patchErrors = validatePatchArray(patchArray);
+      if (patchErrors.length > 0) {
+        recordCopilotMetric("screen-editor", "parse_failure", patchErrors.join("; "));
+        setToast({
+          message: `Patch validation failed: ${patchErrors[0]}`,
+          type: "error",
+        });
+        return;
+      }
+
+      editorState.setProposedPatch(JSON.stringify(patchArray));
+      editorState.previewPatch();
+      recordCopilotMetric("screen-editor", "parse_success");
     },
     [editorState]
   );
@@ -189,6 +283,48 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     return `${layoutType} · ${componentCount} component${componentCount === 1 ? "" : "s"}`;
      
   }, [editorState.screen, screen]);
+
+  const proposedPatchSummary = useMemo(() => {
+    if (!editorState.proposedPatch) return [];
+    const parsed = tryParseJson(editorState.proposedPatch);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const op = (item as { op?: string }).op ?? "?";
+        const path = (item as { path?: string }).path ?? "?";
+        return `${op} ${path}`;
+      })
+      .filter((line): line is string => Boolean(line));
+  }, [editorState.proposedPatch]);
+
+  const livePreviewBlock = useMemo<UIScreenBlock | null>(() => {
+    if (!screen?.screen_id) return null;
+    return {
+      type: "ui_screen",
+      screen_id: screen.screen_id,
+      params: {},
+      bindings: {},
+    };
+  }, [screen?.screen_id]);
+
+  const copilotBuilderContext = useMemo(
+    () => ({
+      screen: screen
+        ? {
+            screen_id: screen.screen_id,
+            name: screen.name ?? null,
+            layout_type: screen.layout?.type ?? null,
+            component_count: Array.isArray(screen.components)
+              ? screen.components.length
+              : 0,
+          }
+        : null,
+      draft_modified: draftModified,
+      selected_component_id: selectedComponentId,
+    }),
+    [draftModified, screen, selectedComponentId]
+  );
 
   if (!authCheckDone || loading) {
     return (
@@ -333,12 +469,22 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             <BuilderCopilotPanel
               builderSlug="screen-editor"
               instructionPrompt={SCREEN_COPILOT_INSTRUCTION}
+              expectedContract="screen_patch"
+              builderContext={copilotBuilderContext}
               onAssistantMessageComplete={handleAssistantMessageComplete}
               inputPlaceholder="Describe changes to apply..."
             />
           </div>
           {editorState.proposedPatch && (
             <div className="border-t border-slate-800 px-4 py-3 space-y-2">
+              {proposedPatchSummary.length > 0 && (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-2 text-[11px] text-slate-300">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500">Patch Diff</p>
+                  {proposedPatchSummary.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -364,6 +510,14 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                 >
                   Discard
                 </button>
+              </div>
+            </div>
+          )}
+          {livePreviewBlock && (
+            <div className="border-t border-slate-800 px-4 py-3">
+              <p className="mb-2 text-[10px] uppercase tracking-[0.15em] text-slate-500">Live Preview</p>
+              <div className="max-h-60 overflow-auto rounded-lg border border-slate-800 bg-slate-900/40 p-2">
+                <UIScreenRenderer block={livePreviewBlock} schemaOverride={screen} />
               </div>
             </div>
           )}

@@ -11,11 +11,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import yaml
+from app.modules.asset_registry.crud import create_asset
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from sqlmodel import select
-from app.modules.asset_registry.models import TbAssetRegistry
-from app.modules.asset_registry.crud import create_asset, publish_asset
-
 
 UNIVERSAL_PROMPTS = [
     {
@@ -157,7 +156,7 @@ def main() -> None:
                     print(f"  ✓ Created: v{asset.version} (draft status)")
                     created_count += 1
                 else:
-                    print(f"  ⊘ Skipped: already exists")
+                    print("  ⊘ Skipped: already exists")
                     skipped_count += 1
             except Exception as e:
                 print(f"  ✗ Error: {e}")

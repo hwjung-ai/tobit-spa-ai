@@ -957,9 +957,9 @@ async def scan_schema_asset(
     Returns:
         Updated schema asset
     """
-    import asyncio
-    from app.modules.ops.services.ci.discovery.catalog_factory import CatalogFactory
     from core.logging import get_logger
+
+    from app.modules.ops.services.ci.discovery.catalog_factory import CatalogFactory
 
     logger = get_logger(__name__)
 

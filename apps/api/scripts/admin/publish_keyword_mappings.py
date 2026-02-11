@@ -13,9 +13,8 @@ from pathlib import Path
 # Add apps/api to path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from core.config import get_settings
-from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
 
 
 def create_mapping_asset(name: str, content: dict, description: str):

@@ -32,9 +32,13 @@ def main():
     print("\n2️⃣  Tool Limits (tool_limits)")
     try:
         from app.modules.ops.services.ci.tools.ci import _get_limits as ci_limits
-        from app.modules.ops.services.ci.tools.history import _get_limits as history_limits
         from app.modules.ops.services.ci.tools.graph import _get_limits as graph_limits
-        from app.modules.ops.services.ci.tools.metric import _get_limits as metric_limits
+        from app.modules.ops.services.ci.tools.history import (
+            _get_limits as history_limits,
+        )
+        from app.modules.ops.services.ci.tools.metric import (
+            _get_limits as metric_limits,
+        )
 
         ci = ci_limits()
         hist = history_limits()
@@ -53,8 +57,12 @@ def main():
     # 3. Time Ranges
     print("\n3️⃣  Time Ranges (time_ranges)")
     try:
-        from app.modules.ops.services.ci.tools.history import _get_time_ranges as history_ranges
-        from app.modules.ops.services.ci.tools.metric import _get_time_ranges as metric_ranges
+        from app.modules.ops.services.ci.tools.history import (
+            _get_time_ranges as history_ranges,
+        )
+        from app.modules.ops.services.ci.tools.metric import (
+            _get_time_ranges as metric_ranges,
+        )
 
         hist_ranges = history_ranges()
         metric_ranges = metric_ranges()
@@ -81,8 +89,12 @@ def main():
     # 5. Discovery Config
     print("\n5️⃣  Discovery Config (discovery_config)")
     try:
-        from app.modules.ops.services.ci.discovery.postgres_catalog import _get_discovery_config as pg_config
-        from app.modules.ops.services.ci.discovery.neo4j_catalog import _get_discovery_config as neo4j_config
+        from app.modules.ops.services.ci.discovery.neo4j_catalog import (
+            _get_discovery_config as neo4j_config,
+        )
+        from app.modules.ops.services.ci.discovery.postgres_catalog import (
+            _get_discovery_config as pg_config,
+        )
 
         pg = pg_config()
         neo4j = neo4j_config()

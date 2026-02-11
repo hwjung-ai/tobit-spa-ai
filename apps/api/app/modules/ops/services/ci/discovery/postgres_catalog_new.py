@@ -5,8 +5,6 @@ This module implements schema discovery for PostgreSQL databases,
 extracting table, column, and constraint metadata.
 """
 
-import asyncio
-from typing import Any, Optional
 
 from .base_catalog import BaseCatalog
 
@@ -231,7 +229,7 @@ class PostgresCatalog(BaseCatalog):
             result = await self.connection.execute(query)
             row = await result.fetchone()
             return row[0] if row else 0
-        except Exception as e:
+        except Exception:
             # Row count is optional - return 0 on failure
             return 0
 

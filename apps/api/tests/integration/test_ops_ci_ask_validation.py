@@ -3,10 +3,10 @@
 Trace ID 기반 상세 분석 및 검증
 """
 
-import json
 import asyncio
+import json
+
 import httpx
-from datetime import datetime
 
 # 테스트 설정
 API_BASE_URL = "http://localhost:8000"
@@ -26,20 +26,20 @@ async def test_ops_ci_ask_real_query():
         print("\n" + "="*80)
         print("📍 실제 ops/ci/ask API 테스트")
         print("="*80)
-        print(f"엔드포인트: POST {API_BASE_URL}/ops/ci/ask")
+        print(f"엔드포인트: POST {API_BASE_URL}/ops/ask")
         print(f"질의: {payload['question']}")
         print()
 
         try:
             response = await client.post(
-                f"{API_BASE_URL}/ops/ci/ask",
+                f"{API_BASE_URL}/ops/ask",
                 json=payload
             )
 
             if response.status_code == 200:
                 data = response.json()
-                print(f"✅ 요청 성공")
-                print(f"\n응답 구조:")
+                print("✅ 요청 성공")
+                print("\n응답 구조:")
                 print(json.dumps(data, indent=2, ensure_ascii=False)[:1000])
 
                 # Trace 정보 추출
@@ -106,7 +106,7 @@ async def test_trace_details(client, trace_id: str):
                             name = asset_info if isinstance(asset_info, str) else asset_info.get('name', '?')
                             print(f"     - {asset_type}: {name}")
                 else:
-                    print(f"  └─ 적용된 Asset: 없음")
+                    print("  └─ 적용된 Asset: 없음")
                 print()
 
                 total_stage_time += elapsed
@@ -182,8 +182,8 @@ async def test_stage_specific_assets():
     실제 Stage별 Asset 분석
     DB에서 직접 stage_inputs 조회
     """
+
     import psycopg2
-    import json as json_lib
 
     print("\n" + "="*80)
     print("⚙️ Stage별 Asset 상세 분석")
@@ -224,7 +224,7 @@ async def test_stage_specific_assets():
 
             # Stage별 분석
             if stage_inputs:
-                print(f"\n📋 Stage별 상세 분석:")
+                print("\n📋 Stage별 상세 분석:")
                 print()
 
                 for idx, stage_data in enumerate(stage_inputs, 1):
@@ -248,7 +248,7 @@ async def test_stage_specific_assets():
                             print()
 
             # 전체 applied assets
-            print(f"\n📦 전체 적용된 Asset:")
+            print("\n📦 전체 적용된 Asset:")
             if applied_assets:
                 for asset_type, asset_info in applied_assets.items():
                     if asset_info:

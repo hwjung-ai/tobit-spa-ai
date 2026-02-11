@@ -7,16 +7,20 @@ Tests for:
 - Data flow between tools
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.modules.ops.services.ci.planner.plan_schema import (
-    Plan, PrimarySpec, SecondarySpec, AggregateSpec, GraphSpec,
-    ExecutionStrategy, Intent, FilterSpec,
-)
+import pytest
 from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
     ToolOrchestrator,
+)
+from app.modules.ops.services.ci.planner.plan_schema import (
+    AggregateSpec,
+    ExecutionStrategy,
+    GraphSpec,
+    Intent,
+    PrimarySpec,
+    SecondarySpec,
 )
 from app.modules.ops.services.ci.tools.base import ToolContext
 
@@ -310,7 +314,6 @@ class TestOrchestrationTraceMetadata:
     def test_create_execution_plan_trace_parallel(self):
         """Should create execution plan trace for parallel execution."""
         from app.modules.ops.services.ci.planner.plan_schema import ToolDependency
-        from app.modules.ops.services.ci.orchestrator.tool_orchestration import ExecutionPlanner
 
         plan = MagicMock()
         plan.intent = Intent.AGGREGATE

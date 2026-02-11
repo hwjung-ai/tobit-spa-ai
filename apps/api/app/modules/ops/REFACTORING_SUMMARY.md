@@ -25,7 +25,7 @@ The OPS module has been successfully refactored to improve code organization and
 | File | Endpoints | Lines | Purpose |
 |------|-----------|-------|---------|
 | `routes/query.py` | `/query`, `/observability/kpis` | ~130 | Standard OPS query processing |
-| `routes/ci_ask.py` | `/ci/ask` | ~750 | CI question processing with planning |
+| `routes/ci_ask.py` | `/ask`, `/ci/ask` | ~750 | OPS ask processing with planning |
 | `routes/ui_actions.py` | `/ui-actions` | ~220 | Deterministic UI action execution |
 | `routes/rca.py` | `/rca/*` | ~150 | Root cause analysis |
 | `routes/regression.py` | `/golden-queries/*`, `/regression-runs/*` | ~650 | Golden query management and regression |
@@ -117,7 +117,7 @@ ops/
 ├── routes/                        # NEW: Modularized routes
 │   ├── __init__.py               # Route package entry
 │   ├── query.py                  # OPS query processing
-│   ├── ci_ask.py                 # CI asking and planning
+│   ├── ask.py                 # CI asking and planning
 │   ├── ui_actions.py             # UI action execution
 │   ├── rca.py                    # RCA operations
 │   ├── regression.py             # Golden queries & regression
@@ -154,7 +154,7 @@ ops/
 | Metric | Before | After |
 |--------|--------|-------|
 | router.py size | 2,399 lines | ~100 lines (deprecated marker) |
-| Largest route file | - | ci_ask.py (750 lines) |
+| Largest route file | - | ask.py (750 lines) |
 | Average route file | - | ~350 lines |
 | Total route code | 2,399 lines | ~2,520 lines |
 | Documentation | Minimal | Comprehensive |
@@ -207,7 +207,7 @@ router = get_combined_router()
 
 # Import specific routers
 from app.modules.ops.routes.query import router as query_router
-from app.modules.ops.routes.ci_ask import router as ci_ask_router
+from app.modules.ops.routes.ci_ask import router as ask_router
 ```
 
 ### For New Development

@@ -11,9 +11,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from core.logging import get_logger
 from pydantic import BaseModel, Field
 
-from core.logging import get_logger
 from app.modules.ops.services.ci.tools.base import get_tool_registry
 
 logger = get_logger(__name__)
@@ -108,7 +108,10 @@ JSON 응답:"""
     def _get_schema_info_for_tool(self, tool_name: str) -> str | None:
         """Get schema information for a tool if available via catalog_ref."""
         try:
-            from app.modules.asset_registry.loader import load_tool_asset, load_catalog_asset
+            from app.modules.asset_registry.loader import (
+                load_catalog_asset,
+                load_tool_asset,
+            )
 
             tool_asset = load_tool_asset(tool_name)
             if not tool_asset:
@@ -182,7 +185,7 @@ JSON 응답:"""
             # Try to add schema information if available
             schema_info = self._get_schema_info_for_tool(tool_name)
             if schema_info:
-                lines.append(f"  데이터베이스 스키마:")
+                lines.append("  데이터베이스 스키마:")
                 lines.append(schema_info)
 
         return "\n".join(lines)

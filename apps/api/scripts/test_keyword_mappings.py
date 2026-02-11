@@ -16,16 +16,16 @@ def main():
     print("=" * 70)
 
     from app.modules.ops.services.ci.planner.planner_llm import (
-        _get_metric_aliases,
         _get_agg_keywords,
-        _get_series_keywords,
+        _get_auto_keywords,
+        _get_cep_keywords,
+        _get_filterable_fields,
+        _get_graph_scope_keywords,
         _get_history_keywords,
         _get_list_keywords,
+        _get_metric_aliases,
+        _get_series_keywords,
         _get_table_hints,
-        _get_cep_keywords,
-        _get_graph_scope_keywords,
-        _get_auto_keywords,
-        _get_filterable_fields,
     )
 
     tests = []

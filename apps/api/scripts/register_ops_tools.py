@@ -20,8 +20,8 @@ from typing import Any, Dict, List
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -510,6 +510,184 @@ TOOL_ASSETS: List[Dict[str, Any]] = [
             },
         },
         "tags": {"category": "ci", "operation": "graph", "phase": "3"},
+    },
+    # Additional CI and Metric tools for complete coverage
+    {
+        "name": "ci_search",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Search CIs by keyword in name, code, type, or description",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("ci/ci_search.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id", "keyword", "limit"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+                "keyword": {
+                    "type": "string",
+                    "description": "Keyword to search for (name, code, type, description)",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 50,
+                    "description": "Maximum number of results to return",
+                },
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "ci_id": {"type": "string"},
+                            "ci_code": {"type": "string"},
+                            "ci_name": {"type": "string"},
+                            "ci_type": {"type": "string"},
+                            "ci_subtype": {"type": "string"},
+                            "ci_category": {"type": "string"},
+                            "status": {"type": "string"},
+                            "location": {"type": "string"},
+                            "owner": {"type": "string"},
+                            "description": {"type": "string"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "ci", "operation": "search", "phase": "4"},
+    },
+    {
+        "name": "metric_series",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Fetch time series metric data for visualization",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("metric/metric_series.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id", "metric_name", "ci_id", "start_time", "end_time", "limit"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+                "metric_name": {
+                    "type": "string",
+                    "description": "Name of the metric (cpu_usage, memory_usage, latency, etc.)",
+                },
+                "ci_id": {"type": "string", "description": "CI ID to fetch metrics for"},
+                "start_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start of time range",
+                },
+                "end_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End of time range",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10000,
+                    "default": 1000,
+                    "description": "Maximum number of data points to return",
+                },
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "time": {"type": "string", "format": "date-time"},
+                            "value": {"type": "number"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "metric", "operation": "series", "phase": "4"},
+    },
+    {
+        "name": "metric_aggregate_by_ci",
+        "asset_type": "tool",
+        "tool_type": "database_query",
+        "status": "published",
+        "version": 1,
+        "description": "Aggregate metrics by CI with flexible aggregation functions",
+        "tool_config": {
+            "source_ref": "default_postgres",
+            "query_template": load_sql_file("metric/metric_aggregate_by_ci.sql"),
+        },
+        "tool_input_schema": {
+            "type": "object",
+            "required": ["tenant_id", "metric_name", "ci_ids", "function", "start_time", "end_time"],
+            "properties": {
+                "tenant_id": {"type": "string", "description": "Tenant identifier"},
+                "metric_name": {
+                    "type": "string",
+                    "description": "Name of the metric to aggregate",
+                },
+                "ci_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "List of CI IDs to aggregate",
+                },
+                "function": {
+                    "type": "string",
+                    "enum": ["AVG", "MAX", "MIN", "SUM", "COUNT"],
+                    "description": "Aggregation function to apply",
+                },
+                "start_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Start of time range",
+                },
+                "end_time": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "End of time range",
+                },
+                "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "default": 100,
+                    "description": "Maximum number of results to return",
+                },
+            },
+        },
+        "tool_output_schema": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "ci_id": {"type": "string"},
+                            "value": {"type": "number"},
+                        },
+                    },
+                }
+            },
+        },
+        "tags": {"category": "metric", "operation": "aggregate", "phase": "4"},
     },
 ]
 

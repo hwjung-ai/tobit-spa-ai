@@ -5,16 +5,15 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from datetime import datetime
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.modules.asset_registry.crud import publish_asset
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from sqlmodel import select
-from app.modules.asset_registry.models import TbAssetRegistry
-from app.modules.asset_registry.crud import publish_asset
 
 
 def publish_planner_asset() -> None:
@@ -49,8 +48,8 @@ def publish_planner_asset() -> None:
         # Publish the asset
         published = publish_asset(session, asset, "admin")
 
-        print(f"✓ Successfully published ci_planner_output_parser!")
-        print(f"  Status changed: draft → published")
+        print("✓ Successfully published ci_planner_output_parser!")
+        print("  Status changed: draft → published")
         print(f"  Published At: {published.published_at}\n")
         print("=" * 80 + "\n")
 

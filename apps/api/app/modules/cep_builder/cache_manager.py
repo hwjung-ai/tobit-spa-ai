@@ -7,10 +7,8 @@ Implements automatic cache invalidation and TTL-based expiration.
 
 import json
 import logging
-from typing import Any, Dict, Optional
-from datetime import datetime, timedelta
 from functools import wraps
-import hashlib
+from typing import Any, Dict, Optional
 
 try:
     import redis.asyncio as redis

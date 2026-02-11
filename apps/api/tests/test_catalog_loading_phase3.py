@@ -1,12 +1,11 @@
 """Unit tests for Catalog Loading (Phase 3)."""
 
-import pytest
 from datetime import datetime
 
 from app.modules.asset_registry.schema_models import (
+    SchemaCatalog,
     SchemaColumn,
     SchemaTable,
-    SchemaCatalog,
 )
 
 

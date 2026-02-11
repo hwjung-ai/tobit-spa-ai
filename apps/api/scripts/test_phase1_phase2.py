@@ -53,7 +53,8 @@ def test_timezone_configuration():
     print("TEST 2: Timezone Configuration")
     print("="*60)
 
-    from datetime import timezone, timedelta
+    from datetime import timedelta, timezone
+
     from core.config import get_settings
 
     settings = get_settings()
@@ -73,7 +74,7 @@ def test_timezone_configuration():
         # For Asia/Seoul, should be UTC+9
         expected_offset = timezone(timedelta(hours=9))
         if tz_offset == expected_offset:
-            print(f"✅ PASSED: Correctly returns UTC+9 for Asia/Seoul")
+            print("✅ PASSED: Correctly returns UTC+9 for Asia/Seoul")
         else:
             print(f"⚠️  WARNING: Expected UTC+9, got {tz_offset}")
     else:
@@ -89,7 +90,10 @@ def test_view_policy_loading():
     print("TEST 3: View Policy Loading from DB")
     print("="*60)
 
-    from app.modules.ops.services.ci.view_registry import get_view_registry, get_view_policy
+    from app.modules.ops.services.ci.view_registry import (
+        get_view_policy,
+        get_view_registry,
+    )
 
     # Test 3.1: Load all view policies
     try:
@@ -165,7 +169,7 @@ def test_budget_policy_required():
         # Try with the actual name in DB
         policy = load_policy_asset("plan_budget_default")
         if policy:
-            print(f"✅ PASSED: Successfully loaded plan_budget_default policy from DB")
+            print("✅ PASSED: Successfully loaded plan_budget_default policy from DB")
             print(f"   Policy keys: {list(policy.keys())}")
         else:
             print("⚠️  WARNING: plan_budget_default policy returned None")
@@ -179,7 +183,7 @@ def test_budget_policy_required():
         return False
     except ValueError as e:
         if "required but not found" in str(e):
-            print(f"✅ PASSED: Correctly raised ValueError with proper message")
+            print("✅ PASSED: Correctly raised ValueError with proper message")
         else:
             print(f"⚠️  WARNING: Raised ValueError but message unclear: {e}")
     except Exception as e:

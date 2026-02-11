@@ -3,6 +3,10 @@ Oracle Catalog - Oracle database schema introspection implementation.
 
 This module implements schema discovery for Oracle databases,
 extracting table, column, and constraint metadata.
+
+Status:
+- Sample/reference implementation in this project.
+- Not currently used by default production flow.
 """
 
 from .base_catalog import BaseCatalog
@@ -14,7 +18,7 @@ except ImportError:
 
 
 class OracleCatalog(BaseCatalog):
-    """Oracle database schema introspection"""
+    """Oracle schema introspection (sample/reference implementation)."""
 
     def get_database_type(self) -> str:
         return "oracle"

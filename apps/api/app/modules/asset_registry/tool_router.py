@@ -10,17 +10,15 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from sqlmodel import Session, select
-
 from core.auth import get_current_user
 from core.db import get_session, get_session_context
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from schemas.common import ResponseEnvelope
+from sqlmodel import Session, select
 
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.asset_registry.schemas import (
     ToolAssetCreate,
-    ToolAssetRead,
     ToolAssetUpdate,
 )
 from app.modules.auth.models import TbUser
@@ -467,8 +465,8 @@ async def test_tool(
 
         # Execute tool
         try:
-            from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
             from app.modules.asset_registry.schemas import ToolAssetRead
+            from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
 
             # Create DynamicTool instance
             tool_asset_read = ToolAssetRead(
@@ -538,8 +536,10 @@ def reload_tools(
             loaded_count = 0
             for asset in assets:
                 try:
-                    from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
                     from app.modules.asset_registry.schemas import ToolAssetRead
+                    from app.modules.ops.services.ci.tools.dynamic_tool import (
+                        DynamicTool,
+                    )
 
                     tool_asset_read = ToolAssetRead(
                         asset_id=str(asset.asset_id),
@@ -568,7 +568,7 @@ def reload_tools(
                     # Register with tool name
                     registry._instances[asset.name] = tool
                     loaded_count += 1
-                except Exception as e:
+                except Exception:
                     pass  # Skip failed tools
 
             return ResponseEnvelope.success(

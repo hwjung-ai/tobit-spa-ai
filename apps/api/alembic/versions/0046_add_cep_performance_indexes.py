@@ -8,7 +8,6 @@ Create Date: 2026-02-06 10:00:00.000000
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0046_add_cep_performance_indexes"

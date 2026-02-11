@@ -1,20 +1,18 @@
 """Unit tests for Plan schema with tool_type field."""
 
-import pytest
 
 from app.modules.ops.services.ci.planner.plan_schema import (
+    AggregateSpec,
+    AutoSpec,
+    CepSpec,
+    GraphSpec,
+    HistorySpec,
+    Intent,
+    MetricSpec,
+    Plan,
+    PlanMode,
     PrimarySpec,
     SecondarySpec,
-    MetricSpec,
-    AggregateSpec,
-    HistorySpec,
-    GraphSpec,
-    CepSpec,
-    AutoSpec,
-    Plan,
-    Intent,
-    View,
-    PlanMode,
 )
 
 

@@ -22,6 +22,7 @@ interface CanvasComponentProps {
   index?: number;
   parentId?: string | null;
   onReorder?: (dragId: string, dropIndex: number) => void;
+  isGridItem?: boolean;
 }
 
 export default function CanvasComponent({
@@ -32,6 +33,7 @@ export default function CanvasComponent({
   index = 0,
   parentId = null,
   onReorder,
+  isGridItem = false,
 }: CanvasComponentProps) {
   const editorState = useEditorState();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -138,6 +140,8 @@ export default function CanvasComponent({
 
   // Get border/background class based on drag state
   const getDragClass = () => {
+    if (isGridItem) return "h-full w-full"; // Minimal styling for grid items as container handles it
+
     if (isDragging) {
       return "opacity-50 border-slate-500";
     }
@@ -157,14 +161,14 @@ export default function CanvasComponent({
   };
 
   return (
-    <div className="relative">
+    <div className={`relative ${isGridItem ? "h-full w-full" : ""}`}>
       {/* Drop indicator - before */}
-      {isDragOver && dropPosition === "before" && (
+      {!isGridItem && isDragOver && dropPosition === "before" && (
         <div className="absolute -top-1 left-0 right-0 h-1 bg-sky-500 rounded-full z-10" />
       )}
 
       <div
-        draggable
+        draggable={!isGridItem}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onClick={(e) => {
@@ -177,18 +181,20 @@ export default function CanvasComponent({
             onSelect();
           }
         }}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${getDragClass()}`}
+        onDragOver={isGridItem ? undefined : handleDragOver}
+        onDragLeave={isGridItem ? undefined : handleDragLeave}
+        onDrop={isGridItem ? undefined : handleDrop}
+        className={`${isGridItem ? "" : "p-3 rounded-lg border-2 cursor-pointer transition-colors"} ${getDragClass()}`}
         style={{ marginLeft: depth > 0 ? 0 : undefined }}
         data-testid={`canvas-component-${component.id}`}
       >
         <div className="flex items-start justify-between gap-2">
           {/* Drag handle */}
-          <div className="flex-shrink-0 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 pt-0.5">
-            <GripVertical className="w-4 h-4" />
-          </div>
+          {!isGridItem && (
+            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 pt-0.5">
+              <GripVertical className="w-4 h-4" />
+            </div>
+          )}
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -247,9 +253,8 @@ export default function CanvasComponent({
         {/* Render children for container components */}
         {isContainer && children.length > 0 && (
           <div
-            className={`mt-3 pt-3 border-t border-slate-700 ${
-              isRow ? "flex flex-row gap-2 flex-wrap" : "flex flex-col gap-2"
-            }`}
+            className={`mt-3 pt-3 border-t border-slate-700 ${isRow ? "flex flex-row gap-2 flex-wrap" : "flex flex-col gap-2"
+              }`}
           >
             {children.map((child, childIndex) => (
               <div key={child.id} className={isRow ? "flex-1 min-w-[120px]" : ""}>
@@ -272,9 +277,8 @@ export default function CanvasComponent({
         {/* Empty container placeholder */}
         {isContainer && children.length === 0 && (
           <div className="mt-3 pt-3 border-t border-slate-700">
-            <div className={`text-center py-4 border-2 border-dashed rounded-lg transition-colors ${
-              isDragOver ? "border-sky-500 bg-sky-950/30" : "border-slate-700"
-            }`}>
+            <div className={`text-center py-4 border-2 border-dashed rounded-lg transition-colors ${isDragOver ? "border-sky-500 bg-sky-950/30" : "border-slate-700"
+              }`}>
               <p className={`text-xs ${isDragOver ? "text-sky-300" : "text-slate-500"}`}>
                 {isDragOver ? "Drop here to add" : `Drag or click to add components`}
               </p>
@@ -284,7 +288,7 @@ export default function CanvasComponent({
       </div>
 
       {/* Drop indicator - after */}
-      {isDragOver && dropPosition === "after" && (
+      {!isGridItem && isDragOver && dropPosition === "after" && (
         <div className="absolute -bottom-1 left-0 right-0 h-1 bg-sky-500 rounded-full z-10" />
       )}
     </div>

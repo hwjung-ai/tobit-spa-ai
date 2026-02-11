@@ -7,19 +7,18 @@ It directly creates tools in the database without requiring YAML files.
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
-from uuid import uuid4
 
 # Add apps/api to Python path
 API_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_DIR))
 
+from datetime import datetime
+
+from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from core.db import get_session_context
 from core.logging import get_logger
-from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
-from datetime import datetime
 
 logger = get_logger(__name__)
 
@@ -412,7 +411,7 @@ def main():
 
         print(f"\n✓ Successfully created {len(created_tools)} demo tools")
         if args.publish:
-            print(f"✓ All tools are published and ready to use")
+            print("✓ All tools are published and ready to use")
         else:
             print("  Status: draft")
             print("  Use --publish to publish tools")

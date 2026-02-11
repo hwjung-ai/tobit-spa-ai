@@ -10,7 +10,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
-from app.modules.asset_registry.loader import load_source_asset
 
 
 def test_aggregate_query_processing():

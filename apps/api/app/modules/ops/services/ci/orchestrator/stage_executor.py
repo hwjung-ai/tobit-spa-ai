@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import logging
 import time
-from datetime import date, datetime, time as datetime_time
+from datetime import date, datetime
+from datetime import time as datetime_time
 from typing import Any, Dict, List, Optional
 
 from core.db import get_session_context
@@ -447,7 +448,6 @@ class StageExecutor:
 
                             ci_id = selected_row.get("ci_id")
                             if ci_id:
-                                from sqlalchemy import text
                                 sql = (
                                     "SELECT ci_id, ci_code, ci_name, ci_type, ci_subtype, "
                                     "ci_category, status, location, owner, tags, attributes "
@@ -1071,7 +1071,7 @@ class StageExecutor:
 
             # ===== NEW: Use LLM-composed answer from compose stage =====
             if llm_summary:
-                self.logger.info(f"📊 [PRESENT] Using LLM-composed answer from compose stage")
+                self.logger.info("📊 [PRESENT] Using LLM-composed answer from compose stage")
 
                 # Add LLM summary as the first block
                 blocks.append({

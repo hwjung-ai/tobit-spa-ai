@@ -16,8 +16,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.modules.ops.services.ci.orchestrator.chain_executor import (
-    ToolChainExecutor,
     StepResult,
+    ToolChainExecutor,
 )
 
 
@@ -48,7 +48,7 @@ def test_wildcard_path_resolution():
 
     print(f"  Path: {path}")
     print(f"  Result: {ci_ids}")
-    print(f"  Expected: ['ci-001', 'ci-002', 'ci-003']")
+    print("  Expected: ['ci-001', 'ci-002', 'ci-003']")
 
     assert ci_ids == ["ci-001", "ci-002", "ci-003"], f"Expected ['ci-001', 'ci-002', 'ci-003'], got {ci_ids}"
     print("  ✅ PASS: Wildcard path resolution works correctly")
@@ -140,11 +140,13 @@ def test_output_mapping_definition():
     """Test that metric tool output_mapping is defined."""
     print("\n=== Test 4: Metric Tool Output Mapping Definition ===")
 
-    from app.modules.ops.services.ci.orchestrator.tool_orchestration import DependencyAnalyzer
+    from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
+        DependencyAnalyzer,
+    )
     from app.modules.ops.services.ci.planner.plan_schema import (
-        Plan,
         AggregateSpec,
         MetricSpec,
+        Plan,
     )
 
     analyzer = DependencyAnalyzer()

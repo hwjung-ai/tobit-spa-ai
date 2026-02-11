@@ -6,12 +6,9 @@ specifically designed for screen schema editing with automatic conflict resoluti
 
 import json
 import logging
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
-
-from pydantic import BaseModel
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

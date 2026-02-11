@@ -7,11 +7,11 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pytest
-from app.modules.ops.services.langgraph_advanced import (
+from app.modules.ops.services.query_decomposition_runner import (
     ConditionalRouter,
     ExecutionMode,
     ExecutionState,
-    LangGraphAdvancedRunner,
+    QueryDecompositionRunner,
     QueryAnalysis,
     QueryAnalyzer,
     QueryType,
@@ -247,20 +247,20 @@ class TestToolComposer:
         assert len(order) == 3
 
 
-class TestLangGraphAdvancedRunner:
-    """Test advanced LangGraph runner."""
+class TestQueryDecompositionRunner:
+    """Test query decomposition runner."""
 
     @pytest.fixture
     def runner(self):
         settings = AppSettings(openai_api_key="test-key")
-        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
-            return LangGraphAdvancedRunner(settings)
+        with patch("app.modules.ops.services.query_decomposition_runner.get_llm_client"):
+            return QueryDecompositionRunner(settings)
 
     def test_initialization(self):
         """Test runner initialization."""
         settings = AppSettings(openai_api_key="test-key")
-        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
-            runner = LangGraphAdvancedRunner(settings)
+        with patch("app.modules.ops.services.query_decomposition_runner.get_llm_client"):
+            runner = QueryDecompositionRunner(settings)
             assert runner.settings == settings
             assert runner.analyzer is not None
             assert runner.router is not None
@@ -272,7 +272,7 @@ class TestLangGraphAdvancedRunner:
         # AppSettings provides a default, so we need to explicitly set it to None
         settings.openai_api_key = None
         with pytest.raises(ValueError, match="OpenAI API key is required"):
-            LangGraphAdvancedRunner(settings)
+            QueryDecompositionRunner(settings)
 
     def test_run_simple_query(self, runner):
         """Test running a simple query."""
@@ -471,14 +471,14 @@ class TestExecutionState:
 
 
 class TestIntegration:
-    """Integration tests for advanced LangGraph."""
+    """Integration tests for query decomposition runner."""
 
     def test_full_workflow_simple_to_complex(self):
         """Test complete workflow from simple to complex queries."""
         settings = AppSettings(openai_api_key="test-key")
 
-        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
-            runner = LangGraphAdvancedRunner(settings)
+        with patch("app.modules.ops.services.query_decomposition_runner.get_llm_client"):
+            runner = QueryDecompositionRunner(settings)
 
             # Simple query
             blocks1, tools1, error1 = runner.run("Show metrics")
@@ -494,8 +494,8 @@ class TestIntegration:
         """Test query analysis leading to execution."""
         settings = AppSettings(openai_api_key="test-key")
 
-        with patch("app.modules.ops.services.langgraph_advanced.get_llm_client"):
-            runner = LangGraphAdvancedRunner(settings)
+        with patch("app.modules.ops.services.query_decomposition_runner.get_llm_client"):
+            runner = QueryDecompositionRunner(settings)
 
             # Analyze
             analysis = runner.analyzer.analyze("Show metrics and relationships")

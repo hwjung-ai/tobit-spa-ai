@@ -10,10 +10,9 @@ Tests for the CICache implementation to verify:
 """
 
 import asyncio
-import pytest
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from datetime import timedelta
 
+import pytest
 from app.modules.ops.services.ci.services.ci_cache import CICache
 
 

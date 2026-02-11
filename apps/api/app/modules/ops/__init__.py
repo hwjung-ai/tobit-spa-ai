@@ -12,7 +12,7 @@ Architecture:
     - error_handler.py: Global exception handlers
 
 Key Features:
-    1. CI (Causal Investigation): Plan generation and query understanding
+    1. OPS Ask: Plan generation and query understanding
     2. Orchestration: Multi-stage execution with fallback handling
     3. Regression Testing: Golden queries and baseline comparison
     4. RCA (Root Cause Analysis): Trace analysis and diff detection
@@ -20,8 +20,8 @@ Key Features:
 
 Routing:
     - /ops/query: Standard OPS query processing
-    - /ops/ci/ask: CI question processing with planning
-    - /ops/ui-actions: UI action execution
+    - /ops/ask: OPS ask processing with planning
+    -     - /ops/ui-actions: UI action execution
     - /ops/rca/*: Root cause analysis
     - /ops/golden-queries/*: Golden query management and regression
     - /ops/actions: Recovery action execution

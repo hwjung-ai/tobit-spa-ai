@@ -6,8 +6,6 @@ Supports PostgreSQL, MySQL, Oracle, SQL Server, and other databases through impl
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Optional
 
 
 class BaseCatalog(ABC):

@@ -210,9 +210,17 @@ export async function fetchApi<T = any>(
         contentLength: response.headers.get("content-length"),
       });
 
+      const contentType = response.headers.get("content-type") || "";
+      const trimmedText = rawText.trim();
+      const looksLikeJson = trimmedText.startsWith("{") || trimmedText.startsWith("[");
+
       if (rawText) {
         try {
-          errorData = JSON.parse(rawText);
+          if (contentType.includes("application/json") && looksLikeJson) {
+            errorData = JSON.parse(rawText);
+          } else {
+            throw new Error(`Non-JSON response content-type: ${contentType || "unknown"}`);
+          }
         } catch (parseErr) {
           console.error("[API] JSON parse error:", parseErr);
           console.error("[API] Tried to parse as JSON but failed. Raw text:", rawText.substring(0, 200));
@@ -262,7 +270,28 @@ export async function fetchApi<T = any>(
     throw error;
   }
 
-  const payload = await response.json();
+  const successContentType = response.headers.get("content-type") || "";
+  if (!successContentType.includes("application/json")) {
+    const rawText = await response.text();
+    console.error("[API] Expected JSON but received non-JSON response:", {
+      endpoint,
+      status: response.status,
+      contentType: successContentType || "unknown",
+      rawResponse: rawText.substring(0, 500),
+    });
+    throw new Error(
+      `Expected JSON response but got ${successContentType || "unknown content type"}`
+    );
+  }
+
+  let payload: unknown;
+  try {
+    payload = await response.json();
+  } catch (parseErr) {
+    console.error("[API] Failed to parse successful response as JSON:", parseErr);
+    throw new Error("Invalid JSON response from server");
+  }
+
   if (payload && typeof payload === "object" && "code" in payload) {
     const envelope = payload as ResponseEnvelope<T>;
     const ok = (envelope.code ?? 1) === 0;

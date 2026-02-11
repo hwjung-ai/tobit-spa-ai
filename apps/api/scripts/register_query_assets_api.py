@@ -7,11 +7,9 @@ with tool_type and operation metadata for dynamic discovery.
 """
 
 import argparse
-import sys
 from pathlib import Path
 
 import httpx
-import yaml
 
 # Find the resources directory
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -176,7 +174,7 @@ def register_via_api(
                 elif response.status_code == 400:
                     error_detail = response.json().get("detail", "")
                     if "already exists" in error_detail.lower() or "duplicate" in error_detail.lower():
-                        print(f"  ℹ️  Already exists, skipping")
+                        print("  ℹ️  Already exists, skipping")
                         skipped_count += 1
                     else:
                         print(f"  ⚠️  Error: {error_detail}")
@@ -187,7 +185,7 @@ def register_via_api(
 
         except httpx.ConnectError:
             print(f"  ⚠️  Could not connect to API at {api_url}")
-            print(f"     Make sure the API server is running")
+            print("     Make sure the API server is running")
             error_count += 1
             break
         except Exception as e:
@@ -195,7 +193,7 @@ def register_via_api(
             error_count += 1
 
     print(f"\n{'='*60}")
-    print(f"Summary:")
+    print("Summary:")
     print(f"  Registered: {registered_count}")
     print(f"  Skipped: {skipped_count}")
     print(f"  Errors: {error_count}")

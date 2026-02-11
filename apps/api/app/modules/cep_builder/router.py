@@ -12,11 +12,11 @@ from core.db import get_session
 
 logger = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from starlette.requests import Request
 from schemas.common import ResponseEnvelope
 from sqlalchemy import desc, select
 from sqlmodel import Session
 from sse_starlette.sse import EventSourceResponse
+from starlette.requests import Request
 
 from .crud import (
     acknowledge_event,
@@ -41,6 +41,10 @@ from .crud import (
 )
 from .event_broadcaster import event_broadcaster
 from .executor import evaluate_trigger, manual_trigger
+from .form_converter import (
+    convert_form_to_action_spec,
+    convert_form_to_trigger_spec,
+)
 from .models import (
     TbCepExecLog,
     TbCepMetricPollSnapshot,
@@ -63,23 +67,19 @@ from .schemas import (
     CepNotificationRead,
     CepNotificationUpdate,
     CepRuleCreate,
+    # Phase 2: Form-based UI schemas
+    CepRuleFormData,
     CepRuleRead,
     CepRuleUpdate,
     CepSimulateRequest,
     CepSimulateResponse,
     CepTriggerRequest,
     CepTriggerResponse,
-    # Phase 2: Form-based UI schemas
-    CepRuleFormData,
     ConditionSpec,
-    ValidationResult,
-    PreviewResult,
-    FieldInfo,
     ConditionTemplate,
-)
-from .form_converter import (
-    convert_form_to_trigger_spec,
-    convert_form_to_action_spec,
+    FieldInfo,
+    PreviewResult,
+    ValidationResult,
 )
 
 router = APIRouter(prefix="/cep", tags=["cep-builder"])
@@ -200,7 +200,7 @@ def get_rules_performance(
                         "error_rate": float(error_count / exec_count),
                         "avg_duration_ms": float(round(avg_duration, 2)),
                     })
-            except Exception as e:
+            except Exception:
                 logger.exception(f"Error processing rule {rule.rule_id}")
                 continue
 
@@ -214,7 +214,7 @@ def get_rules_performance(
                 "period_days": 7,
             }
         )
-    except Exception as e:
+    except Exception:
         logger.exception("Error in get_rules_performance")
         return ResponseEnvelope.success(
             data={
@@ -1224,7 +1224,10 @@ async def test_notification_channel(
         raise HTTPException(status_code=400, detail="Config is required")
 
     try:
-        from .notification_channels import NotificationChannelFactory, NotificationMessage
+        from .notification_channels import (
+            NotificationChannelFactory,
+            NotificationMessage,
+        )
 
         channel = NotificationChannelFactory.create(channel_type, config)
         if not channel:

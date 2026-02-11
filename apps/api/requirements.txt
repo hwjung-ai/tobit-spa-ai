@@ -7,7 +7,6 @@ alembic
 psycopg[binary]>=3.1
 redis
 rq
-langgraph
 neo4j
 sse-starlette
 openai>=1.0.0
@@ -18,9 +17,6 @@ httpx
 python-dotenv>=1.2.0
 ruff
 mypy
-langchain
-langchain-community
-langchain-openai>=0.1.0
 pgvector
 python-docx
 pypdf

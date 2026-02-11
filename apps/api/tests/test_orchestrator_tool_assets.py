@@ -5,9 +5,9 @@ Tests verify that Phase 1 Tool Assets are properly registered
 and use parameterized queries safely.
 """
 
-import pytest
-from datetime import datetime, timedelta
 from pathlib import Path
+
+import pytest
 
 # SQL file validation tests
 

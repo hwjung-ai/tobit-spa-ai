@@ -1,10 +1,14 @@
 "use client";
 
 import ChatExperience from "./ChatExperience";
+import type { CopilotContract } from "@/lib/copilot/contract-utils";
 
 interface BuilderCopilotPanelProps {
   builderSlug?: string;
   instructionPrompt?: string;
+  expectedContract?: CopilotContract;
+  builderContext?: Record<string, unknown> | null;
+  enableAutoRepair?: boolean;
   onAssistantMessage?: (text: string) => void;
   onAssistantMessageComplete?: (text: string) => void;
   onUserMessage?: (text: string) => void;
@@ -14,6 +18,9 @@ interface BuilderCopilotPanelProps {
 export default function BuilderCopilotPanel({
   builderSlug = "api-manager",
   instructionPrompt,
+  expectedContract,
+  builderContext,
+  enableAutoRepair = true,
   onAssistantMessage,
   onAssistantMessageComplete,
   onUserMessage,
@@ -25,6 +32,9 @@ export default function BuilderCopilotPanel({
         builderSlug={builderSlug}
         inline
         instructionPrompt={instructionPrompt}
+        expectedContract={expectedContract}
+        builderContext={builderContext}
+        enableAutoRepair={enableAutoRepair}
         onAssistantMessage={onAssistantMessage}
         onAssistantMessageComplete={onAssistantMessageComplete}
         onUserMessage={onUserMessage}

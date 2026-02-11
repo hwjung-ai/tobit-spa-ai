@@ -1,6 +1,5 @@
 """Unit tests for Tool Registry enhancements (Phase 2)."""
 
-import pytest
 
 from app.modules.ops.services.ci.tools.base import (
     BaseTool,

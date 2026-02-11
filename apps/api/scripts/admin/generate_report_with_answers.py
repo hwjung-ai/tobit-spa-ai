@@ -5,24 +5,13 @@ Generate 100 Questions Test Report with Expected Answers
 
 from __future__ import annotations
 
-import json
 import sys
-import time
-from datetime import datetime
 from pathlib import Path
-from typing import Any
-
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.db import get_session_context
-from app.modules.inspector.models import TbExecutionTrace
-from app.modules.inspector.crud import get_execution_trace
 
 # API Configuration
 API_BASE_URL = "http://127.0.0.1:8000"

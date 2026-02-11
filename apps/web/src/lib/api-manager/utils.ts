@@ -10,6 +10,11 @@ import type {
   LogicType,
   ScopeType,
 } from "./types";
+import {
+  extractJsonCandidates,
+  stripCodeFences,
+  tryParseJson,
+} from "../copilot/json-utils";
 
 // ─── Constants ───
 
@@ -47,6 +52,47 @@ export const draftStatusLabels: Record<string, string> = {
   outdated: "드래프트 오래됨",
   error: "오류 발생",
 };
+
+export const API_MANAGER_SCENARIO_FUNCTIONS: Array<{
+  name: string;
+  summary: string;
+  signature: string;
+}> = [
+  {
+    name: "generateApiDraft",
+    summary: "새 API 초안을 생성합니다.",
+    signature: "generateApiDraft(goal, method?, endpointHint?, logicType?)",
+  },
+  {
+    name: "refineApiDraft",
+    summary: "기존 초안을 요구사항에 맞게 수정합니다.",
+    signature: "refineApiDraft(currentDraft, changeRequest)",
+  },
+  {
+    name: "addRuntimePolicy",
+    summary: "런타임 정책을 보강합니다.",
+    signature: "addRuntimePolicy(currentDraft, policyPreset)",
+  },
+  {
+    name: "addBindings",
+    summary: "템플릿 바인딩을 포함한 로직을 생성합니다.",
+    signature: "addBindings(currentDraft, bindings)",
+  },
+];
+
+export const API_MANAGER_COPILOT_INSTRUCTION =
+  [
+    "You are Tobit API Manager Copilot.",
+    "Return ONLY one JSON object. No markdown. No prose.",
+    "Contract: type must be api_draft.",
+    "Supported function-style intents:",
+    "- generateApiDraft(goal, method?, endpointHint?, logicType?)",
+    "- refineApiDraft(currentDraft, changeRequest)",
+    "- addRuntimePolicy(currentDraft, policyPreset)",
+    "- addBindings(currentDraft, bindings)",
+    "Output example:",
+    '{"type":"api_draft","draft":{"api_name":"Get CPU","method":"GET","endpoint":"/api-manager/metrics/cpu","description":"CPU metric endpoint","tags":["metrics"],"params_schema":{},"runtime_policy":{"timeout_ms":5000},"is_active":true,"logic":{"type":"sql","query":"SELECT now() AS ts, 0.5 AS cpu"}}}',
+  ].join("\n");
 
 // ─── Helpers ───
 
@@ -124,6 +170,51 @@ export const safeParseJson = (value: string, fallback: Record<string, unknown> =
   } catch {
     return fallback;
   }
+};
+
+export const extractTemplateBindings = (text: string): string[] => {
+  const out = new Set<string>();
+  const regex = /\{\{\s*([^{}]+?)\s*\}\}/g;
+  let match: RegExpExecArray | null = regex.exec(text);
+  while (match) {
+    const expr = match[1]?.trim();
+    if (expr) {
+      out.add(expr);
+    }
+    match = regex.exec(text);
+  }
+  return [...out];
+};
+
+export const validateTemplateBindingExpression = (expr: string): string | null => {
+  const trimmed = expr.trim();
+  if (!trimmed) {
+    return "빈 바인딩 표현식은 허용되지 않습니다.";
+  }
+  if (!/^(inputs|state|context|trace_id)(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(trimmed)) {
+    return `지원되지 않는 바인딩 경로: {{${trimmed}}}`;
+  }
+  if ((trimmed === "inputs" || trimmed === "state" || trimmed === "context")) {
+    return `경로가 누락되었습니다: {{${trimmed}.<field>}} 형식이 필요합니다.`;
+  }
+  return null;
+};
+
+export const validateTemplateBindingsInTexts = (texts: string[]): { bindings: string[]; errors: string[] } => {
+  const bindings = new Set<string>();
+  for (const text of texts) {
+    for (const binding of extractTemplateBindings(text)) {
+      bindings.add(binding);
+    }
+  }
+  const errors: string[] = [];
+  for (const binding of bindings) {
+    const err = validateTemplateBindingExpression(binding);
+    if (err) {
+      errors.push(err);
+    }
+  }
+  return { bindings: [...bindings], errors };
 };
 
 // ─── Draft operations ───
@@ -207,51 +298,6 @@ export const normalizeApiDraft = (input: Record<string, unknown>): ApiDraft => {
     draft.logic = { type: "sql", query: String(logicInput?.query || "") };
   }
   return draft;
-};
-
-export const stripCodeFences = (value: string) => {
-  const match = value.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (match && match[1]) return match[1].trim();
-  return value.trim();
-};
-
-export const tryParseJson = (text: string) => {
-  try { return JSON.parse(text); } catch { return null; }
-};
-
-export const extractJsonObjectFrom = (text: string, startIdx: number) => {
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let i = startIdx; i < text.length; i += 1) {
-    const char = text[i];
-    if (escape) { escape = false; continue; }
-    if (char === "\\") { escape = true; continue; }
-    if (char === '"') { inString = !inString; continue; }
-    if (inString) continue;
-    if (char === "{") depth += 1;
-    if (char === "}") {
-      depth -= 1;
-      if (depth === 0) return text.slice(startIdx, i + 1);
-    }
-  }
-  if (depth > 0 && !inString) return text.slice(startIdx) + "}".repeat(depth);
-  throw new Error("JSON 객체를 추출하지 못했습니다.");
-};
-
-export const extractJsonCandidates = (text: string) => {
-  const candidates: string[] = [];
-  let searchIdx = text.indexOf("{");
-  while (searchIdx !== -1 && searchIdx < text.length) {
-    try {
-      const candidate = extractJsonObjectFrom(text, searchIdx);
-      if (candidate.trim()) candidates.push(candidate);
-      searchIdx = text.indexOf("{", searchIdx + candidate.length);
-    } catch {
-      searchIdx = text.indexOf("{", searchIdx + 1);
-    }
-  }
-  return candidates;
 };
 
 export const normalizeDraftPayload = (payload: unknown, baseDraft: ApiDraft) => {

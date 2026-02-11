@@ -14,7 +14,7 @@ def test_ops_routes_import():
 
     # Verify all route modules are available
     assert hasattr(routes, "query_router")
-    assert hasattr(routes, "ci_ask_router")
+    assert hasattr(routes, "ask_router")
     assert hasattr(routes, "ui_actions_router")
     assert hasattr(routes, "rca_router")
     assert hasattr(routes, "regression_router")
@@ -35,12 +35,12 @@ def test_combined_router_creation():
 def test_error_classes_import():
     """Test that error classes can be imported."""
     from app.modules.ops.errors import (
+        ExecutionException,
         OPSException,
         PlanningException,
-        ExecutionException,
-        ValidationException,
-        ToolNotFoundException,
         StageExecutionException,
+        ToolNotFoundException,
+        ValidationException,
     )
 
     # Verify all error classes exist
@@ -55,12 +55,12 @@ def test_error_classes_import():
 def test_error_class_hierarchy():
     """Test that error classes have correct inheritance."""
     from app.modules.ops.errors import (
+        ExecutionException,
         OPSException,
         PlanningException,
-        ExecutionException,
-        ValidationException,
-        ToolNotFoundException,
         StageExecutionException,
+        ToolNotFoundException,
+        ValidationException,
     )
 
     # All should inherit from OPSException
@@ -90,13 +90,13 @@ def test_error_to_dict_method():
 def test_error_handler_import():
     """Test that error handlers can be imported."""
     from app.modules.ops.error_handler import (
-        register_exception_handlers,
+        execution_exception_handler,
         ops_exception_handler,
         planning_exception_handler,
-        execution_exception_handler,
-        validation_exception_handler,
-        tool_not_found_handler,
+        register_exception_handlers,
         stage_execution_exception_handler,
+        tool_not_found_handler,
+        validation_exception_handler,
     )
 
     assert register_exception_handlers is not None
@@ -112,8 +112,8 @@ def test_route_utils_import():
     """Test that route utilities can be imported."""
     from app.modules.ops.routes.utils import (
         _tenant_id,
-        generate_references_from_tool_calls,
         apply_patch,
+        generate_references_from_tool_calls,
     )
 
     assert _tenant_id is not None
@@ -147,7 +147,6 @@ def test_generate_references_from_tool_calls():
 
 def test_route_files_exist():
     """Test that all expected route files exist."""
-    import os
     from pathlib import Path
 
     ops_routes_dir = Path(__file__).parent.parent / "app" / "modules" / "ops" / "routes"
@@ -171,7 +170,6 @@ def test_route_files_exist():
 
 def test_error_files_exist():
     """Test that error handling files exist."""
-    import os
     from pathlib import Path
 
     ops_dir = Path(__file__).parent.parent / "app" / "modules" / "ops"

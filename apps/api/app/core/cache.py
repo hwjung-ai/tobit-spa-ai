@@ -2,11 +2,10 @@
 
 import json
 import logging
-from datetime import timedelta
-from typing import Any, Callable, Optional, TypeVar, Union
+from typing import Any, Callable, Optional, TypeVar
 
-from core.redis import get_redis_client
 from core.config import get_settings
+from core.redis import get_redis_client
 
 logger = logging.getLogger(__name__)
 

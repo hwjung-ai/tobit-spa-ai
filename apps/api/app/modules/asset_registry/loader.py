@@ -784,7 +784,6 @@ def load_catalog_for_source(source_ref: str) -> dict[str, Any] | None:
     Returns:
         Full catalog data with tables, columns, and metadata, or None if not found
     """
-    from app.modules.asset_registry.schema_models import SchemaCatalog
 
     with get_session_context() as session:
         query = (

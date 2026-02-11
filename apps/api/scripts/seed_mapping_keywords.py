@@ -7,7 +7,6 @@ This script migrates hardcoded keyword sets from planner_llm.py to mapping asset
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -17,8 +16,8 @@ import yaml
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from core.db import get_session, get_session_context
 from app.modules.asset_registry.crud import create_asset, publish_asset
+from core.db import get_session_context
 from core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -161,8 +160,8 @@ def main():
     with get_session_context() as session:
         if args.cleanup_drafts:
             logger.info("Cleaning up existing draft mapping assets...")
-            from sqlmodel import select
             from app.modules.asset_registry.models import TbAssetRegistry
+            from sqlmodel import select
 
             # Find existing draft mapping assets
             existing_drafts = session.exec(

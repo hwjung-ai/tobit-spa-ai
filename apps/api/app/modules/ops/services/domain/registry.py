@@ -9,7 +9,7 @@ appropriate domain without hardcoding.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from app.modules.ops.services.domain.base import BaseDomainPlanner, DomainMetadata
 

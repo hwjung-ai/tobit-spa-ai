@@ -9,6 +9,8 @@ export type BindingKind = "state" | "result";
 
 type JsonSchema = {
   type: string | string[];
+  title?: string;
+  description?: string;
   properties?: Record<string, JsonSchema>;
   required?: string[];
   items?: JsonSchema;

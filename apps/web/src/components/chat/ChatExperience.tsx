@@ -1,8 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  buildRepairPrompt,
+  type CopilotContract,
+  validateCopilotContract,
+} from "@/lib/copilot/contract-utils";
+import { recordCopilotMetric } from "@/lib/copilot/metrics";
 
 const STORAGE_PREFIX = "chat:tobit:";
+const getTimestamp = () => new Date().getTime();
+const generateMessageId = (role: ChatRole) =>
+  `${role}-${typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
 
 type ChatRole = "user" | "assistant";
 
@@ -16,6 +25,9 @@ interface Message {
 interface ChatExperienceProps {
   builderSlug?: string;
   inline?: boolean;
+  expectedContract?: CopilotContract;
+  builderContext?: Record<string, unknown> | null;
+  enableAutoRepair?: boolean;
   onAssistantMessage?: (text: string) => void;
   onAssistantMessageComplete?: (text: string) => void;
   onUserMessage?: (text: string) => void;
@@ -31,6 +43,9 @@ const normalizeBaseUrl = (value: string | undefined) => {
 export default function ChatExperience({
   builderSlug = "api-manager",
   inline = false,
+  expectedContract,
+  builderContext,
+  enableAutoRepair = true,
   onAssistantMessage,
   onAssistantMessageComplete,
   onUserMessage,
@@ -57,6 +72,8 @@ export default function ChatExperience({
 
   const assistantMessageIdRef = useRef<string | null>(null);
   const assistantBufferRef = useRef<string>("");
+  const lastUserPromptRef = useRef<string>("");
+  const repairAttemptRef = useRef<number>(0);
   const apiBaseUrl = useMemo(() => normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL), []);
 
   useEffect(() => {
@@ -72,15 +89,23 @@ export default function ChatExperience({
     setMessages((prev) => prev.filter((m) => m.id !== id));
   };
 
-  const handleStream = (prompt: string) => {
+  const handleStream = (
+    prompt: string,
+    options?: { persistUserMessage?: boolean; isRepair?: boolean }
+  ) => {
+    const persistUserMessage = options?.persistUserMessage ?? true;
+    const isRepair = options?.isRepair ?? false;
+
     // 1. Clear previous assistant tracking
     assistantMessageIdRef.current = null;
     assistantBufferRef.current = "";
 
     // 2. Add user message
-    const userMsgId = `user-${Date.now()}`;
-    const timestamp = Date.now();
-    setMessages((prev) => [...prev, { id: userMsgId, role: "user", text: prompt, timestamp }]);
+    if (persistUserMessage) {
+      const userMsgId = generateMessageId("user");
+      const timestamp = getTimestamp();
+      setMessages((prev) => [...prev, { id: userMsgId, role: "user", text: prompt, timestamp }]);
+    }
     setStatus("streaming");
 
     eventSourceRef.current?.close();
@@ -97,12 +122,24 @@ export default function ChatExperience({
         message: finalPrompt,
         builder: builderSlug,
       });
+      if (expectedContract) {
+        params.set("expected_contract", expectedContract);
+      }
+      if (builderContext) {
+        params.set("builder_context", JSON.stringify(builderContext));
+      }
       streamUrl = `/sse-proxy/chat/stream?${params.toString()}`;
 
     } else {
       const url = new URL(`${apiBaseUrl}/chat/stream`);
       url.searchParams.set("message", finalPrompt);
       url.searchParams.set("builder", builderSlug);
+      if (expectedContract) {
+        url.searchParams.set("expected_contract", expectedContract);
+      }
+      if (builderContext) {
+        url.searchParams.set("builder_context", JSON.stringify(builderContext));
+      }
       streamUrl = url.toString();
     }
 
@@ -129,9 +166,9 @@ export default function ChatExperience({
           setMessages((prev) => {
             if (!assistantMessageIdRef.current) {
               console.log("[Chat] Creating new assistant message entry");
-              const newId = `assistant-${Date.now()}`;
+              const newId = generateMessageId("assistant");
               assistantMessageIdRef.current = newId;
-              return [...prev, { id: newId, role: "assistant", text: chunk, timestamp: Date.now() }];
+              return [...prev, { id: newId, role: "assistant", text: chunk, timestamp: getTimestamp() }];
             }
             return prev.map((m) =>
               m.id === assistantMessageIdRef.current ? { ...m, text: m.text + chunk } : m
@@ -144,11 +181,53 @@ export default function ChatExperience({
         } else if (type === "done") {
           console.log("[Chat] SSE done");
           es.close();
+          const finalText = assistantBufferRef.current;
+          const validation = validateCopilotContract(expectedContract, finalText);
+
+          if (expectedContract && validation.ok) {
+            recordCopilotMetric(builderSlug, "contract_ok");
+          } else if (expectedContract && !validation.ok) {
+            recordCopilotMetric(builderSlug, "contract_violation", validation.reason);
+          }
+
+          if (
+            expectedContract &&
+            !validation.ok &&
+            enableAutoRepair &&
+            repairAttemptRef.current < 1
+          ) {
+            recordCopilotMetric(builderSlug, "auto_repair_attempt", validation.reason);
+            const invalidAssistantMessageId = assistantMessageIdRef.current;
+            if (invalidAssistantMessageId) {
+              setMessages((prev) => prev.filter((msg) => msg.id !== invalidAssistantMessageId));
+            }
+            assistantMessageIdRef.current = null;
+            assistantBufferRef.current = "";
+            repairAttemptRef.current += 1;
+
+            const repairPrompt = buildRepairPrompt({
+              contract: expectedContract,
+              originalUserPrompt: lastUserPromptRef.current || "(empty)",
+              previousAssistantResponse: finalText,
+            });
+            handleStream(repairPrompt, { persistUserMessage: false, isRepair: true });
+            return;
+          }
+
+          if (isRepair) {
+            if (validation.ok) {
+              recordCopilotMetric(builderSlug, "auto_repair_success");
+            } else {
+              recordCopilotMetric(builderSlug, "auto_repair_failed", validation.reason);
+            }
+          }
+
           setStatus("idle");
           if (onAssistantMessageComplete) {
-            onAssistantMessageComplete(assistantBufferRef.current);
+            onAssistantMessageComplete(finalText);
           }
           assistantMessageIdRef.current = null;
+          assistantBufferRef.current = "";
         } else if (type === "error") {
           console.error("[Chat] SSE payload error:", payload.text);
           setStatus("error");
@@ -182,10 +261,12 @@ export default function ChatExperience({
     }
     const val = inputValue.trim();
     setInputValue("");
+    lastUserPromptRef.current = val;
+    repairAttemptRef.current = 0;
     if (onUserMessage) {
       onUserMessage(val);
     }
-    handleStream(val);
+    handleStream(val, { persistUserMessage: true });
   };
 
   const panelClass = inline

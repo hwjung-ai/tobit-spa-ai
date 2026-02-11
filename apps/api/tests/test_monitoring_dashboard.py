@@ -2,22 +2,15 @@
 Tests for monitoring dashboard API endpoints
 """
 
-import pytest
-from datetime import datetime, timedelta, timezone
-from sqlmodel import Session
 
+import pytest
 from modules.cep_builder.models import (
-    TbCepRule,
     TbCepExecLog,
     TbCepNotification,
     TbCepNotificationLog,
+    TbCepRule,
 )
-from modules.cep_builder.router import (
-    get_channels_status,
-    get_stats_summary,
-    get_errors_timeline,
-    get_rules_performance,
-)
+from sqlmodel import Session
 
 
 @pytest.fixture

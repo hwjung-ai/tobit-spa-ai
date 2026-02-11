@@ -23,8 +23,9 @@ import type {
 import {
   normalizeBaseUrl, parseJsonObject, parseCepDraft,
   tabOptions, DRAFT_STORAGE_PREFIX, FINAL_STORAGE_PREFIX, draftStatusLabels,
-  COPILOT_INSTRUCTION,
+  COPILOT_INSTRUCTION, computeCepDraftDiff, CEP_COPILOT_EXAMPLE_PROMPTS,
 } from "../../lib/cep-builder/utils";
+import { recordCopilotMetric } from "../../lib/copilot/metrics";
 
 export default function CepBuilderPage() {
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
@@ -56,6 +57,9 @@ export default function CepBuilderPage() {
   const [draftTestOk, setDraftTestOk] = useState<boolean | null>(null);
   const [draftPreviewJson, setDraftPreviewJson] = useState<string | null>(null);
   const [draftPreviewSummary, setDraftPreviewSummary] = useState<string | null>(null);
+  const [draftDiff, setDraftDiff] = useState<string[] | null>(null);
+  const [draftHistory, setDraftHistory] = useState<Array<{ id: string; createdAt: string; draft: CepDraft }>>([]);
+  const [selectedCompareDraftId, setSelectedCompareDraftId] = useState<string | null>(null);
   const [lastAssistantRaw, setLastAssistantRaw] = useState("");
   const [lastParseStatus, setLastParseStatus] = useState<"idle" | "success" | "fail">("idle");
   const [lastParseError, setLastParseError] = useState<string | null>(null);
@@ -80,6 +84,30 @@ export default function CepBuilderPage() {
     () => rules.find((rule) => rule.rule_id === selectedId) ?? null,
     [rules, selectedId]
   );
+
+  const convertRuleToDraft = useCallback((rule: CepRule): CepDraft => {
+    const trigger = rule.trigger_spec ?? {};
+    const actionSpec = rule.action_spec ?? {};
+    const actionCandidates = Array.isArray((actionSpec as Record<string, unknown>).actions)
+      ? ((actionSpec as Record<string, unknown>).actions as Record<string, unknown>[])
+      : [actionSpec as Record<string, unknown>];
+    const validActions = actionCandidates.filter((item) => Object.keys(item ?? {}).length > 0);
+    return {
+      rule_name: rule.rule_name,
+      description: typeof actionSpec.description === "string" ? actionSpec.description : "",
+      trigger,
+      conditions: Array.isArray((trigger as Record<string, unknown>).conditions)
+        ? ((trigger as Record<string, unknown>).conditions as Record<string, unknown>[])
+        : [],
+      enrichments: Array.isArray((trigger as Record<string, unknown>).enrichments)
+        ? ((trigger as Record<string, unknown>).enrichments as Record<string, unknown>[])
+        : [],
+      actions: validActions,
+      references: typeof (actionSpec as Record<string, unknown>).references === "object"
+        ? ((actionSpec as Record<string, unknown>).references as Record<string, unknown>)
+        : {},
+    };
+  }, []);
 
   const buildCepPayloadFromForm = useCallback(() => {
     let parsedTriggerSpec;
@@ -253,6 +281,7 @@ export default function CepBuilderPage() {
       fetchLogs();
       setFormBaselineSnapshot(null);
       setAppliedDraftSnapshot(null);
+      setSelectedCompareDraftId(null);
     } else {
       setRuleName("");
       setRuleDescription("");
@@ -264,6 +293,7 @@ export default function CepBuilderPage() {
       setLogs([]);
       setFormBaselineSnapshot(buildFormSnapshot());
       setAppliedDraftSnapshot(null);
+      setSelectedCompareDraftId(null);
     }
   }, [selectedRule, fetchLogs, buildFormSnapshot]);
 
@@ -278,6 +308,16 @@ export default function CepBuilderPage() {
       setDraftNotes("폼이 변경되어 드래프트가 오래되었습니다.");
     }
   }, [buildFormSnapshot, formBaselineSnapshot, draftApi, appliedDraftSnapshot]);
+
+  useEffect(() => {
+    if (!draftApi) {
+      setDraftDiff(null);
+      return;
+    }
+    const baseline = selectedRule ? convertRuleToDraft(selectedRule) : null;
+    const diffSummary = computeCepDraftDiff(draftApi, baseline);
+    setDraftDiff(diffSummary);
+  }, [convertRuleToDraft, draftApi, selectedRule]);
 
   const filteredRules = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -297,17 +337,17 @@ export default function CepBuilderPage() {
     }
     setTriggerSpecText(JSON.stringify(triggerPayload ?? {}, null, 2));
     const actionPayload = {
-      actions: (draft.actions ?? []).map((a: any) => ({
+      actions: (draft.actions ?? []).map((a: Record<string, unknown>) => ({
         ...a,
-        id: a.id || `action-${Math.random().toString(36).substr(2, 9)}`,
+        id: (a.id as string) || `action-${Math.random().toString(36).substr(2, 9)}`,
       })),
-      conditions: (draft.conditions ?? []).map((c: any) => ({
+      conditions: (draft.conditions ?? []).map((c: Record<string, unknown>) => ({
         ...c,
-        id: c.id || `cond-${Math.random().toString(36).substr(2, 9)}`,
+        id: (c.id as string) || `cond-${Math.random().toString(36).substr(2, 9)}`,
       })),
-      enrichments: (draft.enrichments ?? []).map((e: any) => ({
+      enrichments: (draft.enrichments ?? []).map((e: Record<string, unknown>) => ({
         ...e,
-        id: e.id || `enrich-${Math.random().toString(36).substr(2, 9)}`,
+        id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`,
       })),
       references: draft.references ?? {},
       description: draft.description ?? "",
@@ -344,17 +384,17 @@ export default function CepBuilderPage() {
     if (activeTab !== "definition-form") return;
 
     // trigger_spec에서 복합 조건 추출
-    const triggerSpec = selectedRule.trigger_spec as Record<string, any>;
+    const triggerSpec = selectedRule.trigger_spec as Record<string, unknown>;
 
     if (triggerSpec.conditions && Array.isArray(triggerSpec.conditions)) {
-      const conditions = triggerSpec.conditions.map((c: any) => ({
-        id: c.id || `cond-${Math.random().toString(36).substr(2, 9)}`,
-        field: c.field || "",
-        op: c.op || "==",
-        value: c.value,
+      const conditions = (triggerSpec.conditions as Record<string, unknown>[]).map((c) => ({
+        id: (c.id as string) || `cond-${Math.random().toString(36).substr(2, 9)}`,
+        field: (c.field as string) || "",
+        op: (c.op as string) || "==",
+        value: String(c.value ?? ""),
       }));
       setFormConditions(conditions);
-      setFormConditionLogic(triggerSpec.logic || "AND");
+      setFormConditionLogic((triggerSpec.logic as "AND" | "OR" | "NOT") || "AND");
     } else {
       setFormConditions([]);
       setFormConditionLogic("AND");
@@ -362,16 +402,17 @@ export default function CepBuilderPage() {
 
     // 윈도우 설정 추출
     if (triggerSpec.window_config) {
-      setFormWindowConfig(triggerSpec.window_config);
+      setFormWindowConfig(triggerSpec.window_config as Record<string, any>);
     } else {
       setFormWindowConfig({});
     }
 
     // 집계 설정 추출
-    if (triggerSpec.aggregation) {
+    if (triggerSpec.aggregation && typeof triggerSpec.aggregation === "object") {
       setFormAggregations([{
-        ...triggerSpec.aggregation,
-        id: triggerSpec.aggregation.id || `agg-${Math.random().toString(36).substr(2, 9)}`
+        ...(triggerSpec.aggregation as Record<string, unknown>),
+        id: ((triggerSpec.aggregation as Record<string, unknown>).id as string)
+          || `agg-${Math.random().toString(36).substr(2, 9)}`
       }]);
     } else {
       setFormAggregations([]);
@@ -379,26 +420,27 @@ export default function CepBuilderPage() {
 
     // 보강 설정 추출
     if (triggerSpec.enrichments && Array.isArray(triggerSpec.enrichments)) {
-      setFormEnrichments(triggerSpec.enrichments.map((e: any) => ({
+      setFormEnrichments((triggerSpec.enrichments as Record<string, unknown>[]).map((e) => ({
         ...e,
-        id: e.id || `enrich-${Math.random().toString(36).substr(2, 9)}`
+        id: (e.id as string) || `enrich-${Math.random().toString(36).substr(2, 9)}`
       })));
     } else {
       setFormEnrichments([]);
     }
 
     // 액션 설정 추출
-    const actionSpec = selectedRule.action_spec as Record<string, any>;
+    const actionSpec = selectedRule.action_spec as Record<string, unknown>;
     if (actionSpec.type === "multi_action" && Array.isArray(actionSpec.actions)) {
-      setFormActions(actionSpec.actions.map((a: any) => ({
+      setFormActions((actionSpec.actions as Record<string, unknown>[]).map((a) => ({
         ...a,
-        id: a.id || `action-${Math.random().toString(36).substr(2, 9)}`
-      })));
+        id: (a.id as string) || `action-${Math.random().toString(36).substr(2, 9)}`,
+        type: ((a.type as Action["type"]) || "webhook"),
+      })) as Action[]);
     } else if (actionSpec && Object.keys(actionSpec).length > 0) {
       setFormActions([{
         ...actionSpec,
         id: actionSpec.id || `action-${Math.random().toString(36).substr(2, 9)}`
-      } as any]);
+      } as unknown as Action]);
     } else {
       setFormActions([]);
     }
@@ -650,6 +692,71 @@ export default function CepBuilderPage() {
     setDraftTestOk(errors.length === 0);
     setDraftNotes(errors.length === 0 ? "테스트 통과" : "테스트 실패");
     setDraftStatus(errors.length === 0 ? "draft_ready" : "error");
+  };
+
+  const handleTestDraftWithSimulation = async () => {
+    if (!draftApi) {
+      setDraftErrors(["CEP 드래프트가 없습니다."]);
+      return;
+    }
+    const errors: string[] = [];
+    if (!draftApi.rule_name.trim()) {
+      errors.push("rule_name은 필수입니다.");
+    }
+    if (!draftApi.trigger || typeof draftApi.trigger !== "object") {
+      errors.push("trigger는 JSON 객체여야 합니다.");
+    }
+    if (!Array.isArray(draftApi.actions)) {
+      errors.push("actions 배열이 필요합니다.");
+    }
+
+    if (errors.length > 0) {
+      setDraftErrors(errors);
+      setDraftWarnings([]);
+      setDraftTestOk(false);
+      setDraftNotes("규격 테스트 실패 (시뮬레이션 생략)");
+      setDraftStatus("error");
+      return;
+    }
+
+    setDraftStatus("testing");
+    setDraftNotes("실제 시뮬레이션 테스트 중...");
+
+    try {
+      // 드래프트 시뮬레이션 API 호출
+      const payload = {
+        rule_name: draftApi.rule_name,
+        trigger_type: draftApi.trigger?.type || "schedule",
+        trigger_spec: draftApi.trigger || {},
+        action_spec: {
+          actions: draftApi.actions || [],
+          references: draftApi.references || {},
+        },
+        is_active: true,
+      };
+
+      const response = await fetch(`${apiBaseUrl}/cep/rules/simulate-draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || data.message || "시뮬레이션 실패");
+      }
+
+      setSimulateResult(data.data.simulation);
+      setDraftNotes("실제 시뮬레이션 테스트 성공! 결과를 확인하세요.");
+      setDraftTestOk(true);
+      setDraftStatus("draft_ready");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "시뮬레이션 오류";
+      setDraftErrors([message]);
+      setDraftNotes("실제 시뮬레이션 테스트 실패");
+      setDraftTestOk(false);
+      setDraftStatus("error");
+    }
   };
 
   const handleApplyDraft = () => {
@@ -1024,10 +1131,21 @@ export default function CepBuilderPage() {
         </div>
       ) : activeTab === "test" ? (
         <div className="space-y-3">
+          {draftTestOk === true && simulateResult && (
+            <div className="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-xs text-slate-200">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold">Draft Simulation Result</p>
+                <span className="text-[10px] rounded-full border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">Pass</span>
+              </div>
+              <pre className="mt-2 max-h-60 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200 custom-scrollbar">
+                {JSON.stringify(simulateResult, null, 2)}
+              </pre>
+            </div>
+          )}
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
             <p className="text-[11px] uppercase tracking-wider text-slate-500">Simulation result</p>
             <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200">
-              {simulateResult ? JSON.stringify(simulateResult, null, 2) : "Run a simulation to inspect the payload."}
+              {simulateResult ? JSON.stringify(simulateResult, null, 2) : "Run a simulation to inspect payload."}
             </pre>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
@@ -1092,12 +1210,21 @@ export default function CepBuilderPage() {
   );
 
   const processAssistantDraft = useCallback(
-    (messageText: string) => {
+    (messageText: string, isComplete: boolean) => {
       setLastAssistantRaw(messageText);
       const result = parseCepDraft(messageText);
+      const parseError = "error" in result ? result.error : null;
       setLastParseStatus(result.ok ? "success" : "fail");
-      setLastParseError(result.error ?? null);
+      setLastParseError(parseError);
       if (result.ok && result.draft) {
+        if (isComplete) {
+          recordCopilotMetric("cep-builder", "parse_success");
+          const snapshotId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          setDraftHistory((prev) => [
+            { id: snapshotId, createdAt: new Date().toISOString(), draft: result.draft as CepDraft },
+            ...prev,
+          ].slice(0, 8));
+        }
         setDraftApi(result.draft);
         setDraftStatus("draft_ready");
         setDraftNotes((prev) => prev ?? "CEP 드래프트가 준비되었습니다.");
@@ -1107,29 +1234,66 @@ export default function CepBuilderPage() {
         setDraftPreviewJson(JSON.stringify(result.draft, null, 2));
         setDraftPreviewSummary(result.draft.rule_name);
       } else {
-        setDraftApi(null);
-        setDraftPreviewJson(null);
-        setDraftPreviewSummary(null);
-        setDraftStatus("error");
-        setDraftNotes(result.error ?? "CEP 드래프트를 해석할 수 없습니다.");
-        setDraftTestOk(false);
+        if (isComplete) {
+          recordCopilotMetric("cep-builder", "parse_failure", parseError);
+          setDraftApi(null);
+          setDraftPreviewJson(null);
+          setDraftPreviewSummary(null);
+          setDraftStatus("error");
+          setDraftNotes(parseError ?? "CEP 드래프트를 해석할 수 없습니다.");
+          setDraftTestOk(false);
+        } else if (draftStatus !== "draft_ready") {
+          setDraftStatus("idle");
+          setDraftNotes("AI가 답변을 생성 중입니다...");
+        }
       }
     },
-    []
+    [draftStatus]
   );
 
   const handleAssistantMessage = useCallback(
     (messageText: string) => {
-      processAssistantDraft(messageText);
+      processAssistantDraft(messageText, false);
     },
     [processAssistantDraft]
   );
 
   const handleAssistantMessageComplete = useCallback(
     (messageText: string) => {
-      processAssistantDraft(messageText);
+      processAssistantDraft(messageText, true);
     },
     [processAssistantDraft]
+  );
+
+  const selectedCompareDraft = useMemo(
+    () => draftHistory.find((item) => item.id === selectedCompareDraftId) ?? null,
+    [draftHistory, selectedCompareDraftId]
+  );
+
+  const compareDiffSummary = useMemo(() => {
+    if (!draftApi || !selectedCompareDraft) {
+      return null;
+    }
+    return computeCepDraftDiff(draftApi, selectedCompareDraft.draft);
+  }, [draftApi, selectedCompareDraft]);
+
+  const copilotBuilderContext = useMemo(
+    () => ({
+      selected_rule: selectedRule
+        ? {
+            rule_id: selectedRule.rule_id,
+            rule_name: selectedRule.rule_name,
+            trigger_type: selectedRule.trigger_type,
+          }
+        : null,
+      draft_status: draftStatus,
+      active_tab: activeTab,
+      current_form: {
+        rule_name: ruleName,
+        trigger_type: triggerType,
+      },
+    }),
+    [activeTab, draftStatus, ruleName, selectedRule, triggerType]
   );
 
   const rightPane = (
@@ -1137,8 +1301,22 @@ export default function CepBuilderPage() {
       <BuilderCopilotPanel
         builderSlug="cep-builder"
         instructionPrompt={COPILOT_INSTRUCTION}
+        expectedContract="cep_draft"
+        builderContext={copilotBuilderContext}
         onAssistantMessage={handleAssistantMessage}
         onAssistantMessageComplete={handleAssistantMessageComplete}
+        onUserMessage={() => {
+          setDraftApi(null);
+          setDraftStatus("idle");
+          setDraftNotes(null);
+          setDraftErrors([]);
+          setDraftWarnings([]);
+          setDraftTestOk(null);
+          setDraftPreviewJson(null);
+          setDraftPreviewSummary(null);
+          setDraftDiff(null);
+          setSelectedCompareDraftId(null);
+        }}
         inputPlaceholder="CEP 룰 드래프트를 설명해 주세요..."
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
@@ -1149,6 +1327,14 @@ export default function CepBuilderPage() {
           </span>
         </div>
         {draftNotes ? <p className="text-sm text-slate-300">{draftNotes}</p> : null}
+        {draftDiff && (
+          <div className="space-y-1 rounded-2xl border border-slate-800 bg-slate-950/40 px-3 py-2 text-[11px] text-slate-300">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">Auto Diff</p>
+            {draftDiff.map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </div>
+        )}
         {draftStatus === "outdated" ? (
           <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
             Draft is outdated. Apply again or regenerate.
@@ -1163,10 +1349,10 @@ export default function CepBuilderPage() {
               Preview
             </button>
             <button
-              onClick={handleTestDraft}
+              onClick={handleTestDraftWithSimulation}
               className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-emerald-400"
             >
-              Test
+              Test (Simulate)
             </button>
             <button
               onClick={handleApplyDraft}
@@ -1213,6 +1399,44 @@ export default function CepBuilderPage() {
             </pre>
           </div>
         ) : null}
+        <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+          <p className="text-xs uppercase tracking-wider text-slate-500">Multi Draft Compare</p>
+          <select
+            value={selectedCompareDraftId ?? ""}
+            onChange={(event) => setSelectedCompareDraftId(event.target.value || null)}
+            className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-100"
+          >
+            <option value="">비교할 드래프트 선택</option>
+            {draftHistory.map((item) => (
+              <option key={item.id} value={item.id}>
+                {new Date(item.createdAt).toLocaleTimeString("ko-KR")} · {item.draft.rule_name}
+              </option>
+            ))}
+          </select>
+          {compareDiffSummary && (
+            <div className="space-y-1">
+              {compareDiffSummary.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+          <p className="text-xs uppercase tracking-wider text-slate-500">Example Prompts</p>
+          <div className="max-h-40 space-y-1 overflow-auto">
+            {CEP_COPILOT_EXAMPLE_PROMPTS.map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                onClick={() => navigator.clipboard.writeText(prompt)}
+                className="w-full rounded-md border border-slate-800 px-2 py-1 text-left text-[11px] text-slate-300 transition hover:border-sky-600 hover:text-white"
+                title="클릭하면 프롬프트가 클립보드에 복사됩니다."
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
         <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
           <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-400">
             Debug

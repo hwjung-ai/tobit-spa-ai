@@ -11,10 +11,9 @@ import logging
 import os
 import uuid
 
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from sqlmodel import select
-
-from app.modules.asset_registry.models import TbAssetRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +69,7 @@ def create_neo4j_source_asset() -> None:
                 existing.status = "published"
                 session.add(existing)
                 session.commit()
-                logger.info(f"  Updated status to 'published'")
+                logger.info("  Updated status to 'published'")
             return
 
         # Create new asset
@@ -89,7 +88,7 @@ def create_neo4j_source_asset() -> None:
         session.add(new_asset)
         session.commit()
 
-        logger.info(f"Created Neo4j Source Asset:")
+        logger.info("Created Neo4j Source Asset:")
         logger.info(f"  ID: {new_asset.asset_id}")
         logger.info(f"  Name: {new_asset.name}")
         logger.info(f"  Status: {new_asset.status}")

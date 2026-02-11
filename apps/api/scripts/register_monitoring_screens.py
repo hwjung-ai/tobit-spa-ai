@@ -4,16 +4,16 @@ Register System Monitoring and CEP Monitoring screens to Asset Registry
 """
 
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add apps/api to Python path
 API_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_DIR))
 
+from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from core.db import get_session_context
 from core.logging import get_logger
-from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 
 logger = get_logger(__name__)
 
@@ -349,8 +349,11 @@ CEP_MONITORING_SCHEMA = {
 }
 
 
+import json
+
+
 def register_screen(screen_id: str, name: str, description: str, schema: dict):
-    """Register a screen asset"""
+    """Register or update a screen asset"""
     with get_session_context() as session:
         # Check if screen already exists
         from sqlmodel import select
@@ -361,8 +364,32 @@ def register_screen(screen_id: str, name: str, description: str, schema: dict):
         ).first()
 
         if existing:
-            logger.info(f"✓ Screen '{name}' (screen_id={screen_id}) already exists")
-            print(f"✓ Screen '{name}' (screen_id={screen_id}) already exists")
+            logger.info(f"Updating existing screen '{name}' (screen_id={screen_id})")
+            print(f"Updating existing screen '{name}' (screen_id={screen_id})")
+            
+            # Update asset
+            existing.name = name
+            existing.description = description
+            existing.schema_json = schema
+            existing.version += 1
+            existing.status = "published"
+            existing.published_at = datetime.now()
+            existing.updated_at = datetime.now()
+            
+            session.add(existing)
+            
+            # Create version history
+            history = TbAssetVersionHistory(
+                asset_id=existing.asset_id,
+                version=existing.version,
+                snapshot={
+                    "schema_json": existing.schema_json,
+                    "name": existing.name,
+                    "description": existing.description,
+                },
+            )
+            session.add(history)
+            session.commit()
             return existing
 
         # Create new screen asset
@@ -374,10 +401,11 @@ def register_screen(screen_id: str, name: str, description: str, schema: dict):
             schema_json=schema,
             tags=["monitoring", "dashboard"],
             created_by="admin",
-            status="draft",
+            status="published",
             version=1,
             created_at=datetime.now(),
             updated_at=datetime.now(),
+            published_at=datetime.now(),
         )
         session.add(asset)
         session.flush()  # Get asset_id without committing yet
@@ -408,20 +436,48 @@ def main():
     print("Registering Monitoring Screens to Asset Registry\n")
     print("=" * 60)
 
+    # Try to load System Monitoring schema from JSON file
+    sys_monitoring_json_path = API_DIR.parents[0] / "web" / "src" / "lib" / "ui-screen" / "screens" / "system-monitoring.screen.json"
+    if sys_monitoring_json_path.exists():
+        logger.info(f"Loading System Monitoring schema from {sys_monitoring_json_path}")
+        with open(sys_monitoring_json_path, "r") as f:
+            sys_monitoring_schema = json.load(f)
+            sys_monitoring_name = sys_monitoring_schema.get("name", "System Monitoring")
+            sys_monitoring_desc = sys_monitoring_schema.get("description", "System monitoring dashboard")
+    else:
+        logger.warning(f"JSON file not found at {sys_monitoring_json_path}, using default schema")
+        sys_monitoring_schema = SYSTEM_MONITORING_SCHEMA
+        sys_monitoring_name = "System Monitoring"
+        sys_monitoring_desc = "System monitoring dashboard with metrics and events"
+
     # Register System Monitoring
     sys_monitoring = register_screen(
         screen_id="system_monitoring",
-        name="System Monitoring",
-        description="System monitoring dashboard with metrics and events",
-        schema=SYSTEM_MONITORING_SCHEMA,
+        name=sys_monitoring_name,
+        description=sys_monitoring_desc,
+        schema=sys_monitoring_schema,
     )
+
+    # Try to load CEP Monitoring schema from JSON file
+    cep_monitoring_json_path = API_DIR.parents[0] / "web" / "src" / "lib" / "ui-screen" / "screens" / "cep-monitoring.screen.json"
+    if cep_monitoring_json_path.exists():
+        logger.info(f"Loading CEP Monitoring schema from {cep_monitoring_json_path}")
+        with open(cep_monitoring_json_path, "r") as f:
+            cep_monitoring_schema = json.load(f)
+            cep_monitoring_name = cep_monitoring_schema.get("name", "CEP Monitoring")
+            cep_monitoring_desc = cep_monitoring_schema.get("description", "CEP monitoring dashboard")
+    else:
+        logger.warning(f"JSON file not found at {cep_monitoring_json_path}, using default schema")
+        cep_monitoring_schema = CEP_MONITORING_SCHEMA
+        cep_monitoring_name = "CEP Monitoring"
+        cep_monitoring_desc = "CEP monitoring dashboard with alerts and patterns"
 
     # Register CEP Monitoring
     cep_monitoring = register_screen(
         screen_id="cep_monitoring",
-        name="CEP Monitoring",
-        description="CEP monitoring dashboard with alerts and patterns",
-        schema=CEP_MONITORING_SCHEMA,
+        name=cep_monitoring_name,
+        description=cep_monitoring_desc,
+        schema=cep_monitoring_schema,
     )
 
     print("=" * 60)

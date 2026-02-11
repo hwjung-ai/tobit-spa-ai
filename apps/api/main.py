@@ -27,7 +27,9 @@ from app.modules.cep_builder import router as cep_builder_router
 from app.modules.cep_builder.scheduler import start_scheduler, stop_scheduler
 from app.modules.ci_management.router import router as ci_management_router
 from app.modules.data_explorer import router as data_explorer_router
+from app.modules.document_processor.router import router as document_processor_router
 from app.modules.inspector.router import router as inspector_router
+from app.modules.llm.router import router as llm_logs_router
 from app.modules.operation_settings.router import router as operation_settings_router
 from app.modules.ops.router import router as ops_router
 from app.modules.ops.services.ci.mappings.registry_init import (
@@ -42,6 +44,7 @@ from app.modules.ops.services.domain.registry_init import (
     initialize_domain_planners,  # noqa: E402
 )
 from app.modules.permissions.router import router as permissions_router
+from app.modules.simulation.router import router as simulation_router
 from app.shared import config_loader
 from core.config import get_settings
 from fastapi import FastAPI
@@ -75,9 +78,11 @@ app.include_router(admin_logs_router, prefix="/admin")
 app.include_router(auth_router)
 app.include_router(api_keys_router)
 app.include_router(permissions_router)
+app.include_router(simulation_router)
 app.include_router(chat_router)
 app.include_router(thread_router)
 app.include_router(document_router)
+app.include_router(document_processor_router)
 app.include_router(ops_router)
 app.include_router(asset_registry_router)
 app.include_router(tool_router)
@@ -89,6 +94,7 @@ app.include_router(audit_log_router)
 app.include_router(api_manager_router)
 app.include_router(runtime_router)
 app.include_router(inspector_router)
+app.include_router(llm_logs_router, prefix="/admin")
 app.include_router(history_router)
 
 _startup_task: asyncio.Task | None = None
@@ -156,6 +162,29 @@ def _run_heavy_startup_sync(logger) -> None:
     initialize_mappings()
     logger.info("Startup: OPS mappings initialized.")
 
+    logger.info("Startup: Starting runtime tool discovery system...")
+    import asyncio
+
+    from app.modules.ops.services.ci.tools.runtime_tool_discovery import (
+        start_runtime_discovery,
+    )
+
+    # Run in asyncio context for async startup
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(
+            start_runtime_discovery(
+                scan_interval=60,  # 1 minute
+                webhook_enabled=True,
+                auto_refresh=True
+            )
+        )
+    finally:
+        loop.close()
+
+    logger.info("Startup: Runtime tool discovery system started.")
+
     _run_migrations(logger)
 
     logger.info("Startup: Starting CEP scheduler...")
@@ -219,6 +248,17 @@ async def on_shutdown() -> None:
         except asyncio.CancelledError:
             pass
         _startup_task = None
+
+    logger.info("Shutdown: Stopping runtime tool discovery system...")
+    try:
+        from app.modules.ops.services.ci.tools.runtime_tool_discovery import (
+            get_runtime_discovery,
+        )
+        discovery = get_runtime_discovery()
+        await discovery.stop_discovery()
+        logger.info("Shutdown: Runtime tool discovery system stopped.")
+    except Exception as e:
+        logger.warning(f"Failed to stop runtime discovery: {str(e)}")
 
     logger.info("Shutdown: Stopping CEP scheduler...")
     # Stop CEP scheduler (now async)

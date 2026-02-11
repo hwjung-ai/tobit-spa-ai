@@ -6,22 +6,12 @@ This module provides CRUD endpoints for Tool Asset management.
 
 from __future__ import annotations
 
-from core.auth import get_current_user
-from core.db import get_session, get_session_context
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
-from schemas.common import ResponseEnvelope
-from sqlmodel import Session, select
-
-from app.modules.asset_registry.crud import (
-    create_asset as create_registry_asset,
-    delete_asset,
-    get_asset,
-    list_assets as list_registry_assets,
-    publish_asset,
-)
 from app.modules.asset_registry.crud import (
     create_tool_asset,
     get_tool_asset,
+)
+from app.modules.asset_registry.crud import (
+    list_assets as list_registry_assets,
 )
 from app.modules.asset_registry.models import TbAssetRegistry
 from app.modules.asset_registry.schemas import (
@@ -30,6 +20,11 @@ from app.modules.asset_registry.schemas import (
     ToolAssetUpdate,
 )
 from app.modules.auth.models import TbUser
+from core.auth import get_current_user
+from core.db import get_session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from schemas.common import ResponseEnvelope
+from sqlmodel import Session
 
 router = APIRouter(prefix="/ops/tool-assets")
 

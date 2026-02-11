@@ -262,7 +262,9 @@ def execute_http_api(
             or (not parsed.scheme and url.startswith("/"))
         )
         if internal_app is not None and is_local_target:
-            from starlette.testclient import TestClient  # lazy import to avoid reload deadlock
+            from starlette.testclient import (
+                TestClient,  # lazy import to avoid reload deadlock
+            )
 
             internal_path = parsed.path or "/"
             if parsed.query:

@@ -7,12 +7,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from core.config import get_settings
 from psycopg import Connection
 
-from app.shared.config_loader import load_text
-from core.config import get_settings
 from app.modules.asset_registry.loader import load_source_asset
 from app.modules.ops.services.connections import ConnectionFactory
+from app.shared.config_loader import load_text
 
 CATALOG_DIR = Path(__file__).resolve().parents[1] / "catalog"
 OUTPUT_PATH = CATALOG_DIR / "postgres_catalog.json"

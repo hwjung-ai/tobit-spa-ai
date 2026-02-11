@@ -6,8 +6,8 @@ by attempting to inject malicious SQL and confirming proper handling.
 """
 
 import pytest
+from app.modules.ops.services.ci.tools.base import ToolContext
 from app.modules.ops.services.ci.tools.dynamic_tool import DynamicTool
-from app.modules.ops.services.ci.tools.base import ToolContext, ToolResult
 
 
 class TestSQLInjectionPrevention:

@@ -8,12 +8,12 @@ from .base import (
     get_tool_registry,
     register_tool,
 )
+from .direct_query_tool import DirectQueryTool
+from .dynamic_tool import DynamicTool
 from .executor import (
     ToolExecutor,
     get_tool_executor,
 )
-from .dynamic_tool import DynamicTool
-from .direct_query_tool import DirectQueryTool
 
 # Type alias for backward compatibility
 ToolType = str

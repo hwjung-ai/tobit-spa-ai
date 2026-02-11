@@ -4,8 +4,8 @@ LLM Call Log Usage Examples
 This document shows how to use LlmCallLogger in different scenarios.
 """
 
-from uuid import uuid4
 from app.llm.client import LlmCallLogger, get_llm_client
+
 
 # =============================================================================
 # Example 1: Basic Usage in Planner
@@ -144,7 +144,7 @@ async def example_error_handling(session, trace_id, question: str):
 
             response = await llm.acreate_response(...)
             logger.log_response(response)
-    except Exception as e:
+    except Exception:
         # Error is automatically logged by __aexit__
         raise
 

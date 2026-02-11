@@ -5,6 +5,8 @@ import type { ApiDefinitionItem, ApiDraft, DraftStatus } from "@/lib/api-manager
 
 interface DraftAssistantPanelProps {
   instructionPrompt: string;
+  scenarioFunctions: Array<{ name: string; summary: string; signature: string }>;
+  builderContext?: Record<string, unknown> | null;
   onAssistantMessage: (messageText: string) => void;
   onAssistantMessageComplete: (messageText: string) => void;
   onUserMessage: () => void;
@@ -33,6 +35,8 @@ interface DraftAssistantPanelProps {
 
 export default function DraftAssistantPanel({
   instructionPrompt,
+  scenarioFunctions,
+  builderContext,
   onAssistantMessage,
   onAssistantMessageComplete,
   onUserMessage,
@@ -62,12 +66,26 @@ export default function DraftAssistantPanel({
     <div className="space-y-4">
       <BuilderCopilotPanel
         instructionPrompt={instructionPrompt}
+        expectedContract="api_draft"
+        builderContext={builderContext}
         onAssistantMessage={onAssistantMessage}
         onAssistantMessageComplete={onAssistantMessageComplete}
         onUserMessage={onUserMessage}
         inputPlaceholder="API 드래프트를 설명해 주세요..."
       />
       <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
+        <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3">
+          <p className="text-[11px] uppercase tracking-normal text-slate-500">Scenario Functions</p>
+          <div className="mt-2 space-y-2">
+            {scenarioFunctions.map((fn) => (
+              <div key={fn.name} className="rounded-xl border border-slate-800/80 bg-slate-900/40 px-2 py-1.5">
+                <p className="text-[11px] font-semibold text-slate-100">{fn.name}</p>
+                <p className="text-[10px] text-slate-400">{fn.summary}</p>
+                <p className="text-[10px] text-sky-300">{fn.signature}</p>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="flex items-center justify-between">
           <span className="text-xs uppercase tracking-normal text-slate-500">Draft status</span>
           <span className="text-sm font-semibold text-white">

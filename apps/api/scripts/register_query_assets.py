@@ -13,7 +13,6 @@ After registration, tools can use QueryAssetRegistry to dynamically discover
 and use queries without hardcoding filenames.
 """
 
-import os
 import sys
 from pathlib import Path
 from typing import Dict, List
@@ -24,13 +23,10 @@ API_DIR = SCRIPT_DIR.parent
 if str(API_DIR) not in sys.path:
     sys.path.insert(0, str(API_DIR))
 
-import yaml
-from sqlmodel import Session, select
-
-from core.db import engine
 from app.modules.asset_registry.models import TbAssetRegistry
 from app.shared.config_loader import load_text
-
+from core.db import engine
+from sqlmodel import Session, select
 
 # Query asset definitions with metadata
 QUERY_ASSETS: List[Dict[str, any]] = [
@@ -209,7 +205,7 @@ def register_query_assets(
             # Get or create asset
             asset = get_or_create_query_asset(session, name, scope)
             if not asset:
-                print(f"  ⚠️  Could not create asset")
+                print("  ⚠️  Could not create asset")
                 skipped_count += 1
                 continue
 
@@ -237,17 +233,17 @@ def register_query_assets(
         session.commit()
 
         print(f"\n{'='*60}")
-        print(f"Summary:")
+        print("Summary:")
         print(f"  Registered: {registered_count}")
         print(f"  Updated: {updated_count}")
         print(f"  Skipped: {skipped_count}")
         print(f"{'='*60}")
 
         if publish:
-            print(f"\n✅ Assets published and ready for use!")
+            print("\n✅ Assets published and ready for use!")
         else:
-            print(f"\n⚠️  Assets created as DRAFT.")
-            print(f"   Use --publish to publish them or publish via Admin UI.")
+            print("\n⚠️  Assets created as DRAFT.")
+            print("   Use --publish to publish them or publish via Admin UI.")
 
 
 def main():

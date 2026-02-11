@@ -1,4 +1,4 @@
-"""Tests for /ops/ci/ask pipeline routing and trace wiring."""
+"""Tests for /ops/ask pipeline routing and trace wiring."""
 
 from typing import Any
 
@@ -41,7 +41,7 @@ def test_ci_ask_direct_route(monkeypatch, client):
     monkeypatch.setattr(planner_llm, "create_plan_output", fake_plan_output)
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
-    response = client.post("/ops/ci/ask", json={"question": "hello"})
+    response = client.post("/ops/ask", json={"question": "hello"})
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -69,7 +69,7 @@ def test_ci_ask_reject_route(monkeypatch, client):
     monkeypatch.setattr(planner_llm, "create_plan_output", fake_plan_output)
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
-    response = client.post("/ops/ci/ask", json={"question": "drop table"})
+    response = client.post("/ops/ask", json={"question": "drop table"})
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -82,7 +82,7 @@ def test_ci_ask_reject_route(monkeypatch, client):
 def test_ci_ask_orchestration_stages(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
     from app.modules.ops.services.ci.planner import planner_llm, validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
@@ -132,11 +132,11 @@ def test_ci_ask_orchestration_stages(monkeypatch, client):
     monkeypatch.setattr(planner_llm, "create_plan_output", fake_plan_output)
     monkeypatch.setattr(validator, "validate_plan", fake_validate_plan)
     monkeypatch.setattr(
-        CIOrchestratorRunner, "_run_async_with_stages", fake_run_with_stages
+        OpsOrchestratorRunner, "_run_async_with_stages", fake_run_with_stages
     )
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
-    response = client.post("/ops/ci/ask", json={"question": "cpu usage"})
+    response = client.post("/ops/ask", json={"question": "cpu usage"})
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -148,7 +148,7 @@ def test_ci_ask_orchestration_stages(monkeypatch, client):
 def test_ci_ask_rerun_replan_events(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
     from app.modules.ops.services.ci.planner import validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
@@ -168,11 +168,11 @@ def test_ci_ask_rerun_replan_events(monkeypatch, client):
         }
 
     monkeypatch.setattr(validator, "validate_plan", fake_validate_plan)
-    monkeypatch.setattr(CIOrchestratorRunner, "run", fake_run)
+    monkeypatch.setattr(OpsOrchestratorRunner, "run", fake_run)
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
     response = client.post(
-        "/ops/ci/ask",
+        "/ops/ask",
         json={
             "question": "rerun",
             "rerun": {
@@ -190,7 +190,7 @@ def test_ci_ask_rerun_replan_events(monkeypatch, client):
 def test_ci_ask_auto_replan_on_error(monkeypatch, client):
     import importlib
 
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
     from app.modules.ops.services.ci.planner import planner_llm, validator
 
     ops_router = importlib.import_module("app.modules.ops.router")
@@ -231,11 +231,11 @@ def test_ci_ask_auto_replan_on_error(monkeypatch, client):
 
     monkeypatch.setattr(planner_llm, "create_plan_output", fake_plan_output)
     monkeypatch.setattr(validator, "validate_plan", fake_validate_plan)
-    monkeypatch.setattr(CIOrchestratorRunner, "run", fake_run)
+    monkeypatch.setattr(OpsOrchestratorRunner, "run", fake_run)
     monkeypatch.setattr(ops_router, "evaluate_replan", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
-    response = client.post("/ops/ci/ask", json={"question": "auto replan"})
+    response = client.post("/ops/ask", json={"question": "auto replan"})
 
     assert response.status_code == 200
     data = response.json()["data"]
@@ -280,7 +280,7 @@ def test_ci_ask_resolver_asset_applies_rules(monkeypatch, client):
     monkeypatch.setattr(ops_router, "persist_execution_trace", _noop_persist)
 
     response = client.post(
-        "/ops/ci/ask",
+        "/ops/ask",
         json={"question": "srv-foo-01 상태 알려줘", "resolver_asset": "ci-resolver"},
     )
 

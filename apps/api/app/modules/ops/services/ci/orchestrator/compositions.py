@@ -4,7 +4,7 @@ from app.modules.ops.services.ci.orchestrator.tool_composition import (
     CompositionPipeline,
     CompositionStep,
 )
-from app.modules.ops.services.ci.tools.base import ToolType, CommonToolTypes
+from app.modules.ops.services.ci.tools.base import CommonToolTypes
 
 COMPOSITION_SEARCH_WITH_CONTEXT = CompositionPipeline(
     [

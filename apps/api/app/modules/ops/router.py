@@ -65,7 +65,7 @@ from .schemas import (
 from .services import handle_ops_query
 from .services.action_registry import list_registered_actions
 from .services.ci.blocks import text_block
-from .services.ci.orchestrator.runner import CIOrchestratorRunner
+from .services.ci.orchestrator.runner import OpsOrchestratorRunner
 from .services.ci.planner import planner_llm, validator
 from .services.ci.planner.plan_schema import (
     Intent,
@@ -183,7 +183,7 @@ def query_ops(payload: OpsQueryRequest, request: Request) -> ResponseEnvelope:
                         "uiMode": payload.mode,
                         "backendMode": payload.mode,
                         "trace_id": envelope.meta.trace_id if envelope.meta else None,
-                        "trace": trace_data,  # Include full trace data for consistency with CI ask
+                        "trace": trace_data,  # Include full trace data for consistency with ops ask
                     })
                     session.add(history_entry)
                     session.commit()
@@ -443,8 +443,8 @@ def _apply_patch(plan: Plan, patch: Optional[RerunPatch]) -> Plan:
     return plan.copy(update=updates) if updates else plan
 
 
-@router.post("/ci/ask")
-def ask_ci(
+@router.post("/ask")
+def ask_ops(
     payload: CiAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
@@ -472,8 +472,8 @@ def ask_ci(
         status="processing",
         response=None,
         metadata_info={
-            "uiMode": "ci",
-            "backendMode": "ci",
+            "uiMode": "all",
+            "backendMode": "all",
         },
     )
 
@@ -489,7 +489,7 @@ def ask_ci(
         history_id = None
 
     logger.info(
-        "ci.ask.start",
+        "ops.ask.start",
         extra={
             "query_len": len(payload.question),
             "has_patch": patched,
@@ -520,11 +520,11 @@ def ask_ci(
     active_trace_id = getattr(request.state, "trace_id", None) or context.get("trace_id")
     request_id = getattr(request.state, "request_id", None) or context.get("request_id")
     logger.info(
-        f"ci.ask.context: trace_id={active_trace_id}, request_id={request_id}"
+        f"ops.ask.context: trace_id={active_trace_id}, request_id={request_id}"
     )
     if not active_trace_id or active_trace_id == "-" or active_trace_id == "None":
         active_trace_id = str(uuid.uuid4())
-        logger.info(f"ci.ask.new_trace_id: {active_trace_id}")
+        logger.info(f"ops.ask.new_trace_id: {active_trace_id}")
     parent_trace_id = context.get("parent_trace_id")
     if parent_trace_id == "-":
         parent_trace_id = None
@@ -955,11 +955,11 @@ def ask_ci(
         else:
             runner_span = start_span("runner", "stage")
             try:
-                runner_module = importlib.import_module(CIOrchestratorRunner.__module__)
+                runner_module = importlib.import_module(OpsOrchestratorRunner.__module__)
                 logger.info(
                     "ci.endpoint.entry", extra={"runner_file": runner_module.__file__}
                 )
-                runner = CIOrchestratorRunner(
+                runner = OpsOrchestratorRunner(
                     plan_validated,
                     plan_raw,
                     tenant_id,
@@ -1083,7 +1083,7 @@ def ask_ci(
                             reasoning="Auto replan fallback",
                             metadata={"route": "orch"},
                         )
-                        runner = CIOrchestratorRunner(
+                        runner = OpsOrchestratorRunner(
                             fallback_validated,
                             fallback_plan,
                             tenant_id,
@@ -1159,7 +1159,7 @@ def ask_ci(
         response_payload = ResponseEnvelope.success(data=response.model_dump())
     except Exception as exc:
         status = "error"
-        logger.exception("ci.ask.error", exc_info=exc)
+        logger.exception("ops.ask.error", exc_info=exc)
         error_body = ResponseEnvelope.error(message=str(exc)).model_dump(mode="json")
         error_response = JSONResponse(status_code=500, content=error_body)
         response_payload = None
@@ -1199,7 +1199,7 @@ def ask_ci(
                     trace_id=active_trace_id,
                     parent_trace_id=parent_trace_id,
                     feature="ops",
-                    endpoint="/ops/ci/ask",
+                    endpoint="/ops/ask",
                     method="POST",
                     ops_mode=get_settings().ops_mode,
                     question=payload.question,
@@ -1215,7 +1215,7 @@ def ask_ci(
                 )
                 logger.info(f"✅ Trace persisted successfully: {active_trace_id}")
         except Exception as exc:
-            logger.exception("ci.trace.persist_failed", exc_info=exc)
+            logger.exception("ops.trace.persist_failed", exc_info=exc)
 
         # Update history entry with final status
         if history_id:
@@ -1250,7 +1250,7 @@ def ask_ci(
                 if block_type:
                     block_types.append(block_type)
         logger.info(
-            "ci.ask.done",
+            "ops.ask.done",
             extra={
                 "status": status,
                 "elapsed_ms": elapsed_ms,
@@ -1263,33 +1263,6 @@ def ask_ci(
         )
     assert response_payload or error_response  # ensure we always have a response
     return response_payload or error_response
-
-
-@router.post("/ask")
-def ask_all(
-    payload: CiAskRequest,
-    request: Request,
-    tenant_id: str = Depends(_tenant_id),
-):
-    """
-    Handle OPS "all" mode queries.
-
-    This endpoint is used by the frontend "all" (전체) mode in the OPS menu.
-    It delegates to the existing /ops/ci/ask implementation with the same
-    orchestration logic.
-
-    Args:
-        payload: Question and optional rerun context
-        request: HTTP request
-        tenant_id: Tenant ID from header
-
-    Returns:
-        ResponseEnvelope with blocks and trace data
-    """
-    # Delegate to ask_ci logic - "all" mode uses the same orchestration
-    # This allows the frontend to call /ops/ask for the "all" mode
-    # instead of /ops/ci/ask, maintaining clear separation between modes
-    return ask_ci(payload, request, tenant_id)
 
 
 # --- UI Actions (Deterministic Interactive UI) ---
@@ -2415,7 +2388,7 @@ def execute_action(
     """
     import uuid
 
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
     from app.modules.ops.services.control_loop import ControlLoop
 
     try:
@@ -2449,7 +2422,7 @@ def execute_action(
             if not ci_code:
                 return ResponseEnvelope.error(message="ci_code is required for rerun")
 
-            orchestrator = CIOrchestratorRunner()
+            orchestrator = OpsOrchestratorRunner()
             result = orchestrator.rerun_ci(ci_code, params)
 
         elif action == "replan":
@@ -2779,3 +2752,141 @@ def _calculate_performance_change(comparison_results: List[Dict]) -> Dict[str, f
         "avg_duration_change": avg_change,
         "total_duration_change": total_current_duration - total_baseline_duration,
     }
+
+
+# --- Runtime Tool Discovery Webhooks ---
+
+
+@router.post("/webhooks/tool-discovery")
+async def tool_discovery_webhook(
+    request: Request,
+    x_webhook_signature: Optional[str] = Header(None),
+    x_webhook_secret: Optional[str] = Header(None)
+) -> JSONResponse:
+    """
+    Webhook endpoint for tool discovery updates.
+
+    Allows external systems to trigger immediate tool discovery scans
+    when new tools are added to the Asset Registry.
+
+    Headers:
+    - X-Webhook-Signature: HMAC-SHA256 signature of the payload
+    - X-Webhook-Secret: Secret key for signature verification (alternative to config)
+    """
+    try:
+        # Get payload
+        payload = await request.json()
+
+        # Get discovery instance
+        from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
+        discovery = get_runtime_discovery()
+
+        # Use header secret if provided, otherwise use configured secret
+        webhook_secret = x_webhook_secret or discovery.webhook_secret
+
+        # Process webhook
+        success = await discovery.handle_webhook(
+            payload=payload,
+            signature=x_webhook_signature
+        )
+
+        if success:
+            status_code = 200
+            message = "Webhook processed successfully"
+        else:
+            status_code = 400
+            message = "Webhook processing failed"
+
+        return JSONResponse(
+            status_code=status_code,
+            content={"message": message, "processed_at": datetime.now().isoformat()}
+        )
+
+    except Exception as e:
+        logger.error(f"Webhook error: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Internal server error: {str(e)}"}
+        )
+
+
+@router.get("/tool-discovery/status")
+async def get_tool_discovery_status() -> JSONResponse:
+    """
+    Get the current status of the runtime tool discovery system.
+
+    Returns information about:
+    - Whether discovery is running
+    - Last scan time
+    - Registered tools count
+    - Configuration settings
+    """
+    try:
+        from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
+        discovery = get_runtime_discovery()
+
+        status = discovery.get_discovery_status()
+
+        return JSONResponse(
+            status_code=200,
+            content={"status": status, "timestamp": datetime.now().isoformat()}
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting discovery status: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Internal server error: {str(e)}"}
+        )
+
+
+@router.post("/tool-discovery/refresh")
+async def refresh_tool_discovery(
+    force: bool = Query(False, description="Force refresh even if not scheduled")
+) -> JSONResponse:
+    """
+    Manually trigger a tool discovery refresh.
+
+    Useful for testing or when you need immediate updates
+    without waiting for the next scheduled scan.
+
+    Query Parameters:
+    - force: Force refresh regardless of scan interval
+    """
+    try:
+        from .services.ci.tools.runtime_tool_discovery import get_runtime_discovery
+        discovery = get_runtime_discovery()
+
+        # Check if discovery is running
+        if not discovery._running:
+            return JSONResponse(
+                status_code=400,
+                content={"message": "Tool discovery is not running"}
+            )
+
+        # Scan for changes
+        changes = await discovery.scan_for_changes(force=force)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Discovery refresh completed",
+                "changes_detected": len(changes),
+                "changes": [
+                    {
+                        "type": change.change_type.value,
+                        "tool_name": change.tool_name,
+                        "detected_at": change.detected_at.isoformat()
+                    }
+                    for change in changes
+                ],
+                "timestamp": datetime.now().isoformat()
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error refreshing discovery: {str(e)}", exc_info=True)
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Internal server error: {str(e)}"}
+        )

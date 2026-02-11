@@ -3,13 +3,13 @@ from __future__ import annotations
 import re
 from typing import Iterable
 
+from core.config import get_settings
 
+from app.modules.asset_registry.loader import load_source_asset
+from app.modules.ops.services.connections import ConnectionFactory
 from app.shared.config_loader import load_text
 
 from .types import CIHit
-from core.config import get_settings
-from app.modules.asset_registry.loader import load_source_asset
-from app.modules.ops.services.connections import ConnectionFactory
 
 CI_CODE_PATTERN = re.compile(
     r"\b(?:sys|srv|net|sto|sec|os|db|was|web|app|mes)-[a-z0-9-]+\b", re.IGNORECASE

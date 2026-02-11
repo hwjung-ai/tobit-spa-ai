@@ -11,13 +11,11 @@ from __future__ import annotations
 import re
 import time
 import traceback
-from typing import Any, Literal
+from typing import Any
 
 import httpx
-from sqlmodel import Session, text, select
-
 from models import ApiDefinition, ApiExecutionLog, ApiMode
-
+from sqlmodel import Session, text
 
 # Configuration constants
 STATEMENT_TIMEOUT_MS = 3000  # 3 seconds
@@ -88,7 +86,7 @@ def validate_select_sql(sql: str) -> dict[str, Any]:
     for pattern in injection_patterns:
         if re.search(pattern, sql_upper):
             result["is_safe"] = False
-            result["errors"].append(f"Potential SQL injection pattern detected")
+            result["errors"].append("Potential SQL injection pattern detected")
             break
     
     # Check for LIMIT clause (performance)

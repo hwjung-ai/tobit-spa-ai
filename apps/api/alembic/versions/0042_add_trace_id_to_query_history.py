@@ -5,9 +5,8 @@ Revises: 0041_add_tool_catalog_ref
 Create Date: 2026-01-29 18:25:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "0042_add_trace_id_to_query_history"

@@ -28,11 +28,12 @@ env_file = Path(__file__).resolve().parents[1] / ".env"
 if env_file.exists():
     load_dotenv(env_file)
 
-from core.db import get_session_context
-from core.logging import get_logger
+from datetime import datetime
+
 from app.modules.asset_registry.models import TbAssetRegistry, TbAssetVersionHistory
 from app.modules.ops.services.ci.discovery.catalog_factory import CatalogFactory
-from datetime import datetime
+from core.db import get_session_context
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 

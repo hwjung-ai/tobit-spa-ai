@@ -9,16 +9,16 @@ Migration script to fix asset registry issues:
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from sqlmodel import select
-from app.modules.asset_registry.models import TbAssetRegistry
 
 
 def fix_validator_response_builder() -> tuple[int, int]:

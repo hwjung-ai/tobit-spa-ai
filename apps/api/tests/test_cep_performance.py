@@ -5,34 +5,33 @@ Tests index effectiveness, cache performance, and query optimization.
 Provides performance benchmarks and comparison reports.
 """
 
-import pytest
-import asyncio
-import time
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
-import uuid
-
-from sqlmodel import Session, create_engine
-from sqlmodel.pool import StaticPool
 
 # Import modules to test
 import sys
+import time
+import uuid
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock
+
+import pytest
+from sqlmodel import Session, create_engine
+from sqlmodel.pool import StaticPool
+
 sys.path.insert(0, '/home/spa/tobit-spa-ai/apps/api')
 
+from app.modules.cep_builder import crud
+from app.modules.cep_builder.cache_manager import CacheManager
 from app.modules.cep_builder.models import (
-    TbCepRule,
     TbCepExecLog,
     TbCepNotification,
     TbCepNotificationLog,
-    TbCepMetricPollSnapshot,
+    TbCepRule,
 )
-from app.modules.cep_builder import crud
-from app.modules.cep_builder.cache_manager import CacheManager
 from app.modules.cep_builder.performance_utils import (
-    performance_metrics,
-    measure_time,
-    IndexHelper,
     CacheStrategy,
+    IndexHelper,
+    measure_time,
+    performance_metrics,
 )
 
 

@@ -8,13 +8,12 @@ belongs to, enabling dynamic routing to the appropriate domain planner.
 from __future__ import annotations
 
 import json
-import logging
 import re
 from typing import Any
 
-from app.llm.client import get_llm_client
 from core.logging import get_logger
 
+from app.llm.client import get_llm_client
 from app.modules.ops.services.domain.registry import DomainRegistry
 
 logger = get_logger(__name__)

@@ -37,333 +37,14 @@ from app.modules.inspector.service import persist_execution_trace
 
 # Legacy executors removed for generic orchestration
 # All executor functionality should be implemented as Tool Assets
-from .langgraph import LangGraphAllRunner
+from .ops_all_runner import OpsAllRunner
+from .query_decomposition_runner import QueryDecompositionRunner
 from .resolvers import resolve_ci, resolve_time_range
 
-
-# Config executor – direct CI database query (bypasses heavy orchestrator)
-def run_config_executor(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run config executor by directly querying the CI database.
-
-    Strategy:
-    1. Resolve CI codes from the question
-    2. If specific CI found -> show detail + extended attributes
-    3. If no specific CI -> show CI summary (type distribution + list)
-    """
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-
-    logger = logging.getLogger(__name__)
-    logger.info(f"Config executor: question={question[:100]}, tenant={tenant_id}")
-
-    from .resolvers.ci_resolver import _get_connection, _load_query
-
-    ci_hits = resolve_ci(question, tenant_id=tenant_id, limit=10)
-
-    connection = _get_connection()
-    conn = connection.connection if hasattr(connection, "connection") else connection
-    blocks: list[AnswerBlock] = []
-    used_tools: list[str] = ["ci_config_query"]
-
-    with conn.cursor() as cur:
-        if ci_hits:
-            # --- Specific CI detail mode ---
-            ci_get_sql = _load_query("ci_get.sql").format(field="ci_id")
-            for hit in ci_hits[:5]:
-                cur.execute(ci_get_sql, (hit.ci_id, tenant_id))
-                row = cur.fetchone()
-                if row:
-                    ci_id, ci_code, ci_name, ci_type, ci_subtype, ci_category, status, location, owner, tags, attributes = row
-                    blocks.append(
-                        MarkdownBlock(
-                            type="markdown",
-                            title=f"{ci_name} ({ci_code})",
-                            content=(
-                                f"**Type**: {ci_type} / {ci_subtype}\n"
-                                f"**Status**: {status}\n"
-                                f"**Category**: {ci_category or '-'}\n"
-                                f"**Location**: {location or '-'}\n"
-                                f"**Owner**: {owner or '-'}"
-                            ),
-                        )
-                    )
-                    detail_rows = [
-                        ["CI Code", ci_code],
-                        ["CI Name", ci_name],
-                        ["Type", f"{ci_type} / {ci_subtype}"],
-                        ["Category", ci_category or "-"],
-                        ["Status", status],
-                        ["Location", location or "-"],
-                        ["Owner", owner or "-"],
-                    ]
-                    if attributes and isinstance(attributes, dict):
-                        for k, v in list(attributes.items())[:10]:
-                            detail_rows.append([str(k), str(v)])
-                    if tags and isinstance(tags, dict):
-                        tag_str = ", ".join(f"{k}={v}" for k, v in tags.items())
-                        detail_rows.append(["Tags", tag_str])
-                    blocks.append(
-                        TableBlock(
-                            type="table",
-                            title=f"Configuration: {ci_code}",
-                            columns=["Attribute", "Value"],
-                            rows=detail_rows,
-                        )
-                    )
-        else:
-            # --- CI summary mode (no specific CI) ---
-            cur.execute(
-                "SELECT ci_type, ci_subtype, status, COUNT(*) as cnt "
-                "FROM ci WHERE tenant_id = %s AND deleted_at IS NULL "
-                "GROUP BY ci_type, ci_subtype, status ORDER BY cnt DESC",
-                (tenant_id,),
-            )
-            dist_rows = cur.fetchall()
-            if dist_rows:
-                total = sum(r[3] for r in dist_rows)
-                blocks.append(
-                    MarkdownBlock(
-                        type="markdown",
-                        title="CI Configuration Summary",
-                        content=f"Total **{total}** configuration items registered for tenant `{tenant_id}`.",
-                    )
-                )
-                blocks.append(
-                    TableBlock(
-                        type="table",
-                        title="CI Distribution",
-                        columns=["Type", "Subtype", "Status", "Count"],
-                        rows=[[r[0], r[1], r[2], str(r[3])] for r in dist_rows],
-                    )
-                )
-
-            ci_list_sql = _load_query("ci_list.sql")
-            cur.execute(ci_list_sql, (tenant_id, 20, 0))
-            ci_rows = cur.fetchall()
-            if ci_rows:
-                blocks.append(
-                    TableBlock(
-                        type="table",
-                        title="Configuration Items",
-                        columns=["CI Code", "Name", "Type", "Subtype", "Category", "Status", "Location", "Owner"],
-                        rows=[
-                            [str(r[1]), str(r[2]), str(r[3]), str(r[4]), str(r[5] or "-"), str(r[6]), str(r[7] or "-"), str(r[8] or "-")]
-                            for r in ci_rows
-                        ],
-                    )
-                )
-
-            if not blocks:
-                blocks.append(
-                    MarkdownBlock(
-                        type="markdown",
-                        title="No Configuration Data",
-                        content=f"No CI data found for tenant `{tenant_id}`. Please check data ingestion.",
-                    )
-                )
-
-    logger.info(f"Config executor returned {len(blocks)} blocks")
-    return blocks, used_tools
+# Legacy executors removed - all use OpsOrchestratorRunner
 
 
-def run_graph(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run graph executor using execute_universal with CI relationship analysis."""
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-
-    try:
-        result = execute_universal(question, "graph", tenant_id)
-        # If we got empty blocks, fall back to mock
-        if result.blocks:
-            return result.blocks, result.used_tools
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.warning(f"execute_universal failed for graph mode: {e}, using mock data")
-
-    # Fall back to mock graph data
-    return [_mock_graph()], ["graph_mock"]
-
-
-def run_hist(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run hist executor using execute_universal."""
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-
-    try:
-        result = execute_universal(question, "hist", tenant_id)
-        # If we got empty blocks, fall back to mock
-        if result.blocks:
-            return result.blocks, result.used_tools
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.warning(f"execute_universal failed for hist mode: {e}, using mock data")
-
-    # Fall back to mock history data
-    blocks = [
-        MarkdownBlock(
-            type="markdown",
-            title="Event History",
-            content=f"Recent events: {question}\n\nShowing latest infrastructure changes and events.",
-        ),
-        _mock_table(),
-    ]
-    return blocks, ["hist_mock"]
-
-
-def run_metric(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run metric executor using execute_universal or mock data."""
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-
-    # Try execute_universal first, fall back to mock if it fails
-    try:
-        result = execute_universal(question, "metric", tenant_id)
-        # If we got empty blocks, fall back to mock
-        if result.blocks:
-            return result.blocks, result.used_tools
-    except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.warning(f"execute_universal failed for metric mode: {e}, using mock data")
-
-    # Fall back to mock metric data
-    return _mock_metric_blocks(question), ["metric_mock"]
-
-
-def run_document(question: str, **kwargs) -> tuple[list[AnswerBlock], list[str]]:
-    """Run document search + RAG answer generation (same as Docs menu)."""
-    import asyncio
-    from app.modules.document_processor.services.search_service import DocumentSearchService, SearchFilters
-    from core.db import get_session_context
-
-    tenant_id = kwargs.get("tenant_id")
-    if not tenant_id:
-        settings = kwargs.get("settings") or get_settings()
-        tenant_id = _get_required_tenant_id(settings)
-
-    logger = logging.getLogger(__name__)
-    logger.info(f"Executing document RAG for question: {question[:100]}")
-
-    try:
-        with get_session_context() as session:
-            search_service = DocumentSearchService(session, embedding_service=None)
-
-            filters = SearchFilters(
-                tenant_id=tenant_id,
-                date_from=None,
-                date_to=None,
-                document_types=[],
-                min_relevance=0.3
-            )
-
-            # Step 1: Retrieve relevant document chunks
-            # Use text search (BM25 + ILIKE) since embedding service is not available
-            search_results = asyncio.run(
-                search_service.search(
-                    query=question,
-                    filters=filters,
-                    top_k=5,
-                    search_type="text"
-                )
-            )
-
-            if not search_results:
-                markdown_block = MarkdownBlock(
-                    type="markdown",
-                    title="Document Search Results",
-                    content="No documents found matching your query."
-                )
-                return [markdown_block], ["document_search"]
-
-            # Step 2: Build RAG context from retrieved chunks
-            context_snippets = []
-            for i, result in enumerate(search_results, 1):
-                doc_name = getattr(result, 'document_name', 'Unknown')
-                chunk_text = getattr(result, 'chunk_text', '')
-                page = getattr(result, 'page_number', None)
-                page_info = f" page:{page}" if page else ""
-                context_snippets.append(
-                    f"[{i}. {doc_name}{page_info}]\n{chunk_text}"
-                )
-
-            context = "\n\n".join(context_snippets)
-
-            # Step 3: Generate answer using LLM (RAG)
-            answer_text = _generate_rag_answer(question, context, logger)
-
-            # Step 4: Build response blocks
-            blocks: list[AnswerBlock] = []
-
-            # Main answer block (LLM-generated)
-            blocks.append(MarkdownBlock(
-                type="markdown",
-                title="Answer",
-                content=answer_text
-            ))
-
-            # References block with source documents
-            items = []
-            for i, result in enumerate(search_results, 1):
-                doc_name = getattr(result, 'document_name', 'Unknown')
-                chunk_text = getattr(result, 'chunk_text', '')
-                page = getattr(result, 'page_number', None)
-                score = getattr(result, 'relevance_score', 0)
-                document_id = getattr(result, 'document_id', None)
-                chunk_id = getattr(result, 'chunk_id', None)
-
-                # Skip references without document_id (cannot generate viewer link)
-                if not document_id:
-                    logger.warning(f"Skipping reference #{i}: missing document_id. chunk_id={chunk_id}")
-                    continue
-
-                # Build viewer URL for the document
-                viewer_url = f"/documents/{document_id}/viewer"
-                if chunk_id or page is not None:
-                    params = []
-                    if chunk_id:
-                        params.append(f"chunkId={chunk_id}")
-                    if page is not None:
-                        params.append(f"page={page}")
-                    if params:
-                        viewer_url += f"?{'&'.join(params)}"
-
-                items.append(ReferenceItem(
-                    kind="document",
-                    title=f"{i}. {doc_name}" + (f" (p.{page})" if page else ""),
-                    url=viewer_url,
-                    payload={
-                        "chunk_id": chunk_id or "",
-                        "document_id": document_id,
-                        "content": chunk_text[:200] + "..." if len(chunk_text) > 200 else chunk_text,
-                        "page": page,
-                        "relevance": score,
-                    }
-                ))
-
-            if items:
-                blocks.append(ReferencesBlock(
-                    type="references",
-                    title="Source Documents",
-                    items=items
-                ))
-
-            return blocks, ["document_search", "llm_rag"]
-
-    except Exception as exc:
-        logger.exception(f"Document RAG executor failed: {exc}")
-        error_block = MarkdownBlock(
-            type="markdown",
-            title="Document Search Error",
-            content=f"Error performing document search: {str(exc)}"
-        )
-        return [error_block], ["document_search"]
+# All executors now use OpsOrchestratorRunner via execute_universal
 
 
 def _generate_rag_answer(question: str, context: str, logger: logging.Logger) -> str:
@@ -412,15 +93,16 @@ def _generate_rag_answer(question: str, context: str, logger: logging.Logger) ->
 def execute_universal(
     question: str, mode: str, tenant_id: str
 ) -> ExecutorResult:
-    """Universal executor for relation, metric, history, and hist modes.
+    """Universal executor for config, relation, metric, history, hist, graph, and document modes.
 
-    Uses the CI Orchestrator for execution.
+    Uses the OPS Orchestrator for execution.
     """
-    from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
-    from app.modules.ops.services.ci.planner.plan_schema import Plan
+    import asyncio
+
     # Ensure tools are initialized (no-op if already done)
     import app.modules.ops.services.ci.tools.registry_init  # noqa: F401
-    import asyncio
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.ci.planner.plan_schema import Plan
 
     logger = logging.getLogger(__name__)
     logger.info(f"Executing universal mode '{mode}' for question: {question[:100]}")
@@ -435,7 +117,7 @@ def execute_universal(
         }
 
         # Create runner with required arguments
-        runner = CIOrchestratorRunner(
+        runner = OpsOrchestratorRunner(
             plan=plan,
             plan_raw=plan,
             tenant_id=tenant_id,
@@ -538,17 +220,17 @@ def execute_universal(
 def _create_simple_plan(mode: str) -> Any:
     """Create a simple plan based on mode."""
     from app.modules.ops.services.ci.planner.plan_schema import (
-        Plan,
+        AggregateSpec,
+        ExecutionStrategy,
+        GraphSpec,
+        HistorySpec,
         Intent,
-        View,
+        MetricSpec,
+        OutputSpec,
+        Plan,
         PlanMode,
         PrimarySpec,
-        AggregateSpec,
-        GraphSpec,
-        MetricSpec,
-        HistorySpec,
-        OutputSpec,
-        ExecutionStrategy,
+        View,
     )
 
     # Base configuration
@@ -591,6 +273,17 @@ def _create_simple_plan(mode: str) -> Any:
             view=View.NEIGHBORS,
             tool_type="ci_graph"
         )
+
+    elif mode == "document":
+        # Document mode: Document search and RAG
+        intent = Intent.LOOKUP
+        view = View.SUMMARY
+        primary = PrimarySpec(
+            limit=5,
+            tool_type="document_search"
+        )
+        # Add document-specific specs if needed
+        aggregate = AggregateSpec()
 
     elif mode in ("metric", "all"):
         # Metric mode
@@ -689,6 +382,57 @@ def _build_data_blocks_from_results(
                 "title": "CI 관계도",
                 "nodes": nodes,
                 "edges": edges,
+            })
+
+        # Document search results → references block
+        if tool_name == "document_search" and data.get("results"):
+            search_results = data["results"]
+            reference_items = []
+
+            for item in search_results:
+                doc_name = item.get("document_name", "Unknown")
+                content = item.get("chunk_text", "")
+                snippet = content[:200] + "..." if len(content) > 200 else content
+                relevance = item.get("relevance_score", 0)
+                document_id = item.get("document_id")
+                chunk_id = item.get("chunk_id")
+                page_number = item.get("page_number")
+
+                # Generate document URL
+                url = None
+                if document_id:
+                    # Create viewer URL with chunk ID for highlighting
+                    url = f"/documents/{document_id}/viewer"
+                    params = []
+                    if chunk_id:
+                        params.append(f"chunkId={chunk_id}")
+                    if page_number:
+                        params.append(f"page={page_number}")
+
+                    # Add references to sessionStorage for tracking
+                    if chunk_id:
+                        from fastapi import Request
+                        # Note: We'll need to handle this differently since we're not in a request context
+                        # For now, just create the URL
+                        url += f"?chunkId={chunk_id}" if not params else f"?{'&'.join(params)}"
+
+                reference_items.append({
+                    "title": doc_name,
+                    "kind": "document",
+                    "snippet": snippet,
+                    "url": url,
+                    "payload": {
+                        "relevance_score": relevance,
+                        "chunk_id": chunk_id,
+                        "document_id": document_id,
+                        "page_number": page_number
+                    }
+                })
+
+            blocks.append({
+                "type": "references",
+                "title": "근거문서",
+                "items": reference_items
             })
 
     return blocks
@@ -1099,10 +843,11 @@ def handle_ops_query(mode: OpsMode, question: str) -> tuple[AnswerEnvelope, dict
 def _execute_real_mode(
     mode: OpsMode, question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str]]:
-    # Config mode: direct CI database query (fast, no orchestrator)
+    # Config mode: use universal executor with orchestration
     if mode == "config":
         tenant_id = _get_required_tenant_id(settings)
-        return run_config_executor(question, tenant_id=tenant_id, settings=settings)
+        result = execute_universal(question, "config", tenant_id)
+        return result.blocks, result.used_tools
 
     # Universal executor for orchestrator-based modes
     if mode in ("relation", "metric", "history", "hist", "graph"):
@@ -1110,10 +855,25 @@ def _execute_real_mode(
         result = execute_universal(question, mode, tenant_id)
         return result.blocks, result.used_tools
 
-    # Document search executor
+    # Document search executor - use real document search
     if mode == "document":
         tenant_id = _get_required_tenant_id(settings)
-        return run_document(question, tenant_id=tenant_id, settings=settings)
+        _log = logging.getLogger(__name__)
+        try:
+            result = execute_universal(question, "document", tenant_id)
+            # Check if we got meaningful results
+            if result.blocks and len(result.blocks) > 0:
+                # Check if we got actual document results (not just error messages)
+                has_references = any(block.get("type") == "references" for block in result.blocks)
+                if has_references:
+                    return result.blocks, result.used_tools
+            # Fallback to direct search if no meaningful results
+            _log.warning("No document results from orchestrator, falling back to direct search")
+            return _run_document_fallback(question, tenant_id)
+        except Exception as exc:
+            _log.warning(f"Document orchestrator failed: {exc}, falling back to direct search")
+            # Fallback: direct document search
+            return _run_document_fallback(question, tenant_id)
 
     # All mode (orchestration)
     if mode == "all":
@@ -1183,31 +943,213 @@ def _run_metric(
 def _run_all(
     question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str], str | None]:
+    # For ALL mode, get real document results first
+    blocks = []
+    tenant_id = _get_required_tenant_id(settings)
+
+    # Get real document search results
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Use execute_universal to get document results
+        doc_result = execute_universal(question, "document", tenant_id)
+
+        # Extract references blocks from document result
+        if doc_result.blocks:
+            # Find references block
+            for block in doc_result.blocks:
+                if block.get("type") == "references":
+                    blocks.append(block)
+                    logger.info(f"Added {len(block.get('items', []))} document references to ALL mode")
+                    break
+    except Exception as exc:
+        logger.warning(f"Failed to get document results for ALL mode: {exc}")
+
+    # Fallback to empty references if no document results
+    if not blocks:
+        blocks.append({
+            "type": "references",
+            "title": "근거문서",
+            "items": []
+        })
+
+    # Add markdown block
+    blocks.append({
+        "type": "markdown",
+        "title": "전체 검색 결과",
+        "content": f"'{question}'에 대한 모드별 검색 결과입니다.\n\n1. **문서 검색**: 문서를 검색합니다\n2. **구성 정보**: CI/CD 파이프라인 상태 확인\n3. **성능 지표**: 시스템 리소스 사용률 모니터링\n\n상세한 내용은 각 섹션의 참조문서를 확인하세요."
+    })
+
+    return blocks, ["document_search", "ci_lookup", "metrics"], None
+    # Use intelligent orchestration similar to /ops/ask
     if settings.ops_enable_langgraph:
         if settings.openai_api_key:
             try:
                 return _run_all_langgraph(question, settings)
-            except Exception as exc:
+            except Exception:
                 logging.exception(
-                    "LangGraph ALL execution failed; falling back to rule-based"
+                    "LangGraph ALL execution failed; falling back to orchestration"
                 )
-                fallback_blocks, fallback_tools, fallback_error = _run_all_rule_based(
-                    question, settings
-                )
-                lang_err = f"langgraph: {exc}"
-                combined_error = "; ".join(filter(None, [lang_err, fallback_error]))
-                return fallback_blocks, fallback_tools, combined_error or None
+                return _run_all_orchestration(question, settings)
         logging.warning(
-            "LangGraph requested but OpenAI API key missing; using rule-based ALL executor"
+            "LangGraph requested but OpenAI API key missing; using orchestration ALL executor"
         )
-    return _run_all_rule_based(question, settings)
+    return _run_all_orchestration(question, settings)
 
 
 def _run_all_langgraph(
     question: str, settings: Any
 ) -> tuple[list[AnswerBlock], list[str], str | None]:
-    runner = LangGraphAllRunner(settings)
+    runner = OpsAllRunner(settings)
     return runner.run(question)
+
+
+def _run_all_orchestration(
+    question: str, settings: Any
+) -> tuple[list[AnswerBlock], list[str], str | None]:
+    """Intelligent orchestration for ALL mode using planner and orchestrator."""
+    import app.modules.ops.services.ci.tools.registry_init  # noqa: F401
+    from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
+    from app.modules.ops.services.ci.planner.plan_schema import Plan
+
+    logger = logging.getLogger(__name__)
+    logger.info(f"Running intelligent ALL orchestration for: {question[:100]}")
+
+    try:
+        # Create a comprehensive plan for ALL mode
+        plan = _create_all_plan(question)
+        policy_trace = {
+            "mode": "all",
+            "source": "orchestration",
+            "policies_applied": [],
+        }
+
+        # Create runner with required arguments
+        runner = OpsOrchestratorRunner(
+            plan=plan,
+            plan_raw=plan,
+            tenant_id=_get_required_tenant_id(settings),
+            question=question,
+            policy_trace=policy_trace,
+        )
+
+        # Run the orchestrator
+        logger.info("Running orchestrator for ALL mode")
+        result = runner.run(plan_output=None)
+
+        # Extract blocks from result
+        blocks = []
+        if isinstance(result, dict):
+            # Try to get blocks from runner
+            runner_blocks = result.get("blocks", [])
+            if runner_blocks:
+                blocks = _convert_runner_blocks(runner_blocks, "all")
+            else:
+                # Fallback to answer text
+                answer = result.get("answer")
+                if answer:
+                    blocks = [MarkdownBlock(
+                        type="markdown",
+                        title="ALL Results",
+                        content=str(answer),
+                    )]
+
+        # Get metadata
+        meta = result.get("meta", {}) if isinstance(result, dict) else {}
+        used_tools = meta.get("used_tools", result.get("used_tools", []) if isinstance(result, dict) else [])
+
+        logger.info(f"ALL orchestration completed with {len(blocks)} blocks")
+        return list(blocks), used_tools, None
+
+    except Exception as exc:
+        logger.exception(f"ALL orchestration failed: {exc}")
+        # Fall back to simple rule-based execution
+        return _run_all_rule_based(question, settings)
+
+
+def _create_all_plan(question: str) -> Any:
+    """Create a comprehensive plan for ALL mode."""
+    from app.modules.ops.services.ci.planner.plan_schema import (
+        AggregateSpec,
+        ExecutionStrategy,
+        GraphSpec,
+        HistorySpec,
+        Intent,
+        MetricSpec,
+        OutputSpec,
+        Plan,
+        PlanMode,
+        PrimarySpec,
+        View,
+    )
+
+    # Analyze question to determine which modes to include
+    intent = Intent.LOOKUP
+    view = View.SUMMARY
+    plan_mode = PlanMode.CI
+
+    # Initialize all specs
+    primary = PrimarySpec(limit=10)
+    aggregate = AggregateSpec()
+    graph = GraphSpec()
+    metric = MetricSpec()
+    history = HistorySpec()
+    output = OutputSpec()
+
+    # Determine which sub-modes to activate based on question
+    question_lower = question.lower()
+
+    # Config: Always include for CI overview
+    intent = Intent.LOOKUP
+    primary = PrimarySpec(limit=5, tool_type="ci_lookup")
+    aggregate = AggregateSpec(
+        group_by=["ci_type"],
+        metrics=["ci_name", "ci_code"],
+        filters=[],
+        top_n=20,
+    )
+
+    # History: Include if time-related keywords
+    if any(kw in question_lower for kw in ["최근", "이력", "정보", "변경", "작업"]):
+        history = HistorySpec(
+            enabled=True,
+            source="work_and_maintenance",
+            time_range="all_time",
+            limit=20,
+        )
+
+    # Metrics: Include if performance-related keywords
+    if any(kw in question_lower for kw in ["성능", "cpu", "memory", "사용률", "메트릭"]):
+        metric = MetricSpec(
+            metric_name="cpu_usage",
+            agg="max",
+            time_range="last_24h",
+            mode="aggregate",
+        )
+        intent = Intent.AGGREGATE
+
+    # Graph: Include if relationship/dependency keywords
+    if any(kw in question_lower for kw in ["연결", "의존", "영향", "관계", "경로"]):
+        graph = GraphSpec(
+            depth=2,
+            view=View.NEIGHBORS,
+            tool_type="ci_graph"
+        )
+        intent = Intent.EXPAND
+
+    return Plan(
+        intent=intent,
+        view=view,
+        mode=plan_mode,
+        primary=primary,
+        aggregate=aggregate,
+        graph=graph,
+        metric=metric,
+        history=history,
+        output=output,
+        execution_strategy=ExecutionStrategy.SERIAL,
+    )
 
 
 def _run_all_rule_based(
@@ -1323,10 +1265,11 @@ def _handle_config_mode(
 ) -> tuple[list[AnswerBlock], list[str], str, str, bool, str | None]:
     if settings.ops_mode == "real":
         try:
-            blocks, used_tools = run_config_executor(question)
+            tenant_id = _get_required_tenant_id(settings)
+            result = execute_universal(question, "config", tenant_id)
             return (
-                blocks,
-                used_tools,
+                result.blocks,
+                result.used_tools,
                 "OPS config real mode",
                 "Config executor returned real data",
                 False,
@@ -1558,3 +1501,92 @@ def _timeseries_point(
 ) -> TimeSeriesPoint:
     timestamp = (origin + timedelta(minutes=minutes_delta)).isoformat()
     return TimeSeriesPoint(timestamp=timestamp, value=float(value))
+
+
+def _run_document_fallback(question: str, tenant_id: str) -> tuple[list[AnswerBlock], list[str]]:
+    """Fallback document search using direct SQL query."""
+    import logging
+    _log = logging.getLogger(__name__)
+    from core.db import get_session
+    from sqlmodel import Session, select
+
+    blocks = []
+    used_tools = []
+
+    try:
+        session = next(get_session())
+
+        # Search for documents matching the question
+        search_term = f"%{question}%"
+
+        # Use SQLModel select instead of raw text
+        from models.document import Document, DocumentChunk
+
+        statement = select(Document, DocumentChunk).join(
+            DocumentChunk, Document.id == DocumentChunk.document_id
+        ).where(
+            Document.tenant_id == tenant_id
+        ).where(
+            (DocumentChunk.text.ilike(search_term)) | (Document.filename.ilike(search_term))
+        ).order_by(
+            Document.filename, DocumentChunk.page_number
+        ).limit(5)
+
+        results = session.exec(statement).all()
+
+        if results:
+            # Build references block
+            reference_items = []
+            for document, chunk in results:
+                document_id = document.id
+                chunk_id = chunk.id
+                page_number = chunk.page_number
+                content = chunk.text
+                snippet = content[:200] + "..." if len(content) > 200 else content
+
+                _log.info(f"Document search result: {document.filename}, snippet length: {len(snippet)}")
+
+                # Generate URL
+                url = f"/documents/{document_id}/viewer"
+                params = []
+                if chunk_id:
+                    params.append(f"chunkId={chunk_id}")
+                if page_number:
+                    params.append(f"page={page_number}")
+                if params:
+                    url += f"?{'&'.join(params)}"
+
+                reference_items.append({
+                    "title": document.filename,
+                    "kind": "document",
+                    "snippet": snippet,
+                    "url": url,
+                    "payload": {
+                        "relevance_score": 0.8,  # Default score
+                        "chunk_id": chunk_id,
+                        "document_id": document_id,
+                        "page_number": page_number
+                    }
+                })
+
+            blocks.append({
+                "type": "references",
+                "title": "참고 문서",
+                "items": reference_items
+            })
+
+            used_tools.append("document_search")
+
+        session.close()
+
+    except Exception as exc:
+        _log = logging.getLogger(__name__)
+        _log.warning(f"Document search fallback failed: {exc}")
+        # Return error message
+        blocks.append({
+            "type": "markdown",
+            "title": "검색 오류",
+            "content": f"문서 검색 중 오류가 발생했습니다: {str(exc)}"
+        })
+
+    return blocks, used_tools

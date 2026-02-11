@@ -3,12 +3,20 @@ Catalog Factory - Factory for creating database-specific catalog implementations
 
 This module provides a factory pattern for instantiating the appropriate
 catalog class based on the source database type.
+
+Note:
+- `postgres` / `postgresql` are production-supported in this project.
+- `mysql` / `oracle` are sample/reference implementations kept for extension.
 """
 
+from core.logging import get_logger
+
 from .base_catalog import BaseCatalog
-from .postgres_catalog_new import PostgresCatalog
 from .mysql_catalog import MySQLCatalog
 from .oracle_catalog import OracleCatalog
+from .postgres_catalog_new import PostgresCatalog
+
+logger = get_logger(__name__)
 
 
 class CatalogFactory:
@@ -22,6 +30,7 @@ class CatalogFactory:
         # "sqlserver": SQLServerCatalog,  # Coming soon
         # "neo4j": Neo4jCatalog,  # Coming soon
     }
+    _sample_types: set[str] = {"mysql", "oracle"}
 
     @classmethod
     def create(cls, source_asset: dict) -> BaseCatalog:
@@ -47,6 +56,18 @@ class CatalogFactory:
                 f"Supported types: {supported}"
             )
 
+        if source_type in cls._sample_types:
+            logger.warning(
+                "ci.discovery.sample_catalog_selected",
+                extra={
+                    "source_type": source_type,
+                    "message": (
+                        "Selected catalog is sample/reference implementation. "
+                        "Validate driver, query behavior, and production readiness."
+                    ),
+                },
+            )
+
         return catalog_class(source_asset)
 
     @classmethod
@@ -64,6 +85,16 @@ class CatalogFactory:
     def supported_types(cls) -> list[str]:
         """Get list of supported source types"""
         return list(cls._registry.keys())
+
+    @classmethod
+    def sample_types(cls) -> list[str]:
+        """Get list of sample/reference source types."""
+        return sorted(cls._sample_types)
+
+    @classmethod
+    def is_sample_type(cls, source_type: str) -> bool:
+        """Check if source type is sample/reference only."""
+        return source_type.lower() in cls._sample_types
 
     @classmethod
     def is_supported(cls, source_type: str) -> bool:

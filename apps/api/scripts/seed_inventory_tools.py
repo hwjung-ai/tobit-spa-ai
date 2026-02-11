@@ -7,7 +7,6 @@ These tools demonstrate the Generic Orchestration System's capability to load to
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
@@ -16,10 +15,9 @@ API_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(API_DIR))
 
 import yaml
-
-from core.db import get_session, get_session_context
-from core.logging import get_logger
 from app.modules.asset_registry.crud import create_asset, publish_asset
+from core.db import get_session_context
+from core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -115,8 +113,8 @@ def main():
         with get_session_context() as session:
             if args.cleanup_drafts:
                 logger.info("Cleaning up existing draft tool assets...")
-                from sqlmodel import select
                 from app.modules.asset_registry.models import TbAssetRegistry
+                from sqlmodel import select
 
                 existing_drafts = session.exec(
                     select(TbAssetRegistry)

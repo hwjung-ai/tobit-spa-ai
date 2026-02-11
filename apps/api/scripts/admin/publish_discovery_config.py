@@ -12,8 +12,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
 
 
 def create_discovery_config():
@@ -94,7 +94,7 @@ def create_discovery_config():
         # Display the configuration
         print("\n📋 Configured discovery settings:")
 
-        print(f"\n   POSTGRESQL:")
+        print("\n   POSTGRESQL:")
         print(f"      Target Tables ({len(content['postgres']['target_tables'])} tables):")
         for table in content["postgres"]["target_tables"]:
             print(f"         • {table}")
@@ -102,7 +102,7 @@ def create_discovery_config():
         for col in content["postgres"]["agg_columns"]:
             print(f"         • {col}")
 
-        print(f"\n   NEO4J:")
+        print("\n   NEO4J:")
         print(f"      Target Labels ({len(content['neo4j']['target_labels'])} labels):")
         for label in content["neo4j"]["target_labels"]:
             print(f"         • {label}")

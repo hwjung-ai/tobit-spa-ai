@@ -8,15 +8,12 @@ Uses direct SQL without importing app modules.
 """
 
 import os
-import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row
-import yaml
 
 # Get database URL from environment or use default
 DB_URL = os.environ.get(
@@ -219,7 +216,7 @@ def register_query_assets(actor: str = "system") -> None:
             registered_count += 1
 
         print(f"\n{'='*60}")
-        print(f"Summary:")
+        print("Summary:")
         print(f"  Registered: {registered_count}")
         print(f"  Skipped: {skipped_count}")
         print(f"  Errors: {error_count}")

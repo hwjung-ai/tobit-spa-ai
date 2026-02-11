@@ -11,7 +11,7 @@ import logging
 import re
 from typing import Any
 
-from app.modules.ops.services.ci.planner.plan_schema import Plan, PlanOutput
+from app.modules.ops.services.ci.planner.plan_schema import PlanOutput
 from app.modules.ops.services.domain.base import BaseDomainPlanner, DomainMetadata
 
 logger = logging.getLogger(__name__)

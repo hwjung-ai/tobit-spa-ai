@@ -12,9 +12,9 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.config import get_settings
 from core.db import get_session_context
-from app.modules.asset_registry.models import TbAssetRegistry
 
 
 def create_view_policy_asset():

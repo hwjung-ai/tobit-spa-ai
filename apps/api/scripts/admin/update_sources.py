@@ -10,13 +10,16 @@ sys.path.insert(0, '.')
 
 # Load .env file
 from dotenv import load_dotenv
+
 env_path = Path(__file__).resolve().parents[2] / '.env'
 load_dotenv(env_path)
 
-from core.db import get_session_context
-from app.modules.asset_registry.models import TbAssetRegistry
-from sqlmodel import select
 from uuid import uuid4
+
+from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
+from sqlmodel import select
+
 
 def main():
     # Read .env for PostgreSQL credentials

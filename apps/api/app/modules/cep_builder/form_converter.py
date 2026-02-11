@@ -5,6 +5,7 @@ CEP Rule Form Data Converter
 """
 
 from typing import Any, Dict
+
 from .schemas import CepRuleFormData
 
 

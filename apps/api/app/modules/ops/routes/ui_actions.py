@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Any
 
 from core.config import get_settings
 from core.db import get_session_context

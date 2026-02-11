@@ -8,7 +8,6 @@ enabling horizontal scaling and high availability.
 import json
 import logging
 from typing import Any, Dict, Optional
-from datetime import datetime, timedelta
 
 try:
     import redis.asyncio as redis

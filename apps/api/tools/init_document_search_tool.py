@@ -13,19 +13,17 @@ Environment Variables:
     API_BASE_URL: Base URL for API endpoints (default: http://localhost:8000)
 """
 
+import json
 import os
 import sys
-import json
-from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.db import engine, get_session_context
 from app.modules.asset_registry.crud import create_tool_asset, publish_asset
 from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import engine
 from sqlmodel import Session
-
 
 DOCUMENT_SEARCH_TOOL_CONFIG = {
     "name": "document_search",
@@ -139,7 +137,7 @@ def init_document_search_tool(session: Session, api_base_url: str = None):
         "{API_BASE_URL}", api_base_url
     )
 
-    print(f"Initializing Document Search Tool Asset...")
+    print("Initializing Document Search Tool Asset...")
     print(f"  API Base URL: {api_base_url}")
     print(f"  Tool Type: {config['tool_type']}")
     print(f"  Tool Config URL: {config['tool_config']['url']}")
@@ -182,26 +180,26 @@ def init_document_search_tool(session: Session, api_base_url: str = None):
             published_by="system",
         )
 
-        print(f"\n✅ Tool Asset published")
+        print("\n✅ Tool Asset published")
         print(f"   Version: {published_asset.version}")
         print(f"   Status: {published_asset.status}")
         print(f"   Published At: {published_asset.published_at}")
 
         # Display usage information
-        print(f"\n" + "="*70)
-        print(f"DOCUMENT SEARCH TOOL REGISTERED SUCCESSFULLY")
-        print(f"="*70)
+        print("\n" + "="*70)
+        print("DOCUMENT SEARCH TOOL REGISTERED SUCCESSFULLY")
+        print("="*70)
         print(f"\nTool Asset ID: {published_asset.asset_id}")
         print(f"Tool Name: {published_asset.name}")
-        print(f"\nUsage in OPS CI Ask:")
-        print(f"  - Tool will automatically be discovered by OPS CI Planner")
-        print(f"  - User questions about documents will trigger this tool")
-        print(f"  - Search results will be included in LLM context")
-        print(f"\nEndpoint Details:")
+        print("\nUsage in OPS CI Ask:")
+        print("  - Tool will automatically be discovered by OPS CI Planner")
+        print("  - User questions about documents will trigger this tool")
+        print("  - Search results will be included in LLM context")
+        print("\nEndpoint Details:")
         print(f"  - URL: {config['tool_config']['url']}")
         print(f"  - Method: {config['tool_config']['method']}")
         print(f"  - Type: {config['tool_type']}")
-        print(f"\n" + "="*70)
+        print("\n" + "="*70)
 
         return published_asset
 

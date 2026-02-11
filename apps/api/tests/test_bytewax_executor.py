@@ -4,26 +4,22 @@ Unit tests for Bytewax CEP executor integration
 Tests the unified Bytewax-based CEP engine with backward compatibility
 """
 
-import pytest
-from typing import Dict, Any, Optional, Tuple
-from uuid import UUID
 
-from app.modules.cep_builder.bytewax_executor import (
-    get_bytewax_engine,
-    convert_db_rule_to_bytewax,
-    register_rule_with_bytewax,
-    evaluate_rule_with_bytewax,
-    process_event_with_bytewax,
-    get_rule_stats,
-    list_registered_rules,
-    enable_rule_bytewax,
-    disable_rule_bytewax,
-    delete_rule_bytewax,
-)
+import pytest
 from app.modules.cep_builder.bytewax_engine import (
     BytewaxCEPEngine,
-    CEPRuleDefinition,
-    FilterProcessor,
+)
+from app.modules.cep_builder.bytewax_executor import (
+    convert_db_rule_to_bytewax,
+    delete_rule_bytewax,
+    disable_rule_bytewax,
+    enable_rule_bytewax,
+    evaluate_rule_with_bytewax,
+    get_bytewax_engine,
+    get_rule_stats,
+    list_registered_rules,
+    process_event_with_bytewax,
+    register_rule_with_bytewax,
 )
 
 
@@ -488,7 +484,7 @@ class TestActionExecution:
 
         try:
             payload, refs = execute_action(action_spec)
-        except Exception as exc:
+        except Exception:
             # 네트워크 에러는 예상됨
             pass
 
@@ -511,9 +507,10 @@ class TestActionExecution:
 
     def test_execute_api_script_action_missing_api_id(self):
         """API 스크립트 액션: api_id 미지정"""
+        from unittest.mock import MagicMock
+
         from app.modules.cep_builder.executor import execute_action
         from fastapi import HTTPException
-        from unittest.mock import MagicMock
 
         action_spec = {
             "type": "api_script",
@@ -545,9 +542,10 @@ class TestActionExecution:
 
     def test_execute_trigger_rule_action_missing_rule_id(self):
         """규칙 트리거 액션: rule_id 미지정"""
+        from unittest.mock import MagicMock
+
         from app.modules.cep_builder.executor import execute_action
         from fastapi import HTTPException
-        from unittest.mock import MagicMock
 
         action_spec = {
             "type": "trigger_rule",
@@ -580,9 +578,10 @@ class TestManualTriggerWithActions:
 
     def test_manual_trigger_with_webhook_action(self):
         """웹훅 액션을 포함한 규칙 트리거"""
+        from uuid import uuid4
+
         from app.modules.cep_builder.executor import manual_trigger
         from app.modules.cep_builder.models import TbCepRule
-        from uuid import uuid4
 
         # 웹훅 액션을 가진 규칙 생성 (임시, DB에 저장되지 않음)
         rule = TbCepRule(
@@ -610,15 +609,16 @@ class TestManualTriggerWithActions:
                 executed_by="test-user",
             )
             # 웹훅 호출 실패는 예상되지만 조건 평가는 성공해야 함
-        except Exception as exc:
+        except Exception:
             # 웹훅 네트워크 에러는 무시
             pass
 
     def test_manual_trigger_condition_not_met(self):
         """조건 미충족 시 액션 실행되지 않음"""
+        from uuid import uuid4
+
         from app.modules.cep_builder.executor import manual_trigger
         from app.modules.cep_builder.models import TbCepRule
-        from uuid import uuid4
 
         rule = TbCepRule(
             rule_id=uuid4(),
@@ -650,9 +650,10 @@ class TestManualTriggerWithActions:
 
     def test_manual_trigger_with_composite_conditions(self):
         """복합 조건을 가진 규칙 트리거"""
+        from uuid import uuid4
+
         from app.modules.cep_builder.executor import manual_trigger
         from app.modules.cep_builder.models import TbCepRule
-        from uuid import uuid4
 
         rule = TbCepRule(
             rule_id=uuid4(),
@@ -680,7 +681,7 @@ class TestManualTriggerWithActions:
                 payload={"cpu": 85, "memory": 75},
                 executed_by="test-user",
             )
-        except Exception as exc:
+        except Exception:
             # 웹훅 네트워크 에러 무시
             pass
 

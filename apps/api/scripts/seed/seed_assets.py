@@ -12,11 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.db import get_session_context
 from app.modules.asset_registry.crud import (
     create_asset,
-    create_resolver_asset,
-    create_schema_asset,
     create_source_asset,
     publish_asset,
 )
@@ -24,19 +21,19 @@ from app.modules.asset_registry.models import TbAssetRegistry
 from app.modules.asset_registry.resolver_models import (
     AliasMapping,
     PatternRule,
-    ResolverAssetCreate,
     ResolverConfig,
     ResolverRule,
     ResolverType,
     TransformationRule,
 )
-from app.modules.asset_registry.schema_models import SchemaAssetCreate, SchemaCatalog
+from app.modules.asset_registry.schema_models import SchemaAssetCreate
 from app.modules.asset_registry.source_models import (
     SourceAssetCreate,
     SourceConnection,
     SourceType,
 )
 from app.shared.config_loader import load_yaml
+from core.db import get_session_context
 
 RESOURCES_DIR = ROOT / "resources"
 SOURCE_DIR = "sources"
@@ -250,7 +247,6 @@ def _seed_query(session, scope: str, name: str, force: bool) -> bool:
     query_sql = load_text(sql_path) or ""
 
     # Import QueryAssetCreate locally to avoid circular imports
-    from app.modules.asset_registry.query_models import QueryAssetCreate
     from app.modules.asset_registry.crud import create_asset
 
     # Convert tags list to dict if needed
@@ -566,7 +562,6 @@ def main() -> None:
                     _seed_resolver(session, name, args.force)
             if "query" in selected_types:
                 # Seed query assets from queries/postgres/{scope}/*.sql
-                import os
                 query_base = RESOURCES_DIR / "queries" / "postgres"
                 if query_base.exists():
                     for scope_dir in query_base.iterdir():
@@ -580,7 +575,6 @@ def main() -> None:
                     _seed_policy(session, name, args.force)
             if "prompt" in selected_types:
                 # Seed prompt assets from prompts/{scope}/*.yaml
-                import os
                 prompt_base = RESOURCES_DIR / "prompts"
                 if prompt_base.exists():
                     for scope_dir in prompt_base.iterdir():

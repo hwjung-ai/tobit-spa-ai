@@ -67,6 +67,7 @@ class GraphBlock(BaseModel):
 class ReferenceItem(BaseModel):
     kind: Literal["sql", "cypher", "row", "document"]
     title: str
+    snippet: str | None = None
     payload: Any
     url: str | None = None
 

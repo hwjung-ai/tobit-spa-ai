@@ -4,7 +4,6 @@ Tests for SecurityUtils module.
 Tests masking, sanitization, and security functions for protecting sensitive data.
 """
 
-import pytest
 from app.modules.ops.security import SecurityUtils
 
 

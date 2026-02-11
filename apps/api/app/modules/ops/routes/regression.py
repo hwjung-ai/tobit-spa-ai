@@ -28,8 +28,8 @@ from schemas import ResponseEnvelope
 from sqlmodel import Session
 
 from app.modules.inspector.span_tracker import clear_spans, get_all_spans
-from app.modules.ops.services import handle_ops_query
 from app.modules.ops.security import SecurityUtils
+from app.modules.ops.services import handle_ops_query
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)

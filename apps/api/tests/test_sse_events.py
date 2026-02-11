@@ -3,17 +3,11 @@
 from __future__ import annotations
 
 import asyncio
-import json
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from app.modules.cep_builder.event_broadcaster import CepEventBroadcaster
-from app.modules.cep_builder.models import TbCepNotificationLog
-from fastapi import HTTPException
-from httpx import AsyncClient
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import Session, SQLModel, create_engine
 from sqlmodel.pool import StaticPool
 
 

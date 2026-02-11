@@ -394,9 +394,8 @@ class SystemMonitor:
     def _check_database_health(self) -> Dict[str, str]:
         """Database = PostgreSQL SELECT 1 + connection pool check"""
         try:
-            from sqlalchemy import text
-
             from core.db import engine
+            from sqlalchemy import text
 
             with engine.connect() as conn:
                 conn.execute(text("SELECT 1"))

@@ -1,11 +1,11 @@
 """
-OPS CI Ask Route
+OPS Ask Route
 
-Handles CI (Causal Investigation) questioning and planning endpoints for
+Handles OPS orchestration asking/planning endpoints for
 complex query analysis with plan generation and execution.
 
 Endpoints:
-    POST /ops/ci/ask - Process CI question with planning and orchestration
+    POST /ops/ask - Primary endpoint
 """
 
 from __future__ import annotations
@@ -18,8 +18,8 @@ from typing import Any
 
 from core.config import get_settings
 from core.db import get_session_context
-from core.logging import get_logger, get_request_context, set_request_context
-from fastapi import APIRouter, Depends, Header, Request
+from core.logging import get_logger, get_request_context
+from fastapi import APIRouter, Depends, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from models.history import QueryHistory
@@ -46,9 +46,9 @@ from app.modules.ops.schemas import (
     ReplanTrigger,
     RerunContext,
 )
-from app.modules.ops.services import handle_ops_query
+from app.modules.ops.security import SecurityUtils
 from app.modules.ops.services.ci.blocks import text_block
-from app.modules.ops.services.ci.orchestrator.runner import CIOrchestratorRunner
+from app.modules.ops.services.ci.orchestrator.runner import OpsOrchestratorRunner
 from app.modules.ops.services.ci.planner import planner_llm, validator
 from app.modules.ops.services.ci.planner.plan_schema import (
     Intent,
@@ -58,22 +58,22 @@ from app.modules.ops.services.ci.planner.plan_schema import (
     View,
 )
 from app.modules.ops.services.control_loop import evaluate_replan
-from app.modules.ops.security import SecurityUtils
+
 from .utils import _tenant_id, apply_patch, generate_references_from_tool_calls
 
 router = APIRouter(prefix="/ops", tags=["ops"])
 logger = get_logger(__name__)
 
 
-@router.post("/ci/ask")
-def ask_ci(
+@router.post("/ask")
+def ask_ops(
     payload: CiAskRequest,
     request: Request,
     tenant_id: str = Depends(_tenant_id),
 ):
-    """Process CI (Causal Investigation) question with planning and execution.
+    """Process OPS question with planning and execution.
 
-    This is the primary endpoint for CI operations. It performs:
+    This is the primary endpoint for OPS orchestration. It performs:
     1. Question normalization with resolver rules
     2. Plan generation (raw and validated)
     3. Route determination (direct/reject/orchestration)
@@ -82,7 +82,7 @@ def ask_ci(
     6. Trace persistence and history update
 
     Args:
-        payload: CI ask request with question and optional rerun context
+        payload: Ask request with question and optional rerun context
         request: HTTP request object
         tenant_id: Tenant ID from header
 
@@ -447,10 +447,10 @@ def ask_ci(
             next_actions_count = 0
             trace_status = "success"
         else:
-            # Handle orchestration route with CIOrchestratorRunner
+            # Handle orchestration route with OpsOrchestratorRunner
             runner_span = start_span("runner", "stage")
             try:
-                runner = CIOrchestratorRunner(
+                runner = OpsOrchestratorRunner(
                     plan_validated,
                     plan_raw,
                     tenant_id,
@@ -529,7 +529,7 @@ def ask_ci(
                             reasoning="Auto replan fallback",
                             metadata={"route": "orch"},
                         )
-                        runner = CIOrchestratorRunner(
+                        runner = OpsOrchestratorRunner(
                             fallback_validated,
                             fallback_plan,
                             tenant_id,
@@ -617,7 +617,7 @@ def ask_ci(
                     trace_id=active_trace_id,
                     parent_trace_id=parent_trace_id,
                     feature="ops",
-                    endpoint="/ops/ci/ask",
+                    endpoint="/ops/ask",
                     method="POST",
                     ops_mode=get_settings().ops_mode,
                     question=payload.question,
@@ -633,7 +633,7 @@ def ask_ci(
                 )
                 logger.info(f"Trace persisted: {active_trace_id}")
         except Exception as exc:
-            logger.exception("ci.trace.persist_failed", exc_info=exc)
+            logger.exception("ops.trace.persist_failed", exc_info=exc)
 
         # Update history with final status
         if history_id:
@@ -666,7 +666,7 @@ def ask_ci(
                 logger.exception("ci.history.update_failed", exc_info=exc)
 
         logger.info(
-            "ci.ask.done",
+            "ops.ask.done",
             extra={
                 "status": status,
                 "elapsed_ms": elapsed_ms,
@@ -677,3 +677,4 @@ def ask_ci(
 
     assert response_payload or error_response
     return response_payload or error_response
+

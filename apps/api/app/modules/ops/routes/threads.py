@@ -54,7 +54,10 @@ async def execute_isolated_stage_test(
     """
     import time
 
-    from app.modules.ops.schemas import ExecutionContext, IsolatedStageTestRequest, StageInput
+    from app.modules.ops.schemas import (
+        ExecutionContext,
+        StageInput,
+    )
     from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor
 
     logger_inst = get_logger(__name__)

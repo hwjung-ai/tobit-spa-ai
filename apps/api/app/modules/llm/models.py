@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID, uuid4
 
-from sqlmodel import Column, Field, JSON, SQLModel
+from sqlmodel import JSON, Column, Field, SQLModel
 
 
 class LlmCallLogBase(SQLModel):

@@ -7,13 +7,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from sqlalchemy import text
-
-from core.db import get_session_context
-from sqlmodel import select
-
 from app.modules.asset_registry.loader import load_catalog_asset
-from app.modules.asset_registry.models import TbAssetRegistry
 
 logger = logging.getLogger(__name__)
 

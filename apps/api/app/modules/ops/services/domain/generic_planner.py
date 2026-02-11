@@ -10,17 +10,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from core.logging import get_logger
 from pydantic import BaseModel, Field
 
-from core.logging import get_logger
+from app.modules.ops.services.ci.tools.base import ToolContext
 from app.modules.ops.services.domain.base import BaseDomainPlanner, DomainMetadata
 from app.modules.ops.services.domain.tool_selector_llm import (
-    LLMToolSelector,
     ToolSelection,
     ToolSelectionResult,
     get_tool_selector,
 )
-from app.modules.ops.services.ci.tools.base import ToolContext
 
 logger = get_logger(__name__)
 

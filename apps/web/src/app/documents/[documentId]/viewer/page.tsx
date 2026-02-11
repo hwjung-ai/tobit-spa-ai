@@ -43,6 +43,15 @@ interface ChunkInfo {
   snippet: string;
 }
 
+interface Reference {
+  document_id: string;
+  document_title: string;
+  chunk_id: string;
+  page: number | null;
+  snippet: string;
+  score?: number;
+}
+
 interface DocumentMeta {
   id: string;
   filename: string;
@@ -54,6 +63,15 @@ interface DocumentMeta {
   updated_at: string;
 }
 
+interface Reference {
+  document_id: string;
+  document_title: string;
+  chunk_id: string;
+  page: number | null;
+  snippet: string;
+  score?: number;
+}
+
 function DocumentViewerContent() {
   const apiBaseUrl = sanitizeUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const params = useParams();
@@ -62,6 +80,7 @@ function DocumentViewerContent() {
   const searchParams = useSearchParams();
   const chunkId = searchParams?.get("chunkId") ?? undefined;
   const initialPageParam = Number(searchParams?.get("page") ?? 1) || 1;
+  const referencesParam = searchParams?.get("references");
 
   const [currentPage, setCurrentPage] = useState(initialPageParam);
   const [numPages, setNumPages] = useState<number | null>(null);
@@ -72,9 +91,42 @@ function DocumentViewerContent() {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(true);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [references, setReferences] = useState<Reference[]>([]);
 
   // Derive currentPage from searchParams and chunkInfo
   const derivedCurrentPage = Number(searchParams?.get("page") ?? chunkInfo?.page ?? 1) || 1;
+
+  // Parse references from URL parameter
+  useEffect(() => {
+    if (referencesParam) {
+      try {
+        const decoded = decodeURIComponent(referencesParam);
+        const parsedReferences = JSON.parse(decoded);
+        if (Array.isArray(parsedReferences)) {
+          setReferences(parsedReferences);
+        }
+      } catch (error) {
+        console.error("Failed to parse references from URL:", error);
+      }
+    }
+  }, [referencesParam]);
+
+  // Restore references from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = sessionStorage.getItem("codex-document-page-state");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.references && Array.isArray(parsed.references)) {
+            setReferences(parsed.references);
+          }
+        } catch (error) {
+          console.error("Failed to restore references from sessionStorage:", error);
+        }
+      }
+    }
+  }, []);
 
   const highlightVisible = chunkInfo && chunkInfo.page === currentPage;
 
@@ -133,14 +185,17 @@ function DocumentViewerContent() {
 
   const updatePageParam = useCallback(
     (page: number) => {
-      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      const params = new URLSearchParams();
       params.set("page", page.toString());
       if (chunkId) {
         params.set("chunkId", chunkId);
       }
+      if (references.length > 0) {
+        params.set("references", encodeURIComponent(JSON.stringify(references)));
+      }
       router.replace(`/documents/${documentId}/viewer?${params.toString()}`);
     },
-    [chunkId, documentId, router, searchParams]
+    [chunkId, documentId, router, references]
   );
 
   useEffect(() => {
@@ -177,6 +232,21 @@ function DocumentViewerContent() {
     };
     void fetchChunk();
   }, [apiBaseUrl, chunkId, documentId]);
+
+  // Update URL when chunkId changes
+  useEffect(() => {
+    if (chunkId) {
+      const params = new URLSearchParams();
+      params.set("chunkId", chunkId);
+      if (currentPage) {
+        params.set("page", currentPage.toString());
+      }
+      if (references.length > 0) {
+        params.set("references", encodeURIComponent(JSON.stringify(references)));
+      }
+      router.replace(`/documents/${documentId}/viewer?${params.toString()}`, { scroll: false });
+    }
+  }, [chunkId, currentPage, documentId, router, references]);
 
   // Sync currentPage with derived value when it changes from external source
   useEffect(() => {
@@ -262,6 +332,21 @@ function DocumentViewerContent() {
     };
   }, [apiBaseUrl, documentId]);
 
+  // Update URL when page changes
+  useEffect(() => {
+    if (currentPage) {
+      const params = new URLSearchParams();
+      params.set("page", currentPage.toString());
+      if (chunkId) {
+        params.set("chunkId", chunkId);
+      }
+      if (references.length > 0) {
+        params.set("references", encodeURIComponent(JSON.stringify(references)));
+      }
+      router.replace(`/documents/${documentId}/viewer?${params.toString()}`, { scroll: false });
+    }
+  }, [currentPage, chunkId, documentId, router, references]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -271,33 +356,29 @@ function DocumentViewerContent() {
         if (currentPage > 1) {
           const prev = currentPage - 1;
           setCurrentPage(prev);
-          updatePageParam(prev);
         }
       } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
         if (numPages !== null && currentPage < numPages) {
           const next = currentPage + 1;
           setCurrentPage(next);
-          updatePageParam(next);
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentPage, numPages, updatePageParam]);
+  }, [currentPage, numPages]);
 
   const handlePrevious = () => {
     if (currentPage <= 1) return;
     const previous = currentPage - 1;
     setCurrentPage(previous);
-    updatePageParam(previous);
   };
 
   const handleNext = () => {
     if (numPages !== null && currentPage >= numPages) return;
     const next = currentPage + 1;
     setCurrentPage(next);
-    updatePageParam(next);
   };
 
   const handleDownload = () => {
@@ -438,6 +519,43 @@ function DocumentViewerContent() {
           </div>
         </div>
       </section>
+
+      {/* References Section */}
+      {references.length > 0 && (
+        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+          <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
+            <span>근거 문서 ({references.length}건)</span>
+          </div>
+          <div className="space-y-3">
+            {references.map((reference, index) => {
+              const isCurrentDocument = reference.document_id === documentId;
+              return (
+                <div
+                  key={`${reference.document_id}-${reference.chunk_id}-${index}`}
+                  className={`block rounded-2xl border p-4 transition ${
+                    isCurrentDocument
+                      ? "border-amber-400 bg-amber-500/10"
+                      : "border-slate-800 bg-slate-900/80 hover:border-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                    <span>{reference.document_title}</span>
+                    <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-200 line-clamp-3">{reference.snippet}</p>
+                  {reference.score != null && (
+                    <p className="mt-2 text-[10px] text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
+                  )}
+                  {isCurrentDocument && (
+                    <p className="mt-2 text-xs text-amber-400">현재 문서</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <style jsx global>{`
         .codex-pdf-highlight {
           background-color: rgba(250, 208, 100, 0.6);

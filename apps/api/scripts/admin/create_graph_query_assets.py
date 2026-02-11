@@ -8,15 +8,13 @@ adding query_cypher content to the assets.
 from __future__ import annotations
 
 import logging
-import os
 import uuid
 from pathlib import Path
 
-from core.db import get_session_context
-from sqlmodel import select
-
 from app.modules.asset_registry.models import TbAssetRegistry
 from app.shared.config_loader import load_text
+from core.db import get_session_context
+from sqlmodel import select
 
 logger = logging.getLogger(__name__)
 

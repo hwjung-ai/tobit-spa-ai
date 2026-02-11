@@ -11,8 +11,8 @@ All handlers follow this signature:
 from __future__ import annotations
 
 import ipaddress
-from urllib.parse import urlparse
 from typing import Any, Callable, Dict
+from urllib.parse import urlparse
 
 import httpx
 from core.config import get_settings
@@ -1173,7 +1173,8 @@ async def handle_fetch_cep_stats(
 
     try:
         # 1. Stats summary
-        from datetime import datetime as dt, timezone as tz
+        from datetime import datetime as dt
+        from datetime import timezone as tz
         now = dt.now(tz.utc)
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -1186,7 +1187,7 @@ async def handle_fetch_cep_stats(
         ).all()
         today_exec_count = len(today_logs)
         today_errors = sum(1 for log in today_logs if log.status == "fail")
-        avg_duration = (sum(log.duration_ms for log in today_logs) / len(today_logs)) if today_logs else 0
+        avg_duration = (sum((log.duration_ms or 0) for log in today_logs) / len(today_logs)) if today_logs else 0
         error_rate = (today_errors / len(today_logs)) if today_logs else 0
 
         last_24h = now - timedelta(hours=24)
@@ -1216,7 +1217,7 @@ async def handle_fetch_cep_stats(
             if rule_logs:
                 exec_count = len(rule_logs)
                 err_count = sum(1 for l in rule_logs if l.status == "fail")
-                avg_dur = sum(l.duration_ms for l in rule_logs) / exec_count
+                avg_dur = sum((l.duration_ms or 0) for l in rule_logs) / exec_count
                 cep_rules_perf.append({
                     "rule_name": str(rule.rule_name),
                     "trigger_type": str(getattr(rule, "trigger_type", "event")),
@@ -1274,7 +1275,8 @@ async def handle_fetch_cep_stats(
         cep_events = []
         for log in error_logs[:20]:
             rule = next((r for r in all_rules if str(r.rule_id) == str(log.rule_id)), None)
-            severity = "critical" if log.duration_ms > 5000 else "high" if log.duration_ms > 2000 else "medium"
+            duration = log.duration_ms or 0
+            severity = "critical" if duration > 5000 else "high" if duration > 2000 else "medium"
             cep_events.append({
                 "triggered_at": log.triggered_at.isoformat(),
                 "severity": severity,
@@ -1287,7 +1289,10 @@ async def handle_fetch_cep_stats(
         # 4. Channels status
         channels = []
         try:
-            from app.modules.cep_builder.models import TbCepNotification, TbCepNotificationLog
+            from app.modules.cep_builder.models import (
+                TbCepNotification,
+                TbCepNotificationLog,
+            )
 
             notifications = session.exec(sql_select(TbCepNotification)).all()
             channels_map: Dict[str, Dict[str, Any]] = {}
@@ -1416,16 +1421,21 @@ async def handle_fetch_system_health(
     import psutil
 
     try:
-        # 1. System resource metrics via psutil
-        cpu_usage = psutil.cpu_percent(interval=0.5)
-        mem = psutil.virtual_memory()
-        memory_usage = mem.percent
-        memory_available_gb = round(mem.available / (1024 ** 3), 1)
-        disk = psutil.disk_usage("/")
-        disk_usage = disk.percent
-        disk_available_gb = round(disk.free / (1024 ** 3), 1)
+        # 1. System resource metrics via psutil (Robust)
+        try:
+            cpu_usage = psutil.cpu_percent(interval=None)  # Use non-blocking call first if preferable, or short interval
+            mem = psutil.virtual_memory()
+            memory_usage = mem.percent
+            memory_available_gb = round(mem.available / (1024 ** 3), 1)
+            disk = psutil.disk_usage("/")
+            disk_usage = disk.percent
+            disk_available_gb = round(disk.free / (1024 ** 3), 1)
+        except Exception as e:
+            logger.warning(f"psutil failed in system health check: {e}")
+            cpu_usage, memory_usage, memory_available_gb = 0, 0, 0
+            disk_usage, disk_available_gb = 0, 0
 
-        # Determine system status
+        # Determine system status based on available metrics
         if cpu_usage > 90 or memory_usage > 90 or disk_usage > 95:
             system_status = "critical"
         elif cpu_usage > 70 or memory_usage > 80 or disk_usage > 85:
@@ -1434,7 +1444,9 @@ async def handle_fetch_system_health(
             system_status = "healthy"
 
         # 2. OPS observability metrics
-        from app.modules.ops.services.observability_service import collect_observability_metrics
+        from app.modules.ops.services.observability_service import (
+            collect_observability_metrics,
+        )
         obs_metrics = collect_observability_metrics(session)
 
         success_rate = obs_metrics.get("success_rate", 0)
@@ -1451,7 +1463,8 @@ async def handle_fetch_system_health(
 
         # 3. Build system alerts from various sources
         system_alerts = []
-        from datetime import datetime as dt, timezone as tz
+        from datetime import datetime as dt
+        from datetime import timezone as tz
         now_iso = dt.now(tz.utc).isoformat()
 
         if cpu_usage > 80:

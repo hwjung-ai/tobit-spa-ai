@@ -6,8 +6,6 @@ Create Date: 2026-02-06 10:00:00.000000
 
 """
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = "0047_add_document_search_indexes"

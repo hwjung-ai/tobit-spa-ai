@@ -125,16 +125,26 @@ def collect_observability_metrics(session: Session) -> Dict[str, Any]:
 
 
 def collect_ops_summary_stats(session: Session) -> Dict[str, Any]:
-    """Collect specific metrics for the OPS summary strip in the frontend."""
-    # Total counts (lifetime for now, or we could limit to recent)
-    total_queries = session.exec(select(func.count(TbExecutionTrace.trace_id))).scalar_one()
+    """Collect specific metrics for the OPS summary strip in the frontend (last 24h for consistency)."""
+    now = datetime.utcnow()
+    since_day = now - timedelta(hours=24)
+
+    # Stats for the last 24h
+    total_queries = session.exec(
+        select(func.count(TbExecutionTrace.trace_id)).where(TbExecutionTrace.created_at >= since_day)
+    ).scalar_one()
     successful_queries = session.exec(
-        select(func.count(TbExecutionTrace.trace_id)).where(TbExecutionTrace.status == "success")
+        select(func.count(TbExecutionTrace.trace_id)).where(
+            TbExecutionTrace.created_at >= since_day,
+            TbExecutionTrace.status == "success"
+        )
     ).scalar_one()
     failed_queries = total_queries - successful_queries
 
-    # Average response time
-    avg_latency = session.exec(select(func.avg(TbExecutionTrace.duration_ms))).scalar() or 0
+    # Average response time (last 24h)
+    avg_latency = session.exec(
+        select(func.avg(TbExecutionTrace.duration_ms)).where(TbExecutionTrace.created_at >= since_day)
+    ).scalar() or 0
 
     # Recent activity (last 5)
     recent_traces = session.exec(

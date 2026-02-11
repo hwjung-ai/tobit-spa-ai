@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authenticatedFetch } from "@/lib/apiClient/index";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -80,6 +81,10 @@ interface DocumentHistoryPayload {
 interface DocumentPageState {
   selectedDocumentId?: string | null;
   references?: Reference[];
+  urlState?: {
+    chunkId?: string;
+    page?: number;
+  };
 }
 
 const generateLocalHistoryId = () =>
@@ -167,8 +172,11 @@ export default function DocumentsPage() {
   const { isLoading: authLoading, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamAbortController = useRef<AbortController | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const selectedDocumentFromUrl = searchParams?.get("documentId") || undefined;
   const [selectedDocument, setSelectedDocument] = useState<DocumentDetail | null>(null);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
   const [documentsError, setDocumentsError] = useState<string | null>(null);
@@ -292,7 +300,10 @@ export default function DocumentsPage() {
         }
       }
     } catch (error: unknown) {
-      setDocumentsError(error instanceof Error ? error.message : "Failed to load documents");
+      console.error("Failed to load documents:", error);
+      // Don't show error for now, just show empty list
+      setDocuments([]);
+      // setDocumentsError(error instanceof Error ? error.message : "Failed to load documents");
     } finally {
       setLoadingDocuments(false);
     }
@@ -323,9 +334,43 @@ export default function DocumentsPage() {
       setStreamChunks([]);
       setStreamStatus("idle");
       streamAbortController.current?.abort();
+
+      // Update URL to include document ID
+      const params = new URLSearchParams();
+      params.set("documentId", documentId);
+      router.replace(`/documents?${params.toString()}`);
     },
-    [fetchDocumentDetail, selectedDocument]
+    [fetchDocumentDetail, router, selectedDocument]
   );
+
+  // Initialize from URL
+  useEffect(() => {
+    if (selectedDocumentFromUrl && !selectedDocument) {
+      selectDocument(selectedDocumentFromUrl);
+    }
+  }, [selectedDocumentFromUrl, selectDocument, selectedDocument]);
+
+  // Restore URL state when document is selected
+  const restoreUrlState = useCallback(() => {
+    const stored = persistedStateRef.current;
+    if (stored?.urlState) {
+      const { chunkId, page } = stored.urlState;
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      if (chunkId) {
+        params.set("chunkId", chunkId);
+      }
+      if (page) {
+        params.set("page", page.toString());
+      }
+      if (params.toString()) {
+        window.history.replaceState(
+          {},
+          "",
+          `/documents/${selectedDocument?.id}${params.toString() ? `?${params.toString()}` : ""}`
+        );
+      }
+    }
+  }, [searchParams, selectedDocument?.id]);
 
   const documentHistoryEntries = useMemo(() => {
     if (!selectedDocument) {
@@ -392,9 +437,32 @@ export default function DocumentsPage() {
     const payload: DocumentPageState = {
       selectedDocumentId: selectedDocument?.id ?? null,
       references,
+      urlState: {
+        chunkId: searchParams?.get("chunkId") || undefined,
+        page: Number(searchParams?.get("page")) || undefined,
+      },
     };
     window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }, [references, selectedDocument?.id]);
+  }, [references, selectedDocument?.id, searchParams]);
+
+  // Persist state whenever references change
+  useEffect(() => {
+    if (restoredStateApplied) {
+      persistDocumentState();
+    }
+  }, [references, persistDocumentState, restoredStateApplied]);
+
+  // Update URL when references change
+  useEffect(() => {
+    if (selectedDocument && references.length > 0) {
+      const params = new URLSearchParams();
+      params.set("documentId", selectedDocument.id);
+      if (references.length > 0) {
+        params.set("references", encodeURIComponent(JSON.stringify(references)));
+      }
+      router.replace(`/documents?${params.toString()}`);
+    }
+  }, [references, selectedDocument, router]);
 
   useEffect(() => {
     if (!restoredStateApplied) {
@@ -426,8 +494,11 @@ export default function DocumentsPage() {
     if (stored?.references && stored.references.length > 0) {
       setReferences(stored.references);
     }
+    if (selectedDocument && stored?.urlState) {
+      restoreUrlState();
+    }
     setRestoredStateApplied(true);
-  }, [documents, fetchDocumentDetail, restoredStateApplied, selectDocument, selectedDocument]);
+  }, [documents, fetchDocumentDetail, restoredStateApplied, restoreUrlState, selectDocument, selectedDocument]);
   const clearStream = () => {
     streamAbortController.current?.abort();
     streamAbortController.current = null;
@@ -617,10 +688,15 @@ export default function DocumentsPage() {
       if (reference.page != null) {
         params.set("page", reference.page.toString());
       }
+      // Add references to URL parameters
+      if (references.length > 0) {
+        params.set("references", encodeURIComponent(JSON.stringify(references)));
+      }
       const query = params.toString();
+      // Use absolute path with leading slash to avoid rewrite issues
       return `/documents/${documentId}/viewer${query ? `?${query}` : ""}`;
     },
-    [selectedDocument]
+    [selectedDocument, references]
   );
 
   const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
@@ -724,7 +800,7 @@ export default function DocumentsPage() {
               {uploading ? "Uploading…" : "문서 업로드"}
             </button>
             <span className="text-xs uppercase tracking-[0.3em] text-slate-500">
-              API: /documents/upload
+              API: /api/documents/upload
             </span>
           </div>
         </form>
@@ -864,7 +940,12 @@ export default function DocumentsPage() {
                   className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
                   disabled={!selectedDocument || selectedDocument.status !== "done" || streamStatus === "streaming"}
                 >
-                  {streamStatus === "streaming" ? "Streaming…" : "메시지 전송"}
+                  {streamStatus === "streaming" ? (
+                    <div className="flex items-center gap-2">
+                      <span className="animate-pulse">Streaming</span>
+                      <span className="animate-bounce">▶</span>
+                    </div>
+                  ) : "메시지 전송"}
                 </button>
                 <span
                   className={`text-xs uppercase tracking-[0.3em] ${streamStatus === "error" ? "text-rose-400" : "text-slate-500"

@@ -1,4 +1,9 @@
 import type { CenterTab, CepDraft, DraftStatus } from "./types";
+import {
+  extractJsonCandidates,
+  stripCodeFences,
+  tryParseJson,
+} from "../copilot/json-utils";
 
 export const normalizeBaseUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
@@ -8,55 +13,6 @@ export const parseJsonObject = (value: string) => {
     return {};
   }
   return JSON.parse(trimmed);
-};
-
-export const stripCodeFences = (value: string) => {
-  const match = value.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-  return value.trim();
-};
-
-export const extractFirstJsonObject = (text: string) => {
-  const startIdx = text.indexOf("{");
-  if (startIdx === -1) {
-    throw new Error("JSON 객체가 포함되어 있지 않습니다.");
-  }
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let i = startIdx; i < text.length; i += 1) {
-    const char = text[i];
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (char === "\\") {
-      escape = true;
-      continue;
-    }
-    if (char === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) {
-      continue;
-    }
-    if (char === "{") {
-      depth += 1;
-    }
-    if (char === "}") {
-      depth -= 1;
-      if (depth === 0) {
-        return text.slice(startIdx, i + 1);
-      }
-    }
-  }
-  if (depth > 0 && !inString) {
-    return text.slice(startIdx) + "}".repeat(depth);
-  }
-  throw new Error("JSON 객체를 추출하지 못했습니다.");
 };
 
 export const validateCepDraftShape = (draft: CepDraft) => {
@@ -76,36 +32,53 @@ export const validateCepDraftShape = (draft: CepDraft) => {
 };
 
 export const parseCepDraft = (text: string) => {
-  const candidates = [stripCodeFences(text), text];
-  for (const candidate of candidates) {
-    if (!candidate.trim()) {
-      continue;
-    }
-    let parsed: unknown = null;
-    try {
-      parsed = JSON.parse(candidate);
-    } catch {
-      const extracted = extractFirstJsonObject(candidate);
-      parsed = JSON.parse(extracted);
-    }
-    if (typeof parsed !== "object" || parsed === null) {
-      continue;
-    }
-    const obj = parsed as Record<string, unknown>;
+  const rawCandidates = [stripCodeFences(text), text];
+  let lastError: string | null = null;
+
+  const tryNormalize = (payload: unknown) => {
+    if (typeof payload !== "object" || payload === null) return null;
+    const obj = payload as Record<string, unknown>;
+
     if (obj.type !== "cep_draft") {
-      return { ok: false, error: "type=cep_draft인 객체가 아닙니다." };
+      // tolerate direct draft object shape for lenient parsing
+      if (obj.rule_name && obj.trigger) {
+        const directDraft = obj as unknown as CepDraft;
+        const directShapeError = validateCepDraftShape(directDraft);
+        if (!directShapeError) return { ok: true as const, draft: directDraft, notes: null as string | null };
+      }
+      lastError = "type=cep_draft인 객체가 아닙니다.";
+      return null;
     }
+
     if (!obj.draft || typeof obj.draft !== "object") {
-      return { ok: false, error: "draft 필드가 없습니다." };
+      lastError = "draft 필드가 없습니다.";
+      return null;
     }
     const draft = obj.draft as CepDraft;
     const shapeError = validateCepDraftShape(draft);
     if (shapeError) {
-      return { ok: false, error: shapeError };
+      lastError = shapeError;
+      return null;
     }
-    return { ok: true, draft, notes: (obj.notes as string) ?? null };
+    return { ok: true as const, draft, notes: (obj.notes as string) ?? null };
+  };
+
+  for (const candidate of rawCandidates) {
+    if (!candidate.trim()) continue;
+
+    const direct = tryParseJson(candidate);
+    const directResult = tryNormalize(direct);
+    if (directResult) return directResult;
+
+    const extractedCandidates = extractJsonCandidates(candidate);
+    for (const extracted of extractedCandidates) {
+      const parsed = tryParseJson(extracted);
+      const normalized = tryNormalize(parsed);
+      if (normalized) return normalized;
+    }
   }
-  return { ok: false, error: "JSON 객체를 추출할 수 없습니다." };
+
+  return { ok: false as const, error: lastError ?? "JSON 객체를 추출할 수 없습니다." };
 };
 
 export const tabOptions: { id: CenterTab; label: string }[] = [
@@ -174,3 +147,76 @@ Example for user input: "Alert when CPU exceeds 80% OR memory exceeds 70%"
 
 Only output raw JSON without additional explanation or markdown.
 `;
+
+export const CEP_COPILOT_EXAMPLE_PROMPTS: string[] = [
+  "CPU 사용률이 85%를 5분 이상 넘으면 Slack 경고",
+  "에러 로그가 1분에 100건 이상이면 PagerDuty 트리거",
+  "주문 실패율이 3% 초과 시 webhook 호출",
+  "DB 커넥션 수가 90% 이상이면 자동 스케일아웃 API 호출",
+  "메모리 누수 징후(10분 연속 증가) 감지 시 알림",
+  "서비스 다운 이벤트 발생 시 SMS + Email 동시 발송",
+  "응답시간 p95가 800ms 초과하면 티켓 생성",
+  "새 릴리즈 후 에러율 급증 시 롤백 워크플로우 실행",
+  "결제 실패 이벤트가 특정 국가에서 급증하면 차단 액션",
+  "디스크 사용량 95% 이상이면 로그 정리 스크립트 실행",
+  "API 429 비율 증가 시 rate-limit 정책 강화 호출",
+  "테넌트별 SLA 위반 징후를 감지하고 보고서 생성",
+];
+
+/**
+ * CEP 드래프트 Diff 계산
+ * 원본과 드래프트의 차이점을 계산하여 변경 사항 목록 반환
+ */
+export const computeCepDraftDiff = (draft: CepDraft, baseline: CepDraft | null | undefined): string[] => {
+  const changes: string[] = [];
+
+  if (!baseline) {
+    return ["새로운 규칙 생성"];
+  }
+
+  // rule_name 변경
+  if (draft.rule_name !== baseline.rule_name) {
+    changes.push(`규칙명: "${baseline.rule_name}" → "${draft.rule_name}"`);
+  }
+
+  // description 변경
+  const descDiff = (draft.description ?? "") !== (baseline.description ?? "");
+  if (descDiff) {
+    if (!baseline.description) {
+      changes.push(`설명 추가: "${draft.description}"`);
+    } else if (!draft.description) {
+      changes.push(`설명 제거`);
+    } else {
+      changes.push(`설명 변경`);
+    }
+  }
+
+  // trigger_spec 변경
+  const triggerDiff = JSON.stringify(draft.trigger) !== JSON.stringify(baseline.trigger);
+  if (triggerDiff) {
+    changes.push(`트리거 스펙 변경`);
+  }
+
+  // composite_condition 변경
+  const conditionDiff = JSON.stringify(draft.conditions) !== JSON.stringify(baseline.conditions);
+  if (conditionDiff) {
+    const conditionCount = (draft.conditions ?? []).length;
+    changes.push(`조건 변경 (${conditionCount}개 조건)`);
+  }
+
+  // actions 변경
+  const actionDiff = JSON.stringify(draft.actions) !== JSON.stringify(baseline.actions);
+  if (actionDiff) {
+    const actionCount = (draft.actions ?? []).length;
+    changes.push(`액션 변경 (${actionCount}개 액션)`);
+  }
+
+  // enrichments 변경
+  const enrichmentDiff = JSON.stringify(draft.enrichments) !== JSON.stringify(baseline.enrichments);
+  if (enrichmentDiff) {
+    const enrichmentCount = (draft.enrichments ?? []).length;
+    changes.push(`보강 변경 (${enrichmentCount}개 보강)`);
+  }
+
+  return changes.length > 0 ? changes : ["변경 사항이 없습니다."];
+};

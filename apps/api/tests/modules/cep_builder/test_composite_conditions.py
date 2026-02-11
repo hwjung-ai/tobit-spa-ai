@@ -2,9 +2,9 @@
 
 import pytest
 from app.modules.cep_builder.executor import (
-    _evaluate_single_condition,
     _evaluate_composite_conditions,
     _evaluate_event_trigger,
+    _evaluate_single_condition,
 )
 
 

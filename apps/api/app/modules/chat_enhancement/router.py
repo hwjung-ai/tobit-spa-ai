@@ -4,11 +4,12 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from app.modules.auth.models import TbUser
 from core.auth import get_current_user
 from core.config import get_settings
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+
+from app.modules.auth.models import TbUser
 
 from .services.chat_service import ChatEnhancementService
 from .services.export_service import ChatExportService

@@ -86,11 +86,79 @@ export default function PropertiesPanel() {
 
   if (!selectedComponent) {
     return (
-      <div className="flex flex-col h-full bg-slate-900/50 items-center justify-center">
-        <p className="text-slate-400 text-sm">Select a component to edit</p>
+      <div className="flex flex-col h-full bg-slate-900/50">
+        <div className="border-b border-slate-800 p-3">
+          <h3 className="text-sm font-semibold text-slate-200">
+            Screen Properties
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Global settings
+          </p>
+        </div>
+        <div className="p-3 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-300 mb-1">
+              Layout Mode
+            </label>
+            <Select
+              value={displayScreen?.layout?.type || "list"}
+              onValueChange={(val) => {
+                editorState.updateLayout({
+                  ...displayScreen?.layout,
+                  type: val
+                });
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="list">List (Vertical)</SelectItem>
+                <SelectItem value="dashboard">Dashboard (Grid)</SelectItem>
+                <SelectItem value="form">Form</SelectItem>
+                <SelectItem value="modal">Modal</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-slate-500 mt-1">
+              'Dashboard' allows drag-and-drop grid positioning.
+            </p>
+          </div>
+
+          {(displayScreen?.layout?.type === "dashboard" || displayScreen?.layout?.type === "grid") && (
+            <div className="p-3 bg-sky-950/20 rounded border border-sky-900/50 space-y-2">
+              <p className="text-xs text-sky-300 font-medium">Dashboard Settings</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1">Columns</label>
+                  <Input
+                    disabled
+                    value="12"
+                    className="h-7 text-xs bg-slate-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 mb-1">Row Height</label>
+                  <Input
+                    disabled
+                    value="60px"
+                    className="h-7 text-xs bg-slate-900"
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-500">
+                Grid system is fixed to 12 columns. Drag components to arrange.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
+
+  // If in Dashboard mode, add Grid Layout controls for standard components
+  const showGridLayout = displayScreen?.layout?.type === "dashboard" || displayScreen?.layout?.type === "grid";
+  const layout = (selectedComponent.props?.layout as { x: number, y: number, w: number, h: number }) || { x: 0, y: 0, w: 4, h: 2 };
+
 
   const fields = generatePropsFormFields(selectedComponent.type);
   const normalizedType = (selectedComponent.type || "").toLowerCase();
@@ -115,56 +183,56 @@ export default function PropertiesPanel() {
   const tableColumns = !Array.isArray(rawTableColumns)
     ? ([] as Array<{ field: string; header: string; sortable: boolean; format: string }>)
     : rawTableColumns.map((item) => {
-        if (typeof item === "string") {
-          return { field: item, header: item, sortable: true, format: "" };
-        }
-        const obj = (item || {}) as Record<string, unknown>;
-        const field = String(obj.field || obj.key || "");
-        return {
-          field,
-          header: String(obj.header || obj.label || field),
-          sortable: obj.sortable !== false,
-          format: String(obj.format || ""),
-        };
-      });
+      if (typeof item === "string") {
+        return { field: item, header: item, sortable: true, format: "" };
+      }
+      const obj = (item || {}) as Record<string, unknown>;
+      const field = String(obj.field || obj.key || "");
+      return {
+        field,
+        header: String(obj.header || obj.label || field),
+        sortable: obj.sortable !== false,
+        format: String(obj.format || ""),
+      };
+    });
   const rawChartSeries = formData.series;
   const chartSeries = !Array.isArray(rawChartSeries)
     ? ([] as Array<{ name: string; data_key: string; color: string }>)
     : rawChartSeries.map((item, index) => {
-        const obj = (item || {}) as Record<string, unknown>;
-        return {
-          name: String(obj.name || `Series ${index + 1}`),
-          data_key: String(obj.data_key || obj.dataKey || (index === 0 ? "y" : `y${index + 1}`)),
-          color: String(obj.color || obj.stroke || "#38bdf8"),
-        };
-      });
+      const obj = (item || {}) as Record<string, unknown>;
+      return {
+        name: String(obj.name || `Series ${index + 1}`),
+        data_key: String(obj.data_key || obj.dataKey || (index === 0 ? "y" : `y${index + 1}`)),
+        color: String(obj.color || obj.stroke || "#38bdf8"),
+      };
+    });
   const rawConditionalStyles = formData.conditional_styles;
   const componentConditionalStyles = !Array.isArray(rawConditionalStyles)
     ? ([] as Array<{
-        field: string;
-        operator: string;
-        value: string;
-        color: string;
-        bg_color: string;
-        border_color: string;
-        series_name: string;
-        target: string;
-        variant: string;
-      }>)
+      field: string;
+      operator: string;
+      value: string;
+      color: string;
+      bg_color: string;
+      border_color: string;
+      series_name: string;
+      target: string;
+      variant: string;
+    }>)
     : rawConditionalStyles.map((item) => {
-        const obj = (item || {}) as Record<string, unknown>;
-        return {
-          field: String(obj.field || ""),
-          operator: String(obj.operator || "eq"),
-          value: String(obj.value ?? ""),
-          color: String(obj.color || ""),
-          bg_color: String(obj.bg_color || ""),
-          border_color: String(obj.border_color || ""),
-          series_name: String(obj.series_name || ""),
-          target: String(obj.target || "auto"),
-          variant: String(obj.variant || ""),
-        };
-      });
+      const obj = (item || {}) as Record<string, unknown>;
+      return {
+        field: String(obj.field || ""),
+        operator: String(obj.operator || "eq"),
+        value: String(obj.value ?? ""),
+        color: String(obj.color || ""),
+        bg_color: String(obj.bg_color || ""),
+        border_color: String(obj.border_color || ""),
+        series_name: String(obj.series_name || ""),
+        target: String(obj.target || "auto"),
+        variant: String(obj.variant || ""),
+      };
+    });
 
   const handlePropChange = (name: string, value: unknown) => {
     const newData = { ...formData, [name]: value };
@@ -209,6 +277,53 @@ export default function PropertiesPanel() {
           {selectedComponent.type}
         </p>
       </div>
+
+      {/* Dashboard Item Properties */}
+      {showGridLayout && (
+        <div className="px-3 pt-3 pb-0">
+          <div className="p-2 bg-sky-950/20 border border-sky-900/30 rounded mb-2">
+            <p className="text-[10px] uppercase font-bold text-sky-500 mb-2">Grid Position</p>
+            <div className="grid grid-cols-4 gap-1">
+              <div>
+                <label className="block text-[9px] text-slate-400 text-center">X</label>
+                <Input
+                  type="number"
+                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  value={layout.x}
+                  onChange={(e) => handlePropChange("layout", { ...layout, x: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] text-slate-400 text-center">Y</label>
+                <Input
+                  type="number"
+                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  value={layout.y}
+                  onChange={(e) => handlePropChange("layout", { ...layout, y: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] text-slate-400 text-center">W</label>
+                <Input
+                  type="number"
+                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  value={layout.w}
+                  onChange={(e) => handlePropChange("layout", { ...layout, w: Number(e.target.value) })}
+                />
+              </div>
+              <div>
+                <label className="block text-[9px] text-slate-400 text-center">H</label>
+                <Input
+                  type="number"
+                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  value={layout.h}
+                  onChange={(e) => handlePropChange("layout", { ...layout, h: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       <div className="flex-1 overflow-y-auto p-3 space-y-4">

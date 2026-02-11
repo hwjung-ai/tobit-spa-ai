@@ -1,7 +1,6 @@
 import asyncio
 
 import pytest
-
 from app.modules.ops.services.ui_editor_presence import UIEditorPresenceManager
 
 

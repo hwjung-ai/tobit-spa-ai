@@ -5,8 +5,6 @@ from datetime import datetime
 from typing import Any, List
 
 from core.auth import get_current_user
-from app.modules.permissions.models import ResourcePermission
-from app.modules.permissions.crud import check_permission
 from core.db import get_session, get_session_context
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from schemas.common import ResponseEnvelope
@@ -71,6 +69,8 @@ from app.modules.asset_registry.source_models import (
 from app.modules.auth.models import TbUser
 from app.modules.inspector import crud as inspector_crud
 from app.modules.inspector.schemas import TraceSummary
+from app.modules.permissions.crud import check_permission
+from app.modules.permissions.models import ResourcePermission
 
 from .validators import validate_asset
 

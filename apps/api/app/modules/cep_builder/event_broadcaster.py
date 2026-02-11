@@ -143,7 +143,6 @@ class CepEventBroadcaster:
     def _publish_to_redis(self, event_type: str, payload: dict[str, Any]) -> None:
         """Redis Pub/Sub으로 발행"""
         try:
-            import asyncio as aio
 
             # 비동기 작업 스케줄
             asyncio_loop = None

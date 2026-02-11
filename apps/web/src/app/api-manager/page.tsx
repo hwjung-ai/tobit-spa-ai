@@ -26,10 +26,23 @@ import {
   normalizeBaseUrl, buildApiUrl, formatTimestamp, buildStatusMessage,
   parseTags, getEditorLanguage, formatJson, parseJsonObject, safeParseJson,
   normalizeApiDraft, parseApiDraft, apiToDraft, buildTemporaryApiFromDraft,
-  validateApiDraft, computeDraftDiff,
+  validateApiDraft, computeDraftDiff, API_MANAGER_COPILOT_INSTRUCTION,
+  API_MANAGER_SCENARIO_FUNCTIONS, validateTemplateBindingsInTexts,
 } from "../../lib/api-manager/utils";
+import { recordCopilotMetric } from "../../lib/copilot/metrics";
 
 /* Types and utilities imported from lib/api-manager */
+
+type ParsedResponsePayload = {
+  data?: Record<string, unknown>;
+  message?: string;
+  detail?: string;
+  [key: string]: unknown;
+};
+
+type SaveApiResult =
+  | { ok: true; data: Record<string, unknown> | null }
+  | { ok: false; error: string; details: unknown };
 
 
 
@@ -82,6 +95,8 @@ export default function ApiManagerPage() {
     created_by: "",
   });
   const [logicBody, setLogicBody] = useState("");
+  const [logicHistory, setLogicHistory] = useState<string[]>([""]);
+  const [logicHistoryIndex, setLogicHistoryIndex] = useState(0);
   const [logicType, setLogicType] = useState<LogicType>("sql");
   const [scriptLanguage, setScriptLanguage] = useState<"python" | "javascript">("python");
   const [paramSchemaText, setParamSchemaText] = useState("{}");
@@ -112,6 +127,7 @@ export default function ApiManagerPage() {
   const [appliedDraftSnapshot, setAppliedDraftSnapshot] = useState<string | null>(null);
   const [saveTarget, setSaveTarget] = useState<"server" | "local" | null>(null);
   const [lastSaveError, setLastSaveError] = useState<string | null>(null);
+  const editorUndoRedoRef = useRef<{ trigger: (source: string, id: string, payload: unknown) => void } | null>(null);
 
   useEffect(() => {
     if (logicType === "http") {
@@ -129,6 +145,19 @@ export default function ApiManagerPage() {
       }
     }
   }, [httpSpec, logicType]);
+
+  useEffect(() => {
+    setLogicHistory((prev) => {
+      const current = prev[logicHistoryIndex];
+      if (current === logicBody) {
+        return prev;
+      }
+      const base = prev.slice(0, logicHistoryIndex + 1);
+      const next = [...base, logicBody].slice(-100);
+      setLogicHistoryIndex(next.length - 1);
+      return next;
+    });
+  }, [logicBody, logicHistoryIndex]);
 
   useEffect(() => {
     if (!enableSystemApis && scope === "system") {
@@ -262,7 +291,7 @@ export default function ApiManagerPage() {
   }, [buildDraftFromForm]);
 
   const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
-  const parseResponsePayload = useCallback(async (response: Response): Promise<Record<string, unknown>> => {
+  const parseResponsePayload = useCallback(async (response: Response): Promise<ParsedResponsePayload> => {
     const rawText = await response.text();
     if (!rawText) {
       return {};
@@ -270,16 +299,16 @@ export default function ApiManagerPage() {
     try {
       const parsed = JSON.parse(rawText);
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>;
+        return parsed as ParsedResponsePayload;
       }
-      return { data: parsed };
+      return { data: { value: parsed } };
     } catch {
       return { detail: rawText };
     }
   }, []);
 
   const saveApiToServer = useCallback(
-    async (payload: Record<string, unknown>, forceCreate = false) => {
+    async (payload: Record<string, unknown>, forceCreate = false): Promise<SaveApiResult> => {
       const isUpdating = selectedApi && selectedApi.api_id !== "applied-draft-temp" && !forceCreate;
       const target = isUpdating
         ? `${apiBaseUrl}/api-manager/apis/${selectedApi.api_id}`
@@ -293,9 +322,10 @@ export default function ApiManagerPage() {
         });
         const result = await parseResponsePayload(response);
         if (!response.ok) {
-          return { ok: false, error: result?.message ?? "Failed to save API definition", details: result };
+          return { ok: false, error: result.message ?? "Failed to save API definition", details: result };
         }
-        return { ok: true, data: result?.data?.api ?? null };
+        const resultData = (result.data ?? {}) as Record<string, unknown>;
+        return { ok: true, data: (resultData.api as Record<string, unknown> | undefined) ?? null };
       } catch (error) {
         return { ok: false, error: error instanceof Error ? error.message : "Network error", details: error };
       }
@@ -364,7 +394,8 @@ export default function ApiManagerPage() {
             throw new Error("Failed to load system APIs");
           }
           const payload = await parseResponsePayload(response);
-          const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
+          const payloadData = (payload.data ?? {}) as Record<string, unknown>;
+          const items: Record<string, unknown>[] = (payloadData.apis ?? []) as Record<string, unknown>[];
           const normalized: ApiDefinitionItem[] = items.map((item) => ({
             api_id: item.id as string,
             api_name: item.name as string,
@@ -425,7 +456,8 @@ export default function ApiManagerPage() {
           throw new Error("Failed to load API definitions");
         }
         const payload = await parseResponsePayload(response);
-        const items: Record<string, unknown>[] = (payload.data?.apis ?? []) as Record<string, unknown>[];
+        const payloadData = (payload.data ?? {}) as Record<string, unknown>;
+        const items: Record<string, unknown>[] = (payloadData.apis ?? []) as Record<string, unknown>[];
         const normalized: SystemApiItem[] = items.map((item) => ({
           api_id: item.id as string,
           api_name: item.name as string,
@@ -522,7 +554,8 @@ export default function ApiManagerPage() {
         throw new Error("Failed to load discovered endpoints");
       }
       const payload = await parseResponsePayload(response);
-      const items = (payload.data?.endpoints ?? []) as DiscoveredEndpoint[];
+      const payloadData = (payload.data ?? {}) as Record<string, unknown>;
+      const items = (payloadData.endpoints ?? []) as DiscoveredEndpoint[];
       setDiscoveredEndpoints(items);
       setDiscoveredFetchStatus("ok");
     } catch (error) {
@@ -545,7 +578,8 @@ export default function ApiManagerPage() {
         throw new Error("Failed to load execution logs");
       }
       const payload = await parseResponsePayload(response);
-      setExecLogs(payload.data?.logs ?? []);
+      const payloadData = (payload.data ?? {}) as Record<string, unknown>;
+      setExecLogs((payloadData.logs ?? []) as ExecLogEntry[]);
     } catch {
       // Silently fail - execution logs are optional
       setExecLogs([]);
@@ -718,6 +752,8 @@ export default function ApiManagerPage() {
     fetchExecLogs();
     const baseline = apiToDraft(selectedApi);
     setFormBaselineSnapshot(JSON.stringify(baseline));
+    setLogicHistory([selectedApi.logic_body ?? ""]);
+    setLogicHistoryIndex(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedApi, fetchExecLogs]);
 
@@ -802,12 +838,12 @@ export default function ApiManagerPage() {
     setLastSaveError(null);
     try {
       const result = await saveApiToServer(payload, forceCreate);
-      if (!result.ok) {
+      if ("error" in result) {
         setLastSaveError(result.error ?? "Failed to save API definition");
         setStatusMessage(result.error ?? "Save failed. 확인 로그를 참고하세요.");
         return;
       }
-      const saved = result.data as ApiDefinitionItem | null;
+      const saved = result.data as unknown as ApiDefinitionItem | null;
       setStatusMessage(forceCreate || !selectedApi ? "API created" : "API updated");
       setSaveTarget("server");
       if (saved?.api_id) {
@@ -869,10 +905,10 @@ export default function ApiManagerPage() {
       });
       const body = await parseResponsePayload(response);
       if (!response.ok) {
-        throw new Error(body?.message || body?.detail || "Dry-run failed");
+        throw new Error(body.message || body.detail || "Dry-run failed");
       }
-
-      setExecutionResult(body.data.result);
+      const bodyData = (body.data ?? {}) as Record<string, unknown>;
+      setExecutionResult((bodyData.result as ExecuteResult) ?? null);
       setShowLogicResult(true);
 
       setDraftNotes("실제 로직 테스트 성공! 데이터를 확인하세요.");
@@ -1030,7 +1066,50 @@ export default function ApiManagerPage() {
     setStatusMessage("새 API 정의를 작성하세요.");
     setFormBaselineSnapshot(JSON.stringify(buildDraftFromForm()));
     setAppliedDraftSnapshot(null);
+    setLogicHistory([""]);
+    setLogicHistoryIndex(0);
   }, [buildDraftFromForm]);
+
+  const handleLogicUndo = useCallback(() => {
+    if (logicHistoryIndex <= 0) {
+      editorUndoRedoRef.current?.trigger("toolbar", "undo", null);
+      return;
+    }
+    const nextIndex = logicHistoryIndex - 1;
+    const snapshot = logicHistory[nextIndex];
+    if (typeof snapshot === "string") {
+      setLogicHistoryIndex(nextIndex);
+      setLogicBody(snapshot);
+      return;
+    }
+    editorUndoRedoRef.current?.trigger("toolbar", "undo", null);
+  }, [logicHistory, logicHistoryIndex]);
+
+  const handleLogicRedo = useCallback(() => {
+    if (logicHistoryIndex >= logicHistory.length - 1) {
+      editorUndoRedoRef.current?.trigger("toolbar", "redo", null);
+      return;
+    }
+    const nextIndex = logicHistoryIndex + 1;
+    const snapshot = logicHistory[nextIndex];
+    if (typeof snapshot === "string") {
+      setLogicHistoryIndex(nextIndex);
+      setLogicBody(snapshot);
+      return;
+    }
+    editorUndoRedoRef.current?.trigger("toolbar", "redo", null);
+  }, [logicHistory, logicHistoryIndex]);
+
+  const bindingValidation = useMemo(() => {
+    const texts = [logicBody];
+    if (logicType === "http") {
+      texts.push(httpSpec.url || "");
+      texts.push(httpSpec.headers || "");
+      texts.push(httpSpec.params || "");
+      texts.push(httpSpec.body || "");
+    }
+    return validateTemplateBindingsInTexts(texts);
+  }, [httpSpec.body, httpSpec.headers, httpSpec.params, httpSpec.url, logicBody, logicType]);
 
   const handleImportDiscoveredEndpoint = useCallback((endpoint: DiscoveredEndpoint) => {
     const draft: ApiDraft = {
@@ -1135,12 +1214,13 @@ export default function ApiManagerPage() {
       if (!response.ok) {
         throw new Error(payload.detail ?? "Execution failed");
       }
+      const payloadData = (payload.data ?? {}) as Record<string, unknown>;
       if (selectedApi.logic_type === "workflow") {
-        setWorkflowResult(payload.data.result);
+        setWorkflowResult((payloadData.result as WorkflowExecuteResult) ?? null);
         setExecutionResult(null);
         setStatusMessage("Workflow executed");
       } else {
-        setExecutionResult(payload.data.result);
+        setExecutionResult((payloadData.result as ExecuteResult) ?? null);
         setShowJsonResult(false);
         setWorkflowResult(null);
         setStatusMessage("Execution succeeded");
@@ -1190,7 +1270,8 @@ export default function ApiManagerPage() {
         throw new Error(body.message ?? body.detail ?? "Dry-run failed");
       }
       const duration = Date.now() - start;
-      const result = body.data.result;
+      const bodyData = (body.data ?? {}) as Record<string, unknown>;
+      const result = ((bodyData.result as ExecuteResult | null) ?? {}) as ExecuteResult;
 
       setExecutionResult({
         ...result,
@@ -1551,7 +1632,7 @@ export default function ApiManagerPage() {
               Logic ({logicTypeLabels[logicType]})
             </p>
             {!isSystemScope ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {(["sql", "workflow", "python", "script", "http"] as LogicType[]).map((type) => (
                   <button
                     key={type}
@@ -1565,6 +1646,22 @@ export default function ApiManagerPage() {
                     {logicTypeLabels[type]}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={handleLogicUndo}
+                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-normal text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
+                  disabled={logicHistoryIndex <= 0}
+                >
+                  Undo
+                </button>
+                <button
+                  type="button"
+                  onClick={handleLogicRedo}
+                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-normal text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
+                  disabled={logicHistoryIndex >= logicHistory.length - 1}
+                >
+                  Redo
+                </button>
               </div>
             ) : null}
           </div>
@@ -1626,6 +1723,9 @@ export default function ApiManagerPage() {
                 language={getEditorLanguage(logicType, scriptLanguage)}
                 value={logicBody}
                 onChange={(value) => setLogicBody(value ?? "")}
+                onMount={(editor) => {
+                  editorUndoRedoRef.current = editor as unknown as { trigger: (source: string, id: string, payload: unknown) => void };
+                }}
                 theme="vs-dark"
                 options={{
                   minimap: { enabled: false },
@@ -1635,6 +1735,23 @@ export default function ApiManagerPage() {
               />
             )}
           </div>
+          {(bindingValidation.bindings.length > 0 || bindingValidation.errors.length > 0) && (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 px-3 py-2 text-[11px]">
+              <p className="text-slate-400">Binding scan</p>
+              {bindingValidation.bindings.length > 0 && (
+                <p className="mt-1 text-slate-300">
+                  Detected: {bindingValidation.bindings.map((binding) => `{{${binding}}}`).join(", ")}
+                </p>
+              )}
+              {bindingValidation.errors.length > 0 && (
+                <div className="mt-1 space-y-1 text-rose-300">
+                  {bindingValidation.errors.map((error) => (
+                    <p key={error}>{error}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
       <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800/60">
@@ -2175,11 +2292,6 @@ export default function ApiManagerPage() {
     </div>
   );
 
-  const COPILOT_INSTRUCTION =
-    "Return ONLY ONE JSON object. No markdown. type=api_draft. \n" +
-    "Example (SQL): {\"type\":\"api_draft\",\"draft\":{\"api_name\":\"...\",\"method\":\"GET\",\"endpoint\":\"/api-manager/...\",\"logic\":{\"type\":\"sql\",\"query\":\"SELECT 1\"},\"is_active\":true,\"runtime_policy\":{}}}\n" +
-    "Example (HTTP): {\"type\":\"api_draft\",\"draft\":{\"api_name\":\"...\",\"method\":\"GET\",\"endpoint\":\"/api-manager/...\",\"logic\":{\"type\":\"http\",\"spec\":{\"method\":\"GET\",\"url\":\"https://...\"}},\"is_active\":true,\"runtime_policy\":{}}}";
-
   const processAssistantDraft = useCallback(
     (messageText: string, isComplete: boolean) => {
       setLastAssistantRaw(messageText);
@@ -2189,6 +2301,9 @@ export default function ApiManagerPage() {
       setLastParseError(result.error ?? null);
 
       if (result.ok && result.draft) {
+        if (isComplete) {
+          recordCopilotMetric("api-manager", "parse_success");
+        }
         setDraftApi(result.draft);
         setDraftStatus("draft_ready");
         setDraftNotes(result.notes || "AI 드래프트가 준비되었습니다.");
@@ -2201,6 +2316,7 @@ export default function ApiManagerPage() {
         // While streaming, don't show "failed to extract" as an error immediately
         // Just keep the status as "idle" or a special "typing" status
         if (isComplete) {
+          recordCopilotMetric("api-manager", "parse_failure", result.error ?? null);
           setDraftApi(null);
           setPreviewJson(null);
           setPreviewSummary(null);
@@ -2232,10 +2348,34 @@ export default function ApiManagerPage() {
   );
 
   const showDebug = process.env.NODE_ENV !== "production";
+  const copilotBuilderContext = useMemo(
+    () => ({
+      selected_api: selectedApi
+        ? {
+            api_id: selectedApi.api_id,
+            api_name: selectedApi.api_name,
+            method: selectedApi.method,
+            endpoint: selectedApi.endpoint,
+            logic_type: selectedApi.logic_type,
+          }
+        : null,
+      draft_status: draftStatus,
+      active_tab: activeTab,
+      form_snapshot: {
+        api_name: definitionDraft.api_name,
+        method: definitionDraft.method,
+        endpoint: definitionDraft.endpoint,
+        logic_type: logicType,
+      },
+    }),
+    [activeTab, definitionDraft.api_name, definitionDraft.endpoint, definitionDraft.method, draftStatus, logicType, selectedApi]
+  );
 
   const rightPane = (
     <DraftAssistantPanel
-      instructionPrompt={COPILOT_INSTRUCTION}
+      instructionPrompt={API_MANAGER_COPILOT_INSTRUCTION}
+      scenarioFunctions={API_MANAGER_SCENARIO_FUNCTIONS}
+      builderContext={copilotBuilderContext}
       onAssistantMessage={handleAssistantMessage}
       onAssistantMessageComplete={handleAssistantMessageComplete}
       onUserMessage={() => {

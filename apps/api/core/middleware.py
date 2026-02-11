@@ -7,7 +7,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from apps.api.core.logging import clear_request_context, set_request_context, get_logger, get_request_context
+from apps.api.core.logging import (
+    clear_request_context,
+    get_logger,
+    get_request_context,
+    set_request_context,
+)
 
 logger = get_logger(__name__)
 

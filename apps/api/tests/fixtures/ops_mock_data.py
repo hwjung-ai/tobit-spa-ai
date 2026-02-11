@@ -9,12 +9,13 @@ never in production.
 """
 
 from datetime import datetime, timedelta
+
 from app.modules.ops.schemas import (
     AnswerBlock,
+    GraphBlock,
     MarkdownBlock,
     TableBlock,
     TimeSeriesBlock,
-    GraphBlock,
 )
 
 

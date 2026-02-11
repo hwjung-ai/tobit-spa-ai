@@ -8,7 +8,6 @@ custom exception handlers for FastAPI integration.
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse

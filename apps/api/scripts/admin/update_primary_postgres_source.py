@@ -10,14 +10,17 @@ sys.path.insert(0, '.')
 
 # Load .env file
 from dotenv import load_dotenv
+
 env_path = Path(__file__).resolve().parents[2] / '.env'
 load_dotenv(env_path)
 
+from uuid import uuid4
+
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from core.encryption import get_encryption_manager
-from app.modules.asset_registry.models import TbAssetRegistry
 from sqlmodel import select
-from uuid import uuid4
+
 
 def encrypt_password(password: str) -> str:
     """Encrypt password using EncryptionManager"""
@@ -50,7 +53,7 @@ def main():
     # Encrypt password
     try:
         encrypted_password = encrypt_password(pg_password)
-        print(f"Password encrypted successfully")
+        print("Password encrypted successfully")
     except Exception as e:
         print(f"ERROR: Failed to encrypt password: {e}")
         sys.exit(1)

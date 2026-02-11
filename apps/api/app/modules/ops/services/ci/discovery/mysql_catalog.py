@@ -3,6 +3,10 @@ MySQL Catalog - MySQL schema introspection implementation.
 
 This module implements schema discovery for MySQL/MariaDB databases,
 extracting table, column, and constraint metadata.
+
+Status:
+- Sample/reference implementation in this project.
+- Not currently used by default production flow.
 """
 
 from .base_catalog import BaseCatalog
@@ -14,7 +18,7 @@ except ImportError:
 
 
 class MySQLCatalog(BaseCatalog):
-    """MySQL/MariaDB database schema introspection"""
+    """MySQL/MariaDB schema introspection (sample/reference implementation)."""
 
     def get_database_type(self) -> str:
         return "mysql"
@@ -217,7 +221,7 @@ class MySQLCatalog(BaseCatalog):
         database = schema_name or self.source_asset["connection"]["database"]
 
         try:
-            query = f"SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s"
+            query = "SELECT TABLE_ROWS FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s"
             async with self.connection.cursor() as cursor:
                 await cursor.execute(query, (database, table_name))
                 row = await cursor.fetchone()

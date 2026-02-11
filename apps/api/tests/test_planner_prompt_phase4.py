@@ -1,28 +1,18 @@
 """Unit tests for Phase 4: Planner Prompt Enhancement."""
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from pydantic import BaseModel
-from app.modules.ops.services.ci.planner.planner_llm import (
-    plan_llm_query,
+
+import pytest
+from app.modules.asset_registry.loader import load_catalog_for_llm
+from app.modules.ops.services.ci.planner.plan_schema import (
+    ExecutionStrategy,
 )
 from app.modules.ops.services.ci.planner.planner_llm import (
     _build_enhanced_planner_prompt,
     _validate_plan,
+    plan_llm_query,
 )
-from app.modules.ops.services.ci.planner.plan_schema import (
-    Plan,
-    PrimarySpec,
-    SecondarySpec,
-    AggregateSpec,
-    GraphSpec,
-    MetricSpec,
-    ToolDependency,
-    ExecutionStrategy,
-)
-from app.modules.asset_registry.loader import load_catalog_for_llm
-from pydantic import BaseModel
 
 
 class TestBuildEnhancedPlannerPrompt:
@@ -276,7 +266,6 @@ class TestIntegration:
         # Mock dependencies
         import app.modules.ops.services.ci.tools.base
         from app.llm.client import get_llm_client
-        from app.modules.asset_registry.loader import load_catalog_for_llm
 
         original_get_tool_registry = app.modules.ops.services.ci.tools.base.get_tool_registry
         original_get_llm_client = get_llm_client

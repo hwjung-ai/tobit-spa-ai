@@ -8,23 +8,15 @@ rule execution while maintaining backward compatibility.
 
 import logging
 from typing import Any, Dict, Optional, Tuple
-from uuid import UUID
 
 from fastapi import HTTPException
 
 from .bytewax_engine import (
     BytewaxCEPEngine,
     CEPRuleDefinition,
-    FilterProcessor,
-    AggregationProcessor,
-    WindowProcessor,
 )
 from .executor import (
     evaluate_trigger,
-    _evaluate_composite_conditions,
-    _apply_aggregation,
-    evaluate_aggregation,
-    get_path_value,
 )
 
 logger = logging.getLogger(__name__)

@@ -9,10 +9,8 @@ Tests cover:
 - Error responses and edge cases
 """
 
+
 import pytest
-import json
-from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
 
 # Note: These tests assume FastAPI test setup with TestClient
 # Actual test execution requires proper app initialization
@@ -91,7 +89,7 @@ class TestQueryEndpoint:
 
 
 class TestCiAskEndpoint:
-    """Integration tests for /ops/ci/ask endpoint."""
+    """Integration tests for /ops/ask endpoint."""
 
     def test_ci_ask_with_valid_request(self, client):
         """Test /ci/ask with valid request."""
@@ -99,7 +97,7 @@ class TestCiAskEndpoint:
             "question": "Why is srv-erp-01 slow?"
         }
         headers = {"X-Tenant-Id": "t1"}
-        response = client.post("/ops/ci/ask", json=payload, headers=headers)
+        response = client.post("/ops/ask", json=payload, headers=headers)
         assert response.status_code in [200, 500]  # May fail due to missing data
 
     def test_ci_ask_missing_tenant_id(self, client):
@@ -107,7 +105,7 @@ class TestCiAskEndpoint:
         payload = {
             "question": "Why is srv-erp-01 slow?"
         }
-        response = client.post("/ops/ci/ask", json=payload)
+        response = client.post("/ops/ask", json=payload)
         assert response.status_code == 400
 
     def test_ci_ask_with_rerun_context(self, client):
@@ -119,7 +117,7 @@ class TestCiAskEndpoint:
             }
         }
         headers = {"X-Tenant-Id": "t1"}
-        response = client.post("/ops/ci/ask", json=payload, headers=headers)
+        response = client.post("/ops/ask", json=payload, headers=headers)
         assert response.status_code in [200, 500]
 
     def test_ci_ask_response_structure(self, client):
@@ -128,7 +126,7 @@ class TestCiAskEndpoint:
             "question": "Is system healthy?"
         }
         headers = {"X-Tenant-Id": "t1"}
-        response = client.post("/ops/ci/ask", json=payload, headers=headers)
+        response = client.post("/ops/ask", json=payload, headers=headers)
 
         if response.status_code == 200:
             data = response.json()
@@ -144,7 +142,7 @@ class TestCiAskEndpoint:
             }
         }
         headers = {"X-Tenant-Id": "t1"}
-        response = client.post("/ops/ci/ask", json=payload, headers=headers)
+        response = client.post("/ops/ask", json=payload, headers=headers)
         assert response.status_code in [200, 400, 500]
 
     def test_ci_ask_complex_question(self, client):
@@ -153,7 +151,7 @@ class TestCiAskEndpoint:
             "question": "Compare CPU usage between srv-erp-01 and srv-erp-02 over the last week and identify anomalies"
         }
         headers = {"X-Tenant-Id": "t1"}
-        response = client.post("/ops/ci/ask", json=payload, headers=headers)
+        response = client.post("/ops/ask", json=payload, headers=headers)
         # Should handle complex questions (may timeout or fail gracefully)
         assert response.status_code in [200, 408, 500]
 

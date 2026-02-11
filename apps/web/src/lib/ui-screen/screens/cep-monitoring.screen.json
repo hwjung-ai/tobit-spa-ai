@@ -2,30 +2,58 @@
   "id": "cep_monitoring",
   "screen_id": "cep_monitoring",
   "name": "CEP Monitoring",
-  "version": "2.0",
+  "version": "4.0",
   "description": "Complex Event Processing monitoring dashboard with rules, events, channels, and error analysis",
   "layout": {
-    "type": "dashboard",
+    "type": "stack",
     "direction": "vertical",
-    "spacing": 16
+    "spacing": 6
   },
   "components": [
     {
       "id": "cep_header",
       "type": "row",
-      "label": "Header Row",
+      "label": "Header",
       "props": {
         "gap": 4,
+        "align": "center",
         "components": [
           {
-            "id": "cep_title",
-            "type": "text",
-            "label": "Title",
+            "id": "cep_title_group",
+            "type": "column",
             "props": {
-              "content": "CEP Monitoring Dashboard",
-              "variant": "heading",
-              "fontSize": "lg",
-              "fontWeight": "semibold"
+              "gap": 1,
+              "components": [
+                {
+                  "id": "cep_title",
+                  "type": "text",
+                  "props": {
+                    "content": "CEP Monitoring Dashboard",
+                    "variant": "heading",
+                    "fontSize": "2xl",
+                    "fontWeight": "semibold"
+                  }
+                },
+                {
+                  "id": "cep_subtitle",
+                  "type": "text",
+                  "props": {
+                    "content": "Real-time monitoring of rules, channels, and event processing health",
+                    "variant": "muted",
+                    "fontSize": "sm"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "cep_live_badge",
+            "type": "text",
+            "props": {
+              "content": "LIVE",
+              "fontSize": "xs",
+              "fontWeight": "bold",
+              "color": "#10b981"
             }
           },
           {
@@ -33,13 +61,11 @@
             "type": "button",
             "label": "Refresh",
             "props": {
-              "label": "Refresh Now",
-              "variant": "default",
+              "label": "Refresh",
+              "variant": "outline",
               "auto_refresh": {
                 "enabled": true,
-                "interval_ms": 30000,
-                "max_failures": 3,
-                "backoff_ms": 5000
+                "interval_ms": 30000
               }
             },
             "actions": [
@@ -47,11 +73,9 @@
                 "id": "action_refresh_cep",
                 "handler": "fetch_cep_stats",
                 "label": "Refresh CEP Stats",
-                "payload_template": { "period": "24h" },
-                "continue_on_error": false,
-                "stop_on_error": true,
-                "retry_count": 1,
-                "retry_delay_ms": 1000
+                "payload_template": {
+                  "period": "24h"
+                }
               }
             ]
           }
@@ -59,20 +83,26 @@
       }
     },
     {
-      "id": "cep_kpi_row",
+      "id": "cep_kpi_grid",
       "type": "row",
-      "label": "KPI Row",
+      "label": "KPI Grid",
       "props": {
-        "gap": 3,
+        "gap": 4,
         "components": [
           {
             "id": "cep_kpi_rules",
             "type": "keyvalue",
-            "label": "Rules",
+            "label": "Rules Summary",
             "props": {
               "items": [
-                { "key": "Total Rules", "value": "{{state.total_rules}}" },
-                { "key": "Active", "value": "{{state.active_rules}}" }
+                {
+                  "key": "Total Rules",
+                  "value": "{{state.total_rules}}"
+                },
+                {
+                  "key": "Active Rules",
+                  "value": "{{state.active_rules}}"
+                }
               ]
             }
           },
@@ -82,8 +112,14 @@
             "label": "Executions",
             "props": {
               "items": [
-                { "key": "Today", "value": "{{state.today_execution_count}}" },
-                { "key": "Last 24h", "value": "{{state.last_24h_execution_count}}" }
+                {
+                  "key": "Today",
+                  "value": "{{state.today_execution_count}}"
+                },
+                {
+                  "key": "Last 24h",
+                  "value": "{{state.last_24h_execution_count}}"
+                }
               ]
             }
           },
@@ -93,73 +129,30 @@
             "label": "Performance",
             "props": {
               "items": [
-                { "key": "Avg Duration", "value": "{{state.today_avg_duration_ms}}ms" },
-                { "key": "Error Rate", "value": "{{state.today_error_rate}}" }
+                {
+                  "key": "Avg Duration",
+                  "value": "{{state.today_avg_duration_ms}}ms"
+                },
+                {
+                  "key": "Error Rate",
+                  "value": "{{state.today_error_rate}}"
+                }
               ]
             }
           },
           {
             "id": "cep_kpi_alerts",
             "type": "keyvalue",
-            "label": "Alerts",
+            "label": "Alerts (24h)",
             "props": {
               "items": [
-                { "key": "Today Errors", "value": "{{state.today_error_count}}" },
-                { "key": "Total Errors", "value": "{{state.total_errors}}" }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "id": "cep_rules_table",
-      "type": "table",
-      "label": "CEP Rules Performance",
-      "props": {
-        "rows": "{{state.cep_rules}}",
-        "columns": [
-          { "field": "rule_name", "header": "Rule Name", "sortable": true },
-          { "field": "trigger_type", "header": "Trigger Type", "sortable": true },
-          { "field": "is_active", "header": "Active" },
-          { "field": "execution_count", "header": "Executions", "sortable": true },
-          { "field": "error_rate", "header": "Error Rate", "sortable": true },
-          { "field": "avg_duration_ms", "header": "Avg Duration (ms)", "sortable": true }
-        ],
-        "sortable": true,
-        "page_size": 10
-      }
-    },
-    {
-      "id": "cep_channels_row",
-      "type": "row",
-      "label": "Channels Status",
-      "props": {
-        "gap": 3,
-        "components": [
-          {
-            "id": "cep_channels_table",
-            "type": "table",
-            "label": "Notification Channels",
-            "props": {
-              "rows": "{{state.channels}}",
-              "columns": [
-                { "field": "display_name", "header": "Channel" },
-                { "field": "active", "header": "Active" },
-                { "field": "inactive", "header": "Inactive" },
-                { "field": "total_sent", "header": "Sent (24h)" },
-                { "field": "total_failed", "header": "Failed" },
-                { "field": "failure_rate", "header": "Failure Rate" }
-              ],
-              "sortable": true,
-              "page_size": 10,
-              "conditional_styles": [
                 {
-                  "field": "failure_rate",
-                  "operator": "gt",
-                  "value": 0.1,
-                  "color": "#ffffff",
-                  "bg_color": "#ef4444"
+                  "key": "Today Errors",
+                  "value": "{{state.today_error_count}}"
+                },
+                {
+                  "key": "Critical",
+                  "value": "{{state.critical_alerts_count}}"
                 }
               ]
             }
@@ -168,41 +161,204 @@
       }
     },
     {
-      "id": "cep_events_table",
-      "type": "table",
-      "label": "Recent CEP Events (Errors)",
+      "id": "cep_middle_section",
+      "type": "column",
+      "label": "Timeline Section",
       "props": {
-        "rows": "{{state.cep_events}}",
-        "columns": [
-          { "field": "triggered_at", "header": "Time", "sortable": true },
-          { "field": "severity", "header": "Severity" },
-          { "field": "rule_name", "header": "Rule" },
-          { "field": "summary", "header": "Summary" },
-          { "field": "status", "header": "Status" },
-          { "field": "ack", "header": "Ack" }
-        ],
-        "sortable": true,
-        "page_size": 10,
-        "conditional_styles": [
-          { "field": "severity", "operator": "eq", "value": "critical", "color": "#ffffff", "bg_color": "#ef4444" },
-          { "field": "severity", "operator": "eq", "value": "high", "color": "#ffffff", "bg_color": "#f97316" },
-          { "field": "severity", "operator": "eq", "value": "medium", "color": "#1f2937", "bg_color": "#f59e0b" },
-          { "field": "severity", "operator": "eq", "value": "info", "color": "#1f2937", "bg_color": "#3b82f6" }
+        "gap": 3,
+        "components": [
+          {
+            "id": "cep_chart_title",
+            "type": "text",
+            "props": {
+              "content": "Execution & Error Timeline",
+              "fontSize": "lg",
+              "fontWeight": "semibold"
+            }
+          },
+          {
+            "id": "cep_error_timeline_chart",
+            "type": "chart",
+            "props": {
+              "chart_type": "area",
+              "data": "{{state.error_timeline}}",
+              "x_key": "timestamp",
+              "series": [
+                {
+                  "name": "Errors",
+                  "data_key": "error_count",
+                  "color": "#f87171"
+                },
+                {
+                  "name": "Executions",
+                  "data_key": "execution_count",
+                  "color": "#38bdf8"
+                }
+              ],
+              "y_min": 0,
+              "height": 250
+            }
+          }
         ]
       }
     },
     {
-      "id": "cep_error_timeline_chart",
-      "type": "chart",
-      "label": "Error Timeline",
+      "id": "cep_bottom_grid",
+      "type": "row",
+      "label": "Bottom Grid",
       "props": {
-        "chart_type": "line",
-        "data": "{{state.error_timeline}}",
-        "x_key": "timestamp",
-        "series": [
-          { "name": "Errors", "data_key": "error_count", "color": "#ef4444" }
-        ],
-        "y_min": 0
+        "gap": 4,
+        "components": [
+          {
+            "id": "cep_rules_col",
+            "type": "column",
+            "label": "Rules Performance",
+            "props": {
+              "gap": 3,
+              "components": [
+                {
+                  "id": "cep_rules_title",
+                  "type": "text",
+                  "props": {
+                    "content": "Rule Performance",
+                    "fontSize": "lg",
+                    "fontWeight": "semibold"
+                  }
+                },
+                {
+                  "id": "cep_rules_table",
+                  "type": "table",
+                  "props": {
+                    "rows": "{{state.cep_rules}}",
+                    "columns": [
+                      {
+                        "field": "rule_name",
+                        "header": "Rule Name"
+                      },
+                      {
+                        "field": "execution_count",
+                        "header": "Count"
+                      },
+                      {
+                        "field": "error_rate",
+                        "header": "Error %"
+                      }
+                    ],
+                    "page_size": 5
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "id": "cep_channels_col",
+            "type": "column",
+            "label": "Channels",
+            "props": {
+              "gap": 3,
+              "components": [
+                {
+                  "id": "cep_channels_title",
+                  "type": "text",
+                  "props": {
+                    "content": "Notification Channels",
+                    "fontSize": "lg",
+                    "fontWeight": "semibold"
+                  }
+                },
+                {
+                  "id": "cep_channels_table",
+                  "type": "table",
+                  "props": {
+                    "rows": "{{state.channels}}",
+                    "columns": [
+                      {
+                        "field": "display_name",
+                        "header": "Channel"
+                      },
+                      {
+                        "field": "total_sent",
+                        "header": "Sent"
+                      },
+                      {
+                        "field": "failure_rate",
+                        "header": "Fail %"
+                      }
+                    ],
+                    "page_size": 5,
+                    "conditional_styles": [
+                      {
+                        "field": "failure_rate",
+                        "operator": "gt",
+                        "value": 0.1,
+                        "color": "#f87171"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "cep_events_section",
+      "type": "column",
+      "label": "Recent Events",
+      "props": {
+        "gap": 3,
+        "components": [
+          {
+            "id": "cep_events_title",
+            "type": "text",
+            "props": {
+              "content": "Recent CEP Events (Errors)",
+              "fontSize": "lg",
+              "fontWeight": "semibold"
+            }
+          },
+          {
+            "id": "cep_events_table",
+            "type": "table",
+            "props": {
+              "rows": "{{state.cep_events}}",
+              "columns": [
+                {
+                  "field": "triggered_at",
+                  "header": "Time"
+                },
+                {
+                  "field": "severity",
+                  "header": "Severity"
+                },
+                {
+                  "field": "rule_name",
+                  "header": "Rule"
+                },
+                {
+                  "field": "summary",
+                  "header": "Summary"
+                }
+              ],
+              "page_size": 10,
+              "conditional_styles": [
+                {
+                  "field": "severity",
+                  "operator": "eq",
+                  "value": "critical",
+                  "color": "#f87171"
+                },
+                {
+                  "field": "severity",
+                  "operator": "eq",
+                  "value": "high",
+                  "color": "#fbbf24"
+                }
+              ]
+            }
+          }
+        ]
       }
     }
   ],
@@ -217,6 +373,7 @@
       "last_24h_execution_count": 0,
       "no_data_ratio": 0,
       "total_errors": 0,
+      "critical_alerts_count": 0,
       "cep_rules": [],
       "cep_events": [],
       "channels": [],
@@ -225,21 +382,63 @@
       "recent_errors": []
     },
     "schema": {
-      "total_rules": { "type": "number" },
-      "active_rules": { "type": "number" },
-      "today_execution_count": { "type": "number" },
-      "today_error_count": { "type": "number" },
-      "today_error_rate": { "type": "number" },
-      "today_avg_duration_ms": { "type": "number" },
-      "last_24h_execution_count": { "type": "number" },
-      "no_data_ratio": { "type": "number" },
-      "total_errors": { "type": "number" },
-      "cep_rules": { "type": "array" },
-      "cep_events": { "type": "array" },
-      "channels": { "type": "array" },
-      "error_timeline": { "type": "array" },
-      "error_distribution": { "type": "object" },
-      "recent_errors": { "type": "array" }
+      "total_rules": {
+        "type": "number"
+      },
+      "active_rules": {
+        "type": "number"
+      },
+      "today_execution_count": {
+        "type": "number"
+      },
+      "today_error_count": {
+        "type": "number"
+      },
+      "today_error_rate": {
+        "type": "number"
+      },
+      "today_avg_duration_ms": {
+        "type": "number"
+      },
+      "last_24h_execution_count": {
+        "type": "number"
+      },
+      "no_data_ratio": {
+        "type": "number"
+      },
+      "total_errors": {
+        "type": "number"
+      },
+      "critical_alerts_count": {
+        "type": "number"
+      },
+      "cep_rules": {
+        "type": "array"
+      },
+      "cep_events": {
+        "type": "array"
+      },
+      "channels": {
+        "type": "array"
+      },
+      "error_timeline": {
+        "type": "array"
+      },
+      "error_distribution": {
+        "type": "object"
+      },
+      "recent_errors": {
+        "type": "array"
+      }
+    }
+  },
+  "metadata": {
+    "hide_debug_panels": true,
+    "author": "Antigravity",
+    "created_at": "2026-02-10",
+    "tags": {
+      "category": "cep",
+      "type": "monitoring"
     }
   },
   "actions": [
@@ -247,18 +446,9 @@
       "id": "fetch_cep_stats",
       "label": "Fetch CEP Stats",
       "handler": "fetch_cep_stats",
-      "payload_template": { "period": "24h" }
+      "payload_template": {
+        "period": "24h"
+      }
     }
-  ],
-  "bindings": null,
-  "metadata": {
-    "author": "System",
-    "created_at": "2026-02-08",
-    "notes": "CEP monitoring dashboard using built-in handler fetch_cep_stats. Loads rules performance, channels status, error timeline, and recent events.",
-    "tags": {
-      "category": "cep",
-      "type": "monitoring",
-      "auto_refresh": "true"
-    }
-  }
+  ]
 }

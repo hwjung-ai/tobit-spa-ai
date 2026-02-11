@@ -73,7 +73,39 @@ export default function VisualEditor() {
         return;
       }
       // Arrow keys for reordering (with Ctrl/Cmd)
-      if (isMod && editorState.selectedComponentId) {
+      if (isMod && editorState.selectedComponentId && editorState.screen) {
+        const isGrid = editorState.screen.layout.type === "dashboard" || editorState.screen.layout.type === "grid";
+
+        if (isGrid) {
+          const comp = editorState.screen.components.find(c => c.id === editorState.selectedComponentId);
+          if (comp) {
+            const layout = (comp.props?.layout as { x: number, y: number, w: number, h: number }) || { x: 0, y: 0, w: 4, h: 2 };
+            const newLayout = { ...layout };
+
+            // Movement (Ctrl+Arrow)
+            if (!e.shiftKey) {
+              if (e.key === "ArrowUp") newLayout.y = Math.max(0, layout.y - 1);
+              if (e.key === "ArrowDown") newLayout.y = layout.y + 1;
+              if (e.key === "ArrowLeft") newLayout.x = Math.max(0, layout.x - 1);
+              if (e.key === "ArrowRight") newLayout.x = Math.min(11, layout.x + 1);
+            }
+
+            // Resize (Ctrl+Shift+Arrow)
+            if (e.shiftKey) {
+              if (e.key === "ArrowRight") newLayout.w = Math.min(12 - layout.x, layout.w + 1);
+              if (e.key === "ArrowLeft") newLayout.w = Math.max(1, layout.w - 1);
+              if (e.key === "ArrowDown") newLayout.h = layout.h + 1;
+              if (e.key === "ArrowUp") newLayout.h = Math.max(1, layout.h - 1);
+            }
+
+            if (JSON.stringify(newLayout) !== JSON.stringify(layout)) {
+              e.preventDefault();
+              editorState.updateComponentProps(comp.id, { layout: newLayout });
+            }
+            return;
+          }
+        }
+
         if (e.key === "ArrowUp") {
           e.preventDefault();
           editorState.moveComponent(editorState.selectedComponentId, "up");

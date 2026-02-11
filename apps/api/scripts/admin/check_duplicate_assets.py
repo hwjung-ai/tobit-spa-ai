@@ -8,10 +8,12 @@ from pathlib import Path
 # Add apps/api to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from core.db import get_session_context
-from app.modules.asset_registry.models import TbAssetRegistry
-from sqlmodel import select
 from collections import Counter
+
+from app.modules.asset_registry.models import TbAssetRegistry
+from core.db import get_session_context
+from sqlmodel import select
+
 
 def main():
     with get_session_context() as session:

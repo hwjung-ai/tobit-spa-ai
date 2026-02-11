@@ -7,20 +7,16 @@ Tests cover:
 - Tool Asset configuration
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, MagicMock
-from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, Mock
 
+import pytest
 from app.modules.document_processor.services.search_service import (
     DocumentSearchService,
     SearchFilters,
     SearchResult,
 )
-from app.modules.document_processor.router import (
-    search_documents,
-    SearchRequest,
-)
+from fastapi.testclient import TestClient
 
 
 class TestDocumentSearchService:

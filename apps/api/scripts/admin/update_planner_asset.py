@@ -11,11 +11,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 import yaml
+from app.modules.asset_registry.crud import create_asset, publish_asset, update_asset
+from app.modules.asset_registry.models import TbAssetRegistry
 from core.db import get_session_context
 from sqlmodel import select
-from app.modules.asset_registry.models import TbAssetRegistry
-from app.modules.asset_registry.crud import create_asset, update_asset, publish_asset
-
 
 PLANNER_FILE = ROOT / "resources" / "prompts" / "ci" / "planner.yaml"
 
@@ -95,7 +94,7 @@ def update_planner_asset() -> None:
             ).first()
 
             if draft_asset:
-                print(f"Updating existing draft version...")
+                print("Updating existing draft version...")
                 update_asset(
                     session=session,
                     asset=draft_asset,
@@ -109,7 +108,7 @@ def update_planner_asset() -> None:
                 print(f"✓ Updated draft asset: {draft_asset.asset_id}")
             else:
                 # Create new draft version
-                print(f"Creating new draft version...")
+                print("Creating new draft version...")
                 new_asset = create_asset(
                     session=session,
                     name="ci_planner_output_parser",

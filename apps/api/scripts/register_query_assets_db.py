@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
 from sqlmodel import Session, select
 
 # Find the API root and add to path
@@ -160,7 +159,7 @@ def import_queries(actor: str = "system") -> None:
 
             # Check if already exists
             if _published_exists(session, "query", name=name, scope=scope):
-                print(f"  ℹ️  Already exists, skipping")
+                print("  ℹ️  Already exists, skipping")
                 skipped_count += 1
                 continue
 
@@ -201,7 +200,7 @@ def import_queries(actor: str = "system") -> None:
         session.commit()
 
         print(f"\n{'='*60}")
-        print(f"Summary:")
+        print("Summary:")
         print(f"  Registered: {registered_count}")
         print(f"  Skipped: {skipped_count}")
         print(f"  Errors: {error_count}")

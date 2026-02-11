@@ -8,7 +8,7 @@ import time
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from time import perf_counter
 from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence
 
@@ -19,7 +19,6 @@ from app.modules.inspector.asset_context import (
     begin_stage_asset_tracking,
     end_stage_asset_tracking,
     get_stage_assets,
-    get_tracked_assets,
 )
 from app.modules.inspector.span_tracker import end_span, start_span
 from app.modules.ops.schemas import (
@@ -60,6 +59,7 @@ from app.modules.ops.services.ci.planner.planner_llm import (
     ISO_DATE_PATTERN,
     _sanitize_korean_particles,
 )
+from app.modules.ops.services.ci.services.ci_cache import CICache
 from app.modules.ops.services.ci.tools import (
     ToolContext,
     ToolType,
@@ -67,7 +67,6 @@ from app.modules.ops.services.ci.tools import (
 )
 from app.modules.ops.services.ci.tools.cache import ToolResultCache
 from app.modules.ops.services.ci.tools.observability import ExecutionTracer
-from app.modules.ops.services.ci.services.ci_cache import CICache
 
 # NOTE: Built-in tools (ci, graph, metric, history, cep) have been removed for
 # generic orchestration. All tool functionality should be implemented as Tool Assets
@@ -141,7 +140,7 @@ MODULE_LOGGER = get_logger(__name__)
 MODULE_LOGGER.info("ci.runner.module_start", extra=_runner_context())
 
 
-class CIOrchestratorRunner:
+class OpsOrchestratorRunner:
     def __init__(
         self,
         plan: Plan,
@@ -1396,7 +1395,7 @@ class CIOrchestratorRunner:
         ci_ids_tuple = tuple(ci_ids or ())
 
         # Convert time_range to start_time and end_time
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         end_time = datetime.utcnow()
         if time_range == "last_24h":
             start_time = end_time - timedelta(hours=24)
@@ -1619,8 +1618,9 @@ class CIOrchestratorRunner:
             Dict with blocks/answer if Query Asset matched and executed, None otherwise
         """
         from core.db import get_session_context
-        from sqlmodel import select
         from sqlalchemy import text
+        from sqlmodel import select
+
         from app.modules.asset_registry.models import TbAssetRegistry
 
         question = self.question.lower() if self.question else ""
@@ -5360,7 +5360,7 @@ class CIOrchestratorRunner:
         ci_ids_list = list(ci_ids) if ci_ids else []
 
         # Convert time_range to start_time and end_time
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         end_time = datetime.utcnow()
         if time_range == "last_24h":
             start_time = end_time - timedelta(hours=24)
@@ -5770,7 +5770,10 @@ class CIOrchestratorRunner:
                 # This replaces Query Asset fallback and legacy _run_async()
                 # Tools are executed first, Query Assets are used only as fallback
                 try:
-                    from app.modules.ops.services.ci.orchestrator.stage_executor import StageExecutor, ExecutionContext
+                    from app.modules.ops.services.ci.orchestrator.stage_executor import (
+                        ExecutionContext,
+                        StageExecutor,
+                    )
 
                     # Create execution context
                     exec_context = ExecutionContext(
@@ -6116,3 +6119,5 @@ class CIOrchestratorRunner:
             "summary": summary,
             "presented_at": time.time(),
         }
+
+

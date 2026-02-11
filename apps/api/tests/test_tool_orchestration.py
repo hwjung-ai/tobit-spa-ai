@@ -7,21 +7,26 @@ Tests for:
 - ToolOrchestrator: Integration tests
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import asyncio
 
+import pytest
 from app.modules.ops.services.ci.orchestrator.tool_orchestration import (
-    DependencyAnalyzer,
     DataFlowMapper,
+    DependencyAnalyzer,
     ExecutionPlanner,
-    ToolOrchestrator,
     IntermediateLLMDecider,
+    ToolOrchestrator,
 )
 from app.modules.ops.services.ci.planner.plan_schema import (
-    Plan, PrimarySpec, SecondarySpec, AggregateSpec, GraphSpec, MetricSpec,
-    ToolDependency, ExecutionStrategy, FilterSpec, GraphLimits, View,
-    Intent, PlanMode, OutputSpec, HistorySpec, ListSpec, AutoSpec,
+    AggregateSpec,
+    ExecutionStrategy,
+    FilterSpec,
+    GraphSpec,
+    Intent,
+    Plan,
+    PrimarySpec,
+    SecondarySpec,
+    ToolDependency,
 )
 from app.modules.ops.services.ci.tools.base import ToolContext
 

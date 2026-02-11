@@ -7,7 +7,6 @@ Provides endpoints for viewing and analyzing LLM API calls.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 from core.auth import get_current_user
@@ -19,14 +18,13 @@ from sqlmodel import Session
 from app.modules.auth.models import TbUser
 
 from .crud import (
-    list_llm_call_logs,
+    get_llm_analytics,
     get_llm_call_log,
     get_llm_call_logs_by_trace,
-    get_llm_analytics,
     get_llm_call_pairs,
+    list_llm_call_logs,
     to_read_model,
 )
-from .models import LlmCallLogRead, LlmCallAnalytics
 
 router = APIRouter(prefix="/llm-logs", tags=["llm-logs"])
 

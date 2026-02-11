@@ -8,12 +8,10 @@ Tests cover:
 - Concurrent request handling
 """
 
-import pytest
-import time
-import psutil
 import os
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+import time
+
+import psutil
 
 
 class TestResponseTimeMeasurements:
@@ -212,8 +210,9 @@ class TestConcurrentOperations:
 
     def test_action_registry_concurrent_lookups(self):
         """Test concurrent action lookups."""
-        from app.modules.ops.services.action_registry import ActionRegistry
         import threading
+
+        from app.modules.ops.services.action_registry import ActionRegistry
 
         registry = ActionRegistry()
 
@@ -241,8 +240,9 @@ class TestConcurrentOperations:
 
     def test_binding_engine_concurrent_renders(self):
         """Test concurrent template renders."""
-        from app.modules.ops.services.binding_engine import BindingEngine
         import threading
+
+        from app.modules.ops.services.binding_engine import BindingEngine
 
         template = {"device": "{{inputs.device_id}}", "status": "{{state.status}}"}
         context = {

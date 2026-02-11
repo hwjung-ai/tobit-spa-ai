@@ -9,9 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from core.db import get_session_context
 from app.modules.asset_registry.models import TbAssetRegistry
-from sqlmodel import select, update
+from core.db import get_session_context
+from sqlmodel import select
 
 
 def main():

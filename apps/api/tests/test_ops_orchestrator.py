@@ -9,13 +9,10 @@ Tests cover:
 - Performance metrics
 """
 
-import pytest
-import time
-from datetime import datetime
-from unittest.mock import MagicMock, AsyncMock, patch
 
+import pytest
 from app.modules.ops.services.ci.orchestrator.runner import (
-    CIOrchestratorRunner,
+    OpsOrchestratorRunner,
     RerunContext,
 )
 
@@ -28,7 +25,7 @@ class TestOrchestratorBasicFlow:
         """Test orchestrator processes simple question."""
         # This test would require actual setup of orchestrator components
         # For now, we test the basic structure
-        runner = CIOrchestratorRunner()
+        runner = OpsOrchestratorRunner()
         assert runner is not None
 
     def test_rerun_context_creation(self):

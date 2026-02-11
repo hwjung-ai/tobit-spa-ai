@@ -1,9 +1,8 @@
-import pytest
 
 from app.modules.ops.services.ci.planner.planner_llm import (
-    _normalize_time_range,
-    _determine_metric_spec,
     _determine_history_spec,
+    _determine_metric_spec,
+    _normalize_time_range,
 )
 
 
