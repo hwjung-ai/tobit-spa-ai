@@ -12,7 +12,7 @@
   /* Surface colors */
   --surface-base: #ffffff;
   --surface-elevated: #f8fafc; /* slate-50 */
-  --surface-overlay: rgba(255, 255, 255, 0.95);
+  --surface-overlay: #ffffff;
 
   /* Muted colors */
   --muted-foreground: #64748b; /* slate-500 */
@@ -70,7 +70,7 @@
   /* Surface colors */
   --surface-base: #020617; /* slate-950 */
   --surface-elevated: #0f172a; /* slate-900 */
-  --surface-overlay: rgba(15, 23, 42, 0.95);
+  --surface-overlay: #0f172a; /* slate-900 */
 
   /* Muted colors */
   --muted-foreground: #94a3b8; /* slate-400 */
