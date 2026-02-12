@@ -24,9 +24,17 @@
 
 ---
 
-## ✅ Consistency Fixes Applied (Phase 1-4)
+## ✅ Consistency Fixes Applied (Phase 1-7)
 
 ### Files Modified (2026-02-12)
+
+**Phase 7 (Admin Pages Inline Styles → CSS Classes):**
+- ✅ `RegressionWatchPanel.tsx` - Convert all inline styles to CSS classes
+- ✅ `admin/layout.tsx` - Navigation tabs use cn() utility
+- ✅ `admin/settings/page.tsx` - Alert banners and table use CSS classes
+- ✅ `AssetTable.tsx` - Loading/empty states use CSS classes
+- ✅ `ui/label.tsx` - Remove inline color style
+- ✅ `admin/regression/page.tsx` - Fix Suspense fallback styling
 
 **Phase 3-4 (Border Radius & Background Colors):**
 - ✅ `/apps/web/src/app/globals.css` - Added border-radius & background standard classes
