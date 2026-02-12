@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import BlockRenderer, {
   type AnswerBlock as RendererAnswerBlock,
   type AnswerMeta,
@@ -570,72 +571,66 @@ export default function OpsPage() {
     <div className="ops-theme">
     {/* Summary Modal */}
     {summaryModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-slate-900/80 dark:bg-slate-900/95">
-        <div className="relative w-full max-w-2xl rounded-3xl border border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-950">
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/60">
+        <div className="relative w-full max-w-2xl rounded-3xl border p-6 bg-[var(--surface-overlay)] border-[var(--border)]">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-300 p-6 dark:border-slate-700">
+          <div className="flex items-center justify-between border-b p-6 border-[var(--border)]">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📋</span>
               <div>
-                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">대화 요약</h2>
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <h2 className="text-lg font-semibold text-[var(--foreground)]">대화 요약</h2>
+                <p className="text-xs text-[var(--muted-foreground)]">
                   {summaryData?.question_count || history.length}개의 질문
                 </p>
               </div>
             </div>
             <button
               onClick={() => setSummaryModalOpen(false)}
-              className="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-900 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+              className="rounded-full border px-3 py-1 text-sm transition hover:bg-[var(--surface-elevated)] border-[var(--border)] text-[var(--foreground-secondary)]"
             >
               ✕
             </button>
           </div>
-  +++++++ REPLACE
-  +++++++ REPLACE
 
           {/* Content */}
           <div className="max-h-[60vh] overflow-y-auto px-6 py-4 custom-scrollbar">
             {/* Summary Type Selector */}
-            <div className="mb-4 flex items-center justify-between rounded-xl border border-[var(--border)] p-3 bg-[var(--surface-elevated)] dark:border-[var(--border)] dark:bg-[var(--surface-base)]">
-  +++++++ REPLACE
-  +++++++ REPLACE
+            <div className="mb-4 flex items-center justify-between rounded-xl border p-3 bg-[var(--surface-elevated)] border-[var(--border)]">
               <div className="flex items-center gap-2">
-                <span className="text-sm">요약 방식:</span>
+                <span className="text-sm text-[var(--foreground)]">요약 방식:</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
                       setSummaryType("individual");
-                      // Refetch data when summary type changes
                       setTimeout(() => fetchConversationSummary(), 100);
                     }}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
+                    className={cn(
+                      "rounded-lg px-3 py-1 text-xs font-medium transition border",
                       summaryType === "individual"
-                        ? "border px-3 py-1"
-                        : "border px-3 py-1"
-                    }`}
-                    style={{backgroundColor: summaryType === "individual" ? "rgba(14, 165, 233, 0.2)" : "transparent", borderColor: summaryType === "individual" ? "#0ea5e9" : "var(--border)", color: summaryType === "individual" ? "#e0f2fe" : "var(--foreground)"}}
+                        ? "bg-sky-500/20 border-sky-500 text-sky-300"
+                        : "border-[var(--border)] text-[var(--foreground)]"
+                    )}
                   >
                     개별 요약
                   </button>
                   <button
                     onClick={() => {
                       setSummaryType("overall");
-                      // Refetch data when summary type changes
                       setTimeout(() => fetchConversationSummary(), 100);
                     }}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
+                    className={cn(
+                      "rounded-lg px-3 py-1 text-xs font-medium transition border",
                       summaryType === "overall"
-                        ? "border px-3 py-1"
-                        : "border px-3 py-1"
-                    }`}
-                    style={{backgroundColor: summaryType === "overall" ? "rgba(14, 165, 233, 0.2)" : "transparent", borderColor: summaryType === "overall" ? "#0ea5e9" : "var(--border)", color: summaryType === "overall" ? "#e0f2fe" : "var(--foreground)"}}
+                        ? "bg-sky-500/20 border-sky-500 text-sky-300"
+                        : "border-[var(--border)] text-[var(--foreground)]"
+                    )}
                   >
                     전체 요약
                   </button>
                 </div>
               </div>
               {summaryData?.summary_type && (
-                <span className="text-[10px]" style={{color: "var(--muted-foreground)"}}>
+                <span className="text-[10px] text-[var(--muted-foreground)]">
                   {summaryData.summary_type === "individual" ? "개별" : "전체"}
                 </span>
               )}
@@ -651,71 +646,71 @@ export default function OpsPage() {
                 {summaryData.overall_summary && (
                   <div className="mb-4 rounded-2xl border border-sky-700/50 bg-sky-950/30 p-4">
                     <h3 className="mb-2 text-sm font-semibold text-sky-300">📝 전체 요약</h3>
-                    <pre className="whitespace-pre-wrap text-xs  font-sans" style={{color: "var(--foreground-secondary)"}}>
+                    <pre className="whitespace-pre-wrap text-xs font-sans text-[var(--foreground-secondary)]">
                       {summaryData.overall_summary}
                     </pre>
                   </div>
                 )}
 
                 {/* Metadata */}
-                <div className="mb-4 rounded-2xl border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                <div className="mb-4 rounded-2xl border p-4 bg-[var(--surface-overlay)] border-[var(--border)]">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-xs " style={{color: "var(--muted-foreground)"}}>제목</span>
-                      <p className="font-semibold text-white">{summaryData.title}</p>
+                      <span className="text-xs text-[var(--muted-foreground)]">제목</span>
+                      <p className="font-semibold text-[var(--foreground)]">{summaryData.title}</p>
                     </div>
                     <div>
-                      <span className="text-xs " style={{color: "var(--muted-foreground)"}}>일자</span>
-                      <p className="" style={{color: "var(--foreground-secondary)"}}>{summaryData.date}</p>
+                      <span className="text-xs text-[var(--muted-foreground)]">일자</span>
+                      <p className="text-[var(--foreground-secondary)]">{summaryData.date}</p>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-xs " style={{color: "var(--muted-foreground)"}}>주제</span>
-                      <p className="" style={{color: "var(--foreground-secondary)"}}>{summaryData.topic}</p>
+                      <span className="text-xs text-[var(--muted-foreground)]">주제</span>
+                      <p className="text-[var(--foreground-secondary)]">{summaryData.topic}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Q&A Summary */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold " style={{color: "var(--muted-foreground)"}}>질의-응답 요약</h3>
+                  <h3 className="text-sm font-semibold text-[var(--muted-foreground)]">질의-응답 요약</h3>
                   {summaryData.questions_and_answers?.slice(0, 5).map((qa: any, idx: number) => (
-                    <div key={idx} className="rounded-xl border  /40 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                    <div key={idx} className="rounded-xl border p-3 bg-[var(--surface-base)] border-[var(--border)]">
                       <div className="mb-2 flex items-center gap-2">
                         <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-300">
                           Q{idx + 1}
                         </span>
                         {qa.mode && (
-                          <span className="rounded-full border  px-2 py-0.5 text-[10px] " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
+                          <span className="rounded-full border px-2 py-0.5 text-[10px] border-[var(--border)] text-[var(--muted-foreground)]">
                             {qa.mode}
                           </span>
                         )}
                       </div>
-                      <p className="mb-2 text-sm font-medium text-white">{qa.question}</p>
+                      <p className="mb-2 text-sm font-medium text-[var(--foreground)]">{qa.question}</p>
                       {qa.summary && (
-                        <p className="text-xs  line-clamp-3" style={{color: "var(--muted-foreground)"}}>{qa.summary}</p>
+                        <p className="text-xs line-clamp-3 text-[var(--muted-foreground)]">{qa.summary}</p>
                       )}
                     </div>
                   ))}
                   {summaryData.questions_and_answers?.length > 5 && (
-                    <p className="text-center text-xs " style={{color: "var(--muted-foreground)"}}>
+                    <p className="text-center text-xs text-[var(--muted-foreground)]">
                       ... 그 외 {summaryData.questions_and_answers.length - 5}개의 질문
                     </p>
                   )}
                 </div>
               </>
             ) : (
-              <div className="py-12 text-center " style={{color: "var(--muted-foreground)"}}>
+              <div className="py-12 text-center" style={{color: "var(--muted-foreground)"}}>
                 요약 데이터가 없습니다.
               </div>
             )}
           </div>
 
           {/* Footer - PDF Export */}
-          <div className="flex justify-end border-t  px-6 py-4" style={{borderColor: "var(--border)"}}>
+          <div className="flex justify-end border-t px-6 py-4 border-[var(--border)]">
             <button
               onClick={exportConversationPdf}
               disabled={pdfExporting || summaryLoading}
-              className="flex items-center gap-2 rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-400 disabled:" style={{backgroundColor: "var(--surface-elevated)"}}
+              className="flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition bg-emerald-500/80 hover:bg-emerald-400 disabled:opacity-50"
             >
               {pdfExporting ? (
                 <>

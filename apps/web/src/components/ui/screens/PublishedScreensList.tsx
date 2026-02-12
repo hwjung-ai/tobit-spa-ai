@@ -66,7 +66,7 @@ export default function PublishedScreensList() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-800 bg-red-950/40 p-4 text-sm text-red-200">
+      <div className="rounded-xl border p-4 text-sm" style={{ borderColor: "rgba(var(--error-rgb), 0.4)", backgroundColor: "rgba(var(--error-rgb), 0.15)", color: "var(--error)" }}>
         <p className="font-semibold">Failed to load screens</p>
         <p>{error}</p>
       </div>
@@ -87,7 +87,10 @@ export default function PublishedScreensList() {
         <Link
           key={asset.asset_id}
           href={`/ui/screens/${asset.asset_id}`}
-          className="block rounded-2xl border   px-4 py-3 transition hover: hover:" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+          className="block rounded-2xl border px-4 py-3 transition-all"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-overlay)"; }}
         >
           <div className="flex items-baseline justify-between gap-2">
             <h3 className="text-sm font-semibold  truncate" style={{color: "var(--foreground)"}}>
