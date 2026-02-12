@@ -95,7 +95,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             field: "version",
             width: 100,
             cellRenderer: (params: ICellRendererParams<Asset>) => (
-                <span className="text-slate-400 font-mono text-xs">v{params.value}</span>
+                <span className="style={{ color: "var(--muted-foreground)" }} font-mono text-xs">v{params.value}</span>
             )
         },
         {
@@ -104,7 +104,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             flex: 1,
             minWidth: 150,
             cellRenderer: (params: ICellRendererParams<Asset>) => (
-                <span className="text-slate-500 text-xs">
+                <span className="style={{ color: "var(--muted-foreground)" }} text-xs">
                     {formatRelativeTime(params.value)}
                 </span>
             )
@@ -120,7 +120,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                 <div className="flex justify-end w-full pr-2">
                     <Link
                         href={buildDetailUrl(params.data?.asset_id ?? params.value, params.data?.asset_type)}
-                        className="text-slate-500 hover:text-sky-400 transition-colors"
+                        className="style={{ color: "var(--muted-foreground)" }} hover:text-sky-400 transition-colors"
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -133,13 +133,13 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
 
     if (assets.length === 0) {
         return (
-            <div className="text-center py-20 bg-slate-900/40 rounded-2xl border border-slate-800">
-                <div className="w-12 h-12 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-700/50">
-                    <svg className="w-6 h-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="text-center py-20 rounded-2xl border" style={{ backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "var(--border)" }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 border" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)", borderColor: "rgba(51, 65, 85, 0.5)" }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "#475569" }}>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
-                <p className="text-slate-500 text-sm font-medium italic">No assets found</p>
+                <p className="text-sm font-medium italic" style={{ color: "var(--muted-foreground)" }}>No assets found</p>
             </div>
         );
     }
@@ -147,13 +147,13 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
     return (
         <div className="flex flex-col w-full h-full overflow-hidden">
             {/* Grid Header with Count */}
-            <div className="flex justify-between items-center px-4 py-2 border-b border-slate-800 bg-slate-900/60 backdrop-blur-sm">
+            <div className="flex justify-between items-center px-4 py-2 border-b backdrop-blur-sm" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)" }}>
                 <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>
                         Assets Registry
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 text-[10px] font-mono font-bold border border-slate-700">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border" style={{ backgroundColor: "var(--surface-elevated)", color: "#38bdf8", borderColor: "var(--border-muted)" }}>
                         count: {assets.length}
                     </span>
                     {/* Status Filter Buttons */}
@@ -164,8 +164,9 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                                 className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                                     statusFilter === "all"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
-                                        : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
+                                        : ""
                                 }`}
+                                style={statusFilter !== "all" ? { backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" } : undefined}
                             >
                                 All
                             </button>
@@ -174,8 +175,9 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                                 className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                                     statusFilter === "draft"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
-                                        : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
+                                        : ""
                                 }`}
+                                style={statusFilter !== "draft" ? { backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" } : undefined}
                             >
                                 Draft
                             </button>
@@ -184,15 +186,16 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                                 className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                                     statusFilter === "published"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
-                                        : "bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300"
+                                        : ""
                                 }`}
+                                style={statusFilter !== "published" ? { backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" } : undefined}
                             >
                                 Published
                             </button>
                         </div>
                     )}
                 </div>
-                <div className="text-[10px] text-slate-500 font-medium italic">
+                <div className="text-[10px] font-medium italic" style={{ color: "var(--muted-foreground)" }}>
                     Drag columns to reorder • Click headers to sort
                 </div>
             </div>

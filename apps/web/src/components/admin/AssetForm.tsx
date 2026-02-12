@@ -222,44 +222,46 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
             )}
 
             {/* Basic Info */}
-            <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Basic Info</h2>
+            <div className="rounded-lg border p-6" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--foreground)" }}>Basic Info</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Name</label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             disabled={!isDraft}
-                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Description</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             disabled={!isDraft}
                             rows={3}
-                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                         />
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1">Type</label>
-                            <p className="text-slate-300 capitalize">{asset.asset_type}</p>
+                            <label className="block text-xs uppercase tracking-wider mb-1" style={{ color: "var(--muted-foreground)" }}>Type</label>
+                            <p className="capitalize" style={{ color: "var(--foreground)" }}>{asset.asset_type}</p>
                         </div>
                         <div>
-                            <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1">Status</label>
-                            <p className={`capitalize ${asset.status === 'published' ? 'text-green-400' : 'text-slate-400'}`}>
+                            <label className="block text-xs uppercase tracking-wider mb-1" style={{ color: "var(--muted-foreground)" }}>Status</label>
+                            <p className={`capitalize ${asset.status === 'published' ? 'text-green-400' : ''}`} style={asset.status !== 'published' ? { color: "var(--muted-foreground)" } : undefined}>
                                 {asset.status}
                             </p>
                         </div>
                     <div>
-                        <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1">Version</label>
+                        <label className="block text-xs uppercase tracking-wider mb-1" style={{ color: "var(--muted-foreground)" }}>Version</label>
                         <div className="flex items-center gap-2">
                             <select
                                 value={selectedVersion}
@@ -270,7 +272,8 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                         onLoadVersion(version);
                                     }
                                 }}
-                                className="px-3 py-1 bg-slate-950 border border-slate-700 rounded-lg text-slate-300 font-mono text-sm focus:outline-none focus:border-sky-500"
+                                className="px-3 py-1 border rounded-lg font-mono text-sm focus:outline-none focus:border-sky-500"
+                                style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                             >
                                 <option value={asset.version}>v{asset.version} (current)</option>
                                 {/* Future: Add option to load all versions history */}
@@ -294,8 +297,8 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
             </div>
 
             {/* Type-specific Content */}
-            <div className="bg-slate-900 rounded-lg border border-slate-800 p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Content</h2>
+            <div className="rounded-lg border p-6" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                <h2 className="text-lg font-semibold mb-4" style={{ color: "var(--foreground)" }}>Content</h2>
 
                 {asset.asset_type === "source" && isSourceAsset(asset) && (
                     <SourceAssetForm asset={asset as SourceAssetResponse} onSave={onSave} />
@@ -312,38 +315,41 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 {asset.asset_type === "prompt" && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Template</label>
+                            <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Template</label>
                             <textarea
                                 value={formData.template}
                                 onChange={(e) => setFormData({ ...formData, template: e.target.value })}
                                 disabled={!isDraft}
                                 rows={6}
                                 placeholder="Enter prompt template..."
-                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Input Schema (JSON)</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Input Schema (JSON)</label>
                                 <textarea
                                     value={formData.input_schema}
                                     onChange={(e) => setFormData({ ...formData, input_schema: e.target.value })}
                                     disabled={!isDraft}
                                     rows={6}
                                     placeholder="{}"
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Output Contract (JSON)</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Output Contract (JSON)</label>
                                 <textarea
                                     value={formData.output_contract}
                                     onChange={(e) => setFormData({ ...formData, output_contract: e.target.value })}
                                     disabled={!isDraft}
                                     rows={6}
                                     placeholder="{}"
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                         </div>
@@ -352,28 +358,30 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
 
                 {asset.asset_type === "mapping" && (
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Content (JSON)</label>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Content (JSON)</label>
                         <textarea
                             value={formData.content}
                             onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                             disabled={!isDraft}
                             rows={12}
                             placeholder="{}"
-                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                         />
                     </div>
                 )}
 
                 {asset.asset_type === "policy" && (
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Limits (JSON)</label>
+                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Limits (JSON)</label>
                         <textarea
                             value={formData.limits}
                             onChange={(e) => setFormData({ ...formData, limits: e.target.value })}
                             disabled={!isDraft}
                             rows={12}
                             placeholder="{}"
-                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                         />
                     </div>
                 )}
@@ -383,7 +391,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         {/* Source Type & Asset Selection */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Source Type</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Source Type</label>
                                 <select
                                     value={queryMetadata.source_type || "postgresql"}
                                     onChange={(e) => {
@@ -391,7 +399,8 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                         setFormData({ ...formData, query_metadata: JSON.stringify(newMetadata, null, 2) });
                                     }}
                                     disabled={!isDraft}
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 >
                                     <option value="postgresql">PostgreSQL</option>
                                     <option value="mysql">MySQL</option>
@@ -403,7 +412,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Source Asset Reference</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Source Asset Reference</label>
                                 <input
                                     type="text"
                                     value={queryMetadata.source_ref || ""}
@@ -413,7 +422,8 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                     }}
                                     disabled={!isDraft}
                                     placeholder="e.g., primary_postgres, neo4j_main"
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                         </div>
@@ -422,28 +432,30 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         {(queryMetadata.source_type === "postgresql" || queryMetadata.source_type === "mysql" ||
                           queryMetadata.source_type === "bigquery" || queryMetadata.source_type === "snowflake") && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">SQL Query</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>SQL Query</label>
                                 <textarea
                                     value={formData.query_sql}
                                     onChange={(e) => setFormData({ ...formData, query_sql: e.target.value })}
                                     disabled={!isDraft}
                                     rows={12}
                                     placeholder="SELECT ..."
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                         )}
 
                         {queryMetadata.source_type === "neo4j" && (
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Cypher Query</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Cypher Query</label>
                                 <textarea
                                     value={formData.query_cypher}
                                     onChange={(e) => setFormData({ ...formData, query_cypher: e.target.value })}
                                     disabled={!isDraft}
                                     rows={12}
                                     placeholder="MATCH (ci:CI) RETURN ci"
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                         )}
@@ -452,7 +464,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">HTTP Method</label>
+                                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>HTTP Method</label>
                                         <select
                                             value={JSON.parse(formData.query_http || "{}").method || "GET"}
                                             onChange={(e) => {
@@ -460,7 +472,8 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                                 setFormData({ ...formData, query_http: JSON.stringify({ ...httpConfig, method: e.target.value }, null, 2) });
                                             }}
                                             disabled={!isDraft}
-                                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                            className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                         >
                                             <option value="GET">GET</option>
                                             <option value="POST">POST</option>
@@ -470,7 +483,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-300 mb-2">Path</label>
+                                        <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Path</label>
                                         <input
                                             type="text"
                                             value={JSON.parse(formData.query_http || "{}").path || ""}
@@ -480,19 +493,21 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                             }}
                                             disabled={!isDraft}
                                             placeholder="/api/v1/servers"
-                                            className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                            className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Response Mapping (JSONPath)</label>
+                                    <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Response Mapping (JSONPath)</label>
                                     <textarea
                                         value={formData.query_http}
                                         onChange={(e) => setFormData({ ...formData, query_http: e.target.value })}
                                         disabled={!isDraft}
                                         rows={6}
                                         placeholder='{"items": "$.data.servers[*]", "fields": {"id": "$.id", "name": "$.name"}}'
-                                        className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                        className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                        style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                     />
                                 </div>
                             </div>
@@ -501,25 +516,27 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         {/* Query Parameters & Metadata */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Query Parameters (JSON)</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Query Parameters (JSON)</label>
                                 <textarea
                                     value={formData.query_params}
                                     onChange={(e) => setFormData({ ...formData, query_params: e.target.value })}
                                     disabled={!isDraft}
                                     rows={6}
                                     placeholder="{}"
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Query Metadata (JSON)</label>
+                                <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Query Metadata (JSON)</label>
                                 <textarea
                                     value={formData.query_metadata}
                                     onChange={(e) => setFormData({ ...formData, query_metadata: e.target.value })}
                                     disabled={!isDraft}
                                     rows={6}
                                     placeholder='{"source_type": "postgresql", "source_ref": "primary_postgres", "tool_type": "metric", "operation": "aggregate_by_ci"}'
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                         </div>
@@ -529,46 +546,56 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 {asset.asset_type === "screen" && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Screen ID</label>
+                            <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Screen ID</label>
                             <input
                                 type="text"
                                 value={asset.screen_id || ""}
                                 disabled
-                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm"
+                                className="w-full px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed font-mono text-sm"
+                                style={{
+                                    backgroundColor: "var(--surface-base)",
+                                    borderColor: "var(--border-muted)",
+                                    color: "var(--foreground)"
+                                }}
                             />
-                            <p className="text-xs text-slate-500 mt-1">Stable identifier for the screen (immutable)</p>
+                            <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>Stable identifier for the screen (immutable)</p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Screen Schema (JSON)</label>
+                            <label className="block text-sm font-medium mb-2" style={{ color: "var(--foreground)" }}>Screen Schema (JSON)</label>
                             <textarea
                                 value={formData.content}
                                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                                 disabled={!isDraft}
                                 rows={16}
                                 placeholder="{}"
-                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full px-4 py-2 border rounded-lg font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none transition-colors"
+                                style={{
+                                    backgroundColor: "var(--surface-base)",
+                                    borderColor: "var(--border-muted)",
+                                    color: "var(--foreground)"
+                                }}
                             />
-                            <p className="text-xs text-slate-500 mt-1">UI definition following screen.schema.json format</p>
+                            <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>UI definition following screen.schema.json format</p>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Tags (JSON)</label>
+                            <label className="block text-sm font-medium style={{ color: "var(--foreground)" }} mb-2">Tags (JSON)</label>
                             <textarea
                                 value={formData.tags || ""}
                                 onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
                                 disabled={!isDraft}
                                 rows={4}
                                 placeholder="{}"
-                                className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
+                                className="w-full px-4 py-2 style={{ backgroundColor: "var(--surface-base)" }} border style={{ borderColor: "var(--border-muted)" }} rounded-lg style={{ color: "var(--foreground)" }} font-mono text-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:border-sky-500 transition-colors"
                             />
-                            <p className="text-xs text-slate-500 mt-1">Optional metadata tags (e.g., {`{"category": "maintenance"}`})</p>
+                            <p className="text-xs style={{ color: "var(--muted-foreground)" }} mt-1">Optional metadata tags (e.g., {`{"category": "maintenance"}`})</p>
                         </div>
 
-                        <div className="flex items-center justify-between bg-slate-950/50 rounded-lg p-4 border border-slate-800">
+                        <div className="flex items-center justify-between style={{ backgroundColor: "var(--surface-base)" }}/50 rounded-lg p-4 border style={{ borderColor: "var(--border)" }}">
                             <div className="space-y-1">
-                                <p className="text-sm font-medium text-slate-300">Screen Editor</p>
-                                <p className="text-xs text-slate-500">Use the visual screen editor for better UX</p>
+                                <p className="text-sm font-medium style={{ color: "var(--foreground)" }}">Screen Editor</p>
+                                <p className="text-xs style={{ color: "var(--muted-foreground)" }}">Use the visual screen editor for better UX</p>
                             </div>
                             <Link
                                 href={`/admin/screens/${asset.asset_id}`}
@@ -581,17 +608,17 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                 )}
 
                 {!["prompt", "mapping", "policy", "query", "source", "resolver"].includes(asset.asset_type) && (
-                    <div className="space-y-3 text-sm text-slate-400">
+                    <div className="space-y-3 text-sm style={{ color: "var(--muted-foreground)" }}">
                         <p>
                             이 Asset 타입은 현재 Admin Assets 화면에서 편집을 지원하지 않습니다.
                             전용 관리 UI 또는 API를 사용하세요.
                         </p>
                         {asset.content && (
-                            <details className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
-                                <summary className="text-xs font-semibold text-slate-200 cursor-pointer">
+                            <details className="style={{ backgroundColor: "var(--surface-base)" }}/60 border style={{ borderColor: "var(--border)" }} rounded-xl p-3">
+                                <summary className="text-xs font-semibold style={{ color: "var(--foreground)" }} cursor-pointer">
                                     Raw Asset Content
                                 </summary>
-                                <pre className="mt-2 text-[11px] text-slate-200 overflow-x-auto max-h-64">
+                                <pre className="mt-2 text-[11px] style={{ color: "var(--foreground)" }} overflow-x-auto max-h-64">
                                     {JSON.stringify(asset.content, null, 2)}
                                 </pre>
                             </details>
@@ -614,14 +641,15 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         <button
                             onClick={handleSaveDraft}
                             disabled={isSaving}
-                            className="px-6 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg transition-colors font-medium border border-slate-600"
+                            className="px-6 py-2 rounded-lg transition-colors font-medium border text-white hover:bg-slate-600 disabled:opacity-50"
+                            style={{ backgroundColor: "#334155", borderColor: "#475569" }}
                         >
                             {isSaving ? "Saving..." : "Save Draft"}
                         </button>
                         <button
                             onClick={handlePublish}
                             disabled={isPublishing}
-                            className="px-6 py-2 bg-sky-600 hover:bg-sky-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-sky-900/20"
+                            className="px-6 py-2 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white rounded-lg transition-colors font-medium shadow-lg shadow-sky-900/20"
                         >
                             {isPublishing ? "Publishing..." : "Publish"}
                         </button>
@@ -637,7 +665,8 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                         </button>
                         <button
                             onClick={() => setShowRollbackModal(true)}
-                            className="px-6 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors font-medium"
+                            className="px-6 py-2 rounded-lg transition-colors font-medium border hover:bg-slate-700"
+                            style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border-muted)" }}
                         >
                             Version Rollback...
                         </button>
@@ -648,21 +677,23 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
             {/* Rollback Modal */}
             {showRollbackModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-md w-full p-6 shadow-2xl">
-                        <h2 className="text-lg font-semibold text-white mb-2">Rollback Asset</h2>
-                        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                    <div className="rounded-lg border max-w-md w-full p-6 shadow-2xl"
+                        style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                        <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--foreground)" }}>Rollback Asset</h2>
+                        <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
                             Enter the version number to rollback to. This will move the <strong>published status</strong> to the selected version and increment the version number.
                         </p>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs text-slate-500 uppercase tracking-wider mb-2">Version Number</label>
+                                    <label className="block text-xs uppercase tracking-wider mb-2" style={{ color: "var(--muted-foreground)" }}>Version Number</label>
                                 <input
                                     type="number"
                                     min="1"
                                     value={rollbackVersion}
                                     onChange={(e) => setRollbackVersion(e.target.value)}
                                     placeholder="e.g. 1"
-                                    className="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-sky-500 transition-colors"
+                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-sky-500 transition-colors"
+                                    style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border-muted)", color: "var(--foreground)" }}
                                 />
                             </div>
                             <div className="flex items-center justify-end gap-3 pt-2">
@@ -671,14 +702,14 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                         setShowRollbackModal(false);
                                         setRollbackVersion("");
                                     }}
-                                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                                    className="px-4 py-2 style={{ color: "var(--muted-foreground)" }} hover:text-white transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleRollback}
                                     disabled={isRollingBack}
-                                    className="px-6 py-2 bg-yellow-600 hover:bg-yellow-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors font-medium"
+                                    className="px-6 py-2 bg-yellow-600 hover:bg-yellow-500 disabled:style={{ backgroundColor: "var(--surface-elevated)" }} disabled:style={{ color: "var(--muted-foreground)" }} text-white rounded-lg transition-colors font-medium"
                                 >
                                     {isRollingBack ? "Rolling back..." : "Execute Rollback"}
                                 </button>
