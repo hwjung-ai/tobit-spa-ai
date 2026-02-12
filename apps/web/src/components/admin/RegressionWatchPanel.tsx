@@ -223,12 +223,12 @@ export default function RegressionWatchPanel() {
         </Alert>
       )}
       {contextScreenId && (
-        <Alert
-          className="rounded-lg border   px-4 py-3 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
+        <Alert>
+          className="rounded-lg border px-4 py-3 text-sm bg-rose-50 border-rose-200 dark:bg-rose-950/50 dark:border-rose-800"
         >
-          <AlertDescription>
+          <AlertDescription className="text-slate-900 dark:text-slate-50">
             Regression context: screen{" "}
-            <span className="font-semibold text-white">{contextScreenId}</span>
+            <span className="font-semibold">{contextScreenId}</span>
             {contextVersion ? ` · v${contextVersion}` : ""}
             {contextAssetId ? ` · asset ${contextAssetId}` : ""}
           </AlertDescription>
@@ -269,7 +269,7 @@ export default function RegressionWatchPanel() {
               <tbody>
                 {queries.map((query) => (
                   <tr key={query.id} className="border-b " style={{borderColor: "var(--border)"}}>
-                    <td className="px-4 py-3 text-white font-medium">
+                    <td className="px-4 py-3 text-white font-medium dark:text-slate-50">
                       {query.name}
                     </td>
                     <td className="px-4 py-3  text-xs" style={{color: "var(--foreground-secondary)"}}>
@@ -299,7 +299,7 @@ export default function RegressionWatchPanel() {
                           setSelectedQuery(query);
                           setShowBaselineDialog(true);
                         }}
-                        className="text-xs h-8 bg-sky-600 hover:bg-sky-700 text-white"
+                        className="text-xs h-8 bg-sky-600 hover:bg-sky-700 dark:text-slate-50"
                       >
                         Set Baseline
                       </Button>
@@ -309,14 +309,14 @@ export default function RegressionWatchPanel() {
                           setSelectedQuery(query);
                           setShowRunDialog(true);
                         }}
-                        className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        className="text-xs h-8 bg-emerald-600 hover:bg-emerald-700 dark:text-slate-50"
                       >
                         Run
                       </Button>
                       <Button
                         size="sm"
                         onClick={() => handleDeleteQuery(query.id)}
-                        className="text-xs h-8 bg-red-600 hover:bg-red-700 text-white"
+                        className="text-xs h-8 bg-red-600 hover:bg-red-700 dark:text-slate-50"
                       >
                         Delete
                       </Button>
@@ -401,7 +401,7 @@ export default function RegressionWatchPanel() {
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className=" " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
           <DialogHeader>
-            <DialogTitle className="text-white">Create Golden Query</DialogTitle>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">Create Golden Query</DialogTitle>
             <DialogDescription>
               Define a new quality baseline question
             </DialogDescription>
@@ -470,7 +470,7 @@ export default function RegressionWatchPanel() {
       <Dialog open={showBaselineDialog} onOpenChange={setShowBaselineDialog}>
         <DialogContent className=" " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
           <DialogHeader>
-            <DialogTitle className="text-white">Set Baseline</DialogTitle>
+            <DialogTitle className="text-slate-900 dark:text-slate-50">Set Baseline</DialogTitle>
             <DialogDescription>
               Use a trace as the regression baseline for {selectedQuery?.name}
             </DialogDescription>
