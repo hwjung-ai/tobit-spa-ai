@@ -60,14 +60,17 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             minWidth: 120,
             cellRenderer: (params: ICellRendererParams<Asset>) => {
                 const type = params.value as string;
-                const colors = type === "prompt" ? "bg-purple-950/50 text-purple-300 border-purple-800/50" :
-                    type === "mapping" ? "bg-blue-950/50 text-blue-300 border-blue-800/50" :
-                    type === "policy" ? "bg-green-950/50 text-green-300 border-green-800/50" :
-                    type === "query" ? "bg-orange-950/50 text-orange-300 border-orange-800/50" :
-                    type === "resolver" ? "bg-amber-950/40 text-amber-200 border-amber-800/40" :
+                const colors = type === "prompt" ? "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700/40" :
+                    type === "mapping" ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/40" :
+                    type === "policy" ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700/40" :
+                    type === "query" ? "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/40" :
+                    type === "resolver" ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/40" :
                         "";
-                const style = type === "source" ? { backgroundColor: "rgba(2, 6, 23, 0.6)", color: "var(--foreground)", borderColor: "var(--border)" } :
-                    !colors ? { backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" } : undefined;
+                const style = type === "source"
+                    ? { backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)" }
+                    : !colors
+                        ? { backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }
+                        : undefined;
                 return (
                     <span
                         className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}
@@ -85,9 +88,11 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             minWidth: 120,
             cellRenderer: (params: ICellRendererParams<Asset>) => {
                 const status = params.value as string;
-                const colors = status === "published" ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50" : "";
+                const colors = status === "published"
+                    ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/40"
+                    : "";
                 const style = status === "published" ? undefined :
-                    { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "rgba(51, 65, 85, 0.5)" };
+                    { backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)" };
                 return (
                     <span
                         className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}
@@ -142,9 +147,9 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
 
     if (assets.length === 0) {
         return (
-            <div className="text-center py-20 rounded-2xl border" style={{ backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "var(--border)" }}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 border" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)", borderColor: "rgba(51, 65, 85, 0.5)" }}>
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "#475569" }}>
+            <div className="text-center py-20 rounded-2xl border" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4 border" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: "var(--muted-foreground)" }}>
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
@@ -156,7 +161,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
     return (
         <div className="flex flex-col w-full h-full overflow-hidden">
             {/* Grid Header with Count */}
-            <div className="flex justify-between items-center px-4 py-2 border-b backdrop-blur-sm" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)" }}>
+            <div className="flex justify-between items-center px-4 py-2 border-b backdrop-blur-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}>
                 <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
                     <span className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>

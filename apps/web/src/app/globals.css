@@ -221,55 +221,49 @@ body {
 }
 
 .ag-theme-cep {
-  --ag-background-color: #0b1220;
-  --ag-foreground-color: #e2e8f0;
-  --ag-border-color: #1f2937;
-  --ag-header-background-color: #0b1220;
+  --ag-background-color: var(--surface-base);
+  --ag-foreground-color: var(--foreground);
+  --ag-border-color: var(--border);
+  --ag-header-background-color: var(--surface-base);
   --ag-header-height: 40px;
-  --ag-odd-row-background-color: #0b1220;
-  --ag-row-background-color: #0b1220;
-  --ag-row-hover-color: rgba(56, 189, 248, 0.05);
-  --ag-selected-row-background-color: rgba(56, 189, 248, 0.12);
-  --ag-header-foreground-color: #64748b;
-  /* slate-500 */
-  --ag-row-border-color: #111827;
+  --ag-odd-row-background-color: var(--surface-base);
+  --ag-row-background-color: var(--surface-base);
+  --ag-row-hover-color: rgba(var(--primary-rgb), 0.06);
+  --ag-selected-row-background-color: rgba(var(--primary-rgb), 0.12);
+  --ag-header-foreground-color: var(--muted-foreground);
+  --ag-row-border-color: var(--border);
   --ag-cell-horizontal-padding: 12px;
-  /* Scrollbar styling */
-  --ag-alpine-active-color: #334155;
-  --ag-range-selection-border-color: #334155;
-  --ag-secondary-foreground-color: #94a3b8;
-  --ag-data-color: #e2e8f0;
+  --ag-alpine-active-color: var(--primary);
+  --ag-range-selection-border-color: var(--primary);
+  --ag-secondary-foreground-color: var(--muted-foreground);
+  --ag-data-color: var(--foreground);
 }
 
 .ag-theme-cep .ag-root-wrapper,
 .ag-theme-cep .ag-root-wrapper-body,
 .ag-theme-cep .ag-root {
-  background-color: #0b1220;
+  background-color: var(--surface-base);
   border-radius: 16px;
 }
 
 .ag-theme-cep .ag-header {
-  background-color: #0b1220 !important;
-  border-bottom: 1px solid #1f2937;
+  background-color: var(--surface-base) !important;
+  border-bottom: 1px solid var(--border);
 }
 
 .ag-theme-cep .ag-header-cell-label {
-  color: #64748b !important;
-  /* slate-500 */
+  color: var(--muted-foreground) !important;
 }
 
 .ag-theme-cep .ag-header-icon {
-  color: #475569 !important;
-  /* slate-600 */
+  color: var(--muted-foreground) !important;
 }
 
 /* Dragging and ghost header styles */
 .ag-dnd-ghost {
-  background-color: #1e293b !important;
-  /* slate-800 */
-  color: #94a3b8 !important;
-  /* slate-400 */
-  border: 1px solid #334155 !important;
+  background-color: var(--surface-elevated) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
   border-radius: 8px;
   padding: 4px 12px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
@@ -277,52 +271,48 @@ body {
 
 .ag-dnd-ghost-icon {
   margin-right: 8px;
-  color: #64748b !important;
+  color: var(--muted-foreground) !important;
 }
 
 .ag-theme-cep .ag-header-cell-moving {
-  background-color: #0f172a !important;
-  /* slate-900 */
+  background-color: var(--surface-elevated) !important;
   opacity: 0.7;
 }
 
 .ag-theme-cep .ag-header-cell-moving .ag-header-cell-label {
-  color: #94a3b8 !important;
+  color: var(--muted-foreground) !important;
 }
 
 .ag-theme-cep .ag-row {
-  background-color: #0b1220;
-  color: #e2e8f0 !important;
-  border-bottom: 1px solid #111827;
+  background-color: var(--surface-base);
+  color: var(--foreground) !important;
+  border-bottom: 1px solid var(--border);
   transition: all 0.15s ease;
   cursor: pointer;
 }
 
 .ag-theme-cep .ag-row-odd {
-  background-color: #0b1220;
+  background-color: var(--surface-base);
 }
 
 .ag-theme-cep .ag-row-even {
-  background-color: #0b1220;
+  background-color: var(--surface-base);
 }
 
 .ag-theme-cep .ag-row-hover {
-  background-color: rgba(56, 189, 248, 0.06) !important;
+  background-color: rgba(var(--primary-rgb), 0.06) !important;
 }
 
 .ag-theme-cep .ag-row-selected {
-  background-color: rgba(56, 189, 248, 0.12) !important;
-  /* 읽기 쉬운 하늘색 배경 */
-  border-left: 4px solid #38bdf8 !important;
-  /* 밝은 하늘색으로 강조 */
-  box-shadow: inset 4px 0 20px -10px rgba(56, 189, 248, 0.3);
+  background-color: rgba(var(--primary-rgb), 0.12) !important;
+  border-left: 4px solid var(--primary) !important;
+  box-shadow: inset 4px 0 20px -10px rgba(var(--primary-rgb), 0.3);
 }
 
 .ag-theme-cep .ag-row-selected .ag-cell {
   background-color: transparent !important;
   font-weight: 500;
-  color: #e0f2fe !important;
-  /* 선택된 행 텍스트를 밝은 하늘색으로 변경하여 가독성 확보 */
+  color: var(--foreground) !important;
 }
 
 .ag-theme-cep .ag-cell {
@@ -337,16 +327,16 @@ body {
 }
 
 .ag-theme-cep ::-webkit-scrollbar-track {
-  background: #0b1220 !important;
+  background: var(--surface-base) !important;
 }
 
 .ag-theme-cep ::-webkit-scrollbar-thumb {
-  background: #1e293b !important;
+  background: var(--border-muted) !important;
   border-radius: 10px !important;
 }
 
 .ag-theme-cep ::-webkit-scrollbar-thumb:hover {
-  background: #334155 !important;
+  background: var(--border) !important;
 }
 
 /* Specific horizontal scroll container background for AG Grid */
@@ -355,7 +345,7 @@ body {
 .ag-theme-cep .ag-horizontal-right-spacer,
 .ag-theme-cep .ag-body-horizontal-scroll-container,
 .ag-theme-cep .ag-scroller-corner {
-  background: #0b1220 !important;
+  background: var(--surface-base) !important;
 }
 
 /* Custom scrollbar utility for non-grid containers */
@@ -365,16 +355,16 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #0b1220;
+  background: var(--surface-base);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--border-muted);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--border);
 }
 /* -- Accessibility: consistent focus-visible ring -- */
 *:focus-visible {

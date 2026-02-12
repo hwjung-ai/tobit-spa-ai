@@ -97,10 +97,10 @@ export default function ToolTable({
             cellRenderer: (params: ICellRendererParams<ToolAsset>) => {
                 const type = params.value as string;
                 const colors =
-                    type === "database_query" ? "bg-blue-950/50 text-blue-300 border-blue-800/50" :
-                    type === "http_api" ? "bg-green-950/50 text-green-300 border-green-800/50" :
-                    type === "graph_query" ? "bg-purple-950/50 text-purple-300 border-purple-800/50" :
-                    type === "python_script" ? "bg-amber-950/50 text-amber-300 border-amber-800/50" :
+                    type === "database_query" ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/40" :
+                    type === "http_api" ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700/40" :
+                    type === "graph_query" ? "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700/40" :
+                    type === "python_script" ? "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/40" :
                     "bg-[var(--surface-overlay)] text-[var(--foreground-secondary)] border-[var(--border)]";
                 const label = type?.replace(/_/g, " ") || "unknown";
                 return (
@@ -128,7 +128,7 @@ export default function ToolTable({
             cellRenderer: (params: ICellRendererParams<ToolAsset>) => {
                 const status = params.value as string;
                 const colors = status === "published"
-                    ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50"
+                    ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/40"
                     : "bg-[var(--surface-overlay)] text-[var(--muted-foreground)] border-[var(--border)]";
                 return (
                     <span className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}>
@@ -226,8 +226,8 @@ export default function ToolTable({
                                 className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                                     statusFilter === "all"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
-                                        : " 0 hover: hover:"
-                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}
+                                        : "hover:bg-[var(--surface-overlay)]"
+                                }`} style={statusFilter !== "all" ? {backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"} : undefined}
                             >
                                 All
                             </button>
@@ -236,8 +236,8 @@ export default function ToolTable({
                                 className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                                     statusFilter === "draft"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
-                                        : " 0 hover: hover:"
-                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}
+                                        : "hover:bg-[var(--surface-overlay)]"
+                                }`} style={statusFilter !== "draft" ? {backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"} : undefined}
                             >
                                 Draft
                             </button>
@@ -246,8 +246,8 @@ export default function ToolTable({
                                 className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
                                     statusFilter === "published"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
-                                        : " 0 hover: hover:"
-                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}
+                                        : "hover:bg-[var(--surface-overlay)]"
+                                }`} style={statusFilter !== "published" ? {backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"} : undefined}
                             >
                                 Published
                             </button>
@@ -279,9 +279,6 @@ export default function ToolTable({
                         if (event.data) {
                             onToolSelect?.(event.data);
                         }
-                    }}
-                    rowClassRules={{
-                        'bg-sky-900/20': (params) => params.data?.asset_id === selectedToolId,
                     }}
                 />
             </div>

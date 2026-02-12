@@ -548,18 +548,16 @@ export default function SimPage() {
   );
 
   return (
-    <div className="space-y-6 px-6 py-10" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
-      {/* Header Section */}
-      <section className="rounded-3xl border p-6" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}>
-        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Simulation</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">SIM Workspace</h1>
-        <p className="mt-2 max-w-4xl text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
+      <header className="border-b px-6 py-4" style={{ borderColor: "var(--border)" }}>
+        <h1 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>SIM Workspace</h1>
+        <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
           질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다.
         </p>
-      </section>
-
-      {/* Main Content Grid */}
-      <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
+      </header>
+      <main className="min-h-[calc(100vh-96px)] px-6 py-6">
+        {/* Main Content Grid */}
+        <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
         {/* Left Panel - Scenario Builder */}
         <aside className="space-y-4 rounded-3xl border p-5 min-h-[320px]" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}>
           <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Scenario Builder</h2>
@@ -1042,7 +1040,8 @@ export default function SimPage() {
             </div>
           </div>
         </aside>
-      </section>
+        </section>
+      </main>
 
       {/* Toast Notification */}
       <Toast

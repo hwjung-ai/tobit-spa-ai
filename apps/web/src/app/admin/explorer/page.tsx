@@ -264,9 +264,14 @@ const TabsButton = ({
     type="button"
     onClick={onClick}
     className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.25em] transition ${active
-      ? "border-sky-400 text-white"
-      : "  hover: hover: dark: dark: dark:hover:0 dark:hover:text-white"
-      }`} style={{color: "var(--foreground)", borderColor: "var(--border)"}}
+      ? ""
+      : "hover:bg-[var(--surface-elevated)]"
+      }`}
+    style={{
+      color: active ? "var(--primary-foreground)" : "var(--foreground)",
+      borderColor: active ? "var(--primary)" : "var(--border)",
+      backgroundColor: active ? "var(--primary)" : "transparent",
+    }}
   >
     {children}
   </button>
@@ -564,7 +569,7 @@ export default function ExplorerPage() {
 
   if (!enableDataExplorer) {
     return (
-      <div className="min-h-screen bg-[#05070f] px-10 py-10 " style={{color: "var(--foreground-secondary)"}}>
+      <div className="min-h-screen px-10 py-10" style={{backgroundColor: "var(--background)", color: "var(--foreground-secondary)"}}>
         <h1 className="text-2xl font-semibold">Data Explorer</h1>
         <p className="mt-4 text-sm " style={{color: "var(--muted-foreground)"}}>
           Data Explorer is disabled. Enable{" "}
@@ -621,10 +626,15 @@ export default function ExplorerPage() {
                       setSelectedTable(item);
                       previewTableMutation.mutate(fullName);
                     }}
-                    className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
-                      ? "border-sky-500 text-white"
-                      : "  hover:"
-                      }`} style={{color: "var(--foreground-secondary)", borderColor: "var(--border)"}}
+                  className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
+                      ? ""
+                      : "hover:bg-[var(--surface-elevated)]"
+                      }`}
+                    style={{
+                      color: active ? "var(--primary-foreground)" : "var(--foreground-secondary)",
+                      borderColor: active ? "var(--primary)" : "var(--border)",
+                      backgroundColor: active ? "var(--primary)" : "transparent",
+                    }}
                   >
                     {fullName}
                   </button>
@@ -665,9 +675,14 @@ export default function ExplorerPage() {
                     runQueryMutation.mutate(statement);
                   }}
                   className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
-                    ? "border-sky-500 text-white"
-                    : "  hover:"
-                    }`} style={{color: "var(--foreground-secondary)", borderColor: "var(--border)"}}
+                    ? ""
+                    : "hover:bg-[var(--surface-elevated)]"
+                    }`}
+                  style={{
+                    color: active ? "var(--primary-foreground)" : "var(--foreground-secondary)",
+                    borderColor: active ? "var(--primary)" : "var(--border)",
+                    backgroundColor: active ? "var(--primary)" : "transparent",
+                  }}
                 >
                   {label}
                 </button>
@@ -727,9 +742,14 @@ export default function ExplorerPage() {
                   redisKeyMutation.mutate(key);
                 }}
                 className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
-                  ? "border-sky-500 text-white"
-                  : "  hover:"
-                  }`} style={{color: "var(--foreground-secondary)", borderColor: "var(--border)"}}
+                  ? ""
+                  : "hover:bg-[var(--surface-elevated)]"
+                  }`}
+                style={{
+                  color: active ? "var(--primary-foreground)" : "var(--foreground-secondary)",
+                  borderColor: active ? "var(--primary)" : "var(--border)",
+                  backgroundColor: active ? "var(--primary)" : "transparent",
+                }}
               >
                 {key}
               </button>
@@ -743,12 +763,12 @@ export default function ExplorerPage() {
   return (
     <div className="py-6 tracking-tight builder-shell builder-text">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold  dark:text-white" style={{color: "var(--foreground)"}}>Data Explorer</h1>
-        <div className="text-xs uppercase tracking-[0.25em]  dark:" style={{color: "var(--muted-foreground)"}}>
+        <h1 className="text-2xl font-semibold" style={{color: "var(--foreground)"}}>Data Explorer</h1>
+        <div className="text-xs uppercase tracking-[0.25em]" style={{color: "var(--muted-foreground)"}}>
           Admin only
         </div>
       </div>
-      <p className="mb-4 text-sm  dark:" style={{color: "var(--muted-foreground)"}}>
+      <p className="mb-4 text-sm" style={{color: "var(--muted-foreground)"}}>
         Read-only data access. Max {MAX_ROWS} rows.
       </p>
 
@@ -840,9 +860,14 @@ export default function ExplorerPage() {
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "graph"
-                        ? "border-sky-400 text-white"
-                        : "  hover:0 hover:text-white"
-                        }`} style={{color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                        ? ""
+                        : "hover:bg-[var(--surface-elevated)]"
+                        }`}
+                      style={{
+                        color: neo4jViewMode === "graph" ? "var(--primary-foreground)" : "var(--muted-foreground)",
+                        borderColor: neo4jViewMode === "graph" ? "var(--primary)" : "var(--border)",
+                        backgroundColor: neo4jViewMode === "graph" ? "var(--primary)" : "transparent",
+                      }}
                       onClick={() => setNeo4jViewMode("graph")}
                       disabled={!graphAvailable}
                     >
@@ -851,9 +876,14 @@ export default function ExplorerPage() {
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "table"
-                        ? "border-sky-400 text-white"
-                        : "  hover:0 hover:text-white"
-                        }`} style={{color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                        ? ""
+                        : "hover:bg-[var(--surface-elevated)]"
+                        }`}
+                      style={{
+                        color: neo4jViewMode === "table" ? "var(--primary-foreground)" : "var(--muted-foreground)",
+                        borderColor: neo4jViewMode === "table" ? "var(--primary)" : "var(--border)",
+                        backgroundColor: neo4jViewMode === "table" ? "var(--primary)" : "transparent",
+                      }}
                       onClick={() => {
                         setNeo4jViewMode("table");
                         setHighlightedNodeIds(new Set());
@@ -866,9 +896,14 @@ export default function ExplorerPage() {
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "value"
-                        ? "border-sky-400 text-white"
-                        : "  hover:0 hover:text-white"
-                        }`} style={{color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                        ? ""
+                        : "hover:bg-[var(--surface-elevated)]"
+                        }`}
+                      style={{
+                        color: neo4jViewMode === "value" ? "var(--primary-foreground)" : "var(--muted-foreground)",
+                        borderColor: neo4jViewMode === "value" ? "var(--primary)" : "var(--border)",
+                        backgroundColor: neo4jViewMode === "value" ? "var(--primary)" : "transparent",
+                      }}
                       onClick={() => setNeo4jViewMode("value")}
                       disabled={!valueAvailable}
                     >
