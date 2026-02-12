@@ -1058,7 +1058,17 @@ export default function SimPage() {
                     style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <defs>
+                          <style>{`
+                            .recharts-surface { background: transparent !important; }
+                            .recharts-wrapper { background: transparent !important; }
+                          `}</style>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-muted)" />
                         <XAxis dataKey="kpi" stroke="var(--border-muted)" />
                         <YAxis stroke="var(--border-muted)" />
@@ -1085,7 +1095,17 @@ export default function SimPage() {
                     style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
                   >
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={chartData}>
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+                        style={{ background: "transparent" }}
+                      >
+                        <defs>
+                          <style>{`
+                            .recharts-surface { background: transparent !important; }
+                            .recharts-wrapper { background: transparent !important; }
+                          `}</style>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-muted)" />
                         <XAxis dataKey="kpi" stroke="var(--border-muted)" />
                         <YAxis stroke="var(--border-muted)" />

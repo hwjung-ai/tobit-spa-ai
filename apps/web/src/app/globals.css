@@ -449,3 +449,19 @@ body {
   background-color: var(--surface-elevated);
   color: var(--foreground);
 }
+
+/* ============================================================================
+ * RECHARTS THEME FIXES
+ * ============================================================================ */
+
+/* Recharts SVG background transparency */
+.recharts-surface,
+.recharts-wrapper {
+  background: transparent !important;
+}
+
+/* Ensure charts inherit parent background in both light and dark modes */
+.page-sim .recharts-surface,
+.page-sim .recharts-wrapper {
+  background: transparent !important;
+}
