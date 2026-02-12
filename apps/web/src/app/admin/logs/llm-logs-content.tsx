@@ -223,8 +223,8 @@ export default function LlmLogsContent() {
             {/* Analytics Cards */}
             {analytics && (
                 <div className="grid grid-cols-4 gap-4">
-                    <div className=" rounded-xl border  p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>Total Calls</div>
+                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Total Calls</div>
                         <div className="text-2xl font-bold text-white">{formatNumber(analytics.total_calls)}</div>
                         <div className="flex gap-4 mt-2 text-xs">
                             <span className="text-green-400">{formatNumber(analytics.successful_calls)} success</span>
@@ -232,27 +232,27 @@ export default function LlmLogsContent() {
                         </div>
                     </div>
 
-                    <div className=" rounded-xl border  p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>Total Tokens</div>
+                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Total Tokens</div>
                         <div className="text-2xl font-bold text-white">{formatTokens(analytics.total_tokens)}</div>
-                        <div className="flex gap-4 mt-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        <div className="flex gap-4 mt-2 text-xs " style={{color: "var(--muted-foreground)"}}>
                             <span>In: {formatTokens(analytics.total_input_tokens)}</span>
                             <span>Out: {formatTokens(analytics.total_output_tokens)}</span>
                         </div>
                     </div>
 
-                    <div className=" rounded-xl border  p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>Avg Latency</div>
+                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Avg Latency</div>
                         <div className="text-2xl font-bold text-white">{formatDuration(analytics.avg_latency_ms)}</div>
-                        <div className="text-xs  mt-2" style={{ color: "var(--muted-foreground)" }}>Total: {formatDuration(analytics.total_duration_ms)}</div>
+                        <div className="text-xs  mt-2" style={{color: "var(--muted-foreground)"}}>Total: {formatDuration(analytics.total_duration_ms)}</div>
                     </div>
 
-                    <div className=" rounded-xl border  p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>Top Model</div>
+                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Top Model</div>
                         <div className="text-lg font-bold text-white truncate">
                             {Object.entries(analytics.model_breakdown).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A"}
                         </div>
-                        <div className="text-xs  mt-2" style={{ color: "var(--muted-foreground)" }}>
+                        <div className="text-xs  mt-2" style={{color: "var(--muted-foreground)"}}>
                             {Object.keys(analytics.model_breakdown).length} models used
                         </div>
                     </div>
@@ -260,14 +260,14 @@ export default function LlmLogsContent() {
             )}
 
             {/* Filters */}
-            <div className="flex gap-4  rounded-xl border  p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+            <div className="flex gap-4  rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
                 {/* Date Range Filter */}
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>Date Range</label>
+                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Date Range</label>
                     <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value as DateRangeOption)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                     >
                         <option value="1h">Last 1 Hour</option>
                         <option value="24h">Last 24 Hours</option>
@@ -282,32 +282,32 @@ export default function LlmLogsContent() {
                 {dateRange === "custom" && (
                     <>
                         <div className="flex-1">
-                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>From</label>
+                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>From</label>
                             <input
                                 type="datetime-local"
                                 value={formatDateForInput(customFromDate)}
                                 onChange={(e) => setCustomFromDate(e.target.value)}
-                                className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                                className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>To</label>
+                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>To</label>
                             <input
                                 type="datetime-local"
                                 value={formatDateForInput(customToDate)}
                                 onChange={(e) => setCustomToDate(e.target.value)}
-                                className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                                className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                             />
                         </div>
                     </>
                 )}
 
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>Status</label>
+                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Status</label>
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                     >
                         <option value="all">All Status</option>
                         <option value="success">Success</option>
@@ -316,11 +316,11 @@ export default function LlmLogsContent() {
                 </div>
 
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>Call Type</label>
+                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Call Type</label>
                     <select
                         value={callTypeFilter}
                         onChange={(e) => setCallTypeFilter(e.target.value as FilterCallType)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                     >
                         <option value="all">All Types</option>
                         <option value="planner">Planner</option>
@@ -330,11 +330,11 @@ export default function LlmLogsContent() {
                 </div>
 
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>Feature</label>
+                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Feature</label>
                     <select
                         value={featureFilter}
                         onChange={(e) => setFeatureFilter(e.target.value as FilterFeature)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                     >
                         <option value="all">All Features</option>
                         <option value="ops">OPS</option>
@@ -345,43 +345,43 @@ export default function LlmLogsContent() {
             </div>
 
             {/* Logs Table */}
-            <div className=" rounded-xl border  overflow-hidden" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+            <div className=" rounded-xl border  overflow-hidden" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
                 {isLoading ? (
                     <div className="flex items-center justify-center py-20">
                         <div className="w-8 h-8 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-                        <span className="ml-3  text-sm" style={{ color: "var(--muted-foreground)" }}>Loading logs...</span>
+                        <span className="ml-3  text-sm" style={{color: "var(--muted-foreground)"}}>Loading logs...</span>
                     </div>
                 ) : error ? (
                     <div className="text-center py-20">
                         <p className="text-red-400 text-sm">Failed to load logs</p>
                         <button
                             onClick={() => refetch()}
-                            className="mt-4 px-4 py-2  hover:  rounded-lg text-sm" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+                            className="mt-4 px-4 py-2  hover:  rounded-lg text-sm" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
                         >
                             Try Again
                         </button>
                     </div>
                 ) : logs.length === 0 ? (
                     <div className="text-center py-20">
-                        <p className=" text-sm" style={{ color: "var(--muted-foreground)" }}>No LLM call logs found</p>
-                        <p className=" text-xs mt-2" style={{ color: "var(--muted-foreground)" }}>LLM calls will appear here once you make queries through OPS</p>
+                        <p className=" text-sm" style={{color: "var(--muted-foreground)"}}>No LLM call logs found</p>
+                        <p className=" text-xs mt-2" style={{color: "var(--muted-foreground)"}}>LLM calls will appear here once you make queries through OPS</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="/50" style={{ backgroundColor: "var(--surface-base)" }}>
+                            <thead className="/50" style={{backgroundColor: "var(--surface-base)"}}>
                                 <tr>
-                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Time</th>
-                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Type</th>
-                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Model</th>
-                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>In</th>
-                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Out</th>
-                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Total</th>
-                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Duration</th>
-                                    <th className="px-3 py-3 text-center text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Status</th>
-                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Feature</th>
-                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Provider</th>
-                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Trace</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Time</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Type</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Model</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>In</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Out</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Total</th>
+                                    <th className="px-3 py-3 text-right text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Duration</th>
+                                    <th className="px-3 py-3 text-center text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Status</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Feature</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Provider</th>
+                                    <th className="px-3 py-3 text-left text-xs font-bold  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-800">
@@ -389,9 +389,9 @@ export default function LlmLogsContent() {
                                     <tr
                                         key={log.id}
                                         onClick={() => handleLogClick(log)}
-                                        className="hover: cursor-pointer transition-colors" style={{ backgroundColor: "var(--surface-overlay)" }}
+                                        className="hover: cursor-pointer transition-colors" style={{backgroundColor: "var(--surface-overlay)"}}
                                     >
-                                        <td className="px-3 py-3 text-sm  whitespace-nowrap" style={{ color: "var(--foreground-secondary)" }}>
+                                        <td className="px-3 py-3 text-sm  whitespace-nowrap" style={{color: "var(--foreground-secondary)"}}>
                                             {new Date(log.created_at).toLocaleString()}
                                         </td>
                                         <td className="px-3 py-3">
@@ -399,19 +399,19 @@ export default function LlmLogsContent() {
                                                 {log.call_type}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3 text-sm  font-mono" style={{ color: "var(--foreground-secondary)" }}>
+                                        <td className="px-3 py-3 text-sm  font-mono" style={{color: "var(--foreground-secondary)"}}>
                                             {log.model_name}
                                         </td>
-                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{ color: "var(--foreground-secondary)" }}>
+                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{color: "var(--foreground-secondary)"}}>
                                             {formatTokens(log.input_tokens)}
                                         </td>
-                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{ color: "var(--foreground-secondary)" }}>
+                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{color: "var(--foreground-secondary)"}}>
                                             {formatTokens(log.output_tokens)}
                                         </td>
-                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{ color: "var(--foreground-secondary)" }}>
+                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{color: "var(--foreground-secondary)"}}>
                                             {formatTokens(log.total_tokens)}
                                         </td>
-                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{ color: "var(--foreground-secondary)" }}>
+                                        <td className="px-3 py-3 text-sm  text-right font-mono" style={{color: "var(--foreground-secondary)"}}>
                                             {formatDuration(log.duration_ms)}
                                         </td>
                                         <td className="px-3 py-3 text-center">
@@ -419,13 +419,13 @@ export default function LlmLogsContent() {
                                                 {log.status}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>
+                                        <td className="px-3 py-3 text-sm " style={{color: "var(--muted-foreground)"}}>
                                             {log.feature || "-"}
                                         </td>
-                                        <td className="px-3 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>
+                                        <td className="px-3 py-3 text-sm " style={{color: "var(--muted-foreground)"}}>
                                             {log.provider || "-"}
                                         </td>
-                                        <td className="px-3 py-3 text-sm  font-mono" style={{ color: "var(--muted-foreground)" }}>
+                                        <td className="px-3 py-3 text-sm  font-mono" style={{color: "var(--muted-foreground)"}}>
                                             {log.trace_id ? log.trace_id.slice(0, 8) + "..." : "-"}
                                         </td>
                                     </tr>
@@ -437,9 +437,9 @@ export default function LlmLogsContent() {
 
                 {/* Pagination Note */}
                 {total > 100 && (
-                    <div className="px-4 py-3 border-t  flex items-center justify-between text-xs " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
+                    <div className="px-4 py-3 border-t  flex items-center justify-between text-xs " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
                         <span>Showing {Math.min(100, total)} of {formatNumber(total)} logs</span>
-                        <span className="" style={{ color: "var(--muted-foreground)" }}>Add pagination controls for more results</span>
+                        <span className="" style={{color: "var(--muted-foreground)"}}>Add pagination controls for more results</span>
                     </div>
                 )}
             </div>
@@ -447,18 +447,18 @@ export default function LlmLogsContent() {
             {/* Detail Modal */}
             {showDetailModal && selectedLog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-                    <div className=" rounded-xl border  max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                    <div className=" rounded-xl border  max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
                         {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b " style={{ borderColor: "var(--border)" }}>
+                        <div className="flex items-center justify-between p-6 border-b " style={{borderColor: "var(--border)"}}>
                             <div>
                                 <h2 className="text-xl font-bold text-white">LLM Call Details</h2>
-                                <p className=" text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
+                                <p className=" text-xs mt-1" style={{color: "var(--muted-foreground)"}}>
                                     {new Date(selectedLog.created_at).toLocaleString()}
                                 </p>
                             </div>
                             <button
                                 onClick={handleCloseDetail}
-                                className=" hover:text-white transition-colors" style={{ color: "var(--muted-foreground)" }}
+                                className=" hover:text-white transition-colors" style={{color: "var(--muted-foreground)"}}
                             >
                                 <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -472,24 +472,24 @@ export default function LlmLogsContent() {
                                 <>
                                     {/* Summary */}
                                     <div className="grid grid-cols-4 gap-4">
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <div className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Model</div>
-                                            <div className="text-sm font-mono " style={{ color: "var(--foreground-secondary)" }}>{logDetail.model_name}</div>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <div className="text-xs  mb-1" style={{color: "var(--muted-foreground)"}}>Model</div>
+                                            <div className="text-sm font-mono " style={{color: "var(--foreground-secondary)"}}>{logDetail.model_name}</div>
                                         </div>
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <div className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Tokens</div>
-                                            <div className="text-sm font-mono " style={{ color: "var(--foreground-secondary)" }}>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <div className="text-xs  mb-1" style={{color: "var(--muted-foreground)"}}>Tokens</div>
+                                            <div className="text-sm font-mono " style={{color: "var(--foreground-secondary)"}}>
                                                 {formatTokens(logDetail.total_tokens)}
                                             </div>
                                         </div>
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <div className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Duration</div>
-                                            <div className="text-sm font-mono " style={{ color: "var(--foreground-secondary)" }}>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <div className="text-xs  mb-1" style={{color: "var(--muted-foreground)"}}>Duration</div>
+                                            <div className="text-sm font-mono " style={{color: "var(--foreground-secondary)"}}>
                                                 {formatDuration(logDetail.duration_ms)}
                                             </div>
                                         </div>
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <div className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Status</div>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <div className="text-xs  mb-1" style={{color: "var(--muted-foreground)"}}>Status</div>
                                             <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusBadgeClass(logDetail.status)}`}>
                                                 {logDetail.status}
                                             </span>
@@ -499,8 +499,8 @@ export default function LlmLogsContent() {
                                     {/* User Prompt */}
                                     {logDetail.user_prompt && (
                                         <div>
-                                            <h3 className="text-sm font-bold  mb-2" style={{ color: "var(--muted-foreground)" }}>User Prompt</h3>
-                                            <div className=" rounded-lg p-4 text-sm  whitespace-pre-wrap font-mono max-h-60 overflow-y-auto" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                            <h3 className="text-sm font-bold  mb-2" style={{color: "var(--muted-foreground)"}}>User Prompt</h3>
+                                            <div className=" rounded-lg p-4 text-sm  whitespace-pre-wrap font-mono max-h-60 overflow-y-auto" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                                 {logDetail.user_prompt}
                                             </div>
                                         </div>
@@ -509,8 +509,8 @@ export default function LlmLogsContent() {
                                     {/* System Prompt */}
                                     {logDetail.system_prompt && (
                                         <div>
-                                            <h3 className="text-sm font-bold  mb-2" style={{ color: "var(--muted-foreground)" }}>System Prompt</h3>
-                                            <div className=" rounded-lg p-4 text-sm  whitespace-pre-wrap font-mono max-h-40 overflow-y-auto" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                            <h3 className="text-sm font-bold  mb-2" style={{color: "var(--muted-foreground)"}}>System Prompt</h3>
+                                            <div className=" rounded-lg p-4 text-sm  whitespace-pre-wrap font-mono max-h-40 overflow-y-auto" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                                 {logDetail.system_prompt}
                                             </div>
                                         </div>
@@ -519,8 +519,8 @@ export default function LlmLogsContent() {
                                     {/* Response */}
                                     {logDetail.raw_response && (
                                         <div>
-                                            <h3 className="text-sm font-bold  mb-2" style={{ color: "var(--muted-foreground)" }}>LLM Response</h3>
-                                            <div className=" rounded-lg p-4 text-sm  whitespace-pre-wrap font-mono max-h-60 overflow-y-auto" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                            <h3 className="text-sm font-bold  mb-2" style={{color: "var(--muted-foreground)"}}>LLM Response</h3>
+                                            <div className=" rounded-lg p-4 text-sm  whitespace-pre-wrap font-mono max-h-60 overflow-y-auto" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                                 {logDetail.raw_response}
                                             </div>
                                         </div>
@@ -529,8 +529,8 @@ export default function LlmLogsContent() {
                                     {/* Context */}
                                     {logDetail.context && Object.keys(logDetail.context).length > 0 && (
                                         <div>
-                                            <h3 className="text-sm font-bold  mb-2" style={{ color: "var(--muted-foreground)" }}>Context</h3>
-                                            <div className=" rounded-lg p-4 text-sm  font-mono max-h-40 overflow-y-auto" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                            <h3 className="text-sm font-bold  mb-2" style={{color: "var(--muted-foreground)"}}>Context</h3>
+                                            <div className=" rounded-lg p-4 text-sm  font-mono max-h-40 overflow-y-auto" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                                 <pre>{JSON.stringify(logDetail.context, null, 2)}</pre>
                                             </div>
                                         </div>
@@ -551,28 +551,28 @@ export default function LlmLogsContent() {
 
                                     {/* Metadata */}
                                     <div className="grid grid-cols-2 gap-4 text-xs">
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <span className="" style={{ color: "var(--muted-foreground)" }}>Trace ID: </span>
-                                            <span className=" font-mono" style={{ color: "var(--foreground-secondary)" }}>{logDetail.trace_id || "N/A"}</span>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <span className="" style={{color: "var(--muted-foreground)"}}>Trace ID: </span>
+                                            <span className=" font-mono" style={{color: "var(--foreground-secondary)"}}>{logDetail.trace_id || "N/A"}</span>
                                         </div>
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <span className="" style={{ color: "var(--muted-foreground)" }}>UI Endpoint: </span>
-                                            <span className=" font-mono" style={{ color: "var(--foreground-secondary)" }}>{logDetail.ui_endpoint || "N/A"}</span>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <span className="" style={{color: "var(--muted-foreground)"}}>UI Endpoint: </span>
+                                            <span className=" font-mono" style={{color: "var(--foreground-secondary)"}}>{logDetail.ui_endpoint || "N/A"}</span>
                                         </div>
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <span className="" style={{ color: "var(--muted-foreground)" }}>Provider: </span>
-                                            <span className="" style={{ color: "var(--foreground-secondary)" }}>{logDetail.provider || "N/A"}</span>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <span className="" style={{color: "var(--muted-foreground)"}}>Provider: </span>
+                                            <span className="" style={{color: "var(--foreground-secondary)"}}>{logDetail.provider || "N/A"}</span>
                                         </div>
-                                        <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-base)" }}>
-                                            <span className="" style={{ color: "var(--muted-foreground)" }}>Call Index: </span>
-                                            <span className="" style={{ color: "var(--foreground-secondary)" }}>{logDetail.call_index}</span>
+                                        <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-base)"}}>
+                                            <span className="" style={{color: "var(--muted-foreground)"}}>Call Index: </span>
+                                            <span className="" style={{color: "var(--foreground-secondary)"}}>{logDetail.call_index}</span>
                                         </div>
                                     </div>
                                 </>
                             ) : (
                                 <div className="flex items-center justify-center py-20">
                                     <div className="w-6 h-6 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-                                    <span className="ml-3  text-sm" style={{ color: "var(--muted-foreground)" }}>Loading details...</span>
+                                    <span className="ml-3  text-sm" style={{color: "var(--muted-foreground)"}}>Loading details...</span>
                                 </div>
                             )}
                         </div>

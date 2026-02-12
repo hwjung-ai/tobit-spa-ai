@@ -51,7 +51,7 @@ export default function PerformanceMetrics() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "var(--muted-foreground)" }}>
+      <div className="rounded-2xl border p-6 text-sm" style={{borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "var(--muted-foreground)"}}>
         Loading performance metrics...
       </div>
     );
@@ -59,7 +59,7 @@ export default function PerformanceMetrics() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(159, 18, 57, 0.7)", backgroundColor: "rgba(120, 53, 15, 0.6)", color: "rgba(251, 146, 60, 1)" }}>
+      <div className="rounded-2xl border p-6 text-sm" style={{borderColor: "rgba(159, 18, 57, 0.7)", backgroundColor: "rgba(120, 53, 15, 0.6)", color: "rgba(251, 146, 60, 1)"}}>
         Error: {error}
       </div>
     );
@@ -95,23 +95,23 @@ export default function PerformanceMetrics() {
   ];
 
   return (
-    <div className="rounded-2xl border p-6" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)" }}>
+    <div className="rounded-2xl border p-6" style={{borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)"}}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>Performance Metrics</h3>
-        <span className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Today</span>
+        <h3 className="text-lg font-semibold" style={{color: "var(--foreground)"}}>Performance Metrics</h3>
+        <span className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Today</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {metrics.map((metric) => (
-          <div key={metric.label} className="p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-            <p className="text-xs  uppercase tracking-[0.1em] mb-3" style={{ color: "var(--muted-foreground)" }}>
+          <div key={metric.label} className="p-4 rounded-lg /40 border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+            <p className="text-xs  uppercase tracking-[0.1em] mb-3" style={{color: "var(--muted-foreground)"}}>
               {metric.label}
             </p>
             <div className="flex items-baseline gap-2">
               <p className={`text-2xl font-semibold ${metric.color}`}>
                 {metric.value}
               </p>
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{metric.unit}</p>
+              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{metric.unit}</p>
             </div>
           </div>
         ))}
@@ -120,23 +120,23 @@ export default function PerformanceMetrics() {
       {/* Detailed Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Execution Stats */}
-        <div className="p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div className="p-4 rounded-lg /40 border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
           <h4 className="text-sm font-semibold text-white mb-3">Execution Stats</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="" style={{ color: "var(--muted-foreground)" }}>Today's Executions</span>
+              <span className="" style={{color: "var(--muted-foreground)"}}>Today's Executions</span>
               <span className="text-white font-semibold">
                 {stats.today_execution_count.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="" style={{ color: "var(--muted-foreground)" }}>Last 24h Executions</span>
+              <span className="" style={{color: "var(--muted-foreground)"}}>Last 24h Executions</span>
               <span className="text-white font-semibold">
                 {stats.last_24h_execution_count.toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="" style={{ color: "var(--muted-foreground)" }}>Average per Hour</span>
+              <span className="" style={{color: "var(--muted-foreground)"}}>Average per Hour</span>
               <span className="text-white font-semibold">
                 {(stats.today_execution_count / 24).toFixed(1)}
               </span>
@@ -145,11 +145,11 @@ export default function PerformanceMetrics() {
         </div>
 
         {/* Error Stats */}
-        <div className="p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div className="p-4 rounded-lg /40 border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
           <h4 className="text-sm font-semibold text-white mb-3">Error Stats</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="" style={{ color: "var(--muted-foreground)" }}>Today's Errors</span>
+              <span className="" style={{color: "var(--muted-foreground)"}}>Today's Errors</span>
               <span
                 className={`font-semibold ${
                   stats.today_error_count > 0 ? "text-rose-400" : "text-emerald-400"
@@ -159,7 +159,7 @@ export default function PerformanceMetrics() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="" style={{ color: "var(--muted-foreground)" }}>Error Rate</span>
+              <span className="" style={{color: "var(--muted-foreground)"}}>Error Rate</span>
               <span
                 className={`font-semibold ${
                   stats.today_error_rate < 0.05 ? "text-emerald-400" : "text-rose-400"
@@ -169,7 +169,7 @@ export default function PerformanceMetrics() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="" style={{ color: "var(--muted-foreground)" }}>Success Rate</span>
+              <span className="" style={{color: "var(--muted-foreground)"}}>Success Rate</span>
               <span className="text-emerald-400 font-semibold">
                 {((1 - stats.today_error_rate) * 100).toFixed(1)}%
               </span>
@@ -179,7 +179,7 @@ export default function PerformanceMetrics() {
       </div>
 
       {/* KPI Assessment */}
-      <div className="mt-4 p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+      <div className="mt-4 p-4 rounded-lg /40 border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
         <h4 className="text-sm font-semibold text-white mb-3">Assessment</h4>
         <div className="space-y-2 text-xs">
           <div className="flex items-center gap-2">
@@ -188,7 +188,7 @@ export default function PerformanceMetrics() {
                 stats.today_avg_duration_ms < 100 ? "bg-emerald-500" : "bg-amber-500"
               }`}
             />
-            <span className="" style={{ color: "var(--muted-foreground)" }}>
+            <span className="" style={{color: "var(--muted-foreground)"}}>
               Response Time:{" "}
               <span className="text-white font-semibold">
                 {stats.today_avg_duration_ms.toFixed(0)}ms
@@ -201,7 +201,7 @@ export default function PerformanceMetrics() {
                 stats.today_error_rate < 0.05 ? "bg-emerald-500" : "bg-amber-500"
               }`}
             />
-            <span className="" style={{ color: "var(--muted-foreground)" }}>
+            <span className="" style={{color: "var(--muted-foreground)"}}>
               Reliability:{" "}
               <span className="text-white font-semibold">
                 {((1 - stats.today_error_rate) * 100).toFixed(1)}%
@@ -214,7 +214,7 @@ export default function PerformanceMetrics() {
                 stats.active_rules > 0 ? "bg-emerald-500" : "bg-[var(--surface-elevated)]"
               }`}
             />
-            <span className="" style={{ color: "var(--muted-foreground)" }}>
+            <span className="" style={{color: "var(--muted-foreground)"}}>
               Active Rules:{" "}
               <span className="text-white font-semibold">{stats.active_rules}</span>
             </span>

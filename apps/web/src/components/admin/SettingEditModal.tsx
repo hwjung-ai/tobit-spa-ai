@@ -76,12 +76,12 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-            <div className=" rounded-lg border  max-w-5xl w-full max-h-[80vh] overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                <div className="flex items-center justify-between p-4 border-b " style={{ borderColor: "var(--border)" }}>
+            <div className=" rounded-lg border  max-w-5xl w-full max-h-[80vh] overflow-hidden flex flex-col" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <div className="flex items-center justify-between p-4 border-b " style={{borderColor: "var(--border)"}}>
                     <h2 className="text-lg font-semibold text-white">Edit Setting: {setting.key}</h2>
                     <button
                         onClick={onClose}
-                        className=" hover:text-white transition-colors" style={{ color: "var(--muted-foreground)" }}
+                        className=" hover:text-white transition-colors" style={{color: "var(--muted-foreground)"}}
                     >
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -96,18 +96,18 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
 
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Key</label>
-                            <p className=" font-mono text-sm mt-1" style={{ color: "var(--foreground-secondary)" }}>{setting.key}</p>
+                            <label className="text-xs  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Key</label>
+                            <p className=" font-mono text-sm mt-1" style={{color: "var(--foreground-secondary)"}}>{setting.key}</p>
                         </div>
 
                         <div>
-                            <label className="text-xs  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Description</label>
-                            <p className=" text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>{setting.description}</p>
+                            <label className="text-xs  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Description</label>
+                            <p className=" text-sm mt-1" style={{color: "var(--muted-foreground)"}}>{setting.description}</p>
                         </div>
 
                         <div>
-                            <label className="text-xs  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Default</label>
-                            <p className=" text-sm mt-1 font-mono" style={{ color: "var(--muted-foreground)" }}>
+                            <label className="text-xs  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Default</label>
+                            <p className=" text-sm mt-1 font-mono" style={{color: "var(--muted-foreground)"}}>
                                 {typeof setting.default === "object"
                                     ? JSON.stringify(setting.default)
                                     : String(setting.default)}
@@ -115,12 +115,12 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                         </div>
 
                         <div>
-                            <label className="text-xs  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Current Source</label>
-                            <p className=" text-sm mt-1" style={{ color: "var(--foreground-secondary)" }}>
+                            <label className="text-xs  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Current Source</label>
+                            <p className=" text-sm mt-1" style={{color: "var(--foreground-secondary)"}}>
                                 <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-blue-950/50 text-blue-300" :
                                     setting.source === "env" ? "bg-yellow-950/50 text-yellow-300" :
                                         " "
-                                    }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}>
+                                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}>
                                     {setting.source}
                                 </span>
                             </p>
@@ -128,8 +128,8 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
 
                         {setting.allowed_values && setting.allowed_values.length > 0 && (
                             <div>
-                                <label className="text-xs  uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Allowed Values</label>
-                                <p className=" text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+                                <label className="text-xs  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Allowed Values</label>
+                                <p className=" text-sm mt-1" style={{color: "var(--muted-foreground)"}}>
                                     {setting.allowed_values.join(", ")}
                                 </p>
                             </div>
@@ -145,14 +145,14 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium  mb-2" style={{ color: "var(--foreground-secondary)" }}>
+                            <label className="block text-sm font-medium  mb-2" style={{color: "var(--foreground-secondary)"}}>
                                 New Value
                             </label>
                             {setting.allowed_values && setting.allowed_values.length > 0 ? (
                                 <select
                                     value={value}
                                     onChange={(e) => setValue(e.target.value)}
-                                    className="w-full px-4 py-2  border  rounded-lg  focus:outline-none focus:border-sky-500 transition-colors" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                                    className="w-full px-4 py-2  border  rounded-lg  focus:outline-none focus:border-sky-500 transition-colors" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
                                 >
                                     {setting.allowed_values.map((val) => (
                                         <option key={String(val)} value={String(val)}>
@@ -165,17 +165,17 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                                     value={value}
                                     onChange={(e) => setValue(e.target.value)}
                                     rows={4}
-                                    className="w-full px-4 py-2  border  rounded-lg  font-mono text-sm focus:outline-none focus:border-sky-500 transition-colors" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                                    className="w-full px-4 py-2  border  rounded-lg  font-mono text-sm focus:outline-none focus:border-sky-500 transition-colors" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
                                 />
                             )}
                         </div>
 
-                        <div className="pt-6 border-t " style={{ borderColor: "var(--border)" }}>
-                            <label className="text-xs  uppercase tracking-wider mb-4 block" style={{ color: "var(--muted-foreground)" }}>Change History (Recent 10)</label>
+                        <div className="pt-6 border-t " style={{borderColor: "var(--border)"}}>
+                            <label className="text-xs  uppercase tracking-wider mb-4 block" style={{color: "var(--muted-foreground)"}}>Change History (Recent 10)</label>
                             {isLoadingHistory ? (
-                                <div className="text-center py-4  text-xs" style={{ color: "var(--muted-foreground)" }}>Loading history...</div>
+                                <div className="text-center py-4  text-xs" style={{color: "var(--muted-foreground)"}}>Loading history...</div>
                             ) : (
-                                <div className=" rounded border  overflow-hidden" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                                <div className=" rounded border  overflow-hidden" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
                                     <AuditLogTable logs={history} onViewDetails={setSelectedLog} />
                                 </div>
                             )}
@@ -183,17 +183,17 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-4 border-t " style={{ borderColor: "var(--border)" }}>
+                <div className="flex items-center justify-end gap-3 p-4 border-t " style={{borderColor: "var(--border)"}}>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2  hover:text-white transition-colors" style={{ color: "var(--muted-foreground)" }}
+                        className="px-4 py-2  hover:text-white transition-colors" style={{color: "var(--muted-foreground)"}}
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="px-6 py-2 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-lg transition-colors font-medium" style={{ color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+                        className="px-6 py-2 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-lg transition-colors font-medium" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
                     >
                         {isSaving ? "Saving..." : "Save"}
                     </button>

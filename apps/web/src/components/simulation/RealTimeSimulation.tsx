@@ -238,18 +238,18 @@ export default function RealTimeSimulation({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-3xl border  /70 p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+      <section className="rounded-3xl border  /70 p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white">Real-time Simulation</h1>
-            <p className="mt-2 text-sm " style={{ color: "var(--foreground-secondary)" }}>
+            <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>
               Streaming simulation results as they compute
             </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : ""}`} style={{ backgroundColor: "var(--surface-elevated)" }} />
-              <span className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+              <div className={`w-3 h-3 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : ""}`} style={{backgroundColor: "var(--surface-elevated)"}} />
+              <span className="text-sm " style={{color: "var(--muted-foreground)"}}>
                 {isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
@@ -275,36 +275,34 @@ export default function RealTimeSimulation({
 
       {/* Progress */}
       {progress && (
-        <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
               Progress
             </h2>
-            <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+            <span className="text-xs " style={{color: "var(--muted-foreground)"}}>
               {progress.step}
             </span>
           </div>
           <div className="mt-3">
-            <div className="h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+            <div className="h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
               <div
                 className="h-full bg-sky-500 transition-all duration-300 ease-out"
-                style={{
-                  width: progress.total
+                style={{width: progress.total
                     ? `${(progress.current || 0) / progress.total * 100}%`
-                    : "50%",
-                }}
+                    : "50%"}}
               />
             </div>
           </div>
-          <p className="mt-2 text-sm " style={{ color: "var(--foreground-secondary)" }}>{progress.message}</p>
+          <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>{progress.message}</p>
         </section>
       )}
 
       {/* Baseline Info */}
       {baseline && (
-        <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
               Baseline KPIs
             </h2>
             <span className={`text-xs px-2 py-1 rounded-full ${
@@ -313,7 +311,7 @@ export default function RealTimeSimulation({
                 : baseline.dataQuality?.using_fallback
                 ? "bg-amber-500/20 text-amber-300"
                 : "0/20 "
-            }`} style={{ backgroundColor: "var(--background)", color: "var(--foreground-secondary)" }}>
+            }`} style={{backgroundColor: "var(--background)", color: "var(--foreground-secondary)"}}>
               {baseline.dataQuality?.metrics_available
                 ? "Real Metrics"
                 : baseline.dataQuality?.using_fallback
@@ -321,13 +319,13 @@ export default function RealTimeSimulation({
                 : "Unknown Source"}
             </span>
           </div>
-          <p className="mt-1 text-xs " style={{ color: "var(--muted-foreground)" }}>
+          <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>
             {baseline.dataQuality?.note || `Source: ${baseline.source}`}
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(baseline.kpis).map(([key, value]) => (
-              <div key={key} className="rounded-xl border  /50 p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{key}</p>
+              <div key={key} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{key}</p>
                 <p className="text-lg font-semibold text-white">{typeof value === "number" ? value.toFixed(2) : value}</p>
               </div>
             ))}
@@ -337,17 +335,17 @@ export default function RealTimeSimulation({
 
       {/* Real-time KPI Results */}
       {kpis.length > 0 && (
-        <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
             KPI Results ({kpis.length})
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {kpis.map((kpi) => {
               const changePct = ((kpi.simulated - kpi.baseline) / kpi.baseline) * 100;
               return (
-                <div key={kpi.kpi} className="rounded-xl border  /50 p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{kpi.kpi}</p>
-                  <p className="mt-1 text-sm " style={{ color: "var(--foreground-secondary)" }}>
+                <div key={kpi.kpi} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                  <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{kpi.kpi}</p>
+                  <p className="mt-1 text-sm " style={{color: "var(--foreground-secondary)"}}>
                     {kpi.baseline.toFixed(2)} → {kpi.simulated.toFixed(2)} {kpi.unit}
                   </p>
                   <p className={`text-sm font-semibold ${changePct >= 0 ? "text-amber-300" : "text-emerald-300"}`}>
@@ -364,8 +362,8 @@ export default function RealTimeSimulation({
       {/* Charts */}
       {chartData.length > 0 && (
         <section className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+          <div className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
               Comparison Chart
             </h2>
             <div className="mt-4 h-56">
@@ -383,8 +381,8 @@ export default function RealTimeSimulation({
             </div>
           </div>
 
-          <div className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+          <div className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
               Change Percentage
             </h2>
             <div className="mt-4 h-56">
@@ -404,29 +402,29 @@ export default function RealTimeSimulation({
 
       {/* Final Result */}
       {result && (
-        <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
             Final Result
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Strategy</p>
+            <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Strategy</p>
               <p className="text-lg font-semibold text-white uppercase">{result.simulation.strategy}</p>
             </div>
-            <div className="rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Confidence</p>
+            <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Confidence</p>
               <p className="text-lg font-semibold text-emerald-400">
                 {(result.simulation.confidence * 100).toFixed(0)}%
               </p>
             </div>
-            <div className="rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Scenario ID</p>
-              <p className="text-sm  truncate" style={{ color: "var(--foreground-secondary)" }}>{result.simulation.scenario_id}</p>
+            <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Scenario ID</p>
+              <p className="text-sm  truncate" style={{color: "var(--foreground-secondary)"}}>{result.simulation.scenario_id}</p>
             </div>
           </div>
-          <div className="mt-4 rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-            <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Explanation</p>
-            <p className="mt-1 text-sm " style={{ color: "var(--foreground-secondary)" }}>{result.simulation.explanation}</p>
+          <div className="mt-4 rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Explanation</p>
+            <p className="mt-1 text-sm " style={{color: "var(--foreground-secondary)"}}>{result.simulation.explanation}</p>
           </div>
 
           {/* Data Source Transparency */}
@@ -438,7 +436,7 @@ export default function RealTimeSimulation({
                     ? "border-emerald-700/40 bg-emerald-950/20"
                     : "border-amber-700/40 bg-amber-950/20"
                 }`}>
-                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Data Source</p>
+                  <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Data Source</p>
                   <p className={`text-sm font-semibold ${
                     result.data_source === "metric_timeseries"
                       ? "text-emerald-300"
@@ -453,12 +451,12 @@ export default function RealTimeSimulation({
                 </div>
               )}
               {result.timing && (
-                <div className="rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Computation Time</p>
+                <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                  <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Computation Time</p>
                   <p className="text-sm font-semibold text-sky-300">
                     {result.timing.total_ms.toFixed(0)}ms total
                   </p>
-                  <p className="mt-1 text-xs " style={{ color: "var(--muted-foreground)" }}>
+                  <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>
                     Planning: {result.timing.planning_ms.toFixed(0)}ms |
                     Baseline: {result.timing.baseline_loading_ms.toFixed(0)}ms |
                     Strategy: {result.timing.strategy_execution_ms.toFixed(0)}ms

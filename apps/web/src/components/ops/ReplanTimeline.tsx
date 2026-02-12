@@ -106,8 +106,8 @@ const PatchDiffViewer = ({ patch }: { patch: unknown }) => {
   }
 
   const renderJson = (data: unknown, title: string) => (
-    <div className=" border  rounded p-3 text-xs font-mono " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
-      <div className=" mb-1" style={{ color: "var(--muted-foreground)" }}>{title}</div>
+    <div className=" border  rounded p-3 text-xs font-mono " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className=" mb-1" style={{color: "var(--muted-foreground)"}}>{title}</div>
       <pre>{JSON.stringify(data, null, 2)}</pre>
     </div>
   );
@@ -179,20 +179,20 @@ export default function ReplanTimeline({
   return (
     <div className={cn("flex flex-col rounded-2xl border border-[var(--border)] bg-[var(--surface-overlay)]", className)}>
       {/* Header */}
-      <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
+      <div className="p-4 border-b " style={{borderColor: "var(--border)"}}>
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
               Replan Events
             </h2>
             {traceId && (
-              <p className="text-xs  mt-1 break-all" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs  mt-1 break-all" style={{color: "var(--muted-foreground)"}}>
                 Trace ID: {traceId}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+            <div className="text-xs " style={{color: "var(--muted-foreground)"}}>
               {filteredEvents.length} event{filteredEvents.length !== 1 ? "s" : ""}
             </div>
           </div>
@@ -229,7 +229,7 @@ export default function ReplanTimeline({
       {/* Events List - Inline Accordion Style */}
       <div className="p-4 space-y-2 max-h-[600px] overflow-auto">
         {filteredEvents.length === 0 ? (
-          <div className="flex items-center justify-center h-24 " style={{ color: "var(--muted-foreground)" }}>
+          <div className="flex items-center justify-center h-24 " style={{color: "var(--muted-foreground)"}}>
             <div className="text-center">
               <Clock className="h-6 w-6 mx-auto mb-1 opacity-50" />
               <p className="text-xs">No replan events</p>
@@ -260,7 +260,7 @@ export default function ReplanTimeline({
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4 flex-shrink-0" />
                     <span className="text-sm font-medium text-white">{triggerConfig.label}</span>
-                    <span className=" text-xs" style={{ color: "var(--muted-foreground)" }}>{event.stage_name}</span>
+                    <span className=" text-xs" style={{color: "var(--muted-foreground)"}}>{event.stage_name}</span>
                     <span className={cn(
                       "px-1.5 py-0.5 rounded text-xs font-medium",
                       SEVERITY_COLORS[event.trigger.severity as keyof typeof SEVERITY_COLORS]
@@ -280,7 +280,7 @@ export default function ReplanTimeline({
                         Denied
                       </span>
                     )}
-                    <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>{formatTime(event.timestamp)}</span>
+                    <span className="text-xs " style={{color: "var(--muted-foreground)"}}>{formatTime(event.timestamp)}</span>
                     <ChevronDown className={cn(
                       "h-4 w-4 text-[var(--muted-foreground)] transition-transform",
                       isExpanded && "rotate-180"
@@ -290,36 +290,36 @@ export default function ReplanTimeline({
 
                 {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="px-3 pb-3 pt-2 space-y-3 border-t /50 mt-2" style={{ borderColor: "var(--border)" }}>
+                  <div className="px-3 pb-3 pt-2 space-y-3 border-t /50 mt-2" style={{borderColor: "var(--border)"}}>
                     {/* Trigger Reason */}
                     <div>
-                      <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Reason</p>
-                      <p className="text-xs " style={{ color: "var(--foreground-secondary)" }}>{event.trigger.reason}</p>
+                      <p className="text-xs  mb-1" style={{color: "var(--muted-foreground)"}}>Reason</p>
+                      <p className="text-xs " style={{color: "var(--foreground-secondary)"}}>{event.trigger.reason}</p>
                     </div>
 
                     {/* Details Grid */}
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className=" rounded p-2" style={{ backgroundColor: "var(--surface-overlay)" }}>
-                        <p className="" style={{ color: "var(--muted-foreground)" }}>Type</p>
-                        <p className="" style={{ color: "var(--foreground-secondary)" }}>{event.event_type}</p>
+                      <div className=" rounded p-2" style={{backgroundColor: "var(--surface-overlay)"}}>
+                        <p className="" style={{color: "var(--muted-foreground)"}}>Type</p>
+                        <p className="" style={{color: "var(--foreground-secondary)"}}>{event.event_type}</p>
                       </div>
-                      <div className=" rounded p-2" style={{ backgroundColor: "var(--surface-overlay)" }}>
-                        <p className="" style={{ color: "var(--muted-foreground)" }}>Stage</p>
-                        <p className="" style={{ color: "var(--foreground-secondary)" }}>{event.stage_name}</p>
+                      <div className=" rounded p-2" style={{backgroundColor: "var(--surface-overlay)"}}>
+                        <p className="" style={{color: "var(--muted-foreground)"}}>Stage</p>
+                        <p className="" style={{color: "var(--foreground-secondary)"}}>{event.stage_name}</p>
                       </div>
                       {event.decision_metadata && (
                         <>
-                          <div className=" rounded p-2" style={{ backgroundColor: "var(--surface-overlay)" }}>
-                            <p className="" style={{ color: "var(--muted-foreground)" }}>Decision</p>
+                          <div className=" rounded p-2" style={{backgroundColor: "var(--surface-overlay)"}}>
+                            <p className="" style={{color: "var(--muted-foreground)"}}>Decision</p>
                             <p className={cn(
                               isApproved ? "text-emerald-400" : "text-rose-400"
                             )}>
                               {isApproved ? "Approved" : "Denied"}
                             </p>
                           </div>
-                          <div className=" rounded p-2" style={{ backgroundColor: "var(--surface-overlay)" }}>
-                            <p className="" style={{ color: "var(--muted-foreground)" }}>Eval Time</p>
-                            <p className="" style={{ color: "var(--foreground-secondary)" }}>
+                          <div className=" rounded p-2" style={{backgroundColor: "var(--surface-overlay)"}}>
+                            <p className="" style={{color: "var(--muted-foreground)"}}>Eval Time</p>
+                            <p className="" style={{color: "var(--foreground-secondary)"}}>
                               {((event.decision_metadata.evaluation_time ?? 0) * 1000).toFixed(2)}ms
                             </p>
                           </div>
@@ -328,7 +328,7 @@ export default function ReplanTimeline({
                     </div>
 
                     {/* Timestamp */}
-                    <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                    <div className="text-xs " style={{color: "var(--muted-foreground)"}}>
                       {new Date(event.timestamp).toLocaleString()}
                     </div>
 

@@ -928,7 +928,7 @@ export default function UIScreenRenderer({
 
   if (isLoading || !screenSchema) {
     return (
-      <div className="rounded-xl border   p-4 text-sm  animate-pulse" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <div className="rounded-xl border   p-4 text-sm  animate-pulse" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
         Loading screen {screenId}...
       </div>
     );
@@ -975,7 +975,7 @@ export default function UIScreenRenderer({
       const fontSize = FONT_SIZE_MAP[(props.fontSize as string) || "sm"] || "text-sm";
       const fontWeight = FONT_WEIGHT_MAP[(props.fontWeight as string) || "normal"] || "font-normal";
       return (
-        <div key={comp.id} className={`${fontSize} ${fontWeight} `} style={{ color: "var(--foreground)" }} data-testid={`component-text-${comp.id}`}>
+        <div key={comp.id} className={`${fontSize} ${fontWeight} `} style={{color: "var(--foreground)"}} data-testid={`component-text-${comp.id}`}>
           {content}
         </div>
       );
@@ -999,7 +999,7 @@ export default function UIScreenRenderer({
         <button
           key={comp.id}
           type="button"
-          className="rounded-full border  px-4 py-2 text-xs uppercase tracking-[0.2em]  hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" }}
+          className="rounded-full border  px-4 py-2 text-xs uppercase tracking-[0.2em]  hover:" style={{borderColor: "var(--border)", color: "var(--foreground)"}}
           disabled={disabled || isLoadingAction}
           onClick={() => executeActions(comp.actions as UIActionPayload[])}
           data-testid={`component-button-${comp.id}`}
@@ -1014,7 +1014,7 @@ export default function UIScreenRenderer({
       return (
         <input
           key={comp.id}
-          className="w-full rounded-xl border  /50 px-3 py-2 text-sm " style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+          className="w-full rounded-xl border  /50 px-3 py-2 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
           placeholder={props.placeholder as string}
           type={(props.inputType as string) || "text"}
           value={String(value)}
@@ -1036,21 +1036,21 @@ export default function UIScreenRenderer({
       return (
         <form
           key={comp.id}
-          className="space-y-3 rounded-2xl border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+          className="space-y-3 rounded-2xl border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
           onSubmit={(e) => {
             e.preventDefault();
             void executeActions(comp.actions as UIActionPayload[]);
           }}
           data-testid={`component-form-${comp.id}`}
         >
-          <div className="text-xs font-semibold uppercase tracking-[0.2em] " style={{ color: "var(--foreground-secondary)" }}>
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] " style={{color: "var(--foreground-secondary)"}}>
             {title}
           </div>
           <div className="space-y-3">{children.map((child) => renderComponent(child))}</div>
           <div className="pt-1">
             <button
               type="submit"
-              className="rounded-full border  px-4 py-2 text-xs uppercase tracking-[0.2em]  hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" }}
+              className="rounded-full border  px-4 py-2 text-xs uppercase tracking-[0.2em]  hover:" style={{borderColor: "var(--border)", color: "var(--foreground)"}}
             >
               {submitLabel}
             </button>
@@ -1168,8 +1168,8 @@ export default function UIScreenRenderer({
 
       return (
         <div key={comp.id} className="space-y-2" data-testid={`component-table-${comp.id}`}>
-          <table className="min-w-full border  text-xs" style={{ borderColor: "var(--border)" }}>
-            <thead className="/80 " style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+          <table className="min-w-full border  text-xs" style={{borderColor: "var(--border)"}}>
+            <thead className="/80 " style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
               <tr>
                 {columnsMeta.map((col) => {
                   const isSorted = currentTableState.sortKey === col.key;
@@ -1179,7 +1179,7 @@ export default function UIScreenRenderer({
                       : " ▼"
                     : "";
                   return (
-                    <th key={col.key} className="border  px-2 py-1 text-left" style={{ borderColor: "var(--border)" }}>
+                    <th key={col.key} className="border  px-2 py-1 text-left" style={{borderColor: "var(--border)"}}>
                       <button
                         type="button"
                         className="inline-flex items-center gap-1"
@@ -1211,7 +1211,7 @@ export default function UIScreenRenderer({
                 <tr
                   key={`${comp.id}-row-${index}`}
                   className={`border  ${rowClickActionIndex >= 0 ? "cursor-pointer hover:" : ""
-                    }`} style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}
+                    }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
                   onClick={() => {
                     if (rowClickActionIndex < 0) return;
                     const rowAction = (comp.actions || [])[rowClickActionIndex];
@@ -1229,7 +1229,7 @@ export default function UIScreenRenderer({
                   {columnsMeta.map((col) => (
                     <td
                       key={`${comp.id}-${col.key}-${index}`}
-                      className="border  px-2 py-1" style={{ borderColor: "var(--border)" }}
+                      className="border  px-2 py-1" style={{borderColor: "var(--border)"}}
                       style={resolveCellStyle(col.key, (row as Record<string, unknown>)?.[col.key])}
                     >
                       {formatCell((row as Record<string, unknown>)?.[col.key], col.format)}
@@ -1241,14 +1241,14 @@ export default function UIScreenRenderer({
           </table>
 
           {pageSize > 0 && (
-            <div className="flex items-center justify-between text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+            <div className="flex items-center justify-between text-[11px] " style={{color: "var(--muted-foreground)"}}>
               <span>
                 Page {safePage + 1}/{totalPages} · {processedRows.length} rows
               </span>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="rounded border  px-2 py-1 disabled:opacity-40" style={{ borderColor: "var(--border)" }}
+                  className="rounded border  px-2 py-1 disabled:opacity-40" style={{borderColor: "var(--border)"}}
                   disabled={safePage <= 0}
                   onClick={() =>
                     updateTableState((prev) => ({ ...prev, page: Math.max(0, prev.page - 1) }))
@@ -1258,7 +1258,7 @@ export default function UIScreenRenderer({
                 </button>
                 <button
                   type="button"
-                  className="rounded border  px-2 py-1 disabled:opacity-40" style={{ borderColor: "var(--border)" }}
+                  className="rounded border  px-2 py-1 disabled:opacity-40" style={{borderColor: "var(--border)"}}
                   disabled={safePage >= totalPages - 1}
                   onClick={() =>
                     updateTableState((prev) => ({
@@ -1525,7 +1525,7 @@ export default function UIScreenRenderer({
       return (
         <div
           key={comp.id}
-          className="w-full rounded-2xl border   p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" ,  height: containerHeight }}
+          className="w-full rounded-2xl border   p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)", height: containerHeight}}
           data-testid={`component-chart-${comp.id}`}
         >
           <ResponsiveContainer width={isResponsive ? "100%" : "99%"} height="100%">
@@ -1568,7 +1568,7 @@ export default function UIScreenRenderer({
       const activeIndex = activeTabs[comp.id] ?? (props.activeIndex as number) ?? 0;
       const activeTab = tabs[activeIndex] as Record<string, unknown> | undefined;
       return (
-        <div key={comp.id} className="rounded-2xl border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }} data-testid={`component-tabs-${comp.id}`}>
+        <div key={comp.id} className="rounded-2xl border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} data-testid={`component-tabs-${comp.id}`}>
           <div className="flex gap-2">
             {tabs.map((tab: unknown, index: number) => {
               const tabItem = tab as Record<string, unknown>;
@@ -1577,7 +1577,7 @@ export default function UIScreenRenderer({
                   key={`${comp.id}-tab-${index}`}
                   type="button"
                   className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${index === activeIndex ? " " : "border  "
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)"}}
                   onClick={() => setActiveTabs((prev) => ({ ...prev, [comp.id]: index }))}
                 >
                   {(tabItem.label as string) || `Tab ${index + 1}`}
@@ -1599,7 +1599,7 @@ export default function UIScreenRenderer({
       return (
         <div
           key={comp.id}
-          className="rounded-2xl border   p-3 space-y-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+          className="rounded-2xl border   p-3 space-y-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
           data-testid={`component-accordion-${comp.id}`}
         >
           {items.map((rawItem, index) => {
@@ -1608,10 +1608,10 @@ export default function UIScreenRenderer({
             const title = String(item.title || `Section ${index + 1}`);
             const children = ((item.components as Component[]) || []);
             return (
-              <div key={`${comp.id}-acc-${index}`} className="rounded-lg border  overflow-hidden" style={{ borderColor: "var(--border)" }}>
+              <div key={`${comp.id}-acc-${index}`} className="rounded-lg border  overflow-hidden" style={{borderColor: "var(--border)"}}>
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between /70 px-3 py-2 text-left text-xs " style={{ color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                  className="flex w-full items-center justify-between /70 px-3 py-2 text-left text-xs " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
                   onClick={() => {
                     setActiveAccordions((prev) => {
                       const current = prev[comp.id] || [0];
@@ -1626,7 +1626,7 @@ export default function UIScreenRenderer({
                   }}
                 >
                   <span>{title}</span>
-                  <span className="" style={{ color: "var(--muted-foreground)" }}>{expanded ? "−" : "+"}</span>
+                  <span className="" style={{color: "var(--muted-foreground)"}}>{expanded ? "−" : "+"}</span>
                 </button>
                 {expanded && <div className="space-y-3 p-3">{children.map((child) => renderComponent(child))}</div>}
               </div>
@@ -1640,13 +1640,13 @@ export default function UIScreenRenderer({
       const isOpen = props.open as boolean | undefined;
       if (!isOpen) return null;
       return (
-        <div key={comp.id} className="fixed inset-0 z-50 flex items-center justify-center /70" style={{ backgroundColor: "var(--surface-base)" }} data-testid={`component-modal-${comp.id}`}>
-          <div className="w-full max-w-xl rounded-2xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div key={comp.id} className="fixed inset-0 z-50 flex items-center justify-center /70" style={{backgroundColor: "var(--surface-base)"}} data-testid={`component-modal-${comp.id}`}>
+          <div className="w-full max-w-xl rounded-2xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold " style={{ color: "var(--foreground)" }}>{(props.title as string) || comp.label}</h3>
+              <h3 className="text-sm font-semibold " style={{color: "var(--foreground)"}}>{(props.title as string) || comp.label}</h3>
               <button
                 type="button"
-                className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}
+                className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}
                 onClick={() => executeActions(comp.actions as UIActionPayload[])}
               >
                 Close
@@ -1663,13 +1663,13 @@ export default function UIScreenRenderer({
     if (comp.type === "keyvalue") {
       const items = (props.items as unknown[]) || (boundValue as unknown[]) || [];
       return (
-        <div key={comp.id} className="rounded-2xl border   p-4 text-xs" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }} data-testid={`component-keyvalue-${comp.id}`}>
+        <div key={comp.id} className="rounded-2xl border   p-4 text-xs" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} data-testid={`component-keyvalue-${comp.id}`}>
           {items.map((item: unknown, index: number) => {
             const kvItem = item as Record<string, unknown>;
             return (
-              <div key={`${comp.id}-kv-${index}`} className="flex items-center justify-between border-b  py-1 last:border-b-0" style={{ borderColor: "var(--border)" }}>
-                <span className="" style={{ color: "var(--muted-foreground)" }}>{kvItem.key as string}</span>
-                <span className="" style={{ color: "var(--foreground)" }}>{kvItem.value as string}</span>
+              <div key={`${comp.id}-kv-${index}`} className="flex items-center justify-between border-b  py-1 last:border-b-0" style={{borderColor: "var(--border)"}}>
+                <span className="" style={{color: "var(--muted-foreground)"}}>{kvItem.key as string}</span>
+                <span className="" style={{color: "var(--foreground)"}}>{kvItem.value as string}</span>
               </div>
             );
           })}
@@ -1706,7 +1706,7 @@ export default function UIScreenRenderer({
         <div
           key={comp.id}
           className={`flex flex-row ${alignClass[align] || "items-stretch"} ${justifyClass[justify] || "justify-start"}`}
-          style={{ gap: `${gap * 4}px` }}
+          style={{gap: `${gap * 4}px`}}
           data-testid={`component-row-${comp.id}`}
         >
           {children.map((child) => (
@@ -1732,7 +1732,7 @@ export default function UIScreenRenderer({
         <div
           key={comp.id}
           className={`flex flex-col ${alignClass[align] || "items-stretch"}`}
-          style={{ gap: `${gap * 4}px` }}
+          style={{gap: `${gap * 4}px`}}
           data-testid={`component-column-${comp.id}`}
         >
           {children.map((child) => renderComponent(child))}
@@ -1741,7 +1741,7 @@ export default function UIScreenRenderer({
     }
 
     return (
-      <div key={comp.id} className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+      <div key={comp.id} className="text-xs " style={{color: "var(--muted-foreground)"}}>
         Unsupported component: {comp.type}
       </div>
     );
@@ -1775,12 +1775,7 @@ export default function UIScreenRenderer({
               <div
                 key={comp.id}
                 className="absolute"
-                style={{
-                  left: `${leftPercent}%`,
-                  width: `${widthPercent}%`,
-                  top: `${topPx}px`,
-                  height: `${heightPx}px`,
-                }}
+                style={{left: `${leftPercent}%`, width: `${widthPercent}%`, top: `${topPx}px`, height: `${heightPx}px`}}
                 data-testid={`dashboard-item-${comp.id}`}
               >
                 <div className="w-full h-full p-2">
@@ -1832,7 +1827,7 @@ export default function UIScreenRenderer({
       return (
         <div className={`space-y-${gap}`} data-testid="layout-list">
           {components.map((comp) => (
-            <div key={comp.id} className="border-b  pb-3 last:border-b-0" style={{ borderColor: "var(--border)" }} data-testid={`list-item-${comp.id}`}>
+            <div key={comp.id} className="border-b  pb-3 last:border-b-0" style={{borderColor: "var(--border)"}} data-testid={`list-item-${comp.id}`}>
               {renderComponent(comp)}
             </div>
           ))}
@@ -1843,8 +1838,8 @@ export default function UIScreenRenderer({
     // Handle modal layout
     if (layoutType === "modal") {
       return (
-        <div data-testid="layout-modal" className="fixed inset-0 z-50 flex items-center justify-center /70" style={{ backgroundColor: "var(--surface-base)" }}>
-          <div className="w-full max-w-xl rounded-2xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div data-testid="layout-modal" className="fixed inset-0 z-50 flex items-center justify-center /70" style={{backgroundColor: "var(--surface-base)"}}>
+          <div className="w-full max-w-xl rounded-2xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
             <div className="space-y-4">
               {components.map((comp) => (
                 <React.Fragment key={comp.id}>{renderComponent(comp)}</React.Fragment>
@@ -1878,7 +1873,7 @@ export default function UIScreenRenderer({
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border  /80  hover: hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border  /80  hover: hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
             title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
             {isFullScreen ? (
@@ -1891,20 +1886,20 @@ export default function UIScreenRenderer({
 
         {!hideDebugPanels && autoRefreshConfigs.length > 0 && (
           <div
-            className="mb-3 rounded-xl border /80  p-3 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="mb-3 rounded-xl border /80  p-3 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
             data-testid="auto-refresh-panel"
           >
-            <p className="mb-2 uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Auto Refresh</p>
+            <p className="mb-2 uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Auto Refresh</p>
             <div className="space-y-2">
               {autoRefreshConfigs.map((config) => {
                 const status = autoRefreshStatus[config.key];
                 return (
                   <div key={config.key} className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate " style={{ color: "var(--foreground)" }}>
+                      <p className="truncate " style={{color: "var(--foreground)"}}>
                         {config.componentLabel} · {config.action.handler}
                       </p>
-                      <p className="" style={{ color: "var(--muted-foreground)" }}>
+                      <p className="" style={{color: "var(--muted-foreground)"}}>
                         {status?.stopped
                           ? "stopped"
                           : status?.paused
@@ -1918,7 +1913,7 @@ export default function UIScreenRenderer({
                     </div>
                     <button
                       type="button"
-                      className="rounded border  px-2 py-1 text-[10px] uppercase tracking-[0.15em] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" }}
+                      className="rounded border  px-2 py-1 text-[10px] uppercase tracking-[0.15em] " style={{borderColor: "var(--border)", color: "var(--foreground)"}}
                       onClick={() => toggleAutoRefreshPaused(config.key)}
                       disabled={!!status?.stopped}
                     >
@@ -1932,14 +1927,14 @@ export default function UIScreenRenderer({
         )}
         {!hideDebugPanels && actionLogs.length > 0 && (
           <div
-            className="mb-3 rounded-xl border /80  p-3 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="mb-3 rounded-xl border /80  p-3 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
             data-testid="action-log-panel"
           >
             <div className="mb-2 flex items-center justify-between">
-              <p className="uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Action Log</p>
+              <p className="uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Action Log</p>
               <button
                 type="button"
-                className="rounded border  px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{ borderColor: "var(--border)" }}
+                className="rounded border  px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{borderColor: "var(--border)"}}
                 onClick={() => setActionLogs([])}
               >
                 Clear
@@ -1948,7 +1943,7 @@ export default function UIScreenRenderer({
             <div className="max-h-48 space-y-1 overflow-y-auto">
               {actionLogs.map((log) => (
                 <div key={log.id} className="flex items-center justify-between gap-3">
-                  <p className="truncate " style={{ color: "var(--foreground)" }}>
+                  <p className="truncate " style={{color: "var(--foreground)"}}>
                     {log.handler} · {log.source} · attempt {log.attempt + 1}
                   </p>
                   <p
@@ -1977,7 +1972,7 @@ export default function UIScreenRenderer({
                     : ss.status === "error"
                       ? "bg-rose-950/50 text-rose-300 border border-rose-800/50"
                       : "  border /50"
-                  }`} style={{ backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)", borderColor: "var(--border)" }}
+                  }`} style={{backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
               >
                 <span
                   className={`inline-block w-1.5 h-1.5 rounded-full ${ss.status === "connected"
@@ -1987,7 +1982,7 @@ export default function UIScreenRenderer({
                       : ss.status === "error"
                         ? "bg-rose-400"
                         : "0"
-                    }`} style={{ backgroundColor: "var(--background)" }}
+                    }`} style={{backgroundColor: "var(--background)"}}
                 />
                 {id.replace("stream_", "")}
               </span>

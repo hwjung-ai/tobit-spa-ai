@@ -146,7 +146,7 @@ export default function SystemDashboard() {
 
       {/* Resource Usage Chart */}
       {metrics.length > 0 && (
-        <div className=" border  rounded-2xl p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <div className=" border  rounded-2xl p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
           <h3 className="text-lg font-bold text-white mb-4">Resource Usage (Last 24 Hours)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={metrics}>
@@ -183,7 +183,7 @@ export default function SystemDashboard() {
       )}
 
       {/* Alerts Panel */}
-      <div className=" border  rounded-2xl p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <div className=" border  rounded-2xl p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
         <h3 className="text-lg font-bold text-white mb-4">System Alerts</h3>
 
         {alerts.length === 0 ? (
@@ -221,7 +221,7 @@ export default function SystemDashboard() {
       </div>
 
       {/* Last Updated */}
-      <div className="flex items-center justify-between text-xs  px-4" style={{ color: "var(--muted-foreground)" }}>
+      <div className="flex items-center justify-between text-xs  px-4" style={{color: "var(--muted-foreground)"}}>
         <div>Last updated: {new Date().toLocaleTimeString()}</div>
         <div>Auto-refresh every 30 seconds</div>
       </div>

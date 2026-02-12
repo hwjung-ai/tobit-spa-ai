@@ -91,9 +91,9 @@ export default function CatalogsContent() {
   return (
     <div className="space-y-4">
       {/* Info Banner */}
-      <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-        <h3 className="font-semibold  mb-2" style={{ color: "var(--foreground-secondary)" }}>📊 Database Catalogs</h3>
-        <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+      <div className=" border  rounded-lg p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <h3 className="font-semibold  mb-2" style={{color: "var(--foreground-secondary)"}}>📊 Database Catalogs</h3>
+        <p className="text-sm " style={{color: "var(--muted-foreground)"}}>
           Database schema 정보를 자동으로 스캔하고 저장합니다.
           Tool이 SQL 쿼리를 생성할 때 schema 정보를 참고하여 정확한 테이블/컬럼명을 사용합니다.
           {demoMode && " (데모 데이터 표시 중)"}
@@ -104,7 +104,7 @@ export default function CatalogsContent() {
       {/* Left Side: Catalog List */}
       <div className="lg:col-span-1">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold " style={{ color: "var(--foreground-secondary)" }}>Catalogs</h2>
+          <h2 className="text-lg font-semibold " style={{color: "var(--foreground-secondary)"}}>Catalogs</h2>
           <button
             onClick={() => setShowCreateModal(true)}
             className="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-sm rounded-lg transition-colors font-medium"
@@ -114,7 +114,7 @@ export default function CatalogsContent() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-4 " style={{ color: "var(--muted-foreground)" }}>Loading...</div>
+          <div className="text-center py-4 " style={{color: "var(--muted-foreground)"}}>Loading...</div>
         ) : (
           <CatalogTable
             catalogs={displayCatalogs}
@@ -130,17 +130,17 @@ export default function CatalogsContent() {
         {selectedCatalog ? (
           <>
             {/* Catalog Info */}
-            <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-              <h3 className="font-semibold text-lg mb-3 " style={{ color: "var(--foreground-secondary)" }}>{selectedCatalog.name}</h3>
+            <div className=" border  rounded-lg p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+              <h3 className="font-semibold text-lg mb-3 " style={{color: "var(--foreground-secondary)"}}>{selectedCatalog.name}</h3>
               {selectedCatalog.description && (
-                <p className="text-sm  mb-2" style={{ color: "var(--muted-foreground)" }}>{selectedCatalog.description}</p>
+                <p className="text-sm  mb-2" style={{color: "var(--muted-foreground)"}}>{selectedCatalog.description}</p>
               )}
-              <div className="text-sm  space-y-1" style={{ color: "var(--muted-foreground)" }}>
+              <div className="text-sm  space-y-1" style={{color: "var(--muted-foreground)"}}>
                 <div>
-                  <span className="font-medium " style={{ color: "var(--foreground-secondary)" }}>ID:</span> <span className=" font-mono" style={{ color: "var(--muted-foreground)" }}>{selectedCatalog.asset_id}</span>
+                  <span className="font-medium " style={{color: "var(--foreground-secondary)"}}>ID:</span> <span className=" font-mono" style={{color: "var(--muted-foreground)"}}>{selectedCatalog.asset_id}</span>
                 </div>
                 <div>
-                  <span className="font-medium " style={{ color: "var(--foreground-secondary)" }}>Status:</span>{" "}
+                  <span className="font-medium " style={{color: "var(--foreground-secondary)"}}>Status:</span>{" "}
                   <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
                     selectedCatalog.status === "published"
                       ? "bg-green-900/50 text-green-300 border border-green-800"
@@ -150,8 +150,8 @@ export default function CatalogsContent() {
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium " style={{ color: "var(--foreground-secondary)" }}>Source:</span>{" "}
-                  <span className="" style={{ color: "var(--muted-foreground)" }}>{selectedCatalog.content?.source_ref || "Not configured"}</span>
+                  <span className="font-medium " style={{color: "var(--foreground-secondary)"}}>Source:</span>{" "}
+                  <span className="" style={{color: "var(--muted-foreground)"}}>{selectedCatalog.content?.source_ref || "Not configured"}</span>
                 </div>
               </div>
             </div>
@@ -163,8 +163,8 @@ export default function CatalogsContent() {
             <CatalogViewerPanel schema={selectedCatalog} onRefresh={() => { void refetch(); }} />
           </>
         ) : (
-          <div className=" border  rounded-lg p-8 text-center" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-            <p className="" style={{ color: "var(--muted-foreground)" }}>Select a catalog to view details</p>
+          <div className=" border  rounded-lg p-8 text-center" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <p className="" style={{color: "var(--muted-foreground)"}}>Select a catalog to view details</p>
           </div>
         )}
       </div>

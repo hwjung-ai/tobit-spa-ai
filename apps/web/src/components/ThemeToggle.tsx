@@ -14,11 +14,7 @@ export default function ThemeToggle() {
     <button
       onClick={toggleTheme}
       className="rounded-md border p-2 transition"
-      style={{
-        borderColor: "var(--border)",
-        backgroundColor: "var(--surface-base)",
-        color: "var(--foreground)"
-      }}
+      style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
         e.currentTarget.style.borderColor = "var(--border-muted)";

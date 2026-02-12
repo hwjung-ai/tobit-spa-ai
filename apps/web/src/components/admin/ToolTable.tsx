@@ -116,7 +116,7 @@ export default function ToolTable({
             flex: 2,
             minWidth: 200,
             cellRenderer: (params: ICellRendererParams<ToolAsset>) => (
-                <span className=" text-xs truncate block max-w-full" style={{ color: "var(--muted-foreground)" }} title={params.value || ""}>
+                <span className=" text-xs truncate block max-w-full" style={{color: "var(--muted-foreground)"}} title={params.value || ""}>
                     {params.value || "-"}
                 </span>
             )
@@ -142,7 +142,7 @@ export default function ToolTable({
             field: "version",
             width: 90,
             cellRenderer: (params: ICellRendererParams<ToolAsset>) => (
-                <span className=" font-mono text-xs" style={{ color: "var(--muted-foreground)" }}>v{params.value}</span>
+                <span className=" font-mono text-xs" style={{color: "var(--muted-foreground)"}}>v{params.value}</span>
             )
         },
         {
@@ -151,7 +151,7 @@ export default function ToolTable({
             flex: 1,
             minWidth: 120,
             cellRenderer: (params: ICellRendererParams<ToolAsset>) => (
-                <span className=" text-xs" style={{ color: "var(--muted-foreground)" }}>
+                <span className=" text-xs" style={{color: "var(--muted-foreground)"}}>
                     {formatRelativeTime(params.value)}
                 </span>
             )
@@ -172,7 +172,7 @@ export default function ToolTable({
                     <div className="flex items-center gap-2 pr-2">
                         <button
                             onClick={() => onToolSelect?.(tool)}
-                            className=" hover:text-sky-400 transition-colors text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}
+                            className=" hover:text-sky-400 transition-colors text-[10px] font-bold uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}
                             title="Test this tool"
                         >
                             Test
@@ -195,13 +195,13 @@ export default function ToolTable({
 
     if (tools.length === 0) {
         return (
-            <div className="text-center py-20  rounded-2xl border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                <div className="w-12 h-12 /50 rounded-full flex items-center justify-center mx-auto mb-4 border /50" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
-                    <svg className="w-6 h-6 " style={{ color: "var(--muted-foreground)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="text-center py-20  rounded-2xl border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                <div className="w-12 h-12 /50 rounded-full flex items-center justify-center mx-auto mb-4 border /50" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
+                    <svg className="w-6 h-6 " style={{color: "var(--muted-foreground)"}} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
                     </svg>
                 </div>
-                <p className=" text-sm font-medium italic" style={{ color: "var(--muted-foreground)" }}>No tools found</p>
+                <p className=" text-sm font-medium italic" style={{color: "var(--muted-foreground)"}}>No tools found</p>
             </div>
         );
     }
@@ -209,13 +209,13 @@ export default function ToolTable({
     return (
         <div className="flex flex-col w-full h-full overflow-hidden">
             {/* Grid Header with Count */}
-            <div className="flex justify-between items-center px-4 py-2 border-b   backdrop-blur-sm" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+            <div className="flex justify-between items-center px-4 py-2 border-b   backdrop-blur-sm" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
                 <div className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-bold  uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>
+                    <span className="text-[10px] font-bold  uppercase tracking-[0.2em]" style={{color: "var(--muted-foreground)"}}>
                         Tool Registry
                     </span>
-                    <span className="px-2 py-0.5 rounded-full  text-emerald-400 text-[10px] font-mono font-bold border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+                    <span className="px-2 py-0.5 rounded-full  text-emerald-400 text-[10px] font-mono font-bold border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
                         count: {tools.length}
                     </span>
                     {/* Status Filter Buttons */}
@@ -227,7 +227,7 @@ export default function ToolTable({
                                     statusFilter === "all"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
                                         : " 0 hover: hover:"
-                                }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", color: "var(--foreground-secondary)" }}
+                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}
                             >
                                 All
                             </button>
@@ -237,7 +237,7 @@ export default function ToolTable({
                                     statusFilter === "draft"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
                                         : " 0 hover: hover:"
-                                }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", color: "var(--foreground-secondary)" }}
+                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}
                             >
                                 Draft
                             </button>
@@ -247,19 +247,19 @@ export default function ToolTable({
                                     statusFilter === "published"
                                         ? "bg-sky-600 text-white shadow-lg shadow-sky-900/20"
                                         : " 0 hover: hover:"
-                                }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", color: "var(--foreground-secondary)" }}
+                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}
                             >
                                 Published
                             </button>
                         </div>
                     )}
                 </div>
-                <div className="text-[10px]  font-medium italic" style={{ color: "var(--muted-foreground)" }}>
+                <div className="text-[10px]  font-medium italic" style={{color: "var(--muted-foreground)"}}>
                     Click row to test • Click headers to sort
                 </div>
             </div>
 
-            <div className="ag-theme-cep w-full overflow-hidden" style={{ height: '600px' }}>
+            <div className="ag-theme-cep w-full overflow-hidden" style={{height: '600px'}}>
                 <AgGridReact
                     theme="legacy"
                     rowData={tools}

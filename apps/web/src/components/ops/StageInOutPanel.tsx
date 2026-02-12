@@ -108,18 +108,18 @@ const JsonViewer = ({ data, title }: { data: unknown; title: string }) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded hover: transition" style={{ backgroundColor: "var(--surface-elevated)" }}
+            className="p-1 rounded hover: transition" style={{backgroundColor: "var(--surface-elevated)"}}
           >
-            {expanded ? <Minimize2 className="h-3 w-3 " style={{ color: "var(--muted-foreground)" }} /> : <Maximize2 className="h-3 w-3 " style={{ color: "var(--muted-foreground)" }} />}
+            {expanded ? <Minimize2 className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} /> : <Maximize2 className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} />}
           </button>
           <button
             onClick={handleCopy}
-            className="p-1 rounded hover: transition" style={{ backgroundColor: "var(--surface-elevated)" }}
+            className="p-1 rounded hover: transition" style={{backgroundColor: "var(--surface-elevated)"}}
           >
             {copied ? (
               <CheckCircle className="h-3 w-3 text-emerald-400" />
             ) : (
-              <Copy className="h-3 w-3 " style={{ color: "var(--muted-foreground)" }} />
+              <Copy className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} />
             )}
           </button>
         </div>
@@ -131,7 +131,7 @@ const JsonViewer = ({ data, title }: { data: unknown; title: string }) => {
           expanded ? "max-h-96" : "max-h-24"
         )}
       >
-        <pre className="p-3 text-xs font-mono  overflow-auto" style={{ color: "var(--foreground-secondary)" }}>
+        <pre className="p-3 text-xs font-mono  overflow-auto" style={{color: "var(--foreground-secondary)"}}>
           {formattedJson}
         </pre>
       </div>
@@ -189,14 +189,14 @@ export default function StageInOutPanel({
   return (
     <div className={cn("flex flex-col h-full rounded-2xl border border-[var(--border)] bg-[var(--surface-overlay)]", className)}>
       {/* Header */}
-      <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
+      <div className="p-4 border-b " style={{borderColor: "var(--border)"}}>
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
               Stage In/Out Panel
             </h2>
             {traceId && (
-              <p className="text-xs  mt-1" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs  mt-1" style={{color: "var(--muted-foreground)"}}>
                 Trace ID: {traceId.slice(0, 8)}...
               </p>
             )}
@@ -204,14 +204,14 @@ export default function StageInOutPanel({
           <div className="flex items-center gap-2">
             <button
               onClick={toggleAllStages}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
             >
               {allExpanded ? "Collapse All" : "Expand All"}
               <ChevronDown className={`h-3 w-3 transition-transform ${allExpanded ? 'rotate-180' : ''}`} />
             </button>
             {compact && (
               <button
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
               >
                 <RotateCcw className="h-3 w-3" />
                 Reset
@@ -252,7 +252,7 @@ export default function StageInOutPanel({
                           {stage.stage.replace(/_/g, ' ')}
                         </h3>
                         {stage.timestamp && (
-                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
                             {new Date(stage.timestamp).toLocaleTimeString()}
                           </p>
                         )}
@@ -266,7 +266,7 @@ export default function StageInOutPanel({
                         </span>
                       </div>
                       {stage.duration_ms !== undefined && (
-                        <div className="text-xs  flex items-center gap-1" style={{ color: "var(--muted-foreground)" }}>
+                        <div className="text-xs  flex items-center gap-1" style={{color: "var(--muted-foreground)"}}>
                           <Clock className="h-3 w-3" />
                           {stage.duration_ms}ms
                         </div>
@@ -296,7 +296,7 @@ export default function StageInOutPanel({
                         </div>
                       )}
                       {Object.keys(stage.diagnostics.counts).length > 0 && (
-                        <div className="" style={{ color: "var(--muted-foreground)" }}>
+                        <div className="" style={{color: "var(--muted-foreground)"}}>
                           {Object.entries(stage.diagnostics.counts)
                             .map(([key, value]) => `${key}: ${value}`)
                             .join(", ")}
@@ -308,10 +308,10 @@ export default function StageInOutPanel({
 
                 {/* Stage Details */}
                 {isExpanded && (
-                  <div className="ml-4 space-y-3 p-3 rounded-lg border  " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                  <div className="ml-4 space-y-3 p-3 rounded-lg border  " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
                     {/* Input Section */}
                     <div>
-                      <h4 className="text-xs font-medium  mb-2" style={{ color: "var(--muted-foreground)" }}>INPUT</h4>
+                      <h4 className="text-xs font-medium  mb-2" style={{color: "var(--muted-foreground)"}}>INPUT</h4>
                       <JsonViewer
                         data={stage.input || {}}
                         title="Stage Input"
@@ -320,7 +320,7 @@ export default function StageInOutPanel({
 
                     {/* Output Section */}
                     <div>
-                      <h4 className="text-xs font-medium  mb-2" style={{ color: "var(--muted-foreground)" }}>OUTPUT</h4>
+                      <h4 className="text-xs font-medium  mb-2" style={{color: "var(--muted-foreground)"}}>OUTPUT</h4>
                       <JsonViewer
                         data={stage.output || {}}
                         title="Stage Output"
@@ -330,20 +330,20 @@ export default function StageInOutPanel({
                     {/* References */}
                     {stage.references && stage.references.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-medium  mb-2" style={{ color: "var(--muted-foreground)" }}>
+                        <h4 className="text-xs font-medium  mb-2" style={{color: "var(--muted-foreground)"}}>
                           REFERENCES ({stage.references.length})
                         </h4>
                         <div className="space-y-2 max-h-32 overflow-auto">
                           {stage.references.slice(0, 5).map((ref, idx) => (
                             <div
                               key={idx}
-                              className="p-2 rounded  border  text-xs font-mono " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}
+                              className="p-2 rounded  border  text-xs font-mono " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
                             >
                               {ref.ref_type || "Reference"}
                             </div>
                           ))}
                           {stage.references.length > 5 && (
-                            <div className="text-xs  text-center py-2" style={{ color: "var(--muted-foreground)" }}>
+                            <div className="text-xs  text-center py-2" style={{color: "var(--muted-foreground)"}}>
                               +{stage.references.length - 5} more references
                             </div>
                           )}
@@ -356,7 +356,7 @@ export default function StageInOutPanel({
                 {/* Connection Line */}
                 {index < stages.length - 1 && (
                   <div className="flex justify-center py-2">
-                    <div className="w-px h-6 " style={{ backgroundColor: "var(--surface-elevated)" }}></div>
+                    <div className="w-px h-6 " style={{backgroundColor: "var(--surface-elevated)"}}></div>
                   </div>
                 )}
               </div>

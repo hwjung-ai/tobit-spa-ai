@@ -101,18 +101,18 @@ function AssetsDiffSection({ diff, showOnlyChanges }: { diff: AssetsDiff; showOn
       <AssetComparisonRow label="Mapping" asset={diff.mapping} />
       {/* Queries */}
       {diff.queries.changeType !== "unchanged" && (
-        <div className="rounded-xl px-4 py-3 space-y-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+        <div className="rounded-xl px-4 py-3 space-y-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>Queries</span>
+            <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Queries</span>
             <ChangeIndicator changeType={diff.queries.changeType} />
           </div>
           {diff.queries.before && (
-            <div className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+            <div className="text-[11px]" style={{color: "var(--muted-foreground)"}}>
               Before: {diff.queries.before.length} queries
             </div>
           )}
           {diff.queries.after && (
-            <div className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+            <div className="text-[11px]" style={{color: "var(--muted-foreground)"}}>
               After: {diff.queries.after.length} queries
             </div>
           )}
@@ -131,27 +131,27 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: DiffItem<A
   }
 
   return (
-    <div className="rounded-xl px-4 py-3 space-y-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-4 py-3 space-y-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>{label}</span>
+        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>{label}</span>
         <ChangeIndicator changeType={asset.changeType} />
       </div>
       <div className="grid grid-cols-2 gap-3">
         {/* Before */}
         {asset.before && (
-          <div className="rounded px-3 py-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
-            <p className="text-[10px] uppercase mb-1" style={{ color: "var(--muted-foreground)" }}>Before</p>
-            <div className="text-[11px] space-y-1" style={{ color: "var(--foreground-secondary)" }}>
-              <span style={{ color: "var(--muted-foreground)" }}>Name: </span>
+          <div className="rounded px-3 py-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
+            <p className="text-[10px] uppercase mb-1" style={{color: "var(--muted-foreground)"}}>Before</p>
+            <div className="text-[11px] space-y-1" style={{color: "var(--foreground-secondary)"}}>
+              <span style={{color: "var(--muted-foreground)"}}>Name: </span>
               {asset.before.name}
             </div>
             <div>
-              <span style={{ color: "var(--muted-foreground)" }}>Version: </span>
+              <span style={{color: "var(--muted-foreground)"}}>Version: </span>
               {asset.before.version}
             </div>
             {asset.before.source && (
               <div>
-                <span style={{ color: "var(--muted-foreground)" }}>Source: </span>
+                <span style={{color: "var(--muted-foreground)"}}>Source: </span>
                 {asset.before.source}
               </div>
             )}
@@ -159,19 +159,19 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: DiffItem<A
         )}
         {/* After */}
         {asset.after && (
-          <div className="rounded px-3 py-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
-            <p className="text-[10px] uppercase mb-1" style={{ color: "var(--muted-foreground)" }}>After</p>
-            <div className="text-[11px] space-y-1" style={{ color: "var(--foreground-secondary)" }}>
-              <span style={{ color: "var(--muted-foreground)" }}>Name: </span>
+          <div className="rounded px-3 py-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
+            <p className="text-[10px] uppercase mb-1" style={{color: "var(--muted-foreground)"}}>After</p>
+            <div className="text-[11px] space-y-1" style={{color: "var(--foreground-secondary)"}}>
+              <span style={{color: "var(--muted-foreground)"}}>Name: </span>
               {asset.after.name}
             </div>
             <div>
-              <span style={{ color: "var(--muted-foreground)" }}>Version: </span>
+              <span style={{color: "var(--muted-foreground)"}}>Version: </span>
               {asset.after.version}
             </div>
             {asset.after.source && (
               <div>
-                <span style={{ color: "var(--muted-foreground)" }}>Source: </span>
+                <span style={{color: "var(--muted-foreground)"}}>Source: </span>
                 {asset.after.source}
               </div>
             )}
@@ -180,14 +180,14 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: DiffItem<A
       </div>
       {/* Changes */}
       {asset.changes && (
-        <div className="rounded px-3 py-2" style={{ backgroundColor: "var(--surface-overlay)" }}>
+        <div className="rounded px-3 py-2" style={{backgroundColor: "var(--surface-overlay)"}}>
           <p className="text-[10px] uppercase text-amber-600 mb-2">Changes</p>
-          <div className="text-[11px] space-y-1" style={{ color: "var(--muted-foreground)" }}>
+          <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
             {Object.entries(asset.changes).map(([key, change]) => (
               <div key={key}>
-                <span style={{ color: "var(--muted-foreground)" }}>{key}: </span>
+                <span style={{color: "var(--muted-foreground)"}}>{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before)}</span>
-                <span style={{ color: "var(--muted-foreground)" }}> → </span>
+                <span style={{color: "var(--muted-foreground)"}}> → </span>
                 <span className="text-emerald-300">{JSON.stringify(change.after)}</span>
               </div>
             ))}
@@ -207,21 +207,21 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: PlanDiff; showOnlyCh
   }
 
   return (
-    <div className="rounded-xl px-4 py-3 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>Plan Comparison</span>
+        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Plan Comparison</span>
         <ChangeIndicator changeType={diff.changeType} />
       </div>
       {/* Validated Plan Changes */}
       {diff.validated && diff.validated.changeType === "modified" && (
-        <div className="rounded px-3 py-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
-          <p className="text-[10px] uppercase mb-2" style={{ color: "var(--muted-foreground)" }}>Validated Plan Changes</p>
-          <div className="text-[11px] space-y-1 max-h-40 overflow-y-auto" style={{ color: "var(--muted-foreground)" }}>
+        <div className="rounded px-3 py-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
+          <p className="text-[10px] uppercase mb-2" style={{color: "var(--muted-foreground)"}}>Validated Plan Changes</p>
+          <div className="text-[11px] space-y-1 max-h-40 overflow-y-auto" style={{color: "var(--muted-foreground)"}}>
             {Object.entries(diff.validated.changes || {}).map(([key, change]: [string, { before: unknown; after: unknown }]) => (
               <div key={key} className="font-mono text-[10px]">
-                <span style={{ color: "var(--muted-foreground)" }}>{key}: </span>
+                <span style={{color: "var(--muted-foreground)"}}>{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before).substring(0, 30)}...</span>
-                <span style={{ color: "var(--muted-foreground)" }}> → </span>
+                <span style={{color: "var(--muted-foreground)"}}> → </span>
                 <span className="text-emerald-300">{JSON.stringify(change.after).substring(0, 30)}...</span>
               </div>
             ))}
@@ -230,14 +230,14 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: PlanDiff; showOnlyCh
       )}
       {/* Raw Plan Changes */}
       {diff.raw && diff.raw.changeType === "modified" && (
-        <div className="rounded px-3 py-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
-          <p className="text-[10px] uppercase mb-2" style={{ color: "var(--muted-foreground)" }}>Raw Plan Changes</p>
-          <div className="text-[11px] space-y-1 max-h-40 overflow-y-auto" style={{ color: "var(--muted-foreground)" }}>
+        <div className="rounded px-3 py-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
+          <p className="text-[10px] uppercase mb-2" style={{color: "var(--muted-foreground)"}}>Raw Plan Changes</p>
+          <div className="text-[11px] space-y-1 max-h-40 overflow-y-auto" style={{color: "var(--muted-foreground)"}}>
             {Object.entries(diff.raw.changes || {}).map(([key, change]: [string, { before: unknown; after: unknown }]) => (
               <div key={key} className="font-mono text-[10px]">
-                <span style={{ color: "var(--muted-foreground)" }}>{key}: </span>
+                <span style={{color: "var(--muted-foreground)"}}>{key}: </span>
                 <span className="text-rose-300">{JSON.stringify(change.before).substring(0, 30)}...</span>
-                <span style={{ color: "var(--muted-foreground)" }}> → </span>
+                <span style={{color: "var(--muted-foreground)"}}> → </span>
                 <span className="text-emerald-300">{JSON.stringify(change.after).substring(0, 30)}...</span>
               </div>
             ))}
@@ -245,7 +245,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: PlanDiff; showOnlyCh
         </div>
       )}
       {diff.changeType === "same" && (
-        <div className="text-[11px] italic" style={{ color: "var(--muted-foreground)" }}>No plan changes detected</div>
+        <div className="text-[11px] italic" style={{color: "var(--muted-foreground)"}}>No plan changes detected</div>
       )}
     </div>
   );
@@ -262,18 +262,18 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: ToolCallsDiff; 
   }
 
   return (
-    <div className="rounded-xl px-4 py-3 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>Tool Calls</span>
-        <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Tool Calls</span>
+        <span className="text-[10px]" style={{color: "var(--muted-foreground)"}}>
           {diff.unchanged} unchanged, {diff.added.length + diff.removed.length + diff.modified.length} changed
         </span>
       </div>
       {/* Added */}
       {diff.added.length > 0 && (
-        <div className="rounded px-3 py-2" style={{ backgroundColor: "rgba(30, 58, 138, 0.2)", borderColor: "rgba(29, 78, 216, 0.5)", border: "1px solid var(--border)" }}>
+        <div className="rounded px-3 py-2" style={{backgroundColor: "rgba(30, 58, 138, 0.2)", borderColor: "rgba(29, 78, 216, 0.5)", border: "1px solid var(--border)"}}>
           <p className="text-[10px] uppercase text-blue-400 mb-2">Added ({diff.added.length})</p>
-          <div className="text-[11px] space-y-1" style={{ color: "#bae6fd" }}>
+          <div className="text-[11px] space-y-1" style={{color: "#bae6fd"}}>
             {diff.added.map((tool, idx) => (
               <div key={idx}>
                 <span className="font-mono">{tool.tool_name}</span>
@@ -297,12 +297,12 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: ReferencesDiff
   }
 
   return (
-    <div className="rounded-xl px-4 py-3 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>References</span>
+        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>References</span>
         <ChangeIndicator changeType={diff.changeType} />
       </div>
-      <div className="text-[11px] space-y-1" style={{ color: "var(--muted-foreground)" }}>
+      <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
         {diff.added.length > 0 && (
           <div>
             <span className="text-emerald-400">+ Added {diff.added.length} references</span>
@@ -327,21 +327,21 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocks
   }
 
   return (
-    <div className="rounded-xl px-4 py-3 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>Answer Blocks</span>
+        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Answer Blocks</span>
         <ChangeIndicator changeType={diff.changeType} />
       </div>
-      <div className="text-[11px] space-y-1" style={{ color: "var(--muted-foreground)" }}>
+      <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
         {diff.changeType === "added" && (
-          <div className="font-mono text-[10px]" style={{ color: "#86efac" }}>
+          <div className="font-mono text-[10px]" style={{color: "#86efac"}}>
             {diff.added.map((block, idx) => (
               <div key={idx}>{block.type}</div>
             ))}
           </div>
         )}
         {diff.changeType === "removed" && (
-          <div className="font-mono text-[10px]" style={{ color: "#fca5a5" }}>
+          <div className="font-mono text-[10px]" style={{color: "#fca5a5"}}>
             {diff.removed.map((block, idx) => (
               <div key={idx}>{block.type}</div>
             ))}
@@ -350,13 +350,13 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocks
         {diff.changeType === "modified" && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="font-mono text-[10px] mb-2" style={{ color: "#fca5a5" }}>Removed</div>
+              <div className="font-mono text-[10px] mb-2" style={{color: "#fca5a5"}}>Removed</div>
               {diff.removed.map((block, idx) => (
                 <div key={idx} className="text-sm mb-1">{block.type}</div>
               ))}
             </div>
             <div>
-              <div className="font-mono text-[10px] mb-2" style={{ color: "#86efac" }}>Added</div>
+              <div className="font-mono text-[10px] mb-2" style={{color: "#86efac"}}>Added</div>
               {diff.added.map((block, idx) => (
                 <div key={idx} className="text-sm mb-1">{block.type}</div>
               ))}
@@ -364,7 +364,7 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocks
           </div>
         )}
         {diff.changeType === "same" && (
-          <div className="text-[11px] italic" style={{ color: "var(--muted-foreground)" }}>No block changes detected</div>
+          <div className="text-[11px] italic" style={{color: "var(--muted-foreground)"}}>No block changes detected</div>
         )}
       </div>
     </div>
@@ -380,21 +380,21 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff
   }
 
   return (
-    <div className="rounded-xl px-4 py-3 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)" }}>
+    <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)" }}>UI Render</span>
+        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>UI Render</span>
         <ChangeIndicator changeType={diff.changeType} />
       </div>
-      <div className="text-[11px] space-y-1" style={{ color: "var(--muted-foreground)" }}>
+      <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
         {diff.changeType === "added" && (
-          <div className="font-mono text-[10px]" style={{ color: "#86efac" }}>
+          <div className="font-mono text-[10px]" style={{color: "#86efac"}}>
             {diff.added.map((block, idx) => (
               <div key={idx}>{block.type}</div>
             ))}
           </div>
         )}
         {diff.changeType === "removed" && (
-          <div className="font-mono text-[10px]" style={{ color: "#fca5a5" }}>
+          <div className="font-mono text-[10px]" style={{color: "#fca5a5"}}>
             {diff.removed.map((block, idx) => (
               <div key={idx}>{block.type}</div>
             ))}
@@ -403,13 +403,13 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff
         {diff.changeType === "modified" && (
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="font-mono text-[10px] mb-2" style={{ color: "#fca5a5" }}>Removed</div>
+              <div className="font-mono text-[10px] mb-2" style={{color: "#fca5a5"}}>Removed</div>
               {diff.removed.map((block, idx) => (
                 <div key={idx} className="text-sm mb-1">{block.type}</div>
               ))}
             </div>
             <div>
-              <div className="font-mono text-[10px] mb-2" style={{ color: "#86efac" }}>Added</div>
+              <div className="font-mono text-[10px] mb-2" style={{color: "#86efac"}}>Added</div>
               {diff.added.map((block, idx) => (
                 <div key={idx} className="text-sm mb-1">{block.type}</div>
               ))}
@@ -417,7 +417,7 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff
           </div>
         )}
         {diff.changeType === "same" && (
-          <div className="text-[11px] italic" style={{ color: "var(--muted-foreground)" }}>No UI render changes detected</div>
+          <div className="text-[11px] italic" style={{color: "var(--muted-foreground)"}}>No UI render changes detected</div>
         )}
       </div>
     </div>
@@ -467,15 +467,15 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
   }, [traceA.trace_id, traceB.trace_id]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}>
-      <div className=" rounded-2xl shadow-2xl w-full max-w-7xl flex overflow-hidden" style={{ backgroundColor: "var(--surface-base)" ,  backgroundColor: "var(--surface-base)", maxHeight: "90vh" }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor: "rgba(15, 23, 42, 0.8)"}}>
+      <div className=" rounded-2xl shadow-2xl w-full max-w-7xl flex overflow-hidden" style={{backgroundColor: "var(--surface-base)", maxHeight: "90vh"}}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "var(--border)" }}>
+        <div className="flex items-center justify-between border-b px-6 py-4" style={{borderColor: "var(--border)"}}>
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold" style={{ color: "var(--foreground)" }}>Trace Comparison</h2>
+            <h2 className="text-xl font-bold" style={{color: "var(--foreground)"}}>Trace Comparison</h2>
             <button
               onClick={onClose}
-              className="rounded p-2 text-sm hover: transition-colors" style={{ backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+              className="rounded p-2 text-sm hover: transition-colors" style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--surface-overlay)"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--surface-elevated)"}
             >
@@ -492,32 +492,32 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
         </div>
 
         {/* Trace Info Header */}
-        <div className="grid grid-cols-2 gap-4 px-6 py-4" style={{ backgroundColor: "var(--surface-elevated)" }}>
+        <div className="grid grid-cols-2 gap-4 px-6 py-4" style={{backgroundColor: "var(--surface-elevated)"}}>
           <div>
-            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Trace A</p>
-            <p className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)" }}>{traceA.trace_id}</p>
-            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace A</p>
+            <p className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>{traceA.trace_id}</p>
+            <p className="text-xs" style={{color: "var(--muted-foreground)"}}>
               {formatTimestamp(traceA.created_at)} • {traceA.status}
             </p>
-            <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-[10px]" style={{color: "var(--muted-foreground)"}}>
               Duration: {traceA.duration_ms}ms
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Trace B</p>
-            <p className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)" }}>{traceB.trace_id}</p>
-            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace B</p>
+            <p className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>{traceB.trace_id}</p>
+            <p className="text-xs" style={{color: "var(--muted-foreground)"}}>
               {formatTimestamp(traceB.created_at)} • {traceB.status}
             </p>
-            <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-[10px]" style={{color: "var(--muted-foreground)"}}>
               Duration: {traceB.duration_ms}ms
             </p>
           </div>
         </div>
 
         {/* Filter Toggle */}
-        <div className="flex items-center gap-2 px-6 py-2" style={{ backgroundColor: "var(--surface-base)" }}>
-          <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "var(--foreground-secondary)" }}>
+        <div className="flex items-center gap-2 px-6 py-2" style={{backgroundColor: "var(--surface-base)"}}>
+          <label className="flex items-center gap-2 text-sm cursor-pointer" style={{color: "var(--foreground-secondary)"}}>
             <input
               type="checkbox"
               checked={showOnlyChanges}
@@ -539,7 +539,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
         </div>
 
         {/* Section Tabs */}
-        <div className="flex border-t px-6 py-2" style={{ borderColor: "var(--border)" }}>
+        <div className="flex border-t px-6 py-2" style={{borderColor: "var(--border)"}}>
           <div className="flex gap-1 overflow-x-auto">
             {SECTIONS.map((section) => (
               <button
@@ -549,7 +549,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
                   activeSection === section.id
                     ? " text-white"
                     : " hover:"
-                }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" }}
+                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
                 style={activeSection === section.id
                   ? { backgroundColor: "var(--surface-elevated)", color: "var(--background)" }
                   : { color: "var(--muted-foreground)" }}

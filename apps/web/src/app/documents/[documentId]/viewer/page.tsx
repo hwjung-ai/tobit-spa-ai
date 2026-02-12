@@ -406,14 +406,14 @@ function DocumentViewerContent() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between rounded-2xl border dark: dark:/70 p-6" style={{ backgroundColor: "var(--background)", borderColor: "var(--border)"  ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+      <header className="flex items-center justify-between rounded-2xl border dark: dark:/70 p-6" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}>
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>문서 뷰어</p>
-          <h2 className="text-2xl font-semibold dark:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>
+          <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>문서 뷰어</p>
+          <h2 className="text-2xl font-semibold dark:" style={{color: "var(--foreground)"}}>
             {documentMeta?.filename ?? "문서 불러오는 중..."}
           </h2>
           {chunkInfo ? (
-            <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
               근거 청크 하이라이트 중 · {chunkInfo.page != null ? `${chunkInfo.page}페이지` : "페이지 미확인"}
             </p>
           ) : null}
@@ -430,14 +430,14 @@ function DocumentViewerContent() {
               }
               router.push("/documents");
             }}
-            className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
+            className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
           >
             문서 목록
           </button>
           {pdfBlobUrl && (
             <button
               onClick={handleDownload}
-              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
+              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
             >
               다운로드
             </button>
@@ -445,14 +445,14 @@ function DocumentViewerContent() {
           <div className="flex gap-2">
             <button
               onClick={handlePrevious}
-              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover: disabled:opacity-50" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
+              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover: disabled:opacity-50" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
               disabled={currentPage <= 1}
             >
               이전
             </button>
             <button
               onClick={handleNext}
-              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover: disabled:opacity-50" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
+              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover: disabled:opacity-50" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
               disabled={numPages !== null && currentPage >= numPages}
             >
               다음
@@ -461,19 +461,19 @@ function DocumentViewerContent() {
         </div>
       </header>
 
-      <section className="rounded-2xl border dark: dark:/70 p-6" style={{ backgroundColor: "var(--background)", borderColor: "var(--border)"  ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-        <div className="mb-4 flex items-center justify-between text-xs " style={{ color: "var(--muted-foreground)" }}>
+      <section className="rounded-2xl border dark: dark:/70 p-6" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}>
+        <div className="mb-4 flex items-center justify-between text-xs " style={{color: "var(--muted-foreground)"}}>
           <span>{currentPage}페이지</span>
           {numPages ? <span>전체 {numPages}페이지</span> : <span>페이지 로딩 중...</span>}
-          <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>방향키(←→)로 페이지 이동</span>
+          <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>방향키(←→)로 페이지 이동</span>
         </div>
         <div className="relative flex justify-center">
           <div className="relative">
             {pdfLoading && (
               <div className="flex h-[600px] w-full items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400" style={{ borderColor: "var(--border)"  }} />
-                  <span className="text-sm " style={{ color: "var(--muted-foreground)" }}>PDF 불러오는 중...</span>
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400" style={{borderColor: "var(--border)"}} />
+                  <span className="text-sm " style={{color: "var(--muted-foreground)"}}>PDF 불러오는 중...</span>
                 </div>
               </div>
             )}
@@ -483,7 +483,7 @@ function DocumentViewerContent() {
                   <p className="text-sm text-rose-400">{pdfError}</p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-3 rounded-2xl border  px-4 py-2 text-xs  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
+                    className="mt-3 rounded-2xl border  px-4 py-2 text-xs  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
                   >
                     다시 시도
                   </button>
@@ -512,8 +512,8 @@ function DocumentViewerContent() {
 
       {/* References Section */}
       {references.length > 0 && (
-        <section className="rounded-2xl border dark: dark:/70 p-6" style={{ backgroundColor: "var(--background)", borderColor: "var(--border)"  ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-          <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
+        <section className="rounded-2xl border dark: dark:/70 p-6" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}>
+          <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
             <span>근거 문서 ({references.length}건)</span>
           </div>
           <div className="space-y-3">
@@ -526,15 +526,15 @@ function DocumentViewerContent() {
                     isCurrentDocument
                       ? "border-amber-400 bg-amber-500/10"
                       : " dark:  hover:"
-                  }`} style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+                  }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
                 >
-                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
+                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
                     <span>{reference.document_title}</span>
                     <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                   </div>
-                  <p className="mt-2 text-xs  line-clamp-3" style={{ color: "var(--foreground-secondary)" }}>{reference.snippet}</p>
+                  <p className="mt-2 text-xs  line-clamp-3" style={{color: "var(--foreground-secondary)"}}>{reference.snippet}</p>
                   {reference.score != null && (
-                    <p className="mt-2 text-[10px] " style={{ color: "var(--muted-foreground)" }}>유사도 {(reference.score * 100).toFixed(1)}%</p>
+                    <p className="mt-2 text-[10px] " style={{color: "var(--muted-foreground)"}}>유사도 {(reference.score * 100).toFixed(1)}%</p>
                   )}
                   {isCurrentDocument && (
                     <p className="mt-2 text-xs text-amber-400">현재 문서</p>
@@ -559,7 +559,7 @@ function DocumentViewerContent() {
 
 export default function DocumentViewerPage() {
   return (
-    <Suspense fallback={<div className="p-4 " style={{ color: "var(--muted-foreground)" }}>불러오는 중...</div>}>
+    <Suspense fallback={<div className="p-4 " style={{color: "var(--muted-foreground)"}}>불러오는 중...</div>}>
       <DocumentViewerContent />
     </Suspense>
   );

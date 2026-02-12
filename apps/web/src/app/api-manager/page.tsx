@@ -1296,15 +1296,15 @@ export default function ApiManagerPage() {
 
   const testResultsArea = (
     <div className="space-y-4">
-      <p className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Execution result</p>
+      <p className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>Execution result</p>
       {selectedApi?.logic_type === "workflow" ? (
         workflowResult ? (
-          <div className="space-y-3 rounded-2xl border  dark:  p-4 text-sm " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+          <div className="space-y-3 rounded-2xl border  dark:  p-4 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
             <div className="space-y-2">
               {workflowSteps.map((step) => (
                 <div
                   key={step.node_id}
-                  className="rounded-2xl border  dark: /30 p-3 text-xs " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                  className="rounded-2xl border  dark: /30 p-3 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">
@@ -1319,7 +1319,7 @@ export default function ApiManagerPage() {
                       {step.status}
                     </span>
                   </div>
-                  <p className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
                     Duration {step.duration_ms} ms · Rows {step.row_count}
                   </p>
                   {step.error_message ? (
@@ -1329,20 +1329,20 @@ export default function ApiManagerPage() {
               ))}
             </div>
             <div>
-              <p className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Final output</p>
-              <pre className="mt-2 max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{ color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}>
+              <p className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>Final output</p>
+              <pre className="mt-2 max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
-              <p className="mt-2 text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+              <p className="mt-2 text-[10px] uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
                 References: {workflowReferences.length}
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>Execute the workflow to see results here.</p>
+          <p className="text-sm " style={{color: "var(--muted-foreground)"}}>Execute the workflow to see results here.</p>
         )
       ) : executionResult ? (
-        <div className="space-y-3 rounded-2xl border  dark:  p-4 text-sm " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <div className="space-y-3 rounded-2xl border  dark:  p-4 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
           <div className="flex items-center justify-between">
             <div>
               <p>Rows: {executionResult.row_count}</p>
@@ -1350,26 +1350,26 @@ export default function ApiManagerPage() {
             </div>
             <button
               onClick={() => setShowJsonResult((prev) => !prev)}
-              className="text-[10px] uppercase tracking-normal  underline" style={{ color: "var(--muted-foreground)" }}
+              className="text-[10px] uppercase tracking-normal  underline" style={{color: "var(--muted-foreground)"}}
             >
               {showJsonResult ? "Hide JSON" : "Show JSON"}
             </button>
           </div>
           {showJsonResult ? (
-            <pre className="max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{ color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}>
+            <pre className="max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
               {JSON.stringify(executionResult, null, 2)}
             </pre>
           ) : executionColumns.length === 0 ? (
-            <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>No columns returned.</p>
+            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>No columns returned.</p>
           ) : (
             <div className="overflow-auto custom-scrollbar">
-              <table className="min-w-full text-left text-xs " style={{ color: "var(--foreground-secondary)" }}>
+              <table className="min-w-full text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
                 <thead>
                   <tr>
                     {executionColumns.map((column) => (
                       <th
                         key={column}
-                        className="border-b  dark: px-2 py-1 uppercase tracking-normal " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}
+                        className="border-b  dark: px-2 py-1 uppercase tracking-normal " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
                       >
                         {column}
                       </th>
@@ -1384,7 +1384,7 @@ export default function ApiManagerPage() {
                     >
                       {executionColumns.map((column) => (
                         <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
-                          <pre className="m-0 text-[12px] " style={{ color: "var(--foreground)" }}>{String(row[column] ?? "")}</pre>
+                          <pre className="m-0 text-[12px] " style={{color: "var(--foreground)"}}>{String(row[column] ?? "")}</pre>
                         </td>
                       ))}
                     </tr>
@@ -1395,28 +1395,28 @@ export default function ApiManagerPage() {
           )}
         </div>
       ) : (
-        <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>Execute the SQL to see results here.</p>
+        <p className="text-sm " style={{color: "var(--muted-foreground)"}}>Execute the SQL to see results here.</p>
       )}
-      <div className="space-y-3 rounded-2xl border  dark:  p-4" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <div className="space-y-3 rounded-2xl border  dark:  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
         <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Execution logs</p>
-          <span className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>Execution logs</p>
+          <span className="text-[10px] uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
             {execLogs.length} entries
           </span>
         </div>
         {logsLoading ? (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Loading logs…</p>
+          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Loading logs…</p>
         ) : execLogs.length === 0 ? (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>No executions yet.</p>
+          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>No executions yet.</p>
         ) : (
           <div className="space-y-2">
             {execLogs.map((log) => (
               <button
                 key={log.exec_id}
                 onClick={() => applyLogParams(log)}
-                className="w-full rounded-2xl border  dark: /30 p-3 text-left text-xs  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                className="w-full rounded-2xl border  dark: /30 p-3 text-left text-xs  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
               >
-                <div className="flex items-center justify-between text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+                <div className="flex items-center justify-between text-[11px] " style={{color: "var(--muted-foreground)"}}>
                   <span>
                     {log.status.toUpperCase()} · {new Date(log.executed_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
                   </span>
@@ -1424,9 +1424,9 @@ export default function ApiManagerPage() {
                     {log.row_count} rows · {log.duration_ms} ms
                   </span>
                 </div>
-                <p className="mt-1 text-[11px]  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>by {log.executed_by ?? "ops-builder"}</p>
+                <p className="mt-1 text-[11px]  dark:" style={{color: "var(--foreground-secondary)"}}>by {log.executed_by ?? "ops-builder"}</p>
                 {log.request_params ? (
-                  <pre className="mt-2 max-h-20 overflow-auto text-[10px]  custom-scrollbar" style={{ color: "var(--muted-foreground)" }}>
+                  <pre className="mt-2 max-h-20 overflow-auto text-[10px]  custom-scrollbar" style={{color: "var(--muted-foreground)"}}>
                     {JSON.stringify(log.request_params, null, 2)}
                   </pre>
                 ) : null}
@@ -1468,7 +1468,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
                 }
-                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 disabled={isSystemScope}
                 placeholder="e.g., User Management API"
               />
@@ -1486,7 +1486,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, method: event.target.value as ApiDraft["method"] }))
                 }
-                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 disabled={isSystemScope}
               >
                 <option value="GET">GET</option>
@@ -1501,7 +1501,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
                 }
-                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 disabled={isSystemScope}
                 placeholder="/api/endpoint"
               />
@@ -1516,11 +1516,7 @@ export default function ApiManagerPage() {
                   setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
                 }
                 className="h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
+                style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
                 onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                 disabled={isSystemScope}
@@ -1529,28 +1525,20 @@ export default function ApiManagerPage() {
             </FormFieldGroup>
           </FormSection>
           {selectedDiscovered ? (
-            <div className="space-y-2 rounded-2xl border p-3 text-[11px]" style={{
-              borderColor: "var(--border)",
-              backgroundColor: "var(--surface-elevated)",
-              color: "var(--foreground)"
-            }}>
-              <p className="text-[10px] uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Supported actions / constraints</p>
+            <div className="space-y-2 rounded-2xl border p-3 text-[11px]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}>
+              <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Supported actions / constraints</p>
               {selectedDiscovered.summary ? (
-                <p className="text-sm" style={{ color: "var(--foreground)" }}>{selectedDiscovered.summary}</p>
+                <p className="text-sm" style={{color: "var(--foreground)"}}>{selectedDiscovered.summary}</p>
               ) : null}
               {discoveredConstraintLines.map((line, index) => (
-                <p key={index} className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                <p key={index} className="text-[11px]" style={{color: "var(--muted-foreground)"}}>
                   {line}
                 </p>
               ))}
               <button
                 onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
                 className="w-full rounded-2xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-normal transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)"
-                }}
+                style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
               >
@@ -1567,7 +1555,7 @@ export default function ApiManagerPage() {
               <input
                 value={definitionDraft.tags}
                 onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
-                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 disabled={isSystemScope}
                 placeholder="user, analytics, reporting"
               />
@@ -1587,11 +1575,7 @@ export default function ApiManagerPage() {
                 value={paramSchemaText}
                 onChange={(event) => setParamSchemaText(event.target.value)}
                 className="h-40 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
+                style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
                 onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
                 onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                 disabled={isSystemScope && systemView !== "registered"}
@@ -1607,22 +1591,14 @@ export default function ApiManagerPage() {
                   value={runtimePolicyText}
                   onChange={(event) => setRuntimePolicyText(event.target.value)}
                   className="h-40 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                  style={{
-                    borderColor: "var(--border)",
-                    backgroundColor: "var(--surface-base)",
-                    color: "var(--foreground)",
-                  }}
+                  style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
                   onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
                   onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                   disabled={isSystemScope && systemView !== "registered"}
                   placeholder='{"timeout": 30000}'
                 />
               ) : (
-                <div className="flex h-40 flex-col justify-center rounded-2xl border p-3 text-[11px]" style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-elevated)",
-                  color: "var(--muted-foreground)"
-                }}>
+                <div className="flex h-40 flex-col justify-center rounded-2xl border p-3 text-[11px]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}>
                   Runtime Policy editing is available only for System {'>'} Registered or Custom APIs.
                 </div>
               )}
@@ -1638,10 +1614,10 @@ export default function ApiManagerPage() {
                   onChange={(event) =>
                     setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
                   }
-                  className="h-4 w-4 rounded   text-sky-400 focus:ring-sky-400" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
+                  className="h-4 w-4 rounded   text-sky-400 focus:ring-sky-400" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
                   disabled={isSystemScope}
                 />
-                <span className="text-sm  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>Enable this API</span>
+                <span className="text-sm  dark:" style={{color: "var(--foreground-secondary)"}}>Enable this API</span>
               </label>
             </FormFieldGroup>
             <FormFieldGroup
@@ -1653,7 +1629,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
                 }
-                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 placeholder="ops-builder"
                 disabled={isSystemScope}
               />
@@ -1664,7 +1640,7 @@ export default function ApiManagerPage() {
       {activeTab === "logic" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
               Logic ({logicTypeLabels[logicType]})
             </p>
             {!isSystemScope ? (
@@ -1677,7 +1653,7 @@ export default function ApiManagerPage() {
                     className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal transition ${logicType === type
                       ? "border-sky-500 bg-sky-500/10  dark:"
                       : " dark:  "
-                      } ${!!selectedId ? "opacity-40 cursor-not-allowed" : "hover: shadow-sm"}`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--muted-foreground)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+                      } ${!!selectedId ? "opacity-40 cursor-not-allowed" : "hover: shadow-sm"}`} style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)"}}
                   >
                     {logicTypeLabels[type]}
                   </button>
@@ -1685,7 +1661,7 @@ export default function ApiManagerPage() {
                 <button
                   type="button"
                   onClick={handleLogicUndo}
-                  className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-normal  dark: transition hover: disabled:opacity-40" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}
+                  className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-normal  dark: transition hover: disabled:opacity-40" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
                   disabled={logicHistoryIndex <= 0}
                 >
                   Undo
@@ -1693,7 +1669,7 @@ export default function ApiManagerPage() {
                 <button
                   type="button"
                   onClick={handleLogicRedo}
-                  className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-normal  dark: transition hover: disabled:opacity-40" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}
+                  className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-normal  dark: transition hover: disabled:opacity-40" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
                   disabled={logicHistoryIndex >= logicHistory.length - 1}
                 >
                   Redo
@@ -1702,14 +1678,14 @@ export default function ApiManagerPage() {
             ) : null}
           </div>
           {logicType === "script" && !isSystemScope ? (
-            <label className="text-xs uppercase tracking-normal  flex flex-col gap-2" style={{ color: "var(--muted-foreground)" }}>
+            <label className="text-xs uppercase tracking-normal  flex flex-col gap-2" style={{color: "var(--muted-foreground)"}}>
               Script language
               <select
                 value={scriptLanguage}
                 onChange={(event) =>
                   setScriptLanguage(event.target.value as "python" | "javascript")
                 }
-                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
               >
                 <option value="python">Python</option>
                 <option value="javascript">JavaScript</option>
@@ -1719,7 +1695,7 @@ export default function ApiManagerPage() {
           <div
             className={`builder-json-shell rounded-2xl border  dark:  dark: transition-all ${
               logicType === "http" ? "h-auto max-h-[600px] overflow-y-auto" : "h-64 overflow-hidden"
-            }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+            }`} style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}
           >
             {logicType === "http" ? (
               <div className="p-4">
@@ -1772,10 +1748,10 @@ export default function ApiManagerPage() {
             )}
           </div>
           {(bindingValidation.bindings.length > 0 || bindingValidation.errors.length > 0) && (
-            <div className="rounded-2xl border  dark:  px-3 py-2 text-[11px]" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-              <p className="" style={{ color: "var(--muted-foreground)" }}>Binding scan</p>
+            <div className="rounded-2xl border  dark:  px-3 py-2 text-[11px]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+              <p className="" style={{color: "var(--muted-foreground)"}}>Binding scan</p>
               {bindingValidation.bindings.length > 0 && (
-                <p className="mt-1  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>
+                <p className="mt-1  dark:" style={{color: "var(--foreground-secondary)"}}>
                   Detected: {bindingValidation.bindings.map((binding) => `{{${binding}}}`).join(", ")}
                 </p>
               )}
@@ -1790,20 +1766,20 @@ export default function ApiManagerPage() {
           )}
         </div>
       )}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t  dark:/60" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}>
+      <div className="flex items-center justify-between mt-6 pt-4 border-t  dark:/60" style={{borderColor: "var(--border)"}}>
         <span className={`text-[11px] uppercase tracking-[0.1em] px-3 py-1 rounded-full border ${statusMessage?.toLowerCase().includes("failed") || statusMessage?.toLowerCase().includes("error")
           ? "text-rose-400 border-rose-500/30 bg-rose-500/5 font-semibold"
           : statusMessage && statusMessage.includes("Saved")
             ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/5"
             : "0 border-transparent bg-transparent"
-          }`} style={{ color: "var(--foreground)" }}>
+          }`} style={{color: "var(--foreground)"}}>
           {statusMessage ?? "정의/로직 저장 대기"}
         </span>
         <div className="flex items-center gap-3">
           {activeTab === "logic" && (logicType === "sql" || logicType === "http" || logicType === "script" || logicType === "python") && (
             <button
               onClick={handleDryRunFromEditor}
-              className="rounded-full border border-sky-500/30 bg-sky-500/80 px-5 py-2 text-[12px] font-bold uppercase tracking-wider dark: transition hover:bg-sky-400 hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled: disabled:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+              className="rounded-full border border-sky-500/30 bg-sky-500/80 px-5 py-2 text-[12px] font-bold uppercase tracking-wider dark: transition hover:bg-sky-400 hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled: disabled:" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
               disabled={isExecuting}
             >
               {isExecuting ? "Running…" : `Test ${logicTypeLabels[logicType]} (Dry-run)`}
@@ -1811,7 +1787,7 @@ export default function ApiManagerPage() {
           )}
           <button
             onClick={handleSave}
-            className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-[12px] font-bold uppercase tracking-wider dark: transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled: disabled:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+            className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-[12px] font-bold uppercase tracking-wider dark: transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled: disabled:" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
             disabled={isSaving || isSystemScope}
           >
             {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
@@ -1819,18 +1795,18 @@ export default function ApiManagerPage() {
         </div>
       </div>
       {showLogicResult && activeTab === "logic" && (
-        <div className="mt-4 border-t  dark: pt-4" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}>
+        <div className="mt-4 border-t  dark: pt-4" style={{borderColor: "var(--border)"}}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Query Result</span>
+            <span className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>Query Result</span>
             <button
               onClick={() => setShowLogicResult(false)}
-              className="text-[10px]  hover: dark:" style={{ color: "var(--foreground)" ,  color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}
+              className="text-[10px]  hover: dark:" style={{color: "var(--foreground-secondary)"}}
             >
               Close
             </button>
           </div>
           {executionResult ? (
-            <div className="space-y-3 rounded-2xl border  dark:  p-4 text-sm " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+            <div className="space-y-3 rounded-2xl border  dark:  p-4 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
               <div className="flex items-center justify-between">
                 <div>
                   <p>Rows: {executionResult.row_count}</p>
@@ -1838,26 +1814,26 @@ export default function ApiManagerPage() {
                 </div>
                 <button
                   onClick={() => setShowJsonResult((prev) => !prev)}
-                  className="text-[10px] uppercase tracking-normal  underline" style={{ color: "var(--muted-foreground)" }}
+                  className="text-[10px] uppercase tracking-normal  underline" style={{color: "var(--muted-foreground)"}}
                 >
                   {showJsonResult ? "Hide JSON" : "Show JSON"}
                 </button>
               </div>
               {showJsonResult ? (
-                <pre className="max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{ color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}>
+                <pre className="max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
                   {JSON.stringify(executionResult, null, 2)}
                 </pre>
               ) : executionColumns.length === 0 ? (
-                <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>No columns returned.</p>
+                <p className="text-xs " style={{color: "var(--muted-foreground)"}}>No columns returned.</p>
               ) : (
                 <div className="overflow-auto custom-scrollbar">
-                  <table className="min-w-full text-left text-xs " style={{ color: "var(--foreground-secondary)" }}>
+                  <table className="min-w-full text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
                     <thead>
                       <tr>
                         {executionColumns.map((column) => (
                           <th
                             key={column}
-                            className="border-b  dark: px-2 py-1 uppercase tracking-normal " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}
+                            className="border-b  dark: px-2 py-1 uppercase tracking-normal " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
                           >
                             {column}
                           </th>
@@ -1872,7 +1848,7 @@ export default function ApiManagerPage() {
                         >
                           {executionColumns.map((column) => (
                             <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
-                              <pre className="m-0 text-[12px] " style={{ color: "var(--foreground)" }}>{String(row[column] ?? "")}</pre>
+                              <pre className="m-0 text-[12px] " style={{color: "var(--foreground)"}}>{String(row[column] ?? "")}</pre>
                             </td>
                           ))}
                         </tr>
@@ -1883,7 +1859,7 @@ export default function ApiManagerPage() {
               )}
             </div>
           ) : (
-            <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>No result available.</p>
+            <p className="text-sm " style={{color: "var(--muted-foreground)"}}>No result available.</p>
           )}
         </div>
       )}
@@ -1897,33 +1873,33 @@ export default function ApiManagerPage() {
   const testTabContent = (
     <div className="space-y-3">
       {selectedApi ? (
-        <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
           Runtime URL:{" "}
-          <span className="font-mono text-[10px] " style={{ color: "var(--foreground-secondary)" }}>
+          <span className="font-mono text-[10px] " style={{color: "var(--foreground-secondary)"}}>
             {`${apiBaseUrl}${selectedApi.endpoint}`}
           </span>
         </p>
       ) : null}
-      <label className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+      <label className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
         Params JSON
         <textarea
           value={testParams}
           onChange={(event) => setTestParams(event.target.value)}
-          className="mt-2 h-32 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500 custom-scrollbar" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+          className="mt-2 h-32 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500 custom-scrollbar" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
         />
       </label>
       {isWorkflowApi ? (
-        <label className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+        <label className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
           Input JSON (optional)
           <textarea
             value={testInput}
             onChange={(event) => setTestInput(event.target.value)}
-            className="mt-2 h-24 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500 custom-scrollbar" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="mt-2 h-24 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500 custom-scrollbar" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
           />
         </label>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+        <label className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
           Limit
           <input
             type="number"
@@ -1931,22 +1907,22 @@ export default function ApiManagerPage() {
             max={1000}
             value={testLimit}
             onChange={(event) => setTestLimit(event.target.value)}
-            className="mt-2 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="mt-2 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
           />
         </label>
-        <label className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+        <label className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
           Executed by
           <input
             value={executedBy}
             onChange={(event) => setExecutedBy(event.target.value)}
-            className="mt-2 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="mt-2 w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
             placeholder="ops-builder"
           />
         </label>
         <div className="flex items-end">
           <button
             onClick={handleExecute}
-            className="w-full rounded-2xl border dark: bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal dark: transition hover:bg-sky-400 disabled:" style={{ color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+            className="w-full rounded-2xl border dark: bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal dark: transition hover:bg-sky-400 disabled:" style={{color: "var(--foreground)", borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}
             disabled={
               !selectedId || isExecuting || (!isSqlApi && !isWorkflowApi && !isHttpApi)
             }
@@ -1960,7 +1936,7 @@ export default function ApiManagerPage() {
         </div>
       </div>
       {selectedApi && selectedApi.logic_type === "script" ? (
-        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
           Script APIs are saved for future execution support in MVP-5.
         </p>
       ) : null}
@@ -1978,7 +1954,7 @@ export default function ApiManagerPage() {
             className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal ${activeTab === tab.id
               ? "border-sky-500 bg-sky-500/10  dark:"
               : " dark:  "
-              }`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--muted-foreground)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+              }`} style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)"}}
           >
             {tab.label}
           </button>
@@ -1994,16 +1970,16 @@ export default function ApiManagerPage() {
         testResultsArea
       ) : (
         <>
-          <p className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Metadata (Current Editor)</p>
-          <div className="space-y-2 rounded-2xl border  dark:  p-3 text-sm  dark:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+          <p className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>Metadata (Current Editor)</p>
+          <div className="space-y-2 rounded-2xl border  dark:  p-3 text-sm  dark:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
             <p>
-              Endpoint: <span className="" style={{ color: "var(--foreground)" }}>{definitionDraft.endpoint || "(new)"}</span>
+              Endpoint: <span className="" style={{color: "var(--foreground)"}}>{definitionDraft.endpoint || "(new)"}</span>
             </p>
             <p>
               Logic type: <span className="text-sky-400 font-mono">{logicTypeLabels[logicType]}</span>
             </p>
             {selectedApi && (
-              <p className="border-t  dark:/60 pt-2 text-[10px] " style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
+              <p className="border-t  dark:/60 pt-2 text-[10px] " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
                 Editing: {selectedApi.api_name} ({selectedApi.api_id})
               </p>
             )}
@@ -2017,7 +1993,7 @@ export default function ApiManagerPage() {
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>API 목록</h3>
+        <h3 className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>API 목록</h3>
         <div className="flex gap-2 text-[10px] uppercase tracking-normal">
           {(["custom"] as ScopeType[])
             .concat(enableSystemApis ? (["system"] as ScopeType[]) : [])
@@ -2028,7 +2004,7 @@ export default function ApiManagerPage() {
                 className={`rounded-full border px-3 py-1 transition ${scope === item
                   ? "border-sky-500 bg-sky-500/10  dark:"
                   : "  "
-                  }`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--muted-foreground)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                  }`} style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)"}}
               >
                 {SCOPE_LABELS[item]}
               </button>
@@ -2038,7 +2014,7 @@ export default function ApiManagerPage() {
       {scope === "system" && enableSystemApis ? (
         <>
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
               <div className="flex items-center gap-2">
                 {(["discovered", "registered"] as SystemView[]).map((view) => (
                   <button
@@ -2047,7 +2023,7 @@ export default function ApiManagerPage() {
                     className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-normal transition ${systemView === view
                       ? "border-sky-500 bg-sky-500/10  dark:"
                       : "  "
-                      }`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--muted-foreground)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                      }`} style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)"}}
                   >
                     {view}
                   </button>
@@ -2056,13 +2032,13 @@ export default function ApiManagerPage() {
             </div>
             {systemView === "discovered" ? (
               <>
-                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>Discovered endpoints are read-only.</p>
-                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>Discovered endpoints are read-only.</p>
+                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
                   Discovered from source (OpenAPI). These are not DB-registered APIs.
                 </p>
-                <div className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+                <div className="text-[10px] uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
                   Last fetch:{" "}
-                  <span className=" dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>
+                  <span className=" dark:" style={{color: "var(--foreground-secondary)"}}>
                     {discoveredFetchAt
                       ? new Date(discoveredFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                       : "-"}
@@ -2078,15 +2054,15 @@ export default function ApiManagerPage() {
               </>
             ) : (
               <>
-                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>Registered APIs are read-only.</p>
+                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>Registered APIs are read-only.</p>
                 {systemFetchStatus === "error" ? (
                   <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
                     Server list unavailable. Showing local cache only.
                   </div>
                 ) : null}
-                <div className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
+                <div className="text-[10px] uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
                   Last fetch:{" "}
-                  <span className=" dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>
+                  <span className=" dark:" style={{color: "var(--foreground-secondary)"}}>
                     {systemFetchAt
                       ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                       : "-"}
@@ -2109,24 +2085,24 @@ export default function ApiManagerPage() {
                   value={discoveredSearchTerm}
                   onChange={(event) => setDiscoveredSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                  className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 />
                 <button
                   onClick={loadDiscoveredEndpoints}
-                  className="ml-2 rounded-full border   px-3 py-2 text-[10px] uppercase tracking-normal  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                  className="ml-2 rounded-full border   px-3 py-2 text-[10px] uppercase tracking-normal  transition hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
                 >
                   Refresh
                 </button>
               </div>
               {discoveredError ? <p className="text-xs text-rose-400">{discoveredError}</p> : null}
-              <div className="max-h-[420px] overflow-auto rounded-2xl border  dark: /40 custom-scrollbar" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                <table className="min-w-full table-auto text-left text-xs " style={{ color: "var(--foreground-secondary)" }}>
-                  <thead className="sticky top-0 /90" style={{ backgroundColor: "var(--surface-base)" }}>
+              <div className="max-h-[420px] overflow-auto rounded-2xl border  dark: /40 custom-scrollbar" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <table className="min-w-full table-auto text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
+                  <thead className="sticky top-0 /90" style={{backgroundColor: "var(--surface-base)"}}>
                     <tr>
                       {["method", "path", "summary", "tags", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b  dark: px-2 py-2 uppercase tracking-normal  whitespace-nowrap" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}
+                          className="border-b  dark: px-2 py-2 uppercase tracking-normal  whitespace-nowrap" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
                         >
                           {column}
                         </th>
@@ -2136,7 +2112,7 @@ export default function ApiManagerPage() {
                   <tbody>
                     {filteredDiscoveredEndpoints.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-3 py-3 " style={{ color: "var(--muted-foreground)" }}>
+                        <td colSpan={5} className="px-3 py-3 " style={{color: "var(--muted-foreground)"}}>
                           No discovered endpoints found.
                         </td>
                       </tr>
@@ -2148,7 +2124,7 @@ export default function ApiManagerPage() {
                             selectedDiscovered?.method === endpoint.method
                             ? "bg-sky-500/10  dark:"
                             : "hover:"
-                            }`} style={{ backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                            }`} style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                           onClick={() => {
                             setSelectedDiscovered(endpoint);
                             setSelectedId(null);
@@ -2167,7 +2143,7 @@ export default function ApiManagerPage() {
                           <td className="px-2 py-2 whitespace-nowrap">{endpoint.summary ?? "-"}</td>
                           <td className="px-2 py-2 whitespace-nowrap">{endpoint.tags?.join(", ") || "-"}</td>
                           <td className="px-2 py-2 whitespace-nowrap">
-                            <span className="rounded-full border  px-2 py-1 text-[10px] uppercase tracking-normal " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
+                            <span className="rounded-full border  px-2 py-1 text-[10px] uppercase tracking-normal " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
                               {endpoint.source}
                             </span>
                           </td>
@@ -2186,26 +2162,26 @@ export default function ApiManagerPage() {
                   value={systemSearchTerm}
                   onChange={(event) => setSystemSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+                  className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 />
                 <div className="ml-2 flex items-center gap-2">
                   <button
                     onClick={() => loadApis(selectedId ?? undefined)}
-                    className="rounded-full border   px-3 py-2 text-[10px] uppercase tracking-normal  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                    className="rounded-full border   px-3 py-2 text-[10px] uppercase tracking-normal  transition hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
                   >
                     Refresh
                   </button>
                 </div>
               </div>
               {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
-              <div className="max-h-[420px] overflow-auto rounded-2xl border  dark: /40 custom-scrollbar" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                <table className="min-w-full table-auto text-left text-xs " style={{ color: "var(--foreground-secondary)" }}>
-                  <thead className="sticky top-0 /90" style={{ backgroundColor: "var(--surface-base)" }}>
+              <div className="max-h-[420px] overflow-auto rounded-2xl border  dark: /40 custom-scrollbar" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <table className="min-w-full table-auto text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
+                  <thead className="sticky top-0 /90" style={{backgroundColor: "var(--surface-base)"}}>
                     <tr>
                       {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b  dark: px-2 py-2 uppercase tracking-normal  whitespace-nowrap" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}
+                          className="border-b  dark: px-2 py-2 uppercase tracking-normal  whitespace-nowrap" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
                         >
                           {column}
                         </th>
@@ -2215,7 +2191,7 @@ export default function ApiManagerPage() {
                   <tbody>
                     {filteredSystemApis.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-3 py-3 " style={{ color: "var(--muted-foreground)" }}>
+                        <td colSpan={6} className="px-3 py-3 " style={{color: "var(--muted-foreground)"}}>
                           No registered APIs found.
                         </td>
                       </tr>
@@ -2226,7 +2202,7 @@ export default function ApiManagerPage() {
                           className={`cursor-pointer border-b /60 ${selectedApi?.api_id === api.api_id
                             ? "bg-sky-500/10  dark:"
                             : "hover:"
-                            }`} style={{ backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                            }`} style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
                           onClick={() => {
                             setSelectedId(api.api_id);
                             setDraftApi(null);
@@ -2242,7 +2218,7 @@ export default function ApiManagerPage() {
                             {new Date(api.updated_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
                           </td>
                           <td className="px-2 py-2 whitespace-nowrap">
-                            <span className="rounded-full border  px-2 py-1 text-[10px] uppercase tracking-normal " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
+                            <span className="rounded-full border  px-2 py-1 text-[10px] uppercase tracking-normal " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
                               {api.source}
                             </span>
                           </td>
@@ -2272,7 +2248,7 @@ export default function ApiManagerPage() {
                 className={`rounded-full border px-3 py-1 transition ${logicFilter === item.id
                   ? "border-sky-500 bg-sky-500/10  dark:"
                   : "  "
-                  }`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--muted-foreground)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                  }`} style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)"}}
               >
                 {item.label}
               </button>
@@ -2282,11 +2258,11 @@ export default function ApiManagerPage() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="검색"
-            className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="w-full rounded-2xl border dark: dark: px-3 py-2 text-sm dark: outline-none transition focus:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
           />
           <div className="space-y-2 max-h-[360px] overflow-auto custom-scrollbar">
             {filteredApis.length === 0 ? (
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>검색 결과 없음</p>
+              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>검색 결과 없음</p>
             ) : (
               filteredApis.map((api) => (
                 <button
@@ -2295,11 +2271,11 @@ export default function ApiManagerPage() {
                   className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition flex items-center gap-3 whitespace-nowrap overflow-hidden ${selectedId === api.api_id
                     ? "border-sky-400 bg-sky-500/10  dark:"
                     : " dark:   dark: hover:"
-                    }`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--foreground-secondary)", color: "var(--foreground)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+                    }`} style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)"}}
                 >
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex items-center gap-2 overflow-hidden">
-                      <span className="text-[10px] uppercase  min-w-8" style={{ color: "var(--muted-foreground)" }}>{api.method}</span>
+                      <span className="text-[10px] uppercase  min-w-8" style={{color: "var(--muted-foreground)"}}>{api.method}</span>
                       <span className="font-semibold truncate">{api.api_name}</span>
                       {((api.source === "local" && api.api_id !== "applied-draft-temp") || api.api_id.startsWith("local-")) && (
                         <span className="rounded-full border border-amber-500/50 bg-amber-500/10 px-1.5 py-0.2 text-[8px] uppercase tracking-normal text-amber-400">
@@ -2307,7 +2283,7 @@ export default function ApiManagerPage() {
                         </span>
                       )}
                     </div>
-                    <span className="text-[10px]  truncate" style={{ color: "var(--muted-foreground)" }}>{api.endpoint}</span>
+                    <span className="text-[10px]  truncate" style={{color: "var(--muted-foreground)"}}>{api.endpoint}</span>
                   </div>
                 </button>
               ))
@@ -2320,7 +2296,7 @@ export default function ApiManagerPage() {
         className={`w-full rounded-2xl border px-3 py-2 text-[10px] uppercase tracking-normal transition ${scope === "system"
           ? "   cursor-not-allowed"
           : " dark:   hover:"
-          }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+          }`} style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
         disabled={scope === "system"}
       >
         New API
@@ -2451,8 +2427,8 @@ export default function ApiManagerPage() {
 
   return (
     <div className="api-manager-theme py-6">
-      <h1 className="text-2xl font-semibold dark:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>API Manager</h1>
-      <p className="mb-6 text-sm " style={{ color: "var(--muted-foreground)" }}>
+      <h1 className="text-2xl font-semibold dark:" style={{color: "var(--foreground)"}}>API Manager</h1>
+      <p className="mb-6 text-sm " style={{color: "var(--muted-foreground)"}}>
         Builder shell for defining executable APIs that power OPS and orchestration tools.
       </p>
       <BuilderShell

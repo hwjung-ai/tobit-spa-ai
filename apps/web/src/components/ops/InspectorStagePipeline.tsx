@@ -37,11 +37,11 @@ interface StagePipelineProps {
 }
 
 const STATUS_STYLES: Record<StageStatusType, { badge: string; icon: React.ReactElement }> = {
-  pending: { badge: "bg-[var(--surface-elevated)] text-[var(--muted-foreground)]", icon: <Clock className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} /> },
+  pending: { badge: "bg-[var(--surface-elevated)] text-[var(--muted-foreground)]", icon: <Clock className="h-3 w-3" style={{color: "var(--muted-foreground)"}} /> },
   ok: { badge: "bg-emerald-500/10 text-emerald-400", icon: <CheckCircle className="h-3 w-3" /> },
   warning: { badge: "bg-amber-500/10 text-amber-400", icon: <AlertTriangle className="h-3 w-3" /> },
   error: { badge: "bg-rose-500/10 text-rose-400", icon: <AlertTriangle className="h-3 w-3" /> },
-  skipped: { badge: "bg-[var(--surface-elevated)] text-[var(--muted-foreground)]", icon: <Clock className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} /> },
+  skipped: { badge: "bg-[var(--surface-elevated)] text-[var(--muted-foreground)]", icon: <Clock className="h-3 w-3" style={{color: "var(--muted-foreground)"}} /> },
 };
 
 const STAGE_STYLES: Record<string, string> = {
@@ -111,14 +111,14 @@ function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
       className={cn(
         "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left cursor-pointer transition-all group"
       )}
-      style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}
+      style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
       title={`${config.label}: ${value}`}
     >
       <span className={config.color}>{config.icon}</span>
-      <span className="text-[10px]  capitalize min-w-[50px]" style={{ color: "var(--muted-foreground)" }}>{config.label}:</span>
-      <span className="text-[10px]  font-medium truncate flex-1" style={{ color: "var(--foreground-secondary)" }}>{displayName}</span>
-      <span className="text-[8px] " style={{ color: "var(--muted-foreground)" }}>{version ? `v${version}` : ""}</span>
-      <Info className="h-3 w-3  opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "var(--muted-foreground)" }} />
+      <span className="text-[10px]  capitalize min-w-[50px]" style={{color: "var(--muted-foreground)"}}>{config.label}:</span>
+      <span className="text-[10px]  font-medium truncate flex-1" style={{color: "var(--foreground-secondary)"}}>{displayName}</span>
+      <span className="text-[8px] " style={{color: "var(--muted-foreground)"}}>{version ? `v${version}` : ""}</span>
+      <Info className="h-3 w-3  opacity-0 group-hover:opacity-100 transition-opacity" style={{color: "var(--muted-foreground)"}} />
     </div>
   );
 }
@@ -138,7 +138,7 @@ function AppliedAssetsList({ appliedAssets, assetNames, onAssetClick }: AppliedA
   if (assets.length === 0) return null;
 
   return (
-    <div className="mt-2 pt-2 border-t /50 space-y-1" style={{ borderColor: "var(--border)" }}>
+    <div className="mt-2 pt-2 border-t /50 space-y-1" style={{borderColor: "var(--border)"}}>
       {assets.map(([type, value]) => (
         <AssetCard
           key={type}
@@ -159,7 +159,7 @@ function AssetLegend() {
       {Object.entries(ASSET_CONFIG).map(([type, config]) => (
         <div key={type} className="flex items-center gap-1.5">
           <span className={config.color}>{config.icon}</span>
-          <span className="text-[9px] " style={{ color: "var(--muted-foreground)" }}>{config.label}</span>
+          <span className="text-[9px] " style={{color: "var(--muted-foreground)"}}>{config.label}</span>
         </div>
       ))}
     </div>
@@ -180,54 +180,54 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="w-full max-w-md  rounded-2xl border  shadow-2xl p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
+        className="w-full max-w-md  rounded-2xl border  shadow-2xl p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg" style={{ backgroundColor: "var(--surface-base)" }}>
+            <div className="p-2 rounded-lg" style={{backgroundColor: "var(--surface-base)"}}>
               {config.icon}
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white">
-                {asset.name} <span className="" style={{ color: "var(--muted-foreground)" }}>({asset.id})</span>
+                {asset.name} <span className="" style={{color: "var(--muted-foreground)"}}>({asset.id})</span>
               </h3>
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{config.label}</p>
+              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{config.label}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover: transition" style={{ backgroundColor: "var(--surface-elevated)" }}
+            className="p-1 rounded-lg hover: transition" style={{backgroundColor: "var(--surface-elevated)"}}
           >
-            <X className="h-4 w-4 " style={{ color: "var(--muted-foreground)" }} />
+            <X className="h-4 w-4 " style={{color: "var(--muted-foreground)"}} />
           </button>
         </div>
 
         <div className="space-y-3">
-          <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-overlay)" }}>
-            <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{ color: "var(--muted-foreground)" }}>Asset ID</p>
-            <p className="text-xs  font-mono break-all" style={{ color: "var(--foreground-secondary)" }}>{asset.id}</p>
+          <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
+            <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Asset ID</p>
+            <p className="text-xs  font-mono break-all" style={{color: "var(--foreground-secondary)"}}>{asset.id}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-overlay)" }}>
-              <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{ color: "var(--muted-foreground)" }}>Type</p>
-              <p className="text-xs  capitalize" style={{ color: "var(--foreground-secondary)" }}>{asset.type}</p>
+            <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
+              <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Type</p>
+              <p className="text-xs  capitalize" style={{color: "var(--foreground-secondary)"}}>{asset.type}</p>
             </div>
-            <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-overlay)" }}>
-              <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{ color: "var(--muted-foreground)" }}>Version</p>
-              <p className="text-xs " style={{ color: "var(--foreground-secondary)" }}>v{asset.version}</p>
+            <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
+              <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Version</p>
+              <p className="text-xs " style={{color: "var(--foreground-secondary)"}}>v{asset.version}</p>
             </div>
           </div>
 
-          <div className=" rounded-lg p-3" style={{ backgroundColor: "var(--surface-overlay)" }}>
-            <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{ color: "var(--muted-foreground)" }}>Full Identifier</p>
-            <p className="text-xs  font-mono break-all" style={{ color: "var(--muted-foreground)" }}>{asset.fullId}</p>
+          <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
+            <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Full Identifier</p>
+            <p className="text-xs  font-mono break-all" style={{color: "var(--muted-foreground)"}}>{asset.fullId}</p>
           </div>
 
           <div className="bg-blue-500/5 border border-blue-400/20 rounded-lg p-3">
             <p className="text-[9px] uppercase tracking-[0.2em] text-blue-400 mb-1">Asset Registry</p>
-            <p className="text-xs " style={{ color: "var(--foreground-secondary)" }}>
+            <p className="text-xs " style={{color: "var(--foreground-secondary)"}}>
               상세 정보는 Asset Registry 페이지에서 확인할 수 있습니다.
             </p>
           </div>
@@ -236,7 +236,7 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
         <div className="mt-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2  hover: text-white text-xs rounded-lg transition" style={{ backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+            className="px-4 py-2  hover: text-white text-xs rounded-lg transition" style={{backgroundColor: "var(--surface-elevated)"}}
           >
             닫기
           </button>
@@ -269,23 +269,23 @@ export default function InspectorStagePipeline({
 
   return (
     <>
-      <div className="flex flex-col rounded-2xl border" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}>
-        <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
+      <div className="flex flex-col rounded-2xl border" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <div className="p-4 border-b " style={{borderColor: "var(--border)"}}>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-white">Stage Pipeline</h2>
               {traceId && (
-                <p className="text-xs  mt-1 break-all" style={{ color: "var(--muted-foreground)" }}>Trace ID: {traceId}</p>
+                <p className="text-xs  mt-1 break-all" style={{color: "var(--muted-foreground)"}}>Trace ID: {traceId}</p>
               )}
             </div>
-            <div className="text-[10px]  uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
+            <div className="text-[10px]  uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
               {orderedStages.length} stages
             </div>
           </div>
 
           {/* Asset Legend */}
           {showAssets && (
-            <div className="mt-3 pt-3 border-t " style={{ borderColor: "var(--border)" }}>
+            <div className="mt-3 pt-3 border-t " style={{borderColor: "var(--border)"}}>
               <AssetLegend />
             </div>
           )}
@@ -306,14 +306,10 @@ export default function InspectorStagePipeline({
                       "min-w-[160px] rounded-xl border px-3 py-2 text-left transition-all",
                       isSelected && "ring-2"
                     )}
-                    style={{
-                      borderColor: isSelected ? "var(--primary)" : "var(--border)",
-                      backgroundColor: isSelected ? "var(--surface-elevated)" : "var(--surface-overlay)",
-                      ringColor: isSelected ? "var(--primary)" : "transparent"
-                    }}
+                    style={{borderColor: isSelected ? "var(--primary)" : "var(--border)", backgroundColor: isSelected ? "var(--surface-elevated)" : "var(--surface-overlay)", ringColor: isSelected ? "var(--primary)" : "transparent"}}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] uppercase tracking-[0.3em]" style={{ color: isSelected ? "var(--foreground)" : "var(--muted-foreground)" }}>
+                      <span className="text-[11px] uppercase tracking-[0.3em]" style={{color: isSelected ? "var(--foreground)" : "var(--muted-foreground)"}}>
                         {stage.label}
                       </span>
                       <span className={cn("px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1", statusStyle.badge)}>
@@ -321,7 +317,7 @@ export default function InspectorStagePipeline({
                         {stage.status}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-xs" style={{ color: isSelected ? "var(--foreground-secondary)" : "var(--muted-foreground)" }}>
+                    <div className="mt-2 flex items-center justify-between text-xs" style={{color: isSelected ? "var(--foreground-secondary)" : "var(--muted-foreground)"}}>
                       <span className="font-mono">{stage.name}</span>
                       <span>{stage.duration_ms ? `${stage.duration_ms}ms` : "-"}</span>
                     </div>
@@ -336,7 +332,7 @@ export default function InspectorStagePipeline({
                     )}
                   </button>
                   {index < orderedStages.length - 1 && (
-                    <div className="h-px w-6 " style={{ backgroundColor: "var(--surface-elevated)" }} />
+                    <div className="h-px w-6 " style={{backgroundColor: "var(--surface-elevated)"}} />
                   )}
                 </div>
               );
@@ -345,7 +341,7 @@ export default function InspectorStagePipeline({
         </div>
 
         {selectedStage && (
-          <div className="border-t   p-4 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+          <div className="border-t   p-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">{selectedStage.label} Details</h3>
               <div className={cn("text-xs px-2 py-1 rounded-full", STATUS_STYLES[selectedStage.status].badge)}>
@@ -353,19 +349,19 @@ export default function InspectorStagePipeline({
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <details className=" border  rounded-xl p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }} open>
-                <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
+              <details className=" border  rounded-xl p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} open>
+                <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
                   Stage Input
                 </summary>
-                <pre className="mt-2 text-[11px]  overflow-auto max-h-56" style={{ color: "var(--foreground-secondary)" }}>
+                <pre className="mt-2 text-[11px]  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
                   {selectedStage.input ? prettyJson(selectedStage.input) : "No input captured"}
                 </pre>
               </details>
-              <details className=" border  rounded-xl p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
+              <details className=" border  rounded-xl p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
                   Stage Output
                 </summary>
-                <pre className="mt-2 text-[11px]  overflow-auto max-h-56" style={{ color: "var(--foreground-secondary)" }}>
+                <pre className="mt-2 text-[11px]  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
                   {selectedStage.output ? prettyJson(selectedStage.output) : "No output captured"}
                 </pre>
               </details>

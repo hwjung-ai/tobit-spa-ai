@@ -99,7 +99,7 @@ export default function LogsPage() {
     const renderTable = (records: LogRecord[]) => {
         if (!records || records.length === 0) {
             return (
-                <div className="text-center py-8 " style={{ color: "var(--muted-foreground)" }}>
+                <div className="text-center py-8 " style={{color: "var(--muted-foreground)"}}>
                     No logs found
                 </div>
             );
@@ -111,11 +111,11 @@ export default function LogsPage() {
             <div className="overflow-x-auto">
                 <table className="w-full text-[11px]">
                     <thead>
-                        <tr className="border-b  dark:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}>
+                        <tr className="border-b  dark:" style={{borderColor: "var(--border)"}}>
                             {columns.map((col) => (
                                 <th
                                     key={col}
-                                    className="px-3 py-2 text-left font-semibold  dark: uppercase tracking-wider" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}
+                                    className="px-3 py-2 text-left font-semibold  dark: uppercase tracking-wider" style={{color: "var(--foreground-secondary)"}}
                                 >
                                     {col.replace(/_/g, " ")}
                                 </th>
@@ -126,10 +126,10 @@ export default function LogsPage() {
                         {records.map((record, idx) => (
                             <tr
                                 key={idx}
-                                className="border-b  dark:/50 hover: dark:hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" ,  backgroundColor: "var(--surface-overlay)" }}
+                                className="border-b  dark:/50 hover: dark:hover:" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
                             >
                                 {columns.map((col) => (
-                                    <td key={col} className="px-3 py-2  dark:" style={{ color: "var(--foreground)" ,  color: "var(--muted-foreground)" }}>
+                                    <td key={col} className="px-3 py-2  dark:" style={{color: "var(--muted-foreground)"}}>
                                         {typeof record[col] === "object"
                                             ? JSON.stringify(record[col])
                                             : String(record[col] || "-")}
@@ -155,7 +155,7 @@ export default function LogsPage() {
                                 : line.includes("WARNING") || line.includes("WARN")
                                 ? "text-yellow-400"
                                 : ""
-                        }`} style={{ color: "var(--foreground-secondary)" }}
+                        }`} style={{color: "var(--foreground-secondary)"}}
                     >
                         {line}
                     </div>
@@ -170,8 +170,8 @@ export default function LogsPage() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h2 className="text-lg font-semibold dark: mb-2" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>System Logs</h2>
-                <p className="text-sm  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
+                <h2 className="text-lg font-semibold dark: mb-2" style={{color: "var(--foreground)"}}>System Logs</h2>
+                <p className="text-sm  dark:" style={{color: "var(--muted-foreground)"}}>
                     View system logs including query history, execution traces, audit logs, LLM calls, and server logs.
                 </p>
             </div>
@@ -184,7 +184,7 @@ export default function LogsPage() {
                         logType === "query-history"
                             ? "bg-sky-500 text-white"
                             : "  hover: dark: dark: dark:hover:"
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
                 >
                     Query History
                 </button>
@@ -194,7 +194,7 @@ export default function LogsPage() {
                         logType === "execution-trace"
                             ? "bg-sky-500 text-white"
                             : "  hover: dark: dark: dark:hover:"
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
                 >
                     Execution Trace
                 </button>
@@ -204,7 +204,7 @@ export default function LogsPage() {
                         logType === "audit"
                             ? "bg-sky-500 text-white"
                             : "  hover: dark: dark: dark:hover:"
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
                 >
                     Audit Log
                 </button>
@@ -214,7 +214,7 @@ export default function LogsPage() {
                         logType === "llm-logs"
                             ? "bg-purple-500 text-white"
                             : "  hover: dark: dark: dark:hover:"
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
                 >
                     LLM Calls
                 </button>
@@ -224,7 +224,7 @@ export default function LogsPage() {
                         logType === "api-file"
                             ? "bg-emerald-500 text-white"
                             : "  hover: dark: dark: dark:hover:"
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
                 >
                     API Server Logs
                 </button>
@@ -234,7 +234,7 @@ export default function LogsPage() {
                         logType === "web-file"
                             ? "bg-emerald-500 text-white"
                             : "  hover: dark: dark: dark:hover:"
-                    }`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)" }}
+                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
                 >
                     WEB Server Logs
                 </button>
@@ -250,7 +250,7 @@ export default function LogsPage() {
                         onChange={(e) => setAutoRefresh(e.target.checked)}
                         className="rounded"
                     />
-                    <label htmlFor="autoRefresh" className="text-xs " style={{ color: "var(--foreground-secondary)" }}>
+                    <label htmlFor="autoRefresh" className="text-xs " style={{color: "var(--foreground-secondary)"}}>
                         Auto-refresh every 3 seconds
                     </label>
                 </div>
@@ -263,7 +263,7 @@ export default function LogsPage() {
                 <>
                     {/* Loading/Error State */}
                     {loading && (
-                        <div className="text-center py-8  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
+                        <div className="text-center py-8  dark:" style={{color: "var(--muted-foreground)"}}>
                             Loading logs...
                         </div>
                     )}
@@ -284,7 +284,7 @@ export default function LogsPage() {
 
                             {/* File Info */}
                             {data.file && (
-                                <div className="mt-4 text-xs  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
+                                <div className="mt-4 text-xs  dark:" style={{color: "var(--muted-foreground)"}}>
                                     File: {data.file} | Exists: {data.exists ? "Yes" : "No"}
                                 </div>
                             )}
@@ -292,24 +292,24 @@ export default function LogsPage() {
                             {/* Pagination */}
                             {data.records && data.total > limit && (
                                 <div className="flex items-center justify-between mt-6 text-sm">
-                                    <div className=" dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
+                                    <div className=" dark:" style={{color: "var(--muted-foreground)"}}>
                                         Showing {page * limit + 1} - {Math.min((page + 1) * limit, data.total)} of {data.total}
                                     </div>
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setPage(Math.max(0, page - 1))}
                                             disabled={page === 0}
-                                            className="px-3 py-1 rounded   hover: dark: dark: dark:hover: disabled:opacity-50 disabled:cursor-not-allowed" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+                                            className="px-3 py-1 rounded   hover: dark: dark: dark:hover: disabled:opacity-50 disabled:cursor-not-allowed" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
                                         >
                                             Previous
                                         </button>
-                                        <div className="px-3 py-1  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
+                                        <div className="px-3 py-1  dark:" style={{color: "var(--muted-foreground)"}}>
                                             Page {page + 1} of {totalPages}
                                         </div>
                                         <button
                                             onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                                             disabled={page >= totalPages - 1}
-                                            className="px-3 py-1 rounded   hover: dark: dark: dark:hover: disabled:opacity-50 disabled:cursor-not-allowed" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+                                            className="px-3 py-1 rounded   hover: dark: dark: dark:hover: disabled:opacity-50 disabled:cursor-not-allowed" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
                                         >
                                             Next
                                         </button>

@@ -275,19 +275,19 @@ export default function ChatExperience({
 
   return (
     <div className={panelClass}>
-      <p className="text-xs uppercase tracking-[0.3em]  shrink-0" style={{ color: "var(--muted-foreground)" }}>AI Copilot</p>
-      <div className="max-h-[min(440px,calc(100vh-14rem))] overflow-y-auto rounded-2xl border   p-3 text-[12px]  custom-scrollbar min-h-0" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <p className="text-xs uppercase tracking-[0.3em]  shrink-0" style={{color: "var(--muted-foreground)"}}>AI Copilot</p>
+      <div className="max-h-[min(440px,calc(100vh-14rem))] overflow-y-auto rounded-2xl border   p-3 text-[12px]  custom-scrollbar min-h-0" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-overlay)"}}>
         {messages.length === 0 ? (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>질문을 입력하면 AI가 응답합니다.</p>
+          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>질문을 입력하면 AI가 응답합니다.</p>
         ) : (
           messages.map((message) => (
             <div key={message.id} className="group mb-2 relative flex items-start gap-2 pr-8">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
+                  <span className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
                     {message.role === "user" ? "User" : "Assistant"}
                   </span>
-                  <span className="text-[9px] " style={{ color: "var(--muted-foreground)" }}>
+                  <span className="text-[9px] " style={{color: "var(--muted-foreground)"}}>
                     {new Date(message.timestamp).toLocaleString("ko-KR", {
                       year: "numeric",
                       month: "numeric",
@@ -299,12 +299,12 @@ export default function ChatExperience({
                     })}
                   </span>
                 </div>
-                <p className="text-sm  break-words whitespace-pre-wrap" style={{ color: "var(--foreground-secondary)" }}>{message.text}</p>
+                <p className="text-sm  break-words whitespace-pre-wrap" style={{color: "var(--foreground-secondary)"}}>{message.text}</p>
               </div>
               <button
                 type="button"
                 onClick={() => removeMessage(message.id)}
-                className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400  text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex" style={{ backgroundColor: "var(--surface-base)" }}
+                className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400  text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex" style={{backgroundColor: "var(--surface-base)"}}
                 aria-label="Delete message"
               >
                 ✕
@@ -318,17 +318,17 @@ export default function ChatExperience({
           rows={2}
           value={inputValue}
           onChange={(event) => setInputValue(event.target.value)}
-          className="w-full rounded-2xl border   px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+          className="w-full rounded-2xl border   px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
           placeholder={inputPlaceholder}
         />
-        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]  pt-1" style={{ color: "var(--muted-foreground)" }}>
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]  pt-1" style={{color: "var(--muted-foreground)"}}>
           <span className={status === "streaming" ? "animate-pulse text-sky-400 font-bold" : ""}>
             {status === "streaming" ? "Streaming…" : status === "error" ? "Error" : "Ready"}
           </span>
           <button
             type="submit"
             className="rounded-full border px-4 py-1 text-white transition disabled:opacity-50"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--primary)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--primary)"}}
             disabled={!inputValue.trim() || status === "streaming"}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--primary-foreground)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--primary)"; }}

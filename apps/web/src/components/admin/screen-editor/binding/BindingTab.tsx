@@ -32,7 +32,7 @@ export default function BindingTab() {
   if (!editorState.screen) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="" style={{ color: "var(--muted-foreground)"  }}>No screen loaded</div>
+        <div className="" style={{color: "var(--muted-foreground)"}}>No screen loaded</div>
       </div>
     );
   }
@@ -82,36 +82,36 @@ export default function BindingTab() {
     <div className="h-full flex flex-col gap-4 p-4">
       <div>
         <h3 className="text-sm font-semibold text-white mb-3">Data Bindings</h3>
-        <p className="text-xs mb-4" style={{ color: "var(--muted-foreground)"  }}>
+        <p className="text-xs mb-4" style={{color: "var(--muted-foreground)"}}>
           Map component properties to state or context data
         </p>
       </div>
 
-      <div className="rounded border p-3 space-y-2" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}>
-        <p className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)"  }}>Binding Debugger Sample Data</p>
+      <div className="rounded border p-3 space-y-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}>
+        <p className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Binding Debugger Sample Data</p>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
           <div>
-            <p className="text-[11px] mb-1" style={{ color: "var(--muted-foreground)"  }}>state (JSON)</p>
+            <p className="text-[11px] mb-1" style={{color: "var(--muted-foreground)"}}>state (JSON)</p>
             <Textarea
               value={sampleStateText}
               onChange={(e) => setSampleStateText(e.target.value)}
-              className="min-h-20 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="min-h-20 font-mono text-xs" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
             />
           </div>
           <div>
-            <p className="text-[11px] mb-1" style={{ color: "var(--muted-foreground)"  }}>context (JSON)</p>
+            <p className="text-[11px] mb-1" style={{color: "var(--muted-foreground)"}}>context (JSON)</p>
             <Textarea
               value={sampleContextText}
               onChange={(e) => setSampleContextText(e.target.value)}
-              className="min-h-20 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="min-h-20 font-mono text-xs" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
             />
           </div>
           <div>
-            <p className="text-[11px] mb-1" style={{ color: "var(--muted-foreground)"  }}>inputs (JSON)</p>
+            <p className="text-[11px] mb-1" style={{color: "var(--muted-foreground)"}}>inputs (JSON)</p>
             <Textarea
               value={sampleInputsText}
               onChange={(e) => setSampleInputsText(e.target.value)}
-              className="min-h-20 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="min-h-20 font-mono text-xs" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
             />
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function BindingTab() {
 
       {bindingEntries.length === 0 ? (
         <div className="flex items-center justify-center flex-1">
-          <div className="text-center" style={{ color: "var(--muted-foreground)"  }}>
+          <div className="text-center" style={{color: "var(--muted-foreground)"}}>
             <p className="text-sm mb-2">No bindings created yet</p>
             <p className="text-xs">Bindings will appear here</p>
           </div>
@@ -140,10 +140,10 @@ export default function BindingTab() {
                 selectedBinding === targetPath
                   ? "border-sky-400 bg-sky-400/10"
                   : "  hover:"
-              }`} style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", borderColor: "var(--border)" }}
+              }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
             >
               <div className="text-xs font-mono text-sky-300">{targetPath}</div>
-                    <div className="text-xs mt-1" style={{ color: "var(--muted-foreground)"  }}>→ {sourcePath}</div>
+                    <div className="text-xs mt-1" style={{color: "var(--muted-foreground)"}}>→ {sourcePath}</div>
                     <div className="mt-1 text-[11px] text-emerald-300 truncate">
                       value: {JSON.stringify(evaluateBindingValue(sourcePath))}
                     </div>
@@ -153,17 +153,17 @@ export default function BindingTab() {
       )}
 
       {selectedBinding && (
-        <div className="border-t pt-4" style={{ borderColor: "var(--border)"  }}>
+        <div className="border-t pt-4" style={{borderColor: "var(--border)"}}>
           <h4 className="text-xs font-semibold text-white mb-3">Edit Binding</h4>
           <div className="space-y-3">
             <div>
-              <label className="text-xs block mb-1" style={{ color: "var(--foreground-secondary)"  }}>Target Path</label>
-              <div className="text-xs font-mono p-2 rounded" style={{ backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"  }}>
+              <label className="text-xs block mb-1" style={{color: "var(--foreground-secondary)"}}>Target Path</label>
+              <div className="text-xs font-mono p-2 rounded" style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
                 {selectedBinding}
               </div>
             </div>
             <div>
-              <label className="text-xs block mb-2" style={{ color: "var(--foreground-secondary)"  }}>Source Path</label>
+              <label className="text-xs block mb-2" style={{color: "var(--foreground-secondary)"}}>Source Path</label>
               <input
                 type="text"
                 value={bindings[selectedBinding] || ""}
@@ -171,12 +171,12 @@ export default function BindingTab() {
                   editorState.updateBinding(selectedBinding, e.target.value);
                 }}
                 placeholder="state.propertyName or context.key"
-                className="w-full text-xs p-2 border rounded text-white placeholder-slate-500" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+                className="w-full text-xs p-2 border rounded text-white placeholder-slate-500" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
               />
             </div>
             <div>
-              <label className="text-xs block mb-1" style={{ color: "var(--foreground-secondary)"  }}>Evaluated Value (sample data)</label>
-              <div className="text-xs font-mono text-emerald-300 p-2 rounded border" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}>
+              <label className="text-xs block mb-1" style={{color: "var(--foreground-secondary)"}}>Evaluated Value (sample data)</label>
+              <div className="text-xs font-mono text-emerald-300 p-2 rounded border" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}>
                 {JSON.stringify(evaluateBindingValue(bindings[selectedBinding] || ""))}
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function BindingTab() {
               </button>
               <button
                 onClick={() => setSelectedBinding(null)}
-                className="flex-1 px-3 py-2 text-xs hover: text-white rounded transition" style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)"  }}
+                className="flex-1 px-3 py-2 text-xs hover: text-white rounded transition" style={{backgroundColor: "var(--surface-elevated)"}}
               >
                 Close
               </button>
@@ -201,15 +201,15 @@ export default function BindingTab() {
         </div>
       )}
 
-      <div className="border-t pt-4 text-xs" style={{ color: "var(--muted-foreground)", borderColor: "var(--border)"  }}>
+      <div className="border-t pt-4 text-xs" style={{color: "var(--muted-foreground)", borderColor: "var(--border)"}}>
         <p className="mb-2">
           <strong>Binding Format:</strong>
         </p>
-        <ul className="space-y-1 0 list-disc list-inside" style={{ color: "var(--foreground)"  }}>
-          <li>Static values: <code className="" style={{ color: "var(--muted-foreground)"  }}>hello</code>, <code className="" style={{ color: "var(--muted-foreground)"  }}>123</code></li>
-          <li>State: <code className="" style={{ color: "var(--muted-foreground)"  }}>state.userName</code></li>
-          <li>Context: <code className="" style={{ color: "var(--muted-foreground)"  }}>context.userId</code></li>
-          <li>Inputs: <code className="" style={{ color: "var(--muted-foreground)"  }}>inputs.formData</code></li>
+        <ul className="space-y-1 0 list-disc list-inside" style={{color: "var(--foreground)"}}>
+          <li>Static values: <code className="" style={{color: "var(--muted-foreground)"}}>hello</code>, <code className="" style={{color: "var(--muted-foreground)"}}>123</code></li>
+          <li>State: <code className="" style={{color: "var(--muted-foreground)"}}>state.userName</code></li>
+          <li>Context: <code className="" style={{color: "var(--muted-foreground)"}}>context.userId</code></li>
+          <li>Inputs: <code className="" style={{color: "var(--muted-foreground)"}}>inputs.formData</code></li>
         </ul>
       </div>
     </div>

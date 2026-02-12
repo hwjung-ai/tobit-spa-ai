@@ -34,13 +34,13 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
   };
 
   return (
-    <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+    <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Orchestration</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Orchestration</p>
           {orchestrationTrace && (
-            <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
+            <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
               {orchestrationTrace.total_groups} group{orchestrationTrace.total_groups !== 1 ? 's' : ''} •{' '}
               {orchestrationTrace.total_tools} tool{orchestrationTrace.total_tools !== 1 ? 's' : ''}
             </span>
@@ -50,7 +50,7 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
         {/* View mode toggle */}
         {orchestrationTrace && (
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1  rounded-lg p-1" style={{ backgroundColor: "var(--surface-base)" }}>
+            <div className="flex gap-1  rounded-lg p-1" style={{backgroundColor: "var(--surface-base)"}}>
               <button
                 onClick={() => {
                   setViewMode('timeline');
@@ -60,7 +60,7 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                   viewMode === 'timeline'
                     ? ' text-white'
                     : ' hover:'
-                }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
+                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
               >
                 Timeline
               </button>
@@ -73,7 +73,7 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                   viewMode === 'graph'
                     ? ' text-white'
                     : ' hover:'
-                }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
+                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
               >
                 Graph
               </button>
@@ -105,23 +105,23 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
 
           {/* Tool Details Panel */}
           {selectedTool && (
-            <div className="/40 border /50 rounded-lg p-4 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-              <div className="text-sm font-semibold " style={{ color: "var(--foreground-secondary)" }}>Tool: {selectedTool}</div>
+            <div className="/40 border /50 rounded-lg p-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+              <div className="text-sm font-semibold " style={{color: "var(--foreground-secondary)"}}>Tool: {selectedTool}</div>
 
               {orchestrationTrace.execution_groups.map((group) => {
                 const tool = group.tools.find((t) => t.tool_id === selectedTool);
                 if (!tool) return null;
 
                 return (
-                  <div key={selectedTool} className="space-y-3 text-xs " style={{ color: "var(--muted-foreground)" }}>
+                  <div key={selectedTool} className="space-y-3 text-xs " style={{color: "var(--muted-foreground)"}}>
                     <div>
-                      <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Type</p>
-                      <p className="" style={{ color: "var(--foreground-secondary)" }}>{tool.tool_type}</p>
+                      <p className=" font-semibold mb-1" style={{color: "var(--muted-foreground)"}}>Type</p>
+                      <p className="" style={{color: "var(--foreground-secondary)"}}>{tool.tool_type}</p>
                     </div>
 
                     {tool.depends_on.length > 0 && (
                       <div>
-                        <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Dependencies</p>
+                        <p className=" font-semibold mb-1" style={{color: "var(--muted-foreground)"}}>Dependencies</p>
                         <div className="flex flex-wrap gap-2">
                           {tool.depends_on.map((dep) => (
                             <span
@@ -137,11 +137,11 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
 
                     {Object.keys(tool.output_mapping).length > 0 && (
                       <div>
-                        <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Data Flow Mappings</p>
+                        <p className=" font-semibold mb-1" style={{color: "var(--muted-foreground)"}}>Data Flow Mappings</p>
                         <div className="space-y-1">
                           {Object.entries(tool.output_mapping).map(([key, value]) => (
                             <div key={key} className="flex items-start gap-2">
-                              <span className=" font-mono" style={{ color: "var(--muted-foreground)" }}>{key}:</span>
+                              <span className=" font-mono" style={{color: "var(--muted-foreground)"}}>{key}:</span>
                               <code className="text-emerald-400 font-mono break-all">{value as string}</code>
                             </div>
                           ))}
@@ -150,8 +150,8 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                     )}
 
                     <div>
-                      <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Execution Group</p>
-                      <p className="" style={{ color: "var(--foreground-secondary)" }}>Group {group.group_index}</p>
+                      <p className=" font-semibold mb-1" style={{color: "var(--muted-foreground)"}}>Execution Group</p>
+                      <p className="" style={{color: "var(--foreground-secondary)"}}>Group {group.group_index}</p>
                     </div>
                   </div>
                 );

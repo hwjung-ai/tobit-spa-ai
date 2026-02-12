@@ -125,7 +125,7 @@ export default function OpsTimelineTab({
       metric: <Database className="h-3 w-3 text-amber-400" />,
       history: <Clock className="h-3 w-3 text-purple-400" />,
       relation: <Network className="h-3 w-3 text-green-400" />,
-      all: <Activity className="h-3 w-3 " style={{ color: "var(--muted-foreground)" }} />,
+      all: <Activity className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} />,
     };
     return icons[type];
   };
@@ -147,7 +147,7 @@ export default function OpsTimelineTab({
       className
     )}>
       {/* Header */}
-      <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
+      <div className="p-4 border-b " style={{borderColor: "var(--border)"}}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-white">
             OPS Timeline
@@ -171,7 +171,7 @@ export default function OpsTimelineTab({
             <button
               onClick={loadTimeline}
               disabled={isLoading}
-              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs border   transition hover: disabled:opacity-50" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}
+              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs border   transition hover: disabled:opacity-50" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
             >
               <RefreshCw className={cn(
                 "h-3 w-3",
@@ -202,13 +202,13 @@ export default function OpsTimelineTab({
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 " style={{ color: "var(--muted-foreground)" }} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3 w-3 " style={{color: "var(--muted-foreground)"}} />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search timeline entries..."
-            className="w-full pl-9 pr-3 py-2  border  rounded-lg text-sm text-white placeholder-slate-500 focus:border-sky-500 outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+            className="w-full pl-9 pr-3 py-2  border  rounded-lg text-sm text-white placeholder-slate-500 focus:border-sky-500 outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
           />
         </div>
       </div>
@@ -217,8 +217,8 @@ export default function OpsTimelineTab({
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {filteredTimeline.length === 0 ? (
           <div className="text-center py-8">
-            <Activity className="h-8 w-8  mx-auto mb-2" style={{ color: "var(--muted-foreground)" }} />
-            <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+            <Activity className="h-8 w-8  mx-auto mb-2" style={{color: "var(--muted-foreground)"}} />
+            <p className="text-sm " style={{color: "var(--muted-foreground)"}}>
               {isLoading ? "Loading timeline..." : "No timeline entries found"}
             </p>
           </div>
@@ -260,19 +260,19 @@ export default function OpsTimelineTab({
                       <span className="text-xs font-semibold text-white">
                         {entry.type.toUpperCase()}
                       </span>
-                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>·</span>
-                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                      <span className="text-xs " style={{color: "var(--muted-foreground)"}}>·</span>
+                      <span className="text-xs " style={{color: "var(--muted-foreground)"}}>
                         {formatRelativeTime(entry.timestamp)}
                       </span>
                     </div>
 
-                    <p className="text-sm  mb-2 truncate" style={{ color: "var(--foreground-secondary)" }}>
+                    <p className="text-sm  mb-2 truncate" style={{color: "var(--foreground-secondary)"}}>
                       {entry.message}
                     </p>
 
                     {/* Additional Info */}
                     {entry.details?.question && (
-                      <p className="text-xs  mb-1 truncate" style={{ color: "var(--muted-foreground)" }}>
+                      <p className="text-xs  mb-1 truncate" style={{color: "var(--muted-foreground)"}}>
                         Question: {entry.details.question}
                       </p>
                     )}
@@ -284,12 +284,12 @@ export default function OpsTimelineTab({
                         </span>
                       )}
                       {entry.details?.route && (
-                        <span className="" style={{ color: "var(--muted-foreground)" }}>
+                        <span className="" style={{color: "var(--muted-foreground)"}}>
                           Route: {entry.details.route}
                         </span>
                       )}
                       {entry.details?.traceId && (
-                        <span className="font-mono " style={{ color: "var(--muted-foreground)" }}>
+                        <span className="font-mono " style={{color: "var(--muted-foreground)"}}>
                           ID: {entry.details.traceId.slice(0, 8)}...
                         </span>
                       )}
@@ -309,8 +309,8 @@ export default function OpsTimelineTab({
       </div>
 
       {/* Summary Footer */}
-      <div className="p-3 border-t  /30" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-        <div className="flex items-center justify-between text-xs " style={{ color: "var(--muted-foreground)" }}>
+      <div className="p-3 border-t  /30" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+        <div className="flex items-center justify-between text-xs " style={{color: "var(--muted-foreground)"}}>
           <span>
             Showing {filteredTimeline.length} of {timeline.length} entries
           </span>

@@ -17,7 +17,7 @@ export default function HeaderUserMenu() {
   const router = useRouter();
 
   if (isLoading) {
-    return <div className="h-10 w-24 rounded animate-pulse" style={{ backgroundColor: "var(--surface-elevated)" }} />;
+    return <div className="h-10 w-24 rounded animate-pulse" style={{backgroundColor: "var(--surface-elevated)"}} />;
   }
 
   if (!isAuthenticated || !user) {
@@ -48,39 +48,35 @@ export default function HeaderUserMenu() {
         <Button
           variant="outline"
           className="border transition"
-          style={{
-            backgroundColor: "var(--surface-elevated)",
-            color: "var(--foreground)",
-            borderColor: "var(--border)"
-          }}
+          style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)"}}
         >
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--surface-elevated)" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: "var(--surface-elevated)"}}>
               <span className="text-xs font-bold">
                 {user.username.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="text-left">
               <div className="text-xs font-medium">{user.username}</div>
-              <div className="text-xs" style={{ color: getRoleColor(user.role) }}>
+              <div className="text-xs" style={{color: getRoleColor(user.role)}}>
                 {user.role}
               </div>
             </div>
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="border" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
-        <DropdownMenuLabel style={{ color: "var(--foreground)" }}>
+      <DropdownMenuContent align="end" className="border" style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)"}}>
+        <DropdownMenuLabel style={{color: "var(--foreground)"}}>
           <div className="flex flex-col gap-1">
             <div className="font-semibold">{user.username}</div>
-            <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>{user.email}</div>
+            <div className="text-xs" style={{color: "var(--muted-foreground)"}}>{user.email}</div>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator style={{ backgroundColor: "var(--border)" }} />
+        <DropdownMenuSeparator style={{backgroundColor: "var(--border)"}} />
         <DropdownMenuItem
           onClick={handleLogout}
           className="cursor-pointer"
-          style={{ color: "var(--foreground)" }}
+          style={{color: "var(--foreground)"}}
         >
           Sign out
         </DropdownMenuItem>

@@ -52,10 +52,10 @@ export function AggregationSection({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
+    <div className="space-y-4 rounded-2xl p-4" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)"}}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>집계 설정 (선택사항)</h3>
-        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{aggregations.length}개</span>
+        <h3 className="text-sm font-semibold" style={{color: "var(--foreground)"}}>집계 설정 (선택사항)</h3>
+        <span className="text-xs" style={{color: "var(--muted-foreground)"}}>{aggregations.length}개</span>
       </div>
 
       <FormFieldGroup label="그룹화 필드" help="선택적으로 특정 필드로 데이터를 그룹화합니다">
@@ -71,24 +71,24 @@ export function AggregationSection({
             )
           }
           placeholder="예: region, service_name (쉼표로 구분)"
-          className="w-full rounded-lg px-3 py-2 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+          className="w-full rounded-lg px-3 py-2 text-xs placeholder-slate-500" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
         />
       </FormFieldGroup>
 
       {aggregations.length === 0 ? (
-        <div className="rounded-lg border border-dashed py-4 text-center" style={{ borderColor: "var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.2)" }}>
-          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>집계 함수를 추가해주세요</p>
+        <div className="rounded-lg border border-dashed py-4 text-center" style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.2)"}}>
+          <p className="text-xs" style={{color: "var(--muted-foreground)"}}>집계 함수를 추가해주세요</p>
         </div>
       ) : (
         <div className="space-y-3">
           {aggregations.map((agg) => (
             <div
               key={agg.id}
-              className="rounded-lg p-3 space-y-2" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
+              className="rounded-lg p-3 space-y-2" style={{border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)"}}
             >
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>집계 타입</label>
+                  <label className="text-xs" style={{color: "var(--muted-foreground)"}}>집계 타입</label>
                   <select
                     value={agg.type}
                     onChange={(e) =>
@@ -96,7 +96,7 @@ export function AggregationSection({
                         type: e.target.value as any,
                       })
                     }
-                    className="w-full rounded-lg px-2 py-1 text-xs mt-1" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+                    className="w-full rounded-lg px-2 py-1 text-xs mt-1" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
                   >
                     {AGGREGATION_TYPES.map((at) => (
                       <option key={at.value} value={at.value}>
@@ -108,7 +108,7 @@ export function AggregationSection({
 
                 {agg.type !== "count" && (
                   <div className="flex-1">
-                    <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>필드명</label>
+                    <label className="text-xs" style={{color: "var(--muted-foreground)"}}>필드명</label>
                     <input
                       type="text"
                       value={agg.field || ""}
@@ -118,13 +118,13 @@ export function AggregationSection({
                         })
                       }
                       placeholder="예: cpu_usage"
-                      className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500 mt-1" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+                      className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500 mt-1" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
                     />
                   </div>
                 )}
 
                 <div className="flex-1">
-                  <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>출력명</label>
+                  <label className="text-xs" style={{color: "var(--muted-foreground)"}}>출력명</label>
                   <input
                     type="text"
                     value={agg.outputAlias || ""}
@@ -134,7 +134,7 @@ export function AggregationSection({
                       })
                     }
                     placeholder="예: avg_cpu"
-                    className="w-full rounded-lg border   px-2 py-1 text-xs text-white placeholder-slate-500 mt-1" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+                    className="w-full rounded-lg border   px-2 py-1 text-xs text-white placeholder-slate-500 mt-1" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
                   />
                 </div>
 

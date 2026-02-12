@@ -834,46 +834,34 @@ export default function CepBuilderPage() {
   const definitionContent = (
     <div className="space-y-4">
       <div className="flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Rule name</span>
+        <span className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Rule name</span>
         <input
           value={ruleName}
           onChange={(event) => setRuleName(event.target.value)}
           className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition"
-          style={{
-            borderColor: "var(--border)",
-            backgroundColor: "var(--surface-base)",
-            color: "var(--foreground)",
-          }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
           onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
         />
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Description</span>
+        <span className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Description</span>
         <textarea
           value={ruleDescription}
           onChange={(event) => setRuleDescription(event.target.value)}
           className="h-20 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition"
-          style={{
-            borderColor: "var(--border)",
-            backgroundColor: "var(--surface-base)",
-            color: "var(--foreground)",
-          }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
           onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
           onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
         />
       </div>
-      <div className="flex items-center gap-1 text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+      <div className="flex items-center gap-1 text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>
         {(["metric", "event", "schedule", "anomaly"] as TriggerType[]).map((type) => (
           <button
             key={type}
             onClick={() => setTriggerType(type)}
             className="rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider transition cursor-pointer"
-            style={{
-              borderColor: triggerType === type ? "var(--primary)" : "var(--border)",
-              backgroundColor: triggerType === type ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)",
-              color: triggerType === type ? "var(--primary)" : "var(--foreground)",
-            }}
+            style={{borderColor: triggerType === type ? "var(--primary)" : "var(--border)", backgroundColor: triggerType === type ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)", color: triggerType === type ? "var(--primary)" : "var(--foreground)"}}
             onMouseEnter={(e) => {
               if (triggerType !== type) e.currentTarget.style.borderColor = "var(--primary)";
             }}
@@ -887,11 +875,8 @@ export default function CepBuilderPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Trigger spec (JSON)</p>
-          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border" style={{
-            borderColor: "var(--border)",
-            backgroundColor: "var(--surface-base)"
-          }}>
+          <p className="text-[10px] uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trigger spec (JSON)</p>
+          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
             <Editor
               height="100%"
               defaultLanguage="json"
@@ -903,11 +888,8 @@ export default function CepBuilderPage() {
           </div>
         </div>
         <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Action spec (JSON)</p>
-          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border" style={{
-            borderColor: "var(--border)",
-            backgroundColor: "var(--surface-base)"
-          }}>
+          <p className="text-[10px] uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Action spec (JSON)</p>
+          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
             <Editor
               height="100%"
               defaultLanguage="json"
@@ -919,28 +901,24 @@ export default function CepBuilderPage() {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{
-        borderColor: "var(--border)",
-        backgroundColor: "var(--surface-base)",
-        color: "var(--foreground)"
-      }}>
-        <span className="text-[11px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+      <div className="flex items-center justify-between rounded-2xl border px-4 py-3 text-sm" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}>
+        <span className="text-[11px] uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>
           {statusMessage}
         </span>
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="rounded-2xl border dark: bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{ color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+          className="rounded-2xl border dark: bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{color: "var(--foreground)", borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}
         >
           {isSaving ? "Saving…" : selectedRule ? "Update rule" : "Create rule"}
         </button>
       </div>
-      <label className="flex items-center gap-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
+      <label className="flex items-center gap-2 text-xs " style={{color: "var(--muted-foreground)"}}>
         <input
           type="checkbox"
           checked={isActive}
           onChange={(event) => setIsActive(event.target.checked)}
-          className="h-4 w-4 rounded  dark: bg-white dark: text-sky-500 dark:text-sky-400 focus:ring-sky-400" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
+          className="h-4 w-4 rounded  dark: bg-white dark: text-sky-500 dark:text-sky-400 focus:ring-sky-400" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
         />
         <span className="uppercase tracking-wider">Active rule</span>
       </label>
@@ -1000,10 +978,10 @@ export default function CepBuilderPage() {
 
       <div
         className="rounded-2xl border p-4"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+        style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
       >
-        <div className="flex items-center justify-between cursor-pointer hover: dark:hover: p-2 rounded-lg" style={{ backgroundColor: "var(--surface-base)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <h3 className="text-sm font-semibold dark:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>JSON 미리보기</h3>
+        <div className="flex items-center justify-between cursor-pointer hover: dark:hover: p-2 rounded-lg" style={{backgroundColor: "var(--surface-overlay)"}}>
+          <h3 className="text-sm font-semibold dark:" style={{color: "var(--foreground)"}}>JSON 미리보기</h3>
         </div>
         <div className="mt-3">
           <JsonPreview
@@ -1055,30 +1033,30 @@ export default function CepBuilderPage() {
 
   const testContent = (
     <div className="space-y-4">
-      <p className="text-[11px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>
+      <p className="text-[11px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
         Action endpoint:&nbsp;
-        <span className="font-mono text-[10px]  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>{actionEndpointLabel}</span>
+        <span className="font-mono text-[10px]  dark:" style={{color: "var(--foreground-secondary)"}}>{actionEndpointLabel}</span>
       </p>
       <div className="flex flex-col gap-2">
-        <span className="text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Payload</span>
+        <span className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Payload</span>
         <textarea
           value={payloadText}
           onChange={(event) => setPayloadText(event.target.value)}
           className="h-32 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
         />
       </div>
       <div className="flex flex-wrap gap-3">
         <button
           onClick={handleSimulate}
-          className="rounded-2xl border dark: bg-sky-500/90 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider dark: transition hover:bg-sky-400 disabled:" style={{ color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+          className="rounded-2xl border dark: bg-sky-500/90 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider dark: transition hover:bg-sky-400 disabled:" style={{color: "var(--foreground)", borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}
           disabled={!selectedRule || isSimulating}
         >
           {isSimulating ? "Simulating…" : "Simulate"}
         </button>
         <button
           onClick={handleTrigger}
-          className="rounded-2xl border dark: bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{ color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+          className="rounded-2xl border dark: bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{color: "var(--foreground)", borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}
           disabled={!selectedRule || isTriggering}
         >
           {isTriggering ? "Triggering…" : "Manual trigger"}
@@ -1091,17 +1069,17 @@ export default function CepBuilderPage() {
   const logsContent = (
     <div className="space-y-2 max-h-[420px] overflow-auto">
       {logsLoading ? (
-        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Loading logs…</p>
+        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Loading logs…</p>
       ) : logs.length === 0 ? (
-        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>No executions yet.</p>
+        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>No executions yet.</p>
       ) : (
         logs.map((log) => (
           <div
             key={log.exec_id}
             className="rounded-2xl border p-3 text-xs"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
           >
-            <div className="flex items-center justify-between text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+            <div className="flex items-center justify-between text-[11px] " style={{color: "var(--muted-foreground)"}}>
               <span>{new Date(log.triggered_at).toLocaleString("ko-KR")}</span>
               <span
                 className={`rounded-full border px-2 py-0.5 uppercase tracking-wider ${log.status === "success"
@@ -1109,12 +1087,12 @@ export default function CepBuilderPage() {
                   : log.status === "dry_run"
                     ? "0  dark:"
                     : "border-rose-500 text-rose-300"
-                  }`} style={{ color: "var(--foreground-secondary)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                  }`} style={{color: "var(--foreground)", borderColor: "var(--border)"}}
               >
                 {log.status}
               </span>
             </div>
-            <p className="mt-1 text-[12px]  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>
+            <p className="mt-1 text-[12px]  dark:" style={{color: "var(--foreground-secondary)"}}>
               Duration {log.duration_ms} ms
             </p>
             {log.error_message ? (
@@ -1134,11 +1112,7 @@ export default function CepBuilderPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className="rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider"
-              style={{
-                borderColor: activeTab === tab.id ? "var(--primary)" : "var(--border)",
-                backgroundColor: activeTab === tab.id ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)",
-                color: "var(--foreground)",
-              }}
+              style={{borderColor: activeTab === tab.id ? "var(--primary)" : "var(--border)", backgroundColor: activeTab === tab.id ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)", color: "var(--foreground)"}}
             >
               {tab.label}
             </button>
@@ -1159,29 +1133,29 @@ export default function CepBuilderPage() {
       {activeTab === "definition" || activeTab === "definition-form" ? (
         <div
           className="rounded-2xl border p-3 text-xs"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
         >
-          <p className="text-[11px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Metadata</p>
+          <p className="text-[11px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Metadata</p>
           {selectedRule ? (
-            <div className="mt-2 space-y-1 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+            <div className="mt-2 space-y-1 text-[11px] " style={{color: "var(--muted-foreground)"}}>
               <p>Trigger type: {selectedRule.trigger_type}</p>
               <p>Last updated: {new Date(selectedRule.updated_at).toLocaleString("ko-KR")}</p>
             </div>
           ) : (
-            <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Select a rule to see its metadata.</p>
+            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Select a rule to see its metadata.</p>
           )}
         </div>
       ) : activeTab === "test" ? (
         <div className="space-y-3">
           {draftTestOk === true && simulateResult && (
-            <div className="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-xs  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>
+            <div className="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-xs  dark:" style={{color: "var(--foreground-secondary)"}}>
               <div className="flex items-center justify-between">
                 <p className="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold">Draft Simulation Result</p>
                 <span className="text-[10px] rounded-full border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">Pass</span>
               </div>
               <pre
                 className="mt-2 max-h-60 overflow-auto rounded-xl p-3 text-[11px] custom-scrollbar"
-                style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+                style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
               >
                 {JSON.stringify(simulateResult, null, 2)}
               </pre>
@@ -1189,24 +1163,24 @@ export default function CepBuilderPage() {
           )}
           <div
             className="rounded-2xl border p-4 text-xs"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
           >
-            <p className="text-[11px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Simulation result</p>
+            <p className="text-[11px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Simulation result</p>
             <pre
               className="mt-2 max-h-40 overflow-auto rounded-xl p-3 text-[11px]"
-              style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+              style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
             >
               {simulateResult ? JSON.stringify(simulateResult, null, 2) : "Run a simulation to inspect payload."}
             </pre>
           </div>
           <div
             className="rounded-2xl border p-4 text-xs"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
           >
-            <p className="text-[11px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Manual trigger result</p>
+            <p className="text-[11px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Manual trigger result</p>
             <pre
               className="mt-2 max-h-40 overflow-auto rounded-xl p-3 text-[11px]"
-              style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+              style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
             >
               {triggerResult ? JSON.stringify(triggerResult, null, 2) : "Trigger once to record an execution log."}
             </pre>
@@ -1215,10 +1189,10 @@ export default function CepBuilderPage() {
       ) : (
         <div
           className="rounded-2xl border p-4 text-xs"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
         >
-          <p className="text-[11px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Logs</p>
-          <p className="mt-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-[11px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Logs</p>
+          <p className="mt-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>
             Click reload to refresh logs or trigger a rule to write entries.
           </p>
         </div>
@@ -1230,10 +1204,10 @@ export default function CepBuilderPage() {
   const leftPane = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>CEP rules</p>
+        <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>CEP rules</p>
         <button
           onClick={handleNew}
-          className="text-[10px] uppercase tracking-wider  underline" style={{ color: "var(--muted-foreground)" }}
+          className="text-[10px] uppercase tracking-wider  underline" style={{color: "var(--muted-foreground)"}}
         >
           New
         </button>
@@ -1243,11 +1217,11 @@ export default function CepBuilderPage() {
         onChange={(event) => setSearchTerm(event.target.value)}
         placeholder="Search rules"
         className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+        style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
       />
       <div className="space-y-2 max-h-[360px] overflow-y-auto">
         {filteredRules.length === 0 ? (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>No rules found.</p>
+          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>No rules found.</p>
         ) : (
           filteredRules.map((rule) => (
             <button
@@ -1257,14 +1231,10 @@ export default function CepBuilderPage() {
                 setActiveTab("definition");
               }}
               className="w-full rounded-2xl border px-3 py-2 text-left text-sm transition"
-              style={{
-                borderColor: selectedId === rule.rule_id ? "var(--primary)" : "var(--border)",
-                backgroundColor: selectedId === rule.rule_id ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)",
-                color: "var(--foreground)",
-              }}
+              style={{borderColor: selectedId === rule.rule_id ? "var(--primary)" : "var(--border)", backgroundColor: selectedId === rule.rule_id ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)", color: "var(--foreground)"}}
             >
               <p className="font-semibold">{rule.rule_name}</p>
-              <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>{rule.trigger_type}</p>
+              <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>{rule.trigger_type}</p>
             </button>
           ))
         )}
@@ -1384,21 +1354,21 @@ export default function CepBuilderPage() {
       />
       <div
         className="space-y-3 rounded-3xl border p-4 text-sm"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+        style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
       >
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Draft status</span>
-          <span className="text-sm font-semibold dark:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>
+          <span className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Draft status</span>
+          <span className="text-sm font-semibold dark:" style={{color: "var(--foreground)"}}>
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
         </div>
-        {draftNotes ? <p className="text-sm  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>{draftNotes}</p> : null}
+        {draftNotes ? <p className="text-sm  dark:" style={{color: "var(--foreground-secondary)"}}>{draftNotes}</p> : null}
         {draftDiff && (
           <div
             className="space-y-1 rounded-2xl border px-3 py-2 text-[11px]"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
           >
-            <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Auto Diff</p>
+            <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Auto Diff</p>
             {draftDiff.map((item) => (
               <p key={item}>{item}</p>
             ))}
@@ -1409,30 +1379,30 @@ export default function CepBuilderPage() {
             Draft is outdated. Apply again or regenerate.
           </div>
         ) : null}
-        <div className="sticky bottom-0 w-full pt-3 backdrop-blur-sm" style={{ backgroundColor: "var(--surface-overlay)" }}>
+        <div className="sticky bottom-0 w-full pt-3 backdrop-blur-sm" style={{backgroundColor: "var(--surface-overlay)"}}>
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               onClick={handlePreviewDraft}
-              className="rounded-2xl border dark: dark: px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:border-sky-500" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border dark: dark: px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:border-sky-500" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
             >
               Preview
             </button>
             <button
               onClick={handleTestDraftWithSimulation}
-              className="rounded-2xl border dark: dark: px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:border-emerald-400" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border dark: dark: px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:border-emerald-400" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
             >
               Test (Simulate)
             </button>
             <button
               onClick={handleApplyDraft}
-              className="rounded-2xl border dark: dark: px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:border-indigo-400" style={{ backgroundColor: "var(--background)", color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border dark: dark: px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:border-indigo-400" style={{backgroundColor: "var(--surface-overlay)", color: "var(--foreground)", borderColor: "var(--border)"}}
               disabled={!draftApi || draftTestOk !== true}
             >
               Apply
             </button>
             <button
               onClick={handleSaveDraft}
-              className="rounded-2xl border dark: bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400" style={{ color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" }}
+              className="rounded-2xl border dark: bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400" style={{color: "var(--foreground)", borderColor: "var(--border)"}}
               disabled={!draftApi || draftTestOk !== true}
             >
               Save
@@ -1440,7 +1410,7 @@ export default function CepBuilderPage() {
           </div>
         </div>
         {!draftApi && (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
             No draft yet. Ask the copilot to generate one.
             {lastParseError ? ` Parse error: ${lastParseError}` : ""}
           </p>
@@ -1462,25 +1432,25 @@ export default function CepBuilderPage() {
         {draftPreviewSummary && draftPreviewJson ? (
           <div
             className="space-y-2 rounded-2xl border p-3 text-[11px]"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
           >
-            <p className="text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Preview</p>
-            <p className="text-sm dark:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>{draftPreviewSummary}</p>
-            <pre className="max-h-48 overflow-auto rounded-xl  p-2 text-[11px]  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+            <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Preview</p>
+            <p className="text-sm dark:" style={{color: "var(--foreground)"}}>{draftPreviewSummary}</p>
+            <pre className="max-h-48 overflow-auto rounded-xl  p-2 text-[11px]  dark:" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
               {draftPreviewJson}
             </pre>
           </div>
         ) : null}
         <div
           className="space-y-2 rounded-2xl border p-3 text-[11px]"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
         >
-          <p className="text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Multi Draft Compare</p>
+          <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Multi Draft Compare</p>
           <select
             value={selectedCompareDraftId ?? ""}
             onChange={(event) => setSelectedCompareDraftId(event.target.value || null)}
             className="w-full rounded-lg border px-2 py-1 text-xs"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
           >
             <option value="">비교할 드래프트 선택</option>
             {draftHistory.map((item) => (
@@ -1499,16 +1469,16 @@ export default function CepBuilderPage() {
         </div>
         <div
           className="space-y-2 rounded-2xl border p-3 text-[11px]"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
         >
-          <p className="text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Example Prompts</p>
+          <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Example Prompts</p>
           <div className="max-h-40 space-y-1 overflow-auto">
             {CEP_COPILOT_EXAMPLE_PROMPTS.map((prompt) => (
               <button
                 key={prompt}
                 type="button"
                 onClick={() => navigator.clipboard.writeText(prompt)}
-                className="w-full rounded-md border dark: px-2 py-1 text-left text-[11px] dark: transition hover:border-sky-600 hover: dark:hover:" style={{ color: "var(--foreground)"  ,  borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground)" ,  color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}
+                className="w-full rounded-md border dark: px-2 py-1 text-left text-[11px] dark: transition hover:border-sky-600 hover: dark:hover:" style={{color: "var(--foreground-secondary)", borderColor: "var(--border)"}}
                 title="클릭하면 프롬프트가 클립보드에 복사됩니다."
               >
                 {prompt}
@@ -1518,37 +1488,37 @@ export default function CepBuilderPage() {
         </div>
         <details
           className="rounded-2xl border p-3 text-[11px]"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
+          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
         >
-          <summary className="cursor-pointer text-xs uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>
+          <summary className="cursor-pointer text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
             Debug
           </summary>
           <div className="mt-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
               Save target: {saveTarget ?? "none"}
             </p>
             {lastSaveError ? <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p> : null}
-            <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Selected rule</p>
-            <p className="text-[11px]  dark:" style={{ color: "var(--foreground)" ,  color: "var(--foreground-secondary)" }}>
+            <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Selected rule</p>
+            <p className="text-[11px]  dark:" style={{color: "var(--foreground-secondary)"}}>
               {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
             </p>
-            <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
               Parse status: {lastParseStatus}
             </p>
             {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
-            <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Last assistant raw</p>
+            <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Last assistant raw</p>
             <pre
               className="max-h-32 overflow-auto rounded-xl p-2 text-[10px]"
-              style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+              style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
             >
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
               <>
-                <p className="text-[10px] uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>Draft JSON</p>
+                <p className="text-[10px] uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Draft JSON</p>
                 <pre
                   className="max-h-32 overflow-auto rounded-xl p-2 text-[10px]"
-                  style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+                  style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
                 >
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
@@ -1561,10 +1531,10 @@ export default function CepBuilderPage() {
   );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
-      <header className="border-b px-6 py-4" style={{ borderColor: "var(--border)" }}>
-        <h1 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>CEP Builder</h1>
-        <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+    <div className="min-h-screen" style={{backgroundColor: "var(--background)", color: "var(--foreground)"}}>
+      <header className="border-b px-6 py-4" style={{borderColor: "var(--border)"}}>
+        <h1 className="text-2xl font-semibold" style={{color: "var(--foreground)"}}>CEP Builder</h1>
+        <p className="mt-2 text-sm" style={{color: "var(--muted-foreground)"}}>
           Define, simulate, and trigger complex CEP rules that orchestrate runtime APIs.
         </p>
       </header>

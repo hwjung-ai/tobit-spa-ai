@@ -58,14 +58,14 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
   };
 
   return (
-    <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-      <h3 className="font-semibold text-lg mb-4 " style={{ color: "var(--foreground)" }}>Schema Discovery</h3>
+    <div className=" border  rounded-lg p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+      <h3 className="font-semibold text-lg mb-4 " style={{color: "var(--foreground)"}}>Schema Discovery</h3>
 
       {/* Status */}
-      <div className="mb-4 p-3  rounded-lg border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <div className="mb-4 p-3  rounded-lg border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
         <div className="flex items-center justify-between">
           <div>
-            <span className="font-semibold text-sm " style={{ color: "var(--foreground-secondary)" }}>Status:</span>
+            <span className="font-semibold text-sm " style={{color: "var(--foreground-secondary)"}}>Status:</span>
             <span
               className={`ml-2 inline-block px-3 py-1 rounded text-xs font-medium ${
                 statusColor[scanStatus as keyof typeof statusColor] || statusColor.pending
@@ -76,7 +76,7 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
           </div>
         </div>
         {lastScanned && (
-          <div className="text-sm  mt-2" style={{ color: "var(--muted-foreground)" }}>
+          <div className="text-sm  mt-2" style={{color: "var(--muted-foreground)"}}>
             Last scanned: {new Date(lastScanned).toLocaleString()}
           </div>
         )}
@@ -90,18 +90,18 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
       {/* Configuration */}
       <div className="space-y-3 mb-4">
         <div>
-          <label className="block text-xs font-bold  uppercase tracking-wider mb-2" style={{ color: "var(--muted-foreground)" }}>
+          <label className="block text-xs font-bold  uppercase tracking-wider mb-2" style={{color: "var(--muted-foreground)"}}>
             Schema Names (comma-separated)
           </label>
           <input
             type="text"
             value={schemaNames}
             onChange={(e) => setSchemaNames(e.target.value)}
-            className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+            className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
             placeholder="public, schema2, schema3"
             disabled={scanning}
           />
-          <p className="mt-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
+          <p className="mt-2 text-xs " style={{color: "var(--muted-foreground)"}}>
             For PostgreSQL, typically "public". For MySQL, use database name. For Oracle, use owner name.
           </p>
         </div>
@@ -113,9 +113,9 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
             checked={includeRowCounts}
             onChange={(e) => setIncludeRowCounts(e.target.checked)}
             disabled={scanning}
-            className="rounded " style={{ borderColor: "var(--border)" }}
+            className="rounded " style={{borderColor: "var(--border)"}}
           />
-          <label htmlFor="rowCounts" className="ml-2 text-sm " style={{ color: "var(--foreground-secondary)" }}>
+          <label htmlFor="rowCounts" className="ml-2 text-sm " style={{color: "var(--foreground-secondary)"}}>
             Include row counts (slower for large tables)
           </label>
         </div>
@@ -129,7 +129,7 @@ export default function CatalogScanPanel({ schema, onScanComplete }: SchemaScanP
           scanning || !schema.content?.source_ref
             ? "  cursor-not-allowed"
             : "bg-sky-600 hover:bg-sky-500"
-        }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" }}
+        }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
       >
         {scanning ? "Scanning..." : "Scan Database Schema"}
       </button>

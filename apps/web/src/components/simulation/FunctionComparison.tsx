@@ -107,18 +107,18 @@ export default function FunctionComparison({ functionIds, baseline, assumptions 
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border  /70 p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+      <section className="rounded-3xl border  /70 p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-white">Function Comparison</h1>
-            <p className="mt-2 text-sm " style={{ color: "var(--foreground-secondary)" }}>
+            <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>
               Compare simulation outputs across different functions side by side.
             </p>
           </div>
           <button
             onClick={runComparison}
             disabled={loading}
-            className="rounded-2xl bg-sky-500/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:" style={{ backgroundColor: "var(--surface-elevated)" }}
+            className="rounded-2xl bg-sky-500/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:" style={{backgroundColor: "var(--surface-elevated)"}}
           >
             {loading ? "Running..." : "Re-run"}
           </button>
@@ -126,7 +126,7 @@ export default function FunctionComparison({ functionIds, baseline, assumptions 
       </section>
 
       {loading ? (
-        <section className="rounded-3xl border   p-12 text-center " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <section className="rounded-3xl border   p-12 text-center " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
           Running comparison...
         </section>
       ) : error ? (
@@ -136,8 +136,8 @@ export default function FunctionComparison({ functionIds, baseline, assumptions 
       ) : (
         <>
           {/* Confidence Comparison */}
-          <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>Confidence Comparison</h2>
+          <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Confidence Comparison</h2>
             <div className="mt-4 h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={comparisonData}>
@@ -154,8 +154,8 @@ export default function FunctionComparison({ functionIds, baseline, assumptions 
           {/* KPI Comparison Charts */}
           <div className="grid gap-4 lg:grid-cols-2">
             {kpiNames.map((kpi) => (
-              <section key={kpi} className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-                <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>
+              <section key={kpi} className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
                   {kpi.replace(/([A-Z])/g, " $1").trim()} Comparison
                 </h2>
                 <div className="mt-4 h-48">
@@ -174,24 +174,24 @@ export default function FunctionComparison({ functionIds, baseline, assumptions 
           </div>
 
           {/* Detailed Results Table */}
-          <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>Detailed Results</h2>
+          <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Detailed Results</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b " style={{ borderColor: "var(--border)" }}>
-                    <th className="px-4 py-2 text-left " style={{ color: "var(--muted-foreground)" }}>Function</th>
-                    <th className="px-4 py-2 text-right " style={{ color: "var(--muted-foreground)" }}>Confidence</th>
-                    <th className="px-4 py-2 text-right " style={{ color: "var(--muted-foreground)" }}>Latency (ms)</th>
-                    <th className="px-4 py-2 text-right " style={{ color: "var(--muted-foreground)" }}>Error Rate (%)</th>
-                    <th className="px-4 py-2 text-right " style={{ color: "var(--muted-foreground)" }}>Throughput (rps)</th>
-                    <th className="px-4 py-2 text-right " style={{ color: "var(--muted-foreground)" }}>Cost (USD/h)</th>
-                    <th className="px-4 py-2 text-center " style={{ color: "var(--muted-foreground)" }}>Status</th>
+                  <tr className="border-b " style={{borderColor: "var(--border)"}}>
+                    <th className="px-4 py-2 text-left " style={{color: "var(--muted-foreground)"}}>Function</th>
+                    <th className="px-4 py-2 text-right " style={{color: "var(--muted-foreground)"}}>Confidence</th>
+                    <th className="px-4 py-2 text-right " style={{color: "var(--muted-foreground)"}}>Latency (ms)</th>
+                    <th className="px-4 py-2 text-right " style={{color: "var(--muted-foreground)"}}>Error Rate (%)</th>
+                    <th className="px-4 py-2 text-right " style={{color: "var(--muted-foreground)"}}>Throughput (rps)</th>
+                    <th className="px-4 py-2 text-right " style={{color: "var(--muted-foreground)"}}>Cost (USD/h)</th>
+                    <th className="px-4 py-2 text-center " style={{color: "var(--muted-foreground)"}}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisonData.map((row) => (
-                    <tr key={row.function} className="border-b /50" style={{ borderColor: "var(--border)" }}>
+                    <tr key={row.function} className="border-b /50" style={{borderColor: "var(--border)"}}>
                       <td className="px-4 py-2 text-white">{row.function}</td>
                       <td className="px-4 py-2 text-right text-sky-400">{row.confidence.toFixed(0)}%</td>
                       <td className="px-4 py-2 text-right text-white">{row.latency.toFixed(2)}</td>
@@ -215,16 +215,16 @@ export default function FunctionComparison({ functionIds, baseline, assumptions 
           </section>
 
           {/* Baseline vs Simulated */}
-          <section className="rounded-3xl border   p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{ color: "var(--foreground-secondary)" }}>Baseline vs Simulated</h2>
+          <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Baseline vs Simulated</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Baseline Latency</p>
+              <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Baseline Latency</p>
                 <p className="text-2xl font-semibold text-white">{baseline.latency_ms || 50} ms</p>
               </div>
-              <div className="rounded-xl border  /50 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Assumptions</p>
-                <p className="text-sm " style={{ color: "var(--foreground-secondary)" }}>
+              <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Assumptions</p>
+                <p className="text-sm " style={{color: "var(--foreground-secondary)"}}>
                   Traffic: {assumptions.traffic_change_pct || 0}% |
                   CPU: {assumptions.cpu_change_pct || 0}% |
                   Memory: {assumptions.memory_change_pct || 0}%

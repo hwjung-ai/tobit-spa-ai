@@ -161,7 +161,7 @@ export function OrchestrationDependencyGraph({
   );
 
   return (
-    <div className="w-full h-[500px] rounded-lg overflow-hidden  border /50" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+    <div className="w-full h-[500px] rounded-lg overflow-hidden  border /50" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
       <ReactFlow
         nodes={styledNodes}
         edges={edges}
@@ -176,9 +176,9 @@ export function OrchestrationDependencyGraph({
 
       {/* Empty state */}
       {trace.execution_groups.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center /80" style={{ backgroundColor: "var(--surface-base)" }}>
+        <div className="absolute inset-0 flex items-center justify-center /80" style={{backgroundColor: "var(--surface-base)"}}>
           <div className="text-center">
-            <p className=" text-sm" style={{ color: "var(--muted-foreground)" }}>No execution groups</p>
+            <p className=" text-sm" style={{color: "var(--muted-foreground)"}}>No execution groups</p>
             {trace.error && (
               <p className="text-rose-400 text-xs mt-2">{trace.error}</p>
             )}

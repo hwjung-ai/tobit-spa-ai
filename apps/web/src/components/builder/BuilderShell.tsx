@@ -58,17 +58,13 @@ export default function BuilderShell({
     <div
       ref={containerRef}
       className="flex h-full flex-col gap-4 overflow-hidden"
-      style={{ userSelect: isResizingLeft || isResizingRight ? "none" : "auto" }}
+      style={{userSelect: isResizingLeft || isResizingRight ? "none" : "auto"}}
     >
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left Pane */}
         <div
           className="flex-shrink-0 space-y-4 overflow-hidden rounded-2xl border p-4 shadow-md"
-          style={{
-            width: `${leftWidth}px`,
-            backgroundColor: "var(--surface-elevated)",
-            borderColor: "var(--border)"
-          }}
+          style={{width: `${leftWidth}px`, backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)"}}
         >
           {leftPane}
         </div>
@@ -80,9 +76,7 @@ export default function BuilderShell({
             setIsResizingLeft(true);
           }}
           className="group flex w-4 cursor-col-resize items-center justify-center transition-colors"
-          style={{
-            backgroundColor: isResizingLeft ? "rgba(14, 165, 233, 0.1)" : "transparent"
-          }}
+          style={{backgroundColor: isResizingLeft ? "rgba(14, 165, 233, 0.1)" : "transparent"}}
           onMouseEnter={(e) => {
             if (!isResizingLeft) e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.05)";
           }}
@@ -92,29 +86,21 @@ export default function BuilderShell({
         >
           <div
             className="h-12 w-1 rounded-full transition-colors"
-            style={{
-              backgroundColor: isResizingLeft ? "var(--primary)" : "var(--border)"
-            }}
+            style={{backgroundColor: isResizingLeft ? "var(--primary)" : "var(--border)"}}
           />
         </div>
 
         {/* Center Pane */}
         <div className="flex flex-1 flex-col gap-4 overflow-hidden">
           <div className="flex-[3] overflow-auto rounded-2xl border p-4 shadow-sm custom-scrollbar"
-            style={{
-              backgroundColor: "var(--surface-base)",
-              borderColor: "var(--border)"
-            }}
+            style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
           >
             {centerTop}
           </div>
           {centerBottom && (
             <div
               className="flex-shrink-0 overflow-hidden rounded-2xl border p-4 shadow-sm"
-              style={{
-                backgroundColor: "var(--surface-base)",
-                borderColor: "var(--border)"
-              }}
+              style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
             >
               {centerBottom}
             </div>
@@ -128,9 +114,7 @@ export default function BuilderShell({
             setIsResizingRight(true);
           }}
           className="group flex w-4 cursor-col-resize items-center justify-center transition-colors"
-          style={{
-            backgroundColor: isResizingRight ? "rgba(14, 165, 233, 0.1)" : "transparent"
-          }}
+          style={{backgroundColor: isResizingRight ? "rgba(14, 165, 233, 0.1)" : "transparent"}}
           onMouseEnter={(e) => {
             if (!isResizingRight) e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.05)";
           }}
@@ -140,21 +124,14 @@ export default function BuilderShell({
         >
           <div
             className="h-12 w-1 rounded-full transition-colors"
-            style={{
-              backgroundColor: isResizingRight ? "var(--primary)" : "var(--border)"
-            }}
+            style={{backgroundColor: isResizingRight ? "var(--primary)" : "var(--border)"}}
           />
         </div>
 
         {/* Right Pane */}
         <div
           className="flex-shrink-0 overflow-hidden rounded-2xl border p-4 text-sm shadow-md"
-          style={{
-            width: `${rightWidth}px`,
-            backgroundColor: "var(--surface-elevated)",
-            borderColor: "var(--border)",
-            color: "var(--muted-foreground)"
-          }}
+          style={{width: `${rightWidth}px`, backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)", color: "var(--muted-foreground)"}}
         >
           {rightPane}
         </div>

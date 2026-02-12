@@ -147,16 +147,16 @@ export default function ConversationSummaryModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="mx-4 max-h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl border   shadow-2xl" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+      <div className="mx-4 max-h-[80vh] w-full max-w-2xl overflow-hidden rounded-2xl border   shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b   px-6 py-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+        <div className="flex items-center justify-between border-b   px-6 py-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
           <div className="flex items-center gap-3">
             <span className="text-2xl">📋</span>
             <h2 className="text-lg font-semibold text-white">대화 요약</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1  transition hover: hover:text-white" style={{ color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+            className="rounded-full p-1  transition hover: hover:text-white" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
             aria-label="닫기"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,12 +166,12 @@ export default function ConversationSummaryModal({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto p-6 custom-scrollbar" style={{ maxHeight: "calc(80vh - 140px)" }}>
+        <div className="overflow-y-auto p-6 custom-scrollbar" style={{maxHeight: "calc(80vh - 140px)"}}>
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-4  border-t-blue-500" style={{ borderColor: "var(--border)" }} />
-                <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>요약을 불러오는 중...</p>
+                <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-4  border-t-blue-500" style={{borderColor: "var(--border)"}} />
+                <p className="text-sm " style={{color: "var(--muted-foreground)"}}>요약을 불러오는 중...</p>
               </div>
             </div>
           ) : error ? (
@@ -187,22 +187,22 @@ export default function ConversationSummaryModal({
           ) : summaryData ? (
             <div className="space-y-4">
               {/* Metadata */}
-              <div className="rounded-lg border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+              <div className="rounded-lg border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="" style={{ color: "var(--muted-foreground)" }}>제목:</span>
+                    <span className="" style={{color: "var(--muted-foreground)"}}>제목:</span>
                     <p className="mt-1 font-medium text-white">{summaryData.title}</p>
                   </div>
                   <div>
-                    <span className="" style={{ color: "var(--muted-foreground)" }}>주제:</span>
+                    <span className="" style={{color: "var(--muted-foreground)"}}>주제:</span>
                     <p className="mt-1 text-white">{summaryData.topic}</p>
                   </div>
                   <div>
-                    <span className="" style={{ color: "var(--muted-foreground)" }}>일자:</span>
+                    <span className="" style={{color: "var(--muted-foreground)"}}>일자:</span>
                     <p className="mt-1 text-white">{summaryData.date}</p>
                   </div>
                   <div>
-                    <span className="" style={{ color: "var(--muted-foreground)" }}>질문 수:</span>
+                    <span className="" style={{color: "var(--muted-foreground)"}}>질문 수:</span>
                     <p className="mt-1 text-white">{summaryData.question_count}개</p>
                   </div>
                 </div>
@@ -210,19 +210,19 @@ export default function ConversationSummaryModal({
 
               {/* Questions and Answers Preview */}
               <div>
-                <h3 className="mb-3 text-sm font-semibold " style={{ color: "var(--foreground-secondary)" }}>질의-응답 내역</h3>
+                <h3 className="mb-3 text-sm font-semibold " style={{color: "var(--foreground-secondary)"}}>질의-응답 내역</h3>
                 <div className="space-y-3">
                   {summaryData.questions_and_answers.map((qa, idx) => (
                     <div
                       key={idx}
-                      className="rounded-lg border   p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+                      className="rounded-lg border   p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
                     >
                       <div className="mb-2 flex items-start justify-between">
                         <span className="text-xs font-medium text-blue-400">
                           Q{idx + 1}. {qa.mode} 모드
                         </span>
                         {qa.timestamp && (
-                          <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
+                          <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
                             {new Date(qa.timestamp).toLocaleString("ko-KR", {
                               month: "short",
                               day: "numeric",
@@ -234,14 +234,14 @@ export default function ConversationSummaryModal({
                       </div>
                       <p className="mb-2 line-clamp-2 text-sm text-white">{qa.question}</p>
                       {qa.summary && (
-                        <p className="line-clamp-2 text-xs " style={{ color: "var(--muted-foreground)" }}>{qa.summary}</p>
+                        <p className="line-clamp-2 text-xs " style={{color: "var(--muted-foreground)"}}>{qa.summary}</p>
                       )}
                       {qa.blocks && qa.blocks.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {qa.blocks.slice(0, 3).map((block, blockIdx) => (
                             <span
                               key={blockIdx}
-                              className="rounded-full  px-2 py-0.5 text-[10px] " style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" }}
+                              className="rounded-full  px-2 py-0.5 text-[10px] " style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
                             >
                               {block.type === "table"
                                 ? "📊 테이블"
@@ -255,7 +255,7 @@ export default function ConversationSummaryModal({
                             </span>
                           ))}
                           {qa.blocks.length > 3 && (
-                            <span className="rounded-full  px-2 py-0.5 text-[10px] " style={{ color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}>
+                            <span className="rounded-full  px-2 py-0.5 text-[10px] " style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}>
                               +{qa.blocks.length - 3}
                             </span>
                           )}
@@ -270,10 +270,10 @@ export default function ConversationSummaryModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t   px-6 py-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+        <div className="flex items-center justify-between border-t   px-6 py-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
           <button
             onClick={onClose}
-            className="rounded-lg border   px-4 py-2 text-sm  transition hover:" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+            className="rounded-lg border   px-4 py-2 text-sm  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
           >
             닫기
           </button>

@@ -181,17 +181,17 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
   }, [currentSQL, onChange, selectedTable]);
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
-      <h3 className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>SQL Visual Builder</h3>
+    <div className="space-y-4 rounded-2xl p-4" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)"}}>
+      <h3 className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>SQL Visual Builder</h3>
       
       {/* Table Selection */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Select Table</label>
+        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Select Table</label>
         <select
           value={selectedTable}
           onChange={(e) => handleTableChange(e.target.value)}
           disabled={readOnly}
-          className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+          className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
         >
           <option value="">-- Select a table --</option>
           {Object.keys(TABLES).map((table) => (
@@ -205,16 +205,16 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* Column Selection */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Select Columns</label>
-          <div className="max-h-40 overflow-auto rounded-2xl border p-3 custom-scrollbar" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
+          <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Select Columns</label>
+          <div className="max-h-40 overflow-auto rounded-2xl border p-3 custom-scrollbar" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)"}}>
             {TABLES[selectedTable].map((column) => (
-              <label key={column} className="flex items-center gap-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+              <label key={column} className="flex items-center gap-2 text-sm" style={{color: "var(--muted-foreground)"}}>
                 <input
                   type="checkbox"
                   checked={selectedColumns.includes(column)}
                   onChange={() => handleColumnToggle(column)}
                   disabled={readOnly}
-                  className="h-4 w-4 rounded   text-sky-400 focus:ring-sky-400" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
+                  className="h-4 w-4 rounded   text-sky-400 focus:ring-sky-400" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
                 />
                 {column}
               </label>
@@ -226,8 +226,8 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* WHERE Conditions */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>WHERE Conditions</label>
-          <div className="rounded-2xl border   p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+          <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>WHERE Conditions</label>
+          <div className="rounded-2xl border   p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
             <QueryBuilder
               query={whereConditions}
               onQueryChange={handleQueryChange}
@@ -250,7 +250,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                       runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
                     }
                     disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                   >
                     <option value="AND">AND</option>
                     <option value="OR">OR</option>
@@ -263,7 +263,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                       runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
                     }
                     disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                   >
                     <option value="">-- Select field --</option>
                     {props.options.map((opt: { name: string; label: string }) => (
@@ -280,7 +280,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                       runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
                     }
                     disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                   >
                     <option value="">-- Select operator --</option>
                     {props.options.map((opt: { name: string; label: string }) => (
@@ -298,7 +298,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                     }
                     disabled={Boolean((props as QueryBuilderControlProps).disabled)}
                     type="text"
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
+                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
                     placeholder="Value"
                   />
                 ),
@@ -356,13 +356,13 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* ORDER BY */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>ORDER BY</label>
+          <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>ORDER BY</label>
           <div className="flex gap-2">
             <select
               value={orderBy.column}
               onChange={(e) => setOrderBy({ ...orderBy, column: e.target.value })}
               disabled={readOnly}
-              className="flex-1 rounded-2xl border   px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+              className="flex-1 rounded-2xl border   px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
             >
               <option value="">-- Select column --</option>
               {TABLES[selectedTable].map((column) => (
@@ -375,7 +375,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
               value={orderBy.direction}
               onChange={(e) => setOrderBy({ ...orderBy, direction: e.target.value as "ASC" | "DESC" })}
               disabled={readOnly}
-              className="rounded-2xl border   px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border   px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
             >
               <option value="ASC">ASC</option>
               <option value="DESC">DESC</option>
@@ -387,10 +387,10 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* GROUP BY */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>GROUP BY</label>
-          <div className="max-h-32 overflow-auto rounded-2xl border   p-3 custom-scrollbar" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+          <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>GROUP BY</label>
+          <div className="max-h-32 overflow-auto rounded-2xl border   p-3 custom-scrollbar" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
             {TABLES[selectedTable].map((column) => (
-              <label key={column} className="flex items-center gap-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+              <label key={column} className="flex items-center gap-2 text-sm" style={{color: "var(--muted-foreground)"}}>
                 <input
                   type="checkbox"
                   checked={groupBy.includes(column)}
@@ -402,7 +402,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                     );
                   }}
                   disabled={readOnly}
-                  className="h-4 w-4 rounded   text-sky-400 focus:ring-sky-400" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
+                  className="h-4 w-4 rounded   text-sky-400 focus:ring-sky-400" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
                 />
                 {column}
               </label>
@@ -414,7 +414,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {/* LIMIT */}
       {selectedTable && (
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>LIMIT</label>
+          <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>LIMIT</label>
           <input
             type="number"
             min={1}
@@ -422,28 +422,28 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
             value={limit}
             onChange={(e) => setLimit(parseInt(e.target.value) || 100)}
             disabled={readOnly}
-            className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+            className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
           />
         </div>
       )}
 
       {/* Generated SQL Preview */}
-      <div className="space-y-2 rounded-2xl border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-        <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Generated SQL</label>
+      <div className="space-y-2 rounded-2xl border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Generated SQL</label>
         {!selectedTable && query?.trim() ? (
-          <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
             Current SQL is loaded. Select a table to rebuild it with the visual builder.
           </p>
         ) : null}
-        <pre className="max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{ color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}>
+        <pre className="max-h-60 overflow-auto rounded-xl /70 p-3 text-xs  custom-scrollbar" style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
           {currentSQL}
         </pre>
       </div>
 
-      <div className="space-y-2 rounded-2xl border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-        <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>SQL Editor</label>
+      <div className="space-y-2 rounded-2xl border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>SQL Editor</label>
         {selectedTable ? (
-          <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
             Visual builder is active. Editing here is allowed, but builder interactions can regenerate SQL.
           </p>
         ) : null}
@@ -451,7 +451,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
           value={query ?? ""}
           onChange={(event) => onChange?.(event.target.value)}
           disabled={readOnly}
-          className="h-44 w-full rounded-xl border  /70 p-3 text-xs  outline-none transition focus:border-sky-500 custom-scrollbar" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+          className="h-44 w-full rounded-xl border  /70 p-3 text-xs  outline-none transition focus:border-sky-500 custom-scrollbar" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
           placeholder="Write SQL directly, e.g. SELECT id, name FROM tb_user LIMIT 100"
         />
       </div>

@@ -88,26 +88,26 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
     };
 
     return (
-        <div className="/80 rounded-2xl border  overflow-hidden shadow-2xl backdrop-blur-sm h-full flex flex-col" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div className="/80 rounded-2xl border  overflow-hidden shadow-2xl backdrop-blur-sm h-full flex flex-col" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
             {/* Header */}
-            <div className="p-4 border-b  flex items-start justify-between" style={{ borderColor: "var(--border)" }}>
+            <div className="p-4 border-b  flex items-start justify-between" style={{borderColor: "var(--border)"}}>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
                             tool.status === "published"
                                 ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
                                 : "  border /50"
-                        }`} style={{ backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)", borderColor: "var(--border)" }}>
+                        }`} style={{backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}>
                             {tool.status}
                         </span>
-                        <span className=" text-xs font-mono" style={{ color: "var(--muted-foreground)" }}>v{tool.version}</span>
+                        <span className=" text-xs font-mono" style={{color: "var(--muted-foreground)"}}>v{tool.version}</span>
                     </div>
                     <h3 className="text-white font-bold text-lg mt-1 truncate">{tool.name}</h3>
-                    <p className=" text-xs mt-0.5 line-clamp-2" style={{ color: "var(--muted-foreground)" }}>{tool.description || "No description"}</p>
+                    <p className=" text-xs mt-0.5 line-clamp-2" style={{color: "var(--muted-foreground)"}}>{tool.description || "No description"}</p>
                 </div>
                 <button
                     onClick={onClose}
-                    className=" hover:text-white transition-colors p-1" style={{ color: "var(--muted-foreground)" }}
+                    className=" hover:text-white transition-colors p-1" style={{color: "var(--muted-foreground)"}}
                 >
                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -116,7 +116,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b " style={{ borderColor: "var(--border)" }}>
+            <div className="flex border-b " style={{borderColor: "var(--border)"}}>
                 {[
                     { key: "test", label: "Test" },
                     { key: "schema", label: "Schema" },
@@ -129,7 +129,7 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                             activeTab === tab.key
                                 ? "text-sky-400 border-b-2 border-sky-400 bg-sky-400/5"
                                 : "0 hover:"
-                        }`} style={{ color: "var(--foreground)", color: "var(--foreground-secondary)" }}
+                        }`} style={{color: "var(--foreground-secondary)"}}
                     >
                         {tab.label}
                     </button>
@@ -141,21 +141,21 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                 {activeTab === "test" && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                 Test Input (JSON)
                             </label>
                             <textarea
                                 value={testInput}
                                 onChange={(e) => setTestInput(e.target.value)}
                                 rows={6}
-                                className="w-full px-3 py-2  border  rounded-lg  font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
+                                className="w-full px-3 py-2  border  rounded-lg  font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
                             />
                         </div>
 
                         <button
                             onClick={handleTest}
                             disabled={isExecuting}
-                            className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-lg transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-sky-900/20" style={{ color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+                            className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-lg transition-all font-bold text-xs uppercase tracking-widest shadow-lg shadow-sky-900/20" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
                         >
                             {isExecuting ? (
                                 <span className="flex items-center justify-center gap-2">
@@ -201,10 +201,10 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
 
                                 {testResult.data && (
                                     <div className="mt-2">
-                                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1" style={{ color: "var(--muted-foreground)" }}>
+                                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>
                                             Output
                                         </label>
-                                        <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-60 overflow-y-auto" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                        <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-60 overflow-y-auto" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                             {JSON.stringify(testResult.data, null, 2)}
                                         </pre>
                                     </div>
@@ -217,20 +217,20 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                 {activeTab === "schema" && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                 Input Schema
                             </label>
-                            <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-60 overflow-y-auto border " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                            <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-60 overflow-y-auto border " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                 {JSON.stringify(tool.tool_input_schema, null, 2)}
                             </pre>
                         </div>
 
                         {tool.tool_output_schema && (
                             <div>
-                                <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                                <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                     Output Schema
                                 </label>
-                                <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-60 overflow-y-auto border " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-60 overflow-y-auto border " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                     {JSON.stringify(tool.tool_output_schema, null, 2)}
                                 </pre>
                             </div>
@@ -241,41 +241,41 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
                 {activeTab === "config" && (
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                 Tool Type
                             </label>
-                            <div className="px-3 py-2  border  rounded-lg" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
-                                <span className=" text-sm font-mono" style={{ color: "var(--foreground-secondary)" }}>{tool.tool_type}</span>
+                            <div className="px-3 py-2  border  rounded-lg" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                                <span className=" text-sm font-mono" style={{color: "var(--foreground-secondary)"}}>{tool.tool_type}</span>
                             </div>
                         </div>
 
                         {tool.tool_catalog_ref && (
                             <div>
-                                <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                                <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                     🗄️ Linked Catalog
                                 </label>
                                 <div className="px-3 py-2 bg-sky-950/30 border border-sky-800/50 rounded-lg">
                                     <span className="text-sky-300 text-sm font-mono">{tool.tool_catalog_ref}</span>
                                 </div>
-                                <p className="text-[9px]  mt-1" style={{ color: "var(--muted-foreground)" }}>This Tool references a database schema catalog for accurate SQL generation</p>
+                                <p className="text-[9px]  mt-1" style={{color: "var(--muted-foreground)"}}>This Tool references a database schema catalog for accurate SQL generation</p>
                             </div>
                         )}
 
                         <div>
-                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                            <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                 Configuration
                             </label>
-                            <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-80 overflow-y-auto border " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                            <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto max-h-80 overflow-y-auto border " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                 {JSON.stringify(tool.tool_config, null, 2)}
                             </pre>
                         </div>
 
                         {tool.tags && Object.keys(tool.tags).length > 0 && (
                             <div>
-                                <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{ color: "var(--muted-foreground)" }}>
+                                <label className="block text-[10px] font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>
                                     Tags
                                 </label>
-                                <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto border " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+                                <pre className=" rounded-lg p-3 text-xs  font-mono overflow-x-auto border " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
                                     {JSON.stringify(tool.tags, null, 2)}
                                 </pre>
                             </div>
@@ -285,19 +285,19 @@ export default function ToolTestPanel({ tool, onClose, onRefresh }: ToolTestPane
             </div>
 
             {/* Footer Actions */}
-            <div className="p-4 border-t  flex gap-3" style={{ borderColor: "var(--border)" }}>
+            <div className="p-4 border-t  flex gap-3" style={{borderColor: "var(--border)"}}>
                 {tool.status === "draft" && (
                     <button
                         onClick={handlePublish}
                         disabled={isPublishing}
-                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled: disabled: text-white rounded-lg transition-all font-bold text-xs uppercase tracking-widest" style={{ color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled: disabled: text-white rounded-lg transition-all font-bold text-xs uppercase tracking-widest" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
                     >
                         {isPublishing ? "Publishing..." : "Publish Tool"}
                     </button>
                 )}
                 <button
                     onClick={onClose}
-                    className="flex-1 py-2.5  hover:  rounded-lg transition-all font-bold text-xs uppercase tracking-widest" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
+                    className="flex-1 py-2.5  hover:  rounded-lg transition-all font-bold text-xs uppercase tracking-widest" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
                 >
                     Close
                 </button>

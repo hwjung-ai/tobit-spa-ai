@@ -66,7 +66,7 @@ export default function SystemHealthChart() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border /70  p-6  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <div className="rounded-2xl border /70  p-6  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
         Loading system health...
       </div>
     );
@@ -86,26 +86,24 @@ export default function SystemHealthChart() {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border /70  p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{ color: "var(--muted-foreground)" }}>Total Rules</p>
+        <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Total Rules</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-semibold text-white">{stats.total_rules}</p>
-            <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+            <span className="text-xs " style={{color: "var(--muted-foreground)"}}>
               {stats.active_rules} active
             </span>
           </div>
-          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
             <div
               className="h-full bg-sky-500"
-              style={{
-                width: `${stats.total_rules > 0 ? (stats.active_rules / stats.total_rules) * 100 : 0}%`,
-              }}
+              style={{width: `${stats.total_rules > 0 ? (stats.active_rules / stats.total_rules) * 100 : 0}%`}}
             />
           </div>
         </div>
 
-        <div className="rounded-2xl border /70  p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{ color: "var(--muted-foreground)" }}>Today Executions</p>
+        <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Today Executions</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-semibold text-white">
               {stats.today_execution_count.toLocaleString()}
@@ -114,68 +112,60 @@ export default function SystemHealthChart() {
               {(stats.today_error_rate * 100).toFixed(1)}% error
             </span>
           </div>
-          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
             <div
               className={getHealthColor(stats.today_error_rate, true)}
-              style={{
-                width: `${Math.min(stats.today_error_rate * 100, 100)}%`,
-              }}
+              style={{width: `${Math.min(stats.today_error_rate * 100, 100)}%`}}
             />
           </div>
         </div>
 
-        <div className="rounded-2xl border /70  p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{ color: "var(--muted-foreground)" }}>Error Count</p>
+        <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Error Count</p>
           <div className="flex items-baseline gap-2">
             <p className={`text-3xl font-semibold ${
               stats.today_error_count > 0 ? "text-rose-400" : "text-emerald-400"
             }`}>
               {stats.today_error_count}
             </p>
-            <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>errors today</span>
+            <span className="text-xs " style={{color: "var(--muted-foreground)"}}>errors today</span>
           </div>
-          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
             <div
               className={stats.today_error_count > 0 ? "bg-rose-500" : "bg-emerald-500"}
-              style={{
-                width: `${stats.today_error_count > 0 ? 100 : 0}%`,
-              }}
+              style={{width: `${stats.today_error_count > 0 ? 100 : 0}%`}}
             />
           </div>
         </div>
 
-        <div className="rounded-2xl border /70  p-5" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{ color: "var(--muted-foreground)" }}>Avg Duration</p>
+        <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Avg Duration</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-semibold text-white">
               {stats.today_avg_duration_ms.toFixed(0)}
             </p>
-            <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>ms</span>
+            <span className="text-xs " style={{color: "var(--muted-foreground)"}}>ms</span>
           </div>
-          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+          <div className="mt-3 h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
             <div
               className="bg-purple-500"
-              style={{
-                width: `${Math.min((stats.today_avg_duration_ms / 1000) * 100, 100)}%`,
-              }}
+              style={{width: `${Math.min((stats.today_avg_duration_ms / 1000) * 100, 100)}%`}}
             />
           </div>
         </div>
       </div>
 
       {/* Health Status */}
-      <div className="rounded-2xl border /70  p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <div className="rounded-2xl border /70  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
         <h3 className="text-lg font-semibold text-white mb-4">System Health Status</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm " style={{ color: "var(--muted-foreground)" }}>Rule Activation Rate</span>
+            <span className="text-sm " style={{color: "var(--muted-foreground)"}}>Rule Activation Rate</span>
             <div className="flex items-center gap-2">
-              <div className="w-24 h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+              <div className="w-24 h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
                 <div
                   className="h-full bg-sky-500"
-                  style={{
-                    width: `${stats.total_rules > 0 ? (stats.active_rules / stats.total_rules) * 100 : 0}%`,
-                  }}
+                  style={{width: `${stats.total_rules > 0 ? (stats.active_rules / stats.total_rules) * 100 : 0}%`}}
                 />
               </div>
               <span className="text-sm text-white font-semibold">
@@ -187,14 +177,12 @@ export default function SystemHealthChart() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm " style={{ color: "var(--muted-foreground)" }}>Error Rate</span>
+            <span className="text-sm " style={{color: "var(--muted-foreground)"}}>Error Rate</span>
             <div className="flex items-center gap-2">
-              <div className="w-24 h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
+              <div className="w-24 h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
                 <div
                   className={getHealthColor(stats.today_error_rate, true)}
-                  style={{
-                    width: `${Math.min(stats.today_error_rate * 100, 100)}%`,
-                  }}
+                  style={{width: `${Math.min(stats.today_error_rate * 100, 100)}%`}}
                 />
               </div>
               <span className={`text-sm font-semibold ${getHealthTextColor(stats.today_error_rate, true)}`}>
@@ -204,7 +192,7 @@ export default function SystemHealthChart() {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm " style={{ color: "var(--muted-foreground)" }}>System Status</span>
+            <span className="text-sm " style={{color: "var(--muted-foreground)"}}>System Status</span>
             <div className="flex items-center gap-2">
               <div
                 className={`w-3 h-3 rounded-full ${
