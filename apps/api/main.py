@@ -45,6 +45,7 @@ from app.modules.ops.services.domain.registry_init import (
 )
 from app.modules.permissions.router import router as permissions_router
 from app.modules.simulation.router import router as simulation_router
+from app.workers.api import router as workers_router
 from app.shared import config_loader
 from core.config import get_settings
 from core.auth import get_current_user
@@ -86,6 +87,7 @@ app.include_router(auth_router)
 app.include_router(api_keys_router, dependencies=auth_required)
 app.include_router(permissions_router, dependencies=auth_required)
 app.include_router(simulation_router, dependencies=auth_required)
+app.include_router(workers_router, dependencies=auth_required, prefix="/api")
 app.include_router(chat_router, dependencies=auth_required)
 app.include_router(thread_router, dependencies=auth_required)
 app.include_router(document_router, dependencies=auth_required)
@@ -282,16 +284,48 @@ async def on_shutdown() -> None:
 
 @app.get("/health")
 def health(_current_user=Depends(get_current_user)):
+    global _startup_ready, _startup_error
+
+    # Determine overall status based on startup and DB connection
+    status = "up"
+    message = "OK"
+
+    if not _startup_ready:
+        if _startup_error:
+            status = "degraded"
+            message = f"Startup failed: {_startup_error}"
+        else:
+            status = "starting"
+            message = "Startup in progress"
+
+    # Check actual DB connection
+    postgres_connected = False
+    postgres_error = None
+    try:
+        from sqlalchemy import text
+        from core.db import engine
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+            postgres_connected = True
+    except Exception as e:
+        postgres_error = str(e)
+        status = "degraded"
+        message = f"Database unavailable: {postgres_error}"
+
     return {
         "time": datetime.utcnow().isoformat(),
         "code": 0,
-        "message": "OK",
+        "message": message,
         "data": {
-            "status": "up",
+            "status": status,
             "startup": {
                 "ready": _startup_ready,
                 "in_progress": _startup_task is not None and not _startup_task.done(),
                 "error": _startup_error,
+            },
+            "postgres": {
+                "connected": postgres_connected,
+                "error": postgres_error,
             },
         },
     }
