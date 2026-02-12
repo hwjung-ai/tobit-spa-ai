@@ -47,31 +47,32 @@ export default function Canvas() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50">
+    <div className="flex flex-col h-full" style={{ backgroundColor: "rgba(15, 23, 42, 0.5)" }}>
       {/* Header */}
-      <div className="border-b border-slate-800 p-3">
-        <h3 className="text-sm font-semibold text-slate-200">
+      <div className="border-b p-3" style={{ borderColor: "var(--border)" }}>
+        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)" }}>
           Canvas ({screen.components.length})
         </h3>
       </div>
 
       {/* Component List */}
       <div
-        className={`flex-1 overflow-y-auto p-3 space-y-2 transition-colors ${isDragOver ? "bg-sky-950/30 ring-2 ring-inset ring-sky-500/50" : ""
+        className={`flex-1 overflow-y-auto p-3 space-y-2 transition-colors ${isDragOver ? "ring-2 ring-inset ring-sky-400/50" : ""
           }`}
+        style={isDragOver ? { backgroundColor: "rgba(12, 74, 110, 0.3)" } : undefined}
         data-testid="canvas-list"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
         {!hasComponents ? (
-          <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg ${isDragOver ? "border-sky-500 bg-sky-950/20" : "border-slate-700"
-            }`}>
+          <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg`}
+            style={isDragOver ? { borderColor: "rgba(14, 165, 233, 1)", backgroundColor: "rgba(12, 74, 110, 0.2)" } : { borderColor: "var(--border-muted)" }}>
             <div className="space-y-2 p-6">
-              <p className={`text-sm ${isDragOver ? "text-sky-300" : "text-slate-400"}`}>
+              <p className="text-sm" style={isDragOver ? { color: "#bae6fd" } : { color: "var(--muted-foreground)" }}>
                 {isDragOver ? "Drop here to add" : "No components yet"}
               </p>
-              <p className="text-slate-500 text-xs">
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                 {isDragOver ? "" : "Drag components from the palette or click to add"}
               </p>
             </div>

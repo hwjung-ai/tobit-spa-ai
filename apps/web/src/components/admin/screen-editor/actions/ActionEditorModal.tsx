@@ -321,7 +321,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                 className="h-8 text-xs"
                 disabled={!!action}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 {!action ? "Auto-generated if empty" : "Cannot change after creation"}
               </p>
             </div>
@@ -389,23 +389,23 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
 
               {/* Handler metadata display */}
               {selectedActionMeta?.description && (
-                <p className="text-xs text-gray-500">{selectedActionMeta.description}</p>
+                <p className="text-xs text-slate-500">{selectedActionMeta.description}</p>
               )}
               {selectedActionMeta?.output?.state_patch_keys &&
                 selectedActionMeta.output.state_patch_keys.length > 0 && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     state_patch: {selectedActionMeta.output.state_patch_keys.join(", ")}
                   </p>
                 )}
               {selectedActionMeta?.required_context &&
                 selectedActionMeta.required_context.length > 0 && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     required context: {selectedActionMeta.required_context.join(", ")}
                   </p>
                 )}
               {selectedActionMeta?.input_schema?.required &&
                 selectedActionMeta.input_schema.required.length > 0 && (
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-slate-500">
                     Required: {selectedActionMeta.input_schema.required.join(", ")}
                   </p>
                 )}
@@ -414,10 +414,10 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
               {selectedActionMeta?.input_schema?.properties &&
                 Object.keys(selectedActionMeta.input_schema.properties).length > 0 && (
                   <details className="mt-1">
-                    <summary className="text-xs cursor-pointer text-slate-400 hover:text-slate-300 font-medium">
+                    <summary className="text-xs cursor-pointer hover:text-slate-300 font-medium" style={{ color: "var(--muted-foreground)" }}>
                       Input Parameters
                     </summary>
-                    <div className="mt-1 rounded bg-slate-800 p-2 space-y-1">
+                    <div className="mt-1 rounded p-2 space-y-1" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
                       {Object.entries(selectedActionMeta.input_schema.properties).map(
                         ([key, prop]) => (
                           <div key={key} className="flex items-center gap-2 text-[11px]">
@@ -521,7 +521,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   placeholder="e.g., user_id, session"
                   className="h-8 text-xs"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Comma-separated list of context variables required by this action
                 </p>
               </div>

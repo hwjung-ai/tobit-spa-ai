@@ -99,7 +99,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
                 placeholder={placeholder || "Select a binding path..."}
                 error={validationError}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 Select from state, context, inputs, or use trace_id
               </p>
             </TabsContent>
@@ -110,7 +110,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Enter a static value..."}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-slate-500">
                 Enter a literal value (string, number, etc.)
               </p>
             </TabsContent>

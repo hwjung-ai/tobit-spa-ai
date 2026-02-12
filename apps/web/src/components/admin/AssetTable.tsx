@@ -64,11 +64,15 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                     type === "mapping" ? "bg-blue-950/50 text-blue-300 border-blue-800/50" :
                     type === "policy" ? "bg-green-950/50 text-green-300 border-green-800/50" :
                     type === "query" ? "bg-orange-950/50 text-orange-300 border-orange-800/50" :
-                    type === "source" ? "bg-slate-900/60 text-slate-200 border-slate-700/60" :
                     type === "resolver" ? "bg-amber-950/40 text-amber-200 border-amber-800/40" :
-                        "bg-slate-950/50 text-slate-300 border-slate-800/50";
+                        "";
+                const style = type === "source" ? { backgroundColor: "rgba(2, 6, 23, 0.6)", color: "var(--foreground)", borderColor: "var(--border)" } :
+                    !colors ? { backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" } : undefined;
                 return (
-                    <span className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}>
+                    <span
+                        className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}
+                        style={style}
+                    >
                         {type}
                     </span>
                 );
@@ -81,10 +85,14 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             minWidth: 120,
             cellRenderer: (params: ICellRendererParams<Asset>) => {
                 const status = params.value as string;
-                const colors = status === "published" ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50" :
-                    "bg-slate-800/50 text-slate-400 border-slate-700/50";
+                const colors = status === "published" ? "bg-emerald-950/50 text-emerald-300 border-emerald-800/50" : "";
+                const style = status === "published" ? undefined :
+                    { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "rgba(51, 65, 85, 0.5)" };
                 return (
-                    <span className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}>
+                    <span
+                        className={`inline-flex px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${colors}`}
+                        style={style}
+                    >
                         {status}
                     </span>
                 );
@@ -95,7 +103,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             field: "version",
             width: 100,
             cellRenderer: (params: ICellRendererParams<Asset>) => (
-                <span className="style={{ color: "var(--muted-foreground)" }} font-mono text-xs">v{params.value}</span>
+                <span className="font-mono text-xs" style={{ color: "var(--muted-foreground)" }}>v{params.value}</span>
             )
         },
         {
@@ -104,7 +112,7 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
             flex: 1,
             minWidth: 150,
             cellRenderer: (params: ICellRendererParams<Asset>) => (
-                <span className="style={{ color: "var(--muted-foreground)" }} text-xs">
+                <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     {formatRelativeTime(params.value)}
                 </span>
             )
@@ -120,7 +128,8 @@ export default function AssetTable({ assets, statusFilter = "all", onStatusFilte
                 <div className="flex justify-end w-full pr-2">
                     <Link
                         href={buildDetailUrl(params.data?.asset_id ?? params.value, params.data?.asset_type)}
-                        className="style={{ color: "var(--muted-foreground)" }} hover:text-sky-400 transition-colors"
+                        className="hover:text-sky-400 transition-colors"
+                        style={{ color: "var(--muted-foreground)" }}
                     >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

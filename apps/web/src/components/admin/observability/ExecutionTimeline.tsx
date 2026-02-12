@@ -59,7 +59,7 @@ export default function ExecutionTimeline() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-slate-400 text-sm">
+      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "var(--muted-foreground)" }}>
         Loading error timeline...
       </div>
     );
@@ -67,7 +67,7 @@ export default function ExecutionTimeline() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-800/70 bg-rose-900/60 p-6 text-rose-400 text-sm">
+      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(159, 18, 57, 0.7)", backgroundColor: "rgba(120, 53, 15, 0.6)", color: "rgba(251, 146, 60, 1)" }}>
         Error: {error}
       </div>
     );
@@ -84,9 +84,9 @@ export default function ExecutionTimeline() {
   }));
 
   return (
-    <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
+    <div className="rounded-2xl border p-6" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)" }}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-white">Error Timeline</h3>
+        <h3 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>Error Timeline</h3>
         <div className="flex gap-2">
           {(["1h", "6h", "24h", "7d"] as const).map((p) => (
             <button
@@ -94,9 +94,10 @@ export default function ExecutionTimeline() {
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded text-xs uppercase tracking-[0.2em] transition ${
                 period === p
-                  ? "bg-sky-500/20 text-sky-400 border border-sky-500/50"
-                  : "border border-slate-700 text-slate-400 hover:text-slate-300 hover:border-slate-600"
+                  ? ""
+                  : ""
               }`}
+              style={period === p ? { backgroundColor: "rgba(14, 165, 233, 0.2)", color: "rgba(56, 189, 248, 1)", borderColor: "rgba(14, 165, 233, 0.5)" } : { borderColor: "var(--border)", color: "var(--muted-foreground)" }}
             >
               {p}
             </button>

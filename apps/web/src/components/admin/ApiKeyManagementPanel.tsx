@@ -179,7 +179,7 @@ export function ApiKeyManagementPanel() {
     if (scope.includes("ci")) return "bg-purple-100 text-purple-800";
     if (scope.includes("metric") || scope.includes("graph")) return "bg-green-100 text-green-800";
     if (scope.includes("cep")) return "bg-orange-100 text-orange-800";
-    return "bg-gray-100 text-gray-800";
+    return "bg-slate-100 text-slate-800";
   };
 
   const activeKeysCount = apiKeys.filter(k => k.is_active).length;
@@ -192,7 +192,7 @@ export function ApiKeyManagementPanel() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-600">Total Keys</p>
+              <p className="text-sm font-medium text-slate-600">Total Keys</p>
               <p className="text-3xl font-bold">{apiKeys.length}</p>
             </div>
           </CardContent>
@@ -200,7 +200,7 @@ export function ApiKeyManagementPanel() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-600">Active Keys</p>
+              <p className="text-sm font-medium text-slate-600">Active Keys</p>
               <p className="text-3xl font-bold text-green-600">{activeKeysCount}</p>
             </div>
           </CardContent>
@@ -208,7 +208,7 @@ export function ApiKeyManagementPanel() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-600">Revoked Keys</p>
+              <p className="text-sm font-medium text-slate-600">Revoked Keys</p>
               <p className="text-3xl font-bold text-red-600">{inactiveKeysCount}</p>
             </div>
           </CardContent>
@@ -254,7 +254,7 @@ export function ApiKeyManagementPanel() {
                   <div className="space-y-4">
                     {AVAILABLE_SCOPES.map((group) => (
                       <div key={group.category}>
-                        <h4 className="text-sm font-semibold text-gray-700 mb-2">{group.category}</h4>
+                        <h4 className="text-sm font-semibold text-slate-700 mb-2">{group.category}</h4>
                         <div className="space-y-2">
                           {group.scopes.map((scope) => (
                             <div key={scope} className="flex items-center space-x-2">
@@ -287,7 +287,7 @@ export function ApiKeyManagementPanel() {
                       setCreateForm({ ...createForm, expires_at: e.target.value || undefined })
                     }
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-1">
                     Leave empty for key that never expires
                   </p>
                 </div>
@@ -372,8 +372,8 @@ export function ApiKeyManagementPanel() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Key: <code className="bg-gray-100 px-2 py-1 rounded text-xs">{key.key_prefix}...</code>
+                          <p className="text-sm text-slate-600 mt-1">
+                            Key: <code className="bg-slate-100 px-2 py-1 rounded text-xs">{key.key_prefix}...</code>
                           </p>
                         </div>
                         {key.is_active && (
@@ -401,7 +401,7 @@ export function ApiKeyManagementPanel() {
                       </div>
 
                       {/* Metadata */}
-                      <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                      <div className="grid grid-cols-2 gap-4 text-xs text-slate-600">
                         <div>
                           Created: {new Date(key.created_at).toLocaleDateString()}
                         </div>
@@ -421,7 +421,7 @@ export function ApiKeyManagementPanel() {
                 </Card>
               ))
             ) : (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-slate-500">
                 No API keys yet. Create one to get started.
               </div>
             )}

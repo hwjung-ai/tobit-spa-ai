@@ -51,7 +51,7 @@ export default function PerformanceMetrics() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-slate-400 text-sm">
+      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "var(--muted-foreground)" }}>
         Loading performance metrics...
       </div>
     );
@@ -59,7 +59,7 @@ export default function PerformanceMetrics() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-800/70 bg-rose-900/60 p-6 text-rose-400 text-sm">
+      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(159, 18, 57, 0.7)", backgroundColor: "rgba(120, 53, 15, 0.6)", color: "rgba(251, 146, 60, 1)" }}>
         Error: {error}
       </div>
     );
@@ -72,32 +72,32 @@ export default function PerformanceMetrics() {
       label: "Throughput",
       value: (stats.today_execution_count / 24).toFixed(1),
       unit: "exec/hour",
-      color: "text-sky-400",
+      color: "rgba(56, 189, 248, 1)",
     },
     {
       label: "Avg Response",
       value: stats.today_avg_duration_ms.toFixed(0),
       unit: "ms",
-      color: "text-purple-400",
+      color: "rgba(192, 132, 252, 1)",
     },
     {
       label: "Error Rate",
       value: (stats.today_error_rate * 100).toFixed(1),
       unit: "%",
-      color: stats.today_error_rate < 0.05 ? "text-emerald-400" : "text-rose-400",
+      color: stats.today_error_rate < 0.05 ? "rgba(52, 211, 153, 1)" : "rgba(251, 146, 60, 1)",
     },
     {
       label: "Success Rate",
       value: ((1 - stats.today_error_rate) * 100).toFixed(1),
       unit: "%",
-      color: "text-emerald-400",
+      color: "rgba(52, 211, 153, 1)",
     },
   ];
 
   return (
-    <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
+    <div className="rounded-2xl border p-6" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)" }}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-white">Performance Metrics</h3>
+        <h3 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>Performance Metrics</h3>
         <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Today</span>
       </div>
 

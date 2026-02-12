@@ -211,7 +211,7 @@ export default function RegressionWatchPanel() {
       case "FAIL":
         return "text-red-400 bg-red-950";
       default:
-        return "text-gray-400 bg-gray-950";
+        return "text-slate-400 bg-slate-950";
     }
   };
 
@@ -286,7 +286,7 @@ export default function RegressionWatchPanel() {
                         className={`px-3 py-1 rounded text-xs font-medium ${
                           query.enabled
                             ? "bg-green-900 text-green-300"
-                            : "bg-gray-800 text-gray-300"
+                            : "bg-slate-800 text-slate-300"
                         }`}
                       >
                         {query.enabled ? "Enabled" : "Disabled"}

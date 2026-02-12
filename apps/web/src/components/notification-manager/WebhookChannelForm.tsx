@@ -75,7 +75,7 @@ export default function WebhookChannelForm({ onSubmit }: WebhookChannelFormProps
           📌 <strong>Webhook Format:</strong>
           <div className="mt-2 text-sm space-y-1">
             <p>Each alert will send a POST request with this payload:</p>
-            <pre className="bg-gray-100 p-2 rounded mt-2 text-xs overflow-auto">
+            <pre className="bg-slate-100 p-2 rounded mt-2 text-xs overflow-auto">
 {`{
   "title": "Alert Name",
   "body": "Alert Description",

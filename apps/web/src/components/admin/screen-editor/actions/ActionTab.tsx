@@ -30,7 +30,7 @@ export default function ActionTab() {
   const { builtinOptions, apiManagerOptions, isLoading, error, findItem } = useActionCatalog(true);
 
   if (!editorState.screen) {
-    return <div className="flex h-full items-center justify-center text-slate-400">No screen loaded</div>;
+    return <div className="flex h-full items-center justify-center" style={{ color: "var(--muted-foreground)" }}>No screen loaded</div>;
   }
 
   const screenActions = editorState.screen.actions || [];

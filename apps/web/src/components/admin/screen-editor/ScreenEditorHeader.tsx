@@ -82,30 +82,32 @@ export default function ScreenEditorHeader({
   };
   return (
     <>
-      <div className="border-b border-slate-800 bg-slate-900/50 px-6 py-4">
+      <div className="border-b px-6 py-4" style={{ borderColor: "var(--border)", backgroundColor: "rgba(15, 23, 42, 0.5)" }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href="/admin/screens"
-              className="text-sky-400 hover:text-sky-300 transition-colors"
+              className="transition-colors"
+              style={{ color: "rgba(56, 189, 248, 1)" }}
             >
               ← Back to Screens
             </Link>
 
             {screenName && (
-              <div className="flex items-center gap-2 border-r border-slate-700 pr-3 mr-1">
-                <h1 className="text-lg font-semibold text-slate-100">{screenName}</h1>
+              <div className="flex items-center gap-2 border-r pr-3 mr-1" style={{ borderColor: "var(--border-muted)" }}>
+                <h1 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>{screenName}</h1>
               </div>
             )}
 
-            <div className="flex items-center gap-1 border-r border-slate-700 pr-3 mr-1">
+            <div className="flex items-center gap-1 border-r pr-3 mr-1" style={{ borderColor: "var(--border-muted)" }}>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={onUndo}
                 disabled={!canUndo}
                 title="Undo (Ctrl+Z)"
-                className="h-7 w-7 p-0 text-slate-400 hover:text-white disabled:opacity-30"
+                className="h-7 w-7 p-0 disabled:opacity-30"
+                style={{ color: "var(--muted-foreground)" }}
               >
                 <Undo2 className="w-4 h-4" />
               </Button>
@@ -115,7 +117,8 @@ export default function ScreenEditorHeader({
                 onClick={onRedo}
                 disabled={!canRedo}
                 title="Redo (Ctrl+Shift+Z)"
-                className="h-7 w-7 p-0 text-slate-400 hover:text-white disabled:opacity-30"
+                className="h-7 w-7 p-0 disabled:opacity-30"
+                style={{ color: "var(--muted-foreground)" }}
               >
                 <Redo2 className="w-4 h-4" />
               </Button>
@@ -123,17 +126,18 @@ export default function ScreenEditorHeader({
 
             <div className="flex items-center gap-3">
               <span
-                className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${status === "published"
-                  ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
-                  : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
+                className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider border ${status === "published"
+                  ? ""
+                  : ""
                   }`}
+                style={status === "published" ? { backgroundColor: "rgba(6, 78, 59, 0.5)", color: "#86efac", borderColor: "rgba(16, 185, 129, 0.5)" } : { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "rgba(51, 65, 85, 0.5)" }}
                 data-testid="status-badge"
               >
                 {status}
               </span>
 
               {isDirty && (
-                <span className="text-yellow-500 text-xs font-medium">
+                <span className="text-xs font-medium" style={{ color: "rgba(234, 179, 8, 1)" }}>
                   Unsaved changes
                 </span>
               )}

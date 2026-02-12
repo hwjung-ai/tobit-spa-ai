@@ -48,24 +48,24 @@ export default function RecentErrors() {
   }, []);
 
   const getSeverityColor = (message: string | null): string => {
-    if (!message) return "text-slate-400";
-    if (message.toLowerCase().includes("timeout")) return "text-rose-400";
-    if (message.toLowerCase().includes("connection")) return "text-orange-400";
-    if (message.toLowerCase().includes("validation")) return "text-yellow-400";
-    return "text-slate-400";
+    if (!message) return "color: var(--muted-foreground)";
+    if (message.toLowerCase().includes("timeout")) return "color: rgba(251, 146, 60, 1)";
+    if (message.toLowerCase().includes("connection")) return "color: rgba(251, 146, 60, 1)";
+    if (message.toLowerCase().includes("validation")) return "color: rgba(250, 204, 21, 1)";
+    return "color: var(--muted-foreground)";
   };
 
   const getSeverityBgColor = (message: string | null): string => {
-    if (!message) return "bg-slate-800/30";
-    if (message.toLowerCase().includes("timeout")) return "bg-rose-800/20 border-rose-800/50";
-    if (message.toLowerCase().includes("connection")) return "bg-orange-800/20 border-orange-800/50";
-    if (message.toLowerCase().includes("validation")) return "bg-yellow-800/20 border-yellow-800/50";
-    return "bg-slate-800/30";
+    if (!message) return "background-color: rgba(30, 41, 59, 0.3)";
+    if (message.toLowerCase().includes("timeout")) return "background-color: rgba(127, 29, 29, 0.2); border-color: rgba(127, 29, 29, 0.5)";
+    if (message.toLowerCase().includes("connection")) return "background-color: rgba(124, 45, 18, 0.2); border-color: rgba(124, 45, 18, 0.5)";
+    if (message.toLowerCase().includes("validation")) return "background-color: rgba(250, 204, 21, 0.2); border-color: rgba(250, 204, 21, 0.5)";
+    return "background-color: rgba(30, 41, 59, 0.3)";
   };
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-slate-400 text-sm">
+      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "var(--muted-foreground)" }}>
         Loading recent errors...
       </div>
     );
@@ -73,25 +73,25 @@ export default function RecentErrors() {
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-rose-800/70 bg-rose-900/60 p-6 text-rose-400 text-sm">
+      <div className="rounded-2xl border p-6 text-sm" style={{ borderColor: "rgba(159, 18, 57, 0.7)", backgroundColor: "rgba(120, 53, 15, 0.6)", color: "rgba(251, 146, 60, 1)" }}>
         Error: {error}
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
+    <div className="rounded-2xl border p-6" style={{ borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)" }}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-white">Recent Errors</h3>
-        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+        <h3 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>Recent Errors</h3>
+        <span className="text-xs uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>
           {errors.length} errors
         </span>
       </div>
 
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {errors.length === 0 ? (
-          <div className="p-6 text-center rounded-lg bg-slate-950/40 border border-slate-800">
-            <div className="inline-block p-3 rounded-full bg-emerald-500/10 mb-3">
+          <div className="p-6 text-center rounded-lg border" style={{ borderColor: "var(--border)", backgroundColor: "rgba(3, 7, 18, 0.4)" }}>
+            <div className="inline-block p-3 rounded-full mb-3" style={{ backgroundColor: "rgba(16, 185, 129, 0.1)" }}>
               <svg
                 className="w-6 h-6 text-emerald-400"
                 fill="none"

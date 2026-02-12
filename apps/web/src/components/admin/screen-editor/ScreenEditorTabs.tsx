@@ -398,23 +398,23 @@ export default function ScreenEditorTabs() {
           </div>
         </div>
       )}
-      <TabsList className="mx-6 mt-4 bg-slate-800 border-b border-slate-700 rounded-none gap-1">
-        <TabsTrigger value="visual" data-testid="tab-visual" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200">
+      <TabsList className="mx-6 mt-4 border-b gap-1 rounded-none" style={{ backgroundColor: "var(--surface-elevated)" }}>
+        <TabsTrigger value="visual" data-testid="tab-visual" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
           Visual Editor
         </TabsTrigger>
-        <TabsTrigger value="json" data-testid="tab-json" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200">
+        <TabsTrigger value="json" data-testid="tab-json" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
           JSON
         </TabsTrigger>
-        <TabsTrigger value="binding" data-testid="tab-binding" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200">
+        <TabsTrigger value="binding" data-testid="tab-binding" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
           Binding
         </TabsTrigger>
-        <TabsTrigger value="action" data-testid="tab-action" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200">
+        <TabsTrigger value="action" data-testid="tab-action" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
           Action
         </TabsTrigger>
-        <TabsTrigger value="preview" data-testid="tab-preview" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200">
+        <TabsTrigger value="preview" data-testid="tab-preview" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
           Preview
         </TabsTrigger>
-        <TabsTrigger value="diff" data-testid="tab-diff" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200">
+        <TabsTrigger value="diff" data-testid="tab-diff" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
           Diff
         </TabsTrigger>
       </TabsList>

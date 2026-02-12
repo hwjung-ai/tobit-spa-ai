@@ -570,22 +570,25 @@ export default function OpsPage() {
     <>
     {/* Summary Modal */}
     {summaryModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm dark:bg-slate-950/80">
-        <div className="relative w-full max-w-2xl rounded-3xl border border-slate-300 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm dark:bg-slate-950/80" style={{ backgroundColor: "rgba(15, 23, 42, 0.95)" }}>
+        <div className="relative w-full max-w-2xl rounded-3xl border p-6" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
+          <div className="flex items-center justify-between p-6" style={{ borderBottom: "1px solid var(--border)" }}>
             <div className="flex items-center gap-3">
               <span className="text-2xl">📋</span>
               <div>
-                <h2 className="text-lg font-semibold text-white">대화 요약</h2>
-                <p className="text-xs text-slate-400">
+                <h2 className="text-lg font-semibold">대화 요약</h2>
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                   {summaryData?.question_count || history.length}개의 질문
                 </p>
               </div>
             </div>
             <button
               onClick={() => setSummaryModalOpen(false)}
-              className="rounded-full border border-slate-600 px-3 py-1 text-sm text-slate-300 hover:border-slate-500 hover:text-white"
+              className="rounded-full border px-3 py-1 text-sm"
+              style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
             >
               ✕
             </button>
@@ -594,9 +597,9 @@ export default function OpsPage() {
           {/* Content */}
           <div className="max-h-[60vh] overflow-y-auto px-6 py-4 custom-scrollbar">
             {/* Summary Type Selector */}
-            <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/60 p-3">
+            <div className="mb-4 flex items-center justify-between rounded-xl border p-3" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">요약 방식:</span>
+                <span className="text-sm">요약 방식:</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
@@ -606,9 +609,14 @@ export default function OpsPage() {
                     }}
                     className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
                       summaryType === "individual"
-                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/50"
-                        : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                        ? "border px-3 py-1"
+                        : "border px-3 py-1"
                     }`}
+                    style={{
+                      backgroundColor: summaryType === "individual" ? "rgba(14, 165, 233, 0.2)" : "transparent",
+                      borderColor: summaryType === "individual" ? "#0ea5e9" : "var(--border)",
+                      color: summaryType === "individual" ? "#e0f2fe" : "var(--foreground)"
+                    }}
                   >
                     개별 요약
                   </button>
@@ -620,16 +628,21 @@ export default function OpsPage() {
                     }}
                     className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
                       summaryType === "overall"
-                        ? "bg-sky-500/20 text-sky-300 border border-sky-500/50"
-                        : "bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600"
+                        ? "border px-3 py-1"
+                        : "border px-3 py-1"
                     }`}
+                    style={{
+                      backgroundColor: summaryType === "overall" ? "rgba(14, 165, 233, 0.2)" : "transparent",
+                      borderColor: summaryType === "overall" ? "#0ea5e9" : "var(--border)",
+                      color: summaryType === "overall" ? "#e0f2fe" : "var(--foreground)"
+                    }}
                   >
                     전체 요약
                   </button>
                 </div>
               </div>
               {summaryData?.summary_type && (
-                <span className="text-[10px] text-slate-500">
+                <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
                   {summaryData.summary_type === "individual" ? "개별" : "전체"}
                 </span>
               )}
@@ -785,23 +798,37 @@ export default function OpsPage() {
                     return (
                       <div
                         key={entry.id}
-                        className={`group relative flex w-full flex-col rounded-2xl border px-3 py-2 text-left transition ${isSelected
-                          ? "border-sky-500 bg-sky-500/10 text-white"
-                          : "border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-600"
-                          }`}
+                        className="group relative flex w-full flex-col rounded-2xl border px-3 py-2 transition"
+                        style={{
+                          backgroundColor: isSelected ? "var(--surface-elevated)" : "transparent",
+                          borderColor: isSelected ? "var(--primary)" : "transparent",
+                          color: isSelected ? "var(--foreground)" : "var(--foreground)"
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                            e.currentTarget.style.borderColor = "var(--border)";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.borderColor = "transparent";
+                          }
+                        }}
                       >
                         <button
                           onClick={() => setSelectedId(entry.id)}
                           className="text-left"
                         >
-                          <div className="flex items-center justify-between pr-8 text-[11px] text-slate-400">
-                            <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-200">
+                          <div className="flex items-center justify-between pr-8" style={{ color: "var(--muted-foreground)" }}>
+                            <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}>
                               {label}
                             </span>
                             <span className="tracking-normal">{formatTimestamp(entry.createdAt)}</span>
                           </div>
                           <p
-                            className="mt-2 text-sm font-semibold leading-snug text-white overflow-hidden"
+                            className="mt-2 text-sm font-semibold leading-snug overflow-hidden"
                             style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}
                           >
                             {entry.question}
@@ -847,10 +874,20 @@ export default function OpsPage() {
                 <button
                   key={modeEntry.id}
                   onClick={() => handleModeSelection(modeEntry.id)}
-                  className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition ${uiMode === modeEntry.id
-                    ? "border-sky-500 bg-sky-500/10 text-white"
-                    : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
-                    }`}
+                  className="rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition"
+                  style={{
+                    backgroundColor: uiMode === modeEntry.id ? "var(--primary)" : "transparent",
+                    borderColor: uiMode === modeEntry.id ? "var(--primary)" : "var(--border)",
+                    color: uiMode === modeEntry.id ? "var(--primary-foreground)" : "var(--foreground)"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (uiMode !== modeEntry.id) {
+                      e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }}
                 >
                   {modeEntry.label}
                 </button>

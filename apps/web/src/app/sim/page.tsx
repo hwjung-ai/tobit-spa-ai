@@ -547,12 +547,12 @@ export default function SimPage() {
   );
 
   return (
-    <div className="space-y-6 py-6 bg-slate-50 dark:bg-slate-950">
+    <div className="space-y-6 py-6" style={{ backgroundColor: "var(--surface-base)" }}>
       {/* Header Section */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-        <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">Simulation</p>
-        <h1 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">SIM Workspace</h1>
-        <p className="mt-2 max-w-4xl text-sm text-slate-700 dark:text-slate-400">
+      <section className="rounded-2xl border p-6 shadow-sm" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+        <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Simulation</p>
+        <h1 className="mt-2 text-2xl font-semibold" style={{ color: "var(--foreground)" }}>SIM Workspace</h1>
+        <p className="mt-2 max-w-4xl text-sm" style={{ color: "var(--muted-foreground)" }}>
           질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다.
         </p>
       </section>
@@ -560,14 +560,19 @@ export default function SimPage() {
       {/* Main Content Grid */}
       <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
         {/* Left Panel - Scenario Builder */}
-        <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 min-h-[320px]">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Scenario Builder</h2>
+        <aside className="space-y-4 rounded-2xl border p-5 shadow-sm min-h-[320px]" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+          <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Scenario Builder</h2>
 
-          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+          <label className="block text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
             질문
             <textarea
               data-testid="simulation-question-input"
-              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
+              className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
               rows={4}
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
@@ -577,11 +582,13 @@ export default function SimPage() {
                   void handleRun();
                 }
               }}
+              onFocus={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "var(--border)"}
             />
           </label>
 
           <div>
-            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">템플릿</p>
+            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>템플릿</p>
             <div className="mt-2 grid gap-2">
               {templates.map((template) => (
                 <button
@@ -589,30 +596,44 @@ export default function SimPage() {
                   type="button"
                   data-testid="simulation-template-select"
                   onClick={() => applyTemplate(template)}
-                  className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-left transition hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/60 dark:hover:border-sky-400"
+                  className="rounded-2xl border px-3 py-2 text-left transition"
+                  style={{
+                    backgroundColor: "var(--surface-base)",
+                    borderColor: "var(--border)",
+                    color: "var(--foreground)"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border)"}
                 >
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{template.name}</p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">{template.description}</p>
+                  <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{template.name}</p>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{template.description}</p>
                 </button>
               ))}
             </div>
             {selectedTemplate ? (
-              <div className="mt-3 rounded-2xl border border-emerald-600 bg-emerald-50 px-3 py-2 dark:border-emerald-500 dark:bg-emerald-900/30">
-                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Applied Template</p>
-                <p className="mt-1 text-sm text-slate-800 dark:text-slate-200">{selectedTemplate.name}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400">{selectedTemplate.description}</p>
+              <div className="mt-3 rounded-2xl border px-3 py-2" style={{ borderColor: "var(--success)", backgroundColor: "rgba(34, 197, 94, 0.1)" }}>
+                <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--success)" }}>Applied Template</p>
+                <p className="mt-1 text-sm" style={{ color: "var(--foreground)" }}>{selectedTemplate.name}</p>
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{selectedTemplate.description}</p>
               </div>
             ) : (
-              <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.</p>
+              <p className="mt-2 text-xs" style={{ color: "var(--muted-foreground)" }}>템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.</p>
             )}
           </div>
 
-          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+          <label className="block text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
             시나리오 유형
             <select
-              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
+              className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
               value={scenarioType}
               onChange={(event) => setScenarioType(event.target.value as ScenarioType)}
+              onFocus={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "var(--border)"}
             >
               <option value="what_if">What-if</option>
               <option value="stress_test">Stress Test</option>
@@ -620,12 +641,19 @@ export default function SimPage() {
             </select>
           </label>
 
-          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+          <label className="block text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
             Service
             <select
-              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
+              className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
               value={service}
               onChange={(event) => setService(event.target.value)}
+              onFocus={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "var(--border)"}
             >
               {services.length === 0 ? (
                 <option value="">No services available</option>
@@ -638,25 +666,32 @@ export default function SimPage() {
             </select>
           </label>
 
-          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+          <label className="block text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
             Horizon
             <input
-              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
+              className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
               value={horizon}
               onChange={(event) => setHorizon(event.target.value)}
+              onFocus={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
+              onBlur={(e) => e.currentTarget.style.borderColor = "var(--border)"}
             />
           </label>
 
           <div>
-            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">가정값</p>
+            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>가정값</p>
             {Object.entries(assumptions).map(([key, value]) => {
               const meta = assumptionMeta[key];
               if (!meta) return null;
               return (
-                <label key={key} className="block rounded-2xl border border-slate-300 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/50">
+                <label key={key} className="block rounded-2xl border px-3 py-2" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs text-slate-700 dark:text-slate-300">{meta.label}</span>
-                    <span className="text-xs text-slate-600 dark:text-slate-400">
+                    <span className="text-xs" style={{ color: "var(--foreground)" }}>{meta.label}</span>
+                    <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                       {value}
                       {meta.unit}
                     </span>
@@ -674,6 +709,7 @@ export default function SimPage() {
                       }))
                     }
                     className="w-full"
+                    style={{ accentColor: "var(--primary)" }}
                   />
                 </label>
               );
@@ -681,54 +717,98 @@ export default function SimPage() {
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">전략 선택</p>
+            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>전략 선택</p>
             {(Object.keys(strategyMeta) as Strategy[]).map((s) => (
               <button
                 key={s}
                 data-testid="simulation-strategy-select"
                 onClick={() => setStrategy(s)}
-                className={`rounded-2xl border px-3 py-2 text-left transition ${
-                  strategy === s
-                    ? "border-sky-600 bg-sky-600 dark:border-sky-500 dark:bg-sky-600"
-                    : "border-slate-300 bg-white hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/60 dark:hover:border-sky-400"
-                }`}
+                className="rounded-2xl border px-3 py-2 text-left transition"
+                style={{
+                  borderColor: strategy === s ? "var(--primary)" : "var(--border)",
+                  backgroundColor: strategy === s ? "var(--primary)" : "var(--surface-base)",
+                }}
+                onMouseEnter={(e) => {
+                  if (strategy !== s) {
+                    e.currentTarget.style.borderColor = "var(--primary)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (strategy !== s) {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                  }
+                }}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-white dark:text-slate-100">{strategyMeta[s].title}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">{strategyMeta[s].badge}</span>
+                  <span className="text-sm font-semibold" style={{ color: strategy === s ? "white" : "var(--foreground)" }}>{strategyMeta[s].title}</span>
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: strategy === s ? "white" : "var(--muted-foreground)" }}>{strategyMeta[s].badge}</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">{strategyMeta[s].desc}</p>
+                <p className="mt-1 text-xs" style={{ color: strategy === s ? "white" : "var(--muted-foreground)" }}>{strategyMeta[s].desc}</p>
               </button>
             ))}
           </div>
 
           <button
             data-testid="simulation-run-button"
-            className="w-full rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-400 dark:disabled:bg-slate-700"
+            className="w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: loading || servicesLoading || !question.trim() || !service.trim() ? "var(--disabled)" : "var(--primary)",
+              color: "white"
+            }}
             onClick={handleRun}
             disabled={loading || servicesLoading || !question.trim() || !service.trim()}
+            onMouseEnter={(e) => {
+              if (!(loading || servicesLoading || !question.trim() || !service.trim())) {
+                e.currentTarget.style.opacity = "0.9";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+            }}
           >
             {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
           </button>
-          {!question.trim() ? <p className="text-[11px] text-slate-600 dark:text-slate-500">질문을 입력하면 실행할 수 있습니다.</p> : null}
-          {!service.trim() ? <p className="text-[11px] text-slate-600 dark:text-slate-500">Service를 입력하거나 선택하면 실행할 수 있습니다.</p> : null}
+          {!question.trim() ? <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>질문을 입력하면 실행할 수 있습니다.</p> : null}
+          {!service.trim() ? <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Service를 입력하거나 선택하면 실행할 수 있습니다.</p> : null}
 
           <div>
             <button
               type="button"
               data-testid="simulation-backtest-button"
-              className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 dark:hover:border-sky-400"
+              className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
               onClick={handleBacktest}
               disabled={servicesLoading || !service.trim()}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+              }}
             >
               Run Backtest
             </button>
             <button
               type="button"
               data-testid="simulation-export-button"
-              className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:border-emerald-600 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 dark:hover:border-emerald-500"
+              className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
               onClick={handleExportCsv}
               disabled={servicesLoading || !service.trim()}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--success)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+              }}
             >
               Export CSV
             </button>
@@ -738,36 +818,36 @@ export default function SimPage() {
         {/* Main Content */}
         <main className="space-y-4">
           {/* KPI Summary Section */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-            <h2 data-testid="simulation-kpi-summary" className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
+          <section className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+            <h2 data-testid="simulation-kpi-summary" className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
               KPI Summary
             </h2>
             {!result ? (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">왼쪽에서 시나리오를 설정하고 실행하세요.</p>
+              <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>왼쪽에서 시나리오를 설정하고 실행하세요.</p>
             ) : (
               <>
-                <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">{result.summary}</p>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+                <p className="mt-3 text-sm" style={{ color: "var(--foreground)" }}>{result.summary}</p>
+                <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
                   Confidence: {result.simulation.confidence.toFixed(2)} ({getConfidenceLabel(result.simulation.confidence)})
                 </p>
                 {result.simulation.confidence_interval ? (
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
+                  <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
                     CI: {result.simulation.confidence_interval[0].toFixed(2)} ~ {result.simulation.confidence_interval[1].toFixed(2)}
                     {result.simulation.error_bound ? ` / Error Bound: ±${result.simulation.error_bound}` : ""}
                   </p>
                 ) : null}
                 <div className="mt-3 grid gap-3">
                   {result.simulation.kpis.map((kpi) => (
-                    <div key={kpi.kpi} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                    <div key={kpi.kpi} className="rounded-2xl border p-3 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
                       {(() => {
                         const changePct = calculateChangePct(kpi);
                         return (
                           <>
-                            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">{formatKpiLabel(kpi.kpi)}</p>
-                            <p className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+                            <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>{formatKpiLabel(kpi.kpi)}</p>
+                            <p className="mt-1 text-sm" style={{ color: "var(--foreground)" }}>
                               {kpi.baseline} → {kpi.simulated} {kpi.unit}
                             </p>
-                            <p className={`text-sm font-semibold ${changePct >= 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                            <p className="text-sm font-semibold" style={{ color: changePct >= 0 ? "var(--warning)" : "var(--success)" }}>
                               {changePct >= 0 ? "+" : ""}
                               {changePct}%
                             </p>
@@ -782,50 +862,50 @@ export default function SimPage() {
           </section>
 
           {/* Comparison Charts Section */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Comparison Charts</h2>
+          <section className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Comparison Charts</h2>
             {!result ? (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">실행 후 차트가 표시됩니다.</p>
+              <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>실행 후 차트가 표시됩니다.</p>
             ) : (
               <div className="mt-4 grid gap-4">
-                <div className="h-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                <div className="h-64 rounded-2xl border p-2 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="kpi" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis dataKey="kpi" stroke="var(--muted-foreground)" />
+                      <YAxis stroke="var(--muted-foreground)" />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="baseline" stroke="#0ea5e9" strokeWidth={2} />
-                      <Line type="monotone" dataKey="simulated" stroke="#f59e0b" strokeWidth={2} />
+                      <Line type="monotone" dataKey="baseline" stroke="var(--primary)" strokeWidth={2} />
+                      <Line type="monotone" dataKey="simulated" stroke="var(--warning)" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
 
-                <div className="h-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                <div className="h-64 rounded-2xl border p-2 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="kpi" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis dataKey="kpi" stroke="var(--muted-foreground)" />
+                      <YAxis stroke="var(--muted-foreground)" />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="changePct" fill="#22c55e" name="Change %" />
+                      <Bar dataKey="changePct" fill="var(--success)" name="Change %" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
                 {compareData.length > 0 ? (
-                  <div className="h-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                  <div className="h-56 rounded-2xl border p-2 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={compareData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                        <XAxis dataKey="kpi" stroke="#94a3b8" />
-                        <YAxis stroke="#94a3b8" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                        <XAxis dataKey="kpi" stroke="var(--muted-foreground)" />
+                        <YAxis stroke="var(--muted-foreground)" />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="previous" fill="#64748b" name="Previous Run" />
-                        <Bar dataKey="current" fill="#3b82f6" name="Current Run" />
+                        <Bar dataKey="previous" fill="var(--muted-foreground)" name="Previous Run" />
+                        <Bar dataKey="current" fill="var(--primary)" name="Current Run" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -845,35 +925,35 @@ export default function SimPage() {
           </section>
 
           {/* Evidence Panel */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 min-h-[220px]">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Algorithm & Evidence</h2>
+          <section className="rounded-2xl border p-5 shadow-sm min-h-[220px]" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Algorithm & Evidence</h2>
             {!result ? (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">실행 후 알고리즘 설명과 근거가 표시됩니다.</p>
+              <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>실행 후 알고리즘 설명과 근거가 표시됩니다.</p>
             ) : (
-              <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-300">
+              <div className="mt-3 space-y-3 text-sm" style={{ color: "var(--foreground)" }}>
                 <p>
-                  <span className="text-slate-600 dark:text-slate-500">Strategy:</span> {result.simulation.strategy.toUpperCase()} /
-                  <span className="text-slate-600 dark:text-slate-500"> Model:</span> {String(result.simulation.model_info.version ?? "n/a")}
+                  <span style={{ color: "var(--muted-foreground)" }}>Strategy:</span> {result.simulation.strategy.toUpperCase()} /
+                  <span style={{ color: "var(--muted-foreground)" }}> Model:</span> {String(result.simulation.model_info.version ?? "n/a")}
                 </p>
                 {plan ? (
-                  <p className="text-xs text-slate-600 dark:text-slate-500">
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     Baseline Window: {plan.baseline_window} / Horizon: {plan.horizon} / Service: {plan.service}
                   </p>
                 ) : null}
                 <p>{result.simulation.explanation}</p>
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">Recommended Actions</p>
+                  <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Recommended Actions</p>
                   <ul className="mt-1 list-disc pl-5">
                     {result.simulation.recommended_actions.map((action) => (
                       <li key={action}>{action}</li>
                     ))}
                   </ul>
                 </div>
-                <pre className="overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
+                <pre className="overflow-auto rounded-2xl border p-3 text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)" }}>
                   {JSON.stringify(result.references, null, 2)}
                 </pre>
                 {result.simulation.warnings.length > 0 ? (
-                  <ul className="list-disc pl-5 text-amber-600 dark:text-amber-400">
+                  <ul className="list-disc pl-5" style={{ color: "var(--warning)" }}>
                     {result.simulation.warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}
@@ -884,27 +964,27 @@ export default function SimPage() {
             </section>
 
           {/* Backtest Report Section */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Backtest Report</h2>
+          <section className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Backtest Report</h2>
             {!backtest ? (
-              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">왼쪽에서 Backtest 버튼을 눌러 전략 성능 지표를 확인하세요.</p>
+              <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>왼쪽에서 Backtest 버튼을 눌러 전략 성능 지표를 확인하세요.</p>
             ) : (
-              <div className="mt-3 grid gap-3 text-sm text-slate-700 dark:text-slate-300">
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
-                  <p className="text-xs text-slate-600 dark:text-slate-500">R2</p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{backtest.metrics.r2.toFixed(4)}</p>
+              <div className="mt-3 grid gap-3 text-sm" style={{ color: "var(--foreground)" }}>
+                <div className="rounded-2xl border p-3 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>R2</p>
+                  <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>{backtest.metrics.r2.toFixed(4)}</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
-                  <p className="text-xs text-slate-600 dark:text-slate-500">MAPE</p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{(backtest.metrics.mape * 100).toFixed(2)}%</p>
+                <div className="rounded-2xl border p-3 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>MAPE</p>
+                  <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>{(backtest.metrics.mape * 100).toFixed(2)}%</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
-                  <p className="text-xs text-slate-600 dark:text-slate-500">RMSE</p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{backtest.metrics.rmse.toFixed(3)}</p>
+                <div className="rounded-2xl border p-3 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>RMSE</p>
+                  <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>{backtest.metrics.rmse.toFixed(3)}</p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
-                  <p className="text-xs text-slate-600 dark:text-slate-500">Coverage@90%</p>
-                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{(backtest.metrics.coverage_90 * 100).toFixed(2)}%</p>
+                <div className="rounded-2xl border p-3 shadow-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Coverage@90%</p>
+                  <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>{(backtest.metrics.coverage_90 * 100).toFixed(2)}%</p>
                 </div>
               </div>
             )}
@@ -912,7 +992,7 @@ export default function SimPage() {
         </main>
 
         {/* Right Panel - AI Copilot */}
-        <aside className="min-h-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto dark:border-slate-800 dark:bg-slate-900/60">
+        <aside className="min-h-[320px] rounded-2xl border p-4 shadow-sm xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
           <div className="space-y-4">
             <BuilderCopilotPanel
               builderSlug="sim-workspace"
@@ -931,10 +1011,10 @@ export default function SimPage() {
               }}
               inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
             />
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
+            <div className="space-y-3 rounded-2xl border p-4 text-sm" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)" }}>
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">Draft status</span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                <span className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Draft status</span>
+                <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
                   {draftStatus === "draft_ready"
                     ? "Ready"
                     : draftStatus === "error"
@@ -942,7 +1022,7 @@ export default function SimPage() {
                       : "Idle"}
                 </span>
               </div>
-              {draftNotes ? <p className="text-sm text-slate-700 dark:text-slate-200">{draftNotes}</p> : null}
+              {draftNotes ? <p className="text-sm" style={{ color: "var(--foreground)" }}>{draftNotes}</p> : null}
               <div className="grid gap-2">
                 <button
                   type="button"
@@ -952,7 +1032,14 @@ export default function SimPage() {
                     setStatusMessage("AI 드래프트가 좌측 Scenario Builder에 반영되었습니다.");
                   }}
                   disabled={!simDraft}
-                  className="rounded-2xl border border-slate-300 bg-sky-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500 disabled:opacity-40 dark:border-slate-700 dark:bg-sky-700 dark:disabled:bg-slate-700"
+                  className="rounded-2xl px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition disabled:opacity-40"
+                  style={{ backgroundColor: "var(--primary)" }}
+                  onMouseEnter={(e) => {
+                    if (simDraft) e.currentTarget.style.opacity = "0.9";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                  }}
                 >
                   Apply
                 </button>
@@ -966,32 +1053,43 @@ export default function SimPage() {
                     setLastParseError(null);
                     setLastAssistantRaw("");
                   }}
-                  className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-700 hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 transition hover:border-sky-400"
+                  className="rounded-2xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider transition"
+                  style={{
+                    backgroundColor: "var(--surface-base)",
+                    borderColor: "var(--border)",
+                    color: "var(--foreground)"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                  }}
                 >
                   Discard
                 </button>
               </div>
               {simDraft ? (
-                <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">Draft JSON</p>
-                  <pre className="max-h-44 overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
+                <div className="space-y-2 rounded-2xl border p-3" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Draft JSON</p>
+                  <pre className="max-h-44 overflow-auto rounded-2xl border p-2 text-[11px]" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)", color: "var(--foreground)" }}>
                     {JSON.stringify(simDraft, null, 2)}
                   </pre>
                 </div>
               ) : (
-                <p className="text-xs text-slate-600 dark:text-slate-500">No SIM draft yet. Ask Copilot to generate one.</p>
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>No SIM draft yet. Ask Copilot to generate one.</p>
               )}
-              <details className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/40">
-                <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+              <details className="rounded-2xl border p-3 text-[11px]" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)" }}>
+                <summary className="cursor-pointer text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
                   Debug
                 </summary>
                 <div className="mt-2 space-y-1">
-                  <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
                     Parse status: {lastParseStatus}
                   </p>
-                  {lastParseError ? <p className="text-[11px] text-rose-600 dark:text-rose-400">Error: {lastParseError}</p> : null}
-                  <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">Last assistant raw</p>
-                  <pre className="max-h-24 overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
+                  {lastParseError ? <p className="text-[11px]" style={{ color: "var(--error)" }}>Error: {lastParseError}</p> : null}
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Last assistant raw</p>
+                  <pre className="max-h-24 overflow-auto rounded-2xl border p-2 text-[11px]" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)", color: "var(--foreground)" }}>
                     {lastAssistantRaw || "없음"}
                   </pre>
                 </div>

@@ -10,7 +10,7 @@ interface SettingsTableProps {
 export default function SettingsTable({ settings, onEdit }: SettingsTableProps) {
     if (settings.length === 0) {
         return (
-            <div className="text-center py-8 style={{ color: "var(--muted-foreground)" }}">
+            <div className="text-center py-8 text-slate-600 dark:text-slate-400">
                 No settings found
             </div>
         );
@@ -20,24 +20,24 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="border-b style={{ borderColor: "var(--border)" }}">
-                        <th className="text-left py-3 px-4 style={{ color: "var(--muted-foreground)" }} font-medium">Key</th>
-                        <th className="text-left py-3 px-4 style={{ color: "var(--muted-foreground)" }} font-medium">Value</th>
-                        <th className="text-left py-3 px-4 style={{ color: "var(--muted-foreground)" }} font-medium">Source</th>
-                        <th className="text-left py-3 px-4 style={{ color: "var(--muted-foreground)" }} font-medium text-center">Restart</th>
-                        <th className="text-left py-3 px-4 style={{ color: "var(--muted-foreground)" }} font-medium">Actions</th>
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Key</th>
+                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Value</th>
+                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Source</th>
+                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium text-center">Restart</th>
+                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {settings.map((setting) => (
                         <tr
                             key={setting.key}
-                            className="border-b style={{ borderColor: "var(--border)" }} hover:style={{ backgroundColor: "rgba(2, 6, 23, 0.4)" }} transition-colors"
+                            className="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/40 transition-colors"
                         >
-                            <td className="py-3 px-4 style={{ color: "var(--foreground)" }} font-mono text-xs">
+                            <td className="py-3 px-4 text-slate-900 dark:text-slate-50 font-mono text-xs">
                                 {setting.key}
                             </td>
-                            <td className="py-3 px-4 style={{ color: "var(--foreground)" }}">
+                            <td className="py-3 px-4 text-slate-900 dark:text-slate-50">
                                 {typeof setting.value === "object"
                                     ? JSON.stringify(setting.value)
                                     : String(setting.value)}
@@ -45,7 +45,7 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
                             <td className="py-3 px-4">
                                 <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-blue-950/50 text-blue-300" :
                                         setting.source === "env" ? "bg-yellow-950/50 text-yellow-300" :
-                                            "style={{ backgroundColor: "var(--surface-elevated)" }} style={{ color: "var(--foreground)" }}"
+                                            "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50"
                                     }`}>
                                     {setting.source}
                                 </span>

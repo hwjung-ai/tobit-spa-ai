@@ -124,8 +124,8 @@ export default function VisualEditor() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-slate-400">Published screens are read-only</p>
-          <p className="text-slate-500 text-sm">Rollback to draft to edit</p>
+          <p style={{ color: "var(--muted-foreground)" }}>Published screens are read-only</p>
+          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Rollback to draft to edit</p>
         </div>
       </div>
     );
@@ -138,27 +138,27 @@ export default function VisualEditor() {
       data-testid="visual-editor"
     >
       {editorState.previewEnabled && (
-        <div className="absolute inset-x-6 top-6 z-10 rounded-lg border border-sky-500/40 bg-sky-950/60 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-sky-200">
+        <div className="absolute inset-x-6 top-6 z-10 rounded-lg border px-3 py-1 text-[10px] uppercase tracking-[0.3em]" style={{ borderColor: "rgba(14, 165, 233, 0.4)", backgroundColor: "rgba(12, 74, 110, 0.6)", color: "#bae6fd" }}>
           Preview overlay active
         </div>
       )}
       {/* Left: Component Palette */}
-      <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
         <ComponentPalette />
       </div>
 
       {/* Center: Canvas */}
-      <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
         <Canvas />
       </div>
 
       {/* Tree: Component hierarchy */}
-      <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
         <ComponentTreeView />
       </div>
 
       {/* Right: Properties Panel */}
-      <div className="border border-slate-800 rounded-lg overflow-hidden flex flex-col">
+      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
         <PropertiesPanel />
       </div>
     </div>

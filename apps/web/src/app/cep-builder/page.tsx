@@ -1473,12 +1473,16 @@ export default function CepBuilderPage() {
   );
 
   return (
-    <div className="py-6 tracking-tight builder-shell builder-text">
-      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CEP Builder</h1>
-      <p className="mb-6 text-sm text-slate-400">
-        Define, simulate, and trigger complex CEP rules that orchestrate runtime APIs.
-      </p>
-      <BuilderShell leftPane={leftPane} centerTop={centerTop} centerBottom={centerBottom} rightPane={rightPane} />
+    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+      <header className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CEP Builder</h1>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Define, simulate, and trigger complex CEP rules that orchestrate runtime APIs.
+        </p>
+      </header>
+      <main className="min-h-[calc(100vh-96px)] px-6 py-6">
+        <BuilderShell leftPane={leftPane} centerTop={centerTop} centerBottom={centerBottom} rightPane={rightPane} />
+      </main>
     </div>
   );
 }

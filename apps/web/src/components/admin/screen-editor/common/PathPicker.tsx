@@ -136,7 +136,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("state", "")}>
-                            <span className="text-xs text-gray-500">(root)</span>
+                            <span className="text-xs text-slate-500">(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             stateTree,
@@ -158,7 +158,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("context", "")}>
-                            <span className="text-xs text-gray-500">(root)</span>
+                            <span className="text-xs text-slate-500">(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             contextTree,
@@ -180,7 +180,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("inputs", "")}>
-                            <span className="text-xs text-gray-500">(root)</span>
+                            <span className="text-xs text-slate-500">(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             inputsTree,
@@ -203,11 +203,11 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                   className={`w-full px-3 py-2 border rounded-md text-sm text-left flex items-center justify-between transition-colors ${
                     error
                       ? "border-red-500 bg-red-50"
-                      : "border-gray-300 bg-white hover:bg-gray-50"
+                      : "border-slate-300 bg-white hover:bg-slate-50"
                   }`}
                 >
-                  <span className="text-gray-700">{displayLabel}</span>
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                  <span className="text-slate-700">{displayLabel}</span>
+                  <ChevronDown className="w-4 h-4 text-slate-500" />
                 </button>
               </DropdownMenu>
             )}
@@ -252,7 +252,7 @@ function renderPathTree(
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem onClick={() => onSelect(source, currentPath)}>
-              <span className="text-xs text-gray-500">(this level)</span>
+              <span className="text-xs text-slate-500">(this level)</span>
             </DropdownMenuItem>
             {renderPathTree(node.children, source, onSelect, currentPath)}
           </DropdownMenuSubContent>

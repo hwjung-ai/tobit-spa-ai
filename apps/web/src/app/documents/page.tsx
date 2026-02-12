@@ -144,13 +144,30 @@ interface DocumentDetail extends DocumentItem {
   chunk_count: number;
 }
 
-const badgeStyles: Record<DocumentStatus, string> = {
-  queued: "bg-amber-400/10 text-amber-200 border-amber-500/40",
-  processing: "bg-sky-500/10 text-sky-300 border-sky-500/60",
-  done: "bg-emerald-500/10 text-emerald-200 border-emerald-500/60",
-  failed: "bg-rose-500/10 text-rose-200 border-rose-500/60",
+const getBadgeStyle = (status: DocumentStatus): React.CSSProperties => {
+  const base: React.CSSProperties = {
+    padding: "2px 10px",
+    borderRadius: "9999px",
+    fontSize: "10px",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    borderWidth: "1px",
+    borderStyle: "solid",
+  };
+  switch (status) {
+    case "queued":
+      return { ...base, backgroundColor: "rgba(245, 158, 11, 0.2)", color: "#92400e", borderColor: "rgba(245, 158, 11, 0.4)" };
+    case "processing":
+      return { ...base, backgroundColor: "rgba(14, 165, 233, 0.15)", color: "#0c4a6e", borderColor: "rgba(14, 165, 233, 0.4)" };
+    case "done":
+      return { ...base, backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#064e3b", borderColor: "rgba(16, 185, 129, 0.4)" };
+    case "failed":
+      return { ...base, backgroundColor: "rgba(244, 63, 94, 0.15)", color: "#881337", borderColor: "rgba(244, 63, 94, 0.4)" };
+    default:
+      return base;
+  }
 };
-
 
 const formatTimestamp = (value: string) => {
   try {
@@ -801,40 +818,62 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6">
+      <section
+        className="rounded-2xl border p-6"
+        style={{
+          backgroundColor: "var(--surface-base)",
+          borderColor: "var(--border)",
+          color: "var(--foreground)",
+        }}
+      >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Document index</p>
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Upload and query documents</h2>
+            <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Document index</p>
+            <h2 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>Upload and query documents</h2>
           </div>
           <button
             onClick={fetchDocuments}
-            className="rounded-2xl border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-800 dark:text-slate-200 transition hover:border-slate-500"
+            className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-[0.3em] transition"
+            style={{
+              backgroundColor: "var(--surface-base)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)"
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
           >
             Refresh list
           </button>
         </div>
         <form onSubmit={handleUpload} className="mt-4 flex flex-col gap-3">
-          <label className="text-sm text-slate-700 dark:text-slate-300">
+          <label className="text-sm" style={{ color: "var(--foreground)" }}>
             Select a file (txt/pdf/docx)
             <input
               ref={fileInputRef}
               type="file"
-              className="mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-950/50 px-4 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
+              className="mt-2 block w-full rounded-2xl border px-4 py-2 text-sm outline-none transition"
+              style={{
+                borderColor: "var(--border-muted)",
+                backgroundColor: "var(--surface-base)",
+                color: "var(--foreground)"
+              }}
+              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
+              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; }}
             />
           </label>
           {uploadError ? (
-            <p className="text-xs text-rose-400">{uploadError}</p>
+            <p className="text-xs" style={{ color: "var(--error)" }}>{uploadError}</p>
           ) : null}
           <div className="flex items-center justify-between gap-3">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 disabled:bg-slate-700"
+              className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition disabled:opacity-40"
+              style={{ backgroundColor: "var(--primary)" }}
               disabled={uploading}
             >
               {uploading ? "Uploading…" : "문서 업로드"}
             </button>
-            <span className="text-xs uppercase tracking-[0.3em] text-slate-500">
+            <span className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
               API: /api/documents/upload
             </span>
           </div>
@@ -842,11 +881,18 @@ export default function DocumentsPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <aside className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+        <aside
+          className="rounded-2xl border p-5"
+          style={{
+            backgroundColor: "var(--surface-base)",
+            borderColor: "var(--border)",
+            color: "var(--foreground)",
+          }}
+        >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Library</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">Library</p>
             {loadingDocuments ? (
-              <span className="text-xs text-slate-500">Loading...</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Loading...</span>
             ) : null}
           </div>
           {documentsError ? (
@@ -854,14 +900,14 @@ export default function DocumentsPage() {
           ) : null}
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
-              <p className="text-sm text-slate-500">No documents yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No documents yet.</p>
             ) : null}
             {documents.map((document) => (
               <div
                 key={document.id}
                 className={`group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${selectedDocumentId === document.id
                     ? "border-sky-400 bg-sky-500/10 text-slate-900 dark:text-slate-50"
-                    : "border-slate-200 dark:border-slate-800 bg-slate-900 hover:border-slate-600"
+                    : "border-slate-200 dark:border-slate-800 bg-slate-50 text-slate-700 hover:border-slate-300 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600"
                   }`}
                 role="button"
                 tabIndex={0}
@@ -875,11 +921,11 @@ export default function DocumentsPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-left text-sm font-semibold">{document.filename}</span>
-                  <span className={`rounded-full border px-3 py-1 text-[10px] ${badgeStyles[document.status]}`}>
+                  <span style={getBadgeStyle(document.status)}>
                     {document.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500">{formatTimestamp(document.updated_at)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{formatTimestamp(document.updated_at)}</p>
                 <button
                   type="button"
                   className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
@@ -897,10 +943,17 @@ export default function DocumentsPage() {
         </aside>
 
         <div className="space-y-6">
-          <section className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+          <section
+            className="group rounded-2xl border p-5"
+            style={{
+              backgroundColor: "var(--surface-base)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
+            }}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
                   Document detail
                 </p>
                 <p className="text-sm text-slate-700 dark:text-slate-300">
@@ -909,7 +962,7 @@ export default function DocumentsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {selectedDocument ? (
-                  <span className={`rounded-full border px-3 py-1 text-[10px] ${badgeStyles[selectedDocument.status]}`}>
+                  <span style={getBadgeStyle(selectedDocument.status)}>
                     {selectedDocument.status}
                   </span>
                 ) : null}
@@ -925,7 +978,7 @@ export default function DocumentsPage() {
             </div>
             {selectedDocument ? (
               <>
-                <div className="mt-4 grid gap-3 text-xs text-slate-500 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 text-xs text-slate-500 dark:text-slate-400 sm:grid-cols-2">
                   <div>
                     <p>Size: {formattedSize(selectedDocument.size)}</p>
                     <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
@@ -942,7 +995,14 @@ export default function DocumentsPage() {
             ) : null}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
+          <section
+            className="rounded-2xl border p-5"
+            style={{
+              backgroundColor: "var(--surface-base)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
+            }}
+          >
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -957,11 +1017,11 @@ export default function DocumentsPage() {
                     value={queryValue}
                     onChange={(event) => setQueryValue(event.target.value)}
                     placeholder="질문 예: 이 문서의 핵심 요약은?"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-4 py-3 text-base text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-4 py-3 text-base text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
                     disabled={!selectedDocument || selectedDocument.status !== "done"}
                   />
                 </label>
-                <div className="flex flex-col gap-2 text-xs text-slate-400">
+                <div className="flex flex-col gap-2 text-xs text-slate-400 dark:text-slate-500">
                   <span>Top K chunks</span>
                   <input
                     type="number"
@@ -969,7 +1029,7 @@ export default function DocumentsPage() {
                     max={10}
                     value={topK}
                     onChange={(event) => setTopK(Number(event.target.value))}
-                    className="w-20 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
+                    className="w-20 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
                   />
                 </div>
               </div>
@@ -987,7 +1047,7 @@ export default function DocumentsPage() {
                   ) : "메시지 전송"}
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-[0.3em] ${streamStatus === "error" ? "text-rose-400" : "text-slate-500"
+                  className={`text-xs uppercase tracking-[0.3em] ${streamStatus === "error" ? "text-rose-400" : "text-slate-500 dark:text-slate-400"
                     }`}
                 >
                   {streamStatus === "streaming" ? "SSE live" : streamStatus === "idle" ? "Ready" : "Error"}
@@ -997,16 +1057,23 @@ export default function DocumentsPage() {
             </form>
             <div className="mt-4 space-y-3">
               {streamChunks.length === 0 ? (
-                <p className="text-sm text-slate-500">Streaming answers will appear here.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Streaming answers will appear here.</p>
               ) : null}
               {streamChunks.map((chunk, idx) => (
-                <div key={`${chunk.type}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 p-4 text-sm">
+                <div
+                  key={`${chunk.type}-${idx}`}
+                  className="space-y-2 rounded-2xl border p-4 text-sm"
+                  style={{
+                    backgroundColor: "var(--surface-elevated)",
+                    borderColor: "var(--border-muted)",
+                  }}
+                >
                   <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-700 dark:text-slate-300">
                     {chunkTypeLabel[chunk.type] ?? chunk.type}
                   </span>
                   <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-50">{chunk.text}</p>
                   {chunk.meta ? (
-                    <div className="text-xs text-slate-400">
+                    <div className="text-xs text-slate-400 dark:text-slate-500">
                       <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
                       <p>
                         {chunk.meta.chunks
@@ -1018,8 +1085,15 @@ export default function DocumentsPage() {
                 </div>
               ))}
               {references.length > 0 && (
-                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-700 dark:text-slate-300">
-                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
+                <section
+                  className="rounded-2xl border p-4 text-sm"
+                  style={{
+                    backgroundColor: "var(--surface-elevated)",
+                    borderColor: "var(--border-muted)",
+                    color: "var(--foreground)",
+                  }}
+                >
+                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
                     <span>근거 문서 ({references.length}건)</span>
                   </div>
                   <div className="space-y-3">
@@ -1027,16 +1101,16 @@ export default function DocumentsPage() {
                       const href = buildReferencePdfHref(reference);
                       const viewerHref = buildReferenceViewerHref(reference);
                       const containerClass =
-                        "block rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90 cursor-pointer";
+                        "block rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 px-4 py-3 transition hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-900/90 cursor-pointer";
                       const content = (
                         <>
-                          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                            <span>{reference.document_title}</span>
+                          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                            <span className="text-slate-700 dark:text-slate-200">{reference.document_title}</span>
                             <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                           </div>
-                          <p className="mt-2 text-xs text-slate-800 dark:text-slate-200 line-clamp-3">{reference.snippet}</p>
+                          <p className="mt-2 text-xs text-slate-700 dark:text-slate-200 line-clamp-3">{reference.snippet}</p>
                           {reference.score != null ? (
-                            <p className="mt-2 text-[10px] text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
+                            <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">유사도 {(reference.score * 100).toFixed(1)}%</p>
                           ) : null}
                         </>
                       );
@@ -1084,20 +1158,27 @@ export default function DocumentsPage() {
                   </div>
                 </section>
               )}
-              <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-700 dark:text-slate-300">
+              <section
+                className="rounded-2xl border p-4 text-sm"
+                style={{
+                  backgroundColor: "var(--surface-elevated)",
+                  borderColor: "var(--border-muted)",
+                  color: "var(--foreground)",
+                }}
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Document history</p>
-                    <p className="text-[11px] text-slate-400">Select a prior question to review its answer.</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Document history</p>
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500">Select a prior question to review its answer.</p>
                   </div>
-                  {docHistoryLoading ? <span className="text-xs text-slate-500">Loading…</span> : null}
+                  {docHistoryLoading ? <span className="text-xs text-slate-500 dark:text-slate-400">Loading…</span> : null}
                 </div>
                 {docHistoryError ? (
                   <p className="mt-2 text-[11px] text-rose-400">{docHistoryError}</p>
                 ) : null}
                 <div className="mt-4 space-y-2">
                   {documentHistoryEntries.length === 0 ? (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                       {selectedDocument ? "No documented questions yet." : "Select a document to view history."}
                     </p>
                   ) : (
@@ -1108,14 +1189,14 @@ export default function DocumentsPage() {
                           key={entry.id}
                           className={`group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition ${isSelected
                               ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
-                              : "border-slate-200 dark:border-slate-800 bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-600"
+                              : "border-slate-200 dark:border-slate-800 bg-white text-slate-700 dark:bg-slate-900/60 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
                             }`}
                         >
                           <div
                             onClick={() => setSelectedDocHistoryId(entry.id)}
                             className="cursor-pointer text-left"
                           >
-                            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
                               <span>{entry.status === "error" ? "Error" : "OK"}</span>
                               <div className="flex items-center gap-2">
                                 <span>{formatTimestamp(entry.createdAt)}</span>
@@ -1134,7 +1215,7 @@ export default function DocumentsPage() {
                               </div>
                             </div>
                             <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">{entry.question}</p>
-                            <p className="text-[12px] text-slate-400">{entry.summary}</p>
+                            <p className="text-[12px] text-slate-400 dark:text-slate-500">{entry.summary}</p>
                           </div>
                         </div>
                       );
@@ -1142,11 +1223,18 @@ export default function DocumentsPage() {
                   )}
                 </div>
                 {selectedDocHistoryEntry ? (
-                  <div className="group relative mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-800 dark:text-slate-200">
+                  <div
+                    className="group relative mt-4 rounded-2xl border p-4 text-sm"
+                    style={{
+                      backgroundColor: "var(--surface-elevated)",
+                      borderColor: "var(--border-muted)",
+                      color: "var(--foreground)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Answer</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Answer</p>
                       <div className="flex items-center gap-3">
-                        <span className="text-[11px] text-slate-400">{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
                         <button
                           type="button"
                           aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
@@ -1162,8 +1250,8 @@ export default function DocumentsPage() {
                       {selectedDocHistoryEntry.answer || "No answer recorded."}
                     </p>
                     {selectedDocHistoryEntry.references.length > 0 ? (
-                      <div className="mt-3 text-xs text-slate-400">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">References</p>
+                      <div className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">References</p>
                         <div className="mt-2 space-y-2">
                           {selectedDocHistoryEntry.references.map((reference) => {
                             const viewerHref = buildReferenceViewerHref(reference);
@@ -1172,7 +1260,7 @@ export default function DocumentsPage() {
                             const content = (
                               <>
                                 <p className="text-slate-900 dark:text-slate-50">{reference.document_title}</p>
-                                <p className="text-slate-400">{reference.snippet}</p>
+                                <p className="text-slate-400 dark:text-slate-500">{reference.snippet}</p>
                                 {reference.page != null ? (
                                   <p className="mt-1 text-[10px] text-sky-400">
                                     페이지 {reference.page}
@@ -1201,14 +1289,14 @@ export default function DocumentsPage() {
                                     console.error('Failed to open document:', error);
                                   }
                                 }}
-                                className="block rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
+                                className="block rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
                               >
                                 {content}
                               </button>
                             ) : (
                               <div
                                 key={`${reference.document_id}-${reference.chunk_id}`}
-                                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] opacity-60"
+                                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-3 py-2 text-[11px] opacity-60"
                               >
                                 {content}
                               </div>

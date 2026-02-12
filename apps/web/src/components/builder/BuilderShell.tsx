@@ -63,8 +63,12 @@ export default function BuilderShell({
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left Pane */}
         <div
-          className="flex-shrink-0 space-y-4 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-md dark:border-slate-800 dark:bg-slate-950/90 dark:shadow-xl dark:shadow-black/20"
-          style={{ width: `${leftWidth}px` }}
+          className="flex-shrink-0 space-y-4 overflow-hidden rounded-2xl border p-4 shadow-md"
+          style={{
+            width: `${leftWidth}px`,
+            backgroundColor: "var(--surface-elevated)",
+            borderColor: "var(--border)"
+          }}
         >
           {leftPane}
         </div>
@@ -75,20 +79,43 @@ export default function BuilderShell({
             event.preventDefault();
             setIsResizingLeft(true);
           }}
-          className={`group flex w-4 cursor-col-resize items-center justify-center transition-colors ${isResizingLeft ? "bg-sky-500/10" : "hover:bg-sky-500/5"
-            }`}
+          className="group flex w-4 cursor-col-resize items-center justify-center transition-colors"
+          style={{
+            backgroundColor: isResizingLeft ? "rgba(14, 165, 233, 0.1)" : "transparent"
+          }}
+          onMouseEnter={(e) => {
+            if (!isResizingLeft) e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.05)";
+          }}
+          onMouseLeave={(e) => {
+            if (!isResizingLeft) e.currentTarget.style.backgroundColor = "transparent";
+          }}
         >
-          <div className={`h-12 w-1 rounded-full bg-slate-300 transition-colors group-hover:bg-slate-400 dark:bg-slate-700 dark:group-hover:bg-slate-600 ${isResizingLeft ? "bg-sky-500/50" : ""
-            }`} />
+          <div
+            className="h-12 w-1 rounded-full transition-colors"
+            style={{
+              backgroundColor: isResizingLeft ? "var(--primary)" : "var(--border)"
+            }}
+          />
         </div>
 
         {/* Center Pane */}
         <div className="flex flex-1 flex-col gap-4 overflow-hidden">
-          <div className="flex-[3] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl dark:shadow-black/20 custom-scrollbar">
+          <div className="flex-[3] overflow-auto rounded-2xl border p-4 shadow-sm custom-scrollbar"
+            style={{
+              backgroundColor: "var(--surface-base)",
+              borderColor: "var(--border)"
+            }}
+          >
             {centerTop}
           </div>
           {centerBottom && (
-            <div className="flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl dark:shadow-black/20">
+            <div
+              className="flex-shrink-0 overflow-hidden rounded-2xl border p-4 shadow-sm"
+              style={{
+                backgroundColor: "var(--surface-base)",
+                borderColor: "var(--border)"
+              }}
+            >
               {centerBottom}
             </div>
           )}
@@ -100,17 +127,34 @@ export default function BuilderShell({
             event.preventDefault();
             setIsResizingRight(true);
           }}
-          className={`group flex w-4 cursor-col-resize items-center justify-center transition-colors ${isResizingRight ? "bg-sky-500/10" : "hover:bg-sky-500/5"
-            }`}
+          className="group flex w-4 cursor-col-resize items-center justify-center transition-colors"
+          style={{
+            backgroundColor: isResizingRight ? "rgba(14, 165, 233, 0.1)" : "transparent"
+          }}
+          onMouseEnter={(e) => {
+            if (!isResizingRight) e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.05)";
+          }}
+          onMouseLeave={(e) => {
+            if (!isResizingRight) e.currentTarget.style.backgroundColor = "transparent";
+          }}
         >
-          <div className={`h-12 w-1 rounded-full bg-slate-300 transition-colors group-hover:bg-slate-400 dark:bg-slate-700 dark:group-hover:bg-slate-600 ${isResizingRight ? "bg-sky-500/50" : ""
-            }`} />
+          <div
+            className="h-12 w-1 rounded-full transition-colors"
+            style={{
+              backgroundColor: isResizingRight ? "var(--primary)" : "var(--border)"
+            }}
+          />
         </div>
 
         {/* Right Pane */}
         <div
-          className="flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-4 text-sm text-slate-600 shadow-md dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-400 dark:shadow-xl dark:shadow-black/20"
-          style={{ width: `${rightWidth}px` }}
+          className="flex-shrink-0 overflow-hidden rounded-2xl border p-4 text-sm shadow-md"
+          style={{
+            width: `${rightWidth}px`,
+            backgroundColor: "var(--surface-elevated)",
+            borderColor: "var(--border)",
+            color: "var(--muted-foreground)"
+          }}
         >
           {rightPane}
         </div>

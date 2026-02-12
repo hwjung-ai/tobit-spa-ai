@@ -86,18 +86,18 @@ export default function PropertiesPanel() {
 
   if (!selectedComponent) {
     return (
-      <div className="flex flex-col h-full bg-slate-900/50">
-        <div className="border-b border-slate-800 p-3">
-          <h3 className="text-sm font-semibold text-slate-200">
+      <div className="flex flex-col h-full" style={{ backgroundColor: "rgba(15, 23, 42, 0.5)" }}>
+        <div className="border-b p-3" style={{ borderColor: "var(--border)" }}>
+          <h3 className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)" }}>
             Screen Properties
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
             Global settings
           </p>
         </div>
         <div className="p-3 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1">
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--foreground-secondary)" }}>
               Layout Mode
             </label>
             <Select
@@ -109,7 +109,7 @@ export default function PropertiesPanel() {
                 });
               }}
             >
-              <SelectTrigger className="h-8 text-xs bg-slate-800 border-slate-700">
+              <SelectTrigger className="h-8 text-xs" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -119,33 +119,35 @@ export default function PropertiesPanel() {
                 <SelectItem value="modal">Modal</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-[10px] text-slate-500 mt-1">
+            <p className="text-[10px] mt-1" style={{ color: "var(--muted-foreground)" }}>
               'Dashboard' allows drag-and-drop grid positioning.
             </p>
           </div>
 
           {(displayScreen?.layout?.type === "dashboard" || displayScreen?.layout?.type === "grid") && (
-            <div className="p-3 bg-sky-950/20 rounded border border-sky-900/50 space-y-2">
-              <p className="text-xs text-sky-300 font-medium">Dashboard Settings</p>
+            <div className="p-3 rounded border space-y-2" style={{ backgroundColor: "rgba(12, 74, 110, 0.2)", borderColor: "rgba(12, 74, 110, 0.5)" }}>
+              <p className="text-xs font-medium" style={{ color: "#bae6fd" }}>Dashboard Settings</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">Columns</label>
+                  <label className="block text-[10px] mb-1" style={{ color: "var(--muted-foreground)" }}>Columns</label>
                   <Input
                     disabled
                     value="12"
-                    className="h-7 text-xs bg-slate-900"
+                    className="h-7 text-xs"
+                    style={{ backgroundColor: "rgba(15, 23, 42, 1)" }}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">Row Height</label>
+                  <label className="block text-[10px] mb-1" style={{ color: "var(--muted-foreground)" }}>Row Height</label>
                   <Input
                     disabled
                     value="60px"
-                    className="h-7 text-xs bg-slate-900"
+                    className="h-7 text-xs"
+                    style={{ backgroundColor: "rgba(15, 23, 42, 1)" }}
                   />
                 </div>
               </div>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
                 Grid system is fixed to 12 columns. Drag components to arrange.
               </p>
             </div>
@@ -267,13 +269,13 @@ export default function PropertiesPanel() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50">
+    <div className="flex flex-col h-full" style={{ backgroundColor: "rgba(15, 23, 42, 0.5)" }}>
       {/* Header */}
-      <div className="border-b border-slate-800 p-3">
-        <h3 className="text-sm font-semibold text-slate-200 truncate">
+      <div className="border-b p-3" style={{ borderColor: "var(--border)" }}>
+        <h3 className="text-sm font-semibold truncate" style={{ color: "var(--foreground-secondary)" }}>
           Properties
         </h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
           {selectedComponent.type}
         </p>
       </div>
@@ -281,41 +283,45 @@ export default function PropertiesPanel() {
       {/* Dashboard Item Properties */}
       {showGridLayout && (
         <div className="px-3 pt-3 pb-0">
-          <div className="p-2 bg-sky-950/20 border border-sky-900/30 rounded mb-2">
-            <p className="text-[10px] uppercase font-bold text-sky-500 mb-2">Grid Position</p>
+          <div className="p-2 rounded border mb-2" style={{ backgroundColor: "rgba(12, 74, 110, 0.2)", borderColor: "rgba(12, 74, 110, 0.3)" }}>
+            <p className="text-[10px] uppercase font-bold mb-2" style={{ color: "rgba(14, 165, 233, 1)" }}>Grid Position</p>
             <div className="grid grid-cols-4 gap-1">
               <div>
-                <label className="block text-[9px] text-slate-400 text-center">X</label>
+                <label className="block text-[9px] text-center" style={{ color: "var(--muted-foreground)" }}>X</label>
                 <Input
                   type="number"
-                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  className="h-6 text-xs px-1 text-center"
+                  style={{ backgroundColor: "rgba(15, 23, 42, 1)", borderColor: "var(--border)" }}
                   value={layout.x}
                   onChange={(e) => handlePropChange("layout", { ...layout, x: Number(e.target.value) })}
                 />
               </div>
               <div>
-                <label className="block text-[9px] text-slate-400 text-center">Y</label>
+                <label className="block text-[9px] text-center" style={{ color: "var(--muted-foreground)" }}>Y</label>
                 <Input
                   type="number"
-                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  className="h-6 text-xs px-1 text-center"
+                  style={{ backgroundColor: "rgba(15, 23, 42, 1)", borderColor: "var(--border)" }}
                   value={layout.y}
                   onChange={(e) => handlePropChange("layout", { ...layout, y: Number(e.target.value) })}
                 />
               </div>
               <div>
-                <label className="block text-[9px] text-slate-400 text-center">W</label>
+                <label className="block text-[9px] text-center" style={{ color: "var(--muted-foreground)" }}>W</label>
                 <Input
                   type="number"
-                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  className="h-6 text-xs px-1 text-center"
+                  style={{ backgroundColor: "rgba(15, 23, 42, 1)", borderColor: "var(--border)" }}
                   value={layout.w}
                   onChange={(e) => handlePropChange("layout", { ...layout, w: Number(e.target.value) })}
                 />
               </div>
               <div>
-                <label className="block text-[9px] text-slate-400 text-center">H</label>
+                <label className="block text-[9px] text-center" style={{ color: "var(--muted-foreground)" }}>H</label>
                 <Input
                   type="number"
-                  className="h-6 text-xs px-1 text-center bg-slate-900 border-slate-700"
+                  className="h-6 text-xs px-1 text-center"
+                  style={{ backgroundColor: "rgba(15, 23, 42, 1)", borderColor: "var(--border)" }}
                   value={layout.h}
                   onChange={(e) => handlePropChange("layout", { ...layout, h: Number(e.target.value) })}
                 />
@@ -329,7 +335,7 @@ export default function PropertiesPanel() {
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {/* Component Label */}
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">
+          <label className="block text-xs font-medium mb-1" style={{ color: "var(--foreground-secondary)" }}>
             Label
           </label>
           <Input
