@@ -90,7 +90,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 text-xs text-slate-600 dark:bg-slate-900/60 dark:border-slate-800 dark:text-slate-400">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-400">
           <p className="font-semibold mb-2">Demo Credentials:</p>
           <p>Email: admin@tobit.local</p>
           <p>Password: admin123</p>
