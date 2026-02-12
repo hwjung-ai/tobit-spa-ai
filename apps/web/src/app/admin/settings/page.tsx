@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { OperationSetting, fetchApi } from "../../../lib/adminUtils";
 import SettingsTable from "../../../components/admin/SettingsTable";
 import SettingEditModal from "../../../components/admin/SettingEditModal";
@@ -133,96 +134,106 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Informational Banner */}
-            <div className="rounded-2xl border p-5 flex items-center gap-5 backdrop-blur-sm" style={{backgroundColor: "rgba(245, 158, 11, 0.1)", borderColor: "rgba(245, 158, 11, 0.3)"}}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg" style={{backgroundColor: "rgba(245, 158, 11, 0.2)", color: "var(--warning)"}}>
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+            <div className="alert-box alert-warning">
+                <div className="flex items-center gap-5">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg bg-amber-500/20 text-amber-400">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-sm font-bold tracking-tight mb-0.5 text-amber-300">Runtime Constraints Warning</p>
+                        <p className="text-xs leading-relaxed text-amber-200">
+                            Settings marked with 🔄 require a service restart. Changes to <span className="text-sky-400 ml-1">Published</span> values override
+                            <span className="text-amber-400 ml-1">Environment</span> and <span className="text-muted-standard ml-1">Default</span> configurations.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => refetch()}
+                        className="px-4 py-2 transition-colors text-label-sm flex items-center gap-2 text-muted-standard hover:text-primary"
+                    >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Sync
+                    </button>
                 </div>
-                <div className="flex-1">
-                    <p className="text-sm font-bold tracking-tight mb-0.5" style={{color: "var(--warning)"}}>Runtime Constraints Warning</p>
-                    <p className="text-xs leading-relaxed" style={{color: "rgb(71, 85, 105)"}}>
-                        Settings marked with 🔄 require a service restart. Changes to <span style={{color: "var(--primary)"}}>Published</span> values override
-                        <span style={{color: "var(--warning)"}} className="ml-1">Environment</span> and <span style={{color: "rgb(71, 85, 105)"}} className="ml-1">Default</span> configurations.
-                    </p>
-                </div>
-                <button
-                    onClick={() => refetch()}
-                    className="px-4 py-2 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2"
-                    style={{color: "rgb(71, 85, 105)"}}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted-foreground)"; }}
-                >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Sync
-                </button>
             </div>
 
-            <div className="rounded-2xl border p-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
+            <div className="insp-section">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="inline-flex rounded-xl border p-1" style={{borderColor: "var(--border-muted)", backgroundColor: "var(--muted-background)"}}>
+                    <div className="inline-flex rounded-xl border p-1 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
                         <button
                             onClick={() => setActiveTab("all")}
-                            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition"
-                            style={{backgroundColor: activeTab === "all" ? "var(--primary)" : "transparent", color: activeTab === "all" ? "var(--primary-foreground)" : "var(--foreground)", borderRadius: "8px"}}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                activeTab === "all"
+                                    ? "bg-sky-600 text-white"
+                                    : "bg-transparent text-primary hover:bg-slate-200 dark:hover:bg-slate-800"
+                            )}
                         >
                             All Settings
                         </button>
                         <button
                             onClick={() => setActiveTab("llm")}
-                            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition"
-                            style={{backgroundColor: activeTab === "llm" ? "var(--primary)" : "transparent", color: activeTab === "llm" ? "var(--primary-foreground)" : "var(--foreground)", borderRadius: "8px"}}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                activeTab === "llm"
+                                    ? "bg-sky-600 text-white"
+                                    : "bg-transparent text-primary hover:bg-slate-200 dark:hover:bg-slate-800"
+                            )}
                         >
                             LLM
                         </button>
                         <button
                             onClick={() => setActiveTab("auth")}
-                            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition"
-                            style={{backgroundColor: activeTab === "auth" ? "var(--primary)" : "transparent", color: activeTab === "auth" ? "var(--primary-foreground)" : "var(--foreground)", borderRadius: "8px"}}
+                            className={cn(
+                                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                activeTab === "auth"
+                                    ? "bg-sky-600 text-white"
+                                    : "bg-transparent text-primary hover:bg-slate-200 dark:hover:bg-slate-800"
+                            )}
                         >
                             Auth
                         </button>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs" style={{color: "rgb(15, 23, 42)"}}>
-                        <span className="rounded-full border px-3 py-1" style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(2, 6, 23, 0.6)", color: "rgb(71, 85, 105)"}}>
-                            Provider: <span className="font-semibold" style={{color: "rgb(15, 23, 42)"}}>{llmProvider}</span>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-primary">
+                        <span className="badge-primary">
+                            Provider: <span className="font-semibold text-primary">{llmProvider}</span>
                         </span>
-                        <span className="rounded-full border px-3 py-1" style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(2, 6, 23, 0.6)", color: "rgb(71, 85, 105)"}}>
-                            Model: <span className="font-semibold" style={{color: "rgb(15, 23, 42)"}}>{llmModel}</span>
+                        <span className="badge-primary">
+                            Model: <span className="font-semibold text-primary">{llmModel}</span>
                         </span>
-                        <span className="rounded-full border px-3 py-1" style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(2, 6, 23, 0.6)", color: "rgb(71, 85, 105)"}}>
-                            Fallback: <span className="font-semibold" style={{color: "rgb(15, 23, 42)"}}>{llmFallbackEnabled ? "ON" : "OFF"}</span>
+                        <span className="badge-primary">
+                            Fallback: <span className="font-semibold text-primary">{llmFallbackEnabled ? "ON" : "OFF"}</span>
                         </span>
                     </div>
                 </div>
                 {activeTab === "llm" ? (
-                    <p className="mt-3 text-xs" style={{color: "rgb(71, 85, 105)"}}>
+                    <p className="mt-3 text-xs text-muted-standard">
                         LLM 운영 설정은 여기서 관리합니다. Provider, Base URL, Default/Fallback model, Timeout, Retry 정책을 수정할 수 있습니다.
                     </p>
                 ) : null}
                 {activeTab === "auth" ? (
-                    <p className="mt-3 text-xs" style={{color: "rgb(71, 85, 105)"}}>
+                    <p className="mt-3 text-xs text-muted-standard">
                         Runtime API 인증정책을 설정합니다. `jwt_only`, `jwt_or_api_key`, `api_key_only` 모드를 선택하고 필요한 scope를 관리할 수 있습니다.
                     </p>
                 ) : null}
             </div>
 
             {/* Settings Grid Board */}
-            <div className="rounded-2xl border overflow-hidden shadow-2xl" style={{backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "rgb(203, 213, 225)"}}>
+            <div className="insp-section overflow-hidden shadow-2xl">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-32 gap-4">
-                        <div className="w-10 h-10 border-2 rounded-full animate-spin" style={{borderColor: "rgba(var(--primary-rgb), 0.2)", borderTopColor: "var(--primary)"}}></div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{color: "rgb(71, 85, 105)"}}>Synchronizing Master Config...</p>
+                        <div className="w-10 h-10 border-2 rounded-full animate-spin border-sky-500/20 border-t-sky-500"></div>
+                        <p className="text-label-sm text-muted-standard">Synchronizing Master Config...</p>
                     </div>
                 ) : error ? (
                     <div className="text-center py-24">
-                        <p className="font-medium mb-4 text-sm" style={{color: "var(--error)"}}>{(error as Error)?.message || "Unable to load settings"}</p>
+                        <p className="font-medium mb-4 text-sm text-rose-600 dark:text-rose-400">{(error as Error)?.message || "Unable to load settings"}</p>
                         <button
                             onClick={() => refetch()}
-                            className="px-8 py-2.5 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest"
-                            style={{backgroundColor: "rgb(241, 245, 249)"}}
+                            className="px-8 py-2.5 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
                         >
                             Retry Connection
                         </button>
@@ -230,9 +241,9 @@ export default function SettingsPage() {
                 ) : (
                     <div>
                         <SettingsTable settings={visibleSettings} onEdit={setSelectedSetting} />
-                        <div className="p-4 flex justify-between items-center text-[10px]" style={{backgroundColor: "rgba(2, 6, 23, 0.2)", borderTop: "1px solid var(--border)"}}>
-                            <span className="font-medium italic opacity-50 uppercase tracking-widest" style={{color: "rgb(71, 85, 105)"}}>OperationSettingsProvider v1.0</span>
-                            <span className="font-bold px-3 py-1 rounded-full border" style={{color: "rgb(71, 85, 105)", backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "rgba(51, 65, 85, 0.3)"}}>
+                        <div className="p-4 flex justify-between items-center text-label-sm bg-slate-950/20 border-t border-border">
+                            <span className="font-medium italic opacity-50 uppercase tracking-widest text-muted-standard">OperationSettingsProvider v1.0</span>
+                            <span className="font-bold px-3 py-1 rounded-full border text-muted-standard bg-slate-950/40 border-slate-700/30">
                                 {visibleSettings.length} ACTIVE PARAMETERS
                             </span>
                         </div>
@@ -241,25 +252,22 @@ export default function SettingsPage() {
             </div>
 
             {activeTab === "auth" ? (
-                <div className="rounded-2xl border overflow-hidden shadow-2xl" style={{backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "rgb(203, 213, 225)"}}>
-                    <div className="px-4 py-3 flex items-center justify-between" style={{borderBottom: "1px solid var(--border)"}}>
-                        <h3 className="text-xs uppercase tracking-[0.2em] font-semibold" style={{color: "rgb(15, 23, 42)"}}>Runtime API Auth Policy</h3>
+                <div className="insp-section overflow-hidden shadow-2xl">
+                    <div className="px-4 py-3 flex items-center justify-between border-b border-border">
+                        <h3 className="text-label text-primary">Runtime API Auth Policy</h3>
                         <button
                             onClick={() => refetchPolicies()}
-                            className="px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] rounded-lg border transition"
-                            style={{borderColor: "var(--border-muted)", color: "rgb(15, 23, 42)"}}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary-foreground)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--foreground)"; }}
+                            className="px-3 py-1.5 text-label-sm rounded-lg border transition border-border-muted text-primary hover:text-primary-foreground"
                         >
                             Refresh
                         </button>
                     </div>
                     {isPolicyLoading ? (
-                        <div className="py-10 text-center text-sm" style={{color: "rgb(71, 85, 105)"}}>Loading API policies...</div>
+                        <div className="py-10 text-center text-sm text-muted-standard">Loading API policies...</div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead style={{backgroundColor: "rgba(2, 6, 23, 0.4)", color: "rgb(71, 85, 105)"}}>
+                            <table className="w-full text-sm bg-slate-950/40 text-muted-standard">
+                                <thead>
                                     <tr>
                                         <th className="text-left px-4 py-2">API</th>
                                         <th className="text-left px-4 py-2">Mode</th>
@@ -273,10 +281,10 @@ export default function SettingsPage() {
                                         const mode = draft?.auth_mode ?? api.auth_mode;
                                         const scopesText = draft?.required_scopes ?? api.required_scopes.join(", ");
                                         return (
-                                            <tr key={api.id} style={{borderTop: "1px solid rgba(30, 41, 59, 0.7)"}}>
-                                                <td className="px-4 py-3" style={{color: "rgb(15, 23, 42)"}}>
+                                            <tr key={api.id} className="border-t border-slate-700">
+                                                <td className="px-4 py-3 text-primary">
                                                     <div className="font-medium">{api.name}</div>
-                                                    <div className="text-xs" style={{color: "rgb(71, 85, 105)"}}>{api.method} {api.path}</div>
+                                                    <div className="text-xs text-muted-standard">{api.method} {api.path}</div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <select
@@ -284,8 +292,7 @@ export default function SettingsPage() {
                                                         onChange={(e) =>
                                                             handlePolicyFieldChange(api.id, "auth_mode", e.target.value)
                                                         }
-                                                        className="w-full rounded-md border px-2 py-1.5"
-                                                        style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(2, 6, 23, 0.5)", color: "rgb(15, 23, 42)"}}
+                                                        className="input-container"
                                                     >
                                                         <option value="jwt_only">jwt_only</option>
                                                         <option value="jwt_or_api_key">jwt_or_api_key</option>
@@ -299,8 +306,7 @@ export default function SettingsPage() {
                                                             handlePolicyFieldChange(api.id, "required_scopes", e.target.value)
                                                         }
                                                         placeholder="api:execute, api:read"
-                                                        className="w-full rounded-md border px-2 py-1.5"
-                                                        style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(2, 6, 23, 0.5)", color: "rgb(15, 23, 42)"}}
+                                                        className="input-container"
                                                     />
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
@@ -309,8 +315,7 @@ export default function SettingsPage() {
                                                             handleSavePolicy(api.id, api.auth_mode, api.required_scopes)
                                                         }
                                                         disabled={savingPolicyId === api.id}
-                                                        className="px-3 py-1.5 text-xs rounded-md disabled:opacity-50"
-                                                        style={{backgroundColor: "var(--primary)", color: "var(--primary-foreground)"}}
+                                                        className="px-3 py-1.5 text-xs rounded-md disabled:opacity-50 bg-sky-600 text-white"
                                                     >
                                                         {savingPolicyId === api.id ? "Saving..." : "Save"}
                                                     </button>

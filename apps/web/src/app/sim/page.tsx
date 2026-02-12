@@ -593,7 +593,7 @@ export default function SimPage() {
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
           {/* Left Panel - Scenario Builder */}
           <aside
-            className="space-y-4 rounded-2xl border p-5 min-h-[320px] border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            className="space-y-4 container-section min-h-[320px]"
           >
             <h2
               className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
@@ -607,7 +607,7 @@ export default function SimPage() {
               질문
               <textarea
                 data-testid="simulation-question-input"
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
+                className="mt-2 w-full br-section px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
                 rows={4}
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
@@ -633,7 +633,7 @@ export default function SimPage() {
                     type="button"
                     data-testid="simulation-template-select"
                     onClick={() => applyTemplate(template)}
-                    className="rounded-2xl border px-3 py-2 text-left transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
+                    className="br-card border px-3 py-2 text-left transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
                   >
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                       {template.name}
@@ -646,7 +646,7 @@ export default function SimPage() {
               </div>
               {selectedTemplate ? (
                 <div
-                  className="mt-3 rounded-2xl border px-3 py-2 border-emerald-500 bg-emerald-500/15"
+                  className="mt-3 br-card border px-3 py-2 border-emerald-500 bg-emerald-500/15"
                 >
                   <p
                     className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
@@ -843,9 +843,7 @@ export default function SimPage() {
           {/* Main Content */}
           <main className="space-y-4">
             {/* KPI Summary Section */}
-            <section
-              className="rounded-2xl border p-5 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-            >
+            <section className="container-section">
               <h2
                 data-testid="simulation-kpi-summary"
                 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
@@ -880,7 +878,7 @@ export default function SimPage() {
                       return (
                         <div
                           key={kpi.kpi}
-                          className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                          className="br-card border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                         >
                           <p
                             className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
@@ -908,9 +906,7 @@ export default function SimPage() {
             </section>
 
             {/* Comparison Charts Section */}
-            <section
-              className="rounded-2xl border p-5 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-            >
+            <section className="container-section">
               <h2
                 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
@@ -923,7 +919,7 @@ export default function SimPage() {
               ) : (
                 <div className="mt-4 grid gap-4">
                   <div
-                    className="h-64 rounded-2xl border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="h-64 br-card border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
@@ -959,7 +955,7 @@ export default function SimPage() {
                   </div>
 
                   <div
-                    className="h-64 rounded-2xl border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="h-64 br-card border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart

@@ -16,6 +16,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface AssetTableProps {
   assets: Asset[];
+  loading?: boolean;
   statusFilter?: "all" | "draft" | "published";
   onStatusFilterChange?: (status: "all" | "draft" | "published") => void;
 }
@@ -36,6 +37,7 @@ const filterBtnClass = (active: boolean) =>
 
 export default function AssetTable({
   assets,
+  loading = false,
   statusFilter = "all",
   onStatusFilterChange,
 }: AssetTableProps) {
@@ -164,19 +166,36 @@ export default function AssetTable({
     [buildDetailUrl],
   );
 
+  if (loading) {
+    return (
+      <div className="insp-section overflow-hidden flex h-full w-full flex-col shadow-sm">
+        <div className="flex items-center justify-between border-b border-border px-4 py-2">
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+            <span className="text-label-sm">
+              Assets Registry
+            </span>
+          </div>
+        </div>
+
+        <div className="relative h-[600px] w-full overflow-hidden bg-surface-base">
+          <div className="absolute inset-0 flex items-center justify-center gap-3">
+            <div className="h-8 w-8 rounded-full border-2 border-sky-500/20 border-t-sky-500 animate-spin" />
+            <span className="text-label-sm text-muted-standard">
+              Loading Registry...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (assets.length === 0) {
     return (
-      <div
-        className="rounded-2xl border py-20 text-center shadow-sm"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-      >
-        <div
-          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
-        >
+      <div className="insp-section py-20 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-surface-elevated">
           <svg
-            className="h-6 w-6"
-            style={{ color: "var(--muted-foreground)" }}
+            className="h-6 w-6 text-muted-standard"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -189,7 +208,7 @@ export default function AssetTable({
             />
           </svg>
         </div>
-        <p className="text-sm font-medium italic" style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-sm font-medium italic text-muted-standard">
           No assets found
         </p>
       </div>
@@ -197,30 +216,14 @@ export default function AssetTable({
   }
 
   return (
-    <div
-      className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-sm"
-      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-    >
-      <div
-        className="flex items-center justify-between border-b px-4 py-2"
-        style={{ borderColor: "var(--border)" }}
-      >
+    <div className="insp-section overflow-hidden flex h-full w-full flex-col shadow-sm">
+      <div className="flex items-center justify-between border-b border-border px-4 py-2">
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-          <span
-            className="text-[10px] font-bold uppercase tracking-[0.2em]"
-            style={{ color: "var(--muted-foreground)" }}
-          >
+          <span className="text-label-sm">
             Assets Registry
           </span>
-          <span
-            className="rounded-full border px-2 py-0.5 text-[10px] font-mono font-bold"
-            style={{
-              borderColor: "var(--border)",
-              backgroundColor: "var(--surface-elevated)",
-              color: "var(--primary)",
-            }}
-          >
+          <span className="badge-primary font-mono text-primary">
             count: {assets.length}
           </span>
           {onStatusFilterChange && (
@@ -246,15 +249,12 @@ export default function AssetTable({
             </div>
           )}
         </div>
-        <div
-          className="text-[10px] font-medium italic"
-          style={{ color: "var(--muted-foreground)" }}
-        >
+        <div className="text-label-sm font-medium italic text-muted-standard">
           Drag columns to reorder • Click headers to sort
         </div>
       </div>
 
-      <div className="ag-theme-cep w-full overflow-hidden" style={{ height: "600px" }}>
+      <div className="ag-theme-cep ag-theme-cep-static w-full overflow-hidden" style={{ height: "600px" }}>
         <AgGridReact
           theme="legacy"
           rowData={assets}
@@ -267,7 +267,6 @@ export default function AssetTable({
             unSortIcon: true,
           }}
           rowSelection="single"
-          animateRows
           headerHeight={44}
           rowHeight={48}
         />

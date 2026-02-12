@@ -5,7 +5,6 @@ import {
   ThemePreset,
   DesignTokenSet,
   THEME_PRESETS,
-  tokensToCSSVariables,
   mergeTokens,
 } from "@/lib/ui-screen/design-tokens";
 
@@ -37,40 +36,29 @@ function getInitialTheme(): ThemePreset {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [currentTheme, setCurrentTheme] = useState<ThemePreset>("dark"); // SSR-safe default
-  const [tokens, setTokens] = useState<DesignTokenSet>(THEME_PRESETS.dark); // SSR-safe default
-  const [mounted, setMounted] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<ThemePreset>("dark");
+  const [tokens, setTokens] = useState<DesignTokenSet>(THEME_PRESETS.dark);
 
-  // Mount effect: read localStorage and apply saved theme
-  useEffect(() => {
-    setMounted(true);
-    const savedTheme = getInitialTheme();
-    // Log for debugging
-    console.log('[ThemeContext] Initial theme:', savedTheme, 'localStorage:', localStorage.getItem(STORAGE_KEY));
-    setCurrentTheme(savedTheme);
-    setTokens(THEME_PRESETS[savedTheme]);
-  }, []);
-
-  // Apply CSS variables whenever tokens change
-  useEffect(() => {
-    if (!mounted) return; // Skip on first render (before mount)
-    const vars = tokensToCSSVariables(tokens);
+  const applyTheme = useCallback((theme: ThemePreset) => {
     const root = document.documentElement;
-    console.log('[ThemeContext] Applying theme:', currentTheme, 'surface-overlay:', vars['--surface-overlay']);
-    for (const [key, value] of Object.entries(vars)) {
-      root.style.setProperty(key, value);
-    }
-    root.setAttribute("data-theme", currentTheme);
-
-    // Apply "dark" class for Tailwind dark: classes
-    if (currentTheme === "dark") {
+    root.setAttribute("data-theme", theme);
+    if (theme === "dark") {
       root.classList.add("dark");
-      console.log('[ThemeContext] Added dark class');
     } else {
       root.classList.remove("dark");
-      console.log('[ThemeContext] Removed dark class');
     }
-  }, [tokens, currentTheme, mounted]);
+  }, []);
+
+  useEffect(() => {
+    const savedTheme = getInitialTheme();
+    setCurrentTheme(savedTheme);
+    setTokens(THEME_PRESETS[savedTheme]);
+    applyTheme(savedTheme);
+  }, [applyTheme]);
+
+  useEffect(() => {
+    applyTheme(currentTheme);
+  }, [applyTheme, currentTheme]);
 
   const setTheme = useCallback((preset: ThemePreset) => {
     setCurrentTheme(preset);
@@ -79,7 +67,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const customizeTokens = useCallback((overrides: Partial<DesignTokenSet>) => {
-    setTokens(prev => mergeTokens(prev, overrides));
+    setTokens((prev) => mergeTokens(prev, overrides));
   }, []);
 
   return (

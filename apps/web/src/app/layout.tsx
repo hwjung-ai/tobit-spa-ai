@@ -39,8 +39,11 @@ export default function RootLayout({
                 try {
                   const stored = localStorage.getItem('tobit-theme-preset');
                   const theme = stored && ['light', 'dark', 'brand'].includes(stored) ? stored : 'dark';
+                  document.documentElement.setAttribute('data-theme', theme);
                   if (theme === 'dark') {
                     document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
                   }
                 } catch (e) {
                   console.error('[ThemeInit] Error:', e);

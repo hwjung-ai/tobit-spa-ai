@@ -69,10 +69,10 @@ export default function AssetsPageContent() {
     return (
         <div className="space-y-6">
             {/* Control Bar */}
-            <div className="flex justify-between items-center  rounded-2xl border  p-4 backdrop-blur-sm" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
+            <div className="flex justify-between items-center rounded-2xl border p-4 backdrop-blur-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
                 <div className="flex gap-6">
                     <div className="min-w-[160px]">
-                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1.5 ml-1" style={{color: "rgb(71, 85, 105)"}}>Asset Type</label>
+                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1.5 ml-1" style={{ color: "var(--muted-foreground)" }}>Asset Type</label>
                         <select
                             value={typeFilter}
                             onChange={(e) => {
@@ -83,7 +83,8 @@ export default function AssetsPageContent() {
                                     handleTypeFilterChange(value as AssetType);
                                 }
                             }}
-                            className="w-full px-3 py-2  border  rounded-lg  text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
+                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
+                            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
                         >
                             <option value="all">All Categories</option>
                             <option value="prompt">Prompts</option>
@@ -96,7 +97,7 @@ export default function AssetsPageContent() {
                     </div>
 
                     <div className="min-w-[160px]">
-                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1.5 ml-1" style={{color: "rgb(71, 85, 105)"}}>Lifecycle</label>
+                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1.5 ml-1" style={{ color: "var(--muted-foreground)" }}>Lifecycle</label>
                         <select
                             value={statusFilter}
                             onChange={(e) => {
@@ -105,7 +106,8 @@ export default function AssetsPageContent() {
                                     handleStatusFilterChange(value as AssetStatus);
                                 }
                             }}
-                            className="w-full px-3 py-2  border  rounded-lg  text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
+                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
+                            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
                         >
                             <option value="all">Any Status</option>
                             <option value="draft">Draft Only</option>
@@ -117,11 +119,12 @@ export default function AssetsPageContent() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => refetch()}
-                        className=" hover: transition-colors text-[10px] font-bold uppercase tracking-widest px-2" style={{color: "rgb(71, 85, 105)"}}
+                        className="hover: transition-colors text-[10px] font-bold uppercase tracking-widest px-2"
+                        style={{ color: "var(--muted-foreground)" }}
                     >
                         Refresh
                     </button>
-                    <div className="w-px h-6 " style={{backgroundColor: "rgb(241, 245, 249)"}} />
+                    <div className="w-px h-6" style={{ backgroundColor: "var(--border)" }} />
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-sky-900/20 active:scale-95"
@@ -132,13 +135,8 @@ export default function AssetsPageContent() {
             </div>
 
             {/* Content Area */}
-            <div className=" rounded-2xl border  overflow-hidden shadow-2xl" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-                {!isInitialized || isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-24 gap-4">
-                        <div className="w-10 h-10 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
-                        <p className=" text-xs font-bold uppercase tracking-widest" style={{color: "rgb(71, 85, 105)"}}>Loading Registry...</p>
-                    </div>
-                ) : error ? (
+            <div className=" rounded-2xl border  overflow-hidden shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
+                {error ? (
                     <div className="text-center py-20">
                         <p className="text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load assets"}</p>
                         <button
@@ -148,19 +146,11 @@ export default function AssetsPageContent() {
                             Try Again
                         </button>
                     </div>
-                ) : assets.length === 0 ? (
-                    <div className="text-center py-20">
-                        <div className="w-12 h-12  rounded-full flex items-center justify-center mx-auto mb-4 border /50" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-                            <svg className="w-6 h-6 " style={{color: "rgb(71, 85, 105)"}} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
-                        </div>
-                        <p className=" text-sm font-medium italic" style={{color: "rgb(71, 85, 105)"}}>No assets found matching the selected criteria.</p>
-                    </div>
                 ) : (
-                    <div className="animate-in fade-in duration-500">
+                    <div>
                         <AssetTable
                             assets={assets}
+                            loading={!isInitialized || isLoading}
                             statusFilter={statusFilter}
                             onStatusFilterChange={handleStatusFilterChange}
                         />

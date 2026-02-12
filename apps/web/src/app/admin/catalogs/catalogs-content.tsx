@@ -91,30 +91,30 @@ export default function CatalogsContent() {
   return (
     <div className="space-y-4">
       {/* Info Banner */}
-      <div className=" border  rounded-lg p-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-        <h3 className="font-semibold  mb-2" style={{color: "rgb(71, 85, 105)"}}>📊 Database Catalogs</h3>
-        <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>
+      <div className="border border-slate-200 rounded-lg bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+        <h3 className="mb-2 font-semibold text-slate-600 dark:text-slate-400">📊 Database Catalogs</h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Database schema 정보를 자동으로 스캔하고 저장합니다.
           Tool이 SQL 쿼리를 생성할 때 schema 정보를 참고하여 정확한 테이블/컬럼명을 사용합니다.
           {demoMode && " (데모 데이터 표시 중)"}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       {/* Left Side: Catalog List */}
       <div className="lg:col-span-1">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold " style={{color: "rgb(71, 85, 105)"}}>Catalogs</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-600 dark:text-slate-400">Catalogs</h2>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-3 py-2 bg-sky-600 hover:bg-sky-500 text-white text-sm rounded-lg transition-colors font-medium"
+            className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-500"
           >
             + New Catalog
           </button>
         </div>
 
         {isLoading ? (
-          <div className="text-center py-4 " style={{color: "rgb(71, 85, 105)"}}>Loading...</div>
+          <div className="py-4 text-center text-slate-600 dark:text-slate-400">Loading...</div>
         ) : (
           <CatalogTable
             catalogs={displayCatalogs}
@@ -126,32 +126,32 @@ export default function CatalogsContent() {
       </div>
 
       {/* Right Side: Schema Details */}
-      <div className="lg:col-span-2 space-y-4">
+      <div className="space-y-4 lg:col-span-2">
         {selectedCatalog ? (
           <>
             {/* Catalog Info */}
-            <div className=" border  rounded-lg p-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-              <h3 className="font-semibold text-lg mb-3 " style={{color: "rgb(71, 85, 105)"}}>{selectedCatalog.name}</h3>
+            <div className="border border-slate-200 rounded-lg bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <h3 className="mb-3 text-lg font-semibold text-slate-600 dark:text-slate-400">{selectedCatalog.name}</h3>
               {selectedCatalog.description && (
-                <p className="text-sm  mb-2" style={{color: "rgb(71, 85, 105)"}}>{selectedCatalog.description}</p>
+                <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">{selectedCatalog.description}</p>
               )}
-              <div className="text-sm  space-y-1" style={{color: "rgb(71, 85, 105)"}}>
+              <div className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
                 <div>
-                  <span className="font-medium " style={{color: "rgb(71, 85, 105)"}}>ID:</span> <span className=" font-mono" style={{color: "rgb(71, 85, 105)"}}>{selectedCatalog.asset_id}</span>
+                  <span className="font-medium text-slate-600 dark:text-slate-400">ID:</span> <span className="font-mono text-slate-600 dark:text-slate-400">{selectedCatalog.asset_id}</span>
                 </div>
                 <div>
-                  <span className="font-medium " style={{color: "rgb(71, 85, 105)"}}>Status:</span>{" "}
-                  <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                  <span className="font-medium text-slate-600 dark:text-slate-400">Status:</span>{" "}
+                  <span className={`inline-block rounded border px-2 py-1 text-xs font-medium ${
                     selectedCatalog.status === "published"
-                      ? "bg-green-900/50 text-green-300 border border-green-800"
-                      : "bg-slate-100/50 text-slate-500 border border-slate-300"
+                      ? "border-green-800 bg-green-900/50 text-green-300"
+                      : "border-slate-300 bg-slate-100/50 text-slate-500"
                   }`}>
                     {selectedCatalog.status}
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium " style={{color: "rgb(71, 85, 105)"}}>Source:</span>{" "}
-                  <span className="" style={{color: "rgb(71, 85, 105)"}}>{selectedCatalog.content?.source_ref || "Not configured"}</span>
+                  <span className="font-medium text-slate-600 dark:text-slate-400">Source:</span>{" "}
+                  <span className="text-slate-600 dark:text-slate-400">{selectedCatalog.content?.source_ref || "Not configured"}</span>
                 </div>
               </div>
             </div>
@@ -163,8 +163,8 @@ export default function CatalogsContent() {
             <CatalogViewerPanel schema={selectedCatalog} onRefresh={() => { void refetch(); }} />
           </>
         ) : (
-          <div className=" border  rounded-lg p-8 text-center" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-            <p className="" style={{color: "rgb(71, 85, 105)"}}>Select a catalog to view details</p>
+          <div className="border border-slate-200 rounded-lg bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-900">
+            <p className="text-slate-600 dark:text-slate-400">Select a catalog to view details</p>
           </div>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 export default function AdminLayout({
     children,
@@ -24,44 +25,34 @@ export default function AdminLayout({
     ];
 
     return (
-        <div className="py-6 tracking-tight builder-shell builder-text" style={{color: "rgb(15, 23, 42)"}}>
+        <div className="py-6 tracking-tight builder-shell builder-text text-primary">
             {/* Header & Section Title */}
             <div className="flex items-center justify-between mb-2">
-                <h1 className="text-2xl font-semibold" style={{color: "rgb(15, 23, 42)"}}>Admin Dashboard</h1>
-                <div className="text-[10px] uppercase tracking-wider" style={{color: "rgb(71, 85, 105)"}}>
+                <h1 className="text-2xl font-semibold text-primary">Admin Dashboard</h1>
+                <div className="text-label-sm">
                     System Management
                 </div>
             </div>
-            <p className="mb-6 text-sm" style={{color: "rgb(71, 85, 105)"}}>
+            <p className="mb-6 text-sm text-muted-standard">
                 Configure operational parameters, manage core assets, and audit system activities.
             </p>
 
             {/* Sub Navigation (Capsule Style like Data page) */}
             <div className="mb-6 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-wider" style={{color: "rgb(71, 85, 105)"}}>Module:</span>
+                    <span className="text-label-sm">Module:</span>
                     {tabs.map((tab) => {
                         const isActive = pathname.startsWith(tab.href);
                         return (
                             <Link
                                 key={tab.label}
                                 href={tab.href}
-                                className="rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition"
-                                style={{borderColor: isActive ? "var(--primary)" : "transparent", color: isActive ? "var(--foreground)" : "var(--muted-foreground)", backgroundColor: isActive ? "var(--primary)" : "transparent"}}
-                                onMouseEnter={(e) => {
-                                    if (!isActive) {
-                                        e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
-                                        e.currentTarget.style.color = "var(--foreground)";
-                                        e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.1)";
-                                    }
-                                }}
-                                onMouseLeave={(e) => {
-                                    if (!isActive) {
-                                        e.currentTarget.style.borderColor = "transparent";
-                                        e.currentTarget.style.color = "var(--muted-foreground)";
-                                        e.currentTarget.style.backgroundColor = "transparent";
-                                    }
-                                }}
+                                className={cn(
+                                    "rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition",
+                                    isActive
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "border-transparent text-muted-standard hover:border-sky-500 hover:text-primary hover:bg-sky-500/10"
+                                )}
                             >
                                 {tab.label}
                             </Link>

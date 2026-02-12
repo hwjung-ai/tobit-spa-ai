@@ -2,7 +2,7 @@
 
 > Project: tobit-spa-ai
 > Framework: Next.js 16 + React 19 + Tailwind CSS 4 + Radix UI
-> Last Updated: 2026-02-12 (Phase 2: Primary Colors & Letter Spacing Standardized)
+> Last Updated: 2026-02-12 (Phase 1-6: Complete UI Consistency Standardization)
 
 ---
 
@@ -24,9 +24,35 @@
 
 ---
 
-## ✅ Consistency Fixes Applied (Phase 1-2)
+## ✅ Consistency Fixes Applied (Phase 1-4)
 
 ### Files Modified (2026-02-12)
+
+**Phase 3-4 (Border Radius & Background Colors):**
+- ✅ `/apps/web/src/app/globals.css` - Added border-radius & background standard classes
+  - `.br-badge`, `.br-btn`, `.br-card`, `.br-section`, `.br-panel`
+  - `.bg-surface-base`, `.bg-surface-overlay`, `.bg-surface-elevated`
+  - `.container-card`, `.container-section`, `.container-panel`
+  - `.input-container`, `.code-block`, `.code-block-lg`
+
+**Phase 5 (Apply Consistency Classes):**
+- ✅ `/apps/web/src/app/sim/page.tsx` - Applied `.container-section`, `.br-card`
+- ✅ `/apps/web/src/app/ops/page.tsx` - Applied `.container-section`, `.br-card`
+- ✅ `/apps/web/src/app/page.tsx` - Applied `.container-section`
+- ✅ `/apps/web/src/app/documents/page.tsx` - Applied `.container-section`
+- ✅ `/apps/web/src/app/login/page.tsx` - Applied `.container-panel`
+- ✅ `/apps/web/src/app/cep-events/page.tsx` - Applied `.br-section`
+- ✅ `/apps/web/src/app/cep-builder/page.tsx` - Applied `.br-card`
+
+**Phase 6 (Inspector Page Hierarchy):**
+- ✅ `/apps/web/src/app/admin/inspector/page.tsx` - Applied inspector-specific classes
+  - `.insp-h1`, `.insp-h2`, `.insp-h3` - Heading hierarchy
+  - `.insp-body`, `.insp-body-secondary` - Body text hierarchy
+  - `.insp-label`, `.insp-label-small` - Label styles
+  - `.insp-section` - Section containers
+  - `.insp-input` - Input fields
+  - `.insp-button` - Primary buttons
+  - `.insp-mono` - Monospace text
 
 **Phase 1-2 (Primary Colors & Letter Spacing):**
 - ✅ `/apps/web/src/app/globals.css` - Added consistency utility classes (btn-primary, text-label, etc.)
@@ -36,12 +62,13 @@
 - ✅ `/apps/web/src/app/cep-events/page.tsx` - Letter spacing standardized
 - ✅ `/apps/web/src/app/api-manager/page.tsx` - Letter spacing standardized
 - ✅ `/apps/web/src/app/admin/settings/page.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/app/layout.tsx` - Header background + letter spacing
 - ✅ `/apps/web/src/components/admin/CreateAssetModal.tsx` - Primary color dark mode added
 - ✅ `/apps/web/src/components/admin/CreateToolModal.tsx` - Primary color dark mode added
 - ✅ `/apps/web/src/components/admin/SourceAssetForm.tsx` - Primary color dark mode added
 - ✅ `/apps/web/src/components/admin/AssetForm.tsx` - Primary color dark mode added
 - ✅ `/apps/web/src/components/admin/CreateCatalogModal.tsx` - Primary color dark mode added
-- ✅ `/apps/web/src/components/admin/screen-editor/ScreenEditor.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/app/admin/inspector/page.tsx` - Inspector page hierarchy + consistency fixed
 - ✅ `/apps/web/src/components/admin/screen-editor/ScreenEditorTabs.tsx` - Letter spacing standardized
 - ✅ `/apps/web/src/components/api-manager/WorkflowBuilder.tsx` - Primary colors standardized
 - ✅ `/apps/web/src/components/api-manager/PythonBuilder.tsx` - Primary colors standardized
@@ -57,6 +84,29 @@
 - ✅ CEP Form Builder (11개 파일) - inline styles 제거
 
 ### Key Changes
+
+**Phase 3-4 (Border Radius & Background Colors):**
+1. **Border Radius Standardization**
+   - `.br-badge` - `rounded-full` (badges, pills)
+   - `.br-btn` - `rounded-lg` (buttons)
+   - `.br-card` - `rounded-xl` (cards)
+   - `.br-section` - `rounded-2xl` (sections)
+   - `.br-panel` - `rounded-3xl` (large panels)
+
+2. **Background Color Standardization**
+   - `.bg-surface-base` - Primary surface (white/slate-950)
+   - `.bg-surface-overlay` - Overlay surface (slate-50/slate-950/50)
+   - `.bg-surface-elevated` - Elevated surface (slate-100/slate-900/40)
+
+3. **Container Classes** (Combined border-radius + background)
+   - `.container-card` - Card container (`.br-card` + surface styles)
+   - `.container-section` - Section container (`.br-section` + surface styles)
+   - `.container-panel` - Panel container (`.br-panel` + surface styles)
+
+4. **Input & Code Block Classes**
+   - `.input-container` - Standard input field with consistent styling
+   - `.code-block` - Code block with max-height: 12rem
+   - `.code-block-lg` - Large code block with max-height: 20rem
 
 **Phase 1-2 (Primary Colors & Letter Spacing):**
 1. **Primary Color Standardization**
@@ -692,6 +742,13 @@ Applies to ALL pages (Main, OPS, SIM, ADMIN, etc.):
 All content sections use this pattern:
 
 ```typescript
+// Option 1: Use standardized container class (Phase 3-4)
+<section className="container-section">
+  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Title</h2>
+  {/* Content */}
+</section>
+
+// Option 2: Use utility classes directly
 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
   <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Title</h2>
   {/* Content */}
@@ -703,8 +760,12 @@ All content sections use this pattern:
 All form inputs follow this pattern:
 
 ```typescript
+// Option 1: Use standardized input class (Phase 3-4)
+<input className="input-container" />
+
+// Option 2: Use utility classes directly
 <input
-  className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
+  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
 />
 ```
 
@@ -819,11 +880,12 @@ Create clear visual hierarchy through consistent sizing, spacing, and contrast. 
    - Ghost buttons: `hover:bg-slate-100 dark:hover:bg-slate-800` (subtle)
    - Links: `text-sky-600 hover:text-sky-500 dark:text-sky-400`
 
-5. **Border Radius Hierarchy**
-   - Page sections: `rounded-2xl` (16px) - most prominent
-   - Cards: `rounded-lg` (8px) - medium prominence
-   - Buttons/Inputs: `rounded-md` (6px) - subtle
-   - Badges/Tags: `rounded-full` - circular indicators
+5. **Border Radius Hierarchy** (Phase 3 Standardized)
+   - Panels (large containers): `rounded-3xl` (24px) - `.br-panel`
+   - Page sections: `rounded-2xl` (16px) - `.br-section`
+   - Cards: `rounded-xl` (12px) - `.br-card`
+   - Buttons: `rounded-lg` (8px) - `.br-btn`
+   - Badges/Tags: `rounded-full` - `.br-badge`
 
 ---
 
@@ -882,12 +944,20 @@ Identify and avoid common UI/UX mistakes that reduce clarity and consistency.
 
 ✅ **Good**:
 ```typescript
-// Consistent border radius by element type
-<section className="rounded-2xl">  {/* page sections */}
-<div className="rounded-lg">          {/* cards */}
-<button className="rounded-md">       {/* buttons */}
-<input className="rounded-md">       {/* inputs */}
-<span className="rounded-full">       {/* badges, indicators */}
+// Consistent border radius by element type (Phase 3 standardized)
+<section className="br-section">     {/* page sections - rounded-2xl */}
+<div className="br-card">            {/* cards - rounded-xl */}
+<button className="br-btn">          {/* buttons - rounded-lg */}
+<input className="br-btn">           {/* inputs - rounded-lg */}
+<span className="br-badge">          {/* badges - rounded-full */}
+```
+
+Or use utility classes directly:
+```typescript
+<section className="rounded-2xl">    {/* page sections */}
+<div className="rounded-xl">          {/* cards */}
+<button className="rounded-lg">       {/* buttons */}
+<span className="rounded-full">       {/* badges */}
 ```
 
 ### 4. Color Chaos
@@ -901,9 +971,11 @@ Identify and avoid common UI/UX mistakes that reduce clarity and consistency.
 
 ✅ **Good**:
 ```typescript
-// Semantic color tokens
+// Semantic color tokens (Phase 3-4 standardized)
 <span className="text-slate-900 dark:text-slate-50">  {/* primary text */}
 <span className="text-slate-600 dark:text-slate-400">  {/* muted text */}
+<div className="bg-surface-base">  {/* surface - white/slate-950 */}
+<div className="bg-surface-overlay">  {/* overlay - slate-50/slate-950/50 */}
 <button className="bg-sky-600 hover:bg-sky-500">  {/* primary button */}
 <button className="bg-rose-600 hover:bg-rose-500">  {/* destructive */}
 <button className="bg-emerald-600">  {/* success */}
@@ -981,11 +1053,12 @@ import { cn } from "@/lib/utils";
 | Category | Anti-Pattern | Solution |
 |----------|--------------|----------|
 | **Font Sizes** | `text-[11px]`, `text-[13px]` | Use `text-xs`, `text-sm` |
-| **Border Radius** | Mixed arbitrary values | Use `rounded-2xl`, `rounded-lg`, `rounded-md`, `rounded-full` |
-| **Colors** | Hex codes, random colors | Use semantic tokens: `text-slate-900`, `bg-sky-600` |
+| **Border Radius** | Mixed arbitrary values | Use `.br-badge`, `.br-card`, `.br-section`, `.br-panel` or `rounded-full`, `rounded-xl`, `rounded-2xl`, `rounded-3xl` |
+| **Colors** | Hex codes, random colors | Use semantic tokens: `text-slate-900`, `bg-sky-600` or `.bg-surface-base`, `.bg-surface-overlay` |
 | **Dark Mode** | Hardcoded dark styles | Use `dark:` prefix variants |
 | **Spacing** | `px-3.5`, `gap-1.5` | Use `px-3`, `px-4`, `gap-2`, `gap-3` |
 | **Letter Spacing** | `tracking-[0.2em]`, `tracking-[0.3em]` | Use `tracking-wider` for uppercase |
+| **Containers** | Mixed border+bg styles | Use `.container-card`, `.container-section`, `.container-panel` |
 
 ### Common Violations to Avoid
 
@@ -1013,15 +1086,108 @@ import { cn } from "@/lib/utils";
 
 ---
 
+## 🔧 Phase 3-4: Border Radius & Background Utility Classes
+
+### Border Radius Classes
+
+Use these for consistent border radius across components:
+
+| Class | Value | Usage |
+|-------|-------|-------|
+| `.br-badge` | `rounded-full` | Badges, pills, indicators |
+| `.br-btn` | `rounded-lg` | Buttons, inputs |
+| `.br-card` | `rounded-xl` | Cards, small boxes |
+| `.br-section` | `rounded-2xl` | Page sections, large containers |
+| `.br-panel` | `rounded-3xl` | Large panels, main containers |
+
+### Background Color Classes
+
+Use these for consistent background colors with automatic dark mode:
+
+| Class | Light | Dark | Usage |
+|-------|-------|------|-------|
+| `.bg-surface-base` | `bg-white` | `dark:bg-slate-900/90` | Primary surface |
+| `.bg-surface-overlay` | `bg-slate-50` | `dark:bg-slate-950/50` | Overlay surface |
+| `.bg-surface-elevated` | `bg-slate-100` | `dark:bg-slate-900/40` | Elevated surface |
+
+### Combined Container Classes
+
+These combine border-radius + background + border + shadow:
+
+| Class | Border | Background | Padding | Usage |
+|-------|--------|------------|----------|-------|
+| `.container-card` | `rounded-xl` | surface-base | `p-4` | Cards |
+| `.container-section` | `rounded-2xl` | surface-base | `p-5` | Page sections |
+| `.container-panel` | `rounded-3xl` | surface-base | `p-6` | Large panels |
+
+### Input & Code Block Classes
+
+| Class | Usage |
+|-------|-------|
+| `.input-container` | Standard input field with focus states |
+| `.code-block` | Code block (max-height: 12rem) |
+| `.code-block-lg` | Large code block (max-height: 20rem) |
+
+### Usage Examples
+
+```typescript
+// Container classes
+<section className="container-section">
+  <h2>Section Title</h2>
+  {/* content */}
+</section>
+
+<div className="container-card">
+  {/* card content */}
+</div>
+
+// Background classes
+<div className="bg-surface-base">
+  <div className="bg-surface-overlay p-4">
+    {/* layered content */}
+  </div>
+</div>
+
+// Input classes
+<input className="input-container" />
+<textarea className="input-container" />
+
+// Code blocks
+<pre className="code-block">{code}</pre>
+<pre className="code-block-lg">{longCode}</pre>
+
+// Border radius classes
+<span className="br-badge px-3 py-1">Badge</span>
+<button className="br-btn px-6 py-3">Button</button>
+<div className="br-card p-4">Card</div>
+<section className="br-section p-5">Section</section>
+<div className="br-panel p-6">Panel</div>
+```
+
+---
+
 ## 🎯 Complete Design Checklist
 
 Use this checklist for ANY page/component:
 
+**Layout & Structure:**
 - [ ] Page wrapper: `bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50`
-- [ ] Sections: `rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90`
-- [ ] Inputs: `rounded-md border border-slate-300 bg-white px-4 py-3` (with dark variants)
+- [ ] Sections: `.container-section` or `rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90`
+- [ ] Cards: `.container-card` or `rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900`
+- [ ] Panels: `.container-panel` or `rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900`
+
+**Components:**
+- [ ] Inputs: `.input-container` or `rounded-lg border border-slate-300 bg-white px-4 py-3` (with dark variants)
+- [ ] Code blocks: `.code-block` or `.code-block-lg`
 - [ ] Buttons use standard variants (Primary, Secondary, Destructive, Ghost)
+- [ ] Badges use `.br-badge` (rounded-full)
+
+**Colors & Typography:**
 - [ ] Text has proper dark mode variants
+- [ ] Use `.bg-surface-base`, `.bg-surface-overlay`, `.bg-surface-elevated` for backgrounds
+- [ ] Use `.br-badge`, `.br-btn`, `.br-card`, `.br-section`, `.br-panel` for border radius
+
+**Forms:**
 - [ ] Forms use `space-y-4` for vertical spacing
 - [ ] Empty states follow universal pattern
 - [ ] Loading states follow universal pattern

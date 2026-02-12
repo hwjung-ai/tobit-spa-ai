@@ -3,6 +3,7 @@
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authenticatedFetch, getAuthHeaders } from "@/lib/apiClient/index";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 
@@ -809,9 +810,7 @@ function DocumentsPageContent() {
 
   return (
     <div className="space-y-6">
-      <section
-        className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
-      >
+      <section className="container-section text-slate-900 dark:text-slate-50">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">Document index</p>

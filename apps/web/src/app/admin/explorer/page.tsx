@@ -569,11 +569,11 @@ export default function ExplorerPage() {
 
   if (!enableDataExplorer) {
     return (
-      <div className="min-h-screen px-10 py-10" style={{backgroundColor: "rgb(255, 255, 255)", color: "rgb(71, 85, 105)"}}>
+      <div className="min-h-screen px-10 py-10" style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}>
         <h1 className="text-2xl font-semibold">Data Explorer</h1>
-        <p className="mt-4 text-sm " style={{color: "rgb(71, 85, 105)"}}>
+        <p className="mt-4 text-sm " style={{color: "var(--muted-foreground)"}}>
           Data Explorer is disabled. Enable{" "}
-          <code className="rounded  px-2 py-1 text-xs" style={{backgroundColor: "rgb(241, 245, 249)"}}>
+          <code className="rounded  px-2 py-1 text-xs" style={{backgroundColor: "var(--muted-background)"}}>
             NEXT_PUBLIC_ENABLE_DATA_EXPLORER
           </code>{" "}
           to continue.
@@ -586,19 +586,19 @@ export default function ExplorerPage() {
     if (sourceTab === "postgres") {
       return (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>
+          <div className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
             Tables
           </div>
           <input
             value={tableSearch}
             onChange={(event) => setTableSearch(event.target.value)}
             placeholder="Search tables"
-            className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+            className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
           />
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {tablesQuery.isLoading && (
-              <div className="flex items-center gap-2 py-4 " style={{color: "rgb(71, 85, 105)"}}>
-                <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{borderColor: "rgb(203, 213, 225)"}} />
+              <div className="flex items-center gap-2 py-4 " style={{color: "var(--muted-foreground)"}}>
+                <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{borderColor: "var(--border)"}} />
                 <span className="text-xs">Loading tables...</span>
               </div>
             )}
@@ -631,7 +631,7 @@ export default function ExplorerPage() {
                       : "hover:bg-slate-100"
                       }`}
                     style={{
-                      color: active ? "var(--primary-foreground)" : "var(--foreground-secondary)",
+                      color: active ? "var(--primary-foreground)" : "var(--foreground)",
                       borderColor: active ? "var(--primary)" : "var(--border)",
                       backgroundColor: active ? "var(--primary)" : "transparent",
                     }}
@@ -647,13 +647,13 @@ export default function ExplorerPage() {
     if (sourceTab === "neo4j") {
       return (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>
+          <div className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
             Labels
           </div>
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {labelsQuery.isLoading && (
-              <div className="flex items-center gap-2 py-4 " style={{color: "rgb(71, 85, 105)"}}>
-                <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{borderColor: "rgb(203, 213, 225)"}} />
+              <div className="flex items-center gap-2 py-4 " style={{color: "var(--muted-foreground)"}}>
+                <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{borderColor: "var(--border)"}} />
                 <span className="text-xs">Loading labels...</span>
               </div>
             )}
@@ -679,7 +679,7 @@ export default function ExplorerPage() {
                     : "hover:bg-slate-100"
                     }`}
                   style={{
-                    color: active ? "var(--primary-foreground)" : "var(--foreground-secondary)",
+                    color: active ? "var(--primary-foreground)" : "var(--foreground)",
                     borderColor: active ? "var(--primary)" : "var(--border)",
                     backgroundColor: active ? "var(--primary)" : "transparent",
                   }}
@@ -694,26 +694,26 @@ export default function ExplorerPage() {
     }
     return (
       <div className="space-y-3">
-        <div className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>
+        <div className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
           Keys
         </div>
         <input
           value={redisPrefix}
           onChange={(event) => setRedisPrefix(event.target.value)}
           placeholder="Prefix (allowlist)"
-          className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+          className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
         />
         <input
           value={redisPattern}
           onChange={(event) => setRedisPattern(event.target.value)}
           placeholder="Pattern (optional)"
-          className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+          className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
         />
-        <div className="flex items-center gap-2 text-xs " style={{color: "rgb(71, 85, 105)"}}>
+        <div className="flex items-center gap-2 text-xs " style={{color: "var(--muted-foreground)"}}>
           <button
             type="button"
             onClick={() => setRedisCursor(0)}
-            className="rounded-full border  px-3 py-1 text-xs uppercase tracking-[0.2em] " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+            className="rounded-full border  px-3 py-1 text-xs uppercase tracking-[0.2em] " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
           >
             Scan
           </button>
@@ -721,8 +721,8 @@ export default function ExplorerPage() {
         </div>
         <div className="custom-scrollbar max-h-[320px] space-y-2 overflow-auto pr-1">
           {redisScanQuery.isLoading && (
-            <div className="flex items-center gap-2 py-4 " style={{color: "rgb(71, 85, 105)"}}>
-              <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{borderColor: "rgb(203, 213, 225)"}} />
+            <div className="flex items-center gap-2 py-4 " style={{color: "var(--muted-foreground)"}}>
+              <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{borderColor: "var(--border)"}} />
               <span className="text-xs">Scanning keys...</span>
             </div>
           )}
@@ -746,7 +746,7 @@ export default function ExplorerPage() {
                   : "hover:bg-slate-100"
                   }`}
                 style={{
-                  color: active ? "var(--primary-foreground)" : "var(--foreground-secondary)",
+                  color: active ? "var(--primary-foreground)" : "var(--foreground)",
                   borderColor: active ? "var(--primary)" : "var(--border)",
                   backgroundColor: active ? "var(--primary)" : "transparent",
                 }}
@@ -763,18 +763,18 @@ export default function ExplorerPage() {
   return (
     <div className="py-6 tracking-tight builder-shell builder-text">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold" style={{color: "rgb(15, 23, 42)"}}>Data Explorer</h1>
-        <div className="text-xs uppercase tracking-wider" style={{color: "rgb(71, 85, 105)"}}>
+        <h1 className="text-2xl font-semibold" style={{color: "var(--foreground)"}}>Data Explorer</h1>
+        <div className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>
           Admin only
         </div>
       </div>
-      <p className="mb-4 text-sm" style={{color: "rgb(71, 85, 105)"}}>
+      <p className="mb-4 text-sm" style={{color: "var(--muted-foreground)"}}>
         Read-only data access. Max {MAX_ROWS} rows.
       </p>
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] items-center uppercase tracking-[0.2em] " style={{color: "rgb(71, 85, 105)"}}>Source:</span>
+          <span className="text-[10px] items-center uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Source:</span>
           <TabsButton active={sourceTab === "postgres"} onClick={() => setSourceTab("postgres")}>
             Postgres
           </TabsButton>
@@ -785,9 +785,9 @@ export default function ExplorerPage() {
             Redis
           </TabsButton>
         </div >
-        <div className="h-4 w-px  mx-2" style={{backgroundColor: "rgb(241, 245, 249)"}} />
+        <div className="h-4 w-px  mx-2" style={{backgroundColor: "var(--muted-background)"}} />
         <div className="flex items-center gap-2">
-          <span className="text-[10px] items-center uppercase tracking-[0.2em] " style={{color: "rgb(71, 85, 105)"}}>Mode:</span>
+          <span className="text-[10px] items-center uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Mode:</span>
           <TabsButton active={modeTab === "browse"} onClick={() => setModeTab("browse")}>
             Browse
           </TabsButton>
@@ -807,7 +807,7 @@ export default function ExplorerPage() {
                   value={queryText}
                   onChange={(event) => setQueryText(event.target.value)}
                   rows={4}
-                  className="w-full resize-none rounded-xl border   px-4 py-3 text-sm  focus:border-sky-500 focus:outline-none custom-scrollbar" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}
+                  className="w-full resize-none rounded-xl border   px-4 py-3 text-sm  focus:border-sky-500 focus:outline-none custom-scrollbar" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
                   placeholder={
                     sourceTab === "redis"
                       ? "GET cep:example"
@@ -816,12 +816,12 @@ export default function ExplorerPage() {
                         : "SELECT * FROM tb_cep_notification_log"
                   }
                 />
-                <div className="flex items-center justify-between text-xs " style={{color: "rgb(71, 85, 105)"}}>
+                <div className="flex items-center justify-between text-xs " style={{color: "var(--muted-foreground)"}}>
                   <span>Max {MAX_ROWS} rows</span>
                   <button
                     type="button"
                     onClick={() => runQueryMutation.mutate(queryText)}
-                    className="rounded-full border  px-4 py-2 text-xs uppercase tracking-wider  hover:border-sky-500" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+                    className="rounded-full border  px-4 py-2 text-xs uppercase tracking-wider  hover:border-sky-500" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
                   >
                     Run
                   </button>
@@ -830,10 +830,10 @@ export default function ExplorerPage() {
             )}
 
             <div className="space-y-3">
-              <div className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>
+              <div className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
                 Results
               </div>
-              <div className="ag-theme-cep h-[520px] w-full rounded-2xl border  /70 overflow-hidden" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
+              <div className="ag-theme-cep h-[520px] w-full rounded-2xl border  /70 overflow-hidden" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
                 <AgGridReact
                   theme="legacy"
                   columnDefs={gridColDefs}
@@ -844,7 +844,7 @@ export default function ExplorerPage() {
                 />
               </div>
               {statusMessage && (
-                <div className="mt-3 text-xs " style={{color: "rgb(71, 85, 105)"}}>{statusMessage}</div>
+                <div className="mt-3 text-xs " style={{color: "var(--muted-foreground)"}}>{statusMessage}</div>
               )}
               {queryError && (
                 <div className="mt-2 rounded-2xl border border-rose-500/70 bg-rose-500/5 px-3 py-2 text-xs text-rose-200">
@@ -855,7 +855,7 @@ export default function ExplorerPage() {
             {sourceTab === "neo4j" && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Graph preview</p>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Graph preview</p>
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -911,18 +911,18 @@ export default function ExplorerPage() {
                     </button>
                   </div>
                 </div>
-                <div className="text-[10px] " style={{color: "rgb(71, 85, 105)"}}>
+                <div className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
                   Nodes: {neo4jGraphPreview.nodes.length} · Relations: {neo4jGraphPreview.edges.length}
                 </div>
                 {neo4jGraphPreview.warnings.length > 0 && (
-                  <div className="space-y-1 text-[10px] " style={{color: "rgb(71, 85, 105)"}}>
+                  <div className="space-y-1 text-[10px] " style={{color: "var(--muted-foreground)"}}>
                     {neo4jGraphPreview.warnings.map((warning, index) => (
                       <p key={`warning-${index}`}>{warning}</p>
                     ))}
                   </div>
                 )}
                 {neo4jViewMode === "graph" && (
-                  <div className="h-[360px] w-full rounded-2xl border  /70 shadow-inner" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
+                  <div className="h-[360px] w-full rounded-2xl border  /70 shadow-inner" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
                     {graphAvailable ? (
                       <Neo4jGraphFlow
                         nodes={neo4jGraphPreview.nodes}
@@ -932,15 +932,15 @@ export default function ExplorerPage() {
                         onNodeClick={handleGraphNodeClick}
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm " style={{color: "rgb(71, 85, 105)"}}>
+                      <div className="flex h-full items-center justify-center text-sm " style={{color: "var(--muted-foreground)"}}>
                         Run a Neo4j query returning nodes & relationships to visualize the graph.
                       </div>
                     )}
                   </div>
                 )}
                 {neo4jViewMode === "value" && valueAvailable && (
-                  <div className="rounded-2xl border   p-4 text-sm " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(15, 23, 42)", backgroundColor: "rgb(255, 255, 255)"}}>
-                    <p className="text-xs uppercase tracking-[0.2em] " style={{color: "rgb(71, 85, 105)"}}>Scalar result</p>
+                  <div className="rounded-2xl border   p-4 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
+                    <p className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Scalar result</p>
                     <p className="mt-2 text-lg font-semibold">{String(neo4jScalar)}</p>
                   </div>
                 )}
@@ -950,11 +950,11 @@ export default function ExplorerPage() {
         }
         rightPane={
           <div className="space-y-3">
-            <div className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>
+            <div className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>
               Inspector
             </div>
-            <div className="custom-scrollbar mt-3 max-h-[620px] overflow-auto rounded-xl border   p-3 text-xs " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}>
-              <pre className="whitespace-pre-wrap">
+            <div className="custom-scrollbar mt-3 max-h-[620px] overflow-auto rounded-xl border   p-3 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-elevated)"}}>
+              <pre className="whitespace-pre-wrap" style={{ color: "var(--foreground)" }}>
                 {inspectorContent ? JSON.stringify(inspectorContent, null, 2) : "No selection"}
               </pre>
             </div>

@@ -5,7 +5,7 @@ import RegressionWatchPanel from "@/components/admin/RegressionWatchPanel";
 
 export default function RegressionPage() {
   return (
-    <Suspense fallback={<div className="p-4  dark:" style={{color: "rgb(71, 85, 105)"}}>Loading...</div>}>
+    <Suspense fallback={<div className="p-4 text-muted-standard">Loading...</div>}>
       <RegressionWatchPanel />
     </Suspense>
   );

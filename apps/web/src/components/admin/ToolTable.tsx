@@ -33,6 +33,7 @@ interface ToolAsset {
 
 interface ToolTableProps {
   tools: ToolAsset[];
+  loading?: boolean;
   statusFilter?: "all" | "draft" | "published";
   onStatusFilterChange?: (status: "all" | "draft" | "published") => void;
   onToolSelect?: (tool: ToolAsset) => void;
@@ -56,6 +57,7 @@ const filterBtnClass = (active: boolean) =>
 
 export default function ToolTable({
   tools,
+  loading = false,
   statusFilter = "all",
   onStatusFilterChange,
   onToolSelect,
@@ -215,11 +217,44 @@ export default function ToolTable({
     [handlePublish, onToolSelect, publishingId, selectedToolId],
   );
 
+  if (loading) {
+    return (
+      <div
+        className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-sm"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+      >
+        <div
+          className="flex items-center justify-between border-b px-4 py-2"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <span
+              className="text-[10px] font-bold uppercase tracking-[0.2em]"
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              Tool Registry
+            </span>
+          </div>
+        </div>
+
+        <div className="relative h-[600px] w-full overflow-hidden" style={{ backgroundColor: "var(--surface-base)" }}>
+          <div className="absolute inset-0 flex items-center justify-center gap-3">
+            <div className="h-8 w-8 rounded-full border-2 border-sky-500/20 border-t-sky-500 animate-spin" />
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+              Loading Tools...
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (tools.length === 0) {
     return (
       <div
         className="rounded-2xl border py-20 text-center shadow-sm"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
       >
         <div
           className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border"
@@ -250,7 +285,7 @@ export default function ToolTable({
   return (
     <div
       className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-sm"
-      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
     >
       <div
         className="flex items-center justify-between border-b px-4 py-2"
@@ -305,7 +340,7 @@ export default function ToolTable({
         </div>
       </div>
 
-      <div className="ag-theme-cep w-full overflow-hidden" style={{ height: "600px" }}>
+      <div className="ag-theme-cep ag-theme-cep-static w-full overflow-hidden" style={{ height: "600px" }}>
         <AgGridReact
           theme="legacy"
           rowData={tools}
@@ -318,7 +353,6 @@ export default function ToolTable({
             unSortIcon: true,
           }}
           rowSelection="single"
-          animateRows
           headerHeight={44}
           rowHeight={48}
           onRowClicked={(event) => {

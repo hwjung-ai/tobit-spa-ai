@@ -653,7 +653,7 @@ export default function OpsPage() {
                 )}
 
                 {/* Metadata */}
-                <div className="mb-4 rounded-2xl border p-4 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-4 container-section">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <span className="text-xs text-slate-600 dark:text-slate-400">제목</span>
@@ -674,7 +674,7 @@ export default function OpsPage() {
                 <div className="space-y-4">
                   <h3 className="text-sm font-semibold text-slate-600 dark:text-slate-400">질의-응답 요약</h3>
                   {summaryData.questions_and_answers?.slice(0, 5).map((qa: any, idx: number) => (
-                    <div key={idx} className="rounded-xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+                    <div key={idx} className="br-card border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
                       <div className="mb-2 flex items-center gap-2">
                         <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-sky-300">
                           Q{idx + 1}

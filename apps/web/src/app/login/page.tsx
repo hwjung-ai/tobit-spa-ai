@@ -32,9 +32,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
-      <div
-        className="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
-      >
+      <div className="container-panel w-full max-w-md space-y-6">
         <div>
           <h2 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-50">
             Tobit SPA AI

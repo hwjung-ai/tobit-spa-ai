@@ -726,6 +726,7 @@ function InspectorContent() {
           <div>
             <p
               className="text-xs uppercase tracking-wider "
+              style={{ color: "rgb(71, 85, 105)" }}
             >
               Trace Results
             </p>
@@ -733,7 +734,7 @@ function InspectorContent() {
               {traces.length} 건 중 {total}개
             </h3>
           </div>
-          <p className="text-sm  text-slate-600 dark:text-slate-400">
+          <p className="text-sm " style={{ color: "rgb(71, 85, 105)" }}>
             Showing {offset === 0 ? traces.length : offset} / {total}
           </p>
         </div>
@@ -741,15 +742,17 @@ function InspectorContent() {
           <div className="py-12 flex flex-col items-center gap-3">
             <div
               className="w-10 h-10 rounded-full border-2 border-t-emerald-400 animate-spin"
+              style={{ borderColor: "rgb(203, 213, 225)" }}
             />
             <p
               className="text-sm uppercase tracking-[0.25em]"
+              style={{ color: "rgb(71, 85, 105)" }}
             >
               Loading traces...
             </p>
           </div>
         ) : traces.length === 0 ? (
-          <div className="py-12 text-center text-xs  text-slate-600 dark:text-slate-400">
+          <div className="py-12 text-center text-xs " style={{ color: "rgb(71, 85, 105)" }}>
             필터를 조정하여 실행 기록을 검색하세요.
           </div>
         ) : (
@@ -757,7 +760,8 @@ function InspectorContent() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr
-                  className="text-left text-xs uppercase tracking-wider border-b border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-400"
+                  className="text-left text-xs uppercase tracking-wider border-b "
+                  style={{ borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)" }}
                 >
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Feature</th>
@@ -783,27 +787,28 @@ function InspectorContent() {
                     <td className="px-4 py-3">
                       <p
                         className="font-mono text-xs "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         {trace.trace_id.slice(0, 8)}
                       </p>
-                      <p className="text-sm  text-slate-600 dark:text-slate-400">
+                      <p className="text-sm " style={{ color: "rgb(71, 85, 105)" }}>
                         {formatRelativeTime(trace.created_at)}
                       </p>
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         {formatTimestamp(trace.created_at)}
                       </p>
                     </td>
-                    <td className="px-4 py-3  text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 " style={{ color: "rgb(71, 85, 105)" }}>
                       {trace.feature}
                     </td>
-                    <td className="px-4 py-3  text-slate-900 dark:text-slate-50">
+                    <td className="px-4 py-3 " style={{ color: "rgb(15, 23, 42)" }}>
                       <span
                         className={`px-2 py-1 rounded-full text-sm ${getStatusBadgeClass(trace.status)}`}
                       >
                         {trace.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3  text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 " style={{ color: "rgb(71, 85, 105)" }}>
                       {formatDuration(trace.duration_ms)}
                     </td>
                     <td className="px-4 py-3">
@@ -820,11 +825,12 @@ function InspectorContent() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs  text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                       {trace.question_snippet}
                     </td>
                     <td
                       className="px-4 py-3 text-xs "
+                      style={{ color: "rgb(71, 85, 105)" }}
                     >
                       {formatAppliedAssetSummary(trace)}
                     </td>
@@ -837,11 +843,13 @@ function InspectorContent() {
         {offset < total && traces.length > 0 && (
           <div
             className="p-4 flex justify-center border-t "
+            style={{ borderColor: "rgb(203, 213, 225)" }}
           >
             <button
               onClick={() => handleSearch(offset)}
               disabled={loading}
-              className="px-6 py-2 rounded-full text-xs uppercase tracking-wider opacity-50 bg-slate-100 dark:bg-slate-800"
+              className="px-6 py-2 rounded-full text-xs uppercase tracking-wider opacity-50"
+              style={{ backgroundColor: "rgb(241, 245, 249)" }}
             >
               {loading ? "불러오는 중..." : "Load More"}
             </button>
@@ -855,14 +863,17 @@ function InspectorContent() {
           className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4"
         >
           <div
-            className=" border max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50"
+            className=" border max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            style={{ borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)" }}
           >
             <header
               className="px-6 py-4 border-b flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+              style={{ borderColor: "rgb(203, 213, 225)" }}
             >
               <div className="space-y-3">
                 <p
                   className="text-xs uppercase tracking-wider "
+                  style={{ color: "rgb(71, 85, 105)" }}
                 >
                   Trace Overview
                 </p>
@@ -880,6 +891,7 @@ function InspectorContent() {
                 </div>
                 <div
                   className="flex flex-wrap gap-3 text-xs "
+                  style={{ color: "rgb(71, 85, 105)" }}
                 >
                   <span>Feature: {traceDetail.feature}</span>
                   <span>Mode: {traceDetail.ops_mode}</span>
@@ -888,11 +900,13 @@ function InspectorContent() {
                 </div>
                 <div
                   className="flex flex-wrap items-center gap-2 text-sm "
+                  style={{ color: "rgb(71, 85, 105)" }}
                 >
                   <span className="font-mono">{traceDetail.trace_id}</span>
                   <button
                     onClick={handleCopyTraceId}
                     className="px-3 py-1 rounded-lg border text-xs uppercase tracking-[0.2em] transition "
+                    style={{ borderColor: "rgb(203, 213, 225)" }}
                   >
                     {traceCopyStatus === "copied"
                       ? "복사됨"
@@ -903,6 +917,7 @@ function InspectorContent() {
                   <button
                     onClick={handleCopyLink}
                     className="px-3 py-1 rounded-lg border text-xs uppercase tracking-[0.2em] transition "
+                    style={{ borderColor: "rgb(203, 213, 225)" }}
                   >
                     {linkCopyStatus === "copied"
                       ? "Link copied"
@@ -914,6 +929,7 @@ function InspectorContent() {
                     <button
                       onClick={() => fetchTraceDetail(traceDetail.parent_trace_id!)}
                       className="px-3 py-1 rounded-lg border text-xs uppercase tracking-[0.2em] transition "
+                      style={{ borderColor: "rgb(203, 213, 225)" }}
                     >
                       View parent
                     </button>
@@ -921,6 +937,7 @@ function InspectorContent() {
                 </div>
                 <div
                   className="flex flex-wrap gap-4 text-sm "
+                  style={{ color: "rgb(71, 85, 105)" }}
                 >
                   <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                   <span>{formatTimestamp(traceDetail.created_at)}</span>
@@ -957,6 +974,7 @@ function InspectorContent() {
                     setShowDiffView(false);
                   }}
                   className="px-3 py-2 rounded-xl border text-xs uppercase tracking-[0.2em] "
+                  style={{ borderColor: "rgb(203, 213, 225)" }}
                 >
                   Close
                 </button>
@@ -978,9 +996,11 @@ function InspectorContent() {
                 <div className="py-8 flex flex-col items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full border-2 border-t-emerald-400 animate-spin"
+                    style={{ borderColor: "rgb(203, 213, 225)" }}
                   />
                   <p
                     className="text-xs uppercase tracking-wider"
+                    style={{ color: "rgb(71, 85, 105)" }}
                   >
                     Loading detail...
                   </p>
@@ -998,40 +1018,47 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Overview
                       </p>
-                      <span className="text-xs  text-slate-600 dark:text-slate-400">
+                      <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         Request & Context
                       </span>
                     </div>
                     <p className="text-sm text-white">{traceDetail.question}</p>
                     <div
                       className="flex flex-wrap gap-2 text-sm "
+                      style={{ color: "rgb(71, 85, 105)" }}
                     >
                       <span
-                        className="px-2 py-1 rounded-full  bg-slate-100 dark:bg-slate-800"
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "rgb(241, 245, 249)" }}
                       >
                         Mode: {traceDetail.ops_mode}
                       </span>
                       <span
-                        className="px-2 py-1 rounded-full  bg-slate-100 dark:bg-slate-800"
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "rgb(241, 245, 249)" }}
                       >
                         Endpoint: {traceDetail.endpoint}
                       </span>
                       <span
-                        className="px-2 py-1 rounded-full  bg-slate-100 dark:bg-slate-800"
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "rgb(241, 245, 249)" }}
                       >
                         Method: {traceDetail.method}
                       </span>
                       <span
-                        className="px-2 py-1 rounded-full  bg-slate-100 dark:bg-slate-800"
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "rgb(241, 245, 249)" }}
                       >
                         Route: {traceDetail.route ?? "orch"}
                       </span>
                     </div>
                     <div
                       className="flex flex-wrap gap-3 text-sm "
+                      style={{ color: "rgb(71, 85, 105)" }}
                     >
                       <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                       <span>{formatTimestamp(traceDetail.created_at)}</span>
@@ -1050,6 +1077,7 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Applied Assets
                       </p>
@@ -1065,6 +1093,7 @@ function InspectorContent() {
                       >
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Prompt
                         </p>
@@ -1079,6 +1108,7 @@ function InspectorContent() {
                       >
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Policy
                         </p>
@@ -1093,6 +1123,7 @@ function InspectorContent() {
                       >
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Mapping
                         </p>
@@ -1101,6 +1132,7 @@ function InspectorContent() {
                       <div className="md:col-span-2 space-y-2">
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Queries
                         </p>
@@ -1128,7 +1160,7 @@ function InspectorContent() {
                             )}
                           </ul>
                         ) : (
-                          <p className="text-xs  text-slate-600 dark:text-slate-400">
+                          <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                             Query asset 없음
                           </p>
                         )}
@@ -1136,6 +1168,7 @@ function InspectorContent() {
                       <div className="md:col-span-2 space-y-2">
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Screens
                         </p>
@@ -1157,7 +1190,7 @@ function InspectorContent() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs  text-slate-600 dark:text-slate-400">
+                          <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                             Screen asset 없음
                           </p>
                         )}
@@ -1176,6 +1209,7 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Plan
                       </p>
@@ -1215,6 +1249,7 @@ function InspectorContent() {
                     <div>
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Plan steps
                       </p>
@@ -1222,6 +1257,7 @@ function InspectorContent() {
                         {traceDetail.execution_steps && traceDetail.execution_steps.length ? (
                           <table
                             className="min-w-full text-xs "
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             <thead>
                               <tr
@@ -1243,6 +1279,7 @@ function InspectorContent() {
                                 <tr
                                   key={`${step.step_id}-${step.tool_name}-${step.duration_ms}`}
                                   className="border-b "
+                                  style={{ borderColor: "rgb(203, 213, 225)" }}
                                 >
                                   <td className="px-2 py-2">{step.step_id || "step"}</td>
                                   <td className="px-2 py-2">{step.tool_name || "tool"}</td>
@@ -1266,7 +1303,7 @@ function InspectorContent() {
                             </tbody>
                           </table>
                         ) : (
-                          <p className="text-xs  text-slate-600 dark:text-slate-400">
+                          <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                             Plan step 정보가 없습니다.
                           </p>
                         )}
@@ -1285,13 +1322,14 @@ function InspectorContent() {
                       <div className="flex items-center gap-3">
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Stage Pipeline
                         </p>
-                        <span className="text-xs  text-slate-600 dark:text-slate-400">
+                        <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                           Route: {traceDetail.route ?? "orch"}
                         </span>
-                        <span className="text-xs  text-slate-600 dark:text-slate-400">
+                        <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                           {traceDetail.stage_outputs?.length ?? 0} stages
                         </span>
                       </div>
@@ -1308,6 +1346,7 @@ function InspectorContent() {
                       {assetOverrideLoading && (
                         <span
                           className="text-xs uppercase tracking-[0.2em]"
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Loading assets...
                         </span>
@@ -1326,7 +1365,7 @@ function InspectorContent() {
                         assetNames={assetNames}
                       />
                     ) : (
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         Stage trace가 아직 없습니다.
                       </p>
                     )}
@@ -1356,11 +1395,13 @@ function InspectorContent() {
                               <div>
                                 <p
                                   className="text-xs uppercase tracking-wider "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {STAGE_LABELS[stage] ?? stage.toUpperCase()}
                                 </p>
                                 <p
                                   className="text-sm font-mono"
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {stage}
                                 </p>
@@ -1368,6 +1409,7 @@ function InspectorContent() {
                               <div className="flex items-center gap-2">
                                 <span
                                   className="text-xs uppercase tracking-[0.2em] "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {stageOutput?.duration_ms ? `${stageOutput.duration_ms}ms` : "-"}
                                 </span>
@@ -1394,6 +1436,7 @@ function InspectorContent() {
                               >
                                 <p
                                   className="text-xs uppercase tracking-wider mb-2"
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   Applied Assets
                                 </p>
@@ -1432,6 +1475,7 @@ function InspectorContent() {
                                         <span>{config.icon}</span>
                                         <span
                                           className=" capitalize"
+                                          style={{ color: "rgb(71, 85, 105)" }}
                                         >
                                           {type}:
                                         </span>
@@ -1491,10 +1535,11 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Execution
                       </p>
-                      <span className="text-xs  text-slate-600 dark:text-slate-400">
+                      <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         {traceDetail.execution_steps?.length ?? 0} steps
                       </span>
                     </div>
@@ -1516,6 +1561,7 @@ function InspectorContent() {
                                 </p>
                                 <p
                                   className="text-sm "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {step.tool_name || "tool"}
                                 </p>
@@ -1532,6 +1578,7 @@ function InspectorContent() {
                                 </span>
                                 <span
                                   className="text-sm "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {formatDuration(step.duration_ms)}
                                 </span>
@@ -1555,7 +1602,7 @@ function InspectorContent() {
                               </details>
                             )}
                             {step.references && step.references.length ? (
-                              <p className="text-sm  text-slate-600 dark:text-slate-400">
+                              <p className="text-sm " style={{ color: "rgb(71, 85, 105)" }}>
                                 References:{" "}
                                 {step.references
                                   .map((ref: { name: string }) => ref.name)
@@ -1566,7 +1613,7 @@ function InspectorContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         Tool execution trace가 없습니다.
                       </p>
                     )}
@@ -1582,10 +1629,11 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Control Loop
                       </p>
-                      <span className="text-xs  text-slate-600 dark:text-slate-400">
+                      <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         {traceDetail.replan_events?.length ?? 0} events
                       </span>
                     </div>
@@ -1595,7 +1643,7 @@ function InspectorContent() {
                         events={traceDetail.replan_events}
                       />
                     ) : (
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         Replan 이벤트가 없습니다.
                       </p>
                     )}
@@ -1611,10 +1659,11 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         References
                       </p>
-                      <span className="text-xs  text-slate-600 dark:text-slate-400">
+                      <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         {traceDetail.references?.length ?? 0} items
                       </span>
                     </div>
@@ -1622,6 +1671,7 @@ function InspectorContent() {
                       <div className="overflow-x-auto">
                         <table
                           className="min-w-full text-xs "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           <thead>
                             <tr
@@ -1644,27 +1694,32 @@ function InspectorContent() {
                               <tr
                                 key={`${ref.name}-${index}`}
                                 className="border-b "
+                                style={{ borderColor: "rgb(203, 213, 225)" }}
                               >
                                 <td
                                   className="px-2 py-2 text-sm "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {ref.ref_type}
                                 </td>
-                                <td className="px-2 py-2  text-slate-900 dark:text-slate-50">
+                                <td className="px-2 py-2 " style={{ color: "rgb(15, 23, 42)" }}>
                                   {ref.name}
                                 </td>
                                 <td
                                   className="px-2 py-2 "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {ref.engine || "unknown"}
                                 </td>
                                 <td
                                   className="px-2 py-2 "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {ref.row_count ?? "-"}
                                 </td>
                                 <td
                                   className="px-2 py-2 "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {ref.latency_ms ?? "-"} ms
                                 </td>
@@ -1679,11 +1734,13 @@ function InspectorContent() {
                                     >
                                       <summary
                                         className="text-xs uppercase tracking-[0.2em] cursor-pointer"
+                                        style={{ color: "rgb(71, 85, 105)" }}
                                       >
                                         Statement
                                       </summary>
                                       <pre
                                         className="mt-2 text-sm overflow-x-auto"
+                                        style={{ color: "rgb(71, 85, 105)" }}
                                       >
                                         {ref.statement}
                                       </pre>
@@ -1699,11 +1756,13 @@ function InspectorContent() {
                                     >
                                       <summary
                                         className="text-xs uppercase tracking-[0.2em] cursor-pointer"
+                                        style={{ color: "rgb(71, 85, 105)" }}
                                       >
                                         Params
                                       </summary>
                                       <pre
                                         className="mt-2 text-sm overflow-x-auto"
+                                        style={{ color: "rgb(71, 85, 105)" }}
                                       >
                                         {JSON.stringify(ref.params, null, 2)}
                                       </pre>
@@ -1716,7 +1775,7 @@ function InspectorContent() {
                         </table>
                       </div>
                     ) : (
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         근거 레코드가 없습니다.
                       </p>
                     )}
@@ -1732,10 +1791,11 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Answer Blocks
                       </p>
-                      <span className="text-xs  text-slate-600 dark:text-slate-400">
+                      <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         {traceDetail.answer?.blocks?.length ?? 0} blocks
                       </span>
                     </div>
@@ -1752,6 +1812,7 @@ function InspectorContent() {
                           >
                             <div
                               className="flex items-center justify-between text-sm uppercase tracking-wider"
+                              style={{ color: "rgb(71, 85, 105)" }}
                             >
                               <span>{block.type}</span>
                               <span>
@@ -1764,12 +1825,13 @@ function InspectorContent() {
                               {block.title ? (
                                 <p className="text-sm text-white font-semibold">{block.title}</p>
                               ) : (
-                                <p className="text-sm  text-slate-900 dark:text-slate-50">
+                                <p className="text-sm " style={{ color: "rgb(15, 23, 42)" }}>
                                   Untitled block
                                 </p>
                               )}
                               <p
                                 className="text-sm mt-1"
+                                style={{ color: "rgb(71, 85, 105)" }}
                               >
                                 {summarizeBlockPayload(block)}
                               </p>
@@ -1783,11 +1845,13 @@ function InspectorContent() {
                             >
                               <summary
                                 className="text-xs uppercase tracking-[0.2em] cursor-pointer"
+                                style={{ color: "rgb(71, 85, 105)" }}
                               >
                                 View payload
                               </summary>
                               <pre
                                 className="mt-2 text-xs overflow-x-auto max-h-48"
+                                style={{ color: "rgb(71, 85, 105)" }}
                               >
                                 {JSON.stringify(block, null, 2)}
                               </pre>
@@ -1796,7 +1860,7 @@ function InspectorContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         Blocks가 없습니다.
                       </p>
                     )}
@@ -1811,6 +1875,7 @@ function InspectorContent() {
                   >
                     <p
                       className="text-xs uppercase tracking-wider "
+                      style={{ color: "rgb(71, 85, 105)" }}
                     >
                       UI Render Trace
                     </p>
@@ -1818,6 +1883,7 @@ function InspectorContent() {
                       <div className="space-y-3">
                         <div
                           className="text-xs uppercase tracking-wider"
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Rendered Blocks
                         </div>
@@ -1838,6 +1904,7 @@ function InspectorContent() {
                                 </div>
                                 <p
                                   className="text-sm "
+                                  style={{ color: "rgb(71, 85, 105)" }}
                                 >
                                   {block.component_name}
                                 </p>
@@ -1851,6 +1918,7 @@ function InspectorContent() {
                         {traceDetail.ui_render.warnings.length > 0 && (
                           <ul
                             className="list-disc list-inside text-sm "
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             {traceDetail.ui_render.warnings.map((warning: string, idx: number) => (
                               <li key={idx}>{warning}</li>
@@ -1859,7 +1927,7 @@ function InspectorContent() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs  text-slate-600 dark:text-slate-400">
+                      <p className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         UI 렌더 이벤트가 아직 없습니다.
                       </p>
                     )}
@@ -1876,11 +1944,12 @@ function InspectorContent() {
                       <div className="flex items-center gap-2">
                         <p
                           className="text-xs uppercase tracking-wider "
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           Flow
                         </p>
                         {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
-                          <span className="text-xs  text-slate-600 dark:text-slate-400">
+                          <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                             {traceDetail.flow_spans.length} spans
                           </span>
                         )}
@@ -1889,6 +1958,7 @@ function InspectorContent() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <div
                             className="flex gap-1 rounded-lg p-1"
+                            style={{ backgroundColor: "rgb(248, 250, 252)" }}
                           >
                             <button
                               data-testid="flow-toggle-timeline"
@@ -1969,6 +2039,7 @@ function InspectorContent() {
                                       <div className="flex items-center gap-3 flex-1 min-w-0">
                                         <span
                                           className="text-xs font-mono truncate"
+                                          style={{ color: "rgb(71, 85, 105)" }}
                                         >
                                           {span.name}
                                         </span>
@@ -1979,12 +2050,14 @@ function InspectorContent() {
                                         </span>
                                         <span
                                           className="text-sm whitespace-nowrap"
+                                          style={{ color: "rgb(71, 85, 105)" }}
                                         >
                                           {span.kind}
                                         </span>
                                       </div>
                                       <span
                                         className="text-sm whitespace-nowrap"
+                                        style={{ color: "rgb(71, 85, 105)" }}
                                       >
                                         {span.duration_ms}ms
                                       </span>
@@ -1992,6 +2065,7 @@ function InspectorContent() {
                                     {span.summary.note && (
                                       <p
                                         className="mt-2 text-sm "
+                                        style={{ color: "rgb(71, 85, 105)" }}
                                       >
                                         {span.summary.note}
                                       </p>
@@ -2041,6 +2115,7 @@ function InspectorContent() {
                       <p
                         data-testid="flow-empty-state"
                         className="text-xs "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Flow 데이터 없음 (구버전 trace)
                       </p>
@@ -2059,6 +2134,7 @@ function InspectorContent() {
                         <div>
                           <p
                             className="text-xs uppercase tracking-wider "
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Span Details
                           </p>
@@ -2069,6 +2145,7 @@ function InspectorContent() {
                         <button
                           onClick={() => setSelectedSpan(null)}
                           className=" text-white text-lg"
+                          style={{ color: "rgb(71, 85, 105)" }}
                         >
                           ✕
                         </button>
@@ -2076,10 +2153,12 @@ function InspectorContent() {
 
                       <div
                         className="grid grid-cols-2 gap-3 text-xs "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         <div>
                           <p
                             className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Kind
                           </p>
@@ -2088,6 +2167,7 @@ function InspectorContent() {
                         <div>
                           <p
                             className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Status
                           </p>
@@ -2096,6 +2176,7 @@ function InspectorContent() {
                         <div>
                           <p
                             className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Duration
                           </p>
@@ -2104,6 +2185,7 @@ function InspectorContent() {
                         <div>
                           <p
                             className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Span ID
                           </p>
@@ -2121,6 +2203,7 @@ function InspectorContent() {
                         >
                           <p
                             className="text-xs uppercase tracking-wider "
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Related Plan
                           </p>
@@ -2145,6 +2228,7 @@ function InspectorContent() {
                         >
                           <p
                             className="text-xs uppercase tracking-wider "
+                            style={{ color: "rgb(71, 85, 105)" }}
                           >
                             Related Tool Call
                           </p>
@@ -2158,7 +2242,7 @@ function InspectorContent() {
                                 {renderJsonDetails("Response", step.response)}
                               </div>
                             ) : (
-                              <p className="text-sm  text-slate-600 dark:text-slate-400">
+                              <p className="text-sm " style={{ color: "rgb(71, 85, 105)" }}>
                                 Tool call not found
                               </p>
                             );
@@ -2181,10 +2265,11 @@ function InspectorContent() {
                     <div className="flex items-center justify-between">
                       <p
                         className="text-xs uppercase tracking-wider "
+                        style={{ color: "rgb(71, 85, 105)" }}
                       >
                         Audit Logs
                       </p>
-                      <span className="text-xs  text-slate-600 dark:text-slate-400">
+                      <span className="text-xs " style={{ color: "rgb(71, 85, 105)" }}>
                         {traceAuditLogs.length} events
                       </span>
                     </div>
@@ -2212,6 +2297,7 @@ function InspectorContent() {
               <button
                 onClick={() => setShowCompareModal(false)}
                 className=" text-white text-xl"
+                style={{ color: "rgb(71, 85, 105)" }}
               >
                 ✕
               </button>
@@ -2221,6 +2307,7 @@ function InspectorContent() {
               <div>
                 <label
                   className="block text-xs font-semibold uppercase tracking-[0.2em] mb-2"
+                  style={{ color: "rgb(71, 85, 105)" }}
                 >
                   Trace ID to Compare
                 </label>
@@ -2252,6 +2339,7 @@ function InspectorContent() {
                 <button
                   onClick={() => setShowCompareModal(false)}
                   className="px-3 py-2 rounded-lg border text-xs uppercase tracking-[0.2em] "
+                  style={{ borderColor: "rgb(203, 213, 225)" }}
                 >
                   Cancel
                 </button>
@@ -2318,7 +2406,7 @@ export default function InspectorPage() {
     <ReactFlowProvider>
       <Suspense
         fallback={
-          <div className="p-4  text-slate-600 dark:text-slate-400">
+          <div className="p-4 " style={{ color: "rgb(71, 85, 105)" }}>
             Loading...
           </div>
         }

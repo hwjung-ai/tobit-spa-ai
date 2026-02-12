@@ -595,15 +595,15 @@ function CepEventBrowserContent() {
   }, [isResizing]);
 
   return (
-    <div className="space-y-6 builder-shell builder-text">
+    <div className="space-y-6 builder-shell builder-text text-slate-900 dark:text-slate-50">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold " style={{color: "rgb(71, 85, 105)"}}>CEP Event Browser</h2>
-          <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CEP Event Browser</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             알림 발화 이력과 ACK 상태를 확인합니다. (SSE 갱신)
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 rounded-2xl border  dark: bg-[var(--background)] dark: px-4 py-3 text-xs uppercase tracking-wider " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}>
+        <div className="flex flex-wrap gap-3 br-section border border-slate-200 bg-white px-4 py-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           <span>Unacked: {summaryQuery.data?.unacked_count ?? "-"}</span>
           {summaryQuery.data?.by_severity
             ? Object.entries(summaryQuery.data.by_severity).map(([key, value]) => (
@@ -615,11 +615,11 @@ function CepEventBrowserContent() {
         </div>
       </header>
       {runLoading ? (
-        <section className="rounded-2xl border  dark: /70 px-5 py-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
-          <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>Loading CEP run details …</p>
+        <section className="br-section border border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <p className="text-sm text-slate-600 dark:text-slate-400">Loading CEP run details …</p>
         </section>
       ) : runDetail ? (
-        <section className="rounded-2xl border  dark: /70 px-5 py-4 space-y-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
+        <section className="space-y-3 br-section border border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
           {runError ? (
             <p className="text-sm text-rose-300">
               {runError}
@@ -715,7 +715,10 @@ function CepEventBrowserContent() {
         className="grid gap-0"
         style={{gridTemplateColumns: `${leftWidth ?? 0}px 12px minmax(0, 1fr)`}}
       >
-        <section className="rounded-2xl border  dark: bg-[var(--background)] dark: p-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
+        <section
+          className="rounded-2xl border p-4"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+        >
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <select
               value={ackedFilter}
@@ -792,7 +795,7 @@ function CepEventBrowserContent() {
               {normalizeError(eventsQuery.error)}
             </p>
           ) : null}
-          <div className="ag-theme-cep h-[540px] w-full rounded-2xl border  dark: /70" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
+          <div className="ag-theme-cep h-[540px] w-full rounded-2xl border" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
             <AgGridReact<CepEventSummary>
               rowData={eventsQuery.data ?? []}
               columnDefs={columnDefs}
@@ -817,20 +820,23 @@ function CepEventBrowserContent() {
               setIsResizing(true);
               setIsUserSized(true);
             }}
-            className={`mx-2 w-2 cursor-col-resize rounded-full border  dark:  ${isResizing ? "bg-sky-600/40" : ""
-              }`} style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}
+            className={`mx-2 w-2 cursor-col-resize rounded-full border ${isResizing ? "bg-sky-600/40" : ""}`}
+            style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}
             aria-hidden="true"
           />
         </div>
 
-        <aside className="space-y-4 rounded-2xl border  dark: bg-[var(--background)] dark: p-4 overflow-y-auto custom-scrollbar max-h-[610px]" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
+        <aside
+          className="space-y-4 rounded-2xl border overflow-y-auto custom-scrollbar max-h-[610px] p-4"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Event detail</p>
-              <h3 className="text-lg font-semibold dark:" style={{color: "rgb(15, 23, 42)"}}>
+              <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Event detail</p>
+              <h3 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
                 {selectedEvent?.rule_name ?? "Select an event"}
               </h3>
-              <p className="text-xs " style={{color: "rgb(71, 85, 105)"}}>
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                 {selectedEvent ? formatTimestamp(selectedEvent.triggered_at) : "No event selected"}
               </p>
             </div>
@@ -838,7 +844,8 @@ function CepEventBrowserContent() {
               <button
                 onClick={handleAck}
                 disabled={selectedEvent.ack}
-                className="rounded-2xl border dark: bg-emerald-500/80 px-3 py-2 text-xs font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{color: "rgb(15, 23, 42)", borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(241, 245, 249)"}}
+                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition hover:bg-emerald-500/20 disabled:opacity-60"
+                style={{ color: "var(--foreground)", borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
               >
                 {selectedEvent.ack ? "ACKED" : "ACK"}
               </button>
@@ -846,12 +853,12 @@ function CepEventBrowserContent() {
           </div>
           {detailError ? <p className="text-sm text-rose-400">{detailError}</p> : null}
           {selectedEvent ? (
-            <div className="space-y-3 text-sm  dark:" style={{color: "rgb(71, 85, 105)"}}>
-              <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-                <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Summary</p>
-                <p className="mt-2 text-sm  dark:" style={{color: "rgb(71, 85, 105)"}}>{selectedEvent.summary}</p>
+            <div className="space-y-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+              <div className="rounded-2xl border p-3" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Summary</p>
+                <p className="mt-2 text-sm" style={{ color: "var(--foreground)" }}>{selectedEvent.summary}</p>
               </div>
-              <div className="grid gap-2 rounded-2xl border  dark: bg-[var(--background)] dark: p-3 text-xs  dark:" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}>
+              <div className="grid gap-2 rounded-2xl border p-3 text-xs" style={{ borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)" }}>
                 <p>Severity: {selectedEvent.severity}</p>
                 <p>Status: {selectedEvent.status}</p>
                 <p>ACK: {selectedEvent.ack ? "true" : "false"}</p>
@@ -860,23 +867,23 @@ function CepEventBrowserContent() {
                 <p>Condition evaluated: {String(selectedEvent.condition_evaluated ?? "-")}</p>
                 <p>Extracted value: {String(selectedEvent.extracted_value ?? "-")}</p>
               </div>
-              <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-                <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Payload</p>
-                <pre className="mt-2 max-h-72 overflow-auto text-xs  dark: custom-scrollbar" style={{color: "rgb(71, 85, 105)"}}>
+              <div className="rounded-2xl border p-3" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+                <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Payload</p>
+                <pre className="mt-2 max-h-72 overflow-auto text-xs custom-scrollbar" style={{ color: "var(--foreground)" }}>
                   {JSON.stringify(selectedEvent.payload, null, 2)}
                 </pre>
               </div>
               {selectedEvent.exec_log ? (
-                <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
-                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Exec log</p>
-                  <pre className="mt-2 max-h-64 overflow-auto text-xs  dark: custom-scrollbar" style={{color: "rgb(71, 85, 105)"}}>
+                <div className="rounded-2xl border p-3" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+                  <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Exec log</p>
+                  <pre className="mt-2 max-h-64 overflow-auto text-xs custom-scrollbar" style={{ color: "var(--foreground)" }}>
                     {JSON.stringify(selectedEvent.exec_log, null, 2)}
                   </pre>
                 </div>
               ) : null}
             </div>
           ) : (
-            <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>이벤트를 선택하면 상세 정보가 표시됩니다.</p>
+            <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>이벤트를 선택하면 상세 정보가 표시됩니다.</p>
           )}
         </aside>
       </div>
@@ -886,7 +893,7 @@ function CepEventBrowserContent() {
 
 export default function CepEventBrowserPage() {
   return (
-    <Suspense fallback={<div className="p-4 " style={{color: "rgb(71, 85, 105)"}}>Loading...</div>}>
+    <Suspense fallback={<div className="p-4 text-slate-600 dark:text-slate-400">Loading...</div>}>
       <CepEventBrowserContent />
     </Suspense>
   );

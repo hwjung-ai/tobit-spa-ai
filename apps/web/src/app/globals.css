@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================================
  * DESIGN TOKENS - CSS Variables
@@ -62,6 +63,7 @@
 }
 
 /* DARK MODE overrides */
+:root[data-theme="dark"],
 .dark {
   /* Base colors - DARK MODE */
   --background: #020617; /* slate-950 */
@@ -336,6 +338,34 @@ body {
 .ag-theme-cep .ag-cell {
   display: flex;
   align-items: center;
+}
+
+/* Asset/Tool grid: keep background stable to avoid first-paint flicker */
+.ag-theme-cep-static {
+  --ag-background-color: transparent;
+  --ag-header-background-color: transparent;
+  --ag-odd-row-background-color: transparent;
+  --ag-row-background-color: transparent;
+}
+
+.ag-theme-cep-static .ag-root-wrapper,
+.ag-theme-cep-static .ag-root-wrapper-body,
+.ag-theme-cep-static .ag-root,
+.ag-theme-cep-static .ag-header,
+.ag-theme-cep-static .ag-body-horizontal-scroll,
+.ag-theme-cep-static .ag-horizontal-left-spacer,
+.ag-theme-cep-static .ag-horizontal-right-spacer,
+.ag-theme-cep-static .ag-body-horizontal-scroll-container,
+.ag-theme-cep-static .ag-scroller-corner {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.ag-theme-cep-static .ag-row,
+.ag-theme-cep-static .ag-row-odd,
+.ag-theme-cep-static .ag-row-even {
+  background-color: transparent !important;
+  transition: none !important;
 }
 
 /* AG Grid Scrollbar overrides */
@@ -1180,4 +1210,279 @@ body {
 
 .dark .text-disabled {
   color: #475569; /* slate-600 */
+}
+
+/* ============================================================================
+ * INSPECTOR PAGE SPECIFIC CLASSES
+ * ============================================================================ */
+
+/* Inspector Page - Hierarchy Levels */
+.insp-h1 {
+  @apply text-2xl font-semibold;
+  color: var(--foreground);
+}
+
+.insp-h2 {
+  @apply text-lg font-semibold;
+  color: var(--foreground);
+}
+
+.insp-h3 {
+  @apply text-base font-medium;
+  color: var(--foreground);
+}
+
+.insp-body {
+  @apply text-sm;
+  color: var(--foreground);
+}
+
+.insp-body-secondary {
+  @apply text-sm;
+  color: var(--muted-foreground);
+}
+
+.insp-label {
+  @apply text-xs font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+.insp-label-small {
+  @apply text-[10px] font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+.insp-mono {
+  @apply font-mono text-sm;
+  color: var(--foreground);
+}
+
+/* Inspector Page - Section Containers */
+.insp-section {
+  @apply rounded-2xl border p-5 shadow-sm;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .insp-section {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+/* Inspector Page - Input Fields */
+.insp-input {
+  @apply w-full rounded-lg border px-4 py-3 text-base outline-none transition;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.insp-input:focus {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .insp-input {
+  background-color: rgba(2, 6, 23, 0.5);
+  color: var(--foreground);
+  border-color: #38bdf8; /* sky-400 */
+}
+
+/* Inspector Page - Buttons */
+.insp-button {
+  @apply rounded-lg px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition;
+  background-color: #0284c7; /* sky-600 */
+}
+
+.insp-button:hover {
+  background-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .insp-button {
+  background-color: #0284c7; /* sky-600 */
+}
+
+.dark .insp-button:hover {
+  background-color: #0369a1; /* sky-700 */
+}
+
+.insp-button-secondary {
+  @apply rounded-lg border px-4 py-2 text-sm font-medium transition;
+  border-color: var(--border-muted);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.insp-button-secondary:hover {
+  background-color: var(--muted-background);
+}
+
+/* Inspector Page - Status Badges */
+.insp-badge {
+  @apply inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider;
+  border-color: var(--border-muted);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.insp-badge-success {
+  background-color: #16a34a; /* emerald-600 */
+  color: white;
+}
+
+.insp-badge-warning {
+  background-color: #ca8a04; /* amber-600 */
+  color: white;
+}
+
+.insp-badge-error {
+  background-color: #dc2626; /* rose-600 */
+  color: white;
+}
+
+.insp-badge-info {
+  background-color: #0284c7; /* sky-600 */
+  color: white;
+}
+
+/* Inspector Page - Tabs */
+.insp-tab {
+  @apply px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
+  color: var(--foreground);
+}
+
+.insp-tab-active {
+  @apply bg-sky-600 text-white;
+}
+
+.insp-tab-inactive {
+  @apply bg-transparent text-slate-700 hover:bg-slate-100;
+}
+
+.dark .insp-tab-inactive {
+  @apply text-slate-300 hover:bg-slate-800;
+}
+
+/* ============================================================================
+ * PHASE 3-4: BORDER RADIUS & BACKGROUND STANDARDIZATION
+ * ============================================================================ */
+
+/* Border Radius Standard Classes */
+.br-badge {
+  @apply rounded-full;
+}
+
+.br-btn {
+  @apply rounded-lg;
+}
+
+.br-card {
+  @apply rounded-xl;
+}
+
+.br-section {
+  @apply rounded-2xl;
+}
+
+.br-panel {
+  @apply rounded-3xl;
+}
+
+/* Background Color Standard Classes */
+.bg-surface-base {
+  background-color: var(--surface-base);
+}
+
+.dark .bg-surface-base {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.bg-surface-overlay {
+  background-color: var(--surface-overlay);
+}
+
+.dark .bg-surface-overlay {
+  background-color: rgba(2, 6, 23, 0.5);
+}
+
+.bg-surface-elevated {
+  background-color: var(--surface-elevated);
+}
+
+.dark .bg-surface-elevated {
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+/* Combined Container Classes */
+.container-card {
+  @apply rounded-xl border p-4 shadow-sm;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .container-card {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.container-section {
+  @apply rounded-2xl border p-5 shadow-sm;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .container-section {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.container-panel {
+  @apply rounded-3xl border p-6 shadow-md;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .container-panel {
+  background-color: rgba(15, 23, 42, 0.95);
+}
+
+/* Input Container Classes */
+.input-container {
+  @apply rounded-2xl border px-3 py-2 text-sm outline-none transition;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.input-container:focus {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .input-container {
+  background-color: rgba(2, 6, 23, 0.5);
+}
+
+.dark .input-container:focus {
+  border-color: #38bdf8; /* sky-400 */
+}
+
+/* Code Block Classes */
+.code-block {
+  @apply rounded-2xl overflow-auto border p-3 font-mono text-sm;
+  border-color: var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+  max-height: 12rem;
+}
+
+.dark .code-block {
+  background-color: rgba(2, 6, 23, 0.8);
+}
+
+.code-block-lg {
+  @apply rounded-2xl overflow-auto border p-3 font-mono text-sm;
+  border-color: var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+  max-height: 20rem;
+}
+
+.dark .code-block-lg {
+  background-color: rgba(2, 6, 23, 0.8);
 }
