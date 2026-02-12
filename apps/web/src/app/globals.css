@@ -378,6 +378,84 @@ body {
 }
 /* -- Accessibility: consistent focus-visible ring -- */
 *:focus-visible {
-  outline: 2px solid #38bdf8;
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+/* ============================================================================
+ * PAGE-SPECIFIC THEME CLASSES (Using @apply with CSS Variables)
+ * ============================================================================ */
+
+/* Main Pages */
+.page-main {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-ops {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-sim {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-api-manager {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-cep-builder {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-documents {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.page-admin {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Component Theme Classes */
+.card {
+  @apply rounded-lg border;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.card-elevated {
+  @apply rounded-lg border;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+}
+
+.input-field {
+  @apply rounded-lg border px-4 py-3 bg-white text-slate-900;
+  border-color: var(--border);
+}
+
+.dark .input-field {
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.button-primary {
+  @apply rounded-xl px-6 py-3 text-white font-semibold;
+  background-color: var(--primary);
+}
+
+.button-secondary {
+  @apply rounded-xl px-4 py-3 border;
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.dark .button-secondary {
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
 }

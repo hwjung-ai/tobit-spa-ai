@@ -1,5 +1,4 @@
 import { useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { fetchApi } from "../../lib/adminUtils";
 import {
   computeTraceDiff,
@@ -10,6 +9,7 @@ import {
   type ToolCallsDiff,
   type ReferencesDiff,
   type AnswerBlocksDiff,
+  type UIRenderDiff,
 } from "../../lib/traceDiffUtils";
 
 interface TraceInfo {
@@ -75,6 +75,20 @@ function ChangeIndicator({ changeType }: ChangeIndicatorProps) {
           : "border";
   const label = changeType === "added" ? "+" : changeType === "removed" ? "−" : changeType === "modified" ? "~" : "=";
   return <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] border ${indicatorClass}`}>{label}</span>;
+}
+
+function getReferencesChangeSummary(diff: ReferencesDiff) {
+  const totals = Object.values(diff.byType).reduce(
+    (acc, entry) => {
+      acc.added += entry.added.length;
+      acc.removed += entry.removed.length;
+      return acc;
+    },
+    { added: 0, removed: 0 }
+  );
+  const changed = totals.added + totals.removed;
+  const changeType = changed === 0 ? "unchanged" : "modified";
+  return { ...totals, changed, changeType };
 }
 
 /**
@@ -290,7 +304,8 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: ToolCallsDiff; 
  * Section: References Diff
  */
 function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: ReferencesDiff; showOnlyChanges: boolean }) {
-  const hasChanges = diff.added.length > 0 || diff.removed.length > 0 || diff.modified.length > 0;
+  const summary = getReferencesChangeSummary(diff);
+  const hasChanges = summary.changed > 0;
 
   if (showOnlyChanges && !hasChanges) {
     return null;
@@ -300,17 +315,20 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: ReferencesDiff
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>References</span>
-        <ChangeIndicator changeType={diff.changeType} />
+        <ChangeIndicator changeType={summary.changeType} />
       </div>
       <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
-        {diff.added.length > 0 && (
+        <div>
+          Before: {diff.total_before} / After: {diff.total_after}
+        </div>
+        {summary.added > 0 && (
           <div>
-            <span className="text-emerald-400">+ Added {diff.added.length} references</span>
+            <span className="text-emerald-400">+ Added {summary.added} references</span>
           </div>
         )}
-        {diff.removed.length > 0 && (
+        {summary.removed > 0 && (
           <div>
-            <span className="text-rose-400">- Removed {diff.removed.length} references</span>
+            <span className="text-rose-400">- Removed {summary.removed} references</span>
           </div>
         )}
       </div>
@@ -322,7 +340,13 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: ReferencesDiff
  * Section: Answer Blocks Diff
  */
 function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff; showOnlyChanges: boolean }) {
-  if (showOnlyChanges && diff.changeType === "same") {
+  const added = diff.blocks.filter((b) => b.changeType === "added");
+  const removed = diff.blocks.filter((b) => b.changeType === "removed");
+  const modified = diff.blocks.filter((b) => b.changeType === "modified");
+  const unchanged = diff.blocks.filter((b) => b.changeType === "unchanged");
+  const hasChanges = added.length > 0 || removed.length > 0 || modified.length > 0;
+
+  if (showOnlyChanges && !hasChanges) {
     return null;
   }
 
@@ -330,42 +354,37 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocks
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Answer Blocks</span>
-        <ChangeIndicator changeType={diff.changeType} />
+        <ChangeIndicator changeType={hasChanges ? "modified" : "unchanged"} />
       </div>
       <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
-        {diff.changeType === "added" && (
-          <div className="font-mono text-[10px]" style={{color: "#86efac"}}>
-            {diff.added.map((block, idx) => (
-              <div key={idx}>{block.type}</div>
-            ))}
-          </div>
-        )}
-        {diff.changeType === "removed" && (
-          <div className="font-mono text-[10px]" style={{color: "#fca5a5"}}>
-            {diff.removed.map((block, idx) => (
-              <div key={idx}>{block.type}</div>
-            ))}
-          </div>
-        )}
-        {diff.changeType === "modified" && (
+        <div>
+          Before: {diff.block_count_before} / After: {diff.block_count_after}
+        </div>
+        {hasChanges && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="font-mono text-[10px] mb-2" style={{color: "#fca5a5"}}>Removed</div>
-              {diff.removed.map((block, idx) => (
-                <div key={idx} className="text-sm mb-1">{block.type}</div>
+              {removed.map((block, idx) => (
+                <div key={idx} className="text-sm mb-1">{block.before?.type ?? "unknown"}</div>
               ))}
             </div>
             <div>
               <div className="font-mono text-[10px] mb-2" style={{color: "#86efac"}}>Added</div>
-              {diff.added.map((block, idx) => (
-                <div key={idx} className="text-sm mb-1">{block.type}</div>
+              {added.map((block, idx) => (
+                <div key={idx} className="text-sm mb-1">{block.after?.type ?? "unknown"}</div>
               ))}
             </div>
           </div>
         )}
-        {diff.changeType === "same" && (
+        {modified.length > 0 && (
+          <div className="font-mono text-[10px]" style={{color: "var(--foreground-secondary)"}}>
+            Modified: {modified.length}
+          </div>
+        )}
+        {!hasChanges && (
           <div className="text-[11px] italic" style={{color: "var(--muted-foreground)"}}>No block changes detected</div>
         )}
+        <div className="text-[10px]">Unchanged: {unchanged.length}</div>
       </div>
     </div>
   );
@@ -374,8 +393,13 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocks
 /**
  * Section: UI Render Diff
  */
-function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff; showOnlyChanges: boolean }) {
-  if (showOnlyChanges && diff.changeType === "same") {
+function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: UIRenderDiff; showOnlyChanges: boolean }) {
+  const added = diff.changes.filter((c) => c.changeType === "added");
+  const removed = diff.changes.filter((c) => c.changeType === "removed");
+  const modified = diff.changes.filter((c) => c.changeType === "modified");
+  const hasChanges = added.length > 0 || removed.length > 0 || modified.length > 0 || diff.error_count_before !== diff.error_count_after;
+
+  if (showOnlyChanges && !hasChanges) {
     return null;
   }
 
@@ -383,40 +407,37 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocksDiff
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>UI Render</span>
-        <ChangeIndicator changeType={diff.changeType} />
+        <ChangeIndicator changeType={hasChanges ? "modified" : "unchanged"} />
       </div>
       <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
-        {diff.changeType === "added" && (
-          <div className="font-mono text-[10px]" style={{color: "#86efac"}}>
-            {diff.added.map((block, idx) => (
-              <div key={idx}>{block.type}</div>
-            ))}
-          </div>
-        )}
-        {diff.changeType === "removed" && (
-          <div className="font-mono text-[10px]" style={{color: "#fca5a5"}}>
-            {diff.removed.map((block, idx) => (
-              <div key={idx}>{block.type}</div>
-            ))}
-          </div>
-        )}
-        {diff.changeType === "modified" && (
+        <div>
+          Components: {diff.component_count_before} {"->"} {diff.component_count_after}
+        </div>
+        <div>
+          Errors: {diff.error_count_before} {"->"} {diff.error_count_after}
+        </div>
+        {hasChanges && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="font-mono text-[10px] mb-2" style={{color: "#fca5a5"}}>Removed</div>
-              {diff.removed.map((block, idx) => (
-                <div key={idx} className="text-sm mb-1">{block.type}</div>
+              {removed.map((block, idx) => (
+                <div key={idx} className="text-sm mb-1">{block.before?.component_name ?? "unknown"}</div>
               ))}
             </div>
             <div>
               <div className="font-mono text-[10px] mb-2" style={{color: "#86efac"}}>Added</div>
-              {diff.added.map((block, idx) => (
-                <div key={idx} className="text-sm mb-1">{block.type}</div>
+              {added.map((block, idx) => (
+                <div key={idx} className="text-sm mb-1">{block.after?.component_name ?? "unknown"}</div>
               ))}
             </div>
           </div>
         )}
-        {diff.changeType === "same" && (
+        {modified.length > 0 && (
+          <div className="font-mono text-[10px]" style={{color: "var(--foreground-secondary)"}}>
+            Modified: {modified.length}
+          </div>
+        )}
+        {!hasChanges && (
           <div className="text-[11px] italic" style={{color: "var(--muted-foreground)"}}>No UI render changes detected</div>
         )}
       </div>
@@ -433,14 +454,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
   }, [traceA, traceB]);
 
   const hasChanges = useMemo(() => {
-    return (
-      diff.assets.changeType !== "unchanged" ||
-      diff.plan.changeType !== "same" ||
-      diff.toolCalls.changeType !== "unchanged" ||
-      diff.references.changeType !== "unchanged" ||
-      diff.answers.changeType !== "unchanged" ||
-      diff.ui.changeType !== "unchanged"
-    );
+    return diff.summary.total_changes > 0;
   }, [diff]);
 
   const handleCompare = useCallback(async () => {
@@ -449,15 +463,15 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
     }
 
     try {
-      const response = await fetchApi("/traces/compare", {
+      const response = await fetchApi<{ diff?: unknown }>("/traces/compare", {
         method: "POST",
-        body: {
+        body: JSON.stringify({
           trace_a_id: traceA.trace_id,
           trace_b_id: traceB.trace_id,
-        },
+        }),
       });
 
-      if (response.diff) {
+      if (response.data?.diff) {
         // Refresh the page to show comparison
         window.location.reload();
       }
@@ -530,12 +544,12 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
 
         {/* Sections */}
         <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-6">
-          {activeSection === "assets" && <AssetsDiffSection diff={diff.assets} showOnlyChanges={showOnlyChanges} />}
+          {activeSection === "assets" && <AssetsDiffSection diff={diff.applied_assets} showOnlyChanges={showOnlyChanges} />}
           {activeSection === "plan" && <PlanDiffSection diff={diff.plan} showOnlyChanges={showOnlyChanges} />}
-          {activeSection === "toolcalls" && <ToolCallsDiffSection diff={diff.toolCalls} showOnlyChanges={showOnlyChanges} />}
+          {activeSection === "toolcalls" && <ToolCallsDiffSection diff={diff.tool_calls} showOnlyChanges={showOnlyChanges} />}
           {activeSection === "references" && <ReferencesDiffSection diff={diff.references} showOnlyChanges={showOnlyChanges} />}
-          {activeSection === "answers" && <AnswerBlocksDiffSection diff={diff.answers} showOnlyChanges={showOnlyChanges} />}
-          {activeSection === "ui" && <UIRenderDiffSection diff={diff.ui} showOnlyChanges={showOnlyChanges} />}
+          {activeSection === "answers" && <AnswerBlocksDiffSection diff={diff.answer_blocks} showOnlyChanges={showOnlyChanges} />}
+          {activeSection === "ui" && <UIRenderDiffSection diff={diff.ui_render} showOnlyChanges={showOnlyChanges} />}
         </div>
 
         {/* Section Tabs */}
@@ -549,7 +563,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
                   activeSection === section.id
                     ? " text-white"
                     : " hover:"
-                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
+                }`}
                 style={activeSection === section.id
                   ? { backgroundColor: "var(--surface-elevated)", color: "var(--background)" }
                   : { color: "var(--muted-foreground)" }}

@@ -570,22 +570,22 @@ export default function OpsPage() {
     <div className="ops-theme">
     {/* Summary Modal */}
     {summaryModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-[var(--surface-base)]/80 dark:bg-[var(--surface-base)]/95">
-        <div className="relative w-full max-w-2xl rounded-3xl border border-[var(--border)] p-6 bg-[var(--surface-elevated)] dark:border-[var(--border)] dark:bg-[var(--surface-base)]">
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-slate-900/80 dark:bg-slate-900/95">
+        <div className="relative w-full max-w-2xl rounded-3xl border border-slate-300 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-950">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[var(--border)] p-6 dark:border-[var(--border)]">
+          <div className="flex items-center justify-between border-b border-slate-300 p-6 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📋</span>
               <div>
-                <h2 className="text-lg font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">대화 요약</h2>
-                <p className="text-xs text-[var(--muted-foreground)] dark:text-[var(--muted-foreground)]">
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">대화 요약</h2>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   {summaryData?.question_count || history.length}개의 질문
                 </p>
               </div>
             </div>
             <button
               onClick={() => setSummaryModalOpen(false)}
-              className="rounded-full border border-[var(--border)] px-3 py-1 text-sm text-[var(--foreground)] hover:bg-[var(--surface-elevated)] dark:border-[var(--border)] dark:text-[var(--foreground-secondary)] dark:hover:bg-[var(--surface-elevated)]"
+              className="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-900 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
             >
               ✕
             </button>
@@ -899,8 +899,12 @@ export default function OpsPage() {
           </div>
         </div>
         <section
-          className="flex flex-col gap-4 rounded-3xl border   p-4 shadow-inner shadow-black/40" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
-          style={isFullScreen ? { gridColumn: "span 2" } : undefined}
+          className="flex flex-col gap-4 rounded-3xl border   p-4 shadow-inner shadow-black/40"
+          style={{
+            borderColor: "var(--border)",
+            backgroundColor: "var(--surface-overlay)",
+            ...(isFullScreen ? { gridColumn: "span 2" } : {}),
+          }}
         >
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>

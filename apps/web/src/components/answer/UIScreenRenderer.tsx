@@ -1229,8 +1229,11 @@ export default function UIScreenRenderer({
                   {columnsMeta.map((col) => (
                     <td
                       key={`${comp.id}-${col.key}-${index}`}
-                      className="border  px-2 py-1" style={{borderColor: "var(--border)"}}
-                      style={resolveCellStyle(col.key, (row as Record<string, unknown>)?.[col.key])}
+                      className="border  px-2 py-1"
+                      style={{
+                        borderColor: "var(--border)",
+                        ...(resolveCellStyle(col.key, (row as Record<string, unknown>)?.[col.key]) || {}),
+                      }}
                     >
                       {formatCell((row as Record<string, unknown>)?.[col.key], col.format)}
                     </td>

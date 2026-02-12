@@ -57,7 +57,7 @@ const ASSET_CONFIG: Record<string, { icon: React.ReactElement; color: string; la
   policy: { icon: <Shield className="h-3 w-3" />, color: "text-emerald-400", label: "Policy" },
   query: { icon: <Search className="h-3 w-3" />, color: "text-purple-400", label: "Query" },
   mapping: { icon: <Map className="h-3 w-3" />, color: "text-amber-400", label: "Mapping" },
-  source: { icon: <Database className="h-3 w-3" />, color: "text-[var(--foreground-secondary)]", label: "Source", style: { color: "var(--foreground-secondary)" } },
+  source: { icon: <Database className="h-3 w-3" />, color: "text-[var(--foreground-secondary)]", label: "Source" },
   schema: { icon: <Layers className="h-3 w-3" />, color: "text-fuchsia-300", label: "Schema" },
   resolver: { icon: <Sliders className="h-3 w-3" />, color: "text-orange-300", label: "Resolver" },
 };
@@ -90,7 +90,7 @@ interface AssetCardProps {
 }
 
 function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
-  const config = ASSET_CONFIG[type] || { icon: <FileText className="h-3 w-3" />, color: "text-[var(--muted-foreground)]", label: type, style: { color: "var(--muted-foreground)" } };
+  const config = ASSET_CONFIG[type] || { icon: <FileText className="h-3 w-3" />, color: "text-[var(--muted-foreground)]", label: type };
   const displayName = getAssetName(value, assetNames);
   const version = getAssetVersion(value);
   const baseId = value.replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
@@ -306,7 +306,11 @@ export default function InspectorStagePipeline({
                       "min-w-[160px] rounded-xl border px-3 py-2 text-left transition-all",
                       isSelected && "ring-2"
                     )}
-                    style={{borderColor: isSelected ? "var(--primary)" : "var(--border)", backgroundColor: isSelected ? "var(--surface-elevated)" : "var(--surface-overlay)", ringColor: isSelected ? "var(--primary)" : "transparent"}}
+                    style={{
+                      borderColor: isSelected ? "var(--primary)" : "var(--border)",
+                      backgroundColor: isSelected ? "var(--surface-elevated)" : "var(--surface-overlay)",
+                      boxShadow: isSelected ? "0 0 0 2px var(--primary)" : "none",
+                    }}
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] uppercase tracking-[0.3em]" style={{color: isSelected ? "var(--foreground)" : "var(--muted-foreground)"}}>

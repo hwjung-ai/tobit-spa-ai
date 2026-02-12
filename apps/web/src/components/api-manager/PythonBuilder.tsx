@@ -182,8 +182,12 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
                 selectedTemplate === template
                   ? "border-sky-500 bg-sky-500/10 text-white"
                   : "hover:"
-              }`} style={{borderColor: "var(--border)"}}
-              style={selectedTemplate !== template ? { border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" } : undefined}
+              }`}
+              style={
+                selectedTemplate === template
+                  ? { borderColor: "var(--border)" }
+                  : { border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" }
+              }
             >
               {template}
             </button>
