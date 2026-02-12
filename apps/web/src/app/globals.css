@@ -246,6 +246,59 @@ html {
   background-color: var(--surface-elevated) !important;
 }
 
+/* Cross-page box consistency normalization
+ * Scope to major workspace themes/pages to avoid global side effects.
+ */
+.api-manager-theme :is(.rounded-md, .rounded-lg),
+.ops-theme :is(.rounded-md, .rounded-lg),
+.page-cep-builder :is(.rounded-md, .rounded-lg),
+.page-cep-events :is(.rounded-md, .rounded-lg) {
+  border-radius: 0.75rem;
+}
+
+.api-manager-theme
+  .border:not([class*="border-sky"]):not([class*="border-rose"]):not([class*="border-emerald"]):not(
+    [class*="border-amber"]
+  ):not([class*="border-green"]):not([class*="border-red"]):not([class*="border-orange"]):not(
+    [class*="border-indigo"]
+  ):not([class*="border-violet"]),
+.ops-theme
+  .border:not([class*="border-sky"]):not([class*="border-rose"]):not([class*="border-emerald"]):not(
+    [class*="border-amber"]
+  ):not([class*="border-green"]):not([class*="border-red"]):not([class*="border-orange"]):not(
+    [class*="border-indigo"]
+  ):not([class*="border-violet"]),
+.page-cep-builder
+  .border:not([class*="border-sky"]):not([class*="border-rose"]):not([class*="border-emerald"]):not(
+    [class*="border-amber"]
+  ):not([class*="border-green"]):not([class*="border-red"]):not([class*="border-orange"]):not(
+    [class*="border-indigo"]
+  ):not([class*="border-violet"]),
+.page-cep-events
+  .border:not([class*="border-sky"]):not([class*="border-rose"]):not([class*="border-emerald"]):not(
+    [class*="border-amber"]
+  ):not([class*="border-green"]):not([class*="border-red"]):not([class*="border-orange"]):not(
+    [class*="border-indigo"]
+  ):not([class*="border-violet"]) {
+  border-color: var(--border) !important;
+}
+
+.page-cep-builder .bg-white,
+.page-cep-events .bg-white {
+  background-color: var(--surface-base) !important;
+}
+
+.page-cep-builder .bg-slate-50,
+.page-cep-builder .bg-slate-100,
+.page-cep-builder .dark\:bg-slate-900,
+.page-cep-builder .dark\:bg-slate-950,
+.page-cep-events .bg-slate-50,
+.page-cep-events .bg-slate-100,
+.page-cep-events .dark\:bg-slate-900,
+.page-cep-events .dark\:bg-slate-950 {
+  background-color: var(--surface-elevated) !important;
+}
+
 .ag-theme-cep {
   --ag-background-color: var(--surface-base);
   --ag-foreground-color: var(--foreground);
@@ -2206,10 +2259,28 @@ html {
 
 /* API Manager - Inline style replacements */
 .api-textarea {
-  @apply h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar;
+  @apply h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition overflow-auto;
   border-color: var(--input-border);
   background-color: var(--surface-base);
   color: var(--foreground);
+}
+
+.api-textarea::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.api-textarea::-webkit-scrollbar-track {
+  background: var(--surface-base);
+}
+
+.api-textarea::-webkit-scrollbar-thumb {
+  background: var(--border-muted);
+  border-radius: 10px;
+}
+
+.api-textarea::-webkit-scrollbar-thumb:hover {
+  background: var(--border);
 }
 
 .api-textarea:focus {
