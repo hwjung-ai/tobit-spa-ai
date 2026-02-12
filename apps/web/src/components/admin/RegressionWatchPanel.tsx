@@ -218,7 +218,7 @@ export default function RegressionWatchPanel() {
    return (
     <div className="space-y-6" data-testid="regression-panel">
       {error && (
-        <Alert className="bg-rose-50 border-rose-200 text-rose-800">
+        <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -238,7 +238,7 @@ export default function RegressionWatchPanel() {
       {/* Golden Queries Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Golden Queries</h3>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Golden Queries</h2>
           <Button
             size="sm"
             onClick={() => setShowCreateDialog(true)}
@@ -331,7 +331,7 @@ export default function RegressionWatchPanel() {
 
       {/* Regression Runs Section */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white">Recent Runs</h3>
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Recent Runs</h2>
 
         {runsLoading ? (
           <div className="text-center " style={{color: "var(--muted-foreground)"}}>Loading...</div>
