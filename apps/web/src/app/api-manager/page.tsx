@@ -1901,14 +1901,11 @@ export default function ApiManagerPage() {
                     key={type}
                     onClick={() => setLogicType(type)}
                     disabled={!!selectedId}
-                    className={`rounded-full border px-3 py-1 text-xs uppercase tracking-normal transition ${
-                      logicType === type ? "border-sky-500 bg-sky-500/10 " : " "
-                    } ${!!selectedId ? "opacity-40 cursor-not-allowed" : "hover: shadow-sm"}`}
-                    style={{
-                      backgroundColor: "var(--surface-base)",
-                      color: "var(--foreground)",
-                      borderColor: "var(--border)",
-                    }}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                      logicType === type
+                        ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                        : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    } ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""}`}
                   >
                     {logicTypeLabels[type]}
                   </button>
@@ -1916,18 +1913,24 @@ export default function ApiManagerPage() {
                 <button
                   type="button"
                   onClick={handleLogicUndo}
-                  className="rounded-full border px-3 py-1 text-xs uppercase tracking-normal transition opacity-40"
-                  style={{ borderColor: "var(--border)", color: "var(--foreground-secondary)" }}
                   disabled={logicHistoryIndex <= 0}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                    logicHistoryIndex <= 0
+                      ? "opacity-40 cursor-not-allowed"
+                      : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  }`}
                 >
                   Undo
                 </button>
                 <button
                   type="button"
                   onClick={handleLogicRedo}
-                  className="rounded-full border px-3 py-1 text-xs uppercase tracking-normal transition opacity-40"
-                  style={{ borderColor: "var(--border)", color: "var(--foreground-secondary)" }}
                   disabled={logicHistoryIndex >= logicHistory.length - 1}
+                  className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                    logicHistoryIndex >= logicHistory.length - 1
+                      ? "opacity-40 cursor-not-allowed"
+                      : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  }`}
                 >
                   Redo
                 </button>
@@ -2306,14 +2309,11 @@ export default function ApiManagerPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`rounded-full border px-3 py-1 text-xs uppercase tracking-normal ${
-              activeTab === tab.id ? "border-sky-500 bg-sky-500/10 " : " "
+            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+              activeTab === tab.id
+                ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             }`}
-            style={{
-              backgroundColor: "var(--surface-base)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-            }}
           >
             {tab.label}
           </button>
@@ -2384,14 +2384,11 @@ export default function ApiManagerPage() {
               <button
                 key={item}
                 onClick={() => setScope(item as ScopeType)}
-                className={`rounded-full border px-3 py-1 transition ${
-                  scope === item ? "border-sky-500 bg-sky-500/10 " : " "
+                className={`rounded-full border px-3 py-1 transition font-semibold text-sm ${
+                  scope === item
+                    ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                    : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 }`}
-                style={{
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
               >
                 {SCOPE_LABELS[item]}
               </button>
@@ -2410,14 +2407,11 @@ export default function ApiManagerPage() {
                   <button
                     key={view}
                     onClick={() => setSystemView(view)}
-                    className={`rounded-full border px-2 py-1 text-xs uppercase tracking-normal transition ${
-                      systemView === view ? "border-sky-500 bg-sky-500/10 " : " "
+                    className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                      systemView === view
+                        ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                        : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     }`}
-                    style={{
-                      backgroundColor: "var(--surface-base)",
-                      color: "var(--foreground)",
-                      borderColor: "var(--border)",
-                    }}
                   >
                     {view}
                   </button>
