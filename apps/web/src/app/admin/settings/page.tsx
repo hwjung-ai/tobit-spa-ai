@@ -164,7 +164,7 @@ export default function SettingsPage() {
                             onClick={() => setActiveTab("all")}
                             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
                                 activeTab === "all"
-                                    ? "rounded-lg bg-sky-600 text-white"
+                                    ? "rounded-lg bg-sky-600 text-white dark:text-slate-50"
                                     : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                             }`}
                         >
@@ -174,7 +174,7 @@ export default function SettingsPage() {
                             onClick={() => setActiveTab("llm")}
                             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
                                 activeTab === "llm"
-                                    ? "rounded-lg bg-sky-600 text-white"
+                                    ? "rounded-lg bg-sky-600 text-white dark:text-slate-50"
                                     : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                             }`}
                         >
@@ -184,7 +184,7 @@ export default function SettingsPage() {
                             onClick={() => setActiveTab("auth")}
                             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
                                 activeTab === "auth"
-                                    ? "rounded-lg bg-sky-600 text-white"
+                                    ? "rounded-lg bg-sky-600 text-white dark:text-slate-50"
                                     : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                             }`}
                         >
