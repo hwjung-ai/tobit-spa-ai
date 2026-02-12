@@ -2,7 +2,7 @@
 
 > Project: tobit-spa-ai
 > Framework: Next.js 16 + React 19 + Tailwind CSS 4 + Radix UI
-> Last Updated: 2026-02-12 (Phase 1-6: Complete UI Consistency Standardization)
+> Last Updated: 2026-02-13 (Phase 1-12: Complete UI Consistency Standardization)
 
 ---
 
@@ -24,7 +24,7 @@
 
 ---
 
-## ✅ Consistency Fixes Applied (Phase 1-7)
+## ✅ Consistency Fixes Applied (Phase 1-12)
 
 ### Files Modified (2026-02-12)
 
@@ -133,6 +133,61 @@
    - `.btn-secondary` - Standard secondary button
    - `.badge-primary`, `.badge-active` - Badge styles
    - `.text-label`, `.text-label-sm`, `.text-label-normal` - Label text styles
+
+**Phase 12 (Page Header Standardization):**
+- ✅ `components/shared/PageHeader.tsx` - Standard page header component (3 variants)
+- ✅ `/apps/web/src/app/globals.css` - Page header CSS classes added
+  - `.page-header`, `.page-header-title-group`, `.page-header-title`
+  - `.page-header-description`, `.page-header-actions`, `.page-header-divider`
+  - `.line-clamp-1`, `.line-clamp-2`, `.line-clamp-3`
+  - `.text-tiny`, `.tracking-label`
+  - `.border-variant`, `.bg-surface-base`, `.bg-surface-elevated`
+  - `.text-foreground`, `.text-muted-foreground`, `.divider-vertical`
+- ✅ `/apps/web/src/app/ops/page.tsx` - `PageHeader` component applied
+- ✅ `/apps/web/src/app/sim/page.tsx` - `PageHeader` component applied
+- ✅ `/apps/web/src/app/documents/page.tsx` - `PageHeader` component + actions applied
+- ✅ `/apps/web/src/app/api-manager/page.tsx` - `PageHeader` component applied
+- ✅ `/apps/web/src/app/cep-builder/page.tsx` - `PageHeader` component applied
+- ✅ `/apps/web/src/app/cep-events/page.tsx` - `PageHeader` component + actions applied
+- ✅ `/apps/web/src/app/admin/catalogs/page.tsx` - `PageHeader` component applied
+- ✅ `/apps/web/src/app/ui/screens/page.tsx` - `PageHeader` component applied
+- ✅ `/apps/web/src/app/documents/[documentId]/viewer/page.tsx` - All inline styles removed
+  - RGB colors → Tailwind classes
+  - `tracking-[0.3em]` → `tracking-wider`
+  - `text-[10px]` → `text-tiny`
+  - `style={{backgroundColor: ...}}` → CSS classes
+- ✅ `/apps/web/src/app/admin/tools/tools-content.tsx` - Inline styles removed
+  - `text-[10px]` → `text-tiny`
+  - `tracking-[0.2em]` → `tracking-wider`
+  - `var(--border)` → CSS classes
+- ✅ `/apps/web/src/app/admin/assets/[assetId]/page.tsx` - Inline styles removed
+  - RGB colors → Tailwind classes
+  - `tracking-[0.2em]` → `tracking-wider`
+  - `style={{color: ...}}` → CSS classes
+- ✅ `/apps/web/src/app/admin/assets/assets-content.tsx` - Inline styles removed
+  - `var(--surface-elevated)` → CSS classes
+- ✅ `/apps/web/src/app/ops/page.tsx` - Tracking standardized
+  - `tracking-[0.2em]` → `tracking-wider`
+  - `tracking-[0.3em]` → `tracking-wider`
+  - Line clamp inline styles → `.line-clamp-1`, `.line-clamp-2`
+
+### Key Changes (Phase 12)
+
+1. **Page Header Component Created**
+   - `PageHeader` - Basic header with title + description + optional actions
+   - `PageHeaderWithDivider` - Header with bottom divider
+   - `PageHeaderCentered` - Centered header without actions
+   - All use consistent: `text-2xl font-semibold` for title, `text-sm` for description
+
+2. **Typography Standardization**
+   - `text-tiny` class for `text-[10px]` (10px labels)
+   - `tracking-wider` for all uppercase labels (replaced `tracking-[0.2em]`, `tracking-[0.3em]`)
+   - Line clamp utilities: `.line-clamp-1`, `.line-clamp-2`, `.line-clamp-3`
+
+3. **Inline Style Removal**
+   - All RGB color hardcoded styles → Tailwind classes
+   - All CSS variable inline styles → Tailwind classes
+   - Webkit box-orient styles → `.line-clamp-*` classes
    - `.tab-button`, `.tab-button-active`, `.tab-button-inactive` - Tab styles
    - `.page-section` - Standard page section
    - `.input-standard` - Standard input field

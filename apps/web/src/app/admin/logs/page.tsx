@@ -102,18 +102,18 @@ export default function LogsPage() {
 
   const renderTable = (records: LogRecord[]) => {
     if (!records || records.length === 0) {
-      return <div className="py-10 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>No logs found</div>;
+      return <div className="py-10 text-center text-sm text-muted-foreground">No logs found</div>;
     }
 
     const columns = Object.keys(records[0]);
 
     return (
-      <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+      <div className="overflow-x-auto rounded-2xl border border-border bg-surface-base">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
+            <tr className="border-b border-border bg-surface-elevated">
               {columns.map((col) => (
-                <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                <th key={col} className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-muted-foreground">
                   {col.replace(/_/g, " ")}
                 </th>
               ))}
@@ -121,9 +121,9 @@ export default function LogsPage() {
           </thead>
           <tbody>
             {records.map((record, idx) => (
-              <tr key={idx} className="border-b last:border-b-0" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+              <tr key={idx} className="border-b border-border last:border-b-0 bg-surface-base">
                 {columns.map((col) => (
-                  <td key={col} className="px-3 py-2 align-top" style={{ color: "var(--foreground)" }}>
+                  <td key={col} className="px-3 py-2 align-top text-foreground">
                     {typeof record[col] === "object" ? JSON.stringify(record[col]) : String(record[col] ?? "-")}
                   </td>
                 ))}
@@ -137,23 +137,22 @@ export default function LogsPage() {
 
   const renderFileLog = (lines: string[]) => {
     return (
-      <div className="custom-scrollbar max-h-[600px] overflow-auto rounded-2xl border p-4 font-mono text-[10px]" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
-        {lines.map((line, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              "py-0.5",
-              line.includes("ERROR") || line.includes("error")
-                ? "text-rose-400"
-                : line.includes("WARNING") || line.includes("WARN")
-                  ? "text-amber-400"
-                  : ""
-            )}
-            style={{ color: line.includes("ERROR") || line.includes("error") || line.includes("WARNING") || line.includes("WARN") ? undefined : "var(--foreground)" }}
-          >
-            {line}
-          </div>
-        ))}
+      <div className="custom-scrollbar max-h-[600px] overflow-auto rounded-2xl border border-border bg-surface-base p-4 font-mono text-[10px]">
+        {lines.map((line, idx) => {
+          const isError = line.includes("ERROR") || line.includes("error");
+          const isWarning = line.includes("WARNING") || line.includes("WARN");
+          return (
+            <div
+              key={idx}
+              className={cn(
+                "py-0.5",
+                isError ? "text-rose-400" : isWarning ? "text-amber-400" : "text-foreground"
+              )}
+            >
+              {line}
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -163,8 +162,8 @@ export default function LogsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="mb-2 text-lg font-semibold" style={{ color: "var(--foreground)" }}>System Logs</h2>
-        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+        <h2 className="mb-2 text-lg font-semibold text-foreground">System Logs</h2>
+        <p className="text-sm text-muted-foreground">
           View system logs including query history, execution traces, audit logs, LLM calls, and server logs.
         </p>
       </div>
@@ -183,17 +182,8 @@ export default function LogsPage() {
                 "rounded-lg border px-4 py-2 text-xs font-semibold tracking-wider transition",
                 active
                   ? tab.activeClass
-                  : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                  : "border-border bg-surface-elevated text-foreground hover:bg-slate-100 dark:hover:bg-slate-800"
               )}
-              style={
-                active
-                  ? { borderColor: "transparent" }
-                  : {
-                      borderColor: "var(--border)",
-                      backgroundColor: "var(--surface-elevated)",
-                      color: "var(--foreground)",
-                    }
-              }
             >
               {tab.label}
             </button>
@@ -210,7 +200,7 @@ export default function LogsPage() {
             onChange={(e) => setAutoRefresh(e.target.checked)}
             className="rounded"
           />
-          <label htmlFor="autoRefresh" className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+          <label htmlFor="autoRefresh" className="text-xs text-muted-foreground">
             Auto-refresh every 3 seconds
           </label>
         </div>
@@ -219,9 +209,9 @@ export default function LogsPage() {
       {logType === "llm-logs" ? (
         <LlmLogsContent />
       ) : (
-        <div className="space-y-4 rounded-2xl border p-4" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
+        <div className="space-y-4 rounded-2xl border border-border bg-surface-elevated p-4">
           {loading && (
-            <div className="py-8 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
+            <div className="py-8 text-center text-sm text-muted-foreground">
               Loading logs...
             </div>
           )}
@@ -238,33 +228,31 @@ export default function LogsPage() {
               {data.lines && renderFileLog(data.lines)}
 
               {data.file && (
-                <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                <div className="text-xs text-muted-foreground">
                   File: {data.file} | Exists: {data.exists ? "Yes" : "No"}
                 </div>
               )}
 
               {data.records && data.total > limit && (
                 <div className="mt-2 flex items-center justify-between text-sm">
-                  <div style={{ color: "var(--muted-foreground)" }}>
+                  <div className="text-muted-foreground">
                     Showing {page * limit + 1} - {Math.min((page + 1) * limit, data.total)} of {data.total}
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => setPage(Math.max(0, page - 1))}
                       disabled={page === 0}
-                      className="rounded-lg border px-3 py-1 transition disabled:cursor-not-allowed disabled:opacity-50"
-                      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+                      className="rounded-lg border border-border bg-surface-base px-3 py-1 text-foreground transition disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Previous
                     </button>
-                    <div className="px-3 py-1" style={{ color: "var(--muted-foreground)" }}>
+                    <div className="px-3 py-1 text-muted-foreground">
                       Page {page + 1} of {totalPages}
                     </div>
                     <button
                       onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                       disabled={page >= totalPages - 1}
-                      className="rounded-lg border px-3 py-1 transition disabled:cursor-not-allowed disabled:opacity-50"
-                      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+                      className="rounded-lg border border-border bg-surface-base px-3 py-1 text-foreground transition disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Next
                     </button>
