@@ -1611,10 +1611,7 @@ function InspectorContent() {
                               </details>
                             )}
                             {step.references && step.references.length ? (
-                              <p
-                                className="text-sm "
-                                style={{ color: "var(--muted-foreground)" }}
-                              >
+                              <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
                                 References:{" "}
                                 {step.references
                                   .map((ref: { name: string }) => ref.name)
@@ -1961,10 +1958,7 @@ function InspectorContent() {
                           Flow
                         </p>
                         {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
-                          <span
-                            className="text-xs "
-                            style={{ color: "var(--muted-foreground)" }}
-                          >
+                          <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                             {traceDetail.flow_spans.length} spans
                           </span>
                         )}
@@ -2257,10 +2251,7 @@ function InspectorContent() {
                                 {renderJsonDetails("Response", step.response)}
                               </div>
                             ) : (
-                              <p
-                                className="text-sm "
-                                style={{ color: "var(--muted-foreground)" }}
-                              >
+                              <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
                                 Tool call not found
                               </p>
                             );

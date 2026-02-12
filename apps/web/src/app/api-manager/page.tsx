@@ -1901,11 +1901,28 @@ export default function ApiManagerPage() {
                     key={type}
                     onClick={() => setLogicType(type)}
                     disabled={!!selectedId}
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""}`}
+                    style={
                       logicType === type
-                        ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
-                        : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                    } ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""}`}
+                        ? {
+                            borderColor: "var(--primary)",
+                            backgroundColor: "var(--primary)",
+                            color: "white",
+                          }
+                        : {
+                            borderColor: "var(--border)",
+                            backgroundColor: "var(--surface-base)",
+                            color: "var(--foreground-secondary)",
+                          }
+                    }
+                    onMouseEnter={(e) => {
+                      if (logicType !== type)
+                        e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (logicType !== type)
+                        e.currentTarget.style.backgroundColor = "var(--surface-base)";
+                    }}
                   >
                     {logicTypeLabels[type]}
                   </button>
@@ -1914,11 +1931,18 @@ export default function ApiManagerPage() {
                   type="button"
                   onClick={handleLogicUndo}
                   disabled={logicHistoryIndex <= 0}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition"
+                  style={
                     logicHistoryIndex <= 0
-                      ? "opacity-40 cursor-not-allowed"
-                      : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                  }`}
+                      ? {opacity: "0.4", cursor: "not-allowed"}
+                      : {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground-secondary)"}
+                  }
+                  onMouseEnter={(e) => {
+                    if (logicHistoryIndex > 0) e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (logicHistoryIndex > 0) e.currentTarget.style.backgroundColor = "var(--surface-base)";
+                  }}
                 >
                   Undo
                 </button>
@@ -1926,14 +1950,22 @@ export default function ApiManagerPage() {
                   type="button"
                   onClick={handleLogicRedo}
                   disabled={logicHistoryIndex >= logicHistory.length - 1}
-                  className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
+                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition"
+                  style={
                     logicHistoryIndex >= logicHistory.length - 1
-                      ? "opacity-40 cursor-not-allowed"
-                      : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                  }`}
+                      ? {opacity: "0.4", cursor: "not-allowed"}
+                      : {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground-secondary)"}
+                  }
+                  onMouseEnter={(e) => {
+                    if (logicHistoryIndex < logicHistory.length - 1) e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (logicHistoryIndex < logicHistory.length - 1) e.currentTarget.style.backgroundColor = "var(--surface-base)";
+                  }}
                 >
                   Redo
                 </button>
+  ++++++++ REPLACE
               </div>
             ) : null}
           </div>
@@ -2066,23 +2098,43 @@ export default function ApiManagerPage() {
                 onClick={handleDryRunFromEditor}
                 disabled={isExecuting}
                 className={`rounded-full border px-5 py-2 text-sm font-bold uppercase tracking-wider transition ${
-                  isExecuting
-                    ? "opacity-60 cursor-not-allowed border-slate-400 bg-slate-200 text-slate-600"
-                    : "border-sky-500 bg-sky-500 text-white hover:bg-sky-600 dark:bg-sky-600 dark:hover:bg-sky-700 shadow-md"
+                  isExecuting ? "opacity-60 cursor-not-allowed" : ""
                 }`}
+                style={
+                  isExecuting
+                    ? {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}
+                    : {borderColor: "var(--primary)", backgroundColor: "var(--primary)", color: "white"}
+                }
+                onMouseEnter={(e) => {
+                  if (!isExecuting) e.currentTarget.style.backgroundColor = "var(--primary-hover)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isExecuting) e.currentTarget.style.backgroundColor = "var(--primary)";
+                }}
               >
                 {isExecuting ? "Running…" : `Test ${logicTypeLabels[logicType]} (Dry-run)`}
               </button>
             )}
           <button
             onClick={handleSave}
-            className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-sm font-bold uppercase tracking-wider transition bg-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] "
-            style={{ color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)" }}
             disabled={isSaving || isSystemScope}
+            className="rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition"
+            style={
+              isSaving || isSystemScope
+                ? {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}
+                : {borderColor: "var(--success)", backgroundColor: "var(--success)", color: "white"}
+            }
+            onMouseEnter={(e) => {
+              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "var(--success-hover)";
+            }}
+            onMouseLeave={(e) => {
+              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "var(--success)";
+            }}
           >
             {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
           </button>
         </div>
+  ++++++++ REPLACE
       </div>
       {showLogicResult && activeTab === "logic" && (
         <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
@@ -2168,10 +2220,7 @@ export default function ApiManagerPage() {
                         >
                           {executionColumns.map((column) => (
                             <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
-                              <pre
-                                className="m-0 text-sm "
-                                style={{ color: "var(--foreground)" }}
-                              >
+                              <pre className="m-0 text-sm " style={{ color: "var(--foreground)" }}>
                                 {String(row[column] ?? "")}
                               </pre>
                             </td>
@@ -2789,10 +2838,7 @@ export default function ApiManagerPage() {
                         </span>
                       )}
                     </div>
-                    <span
-                      className="text-xs truncate"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <span className="text-xs truncate" style={{ color: "var(--muted-foreground)" }}>
                       {api.endpoint}
                     </span>
                   </div>
@@ -2950,8 +2996,10 @@ export default function ApiManagerPage() {
 
   return (
     <div className="api-manager-theme py-6">
-      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">API Manager</h1>
-      <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
+      <h1 style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
+        API Manager
+      </h1>
+      <p className="mb-6 text-sm" style={{ color: "var(--muted-foreground)" }}>
         Builder shell for defining executable APIs that power OPS and orchestration tools.
       </p>
       <BuilderShell

@@ -101,6 +101,22 @@
 
   /* Focus ring - brighter in dark mode */
   --focus-ring: 2px solid #38bdf8; /* sky-400 */
+
+  /* Component-specific variables (dark mode) */
+  --form-section-bg: rgba(15, 23, 42, 0.3);
+  --form-section-border: var(--border-muted);
+  --draft-panel-bg: var(--surface-overlay);
+  --form-field-label-color: var(--muted-foreground);
+  --form-field-help-color: var(--muted-foreground);
+}
+
+/* Light mode component variables */
+:root {
+  --form-section-bg: rgba(2, 132, 199, 0.03);
+  --form-section-border: var(--border-muted);
+  --draft-panel-bg: var(--surface-overlay);
+  --form-field-label-color: var(--muted-foreground);
+  --form-field-help-color: var(--muted-foreground);
 }
 
 /* Note: @theme inline removed - using direct CSS variables instead */
@@ -448,6 +464,167 @@ body {
 .dark .button-secondary {
   background-color: var(--surface-elevated);
   color: var(--foreground);
+}
+
+/* ============================================================================
+ * FORM & BUILDER COMPONENT CLASSES (Skills/UI Pattern)
+ * ============================================================================ */
+
+/* Form Section - Reusable container for form sections */
+.form-section {
+  @apply space-y-3 rounded-xl p-4;
+  border: 1px solid var(--form-section-border);
+  background-color: var(--form-section-bg);
+}
+
+.form-section-title {
+  @apply text-lg font-semibold;
+  color: var(--form-field-label-color);
+}
+
+.form-section-description {
+  @apply mt-1 text-xs;
+  color: var(--form-field-label-color);
+}
+
+/* Form Field Group - Reusable label + input wrapper */
+.form-field-group {
+  @apply flex flex-col gap-1.5;
+}
+
+.form-field-label {
+  @apply text-sm font-medium uppercase tracking-normal;
+  color: var(--form-field-label-color);
+}
+
+.form-field-label-required {
+  @apply ml-1;
+  color: #f87171; /* red-400 */
+}
+
+.form-field-help {
+  @apply text-xs;
+  color: var(--form-field-help-color);
+}
+
+.form-field-error {
+  @apply text-xs;
+  color: #f87171; /* red-400 */
+}
+
+/* Draft/Assistant Panel - Right-side Copilot panel */
+.draft-panel {
+  @apply space-y-3 rounded-3xl p-4 text-sm;
+  border: 1px solid var(--border);
+  background-color: var(--draft-panel-bg);
+  color: var(--muted-foreground);
+}
+
+.draft-panel-section {
+  @apply rounded-2xl p-3;
+  border: 1px solid var(--border);
+  background-color: var(--surface-base);
+}
+
+.draft-panel-label {
+  @apply text-[11px] uppercase tracking-normal;
+  color: var(--muted-foreground);
+}
+
+.draft-panel-item {
+  @apply rounded-xl px-2 py-1.5;
+  border: 1px solid var(--border);
+  background-color: var(--surface-base);
+}
+
+.draft-panel-item-label {
+  @apply text-[11px] font-semibold;
+  color: var(--muted-foreground);
+}
+
+.draft-panel-item-description {
+  @apply text-[10px];
+  color: var(--muted-foreground);
+}
+
+.draft-panel-item-signature {
+  @apply text-[10px] text-sky-400;
+}
+
+.dark .draft-panel-item-signature {
+  @apply dark:text-sky-300;
+}
+
+/* Draft Panel Buttons */
+.draft-panel-button {
+  @apply rounded-2xl px-3 py-2 text-[11px] font-semibold uppercase tracking-normal transition;
+  border: 1px solid var(--border);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.draft-panel-button:hover {
+  border-color: var(--primary-light);
+}
+
+.draft-panel-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+/* Alert Boxes - Error and Warning messages */
+.alert-box {
+  @apply space-y-1 rounded-2xl border px-3 py-2 text-[11px];
+}
+
+.alert-error {
+  @apply border-rose-500/60 bg-rose-500/5 text-rose-200;
+}
+
+.alert-warning {
+  @apply border-amber-500/60 bg-amber-500/5 text-amber-200;
+}
+
+.alert-info {
+  @apply border-amber-500/60 bg-amber-500/10 text-amber-200;
+}
+
+/* Code/Debug Blocks - Pre-formatted text containers */
+.code-block {
+  @apply rounded-xl p-2 text-[11px] custom-scrollbar overflow-auto;
+  background-color: var(--surface-base);
+  color: var(--muted-foreground);
+  max-height: 12rem;
+}
+
+.code-block-lg {
+  max-height: 20rem;
+}
+
+/* Debug Section - Collapsible details panel */
+.debug-section {
+  @apply rounded-2xl p-3 text-[11px];
+  border: 1px solid var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--muted-foreground);
+}
+
+.debug-section-summary {
+  @apply cursor-pointer text-xs uppercase tracking-normal;
+  color: var(--muted-foreground);
+}
+
+.debug-section-content {
+  @apply mt-2 space-y-1;
+}
+
+.debug-section-label {
+  @apply text-[10px] uppercase tracking-normal;
+  color: var(--muted-foreground);
+}
+
+.debug-section-value {
+  @apply text-[11px];
+  color: var(--muted-foreground);
 }
 
 /* ============================================================================

@@ -21,19 +21,19 @@ export default function FormFieldGroup({
   className = "",
 }: FormFieldGroupProps) {
   return (
-    <label className={`flex flex-col gap-1.5 ${className}`}>
-      <span className="text-sm font-medium uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>
+    <label className={`form-field-group ${className}`}>
+      <span className="form-field-label">
         {label}
-        {required && <span className="text-red-400 ml-1">*</span>}
+        {required && <span className="form-field-label-required">*</span>}
       </span>
       {children}
       {error && (
-        <span className="text-xs text-red-400">
+        <span className="form-field-error">
           ⚠ {error}
         </span>
       )}
       {help && (
-        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+        <span className="form-field-help">
           {help}
         </span>
       )}

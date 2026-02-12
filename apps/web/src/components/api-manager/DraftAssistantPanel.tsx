@@ -73,21 +73,21 @@ export default function DraftAssistantPanel({
         onUserMessage={onUserMessage}
         inputPlaceholder="API 드래프트를 설명해 주세요..."
       />
-      <div className="space-y-3 rounded-3xl p-4 text-sm" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)"}}>
-        <div className="rounded-2xl p-3" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-base)"}}>
-          <p className="text-[11px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Scenario Functions</p>
+      <div className="draft-panel">
+        <div className="draft-panel-section">
+          <p className="draft-panel-label">Scenario Functions</p>
           <div className="mt-2 space-y-2">
             {scenarioFunctions.map((fn) => (
-              <div key={fn.name} className="rounded-xl px-2 py-1.5" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-base)"}}>
-                <p className="text-[11px] font-semibold" style={{color: "var(--muted-foreground)"}}>{fn.name}</p>
-                <p className="text-[10px]" style={{color: "var(--muted-foreground)"}}>{fn.summary}</p>
-                <p className="text-[10px] text-sky-400 dark:text-sky-300">{fn.signature}</p>
+              <div key={fn.name} className="draft-panel-item">
+                <p className="draft-panel-item-label">{fn.name}</p>
+                <p className="draft-panel-item-description">{fn.summary}</p>
+                <p className="draft-panel-item-signature">{fn.signature}</p>
               </div>
             ))}
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Draft status</span>
+          <span className="draft-panel-label">Draft status</span>
           <span className="text-sm font-semibold" style={{color: "var(--foreground)"}}>
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
@@ -101,33 +101,33 @@ export default function DraftAssistantPanel({
           </ul>
         ) : null}
         {draftStatus === "outdated" ? (
-          <div className="rounded-2xl border border-amber-500/60 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+          <div className="alert-info">
             Draft is outdated. Apply again or regenerate.
           </div>
         ) : null}
         <div className="grid gap-2 sm:grid-cols-2">
           <button
             onClick={onPreviewDraft}
-            className="rounded-2xl px-3 py-2 text-[11px] font-semibold uppercase tracking-normal transition hover:border-sky-500" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+            className="draft-panel-button"
           >
             Preview
           </button>
           <button
             onClick={onTestDraft}
-            className="rounded-2xl border   px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-emerald-400" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+            className="draft-panel-button"
           >
             Test (Dry-run)
           </button>
           <button
             onClick={onApplyDraft}
-            className="rounded-2xl border   px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-indigo-400" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+            className="draft-panel-button"
             disabled={!draftApi || draftTestOk !== true}
           >
             Apply
           </button>
           <button
             onClick={onSaveLocalDraft}
-            className="rounded-2xl border  bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-emerald-400" style={{borderColor: "var(--border)"}}
+            className="draft-panel-button bg-emerald-500/70 hover:bg-emerald-400"
             disabled={!draftApi || draftTestOk !== true}
           >
             Save (Local)
@@ -140,58 +140,58 @@ export default function DraftAssistantPanel({
           </p>
         )}
         {draftErrors.length > 0 && (
-          <div className="space-y-1 rounded-2xl border border-rose-500/60 bg-rose-500/5 px-3 py-2 text-[11px] text-rose-200">
+          <div className="alert-box alert-error">
             {draftErrors.map((error) => (
               <p key={error}>{error}</p>
             ))}
           </div>
         )}
         {draftWarnings.length > 0 && (
-          <div className="space-y-1 rounded-2xl border border-amber-500/60 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-200">
+          <div className="alert-box alert-warning">
             {draftWarnings.map((warning) => (
               <p key={warning}>{warning}</p>
             ))}
           </div>
         )}
         {previewSummary && previewJson ? (
-          <div className="space-y-2 rounded-2xl p-3 text-[11px]" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
-            <p className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Preview</p>
+          <div className="draft-panel-section space-y-2">
+            <p className="draft-panel-label">Preview</p>
             <p className="text-sm" style={{color: "var(--foreground)"}}>{previewSummary}</p>
-            <pre className="max-h-48 overflow-auto rounded-xl p-2 text-[11px] custom-scrollbar" style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
+            <pre className="code-block code-block-lg">
               {previewJson}
             </pre>
           </div>
         ) : null}
         {showDebug ? (
-          <details className="rounded-2xl p-3 text-[11px]" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}>
-            <summary className="cursor-pointer text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>
+          <details className="debug-section">
+            <summary className="debug-section-summary">
               Debug
             </summary>
-            <div className="mt-2 space-y-1">
-              <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>
+            <div className="debug-section-content">
+              <p className="debug-section-label">
                 Save target: {saveTarget ?? "none"}
               </p>
               {lastSaveError ? (
                 <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p>
               ) : null}
-              <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Selected API</p>
-              <p className="text-[11px]" style={{color: "var(--muted-foreground)"}}>
+              <p className="debug-section-label">Selected API</p>
+              <p className="debug-section-value">
                 {selectedApi ? `${selectedApi.api_name} (${selectedApi.api_id})` : "새 API"}
               </p>
-              <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>
+              <p className="debug-section-label">
                 Parse status: {lastParseStatus}
               </p>
               {lastParseError ? (
                 <p className="text-[11px] text-rose-300">Error: {lastParseError}</p>
               ) : null}
-              <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Last assistant raw</p>
-              <pre className="max-h-32 overflow-auto rounded-xl p-2 text-[10px] custom-scrollbar" style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
+              <p className="debug-section-label">Last assistant raw</p>
+              <pre className="code-block">
                 {lastAssistantRaw || "없음"}
               </pre>
               {draftApi ? (
                 <>
-                  <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Draft JSON</p>
-                  <pre className="max-h-32 overflow-auto rounded-xl p-2 text-[10px] custom-scrollbar" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}>
+                  <p className="debug-section-label">Draft JSON</p>
+                  <pre className="code-block">
                     {JSON.stringify(draftApi, null, 2)}
                   </pre>
                 </>
