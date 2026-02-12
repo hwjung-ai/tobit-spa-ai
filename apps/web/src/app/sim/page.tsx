@@ -17,6 +17,13 @@ import {
 import { authenticatedFetch } from "@/lib/apiClient";
 import TopologyMap from "@/components/simulation/TopologyMap";
 import Toast from "@/components/admin/Toast";
+import BuilderCopilotPanel from "@/components/chat/BuilderCopilotPanel";
+import { recordCopilotMetric } from "@/lib/copilot/metrics";
+import {
+  extractJsonCandidates,
+  stripCodeFences,
+  tryParseJson,
+} from "@/lib/copilot/json-utils";
 
 type Strategy = "rule" | "stat" | "ml" | "dl";
 type ScenarioType = "what_if" | "stress_test" | "capacity";
@@ -99,6 +106,20 @@ interface Envelope<T> {
   detail?: string;
 }
 
+interface SimDraftPayload {
+  question: string;
+  scenario_type: ScenarioType;
+  strategy: Strategy;
+  horizon: string;
+  service: string;
+  assumptions: Record<string, number>;
+}
+
+interface SimDraftEnvelope {
+  type: "sim_draft";
+  draft: Partial<SimDraftPayload>;
+}
+
 const assumptionMeta: Record<
   string,
   {
@@ -137,6 +158,16 @@ const strategyMeta: Record<Strategy, { title: string; desc: string; badge: strin
   },
 };
 
+const SIM_COPILOT_INSTRUCTION = [
+  "You are Tobit SIM Workspace AI Copilot.",
+  "Output must be a single JSON object: {\"type\":\"sim_draft\",\"draft\":{...}}.",
+  "draft may include: question, scenario_type, strategy, horizon, service, assumptions.",
+  "scenario_type must be one of: what_if, stress_test, capacity.",
+  "strategy must be one of: rule, stat, ml, dl.",
+  "assumptions may include traffic_change_pct, cpu_change_pct, memory_change_pct.",
+  "No markdown or code fences in final response.",
+].join(" ");
+
 const formatKpiLabel = (value: string) =>
   value
     .replace(/_/g, " ")
@@ -156,6 +187,38 @@ const calculateChangePct = (item: KpiResult): number => {
     return 0;
   }
   return Number((((item.simulated - item.baseline) / item.baseline) * 100).toFixed(2));
+};
+
+const isScenarioType = (value: unknown): value is ScenarioType =>
+  value === "what_if" || value === "stress_test" || value === "capacity";
+
+const isStrategy = (value: unknown): value is Strategy =>
+  value === "rule" || value === "stat" || value === "ml" || value === "dl";
+
+const parseSimDraft = (text: string): { ok: boolean; draft?: Partial<SimDraftPayload>; error?: string } => {
+  const candidates = [stripCodeFences(text), text];
+
+  for (const candidate of candidates) {
+    const parsedItems: unknown[] = [];
+    const direct = tryParseJson(candidate);
+    if (direct !== null) parsedItems.push(direct);
+    for (const extracted of extractJsonCandidates(candidate)) {
+      const value = tryParseJson(extracted);
+      if (value !== null) parsedItems.push(value);
+    }
+
+    for (const parsed of parsedItems) {
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
+      const typed = parsed as Partial<SimDraftEnvelope>;
+      if (typed.type !== "sim_draft") continue;
+      if (!typed.draft || typeof typed.draft !== "object" || Array.isArray(typed.draft)) {
+        return { ok: false, error: "sim_draft의 draft 객체가 필요합니다." };
+      }
+      return { ok: true, draft: typed.draft as Partial<SimDraftPayload> };
+    }
+  }
+
+  return { ok: false, error: "type=sim_draft 객체를 찾지 못했습니다." };
 };
 
 export default function SimPage() {
@@ -179,6 +242,12 @@ export default function SimPage() {
   const [result, setResult] = useState<RunResponseData | null>(null);
   const [previousResult, setPreviousResult] = useState<RunResponseData | null>(null);
   const [backtest, setBacktest] = useState<BacktestResponseData["backtest"] | null>(null);
+  const [simDraft, setSimDraft] = useState<Partial<SimDraftPayload> | null>(null);
+  const [draftStatus, setDraftStatus] = useState<"idle" | "draft_ready" | "error">("idle");
+  const [draftNotes, setDraftNotes] = useState<string | null>(null);
+  const [lastParseStatus, setLastParseStatus] = useState<"idle" | "success" | "fail">("idle");
+  const [lastParseError, setLastParseError] = useState<string | null>(null);
+  const [lastAssistantRaw, setLastAssistantRaw] = useState<string>("");
 
   useEffect(() => {
     const loadServices = async () => {
@@ -390,6 +459,93 @@ export default function SimPage() {
     });
   }, [previousResult, result]);
 
+  const applySimDraftToForm = (draft: Partial<SimDraftPayload>) => {
+    if (typeof draft.question === "string" && draft.question.trim()) {
+      setQuestion(draft.question);
+    }
+    if (isScenarioType(draft.scenario_type)) {
+      setScenarioType(draft.scenario_type);
+    }
+    if (isStrategy(draft.strategy)) {
+      setStrategy(draft.strategy);
+    }
+    if (typeof draft.horizon === "string" && draft.horizon.trim()) {
+      setHorizon(draft.horizon);
+    }
+    if (typeof draft.service === "string" && draft.service.trim()) {
+      setService(draft.service.trim());
+    }
+    if (
+      draft.assumptions &&
+      typeof draft.assumptions === "object" &&
+      !Array.isArray(draft.assumptions)
+    ) {
+      setAssumptions((prev) => {
+        const merged: Record<string, number> = { ...prev };
+        for (const [key, value] of Object.entries(draft.assumptions ?? {})) {
+          if (typeof value === "number" && Number.isFinite(value) && key in assumptionMeta) {
+            merged[key] = value;
+          }
+        }
+        return merged;
+      });
+    }
+  };
+
+  const processAssistantDraft = (messageText: string, isComplete: boolean) => {
+    setLastAssistantRaw(messageText);
+    const result = parseSimDraft(messageText);
+    setLastParseStatus(result.ok ? "success" : "fail");
+    setLastParseError(result.error ?? null);
+
+    if (result.ok && result.draft) {
+      if (isComplete) {
+        recordCopilotMetric("sim-workspace", "parse_success");
+      }
+      setSimDraft(result.draft);
+      setDraftStatus("draft_ready");
+      setDraftNotes("SIM 드래프트가 준비되었습니다. Apply로 좌측 입력에 반영하세요.");
+      return;
+    }
+
+    if (isComplete) {
+      recordCopilotMetric("sim-workspace", "parse_failure", result.error ?? null);
+      setSimDraft(null);
+      setDraftStatus("error");
+      setDraftNotes(result.error ?? "SIM 드래프트를 해석할 수 없습니다.");
+      return;
+    }
+
+    if (draftStatus !== "draft_ready") {
+      setDraftStatus("idle");
+      setDraftNotes("AI가 답변을 생성 중입니다...");
+    }
+  };
+
+  const copilotBuilderContext = useMemo(
+    () => ({
+      sim_mode: "workspace",
+      question,
+      scenario_type: scenarioType,
+      strategy,
+      horizon,
+      service,
+      assumptions,
+      selected_template: selectedTemplate
+        ? {
+            id: selectedTemplate.id,
+            name: selectedTemplate.name,
+            scenario_type: selectedTemplate.scenario_type,
+            default_strategy: selectedTemplate.default_strategy,
+          }
+        : null,
+      latest_summary: result?.summary ?? null,
+      latest_kpis: result?.simulation.kpis ?? [],
+      draft_status: draftStatus,
+    }),
+    [assumptions, draftStatus, horizon, question, result, scenarioType, selectedTemplate, service, strategy]
+  );
+
   return (
     <div className="space-y-6 py-6">
       <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
@@ -400,7 +556,7 @@ export default function SimPage() {
         </p>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
         <aside className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900/60 p-5 min-h-[320px]">
           <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">Scenario Builder</h2>
 
@@ -746,6 +902,91 @@ export default function SimPage() {
             )}
           </section>
         </main>
+
+        <aside className="min-h-[320px] rounded-3xl border border-slate-800 bg-slate-900/60 p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-8rem)] xl:overflow-y-auto">
+          <div className="space-y-4">
+            <BuilderCopilotPanel
+              builderSlug="sim-workspace"
+              instructionPrompt={SIM_COPILOT_INSTRUCTION}
+              expectedContract="sim_draft"
+              builderContext={copilotBuilderContext}
+              onAssistantMessage={(messageText) => processAssistantDraft(messageText, false)}
+              onAssistantMessageComplete={(messageText) => processAssistantDraft(messageText, true)}
+              onUserMessage={() => {
+                setSimDraft(null);
+                setDraftStatus("idle");
+                setDraftNotes(null);
+                setLastParseStatus("idle");
+                setLastParseError(null);
+                setLastAssistantRaw("");
+              }}
+              inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
+            />
+            <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-[0.2em] text-slate-500">Draft status</span>
+                <span className="text-sm font-semibold text-white">
+                  {draftStatus === "draft_ready"
+                    ? "Ready"
+                    : draftStatus === "error"
+                      ? "Error"
+                      : "Idle"}
+                </span>
+              </div>
+              {draftNotes ? <p className="text-sm text-slate-300">{draftNotes}</p> : null}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!simDraft) return;
+                    applySimDraftToForm(simDraft);
+                    setStatusMessage("AI draft가 좌측 Scenario Builder에 반영되었습니다.");
+                  }}
+                  disabled={!simDraft}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition hover:border-emerald-500 disabled:opacity-40"
+                >
+                  Apply
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSimDraft(null);
+                    setDraftStatus("idle");
+                    setDraftNotes(null);
+                  }}
+                  className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-300 transition hover:border-slate-500"
+                >
+                  Discard
+                </button>
+              </div>
+              {simDraft ? (
+                <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Draft JSON</p>
+                  <pre className="max-h-44 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[11px] text-slate-200">
+                    {JSON.stringify(simDraft, null, 2)}
+                  </pre>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500">No SIM draft yet. Ask Copilot to generate one.</p>
+              )}
+              <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+                <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-slate-400">
+                  Debug
+                </summary>
+                <div className="mt-2 space-y-1">
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500">
+                    Parse status: {lastParseStatus}
+                  </p>
+                  {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
+                  <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500">Last assistant raw</p>
+                  <pre className="max-h-24 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                    {lastAssistantRaw || "없음"}
+                  </pre>
+                </div>
+              </details>
+            </div>
+          </div>
+        </aside>
       </section>
 
       <Toast

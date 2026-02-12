@@ -1,0 +1,10 @@
+{
+  "name": "ui-design-guide",
+  "version": "1.0.0",
+  "description": "UI design system guide and consistency checker for tobit-spa-ai",
+  "author": "Claude",
+  "prefix": "/ui",
+  "type": "assistant",
+  "permissions": ["Read"],
+  "categories": ["design-system", "ui-consistency", "component-generator"]
+}

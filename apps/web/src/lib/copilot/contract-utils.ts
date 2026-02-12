@@ -1,6 +1,10 @@
 import { extractJsonCandidates, stripCodeFences, tryParseJson } from "./json-utils";
 
-export type CopilotContract = "api_draft" | "cep_draft" | "screen_patch";
+export type CopilotContract =
+  | "api_draft"
+  | "cep_draft"
+  | "screen_patch"
+  | "sim_draft";
 
 export interface ContractValidationResult {
   ok: boolean;

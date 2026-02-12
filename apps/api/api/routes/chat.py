@@ -27,6 +27,7 @@ CONTRACT_BY_BUILDER: dict[str, str] = {
     "api-manager": "api_draft",
     "cep-builder": "cep_draft",
     "screen-editor": "screen_patch",
+    "sim-workspace": "sim_draft",
 }
 
 
