@@ -30,6 +30,17 @@ class SimulationRunRequest(BaseModel):
     custom_function: SimulationCustomFunctionSpec | None = None
 
 
+class SimulationRealtimeSourceConfig(BaseModel):
+    source: Literal["prometheus", "cloudwatch"] = "prometheus"
+    prometheus_url: str | None = None
+    cloudwatch_region: str | None = None
+    query: str | dict[str, Any] | None = None
+
+
+class SimulationRealtimeRunRequest(SimulationRunRequest):
+    source_config: SimulationRealtimeSourceConfig
+
+
 class SimulationQueryRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     scenario_type: SimulationScenarioType = "what_if"

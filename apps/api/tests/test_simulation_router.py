@@ -63,6 +63,22 @@ def _mock_baseline_loader(monkeypatch):
             "references": {"kind": "custom"},
         },
     )
+    monkeypatch.setattr(
+        router_module,
+        "run_backtest_real",
+        lambda strategy, service, horizon, assumptions, tenant_id: {
+            "strategy": strategy,
+            "service": service,
+            "horizon": horizon,
+            "summary": "mock backtest",
+            "metrics": {
+                "r2": 0.72,
+                "mape": 0.11,
+                "rmse": 2.3,
+                "coverage_90": 0.9,
+            },
+        },
+    )
 
 
 def _mock_user(tenant_id: str = "t1") -> TbUser:
@@ -78,7 +94,7 @@ def _mock_user(tenant_id: str = "t1") -> TbUser:
 
 
 def test_simulation_run_success():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.post(
@@ -111,7 +127,7 @@ def test_simulation_run_success():
 
 
 def test_simulation_query_success():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.post(
@@ -138,7 +154,7 @@ def test_simulation_query_success():
 
 
 def test_simulation_run_tenant_mismatch():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("t2")
     client = TestClient(app)
 
     response = client.post(
@@ -160,7 +176,7 @@ def test_simulation_run_tenant_mismatch():
 
 
 def test_simulation_run_invalid_assumption_key():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.post(
@@ -182,7 +198,7 @@ def test_simulation_run_invalid_assumption_key():
 
 
 def test_simulation_templates():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.get("/sim/templates", headers={"X-Tenant-Id": "t1"})
@@ -197,7 +213,7 @@ def test_simulation_templates():
 
 
 def test_simulation_run_dl_strategy_success():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.post(
@@ -226,7 +242,7 @@ def test_simulation_run_dl_strategy_success():
 
 
 def test_simulation_backtest_and_export():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     backtest_response = client.post(
@@ -262,7 +278,7 @@ def test_simulation_backtest_and_export():
 
 
 def test_simulation_run_custom_strategy_success():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.post(
@@ -295,7 +311,7 @@ def test_simulation_run_custom_strategy_success():
 
 
 def test_simulation_custom_function_validate_endpoint():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
     client = TestClient(app)
 
     response = client.post(
@@ -320,3 +336,40 @@ def test_simulation_custom_function_validate_endpoint():
     payload = response.json()
     assert payload.get("code") == 0
     assert (payload.get("data") or {}).get("valid") is True
+
+
+def test_simulation_run_realtime_accepts_source_config_in_body(monkeypatch):
+    router_module = import_module("app.modules.simulation.api.router")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("default")
+    client = TestClient(app)
+
+    async def _fake_realtime(payload, tenant_id, requested_by):
+        _ = (payload, tenant_id, requested_by)
+        return {"simulation": {"strategy": "ml"}, "summary": "ok"}
+
+    monkeypatch.setattr(router_module, "run_realtime_simulation", _fake_realtime)
+
+    response = client.post(
+        "/sim/run/realtime",
+        json={
+            "question": "realtime test",
+            "scenario_type": "what_if",
+            "strategy": "ml",
+            "horizon": "24h",
+            "service": "api-gateway",
+            "assumptions": {"traffic_change_pct": 20},
+            "source_config": {
+                "source": "prometheus",
+                "prometheus_url": "http://prometheus:9090",
+                "query": "rate(http_requests_total[5m])",
+            },
+        },
+        headers={"X-Tenant-Id": "t1"},
+    )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload.get("code") == 0
+    assert ((payload.get("data") or {}).get("simulation") or {}).get("strategy") == "ml"

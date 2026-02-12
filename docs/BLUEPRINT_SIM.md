@@ -181,6 +181,11 @@ Frontend:
 - 설명: 실행 결과 CSV 반환
 - content-type: `text/csv`
 
+8. `POST /sim/run/realtime`
+- 설명: 실시간 메트릭 기반 시뮬레이션 실행
+- 요청 본문: `SimulationRealtimeRunRequest`
+- 필수 필드: `source_config.source`, `source_config.query`
+
 ---
 
 ## 6. 보안 및 테넌시
@@ -209,12 +214,12 @@ Frontend:
 
 ### 7.2 Baseline/Scenario 정합성
 
-최종 simulated KPI는 전략 출력값이 아니라 실제 topology 기반 scenario KPI로 정렬한다.
+최종 simulated KPI는 전략 출력을 유지하고, 관측 시나리오 KPI는 `model_info.observed_scenario_kpis`로 별도 노출한다.
 
 의미:
 
-1. 해석 계층(전략 confidence)과 데이터 계층(실측 기반 파생 KPI)을 분리
-2. mock 없이 실데이터 기반 결과 일관성 보장
+1. 전략 간 출력 차이를 유지해 비교 가능성 보장
+2. 관측 기반 KPI를 분리 제공해 데이터 투명성 확보
 
 ---
 

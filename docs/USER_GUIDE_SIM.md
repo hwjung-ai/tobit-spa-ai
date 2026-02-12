@@ -20,6 +20,9 @@
 2. 요청 헤더의 `x-tenant-id`와 로그인 사용자 `tenant_id`가 일치해야 한다.
 3. Neo4j에 서비스 토폴로지 데이터가 있어야 한다.
 4. 서비스 목록은 `/api/sim/services`에서 조회되며, 데이터가 없으면 SIM 실행이 불가능하다.
+5. `SIM_MODE`별 동작을 확인해야 한다.
+   - `SIM_MODE=real`: 실데이터 모드, 토폴로지/서비스 데이터 없으면 404
+   - `SIM_MODE=mock`: 샘플 데이터 모드
 
 ---
 
@@ -133,6 +136,10 @@ SIM 페이지는 좌측 빌더 + 우측 결과 영역으로 구성된다.
 
 7. `POST /api/sim/export`
 - CSV 반환 (`text/csv`)
+
+8. `POST /api/sim/run/realtime`
+- 실시간 메트릭 기반 시뮬레이션 실행
+- `source_config`는 요청 본문(body)에 포함해야 한다.
 
 ---
 

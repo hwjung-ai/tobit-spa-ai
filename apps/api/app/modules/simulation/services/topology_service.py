@@ -117,6 +117,9 @@ SAMPLE_TOPOLOGY_DATA: dict[str, dict[str, Any]] = {
 
 def list_available_services(tenant_id: str) -> list[str]:
     settings = get_settings()
+    if settings.sim_mode == "mock":
+        return sorted(list(SAMPLE_TOPOLOGY_DATA.keys()))
+
     driver = get_neo4j_driver(settings)
     try:
         with driver.session() as session:
@@ -140,12 +143,18 @@ def get_topology_data(
     assumptions: dict[str, Any] | None = None,
 ) -> TopologyData:
     assumptions = assumptions or {}
-    base_topology = _get_real_topology(tenant_id, service, get_settings())
-    
-    # Neo4j에 데이터가 없으면 샘플 토폴로지 사용
-    if not base_topology["nodes"]:
+    settings = get_settings()
+
+    if settings.sim_mode == "mock":
         base_topology = _get_sample_topology(service)
-    
+    else:
+        base_topology = _get_real_topology(tenant_id, service, settings)
+        if not base_topology["nodes"]:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No topology data found for service '{service}'.",
+            )
+
     return _apply_simulation(base_topology, assumptions, scenario_type)
 
 

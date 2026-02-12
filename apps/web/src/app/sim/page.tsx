@@ -161,21 +161,8 @@ const calculateChangePct = (item: KpiResult): number => {
 export default function SimPage() {
   const [templates, setTemplates] = useState<SimulationTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  // 기본 샘플 서비스 목록 (Neo4j 데이터가 없을 때 사용)
-  const DEFAULT_SAMPLE_SERVICES = [
-    "api-gateway",
-    "order-service",
-    "payment-service",
-    "user-service",
-    "product-service",
-    "inventory-service",
-    "frontend-web",
-    "notification-service",
-  ];
-
   const [services, setServices] = useState<string[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
-  const [useSampleServices, setUseSampleServices] = useState(false);
   const [question, setQuestion] = useState("트래픽이 20% 증가하면 서비스 지표가 어떻게 변하나?");
   const [scenarioType, setScenarioType] = useState<ScenarioType>("what_if");
   const [strategy, setStrategy] = useState<Strategy>("rule");
@@ -202,19 +189,16 @@ export default function SimPage() {
         if (loaded.length > 0) {
           setServices(loaded);
           setService(loaded[0]);
-          setUseSampleServices(false);
         } else {
-          // Neo4j 데이터가 없으면 샘플 서비스 사용
-          setServices(DEFAULT_SAMPLE_SERVICES);
-          setService(DEFAULT_SAMPLE_SERVICES[0]);
-          setUseSampleServices(true);
+          setServices([]);
+          setService("");
+          setStatusMessage("사용 가능한 SIM 서비스가 없습니다. 토폴로지 동기화 또는 SIM_MODE 설정을 확인해 주세요.");
         }
       } catch (err) {
         console.error("Failed to load simulation services", err);
-        // 오류 발생 시 샘플 서비스 사용
-        setServices(DEFAULT_SAMPLE_SERVICES);
-        setService(DEFAULT_SAMPLE_SERVICES[0]);
-        setUseSampleServices(true);
+        setServices([]);
+        setService("");
+        setStatusMessage("서비스 목록을 불러오지 못했습니다.");
       } finally {
         setServicesLoading(false);
       }
@@ -237,13 +221,8 @@ export default function SimPage() {
     if (!trimmed) {
       throw new Error("Service를 입력하거나 선택해 주세요.");
     }
-    if (services.length === 0) {
-      return trimmed;
-    }
     if (!services.includes(trimmed)) {
-      const fallback = services[0];
-      setService(fallback);
-      return fallback;
+      throw new Error("선택한 Service가 서비스 목록에 없습니다.");
     }
     return trimmed;
   };
@@ -489,17 +468,15 @@ export default function SimPage() {
               value={service}
               onChange={(event) => setService(event.target.value)}
             >
+              {services.length === 0 ? (
+                <option value="">No services available</option>
+              ) : null}
               {services.map((svc) => (
                 <option key={svc} value={svc}>
                   {svc}
                 </option>
               ))}
             </select>
-            {useSampleServices ? (
-              <p className="mt-1 text-[11px] text-amber-300">
-                ※ 샘플 서비스 목록입니다. 직접 서비스명을 입력하여 테스트할 수 있습니다.
-              </p>
-            ) : null}
           </label>
 
           <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
@@ -583,6 +560,7 @@ export default function SimPage() {
               data-testid="simulation-backtest-button"
               className="rounded-2xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-200 hover:border-sky-500"
               onClick={handleBacktest}
+              disabled={servicesLoading || !service.trim()}
             >
               Run Backtest
             </button>
@@ -591,6 +569,7 @@ export default function SimPage() {
               data-testid="simulation-export-button"
               className="rounded-2xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-200 hover:border-emerald-500"
               onClick={handleExportCsv}
+              disabled={servicesLoading || !service.trim()}
             >
               Export CSV
             </button>

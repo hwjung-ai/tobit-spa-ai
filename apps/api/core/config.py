@@ -21,6 +21,7 @@ class AppSettings(BaseSettings):
     log_api_file_path: str = "/home/spa/tobit-spa-ai/apps/api/logs/api.log"
     log_web_file_path: str = "/home/spa/tobit-spa-ai/apps/web/logs/web.log"
     ops_mode: Literal["mock", "real"] = "mock"
+    sim_mode: Literal["mock", "real"] = "mock"
     ops_enable_langgraph: bool = False
     enable_system_apis: bool = False
     enable_data_explorer: bool = True

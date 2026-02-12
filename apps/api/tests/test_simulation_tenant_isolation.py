@@ -19,7 +19,7 @@ def _mock_user(tenant_id: str = "t1") -> TbUser:
 
 
 def test_query_rejects_tenant_mismatch():
-    app.dependency_overrides[get_current_user] = lambda: _mock_user("t1")
+    app.dependency_overrides[get_current_user] = lambda: _mock_user("t2")
     client = TestClient(app)
 
     response = client.post(
