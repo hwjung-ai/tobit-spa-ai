@@ -1,7 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { cn } from "@/lib/utils";
 
 type Strategy = "rule" | "stat" | "ml" | "dl";
 
@@ -46,12 +57,6 @@ interface CompleteResult {
     strategy_execution_ms: number;
   };
   data_source?: string;
-  data_transparency?: {
-    baseline_from_real_metrics: boolean;
-    baseline_from_topology_fallback: boolean;
-    strategy_used: string;
-    strategy_computation_real: boolean;
-  };
 }
 
 interface RealTimeSimulationProps {
@@ -124,8 +129,7 @@ export default function RealTimeSimulation({
 
       eventSource.addEventListener("progress", (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data);
-          setProgress(data);
+          setProgress(JSON.parse(e.data));
         } catch {
           // Ignore parse errors
         }
@@ -133,8 +137,7 @@ export default function RealTimeSimulation({
 
       eventSource.addEventListener("baseline", (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data);
-          setBaseline(data);
+          setBaseline(JSON.parse(e.data));
         } catch {
           // Ignore parse errors
         }
@@ -144,12 +147,12 @@ export default function RealTimeSimulation({
         try {
           const data = JSON.parse(e.data);
           setKpis((prev) => {
-            const newKpis = [...prev, data.kpi];
-            const existing = newKpis.findIndex((k) => k.kpi === data.kpi.kpi);
+            const next = [...prev, data.kpi];
+            const existing = next.findIndex((k) => k.kpi === data.kpi.kpi);
             if (existing >= 0) {
-              newKpis[existing] = data.kpi;
+              next[existing] = data.kpi;
             }
-            return newKpis;
+            return next;
           });
         } catch {
           // Ignore parse errors
@@ -158,8 +161,7 @@ export default function RealTimeSimulation({
 
       eventSource.addEventListener("complete", (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data);
-          setResult(data);
+          setResult(JSON.parse(e.data));
           setIsConnected(false);
           closeCurrentSource();
         } catch {
@@ -223,40 +225,52 @@ export default function RealTimeSimulation({
   };
 
   const handleRestart = () => {
-    // Force re-mount by toggling a key or similar
     window.location.reload();
   };
 
-  // Chart data
-  const chartData = kpis.length > 0 ? kpis.map((kpi) => ({
-    kpi: kpi.kpi.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-    baseline: kpi.baseline,
-    simulated: kpi.simulated,
-    changePct: ((kpi.simulated - kpi.baseline) / kpi.baseline) * 100,
-  })) : [];
+  const chartData =
+    kpis.length > 0
+      ? kpis.map((kpi) => ({
+          kpi: kpi.kpi.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          baseline: kpi.baseline,
+          simulated: kpi.simulated,
+          changePct: ((kpi.simulated - kpi.baseline) / kpi.baseline) * 100,
+        }))
+      : [];
+
+  const sectionClass =
+    "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90";
+  const cardClass =
+    "rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40";
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <section className="rounded-3xl border  /70 p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-        <div className="flex items-center justify-between">
+      <section className={sectionClass}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-white">Real-time Simulation</h1>
-            <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+              Real-time Simulation
+            </h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Streaming simulation results as they compute
             </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : ""}`} style={{backgroundColor: "var(--surface-elevated)"}} />
-              <span className="text-sm " style={{color: "var(--muted-foreground)"}}>
+              <div
+                className={cn(
+                  "h-3 w-3 rounded-full border border-slate-300 dark:border-slate-700",
+                  isConnected ? "bg-emerald-500" : "bg-slate-400",
+                )}
+              />
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 {isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
             {isConnected && (
               <button
                 onClick={handleStop}
-                className="rounded-2xl border border-rose-700 bg-rose-500/20 px-4 py-2 text-sm font-semibold text-rose-300 hover:bg-rose-500/30"
+                className="rounded-md border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/20 dark:text-rose-300"
               >
                 Stop
               </button>
@@ -264,7 +278,7 @@ export default function RealTimeSimulation({
             {!isConnected && result && (
               <button
                 onClick={handleRestart}
-                className="rounded-2xl border border-emerald-700 bg-emerald-500/20 px-4 py-2 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/30"
+                className="rounded-md border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300"
               >
                 Restart
               </button>
@@ -273,82 +287,95 @@ export default function RealTimeSimulation({
         </div>
       </section>
 
-      {/* Progress */}
       {progress && (
-        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <section className={sectionClass}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Progress
             </h2>
-            <span className="text-xs " style={{color: "var(--muted-foreground)"}}>
-              {progress.step}
-            </span>
+            <span className="text-xs text-slate-600 dark:text-slate-400">{progress.step}</span>
           </div>
-          <div className="mt-3">
-            <div className="h-2 rounded-full  overflow-hidden" style={{backgroundColor: "var(--surface-elevated)"}}>
-              <div
-                className="h-full bg-sky-500 transition-all duration-300 ease-out"
-                style={{width: progress.total
-                    ? `${(progress.current || 0) / progress.total * 100}%`
-                    : "50%"}}
-              />
-            </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div
+              className="h-full bg-sky-600 transition-all duration-300 ease-out"
+              style={{
+                width: progress.total
+                  ? `${((progress.current || 0) / progress.total) * 100}%`
+                  : "50%",
+              }}
+            />
           </div>
-          <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>{progress.message}</p>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">{progress.message}</p>
         </section>
       )}
 
-      {/* Baseline Info */}
       {baseline && (
-        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <section className={sectionClass}>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Baseline KPIs
             </h2>
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              baseline.dataQuality?.metrics_available
-                ? "bg-emerald-500/20 text-emerald-300"
-                : baseline.dataQuality?.using_fallback
-                ? "bg-amber-500/20 text-amber-300"
-                : "0/20 "
-            }`} style={{backgroundColor: "var(--background)", color: "var(--foreground-secondary)"}}>
+            <span
+              className={cn(
+                "rounded-md px-2 py-1 text-xs font-semibold",
+                baseline.dataQuality?.metrics_available
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                  : baseline.dataQuality?.using_fallback
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+                    : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+              )}
+            >
               {baseline.dataQuality?.metrics_available
                 ? "Real Metrics"
                 : baseline.dataQuality?.using_fallback
-                ? "Topology Fallback"
-                : "Unknown Source"}
+                  ? "Topology Fallback"
+                  : "Unknown Source"}
             </span>
           </div>
-          <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             {baseline.dataQuality?.note || `Source: ${baseline.source}`}
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(baseline.kpis).map(([key, value]) => (
-              <div key={key} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{key}</p>
-                <p className="text-lg font-semibold text-white">{typeof value === "number" ? value.toFixed(2) : value}</p>
+              <div
+                key={key}
+                className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/40"
+              >
+                <p className="text-xs text-slate-600 dark:text-slate-400">{key}</p>
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  {typeof value === "number" ? value.toFixed(2) : value}
+                </p>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {/* Real-time KPI Results */}
       {kpis.length > 0 && (
-        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+        <section className={sectionClass}>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             KPI Results ({kpis.length})
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {kpis.map((kpi) => {
               const changePct = ((kpi.simulated - kpi.baseline) / kpi.baseline) * 100;
               return (
-                <div key={kpi.kpi} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                  <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{kpi.kpi}</p>
-                  <p className="mt-1 text-sm " style={{color: "var(--foreground-secondary)"}}>
+                <div
+                  key={kpi.kpi}
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-950/40"
+                >
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{kpi.kpi}</p>
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                     {kpi.baseline.toFixed(2)} → {kpi.simulated.toFixed(2)} {kpi.unit}
                   </p>
-                  <p className={`text-sm font-semibold ${changePct >= 0 ? "text-amber-300" : "text-emerald-300"}`}>
+                  <p
+                    className={cn(
+                      "text-sm font-semibold",
+                      changePct >= 0
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-emerald-600 dark:text-emerald-400",
+                    )}
+                  >
                     {changePct >= 0 ? "+" : ""}
                     {changePct.toFixed(2)}%
                   </p>
@@ -359,40 +386,39 @@ export default function RealTimeSimulation({
         </section>
       )}
 
-      {/* Charts */}
       {chartData.length > 0 && (
         <section className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+          <div className={sectionClass}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Comparison Chart
             </h2>
             <div className="mt-4 h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                   <XAxis dataKey="kpi" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="baseline" fill="#38bdf8" name="Baseline" />
+                  <Bar dataKey="baseline" fill="#0ea5e9" name="Baseline" />
                   <Bar dataKey="simulated" fill="#f59e0b" name="Simulated" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+          <div className={sectionClass}>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Change Percentage
             </h2>
             <div className="mt-4 h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
                   <XAxis dataKey="kpi" stroke="#94a3b8" />
                   <YAxis stroke="#94a3b8" />
                   <Tooltip />
-                  <Bar dataKey="changePct" fill="#22d3ee" name="Change %" />
+                  <Bar dataKey="changePct" fill="#06b6d4" name="Change %" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -400,66 +426,76 @@ export default function RealTimeSimulation({
         </section>
       )}
 
-      {/* Final Result */}
       {result && (
-        <section className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+        <section className={sectionClass}>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Final Result
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Strategy</p>
-              <p className="text-lg font-semibold text-white uppercase">{result.simulation.strategy}</p>
+            <div className={cardClass}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Strategy</p>
+              <p className="text-lg font-semibold uppercase text-slate-900 dark:text-slate-100">
+                {result.simulation.strategy}
+              </p>
             </div>
-            <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Confidence</p>
-              <p className="text-lg font-semibold text-emerald-400">
+            <div className={cardClass}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Confidence</p>
+              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                 {(result.simulation.confidence * 100).toFixed(0)}%
               </p>
             </div>
-            <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Scenario ID</p>
-              <p className="text-sm  truncate" style={{color: "var(--foreground-secondary)"}}>{result.simulation.scenario_id}</p>
+            <div className={cardClass}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Scenario ID</p>
+              <p className="truncate text-sm text-slate-700 dark:text-slate-300">
+                {result.simulation.scenario_id}
+              </p>
             </div>
           </div>
-          <div className="mt-4 rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Explanation</p>
-            <p className="mt-1 text-sm " style={{color: "var(--foreground-secondary)"}}>{result.simulation.explanation}</p>
+          <div className={cn(cardClass, "mt-4")}>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Explanation</p>
+            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+              {result.simulation.explanation}
+            </p>
           </div>
 
-          {/* Data Source Transparency */}
-          {(result.data_source || result.data_transparency || result.timing) && (
+          {(result.data_source || result.timing) && (
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {result.data_source && (
-                <div className={`rounded-xl border p-4 ${
-                  result.data_source === "metric_timeseries"
-                    ? "border-emerald-700/40 bg-emerald-950/20"
-                    : "border-amber-700/40 bg-amber-950/20"
-                }`}>
-                  <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Data Source</p>
-                  <p className={`text-sm font-semibold ${
+                <div
+                  className={cn(
+                    "rounded-lg border p-4",
                     result.data_source === "metric_timeseries"
-                      ? "text-emerald-300"
-                      : "text-amber-300"
-                  }`}>
+                      ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/20"
+                      : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/20",
+                  )}
+                >
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Data Source</p>
+                  <p
+                    className={cn(
+                      "text-sm font-semibold",
+                      result.data_source === "metric_timeseries"
+                        ? "text-emerald-700 dark:text-emerald-300"
+                        : "text-amber-700 dark:text-amber-300",
+                    )}
+                  >
                     {result.data_source === "metric_timeseries"
-                      ? "✓ Real Metric Data"
+                      ? "Real Metric Data"
                       : result.data_source === "topology_fallback"
-                      ? "⚠ Topology Fallback (No Real Metrics)"
-                      : result.data_source}
+                        ? "Topology Fallback (No Real Metrics)"
+                        : result.data_source}
                   </p>
                 </div>
               )}
               {result.timing && (
-                <div className="rounded-xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                  <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Computation Time</p>
-                  <p className="text-sm font-semibold text-sky-300">
+                <div className={cardClass}>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Computation Time</p>
+                  <p className="text-sm font-semibold text-sky-600 dark:text-sky-400">
                     {result.timing.total_ms.toFixed(0)}ms total
                   </p>
-                  <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>
-                    Planning: {result.timing.planning_ms.toFixed(0)}ms |
-                    Baseline: {result.timing.baseline_loading_ms.toFixed(0)}ms |
-                    Strategy: {result.timing.strategy_execution_ms.toFixed(0)}ms
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                    Planning: {result.timing.planning_ms.toFixed(0)}ms | Baseline:{" "}
+                    {result.timing.baseline_loading_ms.toFixed(0)}ms | Strategy:{" "}
+                    {result.timing.strategy_execution_ms.toFixed(0)}ms
                   </p>
                 </div>
               )}
@@ -468,10 +504,9 @@ export default function RealTimeSimulation({
         </section>
       )}
 
-      {/* Error */}
       {error && (
-        <section className="rounded-3xl border border-rose-800/40 bg-rose-950/20 p-5">
-          <p className="text-rose-300">{error}</p>
+        <section className="rounded-2xl border border-rose-300 bg-rose-50 p-5 dark:border-rose-800 dark:bg-rose-950/20">
+          <p className="text-rose-700 dark:text-rose-300">{error}</p>
         </section>
       )}
     </div>

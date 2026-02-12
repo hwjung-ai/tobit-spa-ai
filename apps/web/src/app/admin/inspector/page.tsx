@@ -14,13 +14,21 @@ import ReactFlow, {
   ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Asset, AuditLog, fetchApi, formatRelativeTime, formatTimestamp } from "../../../lib/adminUtils";
+import {
+  Asset,
+  AuditLog,
+  fetchApi,
+  formatRelativeTime,
+  formatTimestamp,
+} from "../../../lib/adminUtils";
 import AuditLogTable, { AuditLogDetailsModal } from "../../../components/admin/AuditLogTable";
 import ValidationAlert from "../../../components/admin/ValidationAlert";
 import SpanNode from "../../../components/admin/SpanNode";
 import TraceDiffView from "../../../components/admin/TraceDiffView";
 import StageDiffView from "../../../components/admin/StageDiffView";
-import InspectorStagePipeline, { type StageStatus } from "../../../components/ops/InspectorStagePipeline";
+import InspectorStagePipeline, {
+  type StageStatus,
+} from "../../../components/ops/InspectorStagePipeline";
 import ReplanTimeline from "../../../components/ops/ReplanTimeline";
 import AssetOverrideModal from "../../../components/ops/AssetOverrideModal";
 import { OrchestrationSection } from "../../../components/ops/OrchestrationSection";
@@ -44,12 +52,19 @@ import {
 } from "../../../lib/apiClient/index";
 import type { FilterState, TraceDetailResponse } from "../../../lib/inspector/types";
 import {
-  PER_PAGE, STAGE_ORDER, STAGE_LABELS, initialFilters,
+  PER_PAGE,
+  STAGE_ORDER,
+  STAGE_LABELS,
+  initialFilters,
   createPlaceholderTraceDetail,
 } from "../../../lib/inspector/types";
 import {
-  getStatusBadgeClass, formatDuration, formatAppliedAssetSummary,
-  summarizeStepPayload, summarizeBlockPayload, normalizeStageStatus,
+  getStatusBadgeClass,
+  formatDuration,
+  formatAppliedAssetSummary,
+  summarizeStepPayload,
+  summarizeBlockPayload,
+  normalizeStageStatus,
 } from "../../../lib/inspector/utils";
 
 function InspectorContent() {
@@ -67,7 +82,7 @@ function InspectorContent() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [traceDetail, setTraceDetail] = useState<ExecutionTraceDetail | null>(
-    initialTraceId ? createPlaceholderTraceDetail(initialTraceId) : null
+    initialTraceId ? createPlaceholderTraceDetail(initialTraceId) : null,
   );
   const [traceAuditLogs, setTraceAuditLogs] = useState<AuditLog[]>([]);
   const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
@@ -111,9 +126,11 @@ function InspectorContent() {
         if (filters.from) params.set("from", filters.from);
         if (filters.to) params.set("to", filters.to);
         if (filters.assetId) params.set("asset_id", filters.assetId);
-        const response = await fetchApi<TraceListResponse>(`/inspector/traces?${params.toString()}`);
+        const response = await fetchApi<TraceListResponse>(
+          `/inspector/traces?${params.toString()}`,
+        );
         setTraces((prev) =>
-          nextOffset === 0 ? response.data.traces : [...prev, ...response.data.traces]
+          nextOffset === 0 ? response.data.traces : [...prev, ...response.data.traces],
         );
         setTotal(response.data.total);
         setOffset(nextOffset + response.data.traces.length);
@@ -124,7 +141,7 @@ function InspectorContent() {
         setLoading(false);
       }
     },
-    [filters]
+    [filters],
   );
 
   const fetchTraceDetail = useCallback(async (traceId: string) => {
@@ -156,7 +173,7 @@ function InspectorContent() {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json() as TraceDetailResponse;
+      const data = (await response.json()) as TraceDetailResponse;
       console.log("[Inspector] fetch response received:", data);
 
       if (!data.data?.trace) {
@@ -246,7 +263,9 @@ function InspectorContent() {
   // Generate graph nodes and edges when traceDetail or hideToolSpans changes
   useEffect(() => {
     if (traceDetail?.flow_spans && traceDetail.flow_spans.length > 0) {
-      const spansToUse = hideToolSpans ? filterToolSpans(traceDetail.flow_spans) : traceDetail.flow_spans;
+      const spansToUse = hideToolSpans
+        ? filterToolSpans(traceDetail.flow_spans)
+        : traceDetail.flow_spans;
       const generatedNodes = generateNodes(spansToUse);
       const generatedEdges = generateEdges(spansToUse);
 
@@ -254,7 +273,7 @@ function InspectorContent() {
         generatedNodes.map((node) => ({
           ...node,
           selected: node.id === selectedNodeId,
-        }))
+        })),
       );
       setEdges(generatedEdges);
     }
@@ -332,7 +351,7 @@ function InspectorContent() {
     setCompareError(null);
     try {
       const response = await fetchApi<TraceDetailResponse>(
-        `/inspector/traces/${encodeURIComponent(compareTraceId.trim())}`
+        `/inspector/traces/${encodeURIComponent(compareTraceId.trim())}`,
       );
       setCompareTraceDetail(response.data.trace);
       setShowDiffView(true);
@@ -385,16 +404,27 @@ function InspectorContent() {
 
   const renderAppliedAsset = (asset: AssetSummary | null | undefined) => {
     if (!asset) {
-      return <span className="text-xs " style={{color: "var(--muted-foreground)"}}>미적용</span>;
+      return (
+        <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+          미적용
+        </span>
+      );
     }
     return (
-      <div className="text-xs  space-y-1" style={{color: "var(--foreground-secondary)"}}>
+      <div className="text-xs space-y-1" style={{ color: "var(--foreground-secondary)" }}>
         {asset.name && <p>{asset.name}</p>}
-        <p className="font-mono text-[11px]">
+        <p className="font-mono text-sm">
           {asset.asset_id || `${asset.name || "asset"}@${asset.source || "fallback"}`}
           {asset.version ? ` · v${asset.version}` : ""}
         </p>
-        {asset.source && <p className="uppercase text-[10px] tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>{asset.source}</p>}
+        {asset.source && (
+          <p
+            className="uppercase text-xs tracking-[0.3em] "
+            style={{ color: "var(--muted-foreground)" }}
+          >
+            {asset.source}
+          </p>
+        )}
       </div>
     );
   };
@@ -402,11 +432,11 @@ function InspectorContent() {
   const highlightFallbacks = (fallbacks: Record<string, boolean> | null | undefined) => {
     if (!fallbacks) return null;
     return (
-      <div className="flex gap-2 flex-wrap text-[11px]">
+      <div className="flex gap-2 flex-wrap text-sm">
         {Object.entries(fallbacks).map(([key, value]) => (
           <span
             key={key}
-            className={`px-2 py-1 rounded-full font-semibold uppercase tracking-[0.3em] text-[10px] ${value ? "bg-yellow-900/60 text-yellow-200" : "bg-green-900/30 text-emerald-300"}`}
+            className={`px-2 py-1 rounded-full font-semibold uppercase tracking-[0.3em] text-xs ${value ? "bg-yellow-900/60 text-yellow-200" : "bg-green-900/30 text-emerald-300"}`}
           >
             {key}: {value ? "fallback" : "asset"}
           </span>
@@ -420,9 +450,22 @@ function InspectorContent() {
       return null;
     }
     return (
-      <details className=" border  rounded-xl p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-        <summary className="text-xs font-semibold  cursor-pointer" style={{color: "var(--foreground-secondary)"}}>{label}</summary>
-        <pre className="mt-2 text-[11px]  overflow-x-auto max-h-48" style={{color: "var(--foreground-secondary)"}}>{JSON.stringify(payload, null, 2)}</pre>
+      <details
+        className=" border rounded-xl p-3"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+      >
+        <summary
+          className="text-xs font-semibold cursor-pointer"
+          style={{ color: "var(--foreground-secondary)" }}
+        >
+          {label}
+        </summary>
+        <pre
+          className="mt-2 text-sm overflow-x-auto max-h-48"
+          style={{ color: "var(--foreground-secondary)" }}
+        >
+          {JSON.stringify(payload, null, 2)}
+        </pre>
       </details>
     );
   };
@@ -433,15 +476,15 @@ function InspectorContent() {
     return STAGE_ORDER.map((stage) => {
       const stageInput = inputs.find((entry: StageInput) => entry.stage === stage);
       const stageOutput = outputs.find((entry: StageOutput) => entry.stage === stage);
-        return {
-          name: stage,
-          label: STAGE_LABELS[stage] ?? stage.toUpperCase(),
-          status: normalizeStageStatus(stageOutput) as StageStatus,
-          duration_ms: stageOutput?.duration_ms,
-          input: stageInput ?? null,
-          output: stageOutput ?? null,
-          diagnostics: stageOutput?.diagnostics ?? null,
-        } as StageSnapshot;
+      return {
+        name: stage,
+        label: STAGE_LABELS[stage] ?? stage.toUpperCase(),
+        status: normalizeStageStatus(stageOutput) as StageStatus,
+        duration_ms: stageOutput?.duration_ms,
+        input: stageInput ?? null,
+        output: stageOutput ?? null,
+        diagnostics: stageOutput?.diagnostics ?? null,
+      } as StageSnapshot;
     });
   }, [traceDetail?.stage_inputs, traceDetail?.stage_outputs]);
 
@@ -546,27 +589,33 @@ function InspectorContent() {
         setShowAssetOverrideModal(false);
       }
     },
-    [traceDetail, fetchTraceDetail]
+    [traceDetail, fetchTraceDetail],
   );
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border   p-5 text-sm  space-y-2 shadow-inner" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-5 text-sm shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-300">
         <p>
-          Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/쿼리/렌더를 확인하는 전용 도구입니다.
+          Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/쿼리/렌더를
+          확인하는 전용 도구입니다.
         </p>
-        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
-          Assets/Settings 변경 후에는 반드시 Inspector에서 trace_id로 검증하고, 다시 실행한 trace를 사용해 상태를 확인하세요.
+        <p className="text-xs text-slate-600 dark:text-slate-400">
+          Assets/Settings 변경 후에는 반드시 Inspector에서 trace_id로 검증하고, 다시 실행한 trace를
+          사용해 상태를 확인하세요.
         </p>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className=" border  rounded-2xl p-5 space-y-4 shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Trace Lookup</p>
-              <h3 className="text-lg font-semibold text-white">Trace ID로 바로 열람</h3>
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
+                Trace Lookup
+              </p>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Trace ID로 바로 열람
+              </h3>
             </div>
-            <span className="text-[11px] " style={{color: "var(--muted-foreground)"}}>Exact</span>
+            <span className="text-sm text-slate-600 dark:text-slate-400">Exact</span>
           </div>
           <div className="flex gap-3">
             <input
@@ -574,24 +623,28 @@ function InspectorContent() {
               value={lookupTraceId}
               onChange={(event) => setLookupTraceId(event.target.value)}
               placeholder="Trace ID를 입력하세요"
-              className="flex-1  border  rounded-xl px-4 py-3 text-sm font-mono focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+              className="flex-1 rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-mono text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
             />
             <button
               onClick={handleLookup}
-              className="px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs tracking-[0.2em] font-bold uppercase"
+              className="rounded-md bg-sky-600 px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:bg-sky-500"
             >
               {detailLoading ? "로딩..." : "조회"}
             </button>
           </div>
-          <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Trace ID가 있으면 단일 실행 상세를 즉시 확인합니다.
           </p>
         </div>
 
-        <div className=" border  rounded-2xl p-5 space-y-4 shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Trace Search</p>
-            <h3 className="text-lg font-semibold text-white">운용/분석 필터</h3>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
+              Trace Search
+            </p>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+              운용/분석 필터
+            </h3>
           </div>
           <div className="space-y-3">
             <input
@@ -599,29 +652,35 @@ function InspectorContent() {
               value={filters.q}
               onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
               placeholder="질의 또는 키워드(q)"
-              className="w-full  border  rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+              className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
                 type="text"
                 value={filters.feature}
-                onChange={(event) => setFilters((prev) => ({ ...prev, feature: event.target.value }))}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, feature: event.target.value }))
+                }
                 placeholder="Feature (예: ci)"
-                className=" border  rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
               />
               <input
                 type="text"
                 value={filters.assetId}
-                onChange={(event) => setFilters((prev) => ({ ...prev, assetId: event.target.value }))}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, assetId: event.target.value }))
+                }
                 placeholder="Asset ID 기준"
-                className=" border  rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="rounded-md border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <select
                 value={filters.status}
-                onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-                className=" border  rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                onChange={(event) =>
+                  setFilters((prev) => ({ ...prev, status: event.target.value }))
+                }
+                className="rounded-md border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
               >
                 <option value="">응답 상태 (전체)</option>
                 <option value="success">success</option>
@@ -631,14 +690,16 @@ function InspectorContent() {
                 <input
                   type="date"
                   value={filters.from}
-                  onChange={(event) => setFilters((prev) => ({ ...prev, from: event.target.value }))}
-                  className="flex-1  border  rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                  onChange={(event) =>
+                    setFilters((prev) => ({ ...prev, from: event.target.value }))
+                  }
+                  className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
                 />
                 <input
                   type="date"
                   value={filters.to}
                   onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
-                  className="flex-1  border  rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                  className="flex-1 rounded-md border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-100 dark:focus:border-sky-400"
                 />
               </div>
             </div>
@@ -646,14 +707,14 @@ function InspectorContent() {
           <div className="flex gap-3 justify-end">
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 border  rounded-xl text-[10px] uppercase tracking-[0.2em]  hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+              className="rounded-md border border-slate-300 px-4 py-2 text-xs uppercase tracking-[0.2em] text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
             >
               Reset
             </button>
             <button
               onClick={() => handleSearch(0)}
               disabled={loading}
-              className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-[10px] uppercase tracking-[0.2em] font-bold"
+              className="rounded-md bg-emerald-600 px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500 disabled:opacity-50"
             >
               {loading ? "Searching..." : "Trace Search"}
             </button>
@@ -661,36 +722,56 @@ function InspectorContent() {
         </div>
       </div>
 
-      {error && (
-        <ValidationAlert errors={[error]} onClose={() => setError(null)} />
-      )}
+      {error && <ValidationAlert errors={[error]} onClose={() => setError(null)} />}
 
-      <div className=" border  rounded-2xl overflow-hidden shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-        <div className="px-5 py-3 border-b  flex items-center justify-between" style={{borderColor: "var(--border)"}}>
+      <div
+        className=" border rounded-2xl overflow-hidden shadow-2xl"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+      >
+        <div
+          className="px-5 py-3 border-b flex items-center justify-between"
+          style={{ borderColor: "var(--border)" }}
+        >
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Trace Results</p>
+            <p
+              className="text-xs uppercase tracking-[0.3em] "
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              Trace Results
+            </p>
             <h3 className="text-white text-sm font-semibold">
               {traces.length} 건 중 {total}개
             </h3>
           </div>
-          <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+          <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
             Showing {offset === 0 ? traces.length : offset} / {total}
           </p>
         </div>
         {loading && traces.length === 0 ? (
           <div className="py-12 flex flex-col items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2  border-t-emerald-400 animate-spin" style={{borderColor: "var(--border)"}} />
-            <p className="text-[11px]  uppercase tracking-[0.25em]" style={{color: "var(--muted-foreground)"}}>Loading traces...</p>
+            <div
+              className="w-10 h-10 rounded-full border-2 border-t-emerald-400 animate-spin"
+              style={{ borderColor: "var(--border)" }}
+            />
+            <p
+              className="text-sm uppercase tracking-[0.25em]"
+              style={{ color: "var(--muted-foreground)" }}
+            >
+              Loading traces...
+            </p>
           </div>
         ) : traces.length === 0 ? (
-          <div className="py-12 text-center text-xs " style={{color: "var(--muted-foreground)"}}>
+          <div className="py-12 text-center text-xs " style={{ color: "var(--muted-foreground)" }}>
             필터를 조정하여 실행 기록을 검색하세요.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-[0.3em]  border-b " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
+                <tr
+                  className="text-left text-xs uppercase tracking-[0.3em] border-b "
+                  style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                >
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Feature</th>
                   <th className="px-4 py-3">Status</th>
@@ -706,20 +787,39 @@ function InspectorContent() {
                   <tr
                     key={trace.trace_id}
                     onClick={() => handleRowClick(trace.trace_id)}
-                    className={`border-b  hover: transition-colors cursor-pointer ${selectedTraceId === trace.trace_id ? "" : ""}`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
+                    className={`border-b transition-colors cursor-pointer ${selectedTraceId === trace.trace_id ? "" : ""}`}
+                    style={{
+                      backgroundColor: "var(--surface-overlay)",
+                      borderColor: "var(--border)",
+                    }}
                   >
                     <td className="px-4 py-3">
-                      <p className="font-mono text-xs " style={{color: "var(--foreground-secondary)"}}>{trace.trace_id.slice(0, 8)}</p>
-                      <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>{formatRelativeTime(trace.created_at)}</p>
-                      <p className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{formatTimestamp(trace.created_at)}</p>
+                      <p
+                        className="font-mono text-xs "
+                        style={{ color: "var(--foreground-secondary)" }}
+                      >
+                        {trace.trace_id.slice(0, 8)}
+                      </p>
+                      <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+                        {formatRelativeTime(trace.created_at)}
+                      </p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        {formatTimestamp(trace.created_at)}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 " style={{color: "var(--foreground-secondary)"}}>{trace.feature}</td>
-                    <td className="px-4 py-3 " style={{color: "var(--foreground)"}}>
-                      <span className={`px-2 py-1 rounded-full text-[11px] ${getStatusBadgeClass(trace.status)}`}>
+                    <td className="px-4 py-3 " style={{ color: "var(--foreground-secondary)" }}>
+                      {trace.feature}
+                    </td>
+                    <td className="px-4 py-3 " style={{ color: "var(--foreground)" }}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-sm ${getStatusBadgeClass(trace.status)}`}
+                      >
                         {trace.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 " style={{color: "var(--foreground-secondary)"}}>{formatDuration(trace.duration_ms)}</td>
+                    <td className="px-4 py-3 " style={{ color: "var(--foreground-secondary)" }}>
+                      {formatDuration(trace.duration_ms)}
+                    </td>
                     <td className="px-4 py-3">
                       {trace.route && (
                         <span className="px-2 py-1 rounded-full text-xs font-mono bg-blue-500/10 text-blue-400">
@@ -734,8 +834,15 @@ function InspectorContent() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs " style={{color: "var(--muted-foreground)"}}>{trace.question_snippet}</td>
-                    <td className="px-4 py-3 text-xs " style={{color: "var(--foreground-secondary)"}}>{formatAppliedAssetSummary(trace)}</td>
+                    <td className="px-4 py-3 text-xs " style={{ color: "var(--muted-foreground)" }}>
+                      {trace.question_snippet}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-xs "
+                      style={{ color: "var(--foreground-secondary)" }}
+                    >
+                      {formatAppliedAssetSummary(trace)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -743,11 +850,15 @@ function InspectorContent() {
           </div>
         )}
         {offset < total && traces.length > 0 && (
-          <div className="p-4 flex justify-center border-t " style={{borderColor: "var(--border)"}}>
+          <div
+            className="p-4 flex justify-center border-t "
+            style={{ borderColor: "var(--border)" }}
+          >
             <button
               onClick={() => handleSearch(offset)}
               disabled={loading}
-              className="px-6 py-2 rounded-full  text-xs uppercase tracking-[0.3em] hover: disabled:opacity-50" style={{backgroundColor: "var(--surface-elevated)"}}
+              className="px-6 py-2 rounded-full text-xs uppercase tracking-[0.3em] opacity-50"
+              style={{ backgroundColor: "var(--surface-elevated)" }}
             >
               {loading ? "불러오는 중..." : "Load More"}
             </button>
@@ -760,31 +871,51 @@ function InspectorContent() {
           data-testid="inspector-drawer"
           className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4"
         >
-          <div className=" border  max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-            <header className="px-6 py-4 border-b  flex flex-col gap-4 md:flex-row md:items-center md:justify-between" style={{borderColor: "var(--border)"}}>
+          <div
+            className=" border max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+          >
+            <header
+              className="px-6 py-4 border-b flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+              style={{ borderColor: "var(--border)" }}
+            >
               <div className="space-y-3">
-                <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Trace Overview</p>
+                <p
+                  className="text-xs uppercase tracking-[0.3em] "
+                  style={{ color: "var(--muted-foreground)" }}
+                >
+                  Trace Overview
+                </p>
                 <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold text-white tracking-tight">{traceDetail.question}</h2>
+                  <h2 className="text-lg font-semibold text-white tracking-tight">
+                    {traceDetail.question}
+                  </h2>
                   <span
                     className={`px-3 py-1 rounded-full text-xs uppercase tracking-[0.3em] ${getStatusBadgeClass(
-                      traceDetail.status
+                      traceDetail.status,
                     )}`}
                   >
                     {traceDetail.status}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-3 text-xs " style={{color: "var(--muted-foreground)"}}>
+                <div
+                  className="flex flex-wrap gap-3 text-xs "
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   <span>Feature: {traceDetail.feature}</span>
                   <span>Mode: {traceDetail.ops_mode}</span>
                   <span>Endpoint: {traceDetail.endpoint}</span>
                   <span>Method: {traceDetail.method}</span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                <div
+                  className="flex flex-wrap items-center gap-2 text-sm "
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   <span className="font-mono">{traceDetail.trace_id}</span>
                   <button
                     onClick={handleCopyTraceId}
-                    className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
+                    className="px-3 py-1 rounded-lg border text-xs uppercase tracking-[0.2em] transition "
+                    style={{ borderColor: "var(--border)" }}
                   >
                     {traceCopyStatus === "copied"
                       ? "복사됨"
@@ -794,7 +925,8 @@ function InspectorContent() {
                   </button>
                   <button
                     onClick={handleCopyLink}
-                    className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
+                    className="px-3 py-1 rounded-lg border text-xs uppercase tracking-[0.2em] transition "
+                    style={{ borderColor: "var(--border)" }}
                   >
                     {linkCopyStatus === "copied"
                       ? "Link copied"
@@ -805,13 +937,17 @@ function InspectorContent() {
                   {traceDetail.parent_trace_id && (
                     <button
                       onClick={() => fetchTraceDetail(traceDetail.parent_trace_id!)}
-                      className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
+                      className="px-3 py-1 rounded-lg border text-xs uppercase tracking-[0.2em] transition "
+                      style={{ borderColor: "var(--border)" }}
                     >
                       View parent
                     </button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-4 text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                <div
+                  className="flex flex-wrap gap-4 text-sm "
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                   <span>{formatTimestamp(traceDetail.created_at)}</span>
                   <span>{formatRelativeTime(traceDetail.created_at)}</span>
@@ -821,20 +957,20 @@ function InspectorContent() {
                 <button
                   onClick={handleRunSingleRca}
                   disabled={singleRcaLoading}
-                  className="px-3 py-2 rounded-xl border border-fuchsia-600 bg-fuchsia-900/20 text-xs uppercase tracking-[0.2em] text-fuchsia-200 hover:bg-fuchsia-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 rounded-xl border border-fuchsia-600 bg-fuchsia-900/20 text-xs uppercase tracking-[0.2em] text-fuchsia-200 bg-fuchsia-900/40 transition opacity-50 cursor-not-allowed"
                   data-testid="drawer-run-rca"
                 >
                   {singleRcaLoading ? "Analyzing..." : "Run RCA"}
                 </button>
                 <button
                   onClick={handleCompareClick}
-                  className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-[0.2em] text-emerald-200 hover:bg-emerald-900/40 transition"
+                  className="px-3 py-2 rounded-xl border border-emerald-700 bg-emerald-900/20 text-xs uppercase tracking-[0.2em] text-emerald-200 bg-emerald-900/40 transition"
                 >
                   Compare
                 </button>
                 <button
                   onClick={handleStageCompareClick}
-                  className="px-3 py-2 rounded-xl border border-amber-700 bg-amber-900/20 text-xs uppercase tracking-[0.2em] text-amber-200 hover:bg-amber-900/40 transition"
+                  className="px-3 py-2 rounded-xl border border-amber-700 bg-amber-900/20 text-xs uppercase tracking-[0.2em] text-amber-200 bg-amber-900/40 transition"
                 >
                   Stage Compare
                 </button>
@@ -846,7 +982,8 @@ function InspectorContent() {
                     setDetailError(null);
                     setShowDiffView(false);
                   }}
-                  className="px-3 py-2 rounded-xl border  text-xs uppercase tracking-[0.2em] hover:" style={{borderColor: "var(--border)"}}
+                  className="px-3 py-2 rounded-xl border text-xs uppercase tracking-[0.2em] "
+                  style={{ borderColor: "var(--border)" }}
                 >
                   Close
                 </button>
@@ -866,27 +1003,72 @@ function InspectorContent() {
               )}
               {detailLoading ? (
                 <div className="py-8 flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 rounded-full border-2  border-t-emerald-400 animate-spin" style={{borderColor: "var(--border)"}} />
-                  <p className="text-xs  uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Loading detail...</p>
+                  <div
+                    className="w-10 h-10 rounded-full border-2 border-t-emerald-400 animate-spin"
+                    style={{ borderColor: "var(--border)" }}
+                  />
+                  <p
+                    className="text-xs uppercase tracking-[0.3em]"
+                    style={{ color: "var(--muted-foreground)" }}
+                  >
+                    Loading detail...
+                  </p>
                 </div>
               ) : (
                 <>
                   <section
                     data-testid="flow-section"
-                    className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Overview</p>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>Request & Context</span>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Overview
+                      </p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        Request & Context
+                      </span>
                     </div>
                     <p className="text-sm text-white">{traceDetail.question}</p>
-                    <div className="flex flex-wrap gap-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>
-                      <span className="px-2 py-1 rounded-full " style={{backgroundColor: "var(--surface-elevated)"}}>Mode: {traceDetail.ops_mode}</span>
-                      <span className="px-2 py-1 rounded-full " style={{backgroundColor: "var(--surface-elevated)"}}>Endpoint: {traceDetail.endpoint}</span>
-                      <span className="px-2 py-1 rounded-full " style={{backgroundColor: "var(--surface-elevated)"}}>Method: {traceDetail.method}</span>
-                      <span className="px-2 py-1 rounded-full " style={{backgroundColor: "var(--surface-elevated)"}}>Route: {traceDetail.route ?? "orch"}</span>
+                    <div
+                      className="flex flex-wrap gap-2 text-sm "
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      <span
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "var(--surface-elevated)" }}
+                      >
+                        Mode: {traceDetail.ops_mode}
+                      </span>
+                      <span
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "var(--surface-elevated)" }}
+                      >
+                        Endpoint: {traceDetail.endpoint}
+                      </span>
+                      <span
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "var(--surface-elevated)" }}
+                      >
+                        Method: {traceDetail.method}
+                      </span>
+                      <span
+                        className="px-2 py-1 rounded-full "
+                        style={{ backgroundColor: "var(--surface-elevated)" }}
+                      >
+                        Route: {traceDetail.route ?? "orch"}
+                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-3 text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                    <div
+                      className="flex flex-wrap gap-3 text-sm "
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
                       <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                       <span>{formatTimestamp(traceDetail.created_at)}</span>
                       <span>{formatRelativeTime(traceDetail.created_at)}</span>
@@ -894,50 +1076,132 @@ function InspectorContent() {
                     {renderJsonDetails("Request payload", traceDetail.request_payload)}
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Applied Assets</p>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Applied Assets
+                      </p>
                       {highlightFallbacks(traceDetail.fallbacks)}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="/50 rounded-xl border  px-4 py-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Prompt</p>
+                      <div
+                        className="rounded-xl border px-4 py-3"
+                        style={{
+                          borderColor: "var(--border)",
+                          backgroundColor: "var(--surface-base)",
+                        }}
+                      >
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Prompt
+                        </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.prompt ?? null)}
                       </div>
-                      <div className="/50 rounded-xl border  px-4 py-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Policy</p>
+                      <div
+                        className="rounded-xl border px-4 py-3"
+                        style={{
+                          borderColor: "var(--border)",
+                          backgroundColor: "var(--surface-base)",
+                        }}
+                      >
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Policy
+                        </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.policy ?? null)}
                       </div>
-                      <div className="/50 rounded-xl border  px-4 py-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Mapping</p>
+                      <div
+                        className="rounded-xl border px-4 py-3"
+                        style={{
+                          borderColor: "var(--border)",
+                          backgroundColor: "var(--surface-base)",
+                        }}
+                      >
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Mapping
+                        </p>
                         {renderAppliedAsset(traceDetail.applied_assets?.mapping ?? null)}
                       </div>
                       <div className="md:col-span-2 space-y-2">
-                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Queries</p>
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Queries
+                        </p>
                         {traceDetail.applied_assets?.queries?.length ? (
                           <ul className="space-y-2">
-                            {traceDetail.applied_assets.queries.map((query: {asset_id: string | null; name: string | null; source: string | null}) => (
-                              <li key={query.asset_id || `${query.name}-${query.source}`} className="/50 border  rounded-xl px-3 py-2 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
-                                {query.name || "query"} · {query.source} · {query.asset_id ?? "seed"}
-                              </li>
-                            ))}
+                            {traceDetail.applied_assets.queries.map(
+                              (query: {
+                                asset_id: string | null;
+                                name: string | null;
+                                source: string | null;
+                              }) => (
+                                <li
+                                  key={query.asset_id || `${query.name}-${query.source}`}
+                                  className="border rounded-xl px-3 py-2 text-sm "
+                                  style={{
+                                    borderColor: "var(--border)",
+                                    color: "var(--foreground-secondary)",
+                                    backgroundColor: "var(--surface-base)",
+                                  }}
+                                >
+                                  {query.name || "query"} · {query.source} ·{" "}
+                                  {query.asset_id ?? "seed"}
+                                </li>
+                              ),
+                            )}
                           </ul>
                         ) : (
-                          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Query asset 없음</p>
+                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                            Query asset 없음
+                          </p>
                         )}
                       </div>
                       <div className="md:col-span-2 space-y-2">
-                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Screens</p>
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Screens
+                        </p>
                         {traceDetail.applied_assets?.screens?.length ? (
                           <ul className="space-y-2">
                             {traceDetail.applied_assets.screens.map((screen) => (
-                              <li key={screen.asset_id || `${screen.screen_id}-${screen.status}`} className="/50 border  rounded-xl px-3 py-2 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
-                                {screen.screen_id || "screen"} · {screen.status ?? "unknown"} · {screen.version ?? "?"}
+                              <li
+                                key={screen.asset_id || `${screen.screen_id}-${screen.status}`}
+                                className="border rounded-xl px-3 py-2 text-sm "
+                                style={{
+                                  borderColor: "var(--border)",
+                                  color: "var(--foreground-secondary)",
+                                  backgroundColor: "var(--surface-base)",
+                                }}
+                              >
+                                {screen.screen_id || "screen"} · {screen.status ?? "unknown"} ·{" "}
+                                {screen.version ?? "?"}
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Screen asset 없음</p>
+                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                            Screen asset 없음
+                          </p>
                         )}
                       </div>
                     </div>
@@ -945,24 +1209,43 @@ function InspectorContent() {
 
                   <section
                     data-testid="regression-panel"
-                    className=" border  rounded-2xl p-5 space-y-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                    className=" border rounded-2xl p-5 space-y-4"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Plan</p>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Plan
+                      </p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setPlanView("raw")}
-                          className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.3em] ${planView === "raw"
-                            ? " text-white"
-                            : "  border "}`} style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                          className={`px-3 py-1 rounded-full text-xs uppercase tracking-[0.3em] ${
+                            planView === "raw" ? " text-white" : " border "
+                          }`}
+                          style={{
+                            backgroundColor: "var(--surface-base)",
+                            color: "var(--muted-foreground)",
+                            borderColor: "var(--border)",
+                          }}
                         >
                           Raw
                         </button>
                         <button
                           onClick={() => setPlanView("validated")}
-                          className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.3em] ${planView === "validated"
-                            ? " text-white"
-                            : "  border "}`} style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                          className={`px-3 py-1 rounded-full text-xs uppercase tracking-[0.3em] ${
+                            planView === "validated" ? " text-white" : " border "
+                          }`}
+                          style={{
+                            backgroundColor: "var(--surface-base)",
+                            color: "var(--muted-foreground)",
+                            borderColor: "var(--border)",
+                          }}
                         >
                           Validated
                         </button>
@@ -970,15 +1253,29 @@ function InspectorContent() {
                     </div>
                     {renderJsonDetails(
                       planView === "raw" ? "Raw plan snapshot" : "Validated plan snapshot",
-                      planView === "raw" ? traceDetail.plan_raw : traceDetail.plan_validated
+                      planView === "raw" ? traceDetail.plan_raw : traceDetail.plan_validated,
                     )}
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Plan steps</p>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Plan steps
+                      </p>
                       <div className="mt-2 overflow-x-auto">
                         {traceDetail.execution_steps && traceDetail.execution_steps.length ? (
-                          <table className="min-w-full text-xs " style={{color: "var(--foreground-secondary)"}}>
+                          <table
+                            className="min-w-full text-xs "
+                            style={{ color: "var(--foreground-secondary)" }}
+                          >
                             <thead>
-                              <tr className="text-left text-[10px] uppercase tracking-[0.2em]  border-b " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
+                              <tr
+                                className="text-left text-xs uppercase tracking-[0.2em] border-b "
+                                style={{
+                                  borderColor: "var(--border)",
+                                  color: "var(--muted-foreground)",
+                                }}
+                              >
                                 <th className="px-2 py-2">Step</th>
                                 <th className="px-2 py-2">Tool</th>
                                 <th className="px-2 py-2">Status</th>
@@ -990,14 +1287,19 @@ function InspectorContent() {
                               {traceDetail.execution_steps.map((step: ExecutionStep) => (
                                 <tr
                                   key={`${step.step_id}-${step.tool_name}-${step.duration_ms}`}
-                                  className="border-b " style={{borderColor: "var(--border)"}}
+                                  className="border-b "
+                                  style={{ borderColor: "var(--border)" }}
                                 >
                                   <td className="px-2 py-2">{step.step_id || "step"}</td>
                                   <td className="px-2 py-2">{step.tool_name || "tool"}</td>
                                   <td className="px-2 py-2">
-                                    <span className={`px-2 py-1 rounded-full ${step.status === "success"
-                                      ? "bg-emerald-900/40 text-emerald-200"
-                                      : "bg-rose-900/40 text-rose-200"}`}>
+                                    <span
+                                      className={`px-2 py-1 rounded-full ${
+                                        step.status === "success"
+                                          ? "bg-emerald-900/40 text-emerald-200"
+                                          : "bg-rose-900/40 text-rose-200"
+                                      }`}
+                                    >
                                       {step.status}
                                     </span>
                                   </td>
@@ -1010,36 +1312,56 @@ function InspectorContent() {
                             </tbody>
                           </table>
                         ) : (
-                          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Plan step 정보가 없습니다.</p>
+                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                            Plan step 정보가 없습니다.
+                          </p>
                         )}
                       </div>
                     </div>
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-4"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between flex-wrap gap-3">
                       <div className="flex items-center gap-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Stage Pipeline</p>
-                        <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Stage Pipeline
+                        </p>
+                        <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                           Route: {traceDetail.route ?? "orch"}
                         </span>
-                        <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
+                        <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                           {traceDetail.stage_outputs?.length ?? 0} stages
                         </span>
                       </div>
                       <button
                         onClick={() => setShowAssetOverrideModal(true)}
-                        className="px-3 py-2 rounded-xl border  text-xs uppercase tracking-[0.2em]  hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
+                        className="px-3 py-2 rounded-xl border text-xs uppercase tracking-[0.2em] "
+                        style={{
+                          borderColor: "var(--border)",
+                          color: "var(--foreground-secondary)",
+                        }}
                       >
                         Asset Override Test
                       </button>
                       {assetOverrideLoading && (
-                        <span className="text-[10px]  uppercase tracking-[0.2em]" style={{color: "var(--muted-foreground)"}}>
+                        <span
+                          className="text-xs uppercase tracking-[0.2em]"
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
                           Loading assets...
                         </span>
                       )}
                       {assetOverrideError && !assetOverrideLoading && (
-                        <span className="text-[10px] text-rose-300 uppercase tracking-[0.2em]">
+                        <span className="text-xs text-rose-300 uppercase tracking-[0.2em]">
                           Asset load failed
                         </span>
                       )}
@@ -1052,12 +1374,18 @@ function InspectorContent() {
                         assetNames={assetNames}
                       />
                     ) : (
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Stage trace가 아직 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        Stage trace가 아직 없습니다.
+                      </p>
                     )}
                     <div className="grid gap-4 md:grid-cols-2">
                       {STAGE_ORDER.map((stage) => {
-                        const stageInput = traceDetail.stage_inputs?.find((entry: StageInput) => entry.stage === stage);
-                        const stageOutput = traceDetail.stage_outputs?.find((entry: StageOutput) => entry.stage === stage);
+                        const stageInput = traceDetail.stage_inputs?.find(
+                          (entry: StageInput) => entry.stage === stage,
+                        );
+                        const stageOutput = traceDetail.stage_outputs?.find(
+                          (entry: StageOutput) => entry.stage === stage,
+                        );
                         const status = normalizeStageStatus(stageOutput);
                         const warnings = stageOutput?.diagnostics?.warnings ?? [];
                         const errors = stageOutput?.diagnostics?.errors ?? [];
@@ -1066,20 +1394,41 @@ function InspectorContent() {
                         return (
                           <article
                             key={stage}
-                            className="/50 border  rounded-xl p-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                            className="border rounded-xl p-4 space-y-3"
+                            style={{
+                              borderColor: "var(--border)",
+                              backgroundColor: "var(--surface-base)",
+                            }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+                                <p
+                                  className="text-xs uppercase tracking-[0.3em] "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
                                   {STAGE_LABELS[stage] ?? stage.toUpperCase()}
                                 </p>
-                                <p className="text-[11px]  font-mono" style={{color: "var(--muted-foreground)"}}>{stage}</p>
+                                <p
+                                  className="text-sm font-mono"
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {stage}
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
+                                <span
+                                  className="text-xs uppercase tracking-[0.2em] "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
                                   {stageOutput?.duration_ms ? `${stageOutput.duration_ms}ms` : "-"}
                                 </span>
-                                <span className="px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em]  " style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+                                <span
+                                  className="px-2 py-1 rounded-full text-xs uppercase tracking-[0.2em] "
+                                  style={{
+                                    color: "var(--foreground-secondary)",
+                                    backgroundColor: "var(--surface-overlay)",
+                                  }}
+                                >
                                   {status}
                                 </span>
                               </div>
@@ -1087,8 +1436,17 @@ function InspectorContent() {
 
                             {/* Applied Assets Cards */}
                             {appliedAssets && Object.keys(appliedAssets).length > 0 && (
-                              <div className=" rounded-lg p-3 border " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                                <p className="text-[9px] uppercase tracking-[0.3em]  mb-2" style={{color: "var(--muted-foreground)"}}>
+                              <div
+                                className=" rounded-lg p-3 border "
+                                style={{
+                                  borderColor: "var(--border)",
+                                  backgroundColor: "var(--surface-overlay)",
+                                }}
+                              >
+                                <p
+                                  className="text-xs uppercase tracking-[0.3em] mb-2"
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
                                   Applied Assets
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1098,25 +1456,38 @@ function InspectorContent() {
                                       prompt: { icon: "⭐", color: "text-blue-400" },
                                       policy: { icon: "🛡️", color: "text-emerald-400" },
                                       mapping: { icon: "🗺️", color: "text-amber-400" },
-                                      source: { icon: "💾", color: "text-[var(--foreground-secondary)]" },
+                                      source: {
+                                        icon: "💾",
+                                        color: "text-[var(--foreground-secondary)]",
+                                      },
                                       schema: { icon: "📊", color: "text-fuchsia-300" },
                                       resolver: { icon: "🔧", color: "text-orange-300" },
                                       query: { icon: "🔍", color: "text-purple-400" },
-                                    }[type] || { icon: "📄", color: "text-[var(--muted-foreground)]" };
+                                    }[type] || {
+                                      icon: "📄",
+                                      color: "text-[var(--muted-foreground)]",
+                                    };
 
-                                    const displayValue = String(value).replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
+                                    const displayValue = String(value)
+                                      .replace(/:v\d+$/, "")
+                                      .replace(/@[^:]+$/, "");
 
                                     return (
                                       <div
                                         key={type}
                                         className={cn(
                                           "flex items-center gap-1.5 px-2 py-1 rounded-md",
-                                          "bg-[var(--surface-base)]/60 border border-[var(--border)]/50 text-xs"
+                                          "bg-[var(--surface-base)]/60 border border-[var(--border)]/50 text-xs",
                                         )}
                                         title={`${type}: ${value}`}
                                       >
                                         <span>{config.icon}</span>
-                                        <span className=" capitalize" style={{color: "var(--muted-foreground)"}}>{type}:</span>
+                                        <span
+                                          className=" capitalize"
+                                          style={{ color: "var(--muted-foreground)" }}
+                                        >
+                                          {type}:
+                                        </span>
                                         <span className={cn("font-mono", config.color)}>
                                           {displayValue}
                                         </span>
@@ -1133,7 +1504,9 @@ function InspectorContent() {
                               <div className="grid gap-3 md:grid-cols-2 text-xs">
                                 {warnings.length > 0 && (
                                   <div className="bg-amber-500/5 border border-amber-400/30 rounded-xl p-3 text-amber-200">
-                                    <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300">Warnings</p>
+                                    <p className="text-xs uppercase tracking-[0.3em] text-amber-300">
+                                      Warnings
+                                    </p>
                                     <ul className="mt-2 space-y-1">
                                       {warnings.map((warning: string, index: number) => (
                                         <li key={`${stage}-warn-${index}`}>{warning}</li>
@@ -1143,7 +1516,9 @@ function InspectorContent() {
                                 )}
                                 {errors.length > 0 && (
                                   <div className="bg-rose-500/5 border border-rose-400/30 rounded-xl p-3 text-rose-200">
-                                    <p className="text-[10px] uppercase tracking-[0.3em] text-rose-300">Errors</p>
+                                    <p className="text-xs uppercase tracking-[0.3em] text-rose-300">
+                                      Errors
+                                    </p>
                                     <ul className="mt-2 space-y-1">
                                       {errors.map((error: string, index: number) => (
                                         <li key={`${stage}-err-${index}`}>{error}</li>
@@ -1159,82 +1534,165 @@ function InspectorContent() {
                     </div>
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-4"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Execution</p>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{traceDetail.execution_steps?.length ?? 0} steps</span>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Execution
+                      </p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        {traceDetail.execution_steps?.length ?? 0} steps
+                      </span>
                     </div>
                     {traceDetail.execution_steps && traceDetail.execution_steps.length ? (
                       <div className="space-y-3">
                         {traceDetail.execution_steps.map((step: ExecutionStep, index: number) => (
                           <article
                             key={`${step.step_id ?? index}-${step.tool_name ?? "tool"}`}
-                            className="/50 border  rounded-xl p-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                            className="border rounded-xl p-4 space-y-3"
+                            style={{
+                              borderColor: "var(--border)",
+                              backgroundColor: "var(--surface-base)",
+                            }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-sm text-white font-semibold">{step.step_id || `step-${index + 1}`}</p>
-                                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>{step.tool_name || "tool"}</p>
+                                <p className="text-sm text-white font-semibold">
+                                  {step.step_id || `step-${index + 1}`}
+                                </p>
+                                <p
+                                  className="text-sm "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {step.tool_name || "tool"}
+                                </p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] ${step.status === "success"
-                                  ? "bg-emerald-900/40 text-emerald-200"
-                                  : "bg-rose-900/40 text-rose-200"}`}>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs uppercase tracking-[0.2em] ${
+                                    step.status === "success"
+                                      ? "bg-emerald-900/40 text-emerald-200"
+                                      : "bg-rose-900/40 text-rose-200"
+                                  }`}
+                                >
                                   {step.status}
                                 </span>
-                                <span className="text-[11px] " style={{color: "var(--muted-foreground)"}}>{formatDuration(step.duration_ms)}</span>
+                                <span
+                                  className="text-sm "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {formatDuration(step.duration_ms)}
+                                </span>
                               </div>
                             </div>
                             {renderJsonDetails("Request summary", step.request)}
                             {renderJsonDetails("Response summary", step.response)}
                             {step.error && (
-                              <details className="bg-rose-950/40 border border-rose-800 rounded-xl p-2 text-[11px] text-rose-200">
-                                <summary className="cursor-pointer uppercase tracking-[0.3em] text-[10px]">Error details</summary>
-                                <p className="mt-2 text-[11px] text-rose-100">
+                              <details className="bg-rose-950/40 border border-rose-800 rounded-xl p-2 text-sm text-rose-200">
+                                <summary className="cursor-pointer uppercase tracking-[0.3em] text-xs">
+                                  Error details
+                                </summary>
+                                <p className="mt-2 text-sm text-rose-100">
                                   {step.error?.message ?? "Unknown error"}
                                 </p>
                                 {step.error?.stack && (
-                                  <pre className="mt-2 max-h-40 overflow-auto text-[10px] text-rose-100">
+                                  <pre className="mt-2 max-h-40 overflow-auto text-xs text-rose-100">
                                     {step.error.stack}
                                   </pre>
                                 )}
                               </details>
                             )}
                             {step.references && step.references.length ? (
-                              <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
-                                References: {step.references.map((ref: {name: string}) => ref.name).join(", ")}
+                              <p
+                                className="text-sm "
+                                style={{ color: "var(--muted-foreground)" }}
+                              >
+                                References:{" "}
+                                {step.references
+                                  .map((ref: { name: string }) => ref.name)
+                                  .join(", ")}
                               </p>
                             ) : null}
                           </article>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Tool execution trace가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        Tool execution trace가 없습니다.
+                      </p>
                     )}
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-4"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Control Loop</p>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{traceDetail.replan_events?.length ?? 0} events</span>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Control Loop
+                      </p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        {traceDetail.replan_events?.length ?? 0} events
+                      </span>
                     </div>
                     {traceDetail.replan_events && traceDetail.replan_events.length ? (
-                      <ReplanTimeline traceId={traceDetail.trace_id ?? ""} events={traceDetail.replan_events} />
+                      <ReplanTimeline
+                        traceId={traceDetail.trace_id ?? ""}
+                        events={traceDetail.replan_events}
+                      />
                     ) : (
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Replan 이벤트가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        Replan 이벤트가 없습니다.
+                      </p>
                     )}
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>References</p>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{traceDetail.references?.length ?? 0} items</span>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        References
+                      </p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        {traceDetail.references?.length ?? 0} items
+                      </span>
                     </div>
                     {traceDetail.references && traceDetail.references.length ? (
                       <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs " style={{color: "var(--foreground-secondary)"}}>
+                        <table
+                          className="min-w-full text-xs "
+                          style={{ color: "var(--foreground-secondary)" }}
+                        >
                           <thead>
-                            <tr className="text-left uppercase tracking-[0.3em]  border-b  text-[10px]" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
+                            <tr
+                              className="text-left uppercase tracking-[0.3em] border-b text-xs"
+                              style={{
+                                borderColor: "var(--border)",
+                                color: "var(--muted-foreground)",
+                              }}
+                            >
                               <th className="px-2 py-2">Type</th>
                               <th className="px-2 py-2">Name</th>
                               <th className="px-2 py-2">Engine</th>
@@ -1245,27 +1703,79 @@ function InspectorContent() {
                           </thead>
                           <tbody>
                             {traceDetail.references.map((ref: ReferenceEntry, index: number) => (
-                              <tr key={`${ref.name}-${index}`} className="border-b " style={{borderColor: "var(--border)"}}>
-                                <td className="px-2 py-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>{ref.ref_type}</td>
-                                <td className="px-2 py-2 " style={{color: "var(--foreground)"}}>{ref.name}</td>
-                                <td className="px-2 py-2 " style={{color: "var(--muted-foreground)"}}>{ref.engine || "unknown"}</td>
-                                <td className="px-2 py-2 " style={{color: "var(--muted-foreground)"}}>{ref.row_count ?? "-"}</td>
-                                <td className="px-2 py-2 " style={{color: "var(--muted-foreground)"}}>{ref.latency_ms ?? "-"} ms</td>
+                              <tr
+                                key={`${ref.name}-${index}`}
+                                className="border-b "
+                                style={{ borderColor: "var(--border)" }}
+                              >
+                                <td
+                                  className="px-2 py-2 text-sm "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {ref.ref_type}
+                                </td>
+                                <td className="px-2 py-2 " style={{ color: "var(--foreground)" }}>
+                                  {ref.name}
+                                </td>
+                                <td
+                                  className="px-2 py-2 "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {ref.engine || "unknown"}
+                                </td>
+                                <td
+                                  className="px-2 py-2 "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {ref.row_count ?? "-"}
+                                </td>
+                                <td
+                                  className="px-2 py-2 "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {ref.latency_ms ?? "-"} ms
+                                </td>
                                 <td className="px-2 py-2 space-y-1">
                                   {ref.statement && (
-                                    <details className=" border  rounded-xl p-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                                      <summary className="text-[10px] uppercase tracking-[0.2em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
+                                    <details
+                                      className=" border rounded-xl p-2"
+                                      style={{
+                                        borderColor: "var(--border)",
+                                        backgroundColor: "var(--surface-overlay)",
+                                      }}
+                                    >
+                                      <summary
+                                        className="text-xs uppercase tracking-[0.2em] cursor-pointer"
+                                        style={{ color: "var(--muted-foreground)" }}
+                                      >
                                         Statement
                                       </summary>
-                                      <pre className="mt-2 text-[11px]  overflow-x-auto" style={{color: "var(--foreground-secondary)"}}>{ref.statement}</pre>
+                                      <pre
+                                        className="mt-2 text-sm overflow-x-auto"
+                                        style={{ color: "var(--foreground-secondary)" }}
+                                      >
+                                        {ref.statement}
+                                      </pre>
                                     </details>
                                   )}
                                   {ref.params && (
-                                    <details className=" border  rounded-xl p-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                                      <summary className="text-[10px] uppercase tracking-[0.2em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
+                                    <details
+                                      className=" border rounded-xl p-2"
+                                      style={{
+                                        borderColor: "var(--border)",
+                                        backgroundColor: "var(--surface-overlay)",
+                                      }}
+                                    >
+                                      <summary
+                                        className="text-xs uppercase tracking-[0.2em] cursor-pointer"
+                                        style={{ color: "var(--muted-foreground)" }}
+                                      >
                                         Params
                                       </summary>
-                                      <pre className="mt-2 text-[11px]  overflow-x-auto" style={{color: "var(--foreground-secondary)"}}>
+                                      <pre
+                                        className="mt-2 text-sm overflow-x-auto"
+                                        style={{ color: "var(--foreground-secondary)" }}
+                                      >
                                         {JSON.stringify(ref.params, null, 2)}
                                       </pre>
                                     </details>
@@ -1277,41 +1787,84 @@ function InspectorContent() {
                         </table>
                       </div>
                     ) : (
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>근거 레코드가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        근거 레코드가 없습니다.
+                      </p>
                     )}
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Answer Blocks</p>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{traceDetail.answer?.blocks?.length ?? 0} blocks</span>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Answer Blocks
+                      </p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        {traceDetail.answer?.blocks?.length ?? 0} blocks
+                      </span>
                     </div>
                     {traceDetail.answer?.blocks && traceDetail.answer.blocks.length > 0 ? (
                       <div className="grid gap-3 md:grid-cols-2">
                         {traceDetail.answer.blocks.map((block: AnswerBlock, index: number) => (
                           <article
                             key={`${block.type}-${index}`}
-                            className="/40 border  rounded-xl p-4 space-y-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                            className="border rounded-xl p-4 space-y-2"
+                            style={{
+                              borderColor: "var(--border)",
+                              backgroundColor: "var(--surface-base)",
+                            }}
                           >
-                            <div className="flex items-center justify-between text-[11px]  uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+                            <div
+                              className="flex items-center justify-between text-sm uppercase tracking-[0.3em]"
+                              style={{ color: "var(--muted-foreground)" }}
+                            >
                               <span>{block.type}</span>
-                              <span>{block.references?.length ? `${block.references.length} references` : "No refs"}</span>
+                              <span>
+                                {block.references?.length
+                                  ? `${block.references.length} references`
+                                  : "No refs"}
+                              </span>
                             </div>
                             <div>
                               {block.title ? (
                                 <p className="text-sm text-white font-semibold">{block.title}</p>
                               ) : (
-                                <p className="text-sm " style={{color: "var(--foreground)"}}>Untitled block</p>
+                                <p className="text-sm " style={{ color: "var(--foreground)" }}>
+                                  Untitled block
+                                </p>
                               )}
-                              <p className="text-[11px]  mt-1" style={{color: "var(--muted-foreground)"}}>
+                              <p
+                                className="text-sm mt-1"
+                                style={{ color: "var(--muted-foreground)" }}
+                              >
                                 {summarizeBlockPayload(block)}
                               </p>
                             </div>
-                            <details className=" border  rounded-xl p-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                              <summary className="text-[10px] uppercase tracking-[0.2em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
+                            <details
+                              className=" border rounded-xl p-2"
+                              style={{
+                                borderColor: "var(--border)",
+                                backgroundColor: "var(--surface-overlay)",
+                              }}
+                            >
+                              <summary
+                                className="text-xs uppercase tracking-[0.2em] cursor-pointer"
+                                style={{ color: "var(--muted-foreground)" }}
+                              >
                                 View payload
                               </summary>
-                              <pre className="mt-2 text-[10px]  overflow-x-auto max-h-48" style={{color: "var(--foreground-secondary)"}}>
+                              <pre
+                                className="mt-2 text-xs overflow-x-auto max-h-48"
+                                style={{ color: "var(--foreground-secondary)" }}
+                              >
                                 {JSON.stringify(block, null, 2)}
                               </pre>
                             </details>
@@ -1319,29 +1872,66 @@ function InspectorContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Blocks가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        Blocks가 없습니다.
+                      </p>
                     )}
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                    <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>UI Render Trace</p>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
+                    <p
+                      className="text-xs uppercase tracking-[0.3em] "
+                      style={{ color: "var(--muted-foreground)" }}
+                    >
+                      UI Render Trace
+                    </p>
                     {traceDetail.ui_render ? (
                       <div className="space-y-3">
-                        <div className="text-xs  uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Rendered Blocks</div>
+                        <div
+                          className="text-xs uppercase tracking-[0.3em]"
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Rendered Blocks
+                        </div>
                         <div className="grid gap-2">
-                          {traceDetail.ui_render.rendered_blocks.map((block: UIRenderedBlock, index: number) => (
-                            <div key={`${block.block_type}-${index}`} className="/50 border  rounded-xl px-3 py-2 text-[11px]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                              <div className="flex items-center justify-between">
-                                <span>{block.block_type}</span>
-                                <span>{block.ok ? "ok" : "error"}</span>
+                          {traceDetail.ui_render.rendered_blocks.map(
+                            (block: UIRenderedBlock, index: number) => (
+                              <div
+                                key={`${block.block_type}-${index}`}
+                                className="border rounded-xl px-3 py-2 text-sm"
+                                style={{
+                                  borderColor: "var(--border)",
+                                  backgroundColor: "var(--surface-base)",
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{block.block_type}</span>
+                                  <span>{block.ok ? "ok" : "error"}</span>
+                                </div>
+                                <p
+                                  className="text-sm "
+                                  style={{ color: "var(--muted-foreground)" }}
+                                >
+                                  {block.component_name}
+                                </p>
+                                {block.error && (
+                                  <p className="text-rose-300 text-sm mt-1">{block.error}</p>
+                                )}
                               </div>
-                              <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>{block.component_name}</p>
-                              {block.error && <p className="text-rose-300 text-[11px] mt-1">{block.error}</p>}
-                            </div>
-                          ))}
+                            ),
+                          )}
                         </div>
                         {traceDetail.ui_render.warnings.length > 0 && (
-                          <ul className="list-disc list-inside text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                          <ul
+                            className="list-disc list-inside text-sm "
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
                             {traceDetail.ui_render.warnings.map((warning: string, idx: number) => (
                               <li key={idx}>{warning}</li>
                             ))}
@@ -1349,31 +1939,55 @@ function InspectorContent() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>UI 렌더 이벤트가 아직 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        UI 렌더 이벤트가 아직 없습니다.
+                      </p>
                     )}
                   </section>
 
-                  <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Flow</p>
+                        <p
+                          className="text-xs uppercase tracking-[0.3em] "
+                          style={{ color: "var(--muted-foreground)" }}
+                        >
+                          Flow
+                        </p>
                         {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
-                          <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{traceDetail.flow_spans.length} spans</span>
+                          <span
+                            className="text-xs "
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            {traceDetail.flow_spans.length} spans
+                          </span>
                         )}
                       </div>
                       {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
                         <div className="flex items-center gap-2 flex-wrap">
-                          <div className="flex gap-1  rounded-lg p-1" style={{backgroundColor: "var(--surface-base)"}}>
+                          <div
+                            className="flex gap-1 rounded-lg p-1"
+                            style={{ backgroundColor: "var(--surface-base)" }}
+                          >
                             <button
                               data-testid="flow-toggle-timeline"
                               onClick={() => {
                                 setFlowViewMode("timeline");
                                 setSelectedSpan(null);
                               }}
-                              className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${flowViewMode === "timeline"
-                                ? " text-white"
-                                : " hover:"
-                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
+                              className={`px-3 py-1 rounded text-xs uppercase tracking-[0.2em] transition-colors ${
+                                flowViewMode === "timeline" ? " text-white" : " "
+                              }`}
+                              style={{
+                                backgroundColor: "var(--surface-elevated)",
+                                color: "var(--muted-foreground)",
+                              }}
                             >
                               Timeline
                             </button>
@@ -1383,16 +1997,25 @@ function InspectorContent() {
                                 setFlowViewMode("graph");
                                 setSelectedSpan(null);
                               }}
-                              className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${flowViewMode === "graph"
-                                ? " text-white"
-                                : " hover:"
-                                }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}
+                              className={`px-3 py-1 rounded text-xs uppercase tracking-[0.2em] transition-colors ${
+                                flowViewMode === "graph" ? " text-white" : " "
+                              }`}
+                              style={{
+                                backgroundColor: "var(--surface-elevated)",
+                                color: "var(--muted-foreground)",
+                              }}
                             >
                               Graph
                             </button>
                           </div>
                           {flowViewMode === "graph" && (
-                            <label className="flex items-center gap-2 px-3 py-1 text-[10px]   rounded-lg cursor-pointer hover:" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
+                            <label
+                              className="flex items-center gap-2 px-3 py-1 text-xs rounded-lg cursor-pointer "
+                              style={{
+                                color: "var(--foreground-secondary)",
+                                backgroundColor: "var(--surface-base)",
+                              }}
+                            >
                               <input
                                 type="checkbox"
                                 checked={hideToolSpans}
@@ -1421,30 +2044,65 @@ function InspectorContent() {
                                   <div
                                     key={span.span_id}
                                     onClick={() => setSelectedSpan(span)}
-                                    className="/50 border  rounded-xl px-4 py-3 cursor-pointer hover: transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                                    className="border rounded-xl px-4 py-3 cursor-pointer transition-colors"
+                                    style={{
+                                      borderColor: "var(--border)",
+                                      backgroundColor: "var(--surface-overlay)",
+                                    }}
                                   >
                                     <div className="flex items-center justify-between gap-3">
                                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <span className="text-xs font-mono  truncate" style={{color: "var(--foreground-secondary)"}}>{span.name}</span>
-                                        <span className={`px-2 py-1 rounded-full text-[10px] uppercase whitespace-nowrap ${statusClass}`}>
+                                        <span
+                                          className="text-xs font-mono truncate"
+                                          style={{ color: "var(--foreground-secondary)" }}
+                                        >
+                                          {span.name}
+                                        </span>
+                                        <span
+                                          className={`px-2 py-1 rounded-full text-xs uppercase whitespace-nowrap ${statusClass}`}
+                                        >
                                           {span.status}
                                         </span>
-                                        <span className="text-[11px]  whitespace-nowrap" style={{color: "var(--muted-foreground)"}}>{span.kind}</span>
+                                        <span
+                                          className="text-sm whitespace-nowrap"
+                                          style={{ color: "var(--muted-foreground)" }}
+                                        >
+                                          {span.kind}
+                                        </span>
                                       </div>
-                                      <span className="text-[11px]  whitespace-nowrap" style={{color: "var(--muted-foreground)"}}>{span.duration_ms}ms</span>
+                                      <span
+                                        className="text-sm whitespace-nowrap"
+                                        style={{ color: "var(--muted-foreground)" }}
+                                      >
+                                        {span.duration_ms}ms
+                                      </span>
                                     </div>
                                     {span.summary.note && (
-                                      <p className="mt-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>{span.summary.note}</p>
+                                      <p
+                                        className="mt-2 text-sm "
+                                        style={{ color: "var(--muted-foreground)" }}
+                                      >
+                                        {span.summary.note}
+                                      </p>
                                     )}
                                     {span.summary.error_message && (
-                                      <p className="mt-2 text-[11px] text-rose-300">{span.summary.error_message}</p>
+                                      <p className="mt-2 text-sm text-rose-300">
+                                        {span.summary.error_message}
+                                      </p>
                                     )}
                                   </div>
                                 );
                               })}
                           </div>
                         ) : (
-                          <div style={{height: "400px", background: "#1e293b", borderRadius: "0.75rem", border: "1px solid #475569"}}>
+                          <div
+                            style={{
+                              height: "400px",
+                              background: "#1e293b",
+                              borderRadius: "0.75rem",
+                              border: "1px solid #475569",
+                            }}
+                          >
                             <ReactFlow
                               nodes={nodes}
                               edges={edges}
@@ -1452,7 +2110,9 @@ function InspectorContent() {
                               onEdgesChange={onEdgesChange}
                               onNodeClick={(event, node) => {
                                 setSelectedNodeId(node.id);
-                                const span = traceDetail.flow_spans?.find((s: FlowSpan) => s.span_id === node.id);
+                                const span = traceDetail.flow_spans?.find(
+                                  (s: FlowSpan) => s.span_id === node.id,
+                                );
                                 if (span) {
                                   setSelectedSpan(span);
                                 }
@@ -1469,7 +2129,8 @@ function InspectorContent() {
                     ) : (
                       <p
                         data-testid="flow-empty-state"
-                        className="text-xs " style={{color: "var(--muted-foreground)"}}
+                        className="text-xs "
+                        style={{ color: "var(--muted-foreground)" }}
                       >
                         Flow 데이터 없음 (구버전 trace)
                       </p>
@@ -1477,61 +2138,131 @@ function InspectorContent() {
                   </section>
 
                   {selectedSpan && (
-                    <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                    <section
+                      className=" border rounded-2xl p-5 space-y-3"
+                      style={{
+                        borderColor: "var(--border)",
+                        backgroundColor: "var(--surface-overlay)",
+                      }}
+                    >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Span Details</p>
-                          <p className="text-sm font-semibold text-white mt-1">{selectedSpan.name}</p>
+                          <p
+                            className="text-xs uppercase tracking-[0.3em] "
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Span Details
+                          </p>
+                          <p className="text-sm font-semibold text-white mt-1">
+                            {selectedSpan.name}
+                          </p>
                         </div>
                         <button
                           onClick={() => setSelectedSpan(null)}
-                          className=" hover:text-white text-lg" style={{color: "var(--muted-foreground)"}}
+                          className=" text-white text-lg"
+                          style={{ color: "var(--muted-foreground)" }}
                         >
                           ✕
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 text-xs " style={{color: "var(--foreground-secondary)"}}>
+                      <div
+                        className="grid grid-cols-2 gap-3 text-xs "
+                        style={{ color: "var(--foreground-secondary)" }}
+                      >
                         <div>
-                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{color: "var(--muted-foreground)"}}>Kind</p>
+                          <p
+                            className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Kind
+                          </p>
                           <p className="mt-1">{selectedSpan.kind}</p>
                         </div>
                         <div>
-                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{color: "var(--muted-foreground)"}}>Status</p>
+                          <p
+                            className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Status
+                          </p>
                           <p className="mt-1">{selectedSpan.status}</p>
                         </div>
                         <div>
-                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{color: "var(--muted-foreground)"}}>Duration</p>
+                          <p
+                            className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Duration
+                          </p>
                           <p className="mt-1">{selectedSpan.duration_ms}ms</p>
                         </div>
                         <div>
-                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{color: "var(--muted-foreground)"}}>Span ID</p>
-                          <p className="mt-1 font-mono text-[10px]">{selectedSpan.span_id}</p>
+                          <p
+                            className=" uppercase tracking-[0.2em] text-xs"
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Span ID
+                          </p>
+                          <p className="mt-1 font-mono text-xs">{selectedSpan.span_id}</p>
                         </div>
                       </div>
 
                       {selectedSpan.links.plan_path && (
-                        <div className="/50 border  rounded-xl p-3 space-y-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                          <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Related Plan</p>
+                        <div
+                          className="border rounded-xl p-3 space-y-2"
+                          style={{
+                            borderColor: "var(--border)",
+                            backgroundColor: "var(--surface-base)",
+                          }}
+                        >
+                          <p
+                            className="text-xs uppercase tracking-[0.3em] "
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Related Plan
+                          </p>
                           {renderJsonDetails(
-                            selectedSpan.links.plan_path === "plan.raw" ? "Raw Plan" : "Validated Plan",
-                            selectedSpan.links.plan_path === "plan.raw" ? traceDetail.plan_raw : traceDetail.plan_validated
+                            selectedSpan.links.plan_path === "plan.raw"
+                              ? "Raw Plan"
+                              : "Validated Plan",
+                            selectedSpan.links.plan_path === "plan.raw"
+                              ? traceDetail.plan_raw
+                              : traceDetail.plan_validated,
                           )}
                         </div>
                       )}
 
                       {selectedSpan.links.tool_call_id && traceDetail.execution_steps && (
-                        <div className="/50 border  rounded-xl p-3 space-y-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                          <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Related Tool Call</p>
+                        <div
+                          className="border rounded-xl p-3 space-y-2"
+                          style={{
+                            borderColor: "var(--border)",
+                            backgroundColor: "var(--surface-base)",
+                          }}
+                        >
+                          <p
+                            className="text-xs uppercase tracking-[0.3em] "
+                            style={{ color: "var(--muted-foreground)" }}
+                          >
+                            Related Tool Call
+                          </p>
                           {(() => {
-                            const step = traceDetail.execution_steps?.find((s: ExecutionStep) => s.tool_name === selectedSpan.links.tool_call_id);
+                            const step = traceDetail.execution_steps?.find(
+                              (s: ExecutionStep) => s.tool_name === selectedSpan.links.tool_call_id,
+                            );
                             return step ? (
                               <div className="space-y-2">
                                 {renderJsonDetails("Request", step.request)}
                                 {renderJsonDetails("Response", step.response)}
                               </div>
                             ) : (
-                              <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>Tool call not found</p>
+                              <p
+                                className="text-sm "
+                                style={{ color: "var(--muted-foreground)" }}
+                              >
+                                Tool call not found
+                              </p>
                             );
                           })()}
                         </div>
@@ -1540,14 +2271,25 @@ function InspectorContent() {
                   )}
 
                   {/* Orchestration Section */}
-                  {traceDetail && (
-                    <OrchestrationSection stageOutput={traceDetail} />
-                  )}
+                  {traceDetail && <OrchestrationSection stageOutput={traceDetail} />}
 
-                  <section className=" border  rounded-2xl p-5 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <section
+                    className=" border rounded-2xl p-5 space-y-3"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-overlay)",
+                    }}
+                  >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Audit Logs</p>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{traceAuditLogs.length} events</span>
+                      <p
+                        className="text-xs uppercase tracking-[0.3em] "
+                        style={{ color: "var(--muted-foreground)" }}
+                      >
+                        Audit Logs
+                      </p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                        {traceAuditLogs.length} events
+                      </span>
                     </div>
                     <AuditLogTable logs={traceAuditLogs} onViewDetails={setSelectedLog} />
                   </section>
@@ -1564,12 +2306,16 @@ function InspectorContent() {
       {/* Compare Modal */}
       {showCompareModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-          <div className=" border  rounded-2xl p-6 w-96 space-y-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+          <div
+            className=" border rounded-2xl p-6 w-96 space-y-4"
+            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+          >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Compare with Trace</h3>
               <button
                 onClick={() => setShowCompareModal(false)}
-                className=" hover:text-white text-xl" style={{color: "var(--muted-foreground)"}}
+                className=" text-white text-xl"
+                style={{ color: "var(--muted-foreground)" }}
               >
                 ✕
               </button>
@@ -1577,7 +2323,10 @@ function InspectorContent() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>
+                <label
+                  className="block text-xs font-semibold uppercase tracking-[0.2em] mb-2"
+                  style={{ color: "var(--muted-foreground)" }}
+                >
                   Trace ID to Compare
                 </label>
                 <input
@@ -1585,7 +2334,11 @@ function InspectorContent() {
                   value={compareTraceId}
                   onChange={(e) => setCompareTraceId(e.target.value)}
                   placeholder="Paste trace_id..."
-                  className="w-full px-3 py-2  border  rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                  className="w-full px-3 py-2 border rounded-lg text-sm text-white placeholder-slate-500 outline-none "
+                  style={{
+                    borderColor: "var(--border)",
+                    backgroundColor: "var(--surface-overlay)",
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleFetchCompareTrace();
@@ -1603,14 +2356,15 @@ function InspectorContent() {
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setShowCompareModal(false)}
-                  className="px-3 py-2 rounded-lg border  text-xs uppercase tracking-[0.2em] hover:" style={{borderColor: "var(--border)"}}
+                  className="px-3 py-2 rounded-lg border text-xs uppercase tracking-[0.2em] "
+                  style={{ borderColor: "var(--border)" }}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleFetchCompareTrace}
                   disabled={compareFetching}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-xs uppercase tracking-[0.2em] text-white disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  className="px-4 py-2 rounded-lg bg-emerald-600 bg-emerald-700 text-xs uppercase tracking-[0.2em] text-white opacity-50 cursor-not-allowed transition"
                 >
                   {compareFetching ? "Fetching..." : "Compare"}
                 </button>
@@ -1668,7 +2422,13 @@ function InspectorContent() {
 export default function InspectorPage() {
   return (
     <ReactFlowProvider>
-      <Suspense fallback={<div className="p-4 " style={{color: "var(--muted-foreground)"}}>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div className="p-4 " style={{ color: "var(--muted-foreground)" }}>
+            Loading...
+          </div>
+        }
+      >
         <InspectorContent />
       </Suspense>
     </ReactFlowProvider>

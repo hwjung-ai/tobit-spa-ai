@@ -630,7 +630,7 @@ export default function OpsPage() {
                 </div>
               </div>
               {summaryData?.summary_type && (
-                <span className="text-[10px] text-[var(--muted-foreground)]">
+                <span className="text-xs text-[var(--muted-foreground)]">
                   {summaryData.summary_type === "individual" ? "개별" : "전체"}
                 </span>
               )}
@@ -676,11 +676,11 @@ export default function OpsPage() {
                   {summaryData.questions_and_answers?.slice(0, 5).map((qa: any, idx: number) => (
                     <div key={idx} className="rounded-xl border p-3 bg-[var(--surface-base)] border-[var(--border)]">
                       <div className="mb-2 flex items-center gap-2">
-                        <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-300">
+                        <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-sky-300">
                           Q{idx + 1}
                         </span>
                         {qa.mode && (
-                          <span className="rounded-full border px-2 py-0.5 text-[10px] border-[var(--border)] text-[var(--muted-foreground)]">
+                          <span className="rounded-full border px-2 py-0.5 text-xs border-[var(--border)] text-[var(--muted-foreground)]">
                             {qa.mode}
                           </span>
                         )}
@@ -770,9 +770,9 @@ export default function OpsPage() {
                   <span className="text-xs " style={{color: "var(--muted-foreground)"}}>Loading…</span>
                 ) : null}
               </div>
-              <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>최근 실행한 OPS 질의를 선택해 결과를 확인합니다.</p>
+              <p className="text-sm " style={{color: "var(--muted-foreground)"}}>최근 실행한 OPS 질의를 선택해 결과를 확인합니다.</p>
               {historyError ? (
-                <p className="mt-1 text-[11px] text-rose-400">{historyError}</p>
+                <p className="mt-1 text-sm text-rose-400">{historyError}</p>
               ) : null}
             </div>
             <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
@@ -806,7 +806,7 @@ export default function OpsPage() {
                           className="text-left"
                         >
                           <div className="flex items-center justify-between pr-8" style={{color: "var(--muted-foreground)"}}>
-                            <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em]" style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}>
+                            <span className="rounded-full border px-2 py-0.5 text-xs font-semibold uppercase tracking-[0.3em]" style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}>
                               {label}
                             </span>
                             <span className="tracking-normal">{formatTimestamp(entry.createdAt)}</span>
@@ -818,12 +818,12 @@ export default function OpsPage() {
                             {entry.question}
                           </p>
                           <p
-                            className="text-[12px]  overflow-hidden" style={{color: "var(--muted-foreground)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical"}}
+                            className="text-sm  overflow-hidden" style={{color: "var(--muted-foreground)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical"}}
                           >
                             {entry.summary}
                           </p>
                           {entry.trace?.trace_id && (
-                            <p className="mt-1 text-[10px]  font-mono overflow-hidden" style={{color: "var(--muted-foreground)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical"}}
+                            <p className="mt-1 text-xs  font-mono overflow-hidden" style={{color: "var(--muted-foreground)", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical"}}
                             >
                               Trace: {entry.trace.trace_id}
                             </p>
@@ -835,7 +835,7 @@ export default function OpsPage() {
                             event.preventDefault();
                             handleRemoveHistory(entry.id);
                           }}
-                          className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400  text-[10px] text-rose-400 transition group-hover:flex" style={{backgroundColor: "var(--surface-base)"}}
+                          className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400  text-xs text-rose-400 transition group-hover:flex" style={{backgroundColor: "var(--surface-base)"}}
                         >
                           ✕
                         </button>
@@ -849,14 +849,14 @@ export default function OpsPage() {
           <div className="flex flex-[0.45] flex-col rounded-3xl border   p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
             <div className="mb-3 space-y-1">
               <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Run OPS query</p>
-              <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>mode를 선택하고 질문을 작성한 뒤 실행하세요.</p>
+              <p className="text-sm " style={{color: "var(--muted-foreground)"}}>mode를 선택하고 질문을 작성한 뒤 실행하세요.</p>
             </div>
             <div className="flex gap-1 flex-nowrap">
               {UI_MODES.map((modeEntry) => (
                 <button
                   key={modeEntry.id}
                   onClick={() => handleModeSelection(modeEntry.id)}
-                  className="rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition"
+                  className="rounded-full border px-3 py-1 text-xs uppercase tracking-[0.3em] transition"
                   style={{backgroundColor: uiMode === modeEntry.id ? "var(--primary)" : "transparent", borderColor: uiMode === modeEntry.id ? "var(--primary)" : "var(--border)", color: uiMode === modeEntry.id ? "var(--primary-foreground)" : "var(--foreground)"}}
                   onMouseEnter={(e) => {
                     if (uiMode !== modeEntry.id) {
@@ -871,7 +871,7 @@ export default function OpsPage() {
                 </button>
               ))}
             </div>
-            <label className="mt-4 text-[11px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+            <label className="mt-4 text-sm uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
               Question
               <textarea
                 rows={4}
@@ -909,15 +909,15 @@ export default function OpsPage() {
                 {selectedEntry ? ` · ${formatTimestamp(selectedEntry.createdAt)}` : ""}
               </h1>
               {selectedEntry ? (
-                <p className="text-[12px] " style={{color: "var(--muted-foreground)"}}>{selectedEntry.question}</p>
+                <p className="text-sm " style={{color: "var(--muted-foreground)"}}>{selectedEntry.question}</p>
               ) : (
-                <p className="text-[12px] " style={{color: "var(--muted-foreground)"}}>질의를 실행하면 결과가 여기 표시됩니다.</p>
+                <p className="text-sm " style={{color: "var(--muted-foreground)"}}>질의를 실행하면 결과가 여기 표시됩니다.</p>
               )}
             </div>
             <div className="flex items-center gap-2">
               {selectedEntry ? (
                 <span
-                  className={`rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.3em] ${selectedEntry.status === "ok"
+                  className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.3em] ${selectedEntry.status === "ok"
                     ? "border border-emerald-400 text-emerald-300"
                     : "border border-rose-400 text-rose-300"
                     }`}
@@ -928,15 +928,15 @@ export default function OpsPage() {
               {canFullScreen ? (
                 <button
                   onClick={() => setIsFullScreen((prev) => !prev)}
-                  className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-[0.3em]  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
+                  className="rounded-full border  px-3 py-1 text-xs uppercase tracking-[0.3em]  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}
                 >
                   {isFullScreen ? "Exit full screen" : "Full screen"}
                 </button>
               ) : null}
             </div>
           </header>
-          <details className="rounded-2xl border  /40 p-3 text-[12px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
-            <summary className="cursor-pointer text-[11px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+          <details className="rounded-2xl border  /40 p-3 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
+            <summary className="cursor-pointer text-sm uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
               Meta · used tools · timing
             </summary>
             {meta ? (
@@ -944,20 +944,20 @@ export default function OpsPage() {
                 <p>
                   Route: <span className="font-semibold text-white">{meta.route}</span>
                 </p>
-                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm " style={{color: "var(--muted-foreground)"}}>
                   Reason: {meta.route_reason}
                 </p>
-                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm " style={{color: "var(--muted-foreground)"}}>
                   Timing: {meta.timing_ms} ms · Used tools: {meta.used_tools?.join(", ") || "N/A"}
                 </p>
-                <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm " style={{color: "var(--muted-foreground)"}}>
                   Fallback: {meta.fallback ? "yes" : "no"}
                 </p>
                 {meta.error ? (
-                  <p className="text-[11px] text-rose-300">Error: {String(meta.error)}</p>
+                  <p className="text-sm text-rose-300">Error: {String(meta.error)}</p>
                 ) : null}
                 {selectedEntry.errorDetails ? (
-                  <details className="mt-2 rounded-2xl border   p-3 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+                  <details className="mt-2 rounded-2xl border   p-3 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
                     <summary className="cursor-pointer uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
                       Details
                     </summary>
@@ -968,7 +968,7 @@ export default function OpsPage() {
                 ) : null}
               </div>
             ) : (
-              <p className="mt-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>No meta available.</p>
+              <p className="mt-2 text-sm " style={{color: "var(--muted-foreground)"}}>No meta available.</p>
             )}
           </details>
           {/* Stage Pipeline Inspector */}
@@ -992,9 +992,9 @@ export default function OpsPage() {
           <details
             open={traceOpen}
             onToggle={(event) => setTraceOpen(event.currentTarget.open)}
-            className="rounded-2xl border  /40 p-3 text-[12px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+            className="rounded-2xl border  /40 p-3 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
           >
-            <summary className="flex items-center justify-between cursor-pointer text-[11px] uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+            <summary className="flex items-center justify-between cursor-pointer text-sm uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
               <span>Trace · plan / policy</span>
               <button
                 type="button"
@@ -1004,20 +1004,20 @@ export default function OpsPage() {
                   handleCopyTrace();
                 }}
                 disabled={!traceContents}
-                className={`rounded-2xl border px-3 py-1 text-[10px] uppercase tracking-[0.3em] transition disabled:opacity-60 ${traceCopyVariantClasses}`}
+                className={`rounded-2xl border px-3 py-1 text-xs uppercase tracking-[0.3em] transition disabled:opacity-60 ${traceCopyVariantClasses}`}
               >
                 {traceCopyLabel}
               </button>
             </summary>
             {traceData ? (
-              <pre className="mt-2 max-h-64 overflow-auto rounded-2xl border   p-3 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-overlay)"}}>
+              <pre className="mt-2 max-h-64 overflow-auto rounded-2xl border   p-3 text-sm " style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-overlay)"}}>
                 {traceContents}
               </pre>
             ) : (
-              <p className="mt-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>No trace captured yet.</p>
+              <p className="mt-2 text-sm " style={{color: "var(--muted-foreground)"}}>No trace captured yet.</p>
             )}
           </details>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] " style={{color: "var(--muted-foreground)"}}>
+          <div className="flex flex-wrap items-center gap-2 text-sm " style={{color: "var(--muted-foreground)"}}>
             <span className="font-mono " style={{color: "var(--foreground-secondary)"}}>
               Trace ID: {currentTraceId ?? "없음"}
             </span>
@@ -1025,13 +1025,13 @@ export default function OpsPage() {
               <>
                 <button
                   onClick={handleCopyResultTraceId}
-                  className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
+                  className="px-3 py-1 rounded-lg border  text-xs uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
                 >
                   Copy trace_id
                 </button>
                 <button
                   onClick={openInspectorTrace}
-                  className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
+                  className="px-3 py-1 rounded-lg border  text-xs uppercase tracking-[0.2em] transition hover:" style={{borderColor: "var(--border)"}}
                 >
                   Open in Inspector
                 </button>
