@@ -37,13 +37,15 @@ export const Drawer = ({ open, onOpenChange, children, ...rest }: DrawerProps) =
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
         aria-hidden="true"
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 backdrop-blur-sm animate-in fade-in duration-200"
+        style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
         onClick={handleClose}
       />
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 w-full max-w-md h-full bg-slate-950 border-l border-slate-800 shadow-2xl animate-in slide-in-from-right duration-300"
+        className="relative z-10 w-full max-w-md h-full shadow-2xl animate-in slide-in-from-right duration-300"
+        style={{ backgroundColor: "var(--surface-base)", borderLeft: "1px solid var(--border)" }}
         {...rest}
       >
         {children}
@@ -88,7 +90,8 @@ export const DrawerTitle = ({ children, className, ...rest }: { children?: React
 export const DrawerDescription = ({ children, className, ...rest }: { children?: React.ReactNode } & React.HTMLAttributes<HTMLDivElement>) => {
   return (
     <p
-      className={cn("text-sm text-slate-400", className)}
+      className={cn("text-sm", className)}
+      style={{ color: "var(--muted-foreground)" }}
       {...rest}
     >
       {children}

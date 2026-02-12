@@ -354,7 +354,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   }
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }} data-testid="screen-editor">
+    <div className="screen-editor-theme flex flex-col h-full" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }} data-testid="screen-editor">
       <div className="flex flex-1 gap-6 overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Header */}
@@ -406,7 +406,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   )}
                   <button
                     type="button"
-                    className="rounded border border-slate-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{ borderColor: "var(--border)" }}
                     onClick={() => {
                       void (async () => {
                         try {
@@ -442,7 +442,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded border border-slate-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{ borderColor: "var(--border)" }}
                     onClick={() => clearDraftConflict()}
                   >
                     Dismiss

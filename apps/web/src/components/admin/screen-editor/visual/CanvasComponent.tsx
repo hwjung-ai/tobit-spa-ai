@@ -143,7 +143,7 @@ export default function CanvasComponent({
     if (isGridItem) return "h-full w-full"; // Minimal styling for grid items as container handles it
 
     if (isDragging) {
-      return "opacity-50 border-slate-500";
+      return "opacity-50";
     }
     if (isDragOver) {
       if (dropPosition === "inside") {
@@ -155,9 +155,9 @@ export default function CanvasComponent({
       return "border-sky-500 bg-sky-950/30";
     }
     if (isContainer) {
-      return "border-slate-600 bg-slate-850 hover:bg-slate-750";
+      return "";
     }
-    return "border-slate-700 bg-slate-800 hover:bg-slate-700";
+    return "";
   };
 
   return (
@@ -185,13 +185,27 @@ export default function CanvasComponent({
         onDragLeave={isGridItem ? undefined : handleDragLeave}
         onDrop={isGridItem ? undefined : handleDrop}
         className={`${isGridItem ? "" : "p-3 rounded-lg border-2 cursor-pointer transition-colors"} ${getDragClass()}`}
-        style={{ marginLeft: depth > 0 ? 0 : undefined }}
+        style={{
+          marginLeft: depth > 0 ? 0 : undefined,
+          borderColor: isContainer ? "var(--border)" : "",
+          backgroundColor: isContainer ? "var(--surface-elevated)" : ""
+        }}
+        onMouseEnter={(e) => {
+          if (isContainer && !isDragging && !isDragOver && !isSelected) {
+            e.currentTarget.style.backgroundColor = "var(--surface-base)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (isContainer && !isDragging && !isDragOver && !isSelected) {
+            e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+          }
+        }}
         data-testid={`canvas-component-${component.id}`}
       >
         <div className="flex items-start justify-between gap-2">
           {/* Drag handle */}
           {!isGridItem && (
-            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 pt-0.5">
+            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing 0 hover: pt-0.5" style={{ color: "var(--foreground)", color: "var(--foreground-secondary)"  }}>
               <GripVertical className="w-4 h-4" />
             </div>
           )}
@@ -203,19 +217,19 @@ export default function CanvasComponent({
                   {component.type}
                 </span>
               )}
-              <div className="text-sm font-semibold text-slate-100 truncate">
+              <div className="text-sm font-semibold truncate" style={{ color: "var(--foreground)"  }}>
                 {component.label || component.id}
               </div>
             </div>
             {!isContainer && (
-              <div className="text-xs text-slate-400 font-mono">
+              <div className="text-xs font-mono" style={{ color: "var(--muted-foreground)"  }}>
                 {component.type}
               </div>
             )}
-            <div className="text-xs text-slate-500 mt-1">
+            <div className="text-xs 0 mt-1" style={{ color: "var(--foreground)"  }}>
               ID: {component.id}
               {isContainer && children.length > 0 && (
-                <span className="ml-2 text-slate-400">
+                <span className="ml-2" style={{ color: "var(--muted-foreground)"  }}>
                   ({children.length} children)
                 </span>
               )}
@@ -253,8 +267,8 @@ export default function CanvasComponent({
         {/* Render children for container components */}
         {isContainer && children.length > 0 && (
           <div
-            className={`mt-3 pt-3 border-t border-slate-700 ${isRow ? "flex flex-row gap-2 flex-wrap" : "flex flex-col gap-2"
-              }`}
+            className={`mt-3 pt-3 border-t  ${isRow ? "flex flex-row gap-2 flex-wrap" : "flex flex-col gap-2"
+              }`} style={{ borderColor: "var(--border)" }}
           >
             {children.map((child, childIndex) => (
               <div key={child.id} className={isRow ? "flex-1 min-w-[120px]" : ""}>
@@ -276,10 +290,10 @@ export default function CanvasComponent({
 
         {/* Empty container placeholder */}
         {isContainer && children.length === 0 && (
-          <div className="mt-3 pt-3 border-t border-slate-700">
-            <div className={`text-center py-4 border-2 border-dashed rounded-lg transition-colors ${isDragOver ? "border-sky-500 bg-sky-950/30" : "border-slate-700"
-              }`}>
-              <p className={`text-xs ${isDragOver ? "text-sky-300" : "text-slate-500"}`}>
+          <div className="mt-3 pt-3 border-t" style={{ borderColor: "var(--border)"  }}>
+            <div className={`text-center py-4 border-2 border-dashed rounded-lg transition-colors ${isDragOver ? "border-sky-500 bg-sky-950/30" : ""
+              }`} style={{ borderColor: "var(--border)" }}>
+              <p className={`text-xs ${isDragOver ? "text-sky-300" : "0"}`} style={{ color: "var(--foreground)" }}>
                 {isDragOver ? "Drop here to add" : `Drag or click to add components`}
               </p>
             </div>

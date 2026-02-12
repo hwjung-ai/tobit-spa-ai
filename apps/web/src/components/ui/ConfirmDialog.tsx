@@ -42,7 +42,8 @@ export default function ConfirmDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-slate-950 border border-slate-800 shadow-2xl rounded-2xl p-6 max-w-sm mx-auto"
+        className="border shadow-2xl rounded-2xl p-6 max-w-sm mx-auto"
+        style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -51,9 +52,9 @@ export default function ConfirmDialog({
         }}
       >
         <DialogHeader className="space-y-2">
-          <DialogTitle className="text-lg font-semibold text-slate-100">{title}</DialogTitle>
+          <DialogTitle className="text-lg font-semibold" style={{ color: "var(--foreground-secondary)" }}>{title}</DialogTitle>
           {description ? (
-            <DialogDescription className="text-sm text-slate-400">{description}</DialogDescription>
+            <DialogDescription className="text-sm" style={{ color: "var(--muted-foreground)" }}>{description}</DialogDescription>
           ) : null}
         </DialogHeader>
         <DialogFooter className="mt-6 flex justify-end gap-2">

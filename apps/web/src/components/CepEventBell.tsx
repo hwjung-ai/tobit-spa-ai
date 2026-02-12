@@ -143,7 +143,7 @@ export default function CepEventBell() {
   return (
     <Link
       href="/cep-events"
-      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 bg-slate-950/70 text-slate-200 transition hover:border-slate-600"
+      className="relative flex h-9 w-9 items-center justify-center rounded-full border  /70  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
       title={error ? `Event summary error: ${error}` : "CEP Event Browser"}
     >
       <svg

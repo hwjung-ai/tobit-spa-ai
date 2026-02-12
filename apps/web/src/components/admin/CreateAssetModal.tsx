@@ -47,12 +47,12 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+      <div className=" rounded-2xl border  max-w-lg w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div className="flex items-center justify-between p-6 border-b " style={{ borderColor: "var(--border)" }}>
           <h2 className="text-xl font-bold text-white">Initialize New Asset</h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white transition-colors"
+            className=" hover:text-white transition-colors" style={{ color: "var(--muted-foreground)" }}
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -67,7 +67,7 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
 
           <div className="space-y-6">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{ color: "var(--muted-foreground)" }}>
                 Asset Name
               </label>
               <input
@@ -75,13 +75,13 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. general-intent-classifier"
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all"
+                className="w-full px-4 py-3  border  rounded-xl  placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
                 autoFocus
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{ color: "var(--muted-foreground)" }}>
                 Asset Category
               </label>
               <div className="grid grid-cols-3 gap-3">
@@ -92,8 +92,8 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
                     className={`px-3 py-4 rounded-xl border text-sm font-bold capitalize transition-all ${
                       assetType === type
                         ? "bg-sky-600/20 border-sky-500 text-sky-400 shadow-lg shadow-sky-900/10"
-                        : "bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700"
-                    }`}
+                        : "  0 hover:"
+                    }`} style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                   >
                     {type}
                   </button>
@@ -102,7 +102,7 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">
+              <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{ color: "var(--muted-foreground)" }}>
                 Description (Optional)
               </label>
               <textarea
@@ -110,23 +110,23 @@ export default function CreateAssetModal({ onClose, onSuccess }: CreateAssetModa
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Briefly describe the purpose of this asset..."
                 rows={3}
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none"
+                className="w-full px-4 py-3  border  rounded-xl  placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
               />
             </div>
           </div>
         </div>
 
-        <div className="p-6 border-t border-slate-800 flex gap-3">
+        <div className="p-6 border-t  flex gap-3" style={{ borderColor: "var(--border)" }}>
           <button
             onClick={onClose}
-            className="flex-1 py-3 text-slate-400 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs"
+            className="flex-1 py-3  hover:text-white transition-colors font-bold uppercase tracking-widest text-xs" style={{ color: "var(--muted-foreground)" }}
           >
             Discard
           </button>
           <button
             onClick={handleCreate}
             disabled={isCreating}
-            className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95"
+            className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-xl transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95" style={{ color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
           >
             {isCreating ? "Initializing..." : "Create Draft"}
           </button>

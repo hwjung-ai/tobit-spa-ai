@@ -136,7 +136,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("state", "")}>
-                            <span className="text-xs text-slate-500">(root)</span>
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             stateTree,
@@ -158,7 +158,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("context", "")}>
-                            <span className="text-xs text-slate-500">(root)</span>
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             contextTree,
@@ -180,7 +180,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("inputs", "")}>
-                            <span className="text-xs text-slate-500">(root)</span>
+                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             inputsTree,
@@ -201,13 +201,14 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
 
                 <button
                   className={`w-full px-3 py-2 border rounded-md text-sm text-left flex items-center justify-between transition-colors ${
-                    error
-                      ? "border-red-500 bg-red-50"
-                      : "border-slate-300 bg-white hover:bg-slate-50"
+                    error ? "border-red-500" : ""
                   }`}
+                  style={error ? { backgroundColor: "var(--error-container)" } : { borderColor: "var(--border)", backgroundColor: "var(--background)" }}
+                  onMouseEnter={(e) => { if (!error) e.currentTarget.style.backgroundColor = "var(--surface-base)"; }}
+                  onMouseLeave={(e) => { if (!error) e.currentTarget.style.backgroundColor = "var(--background)"; }}
                 >
-                  <span className="text-slate-700">{displayLabel}</span>
-                  <ChevronDown className="w-4 h-4 text-slate-500" />
+                  <span style={{ color: "var(--foreground)" }}>{displayLabel}</span>
+                  <ChevronDown className="w-4 h-4" style={{ color: "var(--muted-foreground)" }} />
                 </button>
               </DropdownMenu>
             )}
@@ -252,7 +253,7 @@ function renderPathTree(
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem onClick={() => onSelect(source, currentPath)}>
-              <span className="text-xs text-slate-500">(this level)</span>
+              <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(this level)</span>
             </DropdownMenuItem>
             {renderPathTree(node.children, source, onSelect, currentPath)}
           </DropdownMenuSubContent>

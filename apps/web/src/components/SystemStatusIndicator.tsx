@@ -78,7 +78,7 @@ export default function SystemStatusIndicator() {
   }, [fetchHealth]);
 
   const color = (status: string) =>
-    status === "ok" ? "text-green-400" : status === "checking" ? "text-slate-500" : "text-rose-400";
+    status === "ok" ? "text-green-400" : status === "checking" ? "text-gray-400" : "text-rose-400";
 
   const items: { icon: typeof Server; key: string; label: string }[] = [
     { icon: Activity, key: "api", label: "API" },
@@ -100,18 +100,26 @@ export default function SystemStatusIndicator() {
         return (
           <div
             key={key}
-            className="group relative flex items-center gap-1 rounded-full border border-slate-800 bg-slate-900/60 px-2 py-1"
+            className="group relative flex items-center gap-1 rounded-full border px-2 py-1"
+            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
           >
             <Icon className={`h-3.5 w-3.5 ${color(entry.status)}`} />
             <span className={`text-[11px] font-medium ${color(entry.status)}`}>
               {statusText}
             </span>
-            <div className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2.5 py-1.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100 z-50">
+            <div
+              className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded px-2.5 py-1.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100 z-50"
+              style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
+            >
               <div className="absolute left-1/2 bottom-full -mb-1 -translate-x-1/2">
-                <div className="h-2 w-2 rotate-45 bg-slate-800" />
+                <div className="h-2 w-2 rotate-45" style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }} />
               </div>
               {tooltipLines.map((line, i) => (
-                <div key={i} className={i === 0 ? "font-semibold" : "text-slate-300 mt-0.5"}>
+                <div
+                  key={i}
+                  className={i === 0 ? "font-semibold" : "mt-0.5"}
+                  style={i === 0 ? {} : { color: "var(--muted-foreground)" }}
+                >
                   {line}
                 </div>
               ))}

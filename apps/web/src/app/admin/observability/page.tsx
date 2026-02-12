@@ -12,13 +12,13 @@ export default function ObservabilityPage() {
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-4 dark:border-slate-800">
+      <div className="flex items-center gap-3 border-b  pb-4 dark:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}>
         <button
           onClick={() => setActiveTab("system")}
           className={`px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${
             activeTab === "system"
               ? "bg-sky-500/10 border border-sky-500/50 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.1)]"
-              : "border border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-100"
+              : "border border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--border)] hover:text-[var(--foreground)] dark:border-[var(--border)] dark:text-[var(--muted-foreground)] dark:hover:border-[var(--border)] dark:hover:text-[var(--foreground)]"
           }`}
         >
           System Monitoring
@@ -28,12 +28,12 @@ export default function ObservabilityPage() {
           className={`px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-[0.2em] transition-all ${
             activeTab === "cep"
               ? "bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.1)]"
-              : "border border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-100"
+              : "border border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--border)] hover:text-[var(--foreground)] dark:border-[var(--border)] dark:text-[var(--muted-foreground)] dark:hover:border-[var(--border)] dark:hover:text-[var(--foreground)]"
           }`}
         >
           CEP Monitoring
         </button>
-        <div className="ml-auto text-[10px] uppercase tracking-[0.25em] text-slate-500 dark:text-slate-500">
+        <div className="ml-auto text-[10px] uppercase tracking-[0.25em]  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
           {activeTab === "system" ? "Trace & Regression KPIs" : "Rules & Channels & Events"}
         </div>
       </div>

@@ -171,7 +171,7 @@ export default function AssetOverrideDrawer({
               </DrawerDescription>
               {getStatusBadge()}
             </div>
-            <Settings className="h-5 w-5 text-slate-400" />
+            <Settings className="h-5 w-5 " style={{ color: "var(--muted-foreground)" }} />
           </div>
         </DrawerHeader>
 
@@ -185,7 +185,7 @@ export default function AssetOverrideDrawer({
                 const available = availableAssets[assetType.value] || [];
 
                 return (
-                  <div key={assetType.value} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <div key={assetType.value} className="flex items-center gap-3 p-3  rounded-lg" style={{ backgroundColor: "var(--surface-base)" }}>
                     <div className={`p-2 rounded ${assetType.color}`}>
                       <span className="text-xs text-white font-bold">
                         {assetType.label.charAt(0)}
@@ -269,11 +269,11 @@ export default function AssetOverrideDrawer({
                     role="switch"
                     aria-checked={testMode}
                     onClick={() => setTestMode(!testMode)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${testMode ? 'bg-blue-600' : 'bg-slate-200'}`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${testMode ? 'bg-blue-600' : ''}`} style={{ backgroundColor: "var(--surface-elevated)" }}
                   >
                     <span
                       aria-hidden="true"
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${testMode ? 'translate-x-5' : 'translate-x-0'}`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full  shadow ring-0 transition duration-200 ease-in-out ${testMode ? 'translate-x-5' : 'translate-x-0'}`} style={{ backgroundColor: "var(--background)" }}
                     />
                   </button>
                   <Label htmlFor="test-mode">Test Mode</Label>

@@ -49,11 +49,11 @@ export default function CatalogViewerPanel({ schema, onRefresh }: SchemaViewerPa
   };
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-4">
-      <h3 className="font-semibold text-lg mb-4 text-slate-100">Schema Structure</h3>
+    <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+      <h3 className="font-semibold text-lg mb-4 " style={{ color: "var(--foreground)" }}>Schema Structure</h3>
 
       {tables.length === 0 ? (
-        <div className="text-center py-8 text-slate-500">
+        <div className="text-center py-8 " style={{ color: "var(--muted-foreground)" }}>
           No tables found. Run schema scan first.
         </div>
       ) : (
@@ -93,13 +93,13 @@ function TableItem({
   const columns = table.columns || [];
 
   return (
-    <div className="border border-slate-800 rounded-lg overflow-hidden">
+    <div className="border  rounded-lg overflow-hidden" style={{ borderColor: "var(--border)" }}>
       {/* Table Header */}
-      <div className="flex items-center justify-between p-3 bg-slate-800/50 hover:bg-slate-800/70 transition-colors">
+      <div className="flex items-center justify-between p-3  hover:/70 transition-colors" style={{ backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-overlay)" }}>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <button
             onClick={onToggleExpanded}
-            className="text-sm text-slate-400 hover:text-slate-200 flex-shrink-0"
+            className="text-sm  hover: flex-shrink-0" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}
           >
             {isExpanded ? "▼" : "▶"}
           </button>
@@ -109,20 +109,20 @@ function TableItem({
             checked={enabled}
             onChange={(e) => onToggleEnabled(e.target.checked)}
             disabled={isTogglingEnabled}
-            className="rounded border-slate-600 flex-shrink-0"
+            className="rounded  flex-shrink-0" style={{ borderColor: "var(--border)" }}
           />
 
-          <span className="font-medium text-sm truncate text-slate-200">{table.name}</span>
+          <span className="font-medium text-sm truncate " style={{ color: "var(--foreground-secondary)" }}>{table.name}</span>
 
           {table.row_count !== null && table.row_count !== undefined && (
-            <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
+            <span className="text-xs  flex-shrink-0 ml-2" style={{ color: "var(--muted-foreground)" }}>
               ({table.row_count.toLocaleString()} rows)
             </span>
           )}
         </div>
 
         {table.comment && (
-          <span className="text-xs text-slate-400 ml-2 text-right flex-shrink-0 max-w-xs truncate">
+          <span className="text-xs  ml-2 text-right flex-shrink-0 max-w-xs truncate" style={{ color: "var(--muted-foreground)" }}>
             {table.comment}
           </span>
         )}
@@ -130,23 +130,23 @@ function TableItem({
 
       {/* Column List */}
       {isExpanded && (
-        <div className="p-3 bg-slate-950/50">
+        <div className="p-3 /50" style={{ backgroundColor: "var(--surface-base)" }}>
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-slate-700">
-                <th className="text-left p-1 font-semibold text-slate-400">Column</th>
-                <th className="text-left p-1 font-semibold text-slate-400">Type</th>
-                <th className="text-left p-1 font-semibold text-slate-400">Key</th>
-                <th className="text-left p-1 font-semibold text-slate-400">Null</th>
-                <th className="text-left p-1 font-semibold text-slate-400">Comment</th>
+              <tr className="border-b " style={{ borderColor: "var(--border)" }}>
+                <th className="text-left p-1 font-semibold " style={{ color: "var(--muted-foreground)" }}>Column</th>
+                <th className="text-left p-1 font-semibold " style={{ color: "var(--muted-foreground)" }}>Type</th>
+                <th className="text-left p-1 font-semibold " style={{ color: "var(--muted-foreground)" }}>Key</th>
+                <th className="text-left p-1 font-semibold " style={{ color: "var(--muted-foreground)" }}>Null</th>
+                <th className="text-left p-1 font-semibold " style={{ color: "var(--muted-foreground)" }}>Comment</th>
               </tr>
             </thead>
             <tbody>
               {columns.length > 0 ? (
                 columns.map((col, idx) => (
-                  <tr key={idx} className="border-b border-slate-800 hover:bg-slate-800/30">
-                    <td className="p-1 text-slate-200 font-mono">{col.column_name}</td>
-                    <td className="p-1 text-slate-400">{col.data_type}</td>
+                  <tr key={idx} className="border-b  hover:" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                    <td className="p-1  font-mono" style={{ color: "var(--foreground-secondary)" }}>{col.column_name}</td>
+                    <td className="p-1 " style={{ color: "var(--muted-foreground)" }}>{col.data_type}</td>
                     <td className="p-1 text-center">
                       {col.is_primary_key && <span title="Primary Key">🔑</span>}
                       {col.is_foreign_key && <span title="Foreign Key">🔗</span>}
@@ -158,14 +158,14 @@ function TableItem({
                         <span className="text-red-400">No</span>
                       )}
                     </td>
-                    <td className="p-1 text-slate-500 max-w-xs truncate">
+                    <td className="p-1  max-w-xs truncate" style={{ color: "var(--muted-foreground)" }}>
                       {col.comment || col.default_value || "-"}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-2 text-center text-slate-500">
+                  <td colSpan={5} className="p-2 text-center " style={{ color: "var(--muted-foreground)" }}>
                     No columns
                   </td>
                 </tr>

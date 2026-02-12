@@ -58,7 +58,7 @@ export default function CatalogTable({
   return (
     <div className="space-y-2">
       {catalogs.length === 0 ? (
-        <div className="text-center py-8 text-slate-500 bg-slate-900/40 border border-slate-800 rounded-lg">
+        <div className="text-center py-8   border  rounded-lg" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
           No catalogs created yet
         </div>
       ) : (
@@ -69,16 +69,16 @@ export default function CatalogTable({
             className={`p-3 rounded-lg cursor-pointer transition-colors border ${
               selectedCatalog?.asset_id === catalog.asset_id
                 ? "bg-sky-900/40 border-sky-500/50"
-                : "bg-slate-900/40 border-slate-800 hover:bg-slate-900/60"
-            }`}
+                : "  hover:"
+            }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate text-slate-100">{catalog.name}</h4>
+                <h4 className="font-medium text-sm truncate " style={{ color: "var(--foreground)" }}>{catalog.name}</h4>
                 {catalog.description && (
-                  <p className="text-xs text-slate-400 truncate mt-1">{catalog.description}</p>
+                  <p className="text-xs  truncate mt-1" style={{ color: "var(--muted-foreground)" }}>{catalog.description}</p>
                 )}
-                <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                <div className="flex items-center gap-2 mt-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
                   <span>Tables: {getTableCount(catalog)}</span>
                   <span>•</span>
                   <span className={`px-2 py-0.5 rounded ${
@@ -86,8 +86,8 @@ export default function CatalogTable({
                       ? "bg-green-900/50 text-green-400"
                       : getScanStatus(catalog) === "scanning"
                       ? "bg-yellow-900/50 text-yellow-400"
-                      : "bg-slate-800/50 text-slate-400"
-                  }`}>
+                      : " "
+                  }`} style={{ backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" }}>
                     {getScanStatus(catalog)}
                   </span>
                 </div>

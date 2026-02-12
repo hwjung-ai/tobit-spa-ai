@@ -17,7 +17,7 @@ export default function ScreenEditorErrors({ errors }: ScreenEditorErrorsProps) 
 
   return (
     <div
-      className="border-b border-slate-800 bg-red-950/30 px-6 py-3"
+      className="border-b border-[var(--border)] bg-red-950/30 px-6 py-3"
       data-testid="editor-errors"
     >
       <div className="flex items-center justify-between gap-4">
@@ -28,7 +28,7 @@ export default function ScreenEditorErrors({ errors }: ScreenEditorErrorsProps) 
           <span className="text-red-400 font-semibold">
             {errorCount} error{errorCount !== 1 ? "s" : ""}{warningCount > 0 && `, ${warningCount} warning${warningCount !== 1 ? "s" : ""}`}
           </span>
-          <span className="text-slate-500">
+          <span className="text-[var(--foreground)]0">
             {isExpanded ? "▼" : "▶"}
           </span>
         </div>
@@ -46,7 +46,7 @@ export default function ScreenEditorErrors({ errors }: ScreenEditorErrorsProps) 
               }`}
               data-testid={`error-${idx}`}
             >
-              <span className="font-mono text-slate-500 min-w-[150px]">
+              <span className="font-mono text-[var(--foreground)]0 min-w-[150px]">
                 {error.path}:
               </span>
               <span>{error.message}</span>

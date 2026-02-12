@@ -85,7 +85,7 @@ const ASSET_TYPES: Record<string, AssetTypeConfig> = {
   source: {
     label: "Source",
     icon: Database,
-    color: "bg-slate-500/10 border-slate-400/30 text-slate-300",
+    color: "bg-[var(--muted-background)] border-[var(--border)] text-[var(--foreground-secondary)]",
   },
   schema: {
     label: "Schema",
@@ -184,12 +184,26 @@ export default function AssetOverrideModal({
     return (
       <div
         className={cn(
-          "p-3 rounded-lg border cursor-pointer transition-all hover:border-slate-600",
+          "p-3 rounded-lg border cursor-pointer transition-all",
           isSelected
             ? "ring-2 ring-blue-400 border-blue-400/30"
-            : "border-slate-700 hover:border-slate-600",
+            : "",
           assetType.color
         )}
+        style={{
+          borderColor: isSelected ? "" : "var(--border)",
+          transition: "all 0.2s"
+        }}
+        onMouseEnter={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.borderColor = "var(--primary)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSelected) {
+            e.currentTarget.style.borderColor = "var(--border)";
+          }
+        }}
         onClick={() => handleAssetSelect(asset.asset_type, asset)}
       >
         <div className="flex items-start justify-between">
@@ -199,11 +213,11 @@ export default function AssetOverrideModal({
             </div>
             <div className="flex-1">
               <h4 className="text-sm font-medium text-white">{asset.name}</h4>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs  mt-1" style={{ color: "var(--muted-foreground)" }}>
                 {asset.asset_id} • v{asset.version}
               </p>
               {asset.description && (
-                <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+                <p className="text-xs  mt-1 line-clamp-1" style={{ color: "var(--muted-foreground)" }}>
                   {asset.description}
                 </p>
               )}
@@ -214,7 +228,7 @@ export default function AssetOverrideModal({
               "text-xs px-2 py-1 rounded-full",
               asset.status === "published" ? "bg-emerald-500/10 text-emerald-400" :
               asset.status === "draft" ? "bg-amber-500/10 text-amber-400" :
-              "bg-slate-500/10 text-slate-400"
+              "bg-[var(--muted-background)] text-[var(--muted-foreground)]"
             )}>
               {asset.status}
             </span>
@@ -223,7 +237,7 @@ export default function AssetOverrideModal({
                 e.stopPropagation();
                 addOverride(asset.asset_type, asset);
               }}
-              className="p-1 rounded hover:bg-slate-700 transition"
+              className="p-1 rounded hover: transition" style={{ backgroundColor: "var(--surface-elevated)" }}
               title="Add to overrides"
             >
               <Plus className="h-3 w-3" />
@@ -238,16 +252,16 @@ export default function AssetOverrideModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-6xl h-[90vh] bg-slate-950 rounded-2xl border border-slate-800 shadow-2xl">
+      <div className="w-full max-w-6xl h-[90vh]  rounded-2xl border  shadow-2xl" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
         {/* Header */}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-6 border-b " style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold text-white">Asset Override Test</h2>
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm  mt-1" style={{ color: "var(--muted-foreground)" }}>
                 Test different asset versions to compare with baseline
                 {traceId && (
-                  <span className="ml-2 text-xs bg-slate-800 px-2 py-1 rounded">
+                  <span className="ml-2 text-xs  px-2 py-1 rounded" style={{ backgroundColor: "var(--surface-elevated)" }}>
                     Trace: {traceId.slice(0, 8)}...
                   </span>
                 )}
@@ -255,20 +269,20 @@ export default function AssetOverrideModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-slate-800 transition"
+              className="p-2 rounded-lg hover: transition" style={{ backgroundColor: "var(--surface-elevated)" }}
             >
-              <X className="h-5 w-5 text-slate-400" />
+              <X className="h-5 w-5 " style={{ color: "var(--muted-foreground)" }} />
             </button>
           </div>
         </div>
 
         <div className="flex h-[calc(90vh-8rem)]">
           {/* Left Panel - Asset Selection */}
-          <div className="w-1/2 border-r border-slate-800 flex flex-col">
+          <div className="w-1/2 border-r  flex flex-col" style={{ borderColor: "var(--border)" }}>
             {/* Asset Type Filter */}
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center gap-2 mb-3">
-                <Filter className="h-4 w-4 text-slate-400" />
+                <Filter className="h-4 w-4 " style={{ color: "var(--muted-foreground)" }} />
                 <h3 className="text-sm font-medium text-white">Asset Types</h3>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -288,16 +302,29 @@ export default function AssetOverrideModal({
                         "flex items-center gap-2 px-3 py-1.5 rounded text-xs transition",
                         selectedAssetType === type
                           ? config.color
-                          : hasAssets
-                          ? "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                          : "bg-slate-800/50 text-slate-500 cursor-not-allowed"
+                          : ""
                       )}
+                      style={{
+                        backgroundColor: hasAssets ? "var(--surface-elevated)" : "var(--surface-overlay)",
+                        color: hasAssets ? "var(--foreground-secondary)" : "var(--muted-foreground)",
+                        cursor: hasAssets ? "pointer" : "not-allowed"
+                      }}
+                      onMouseEnter={(e) => {
+                        if (hasAssets && selectedAssetType !== type) {
+                          e.currentTarget.style.backgroundColor = "var(--surface-base)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (hasAssets && selectedAssetType !== type) {
+                          e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                        }
+                      }}
                       disabled={!hasAssets}
                     >
                       <Icon className="h-3 w-3" />
                       {config.label}
                       {count > 0 && (
-                        <span className="px-1.5 py-0.5 rounded bg-slate-700">
+                        <span className="px-1.5 py-0.5 rounded " style={{ backgroundColor: "var(--surface-elevated)" }}>
                           {count}
                         </span>
                       )}
@@ -308,15 +335,15 @@ export default function AssetOverrideModal({
             </div>
 
             {/* Search */}
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 " style={{ color: "var(--muted-foreground)" }} />
                 <input
                   type="text"
                   placeholder="Search assets..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-600"
+                  className="w-full pl-10 pr-4 py-2  border  rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}
                 />
               </div>
             </div>
@@ -324,7 +351,7 @@ export default function AssetOverrideModal({
             {/* Asset List */}
             <div className="flex-1 overflow-auto p-4">
               {filteredAssets.length === 0 ? (
-                <div className="flex items-center justify-center h-full text-slate-500">
+                <div className="flex items-center justify-center h-full " style={{ color: "var(--muted-foreground)" }}>
                   <div className="text-center">
                     {selectedAssetType ? (
                       <>
@@ -357,13 +384,13 @@ export default function AssetOverrideModal({
           {/* Right Panel - Overrides & Test Run */}
           <div className="w-1/2 flex flex-col">
             {/* Current Overrides */}
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-white">Active Overrides</h3>
                 {overrides.length > 0 && (
                   <button
                     onClick={clearOverrides}
-                    className="text-xs text-slate-400 hover:text-slate-300"
+                    className="text-xs  hover:" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}
                   >
                     Clear All
                   </button>
@@ -371,7 +398,7 @@ export default function AssetOverrideModal({
               </div>
 
               {overrides.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 " style={{ color: "var(--muted-foreground)" }}>
                   <p>No overrides selected</p>
                   <p className="text-xs mt-1">Select assets from the left panel</p>
                 </div>
@@ -398,17 +425,17 @@ export default function AssetOverrideModal({
                               <h4 className="text-sm font-medium text-white">
                                 {override.asset_name}
                               </h4>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                                 v{override.version}
                               </p>
-                              <p className="text-xs text-slate-500 mt-1">
+                              <p className="text-xs  mt-1" style={{ color: "var(--muted-foreground)" }}>
                                 {override.reason}
                               </p>
                             </div>
                           </div>
                           <button
                             onClick={() => removeOverride(index)}
-                            className="p-1 rounded hover:bg-slate-700 transition"
+                            className="p-1 rounded hover: transition" style={{ backgroundColor: "var(--surface-elevated)" }}
                           >
                             <X className="h-4 w-4" />
                           </button>
@@ -422,14 +449,14 @@ export default function AssetOverrideModal({
 
             {/* Baseline Comparison */}
             {baselineTraceId && (
-              <div className="p-4 border-b border-slate-800">
+              <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
                 <h3 className="text-sm font-medium text-white mb-2">Baseline Comparison</h3>
-                <div className="bg-slate-800/50 rounded-lg p-3 text-xs">
+                <div className=" rounded-lg p-3 text-xs" style={{ backgroundColor: "var(--surface-overlay)" }}>
                   <div className="flex items-center gap-2 text-emerald-400">
                     <CheckCircle className="h-4 w-4" />
                     <span>Baseline: {baselineTraceId.slice(0, 8)}...</span>
                   </div>
-                  <p className="text-slate-400 mt-1">
+                  <p className=" mt-1" style={{ color: "var(--muted-foreground)" }}>
                     Test results will be compared against this trace
                   </p>
                 </div>
@@ -437,16 +464,26 @@ export default function AssetOverrideModal({
             )}
 
             {/* Test Run Controls */}
-            <div className="p-4 border-b border-slate-800">
+            <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
               <button
                 onClick={handleTestRun}
                 disabled={overrides.length === 0 || isRunning}
-                className={cn(
-                  "w-full py-3 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2",
-                  overrides.length === 0 || isRunning
-                    ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                    : "bg-emerald-500 hover:bg-emerald-600 text-white"
-                )}
+                className="w-full py-3 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: overrides.length === 0 || isRunning ? "var(--surface-elevated)" : "#10b981",
+                  color: overrides.length === 0 || isRunning ? "var(--muted-foreground)" : "white",
+                  cursor: overrides.length === 0 || isRunning ? "not-allowed" : "pointer"
+                }}
+                onMouseEnter={(e) => {
+                  if (overrides.length > 0 && !isRunning) {
+                    e.currentTarget.style.backgroundColor = "#059669";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (overrides.length > 0 && !isRunning) {
+                    e.currentTarget.style.backgroundColor = "#10b981";
+                  }
+                }}
               >
                 {isRunning ? (
                   <>
@@ -462,7 +499,7 @@ export default function AssetOverrideModal({
               </button>
 
               {overrides.length > 0 && (
-                <div className="mt-3 text-xs text-slate-400">
+                <div className="mt-3 text-xs " style={{ color: "var(--muted-foreground)" }}>
                   <p>• Test will run with selected asset overrides</p>
                   <p>• Results will be compared against baseline</p>
                   <p>• Performance metrics will be collected</p>
@@ -473,7 +510,7 @@ export default function AssetOverrideModal({
             {/* Expected Changes */}
             <div className="flex-1 p-4 overflow-auto">
               <h3 className="text-sm font-medium text-white mb-3">Expected Changes</h3>
-              <div className="space-y-2 text-xs text-slate-400">
+              <div className="space-y-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
                 <div className="flex items-start gap-2">
                   <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5"></div>
                   <p>Asset versions will be temporarily overridden during test</p>

@@ -240,7 +240,7 @@ export default function OpsPage() {
       ? "border-emerald-500 text-emerald-300 hover:border-emerald-400"
       : traceCopyStatus === "failed"
         ? "border-rose-500 text-rose-300 hover:border-rose-400"
-        : "border-slate-800 text-slate-400 hover:border-white hover:text-white";
+        : "border-[var(--border)] text-[var(--muted-foreground)] hover:border-[var(--border)] hover:text-white";
 
   const handleRemoveHistory = useCallback(
     (id: string) => {
@@ -567,37 +567,38 @@ export default function OpsPage() {
   const shouldShowSidebar = !isFullScreen;
 
   return (
-    <>
+    <div className="ops-theme">
     {/* Summary Modal */}
     {summaryModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm dark:bg-slate-950/80" style={{ backgroundColor: "rgba(15, 23, 42, 0.95)" }}>
-        <div className="relative w-full max-w-2xl rounded-3xl border p-6" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-[var(--surface-base)]/80 dark:bg-[var(--surface-base)]/95">
+        <div className="relative w-full max-w-2xl rounded-3xl border border-[var(--border)] p-6 bg-[var(--surface-elevated)] dark:border-[var(--border)] dark:bg-[var(--surface-base)]">
           {/* Header */}
-          <div className="flex items-center justify-between p-6" style={{ borderBottom: "1px solid var(--border)" }}>
+          <div className="flex items-center justify-between border-b border-[var(--border)] p-6 dark:border-[var(--border)]">
             <div className="flex items-center gap-3">
               <span className="text-2xl">📋</span>
               <div>
-                <h2 className="text-lg font-semibold">대화 요약</h2>
-                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                <h2 className="text-lg font-semibold text-[var(--foreground)] dark:text-[var(--foreground)]">대화 요약</h2>
+                <p className="text-xs text-[var(--muted-foreground)] dark:text-[var(--muted-foreground)]">
                   {summaryData?.question_count || history.length}개의 질문
                 </p>
               </div>
             </div>
             <button
               onClick={() => setSummaryModalOpen(false)}
-              className="rounded-full border px-3 py-1 text-sm"
-              style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+              className="rounded-full border border-[var(--border)] px-3 py-1 text-sm text-[var(--foreground)] hover:bg-[var(--surface-elevated)] dark:border-[var(--border)] dark:text-[var(--foreground-secondary)] dark:hover:bg-[var(--surface-elevated)]"
             >
               ✕
             </button>
           </div>
+  +++++++ REPLACE
+  +++++++ REPLACE
 
           {/* Content */}
           <div className="max-h-[60vh] overflow-y-auto px-6 py-4 custom-scrollbar">
             {/* Summary Type Selector */}
-            <div className="mb-4 flex items-center justify-between rounded-xl border p-3" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+            <div className="mb-4 flex items-center justify-between rounded-xl border border-[var(--border)] p-3 bg-[var(--surface-elevated)] dark:border-[var(--border)] dark:bg-[var(--surface-base)]">
+  +++++++ REPLACE
+  +++++++ REPLACE
               <div className="flex items-center gap-2">
                 <span className="text-sm">요약 방식:</span>
                 <div className="flex gap-2">
@@ -658,71 +659,71 @@ export default function OpsPage() {
                 {summaryData.overall_summary && (
                   <div className="mb-4 rounded-2xl border border-sky-700/50 bg-sky-950/30 p-4">
                     <h3 className="mb-2 text-sm font-semibold text-sky-300">📝 전체 요약</h3>
-                    <pre className="whitespace-pre-wrap text-xs text-slate-300 font-sans">
+                    <pre className="whitespace-pre-wrap text-xs  font-sans" style={{ color: "var(--foreground-secondary)" }}>
                       {summaryData.overall_summary}
                     </pre>
                   </div>
                 )}
 
                 {/* Metadata */}
-                <div className="mb-4 rounded-2xl border border-slate-700 bg-slate-950/60 p-4">
+                <div className="mb-4 rounded-2xl border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <span className="text-xs text-slate-500">제목</span>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>제목</span>
                       <p className="font-semibold text-white">{summaryData.title}</p>
                     </div>
                     <div>
-                      <span className="text-xs text-slate-500">일자</span>
-                      <p className="text-slate-300">{summaryData.date}</p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>일자</span>
+                      <p className="" style={{ color: "var(--foreground-secondary)" }}>{summaryData.date}</p>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-xs text-slate-500">주제</span>
-                      <p className="text-slate-300">{summaryData.topic}</p>
+                      <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>주제</span>
+                      <p className="" style={{ color: "var(--foreground-secondary)" }}>{summaryData.topic}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Q&A Summary */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-slate-400">질의-응답 요약</h3>
+                  <h3 className="text-sm font-semibold " style={{ color: "var(--muted-foreground)" }}>질의-응답 요약</h3>
                   {summaryData.questions_and_answers?.slice(0, 5).map((qa: any, idx: number) => (
-                    <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/40 p-3">
+                    <div key={idx} className="rounded-xl border  /40 p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
                       <div className="mb-2 flex items-center gap-2">
                         <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase text-sky-300">
                           Q{idx + 1}
                         </span>
                         {qa.mode && (
-                          <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+                          <span className="rounded-full border  px-2 py-0.5 text-[10px] " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
                             {qa.mode}
                           </span>
                         )}
                       </div>
                       <p className="mb-2 text-sm font-medium text-white">{qa.question}</p>
                       {qa.summary && (
-                        <p className="text-xs text-slate-400 line-clamp-3">{qa.summary}</p>
+                        <p className="text-xs  line-clamp-3" style={{ color: "var(--muted-foreground)" }}>{qa.summary}</p>
                       )}
                     </div>
                   ))}
                   {summaryData.questions_and_answers?.length > 5 && (
-                    <p className="text-center text-xs text-slate-500">
+                    <p className="text-center text-xs " style={{ color: "var(--muted-foreground)" }}>
                       ... 그 외 {summaryData.questions_and_answers.length - 5}개의 질문
                     </p>
                   )}
                 </div>
               </>
             ) : (
-              <div className="py-12 text-center text-slate-400">
+              <div className="py-12 text-center " style={{ color: "var(--muted-foreground)" }}>
                 요약 데이터가 없습니다.
               </div>
             )}
           </div>
 
           {/* Footer - PDF Export */}
-          <div className="flex justify-end border-t border-slate-700 px-6 py-4">
+          <div className="flex justify-end border-t  px-6 py-4" style={{ borderColor: "var(--border)" }}>
             <button
               onClick={exportConversationPdf}
               disabled={pdfExporting || summaryLoading}
-              className="flex items-center gap-2 rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+              className="flex items-center gap-2 rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-400 disabled:" style={{ backgroundColor: "var(--surface-elevated)" }}
             >
               {pdfExporting ? (
                 <>
@@ -761,7 +762,7 @@ export default function OpsPage() {
             }
           }}
           disabled={!selectedEntry}
-          className="ml-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-700 bg-slate-800 text-slate-300 shadow-lg transition hover:border-blue-500 hover:bg-slate-700 hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-700 disabled:hover:bg-slate-800 disabled:hover:text-slate-300"
+          className="ml-4 flex h-12 w-12 items-center justify-center rounded-full border    shadow-lg transition hover:border-blue-500 hover: hover:text-blue-400 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover: disabled:hover: disabled:hover:" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
           title="대화 요약 보기"
         >
           <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -774,22 +775,22 @@ export default function OpsPage() {
         <div
           className={`h-[80vh] flex-col gap-4 ${shouldShowSidebar ? "flex" : "hidden"}`}
         >
-          <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/70 shadow-inner shadow-black/40">
-            <div className="border-b border-slate-800 px-4 py-3">
+          <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border  /70 shadow-inner shadow-black/40" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+            <div className="border-b  px-4 py-3" style={{ borderColor: "var(--border)" }}>
               <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Query history</p>
+                <p className="text-xs uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Query history</p>
                 {historyLoading ? (
-                  <span className="text-xs text-slate-400">Loading…</span>
+                  <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>Loading…</span>
                 ) : null}
               </div>
-              <p className="text-[11px] text-slate-400">최근 실행한 OPS 질의를 선택해 결과를 확인합니다.</p>
+              <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>최근 실행한 OPS 질의를 선택해 결과를 확인합니다.</p>
               {historyError ? (
                 <p className="mt-1 text-[11px] text-rose-400">{historyError}</p>
               ) : null}
             </div>
             <div className="flex-1 overflow-y-auto px-2 py-2 custom-scrollbar">
               {history.length === 0 ? (
-                <p className="text-sm text-slate-500">질의를 실행하면 여기에 기록됩니다.</p>
+                <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>질의를 실행하면 여기에 기록됩니다.</p>
               ) : (
                 <div className="space-y-2">
                   {history.map((entry) => {
@@ -834,14 +835,12 @@ export default function OpsPage() {
                             {entry.question}
                           </p>
                           <p
-                            className="text-[12px] text-slate-400 overflow-hidden"
-                            style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
+                            className="text-[12px]  overflow-hidden" style={{ color: "var(--muted-foreground)" ,  display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
                           >
                             {entry.summary}
                           </p>
                           {entry.trace?.trace_id && (
-                            <p className="mt-1 text-[10px] text-slate-500 font-mono overflow-hidden"
-                              style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
+                            <p className="mt-1 text-[10px]  font-mono overflow-hidden" style={{ color: "var(--muted-foreground)" ,  display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}
                             >
                               Trace: {entry.trace.trace_id}
                             </p>
@@ -853,7 +852,7 @@ export default function OpsPage() {
                             event.preventDefault();
                             handleRemoveHistory(entry.id);
                           }}
-                          className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400 bg-slate-900 text-[10px] text-rose-400 transition group-hover:flex"
+                          className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-full border border-rose-400  text-[10px] text-rose-400 transition group-hover:flex" style={{ backgroundColor: "var(--surface-base)" }}
                         >
                           ✕
                         </button>
@@ -864,10 +863,10 @@ export default function OpsPage() {
               )}
             </div>
           </div>
-          <div className="flex flex-[0.45] flex-col rounded-3xl border border-slate-800 bg-slate-950/60 p-4">
+          <div className="flex flex-[0.45] flex-col rounded-3xl border   p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
             <div className="mb-3 space-y-1">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Run OPS query</p>
-              <p className="text-[11px] text-slate-400">mode를 선택하고 질문을 작성한 뒤 실행하세요.</p>
+              <p className="text-xs uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Run OPS query</p>
+              <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>mode를 선택하고 질문을 작성한 뒤 실행하세요.</p>
             </div>
             <div className="flex gap-1 flex-nowrap">
               {UI_MODES.map((modeEntry) => (
@@ -893,20 +892,20 @@ export default function OpsPage() {
                 </button>
               ))}
             </div>
-            <label className="mt-4 text-[11px] uppercase tracking-[0.3em] text-slate-400">
+            <label className="mt-4 text-[11px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
               Question
               <textarea
                 rows={4}
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
-                className="mt-2 w-full resize-none rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 tracking-normal"
+                className="mt-2 w-full resize-none rounded-2xl border   px-3 py-2 text-sm text-white outline-none focus:border-sky-500 tracking-normal" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                 placeholder="예: 최근 배포 중단 이유 알려줘"
               />
             </label>
             <div className="mt-4 flex flex-col gap-2">
               <button
                 onClick={runQuery}
-                className="rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+                className="rounded-2xl bg-emerald-500/80 px-4 py-2 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-emerald-400 disabled:" style={{ backgroundColor: "var(--surface-elevated)" }}
                 disabled={isRunning || !question.trim()}
               >
                 {isRunning ? <span className="animate-pulse">Running…</span> : "메시지 전송"}
@@ -916,20 +915,20 @@ export default function OpsPage() {
           </div>
         </div>
         <section
-          className="flex flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 shadow-inner shadow-black/40"
+          className="flex flex-col gap-4 rounded-3xl border   p-4 shadow-inner shadow-black/40" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
           style={isFullScreen ? { gridColumn: "span 2" } : undefined}
         >
           <header className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">OPS answer</p>
+              <p className="text-xs uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>OPS answer</p>
               <h1 className="text-lg font-semibold text-white">
                 {selectedLabel}
                 {selectedEntry ? ` · ${formatTimestamp(selectedEntry.createdAt)}` : ""}
               </h1>
               {selectedEntry ? (
-                <p className="text-[12px] text-slate-400">{selectedEntry.question}</p>
+                <p className="text-[12px] " style={{ color: "var(--muted-foreground)" }}>{selectedEntry.question}</p>
               ) : (
-                <p className="text-[12px] text-slate-500">질의를 실행하면 결과가 여기 표시됩니다.</p>
+                <p className="text-[12px] " style={{ color: "var(--muted-foreground)" }}>질의를 실행하면 결과가 여기 표시됩니다.</p>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -946,15 +945,15 @@ export default function OpsPage() {
               {canFullScreen ? (
                 <button
                   onClick={() => setIsFullScreen((prev) => !prev)}
-                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-slate-200 transition hover:border-slate-500"
+                  className="rounded-full border  px-3 py-1 text-[10px] uppercase tracking-[0.3em]  transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
                 >
                   {isFullScreen ? "Exit full screen" : "Full screen"}
                 </button>
               ) : null}
             </div>
           </header>
-          <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[12px] text-slate-300">
-            <summary className="cursor-pointer text-[11px] uppercase tracking-[0.3em] text-slate-500">
+          <details className="rounded-2xl border  /40 p-3 text-[12px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
+            <summary className="cursor-pointer text-[11px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
               Meta · used tools · timing
             </summary>
             {meta ? (
@@ -962,31 +961,31 @@ export default function OpsPage() {
                 <p>
                   Route: <span className="font-semibold text-white">{meta.route}</span>
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                   Reason: {meta.route_reason}
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                   Timing: {meta.timing_ms} ms · Used tools: {meta.used_tools?.join(", ") || "N/A"}
                 </p>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                   Fallback: {meta.fallback ? "yes" : "no"}
                 </p>
                 {meta.error ? (
                   <p className="text-[11px] text-rose-300">Error: {String(meta.error)}</p>
                 ) : null}
                 {selectedEntry.errorDetails ? (
-                  <details className="mt-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-300">
-                    <summary className="cursor-pointer uppercase tracking-[0.3em] text-slate-400">
+                  <details className="mt-2 rounded-2xl border   p-3 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                    <summary className="cursor-pointer uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
                       Details
                     </summary>
-                    <pre className="mt-2 max-h-40 overflow-auto text-xs text-slate-300">
+                    <pre className="mt-2 max-h-40 overflow-auto text-xs " style={{ color: "var(--foreground-secondary)" }}>
                       {selectedEntry.errorDetails}
                     </pre>
                   </details>
                 ) : null}
               </div>
             ) : (
-              <p className="mt-2 text-[11px] text-slate-400">No meta available.</p>
+              <p className="mt-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>No meta available.</p>
             )}
           </details>
           {/* Stage Pipeline Inspector */}
@@ -1010,9 +1009,9 @@ export default function OpsPage() {
           <details
             open={traceOpen}
             onToggle={(event) => setTraceOpen(event.currentTarget.open)}
-            className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[12px] text-slate-300"
+            className="rounded-2xl border  /40 p-3 text-[12px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
           >
-            <summary className="flex items-center justify-between cursor-pointer text-[11px] uppercase tracking-[0.3em] text-slate-500">
+            <summary className="flex items-center justify-between cursor-pointer text-[11px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
               <span>Trace · plan / policy</span>
               <button
                 type="button"
@@ -1028,28 +1027,28 @@ export default function OpsPage() {
               </button>
             </summary>
             {traceData ? (
-              <pre className="mt-2 max-h-64 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-100">
+              <pre className="mt-2 max-h-64 overflow-auto rounded-2xl border   p-3 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
                 {traceContents}
               </pre>
             ) : (
-              <p className="mt-2 text-[11px] text-slate-400">No trace captured yet.</p>
+              <p className="mt-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>No trace captured yet.</p>
             )}
           </details>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-            <span className="font-mono text-slate-200">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+            <span className="font-mono " style={{ color: "var(--foreground-secondary)" }}>
               Trace ID: {currentTraceId ?? "없음"}
             </span>
             {currentTraceId ? (
               <>
                 <button
                   onClick={handleCopyResultTraceId}
-                  className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                  className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                 >
                   Copy trace_id
                 </button>
                 <button
                   onClick={openInspectorTrace}
-                  className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                  className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                 >
                   Open in Inspector
                 </button>
@@ -1065,8 +1064,8 @@ export default function OpsPage() {
                 traceId={currentTraceId}
               />
             ) : (
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
-                <p className="text-sm text-slate-500">Run a query to visualize OPS data.</p>
+              <div className="rounded-3xl border  /70 p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>Run a query to visualize OPS data.</p>
               </div>
             )}
           </div>
@@ -1094,6 +1093,6 @@ export default function OpsPage() {
       pdfBlobUrl={pdfBlobUrl}
       filename={pdfFilename}
     />
-    </>
+    </div>
   );
  }

@@ -25,12 +25,16 @@
 
   /* Accent colors */
   --primary: #0284c7; /* sky-600 */
+  --primary-rgb: 2, 132, 199;
   --primary-foreground: #ffffff;
   --primary-light: #0ea5e9; /* sky-500 */
   --primary-dark: #0369a1; /* sky-700 */
 
   /* Semantic colors */
   --destructive: #dc2626; /* red-600 */
+  --error: #dc2626; /* alias for legacy usage */
+  --error-rgb: 220, 38, 38;
+  --info: #0369a1; /* sky-700 */
   --destructive-foreground: #ffffff;
   --success: #16a34a; /* green-600 */
   --success-foreground: #ffffff;
@@ -79,12 +83,16 @@
 
   /* Accent colors */
   --primary: #0284c7; /* sky-600 */
+  --primary-rgb: 2, 132, 199;
   --primary-foreground: #ffffff;
   --primary-light: #38bdf8; /* sky-400 */
   --primary-dark: #0369a1; /* sky-700 */
 
   /* Semantic colors (same in dark mode) */
   --destructive: #dc2626;
+  --error: #ef4444;
+  --error-rgb: 239, 68, 68;
+  --info: #38bdf8;
   --destructive-foreground: #ffffff;
   --success: #16a34a;
   --success-foreground: #ffffff;
@@ -133,6 +141,83 @@ body {
 .builder-json-shell .monaco-editor-background,
 .builder-json-shell .monaco-editor .margin {
   background-color: transparent !important;
+}
+
+/* API Manager theme normalization: keep panel backgrounds aligned with design tokens */
+.api-manager-theme .bg-white,
+.api-manager-theme .dark\:bg-slate-950\/60,
+.api-manager-theme .dark\:bg-slate-900\/60,
+.api-manager-theme .dark\:bg-slate-900 {
+  background-color: var(--surface-base) !important;
+}
+
+.api-manager-theme .bg-slate-900\/40,
+.api-manager-theme .bg-slate-950\/30,
+.api-manager-theme .bg-slate-950\/40,
+.api-manager-theme .bg-slate-950\/60,
+.api-manager-theme .bg-slate-950\/70,
+.api-manager-theme .bg-slate-950\/90,
+.api-manager-theme .bg-slate-900\/60,
+.api-manager-theme .bg-slate-900,
+.api-manager-theme .bg-slate-950 {
+  background-color: var(--surface-elevated) !important;
+}
+
+/* OPS + Screen Editor theme normalization */
+.ops-theme .bg-white,
+.ops-theme .dark\:bg-slate-950\/60,
+.ops-theme .dark\:bg-slate-900\/60,
+.ops-theme .dark\:bg-slate-900,
+.screen-editor-theme .bg-white,
+.screen-editor-theme .dark\:bg-slate-950\/60,
+.screen-editor-theme .dark\:bg-slate-900\/60,
+.screen-editor-theme .dark\:bg-slate-900 {
+  background-color: var(--surface-base) !important;
+}
+
+.ops-theme .bg-slate-900\/40,
+.ops-theme .bg-slate-950\/30,
+.ops-theme .bg-slate-950\/40,
+.ops-theme .bg-slate-950\/60,
+.ops-theme .bg-slate-950\/70,
+.ops-theme .bg-slate-950\/90,
+.ops-theme .bg-slate-950\/50,
+.ops-theme .bg-slate-950\/20,
+.ops-theme .bg-slate-900\/60,
+.ops-theme .bg-slate-900\/50,
+.ops-theme .bg-slate-900\/30,
+.ops-theme .bg-slate-900\/20,
+.ops-theme .bg-slate-900,
+.ops-theme .bg-slate-950,
+.ops-theme .bg-slate-800\/60,
+.ops-theme .bg-slate-800\/50,
+.ops-theme .bg-slate-800\/40,
+.ops-theme .bg-slate-800\/30,
+.ops-theme .bg-slate-800\/20,
+.ops-theme .bg-slate-800,
+.ops-theme .bg-slate-700,
+.screen-editor-theme .bg-slate-900\/40,
+.screen-editor-theme .bg-slate-950\/30,
+.screen-editor-theme .bg-slate-950\/40,
+.screen-editor-theme .bg-slate-950\/60,
+.screen-editor-theme .bg-slate-950\/70,
+.screen-editor-theme .bg-slate-950\/90,
+.screen-editor-theme .bg-slate-950\/50,
+.screen-editor-theme .bg-slate-950\/20,
+.screen-editor-theme .bg-slate-900\/60,
+.screen-editor-theme .bg-slate-900\/50,
+.screen-editor-theme .bg-slate-900\/30,
+.screen-editor-theme .bg-slate-900\/20,
+.screen-editor-theme .bg-slate-900,
+.screen-editor-theme .bg-slate-950,
+.screen-editor-theme .bg-slate-800\/60,
+.screen-editor-theme .bg-slate-800\/50,
+.screen-editor-theme .bg-slate-800\/40,
+.screen-editor-theme .bg-slate-800\/30,
+.screen-editor-theme .bg-slate-800\/20,
+.screen-editor-theme .bg-slate-800,
+.screen-editor-theme .bg-slate-700 {
+  background-color: var(--surface-elevated) !important;
 }
 
 .ag-theme-cep {

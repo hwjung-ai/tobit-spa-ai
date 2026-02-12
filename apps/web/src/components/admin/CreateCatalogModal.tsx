@@ -74,16 +74,16 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-md w-full mx-4">
-        <div className="p-6 border-b border-slate-800">
-          <h2 className="text-xl font-bold text-slate-100 mb-1">Create Catalog Asset</h2>
-          <p className="text-xs text-slate-400">Scan database schema and store metadata</p>
+      <div className=" border  rounded-2xl shadow-2xl max-w-md w-full mx-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <div className="p-6 border-b " style={{ borderColor: "var(--border)" }}>
+          <h2 className="text-xl font-bold  mb-1" style={{ color: "var(--foreground)" }}>Create Catalog Asset</h2>
+          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Scan database schema and store metadata</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold  uppercase tracking-wider mb-2" style={{ color: "var(--muted-foreground)" }}>
               Catalog Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -91,21 +91,21 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
               value={name}
               onChange={(e) => setName(e.target.value)}
               disabled={loading}
-              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
               placeholder="e.g., factory_postgres"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold  uppercase tracking-wider mb-2" style={{ color: "var(--muted-foreground)" }}>
               Description
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={loading}
-              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              className="w-full px-4 py-3  border  rounded-lg  placeholder-slate-600 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
               placeholder="Describe this catalog..."
               rows={3}
             />
@@ -113,23 +113,23 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
 
           {/* Source */}
           <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold  uppercase tracking-wider mb-2" style={{ color: "var(--muted-foreground)" }}>
               Database Source <span className="text-red-500">*</span>
             </label>
             <select
               value={sourceRef}
               onChange={(e) => setSourceRef(e.target.value)}
               disabled={loading}
-              className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-lg text-slate-100 focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50"
+              className="w-full px-4 py-3  border  rounded-lg  focus:outline-none focus:border-sky-500/50 transition-all disabled:opacity-50" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-base)" }}
             >
-              <option value="" className="bg-slate-950">Select a source...</option>
+              <option value="" className="" style={{ backgroundColor: "var(--surface-base)" }}>Select a source...</option>
               {sourcesData?.map((source: any) => (
-                <option key={source.asset_id} value={source.name} className="bg-slate-950">
+                <option key={source.asset_id} value={source.name} className="" style={{ backgroundColor: "var(--surface-base)" }}>
                   {source.name}
                 </option>
               ))}
             </select>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
               💡 Source must be published before creating catalog
             </p>
           </div>
@@ -142,19 +142,19 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
           )}
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t border-slate-800">
+          <div className="flex gap-3 pt-4 border-t " style={{ borderColor: "var(--border)" }}>
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-3 text-slate-400 hover:text-slate-200 rounded-lg transition-colors font-medium text-sm disabled:opacity-50 uppercase tracking-wide"
+              className="flex-1 px-4 py-3  hover: rounded-lg transition-colors font-medium text-sm disabled:opacity-50 uppercase tracking-wide" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-sky-600 hover:bg-sky-500 disabled:bg-slate-800 text-white rounded-lg shadow-lg font-medium text-sm disabled:opacity-50 uppercase tracking-wide transition-all"
+              className="flex-1 px-4 py-3 bg-sky-600 hover:bg-sky-500 disabled: text-white rounded-lg shadow-lg font-medium text-sm disabled:opacity-50 uppercase tracking-wide transition-all" style={{ backgroundColor: "var(--surface-elevated)" }}
             >
               {loading ? "Creating..." : "Create"}
             </button>

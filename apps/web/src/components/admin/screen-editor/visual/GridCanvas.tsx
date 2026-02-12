@@ -46,8 +46,7 @@ export default function GridCanvas() {
             lines.push(
                 <div
                     key={i}
-                    className="absolute top-0 bottom-0 border-r border-slate-800/50"
-                    style={{ left: i * colWidth }}
+                    className="absolute top-0 bottom-0 border-r /50" style={{ borderColor: "var(--border)"  ,  left: i * colWidth }}
                 />
             );
         }
@@ -59,8 +58,7 @@ export default function GridCanvas() {
                 lines.push(
                     <div
                         key={`h-${j}`}
-                        className="absolute left-0 right-0 border-b border-slate-800/30 border-dashed"
-                        style={{ top: j * DEFAULT_ROW_HEIGHT }}
+                        className="absolute left-0 right-0 border-b /30 border-dashed" style={{ borderColor: "var(--border)"  ,  top: j * DEFAULT_ROW_HEIGHT }}
                     />
                 );
             }
@@ -137,12 +135,12 @@ export default function GridCanvas() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-900/50 relative overflow-hidden">
-            <div className="border-b border-slate-800 p-3 flex justify-between items-center bg-slate-900 z-10">
-                <h3 className="text-sm font-semibold text-slate-200">
+        <div className="flex flex-col h-full relative overflow-hidden" style={{ backgroundColor: "var(--surface-overlay)"  }}>
+            <div className="border-b p-3 flex justify-between items-center z-10" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}>
+                <h3 className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)"  }}>
                     Dashboard Canvas (Grid {COLS}x)
                 </h3>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs 0" style={{ color: "var(--foreground)"  }}>
                     Drag to move · Arrow keys to nudge · Snap enabled
                 </span>
             </div>
@@ -214,9 +212,8 @@ function GridItem({ component, colWidth, rowHeight, onStop, isSelected, onSelect
             handle=".drag-handle"
         >
             <div
-                className={`absolute box-border transition-shadow ${isSelected ? "z-50 ring-2 ring-sky-500 shadow-lg shadow-sky-900/50" : "z-10 hover:z-20 border border-transparent hover:border-slate-600"
-                    }`}
-                style={{ width: w, height: h }}
+                className={`absolute box-border transition-shadow ${isSelected ? "z-50 ring-2 ring-sky-500 shadow-lg shadow-sky-900/50" : "z-10 hover:z-20 border border-transparent hover:"
+                    }`} style={{ borderColor: "var(--border)" ,  width: w, height: h }}
                 onClick={(e) => {
                     e.stopPropagation();
                     onSelect();
@@ -224,17 +221,17 @@ function GridItem({ component, colWidth, rowHeight, onStop, isSelected, onSelect
             >
                 {/* Drag Handle Overlay - only visible on hover or selected */}
                 <div className="absolute top-0 right-0 left-0 h-4 cursor-move drag-handle group flex justify-center items-start opacity-0 hover:opacity-100 transition-opacity z-20">
-                    <div className="w-8 h-1 bg-slate-400/50 rounded-full mt-1"></div>
+                    <div className="w-8 h-1 /50 rounded-full mt-1" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
                 </div>
 
                 {/* Label for debugging/visual */}
                 {isSelected && (
-                    <div className="absolute -top-5 left-0 text-[10px] text-sky-300 font-mono bg-slate-900/80 px-1 rounded z-30">
+                    <div className="absolute -top-5 left-0 text-[10px] text-sky-300 font-mono px-1 rounded z-30" style={{ backgroundColor: "var(--surface-overlay)"  }}>
                         x:{layout.x} y:{layout.y} w:{layout.w} h:{layout.h}
                     </div>
                 )}
 
-                <div className="w-full h-full overflow-hidden bg-slate-800/20 rounded">
+                <div className="w-full h-full overflow-hidden /20 rounded" style={{ backgroundColor: "var(--surface-elevated)"  }}>
                     <CanvasComponent
                         component={component}
                         isSelected={isSelected}

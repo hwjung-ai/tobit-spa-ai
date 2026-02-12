@@ -76,7 +76,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
   };
 
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+    <div className=" border  rounded-2xl p-5 space-y-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
       {block.title && (
         <h3 className="text-sm font-semibold text-white">{block.title}</h3>
       )}
@@ -86,7 +86,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
         <div className="space-y-3">
           {block.inputs.map((input) => (
             <div key={input.id} className="space-y-2">
-              <Label htmlFor={input.id} className="text-xs text-slate-300">
+              <Label htmlFor={input.id} className="text-xs " style={{ color: "var(--foreground-secondary)" }}>
                 {input.label}
                 {input.required && <span className="text-rose-400 ml-1">*</span>}
               </Label>
@@ -122,9 +122,9 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
 
       {/* Result */}
       {resultBlocks.length > 0 && (
-        <div className="mt-4 border-t border-slate-700 pt-4 space-y-3">
+        <div className="mt-4 border-t  pt-4 space-y-3" style={{ borderColor: "var(--border)" }}>
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Result</p>
+            <p className="text-xs uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Result</p>
             {actionTraceId && (
               <a
                 href={`/admin/inspector?trace_id=${encodeURIComponent(actionTraceId)}`}
@@ -157,7 +157,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder={input.placeholder}
-          className="bg-slate-950/50 border-slate-700 text-white"
+          className="/50  text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
         />
       );
 
@@ -169,7 +169,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           value={(value as string | number) || ""}
           onChange={(e) => onChange(parseFloat(e.target.value) || "")}
           placeholder={input.placeholder}
-          className="bg-slate-950/50 border-slate-700 text-white"
+          className="/50  text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
         />
       );
 
@@ -180,7 +180,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           type="date"
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-slate-950/50 border-slate-700 text-white"
+          className="/50  text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
         />
       );
 
@@ -191,7 +191,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           type="datetime-local"
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
-          className="bg-slate-950/50 border-slate-700 text-white"
+          className="/50  text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
         />
       );
 
@@ -209,7 +209,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
     case "select":
       return (
         <Select value={(value as string) || ""} onValueChange={onChange}>
-          <SelectTrigger className="bg-slate-950/50 border-slate-700 text-white">
+          <SelectTrigger className="/50  text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
             <SelectValue placeholder={input.placeholder || "Select..."} />
           </SelectTrigger>
           <SelectContent>

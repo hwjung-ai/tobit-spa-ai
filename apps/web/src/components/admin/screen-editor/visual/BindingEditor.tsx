@@ -74,15 +74,17 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
       <div ref={ref} className={`space-y-3 ${className}`}>
         {showModeToggle && (
           <Tabs value={localMode} onValueChange={(val) => handleModeChange(val as "binding" | "static")}>
-            <TabsList className="grid w-full grid-cols-2 bg-slate-800/50">
+            <TabsList className="grid w-full grid-cols-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
               <TabsTrigger
-                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-[var(--foreground-secondary)]"
+                style={{ color: "var(--muted-foreground)" }}
                 value="binding"
               >
                 Binding
               </TabsTrigger>
               <TabsTrigger
-                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+                className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-[var(--foreground-secondary)]"
+                style={{ color: "var(--muted-foreground)" }}
                 value="static"
               >
                 Static
@@ -99,7 +101,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
                 placeholder={placeholder || "Select a binding path..."}
                 error={validationError}
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                 Select from state, context, inputs, or use trace_id
               </p>
             </TabsContent>
@@ -110,7 +112,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Enter a static value..."}
               />
-              <p className="text-xs text-slate-500">
+              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                 Enter a literal value (string, number, etc.)
               </p>
             </TabsContent>

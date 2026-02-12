@@ -133,7 +133,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
   if (!userId) {
     return (
       <div className="bg-white rounded-lg border p-8 text-center">
-        <p className="text-slate-500">Select a user to manage permissions</p>
+        <p className="" style={{ color: "var(--muted-foreground)" }}>Select a user to manage permissions</p>
       </div>
     );
   }
@@ -149,7 +149,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
   if (!user) {
     return (
       <div className="bg-white rounded-lg border p-8 text-center">
-        <p className="text-slate-500">User not found</p>
+        <p className="" style={{ color: "var(--muted-foreground)" }}>User not found</p>
       </div>
     );
   }
@@ -165,8 +165,8 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
             </span>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">{user.username}</h2>
-            <p className="text-slate-600">{user.email}</p>
+            <h2 className="text-xl font-bold " style={{ color: "var(--foreground)" }}>{user.username}</h2>
+            <p className="" style={{ color: "var(--muted-foreground)" }}>{user.email}</p>
           </div>
           <div className="ml-auto">
             <span
@@ -182,17 +182,17 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
         </div>
         <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
           <div>
-            <p className="text-slate-500">Login Count</p>
+            <p className="" style={{ color: "var(--muted-foreground)" }}>Login Count</p>
             <p className="text-lg font-semibold">{user.login_count}</p>
           </div>
           <div>
-            <p className="text-slate-500">Last Login</p>
+            <p className="" style={{ color: "var(--muted-foreground)" }}>Last Login</p>
             <p className="text-sm font-semibold">
               {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
             </p>
           </div>
           <div>
-            <p className="text-slate-500">Created</p>
+            <p className="" style={{ color: "var(--muted-foreground)" }}>Created</p>
             <p className="text-sm font-semibold">
               {new Date(user.created_at).toLocaleDateString()}
             </p>
@@ -207,8 +207,8 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
           className={`flex-1 px-4 py-3 font-semibold text-center border-b-2 ${
             activeTab === 'permissions'
               ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-600 hover:text-slate-900'
-          }`}
+              : 'border-transparent  hover:'
+          }`} style={{ color: "var(--muted-foreground)", color: "var(--foreground)" }}
         >
           <Shield className="w-4 h-4 inline mr-2" />
           Permissions
@@ -218,8 +218,8 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
           className={`flex-1 px-4 py-3 font-semibold text-center border-b-2 ${
             activeTab === 'audit'
               ? 'border-blue-600 text-blue-600'
-              : 'border-transparent text-slate-600 hover:text-slate-900'
-          }`}
+              : 'border-transparent  hover:'
+          }`} style={{ color: "var(--muted-foreground)", color: "var(--foreground)" }}
         >
           <Clock className="w-4 h-4 inline mr-2" />
           Audit Log
@@ -234,7 +234,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
             <h3 className="text-lg font-semibold mb-4">Grant Permission</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">
+                <label className="block text-sm font-medium  mb-2" style={{ color: "var(--foreground)" }}>
                   Permission
                 </label>
                 <select
@@ -254,7 +254,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">
+                <label className="block text-sm font-medium  mb-2" style={{ color: "var(--foreground)" }}>
                   Reason (optional)
                 </label>
                 <input
@@ -281,17 +281,17 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
           <div className="bg-white rounded-lg border p-6">
             <h3 className="text-lg font-semibold mb-4">Current Permissions ({permissions.length})</h3>
             {permissions.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">No permissions granted</p>
+              <p className=" text-center py-8" style={{ color: "var(--muted-foreground)" }}>No permissions granted</p>
             ) : (
               <div className="space-y-2">
                 {permissions.map((permission) => (
                   <div
                     key={permission.permission}
-                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                    className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: "var(--background)"  }}
                   >
                     <div className="flex items-center space-x-3">
                       <Shield className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-slate-900">
+                      <span className="font-medium " style={{ color: "var(--foreground)" }}>
                         {permission.permission.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -315,25 +315,25 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
         <div className="bg-white rounded-lg border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-50 border-b">
+              <thead className="border-b" style={{ backgroundColor: "var(--background)"  }}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Action</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Permission</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Admin</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Reason</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Date</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Action</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Permission</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Admin</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Reason</th>
+                  <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {auditLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                    <td colSpan={5} className="px-6 py-8 text-center " style={{ color: "var(--muted-foreground)" }}>
                       No audit logs
                     </td>
                   </tr>
                 ) : (
                   auditLogs.map((log, index) => (
-                    <tr key={index} className="hover:bg-slate-50">
+                    <tr key={index} className="hover:" style={{ backgroundColor: "var(--background)"  }}>
                       <td className="px-6 py-3 text-sm">
                         <span
                           className={`px-2 py-1 rounded text-xs font-semibold ${
@@ -345,10 +345,10 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
                           {log.action}
                         </span>
                       </td>
-                      <td className="px-6 py-3 text-sm text-slate-900">{log.permission.replace(/_/g, ' ')}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{log.admin_id}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">{log.reason || '-'}</td>
-                      <td className="px-6 py-3 text-sm text-slate-600">
+                      <td className="px-6 py-3 text-sm " style={{ color: "var(--foreground)" }}>{log.permission.replace(/_/g, ' ')}</td>
+                      <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>{log.admin_id}</td>
+                      <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>{log.reason || '-'}</td>
+                      <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>
                         {new Date(log.created_at).toLocaleString()}
                       </td>
                     </tr>

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authenticatedFetch, getAuthHeaders } from "@/lib/apiClient/index";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -157,15 +157,15 @@ const getBadgeStyle = (status: DocumentStatus): React.CSSProperties => {
   };
   switch (status) {
     case "queued":
-      return { ...base, backgroundColor: "rgba(245, 158, 11, 0.2)", color: "#92400e", borderColor: "rgba(245, 158, 11, 0.4)" };
+      return { ...base, backgroundColor: "rgba(245, 158, 11, 0.2)", color: "var(--warning)", borderColor: "rgba(245, 158, 11, 0.4)" };
     case "processing":
-      return { ...base, backgroundColor: "rgba(14, 165, 233, 0.15)", color: "#0c4a6e", borderColor: "rgba(14, 165, 233, 0.4)" };
+      return { ...base, backgroundColor: "rgba(14, 165, 233, 0.15)", color: "var(--info)", borderColor: "rgba(14, 165, 233, 0.4)" };
     case "done":
-      return { ...base, backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#064e3b", borderColor: "rgba(16, 185, 129, 0.4)" };
+      return { ...base, backgroundColor: "rgba(16, 185, 129, 0.15)", color: "var(--success)", borderColor: "rgba(16, 185, 129, 0.4)" };
     case "failed":
-      return { ...base, backgroundColor: "rgba(244, 63, 94, 0.15)", color: "#881337", borderColor: "rgba(244, 63, 94, 0.4)" };
+      return { ...base, backgroundColor: "rgba(244, 63, 94, 0.15)", color: "var(--error)", borderColor: "rgba(244, 63, 94, 0.4)" };
     default:
-      return base;
+      return { ...base, borderColor: "var(--border)" };
   }
 };
 
@@ -185,7 +185,7 @@ const formatTimestamp = (value: string) => {
   }
 };
 
-export default function DocumentsPage() {
+function DocumentsPageContent() {
   const { isLoading: authLoading, user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const streamAbortController = useRef<AbortController | null>(null);
@@ -890,28 +890,40 @@ export default function DocumentsPage() {
           }}
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">Library</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Library</p>
             {loadingDocuments ? (
-              <span className="text-xs text-slate-500 dark:text-slate-400">Loading...</span>
+              <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>Loading...</span>
             ) : null}
           </div>
           {documentsError ? (
-            <p className="mt-3 text-xs text-rose-400">{documentsError}</p>
+            <p className="mt-3 text-xs" style={{ color: "var(--error)" }}>{documentsError}</p>
           ) : null}
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No documents yet.</p>
+              <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>No documents yet.</p>
             ) : null}
             {documents.map((document) => (
               <div
                 key={document.id}
-                className={`group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${selectedDocumentId === document.id
-                    ? "border-sky-400 bg-sky-500/10 text-slate-900 dark:text-slate-50"
-                    : "border-slate-200 dark:border-slate-800 bg-slate-50 text-slate-700 hover:border-slate-300 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-600"
-                  }`}
+                className="group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition"
+                style={{
+                  borderColor: selectedDocumentId === document.id ? "var(--primary)" : "var(--border)",
+                  backgroundColor: selectedDocumentId === document.id ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-elevated)",
+                  color: "var(--foreground)",
+                }}
                 role="button"
                 tabIndex={0}
                 onClick={() => selectDocument(document.id)}
+                onMouseEnter={(e) => {
+                  if (selectedDocumentId !== document.id) {
+                    e.currentTarget.style.borderColor = "var(--primary)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedDocumentId !== document.id) {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
@@ -925,10 +937,21 @@ export default function DocumentsPage() {
                     {document.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{formatTimestamp(document.updated_at)}</p>
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{formatTimestamp(document.updated_at)}</p>
                 <button
                   type="button"
-                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
+                  style={{
+                    borderColor: "var(--error)",
+                    backgroundColor: "var(--surface-elevated)",
+                    color: "var(--error)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                  }}
                   onClick={(event) => {
                     event.stopPropagation();
                     deleteDocument(document.id);
@@ -953,10 +976,10 @@ export default function DocumentsPage() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
                   Document detail
                 </p>
-                <p className="text-sm text-slate-700 dark:text-slate-300">
+                <p className="text-sm" style={{ color: "var(--foreground)" }}>
                   {selectedDocument ? selectedDocument.filename : "Select a document to view metadata"}
                 </p>
               </div>
@@ -968,7 +991,18 @@ export default function DocumentsPage() {
                 ) : null}
                 <button
                   type="button"
-                  className="hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
+                  style={{
+                    borderColor: "var(--error)",
+                    backgroundColor: "var(--surface-elevated)",
+                    color: "var(--error)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                  }}
                   onClick={handleDeleteSelectedDocument}
                   aria-label="Delete document"
                 >
@@ -978,7 +1012,7 @@ export default function DocumentsPage() {
             </div>
             {selectedDocument ? (
               <>
-                <div className="mt-4 grid gap-3 text-xs text-slate-500 dark:text-slate-400 sm:grid-cols-2">
+                <div className="mt-4 grid gap-3 text-xs sm:grid-cols-2" style={{ color: "var(--muted-foreground)" }}>
                   <div>
                     <p>Size: {formattedSize(selectedDocument.size)}</p>
                     <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
@@ -987,7 +1021,7 @@ export default function DocumentsPage() {
                   <div>
                     <p>Updated: {formatTimestamp(selectedDocument.updated_at)}</p>
                     {selectedDocument.error_message ? (
-                      <p className="text-rose-400">Error: {selectedDocument.error_message}</p>
+                      <p style={{ color: "var(--error)" }}>Error: {selectedDocument.error_message}</p>
                     ) : null}
                   </div>
                 </div>
@@ -1011,17 +1045,28 @@ export default function DocumentsPage() {
               className="space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <label className="flex-1 text-sm text-slate-700 dark:text-slate-300">
+                <label className="flex-1 text-sm" style={{ color: "var(--foreground)" }}>
                   Ask a question
                   <input
                     value={queryValue}
                     onChange={(event) => setQueryValue(event.target.value)}
                     placeholder="질문 예: 이 문서의 핵심 요약은?"
-                    className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-4 py-3 text-base text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
+                    className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-base)",
+                      color: "var(--foreground)",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "var(--primary)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border)";
+                    }}
                     disabled={!selectedDocument || selectedDocument.status !== "done"}
                   />
                 </label>
-                <div className="flex flex-col gap-2 text-xs text-slate-400 dark:text-slate-500">
+                <div className="flex flex-col gap-2 text-xs" style={{ color: "var(--muted-foreground)" }}>
                   <span>Top K chunks</span>
                   <input
                     type="number"
@@ -1029,14 +1074,26 @@ export default function DocumentsPage() {
                     max={10}
                     value={topK}
                     onChange={(event) => setTopK(Number(event.target.value))}
-                    className="w-20 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
+                    className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition"
+                    style={{
+                      borderColor: "var(--border)",
+                      backgroundColor: "var(--surface-base)",
+                      color: "var(--foreground)",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "var(--primary)";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "var(--border)";
+                    }}
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 disabled:bg-slate-700"
+                  className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition disabled:opacity-50"
+                  style={{ backgroundColor: "var(--primary)" }}
                   disabled={!selectedDocument || selectedDocument.status !== "done" || streamStatus === "streaming"}
                 >
                   {streamStatus === "streaming" ? (
@@ -1047,17 +1104,17 @@ export default function DocumentsPage() {
                   ) : "메시지 전송"}
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-[0.3em] ${streamStatus === "error" ? "text-rose-400" : "text-slate-500 dark:text-slate-400"
-                    }`}
+                  className="text-xs uppercase tracking-[0.3em]"
+                  style={{ color: streamStatus === "error" ? "var(--error)" : "var(--muted-foreground)" }}
                 >
                   {streamStatus === "streaming" ? "SSE live" : streamStatus === "idle" ? "Ready" : "Error"}
                 </span>
               </div>
-              {streamError ? <p className="text-xs text-rose-400">{streamError}</p> : null}
+              {streamError ? <p className="text-xs" style={{ color: "var(--error)" }}>{streamError}</p> : null}
             </form>
             <div className="mt-4 space-y-3">
               {streamChunks.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Streaming answers will appear here.</p>
+                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Streaming answers will appear here.</p>
               ) : null}
               {streamChunks.map((chunk, idx) => (
                 <div
@@ -1068,12 +1125,12 @@ export default function DocumentsPage() {
                     borderColor: "var(--border-muted)",
                   }}
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-700 dark:text-slate-300">
+                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs" style={{ color: "var(--foreground)", borderColor: "var(--border)" }}>
                     {chunkTypeLabel[chunk.type] ?? chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-50">{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--foreground)" }}>{chunk.text}</p>
                   {chunk.meta ? (
-                    <div className="text-xs text-slate-400 dark:text-slate-500">
+                    <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                       <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
                       <p>
                         {chunk.meta.chunks
@@ -1093,24 +1150,22 @@ export default function DocumentsPage() {
                     color: "var(--foreground)",
                   }}
                 >
-                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
                     <span>근거 문서 ({references.length}건)</span>
                   </div>
                   <div className="space-y-3">
                     {references.map((reference, index) => {
                       const href = buildReferencePdfHref(reference);
                       const viewerHref = buildReferenceViewerHref(reference);
-                      const containerClass =
-                        "block rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 px-4 py-3 transition hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-900/90 cursor-pointer";
                       const content = (
                         <>
-                          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                            <span className="text-slate-700 dark:text-slate-200">{reference.document_title}</span>
+                          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
+                            <span style={{ color: "var(--foreground)" }}>{reference.document_title}</span>
                             <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                           </div>
-                          <p className="mt-2 text-xs text-slate-700 dark:text-slate-200 line-clamp-3">{reference.snippet}</p>
+                          <p className="mt-2 text-xs line-clamp-3" style={{ color: "var(--foreground)" }}>{reference.snippet}</p>
                           {reference.score != null ? (
-                            <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">유사도 {(reference.score * 100).toFixed(1)}%</p>
+                            <p className="mt-2 text-[10px]" style={{ color: "var(--muted-foreground)" }}>유사도 {(reference.score * 100).toFixed(1)}%</p>
                           ) : null}
                         </>
                       );
@@ -1141,14 +1196,30 @@ export default function DocumentsPage() {
                               console.error('Failed to open document:', error);
                             }
                           }}
-                          className={containerClass}
+                          className="block rounded-2xl border px-4 py-3 transition cursor-pointer"
+                          style={{
+                            borderColor: "var(--border)",
+                            backgroundColor: "var(--surface-base)",
+                            color: "var(--foreground)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = "var(--primary)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = "var(--border)";
+                          }}
                         >
                           {content}
                         </button>
                       ) : (
                         <div
                           key={`${reference.document_id}-${reference.chunk_id}`}
-                          className={`${containerClass} opacity-60 cursor-not-allowed`}
+                          className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed"
+                          style={{
+                            borderColor: "var(--border)",
+                            backgroundColor: "var(--surface-base)",
+                            color: "var(--foreground)",
+                          }}
                           title="문서 정보가 부족하여 원문을 열 수 없습니다"
                         >
                           {content}
@@ -1168,17 +1239,17 @@ export default function DocumentsPage() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Document history</p>
-                    <p className="text-[11px] text-slate-400 dark:text-slate-500">Select a prior question to review its answer.</p>
+                    <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Document history</p>
+                    <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Select a prior question to review its answer.</p>
                   </div>
-                  {docHistoryLoading ? <span className="text-xs text-slate-500 dark:text-slate-400">Loading…</span> : null}
+                  {docHistoryLoading ? <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>Loading…</span> : null}
                 </div>
                 {docHistoryError ? (
-                  <p className="mt-2 text-[11px] text-rose-400">{docHistoryError}</p>
+                  <p className="mt-2 text-[11px]" style={{ color: "var(--error)" }}>{docHistoryError}</p>
                 ) : null}
                 <div className="mt-4 space-y-2">
                   {documentHistoryEntries.length === 0 ? (
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                    <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
                       {selectedDocument ? "No documented questions yet." : "Select a document to view history."}
                     </p>
                   ) : (
@@ -1187,16 +1258,24 @@ export default function DocumentsPage() {
                       return (
                         <div
                           key={entry.id}
-                          className={`group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition ${isSelected
-                              ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
-                              : "border-slate-200 dark:border-slate-800 bg-white text-slate-700 dark:bg-slate-900/60 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600"
-                            }`}
+                          className="group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer"
+                          style={{
+                            borderColor: isSelected ? "var(--primary)" : "var(--border)",
+                            backgroundColor: isSelected ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)",
+                            color: "var(--foreground)",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSelected) e.currentTarget.style.borderColor = "var(--primary)";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSelected) e.currentTarget.style.borderColor = "var(--border)";
+                          }}
                         >
                           <div
                             onClick={() => setSelectedDocHistoryId(entry.id)}
-                            className="cursor-pointer text-left"
+                            className="text-left"
                           >
-                            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+                            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
                               <span>{entry.status === "error" ? "Error" : "OK"}</span>
                               <div className="flex items-center gap-2">
                                 <span>{formatTimestamp(entry.createdAt)}</span>
@@ -1207,15 +1286,26 @@ export default function DocumentsPage() {
                                     event.stopPropagation();
                                     handleRemoveDocHistory(entry.id);
                                   }}
-                                  className="hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
+                                  style={{
+                                    borderColor: "var(--error)",
+                                    backgroundColor: "var(--surface-elevated)",
+                                    color: "var(--error)",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                                  }}
                                   title="Delete history"
                                 >
                                   ✕
                                 </button>
                               </div>
                             </div>
-                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">{entry.question}</p>
-                            <p className="text-[12px] text-slate-400 dark:text-slate-500">{entry.summary}</p>
+                            <p className="mt-2 text-sm font-semibold" style={{ color: "var(--foreground)" }}>{entry.question}</p>
+                            <p className="text-[12px]" style={{ color: "var(--muted-foreground)" }}>{entry.summary}</p>
                           </div>
                         </div>
                       );
@@ -1232,26 +1322,37 @@ export default function DocumentsPage() {
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Answer</p>
+                      <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Answer</p>
                       <div className="flex items-center gap-3">
-                        <span className="text-[11px] text-slate-400 dark:text-slate-500">{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
+                        <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
                         <button
                           type="button"
                           aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
                           onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
-                          className="hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-slate-950 text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                          className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
+                          style={{
+                            borderColor: "var(--error)",
+                            backgroundColor: "var(--surface-elevated)",
+                            color: "var(--error)",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                          }}
                           title="Delete history"
                         >
                           ✕
                         </button>
                       </div>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
+                    <p className="mt-2 whitespace-pre-wrap text-sm" style={{ color: "var(--foreground)" }}>
                       {selectedDocHistoryEntry.answer || "No answer recorded."}
                     </p>
                     {selectedDocHistoryEntry.references.length > 0 ? (
-                      <div className="mt-3 text-xs text-slate-400 dark:text-slate-500">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">References</p>
+                      <div className="mt-3 text-xs" style={{ color: "var(--muted-foreground)" }}>
+                        <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>References</p>
                         <div className="mt-2 space-y-2">
                           {selectedDocHistoryEntry.references.map((reference) => {
                             const viewerHref = buildReferenceViewerHref(reference);
@@ -1259,10 +1360,10 @@ export default function DocumentsPage() {
 
                             const content = (
                               <>
-                                <p className="text-slate-900 dark:text-slate-50">{reference.document_title}</p>
-                                <p className="text-slate-400 dark:text-slate-500">{reference.snippet}</p>
+                                <p style={{ color: "var(--foreground)" }}>{reference.document_title}</p>
+                                <p style={{ color: "var(--muted-foreground)" }}>{reference.snippet}</p>
                                 {reference.page != null ? (
-                                  <p className="mt-1 text-[10px] text-sky-400">
+                                  <p className="mt-1 text-[10px]" style={{ color: "var(--primary)" }}>
                                     페이지 {reference.page}
                                   </p>
                                 ) : null}
@@ -1289,14 +1390,30 @@ export default function DocumentsPage() {
                                     console.error('Failed to open document:', error);
                                   }
                                 }}
-                                className="block rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-50 dark:hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
+                                className="block rounded-xl border px-3 py-2 text-[11px] transition cursor-pointer w-full text-left"
+                                style={{
+                                  borderColor: "var(--border)",
+                                  backgroundColor: "var(--surface-base)",
+                                  color: "var(--foreground)",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.borderColor = "var(--primary)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.borderColor = "var(--border)";
+                                }}
                               >
                                 {content}
                               </button>
                             ) : (
                               <div
                                 key={`${reference.document_id}-${reference.chunk_id}`}
-                                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/50 px-3 py-2 text-[11px] opacity-60"
+                                className="rounded-xl border px-3 py-2 text-[11px] opacity-60"
+                                style={{
+                                  borderColor: "var(--border)",
+                                  backgroundColor: "var(--surface-base)",
+                                  color: "var(--foreground)",
+                                }}
                               >
                                 {content}
                               </div>
@@ -1329,5 +1446,14 @@ export default function DocumentsPage() {
         highlightSnippet={pdfHighlightSnippet}
       />
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary for useSearchParams
+export default function DocumentsPage() {
+  return (
+    <Suspense fallback={<div className="p-4" style={{ color: "var(--muted-foreground)" }}>Loading documents...</div>}>
+      <DocumentsPageContent />
+    </Suspense>
   );
 }

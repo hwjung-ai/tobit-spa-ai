@@ -10,7 +10,7 @@ interface SettingsTableProps {
 export default function SettingsTable({ settings, onEdit }: SettingsTableProps) {
     if (settings.length === 0) {
         return (
-            <div className="text-center py-8 text-slate-600 dark:text-slate-400">
+            <div className="text-center py-8  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
                 No settings found
             </div>
         );
@@ -20,24 +20,24 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
         <div className="overflow-x-auto">
             <table className="w-full text-sm">
                 <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800">
-                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Key</th>
-                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Value</th>
-                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Source</th>
-                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium text-center">Restart</th>
-                        <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">Actions</th>
+                    <tr className="border-b  dark:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}>
+                        <th className="text-left py-3 px-4  dark: font-medium" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>Key</th>
+                        <th className="text-left py-3 px-4  dark: font-medium" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>Value</th>
+                        <th className="text-left py-3 px-4  dark: font-medium" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>Source</th>
+                        <th className="text-left py-3 px-4  dark: font-medium text-center" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>Restart</th>
+                        <th className="text-left py-3 px-4  dark: font-medium" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     {settings.map((setting) => (
                         <tr
                             key={setting.key}
-                            className="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/40 transition-colors"
+                            className="border-b  dark: hover: dark:hover:/40 transition-colors" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-base)" }}
                         >
-                            <td className="py-3 px-4 text-slate-900 dark:text-slate-50 font-mono text-xs">
+                            <td className="py-3 px-4 dark: font-mono text-xs" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>
                                 {setting.key}
                             </td>
-                            <td className="py-3 px-4 text-slate-900 dark:text-slate-50">
+                            <td className="py-3 px-4 dark:" style={{ color: "var(--foreground)"  ,  color: "var(--foreground)" }}>
                                 {typeof setting.value === "object"
                                     ? JSON.stringify(setting.value)
                                     : String(setting.value)}
@@ -45,8 +45,8 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
                             <td className="py-3 px-4">
                                 <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-blue-950/50 text-blue-300" :
                                         setting.source === "env" ? "bg-yellow-950/50 text-yellow-300" :
-                                            "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50"
-                                    }`}>
+                                            " dark:  dark:"
+                                    }`} style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", color: "var(--foreground)" }}>
                                     {setting.source}
                                 </span>
                             </td>

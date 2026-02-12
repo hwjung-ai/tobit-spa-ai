@@ -385,16 +385,16 @@ function InspectorContent() {
 
   const renderAppliedAsset = (asset: AssetSummary | null | undefined) => {
     if (!asset) {
-      return <span className="text-xs text-slate-500">미적용</span>;
+      return <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>미적용</span>;
     }
     return (
-      <div className="text-xs text-slate-200 space-y-1">
+      <div className="text-xs  space-y-1" style={{ color: "var(--foreground-secondary)" }}>
         {asset.name && <p>{asset.name}</p>}
         <p className="font-mono text-[11px]">
           {asset.asset_id || `${asset.name || "asset"}@${asset.source || "fallback"}`}
           {asset.version ? ` · v${asset.version}` : ""}
         </p>
-        {asset.source && <p className="uppercase text-[10px] tracking-[0.3em] text-slate-500">{asset.source}</p>}
+        {asset.source && <p className="uppercase text-[10px] tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>{asset.source}</p>}
       </div>
     );
   };
@@ -420,9 +420,9 @@ function InspectorContent() {
       return null;
     }
     return (
-      <details className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
-        <summary className="text-xs font-semibold text-slate-200 cursor-pointer">{label}</summary>
-        <pre className="mt-2 text-[11px] text-slate-200 overflow-x-auto max-h-48">{JSON.stringify(payload, null, 2)}</pre>
+      <details className=" border  rounded-xl p-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <summary className="text-xs font-semibold  cursor-pointer" style={{ color: "var(--foreground-secondary)" }}>{label}</summary>
+        <pre className="mt-2 text-[11px]  overflow-x-auto max-h-48" style={{ color: "var(--foreground-secondary)" }}>{JSON.stringify(payload, null, 2)}</pre>
       </details>
     );
   };
@@ -551,22 +551,22 @@ function InspectorContent() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 text-sm text-slate-200 space-y-2 shadow-inner">
+      <div className="rounded-2xl border   p-5 text-sm  space-y-2 shadow-inner" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
         <p>
           Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/쿼리/렌더를 확인하는 전용 도구입니다.
         </p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
           Assets/Settings 변경 후에는 반드시 Inspector에서 trace_id로 검증하고, 다시 실행한 trace를 사용해 상태를 확인하세요.
         </p>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xl">
+        <div className=" border  rounded-2xl p-5 space-y-4 shadow-2xl" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trace Lookup</p>
+              <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Trace Lookup</p>
               <h3 className="text-lg font-semibold text-white">Trace ID로 바로 열람</h3>
             </div>
-            <span className="text-[11px] text-slate-500">Exact</span>
+            <span className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>Exact</span>
           </div>
           <div className="flex gap-3">
             <input
@@ -574,7 +574,7 @@ function InspectorContent() {
               value={lookupTraceId}
               onChange={(event) => setLookupTraceId(event.target.value)}
               placeholder="Trace ID를 입력하세요"
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-mono focus:border-sky-500/50 focus:outline-none"
+              className="flex-1  border  rounded-xl px-4 py-3 text-sm font-mono focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
             />
             <button
               onClick={handleLookup}
@@ -583,14 +583,14 @@ function InspectorContent() {
               {detailLoading ? "로딩..." : "조회"}
             </button>
           </div>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
             Trace ID가 있으면 단일 실행 상세를 즉시 확인합니다.
           </p>
         </div>
 
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-2xl">
+        <div className=" border  rounded-2xl p-5 space-y-4 shadow-2xl" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trace Search</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Trace Search</p>
             <h3 className="text-lg font-semibold text-white">운용/분석 필터</h3>
           </div>
           <div className="space-y-3">
@@ -599,7 +599,7 @@ function InspectorContent() {
               value={filters.q}
               onChange={(event) => setFilters((prev) => ({ ...prev, q: event.target.value }))}
               placeholder="질의 또는 키워드(q)"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none"
+              className="w-full  border  rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <input
@@ -607,21 +607,21 @@ function InspectorContent() {
                 value={filters.feature}
                 onChange={(event) => setFilters((prev) => ({ ...prev, feature: event.target.value }))}
                 placeholder="Feature (예: ci)"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none"
+                className=" border  rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               />
               <input
                 type="text"
                 value={filters.assetId}
                 onChange={(event) => setFilters((prev) => ({ ...prev, assetId: event.target.value }))}
                 placeholder="Asset ID 기준"
-                className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none"
+                className=" border  rounded-xl px-4 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <select
                 value={filters.status}
                 onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none"
+                className=" border  rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               >
                 <option value="">응답 상태 (전체)</option>
                 <option value="success">success</option>
@@ -632,13 +632,13 @@ function InspectorContent() {
                   type="date"
                   value={filters.from}
                   onChange={(event) => setFilters((prev) => ({ ...prev, from: event.target.value }))}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none"
+                  className="flex-1  border  rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
                 />
                 <input
                   type="date"
                   value={filters.to}
                   onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value }))}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none"
+                  className="flex-1  border  rounded-xl px-3 py-3 text-sm focus:border-sky-500/50 focus:outline-none" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
                 />
               </div>
             </div>
@@ -646,7 +646,7 @@ function InspectorContent() {
           <div className="flex gap-3 justify-end">
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 border border-slate-700 rounded-xl text-[10px] uppercase tracking-[0.2em] text-slate-400 hover:border-slate-500"
+              className="px-4 py-2 border  rounded-xl text-[10px] uppercase tracking-[0.2em]  hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}
             >
               Reset
             </button>
@@ -665,32 +665,32 @@ function InspectorContent() {
         <ValidationAlert errors={[error]} onClose={() => setError(null)} />
       )}
 
-      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
+      <div className=" border  rounded-2xl overflow-hidden shadow-2xl" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+        <div className="px-5 py-3 border-b  flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
           <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trace Results</p>
+            <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Trace Results</p>
             <h3 className="text-white text-sm font-semibold">
               {traces.length} 건 중 {total}개
             </h3>
           </div>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
             Showing {offset === 0 ? traces.length : offset} / {total}
           </p>
         </div>
         {loading && traces.length === 0 ? (
           <div className="py-12 flex flex-col items-center gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-slate-800 border-t-emerald-400 animate-spin" />
-            <p className="text-[11px] text-slate-500 uppercase tracking-[0.25em]">Loading traces...</p>
+            <div className="w-10 h-10 rounded-full border-2  border-t-emerald-400 animate-spin" style={{ borderColor: "var(--border)" }} />
+            <p className="text-[11px]  uppercase tracking-[0.25em]" style={{ color: "var(--muted-foreground)" }}>Loading traces...</p>
           </div>
         ) : traces.length === 0 ? (
-          <div className="py-12 text-center text-xs text-slate-500">
+          <div className="py-12 text-center text-xs " style={{ color: "var(--muted-foreground)" }}>
             필터를 조정하여 실행 기록을 검색하세요.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-xs uppercase tracking-[0.3em] text-slate-400 border-b border-slate-800">
+                <tr className="text-left text-xs uppercase tracking-[0.3em]  border-b " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Feature</th>
                   <th className="px-4 py-3">Status</th>
@@ -706,20 +706,20 @@ function InspectorContent() {
                   <tr
                     key={trace.trace_id}
                     onClick={() => handleRowClick(trace.trace_id)}
-                    className={`border-b border-slate-800 hover:bg-slate-900/60 transition-colors cursor-pointer ${selectedTraceId === trace.trace_id ? "bg-slate-900/70" : ""}`}
+                    className={`border-b  hover: transition-colors cursor-pointer ${selectedTraceId === trace.trace_id ? "" : ""}`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}
                   >
                     <td className="px-4 py-3">
-                      <p className="font-mono text-xs text-slate-200">{trace.trace_id.slice(0, 8)}</p>
-                      <p className="text-[11px] text-slate-400">{formatRelativeTime(trace.created_at)}</p>
-                      <p className="text-[10px] text-slate-500">{formatTimestamp(trace.created_at)}</p>
+                      <p className="font-mono text-xs " style={{ color: "var(--foreground-secondary)" }}>{trace.trace_id.slice(0, 8)}</p>
+                      <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>{formatRelativeTime(trace.created_at)}</p>
+                      <p className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{formatTimestamp(trace.created_at)}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-200">{trace.feature}</td>
-                    <td className="px-4 py-3 text-slate-100">
+                    <td className="px-4 py-3 " style={{ color: "var(--foreground-secondary)" }}>{trace.feature}</td>
+                    <td className="px-4 py-3 " style={{ color: "var(--foreground)" }}>
                       <span className={`px-2 py-1 rounded-full text-[11px] ${getStatusBadgeClass(trace.status)}`}>
                         {trace.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-200">{formatDuration(trace.duration_ms)}</td>
+                    <td className="px-4 py-3 " style={{ color: "var(--foreground-secondary)" }}>{formatDuration(trace.duration_ms)}</td>
                     <td className="px-4 py-3">
                       {trace.route && (
                         <span className="px-2 py-1 rounded-full text-xs font-mono bg-blue-500/10 text-blue-400">
@@ -734,8 +734,8 @@ function InspectorContent() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-400">{trace.question_snippet}</td>
-                    <td className="px-4 py-3 text-xs text-slate-300">{formatAppliedAssetSummary(trace)}</td>
+                    <td className="px-4 py-3 text-xs " style={{ color: "var(--muted-foreground)" }}>{trace.question_snippet}</td>
+                    <td className="px-4 py-3 text-xs " style={{ color: "var(--foreground-secondary)" }}>{formatAppliedAssetSummary(trace)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -743,11 +743,11 @@ function InspectorContent() {
           </div>
         )}
         {offset < total && traces.length > 0 && (
-          <div className="p-4 flex justify-center border-t border-slate-800">
+          <div className="p-4 flex justify-center border-t " style={{ borderColor: "var(--border)" }}>
             <button
               onClick={() => handleSearch(offset)}
               disabled={loading}
-              className="px-6 py-2 rounded-full bg-slate-800 text-xs uppercase tracking-[0.3em] hover:bg-slate-700 disabled:opacity-50"
+              className="px-6 py-2 rounded-full  text-xs uppercase tracking-[0.3em] hover: disabled:opacity-50" style={{ backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
             >
               {loading ? "불러오는 중..." : "Load More"}
             </button>
@@ -760,10 +760,10 @@ function InspectorContent() {
           data-testid="inspector-drawer"
           className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/70 p-4"
         >
-          <div className="bg-slate-950 border border-slate-800 max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col">
-            <header className="px-6 py-4 border-b border-slate-800 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className=" border  max-w-6xl w-full max-h-[90vh] rounded-3xl overflow-hidden shadow-2xl flex flex-col" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+            <header className="px-6 py-4 border-b  flex flex-col gap-4 md:flex-row md:items-center md:justify-between" style={{ borderColor: "var(--border)" }}>
               <div className="space-y-3">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Trace Overview</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Trace Overview</p>
                 <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-lg font-semibold text-white tracking-tight">{traceDetail.question}</h2>
                   <span
@@ -774,17 +774,17 @@ function InspectorContent() {
                     {traceDetail.status}
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                <div className="flex flex-wrap gap-3 text-xs " style={{ color: "var(--muted-foreground)" }}>
                   <span>Feature: {traceDetail.feature}</span>
                   <span>Mode: {traceDetail.ops_mode}</span>
                   <span>Endpoint: {traceDetail.endpoint}</span>
                   <span>Method: {traceDetail.method}</span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                   <span className="font-mono">{traceDetail.trace_id}</span>
                   <button
                     onClick={handleCopyTraceId}
-                    className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                    className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                   >
                     {traceCopyStatus === "copied"
                       ? "복사됨"
@@ -794,7 +794,7 @@ function InspectorContent() {
                   </button>
                   <button
                     onClick={handleCopyLink}
-                    className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                    className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                   >
                     {linkCopyStatus === "copied"
                       ? "Link copied"
@@ -805,13 +805,13 @@ function InspectorContent() {
                   {traceDetail.parent_trace_id && (
                     <button
                       onClick={() => fetchTraceDetail(traceDetail.parent_trace_id!)}
-                      className="px-3 py-1 rounded-lg border border-slate-700 text-[10px] uppercase tracking-[0.2em] transition hover:border-slate-500"
+                      className="px-3 py-1 rounded-lg border  text-[10px] uppercase tracking-[0.2em] transition hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                     >
                       View parent
                     </button>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-4 text-[11px] text-slate-400">
+                <div className="flex flex-wrap gap-4 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                   <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                   <span>{formatTimestamp(traceDetail.created_at)}</span>
                   <span>{formatRelativeTime(traceDetail.created_at)}</span>
@@ -846,7 +846,7 @@ function InspectorContent() {
                     setDetailError(null);
                     setShowDiffView(false);
                   }}
-                  className="px-3 py-2 rounded-xl border border-slate-700 text-xs uppercase tracking-[0.2em] hover:border-slate-500"
+                  className="px-3 py-2 rounded-xl border  text-xs uppercase tracking-[0.2em] hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                 >
                   Close
                 </button>
@@ -866,27 +866,27 @@ function InspectorContent() {
               )}
               {detailLoading ? (
                 <div className="py-8 flex flex-col items-center gap-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-slate-800 border-t-emerald-400 animate-spin" />
-                  <p className="text-xs text-slate-400 uppercase tracking-[0.3em]">Loading detail...</p>
+                  <div className="w-10 h-10 rounded-full border-2  border-t-emerald-400 animate-spin" style={{ borderColor: "var(--border)" }} />
+                  <p className="text-xs  uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Loading detail...</p>
                 </div>
               ) : (
                 <>
                   <section
                     data-testid="flow-section"
-                    className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3"
+                    className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Overview</p>
-                      <span className="text-[10px] text-slate-400">Request & Context</span>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Overview</p>
+                      <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>Request & Context</span>
                     </div>
                     <p className="text-sm text-white">{traceDetail.question}</p>
-                    <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-                      <span className="px-2 py-1 rounded-full bg-slate-800">Mode: {traceDetail.ops_mode}</span>
-                      <span className="px-2 py-1 rounded-full bg-slate-800">Endpoint: {traceDetail.endpoint}</span>
-                      <span className="px-2 py-1 rounded-full bg-slate-800">Method: {traceDetail.method}</span>
-                      <span className="px-2 py-1 rounded-full bg-slate-800">Route: {traceDetail.route ?? "orch"}</span>
+                    <div className="flex flex-wrap gap-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
+                      <span className="px-2 py-1 rounded-full " style={{ backgroundColor: "var(--surface-elevated)" }}>Mode: {traceDetail.ops_mode}</span>
+                      <span className="px-2 py-1 rounded-full " style={{ backgroundColor: "var(--surface-elevated)" }}>Endpoint: {traceDetail.endpoint}</span>
+                      <span className="px-2 py-1 rounded-full " style={{ backgroundColor: "var(--surface-elevated)" }}>Method: {traceDetail.method}</span>
+                      <span className="px-2 py-1 rounded-full " style={{ backgroundColor: "var(--surface-elevated)" }}>Route: {traceDetail.route ?? "orch"}</span>
                     </div>
-                    <div className="flex flex-wrap gap-3 text-[11px] text-slate-400">
+                    <div className="flex flex-wrap gap-3 text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                       <span>Duration: {formatDuration(traceDetail.duration_ms)}</span>
                       <span>{formatTimestamp(traceDetail.created_at)}</span>
                       <span>{formatRelativeTime(traceDetail.created_at)}</span>
@@ -894,50 +894,50 @@ function InspectorContent() {
                     {renderJsonDetails("Request payload", traceDetail.request_payload)}
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Applied Assets</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Applied Assets</p>
                       {highlightFallbacks(traceDetail.fallbacks)}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-slate-950/50 rounded-xl border border-slate-800 px-4 py-3">
-                        <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Prompt</p>
+                      <div className="/50 rounded-xl border  px-4 py-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Prompt</p>
                         {renderAppliedAsset(traceDetail.applied_assets?.prompt ?? null)}
                       </div>
-                      <div className="bg-slate-950/50 rounded-xl border border-slate-800 px-4 py-3">
-                        <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Policy</p>
+                      <div className="/50 rounded-xl border  px-4 py-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Policy</p>
                         {renderAppliedAsset(traceDetail.applied_assets?.policy ?? null)}
                       </div>
-                      <div className="bg-slate-950/50 rounded-xl border border-slate-800 px-4 py-3">
-                        <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Mapping</p>
+                      <div className="/50 rounded-xl border  px-4 py-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Mapping</p>
                         {renderAppliedAsset(traceDetail.applied_assets?.mapping ?? null)}
                       </div>
                       <div className="md:col-span-2 space-y-2">
-                        <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Queries</p>
+                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Queries</p>
                         {traceDetail.applied_assets?.queries?.length ? (
                           <ul className="space-y-2">
                             {traceDetail.applied_assets.queries.map((query: {asset_id: string | null; name: string | null; source: string | null}) => (
-                              <li key={query.asset_id || `${query.name}-${query.source}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-300">
+                              <li key={query.asset_id || `${query.name}-${query.source}`} className="/50 border  rounded-xl px-3 py-2 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
                                 {query.name || "query"} · {query.source} · {query.asset_id ?? "seed"}
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs text-slate-500">Query asset 없음</p>
+                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Query asset 없음</p>
                         )}
                       </div>
                       <div className="md:col-span-2 space-y-2">
-                        <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500">Screens</p>
+                        <p className="text-[9px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Screens</p>
                         {traceDetail.applied_assets?.screens?.length ? (
                           <ul className="space-y-2">
                             {traceDetail.applied_assets.screens.map((screen) => (
-                              <li key={screen.asset_id || `${screen.screen_id}-${screen.status}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px] text-slate-300">
+                              <li key={screen.asset_id || `${screen.screen_id}-${screen.status}`} className="/50 border  rounded-xl px-3 py-2 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
                                 {screen.screen_id || "screen"} · {screen.status ?? "unknown"} · {screen.version ?? "?"}
                               </li>
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-xs text-slate-500">Screen asset 없음</p>
+                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Screen asset 없음</p>
                         )}
                       </div>
                     </div>
@@ -945,24 +945,24 @@ function InspectorContent() {
 
                   <section
                     data-testid="regression-panel"
-                    className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4"
+                    className=" border  rounded-2xl p-5 space-y-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Plan</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Plan</p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setPlanView("raw")}
                           className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.3em] ${planView === "raw"
-                            ? "bg-slate-700 text-white"
-                            : "bg-slate-950 text-slate-400 border border-slate-800"}`}
+                            ? " text-white"
+                            : "  border "}`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", borderColor: "var(--border)" }}
                         >
                           Raw
                         </button>
                         <button
                           onClick={() => setPlanView("validated")}
                           className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-[0.3em] ${planView === "validated"
-                            ? "bg-slate-700 text-white"
-                            : "bg-slate-950 text-slate-400 border border-slate-800"}`}
+                            ? " text-white"
+                            : "  border "}`} style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", borderColor: "var(--border)" }}
                         >
                           Validated
                         </button>
@@ -973,12 +973,12 @@ function InspectorContent() {
                       planView === "raw" ? traceDetail.plan_raw : traceDetail.plan_validated
                     )}
                     <div>
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Plan steps</p>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Plan steps</p>
                       <div className="mt-2 overflow-x-auto">
                         {traceDetail.execution_steps && traceDetail.execution_steps.length ? (
-                          <table className="min-w-full text-xs text-slate-300">
+                          <table className="min-w-full text-xs " style={{ color: "var(--foreground-secondary)" }}>
                             <thead>
-                              <tr className="text-left text-[10px] uppercase tracking-[0.2em] text-slate-500 border-b border-slate-800">
+                              <tr className="text-left text-[10px] uppercase tracking-[0.2em]  border-b " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
                                 <th className="px-2 py-2">Step</th>
                                 <th className="px-2 py-2">Tool</th>
                                 <th className="px-2 py-2">Status</th>
@@ -990,7 +990,7 @@ function InspectorContent() {
                               {traceDetail.execution_steps.map((step: ExecutionStep) => (
                                 <tr
                                   key={`${step.step_id}-${step.tool_name}-${step.duration_ms}`}
-                                  className="border-b border-slate-800"
+                                  className="border-b " style={{ borderColor: "var(--border)" }}
                                 >
                                   <td className="px-2 py-2">{step.step_id || "step"}</td>
                                   <td className="px-2 py-2">{step.tool_name || "tool"}</td>
@@ -1010,31 +1010,31 @@ function InspectorContent() {
                             </tbody>
                           </table>
                         ) : (
-                          <p className="text-xs text-slate-500">Plan step 정보가 없습니다.</p>
+                          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Plan step 정보가 없습니다.</p>
                         )}
                       </div>
                     </div>
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <section className=" border  rounded-2xl p-5 space-y-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between flex-wrap gap-3">
                       <div className="flex items-center gap-3">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Stage Pipeline</p>
-                        <span className="text-[10px] text-slate-400">
+                        <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Stage Pipeline</p>
+                        <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
                           Route: {traceDetail.route ?? "orch"}
                         </span>
-                        <span className="text-[10px] text-slate-400">
+                        <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
                           {traceDetail.stage_outputs?.length ?? 0} stages
                         </span>
                       </div>
                       <button
                         onClick={() => setShowAssetOverrideModal(true)}
-                        className="px-3 py-2 rounded-xl border border-slate-700 text-xs uppercase tracking-[0.2em] text-slate-300 hover:border-slate-500"
+                        className="px-3 py-2 rounded-xl border  text-xs uppercase tracking-[0.2em]  hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
                       >
                         Asset Override Test
                       </button>
                       {assetOverrideLoading && (
-                        <span className="text-[10px] text-slate-500 uppercase tracking-[0.2em]">
+                        <span className="text-[10px]  uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>
                           Loading assets...
                         </span>
                       )}
@@ -1052,7 +1052,7 @@ function InspectorContent() {
                         assetNames={assetNames}
                       />
                     ) : (
-                      <p className="text-xs text-slate-500">Stage trace가 아직 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Stage trace가 아직 없습니다.</p>
                     )}
                     <div className="grid gap-4 md:grid-cols-2">
                       {STAGE_ORDER.map((stage) => {
@@ -1066,20 +1066,20 @@ function InspectorContent() {
                         return (
                           <article
                             key={stage}
-                            className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 space-y-3"
+                            className="/50 border  rounded-xl p-4 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                                <p className="text-xs uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>
                                   {STAGE_LABELS[stage] ?? stage.toUpperCase()}
                                 </p>
-                                <p className="text-[11px] text-slate-400 font-mono">{stage}</p>
+                                <p className="text-[11px]  font-mono" style={{ color: "var(--muted-foreground)" }}>{stage}</p>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                                <span className="text-[10px] uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>
                                   {stageOutput?.duration_ms ? `${stageOutput.duration_ms}ms` : "-"}
                                 </span>
-                                <span className="px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] bg-slate-900/60 text-slate-300">
+                                <span className="px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em]  " style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
                                   {status}
                                 </span>
                               </div>
@@ -1087,8 +1087,8 @@ function InspectorContent() {
 
                             {/* Applied Assets Cards */}
                             {appliedAssets && Object.keys(appliedAssets).length > 0 && (
-                              <div className="bg-slate-900/40 rounded-lg p-3 border border-slate-800">
-                                <p className="text-[9px] uppercase tracking-[0.3em] text-slate-500 mb-2">
+                              <div className=" rounded-lg p-3 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                                <p className="text-[9px] uppercase tracking-[0.3em]  mb-2" style={{ color: "var(--muted-foreground)" }}>
                                   Applied Assets
                                 </p>
                                 <div className="flex flex-wrap gap-2">
@@ -1098,11 +1098,11 @@ function InspectorContent() {
                                       prompt: { icon: "⭐", color: "text-blue-400" },
                                       policy: { icon: "🛡️", color: "text-emerald-400" },
                                       mapping: { icon: "🗺️", color: "text-amber-400" },
-                                      source: { icon: "💾", color: "text-slate-300" },
+                                      source: { icon: "💾", color: "text-[var(--foreground-secondary)]" },
                                       schema: { icon: "📊", color: "text-fuchsia-300" },
                                       resolver: { icon: "🔧", color: "text-orange-300" },
                                       query: { icon: "🔍", color: "text-purple-400" },
-                                    }[type] || { icon: "📄", color: "text-slate-400" };
+                                    }[type] || { icon: "📄", color: "text-[var(--muted-foreground)]" };
 
                                     const displayValue = String(value).replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
 
@@ -1111,12 +1111,12 @@ function InspectorContent() {
                                         key={type}
                                         className={cn(
                                           "flex items-center gap-1.5 px-2 py-1 rounded-md",
-                                          "bg-slate-950/60 border border-slate-700/50 text-xs"
+                                          "bg-[var(--surface-base)]/60 border border-[var(--border)]/50 text-xs"
                                         )}
                                         title={`${type}: ${value}`}
                                       >
                                         <span>{config.icon}</span>
-                                        <span className="text-slate-400 capitalize">{type}:</span>
+                                        <span className=" capitalize" style={{ color: "var(--muted-foreground)" }}>{type}:</span>
                                         <span className={cn("font-mono", config.color)}>
                                           {displayValue}
                                         </span>
@@ -1159,22 +1159,22 @@ function InspectorContent() {
                     </div>
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <section className=" border  rounded-2xl p-5 space-y-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Execution</p>
-                      <span className="text-[10px] text-slate-400">{traceDetail.execution_steps?.length ?? 0} steps</span>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Execution</p>
+                      <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{traceDetail.execution_steps?.length ?? 0} steps</span>
                     </div>
                     {traceDetail.execution_steps && traceDetail.execution_steps.length ? (
                       <div className="space-y-3">
                         {traceDetail.execution_steps.map((step: ExecutionStep, index: number) => (
                           <article
                             key={`${step.step_id ?? index}-${step.tool_name ?? "tool"}`}
-                            className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 space-y-3"
+                            className="/50 border  rounded-xl p-4 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
                           >
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm text-white font-semibold">{step.step_id || `step-${index + 1}`}</p>
-                                <p className="text-[11px] text-slate-400">{step.tool_name || "tool"}</p>
+                                <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>{step.tool_name || "tool"}</p>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`px-2 py-1 rounded-full text-[10px] uppercase tracking-[0.2em] ${step.status === "success"
@@ -1182,7 +1182,7 @@ function InspectorContent() {
                                   : "bg-rose-900/40 text-rose-200"}`}>
                                   {step.status}
                                 </span>
-                                <span className="text-[11px] text-slate-400">{formatDuration(step.duration_ms)}</span>
+                                <span className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>{formatDuration(step.duration_ms)}</span>
                               </div>
                             </div>
                             {renderJsonDetails("Request summary", step.request)}
@@ -1201,7 +1201,7 @@ function InspectorContent() {
                               </details>
                             )}
                             {step.references && step.references.length ? (
-                              <p className="text-[11px] text-slate-400">
+                              <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                                 References: {step.references.map((ref: {name: string}) => ref.name).join(", ")}
                               </p>
                             ) : null}
@@ -1209,32 +1209,32 @@ function InspectorContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500">Tool execution trace가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Tool execution trace가 없습니다.</p>
                     )}
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-4">
+                  <section className=" border  rounded-2xl p-5 space-y-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Control Loop</p>
-                      <span className="text-[10px] text-slate-400">{traceDetail.replan_events?.length ?? 0} events</span>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Control Loop</p>
+                      <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{traceDetail.replan_events?.length ?? 0} events</span>
                     </div>
                     {traceDetail.replan_events && traceDetail.replan_events.length ? (
                       <ReplanTimeline traceId={traceDetail.trace_id ?? ""} events={traceDetail.replan_events} />
                     ) : (
-                      <p className="text-xs text-slate-500">Replan 이벤트가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Replan 이벤트가 없습니다.</p>
                     )}
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">References</p>
-                      <span className="text-[10px] text-slate-400">{traceDetail.references?.length ?? 0} items</span>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>References</p>
+                      <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{traceDetail.references?.length ?? 0} items</span>
                     </div>
                     {traceDetail.references && traceDetail.references.length ? (
                       <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs text-slate-300">
+                        <table className="min-w-full text-xs " style={{ color: "var(--foreground-secondary)" }}>
                           <thead>
-                            <tr className="text-left uppercase tracking-[0.3em] text-slate-500 border-b border-slate-800 text-[10px]">
+                            <tr className="text-left uppercase tracking-[0.3em]  border-b  text-[10px]" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" }}>
                               <th className="px-2 py-2">Type</th>
                               <th className="px-2 py-2">Name</th>
                               <th className="px-2 py-2">Engine</th>
@@ -1245,27 +1245,27 @@ function InspectorContent() {
                           </thead>
                           <tbody>
                             {traceDetail.references.map((ref: ReferenceEntry, index: number) => (
-                              <tr key={`${ref.name}-${index}`} className="border-b border-slate-800">
-                                <td className="px-2 py-2 text-[11px] text-slate-400">{ref.ref_type}</td>
-                                <td className="px-2 py-2 text-slate-100">{ref.name}</td>
-                                <td className="px-2 py-2 text-slate-400">{ref.engine || "unknown"}</td>
-                                <td className="px-2 py-2 text-slate-400">{ref.row_count ?? "-"}</td>
-                                <td className="px-2 py-2 text-slate-400">{ref.latency_ms ?? "-"} ms</td>
+                              <tr key={`${ref.name}-${index}`} className="border-b " style={{ borderColor: "var(--border)" }}>
+                                <td className="px-2 py-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>{ref.ref_type}</td>
+                                <td className="px-2 py-2 " style={{ color: "var(--foreground)" }}>{ref.name}</td>
+                                <td className="px-2 py-2 " style={{ color: "var(--muted-foreground)" }}>{ref.engine || "unknown"}</td>
+                                <td className="px-2 py-2 " style={{ color: "var(--muted-foreground)" }}>{ref.row_count ?? "-"}</td>
+                                <td className="px-2 py-2 " style={{ color: "var(--muted-foreground)" }}>{ref.latency_ms ?? "-"} ms</td>
                                 <td className="px-2 py-2 space-y-1">
                                   {ref.statement && (
-                                    <details className="bg-slate-950/60 border border-slate-800 rounded-xl p-2">
-                                      <summary className="text-[10px] uppercase tracking-[0.2em] text-slate-400 cursor-pointer">
+                                    <details className=" border  rounded-xl p-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                                      <summary className="text-[10px] uppercase tracking-[0.2em]  cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
                                         Statement
                                       </summary>
-                                      <pre className="mt-2 text-[11px] text-slate-200 overflow-x-auto">{ref.statement}</pre>
+                                      <pre className="mt-2 text-[11px]  overflow-x-auto" style={{ color: "var(--foreground-secondary)" }}>{ref.statement}</pre>
                                     </details>
                                   )}
                                   {ref.params && (
-                                    <details className="bg-slate-950/60 border border-slate-800 rounded-xl p-2">
-                                      <summary className="text-[10px] uppercase tracking-[0.2em] text-slate-400 cursor-pointer">
+                                    <details className=" border  rounded-xl p-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                                      <summary className="text-[10px] uppercase tracking-[0.2em]  cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
                                         Params
                                       </summary>
-                                      <pre className="mt-2 text-[11px] text-slate-200 overflow-x-auto">
+                                      <pre className="mt-2 text-[11px]  overflow-x-auto" style={{ color: "var(--foreground-secondary)" }}>
                                         {JSON.stringify(ref.params, null, 2)}
                                       </pre>
                                     </details>
@@ -1277,23 +1277,23 @@ function InspectorContent() {
                         </table>
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500">근거 레코드가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>근거 레코드가 없습니다.</p>
                     )}
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Answer Blocks</p>
-                      <span className="text-[10px] text-slate-400">{traceDetail.answer?.blocks?.length ?? 0} blocks</span>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Answer Blocks</p>
+                      <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{traceDetail.answer?.blocks?.length ?? 0} blocks</span>
                     </div>
                     {traceDetail.answer?.blocks && traceDetail.answer.blocks.length > 0 ? (
                       <div className="grid gap-3 md:grid-cols-2">
                         {traceDetail.answer.blocks.map((block: AnswerBlock, index: number) => (
                           <article
                             key={`${block.type}-${index}`}
-                            className="bg-slate-950/40 border border-slate-800 rounded-xl p-4 space-y-2"
+                            className="/40 border  rounded-xl p-4 space-y-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
                           >
-                            <div className="flex items-center justify-between text-[11px] text-slate-400 uppercase tracking-[0.3em]">
+                            <div className="flex items-center justify-between text-[11px]  uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
                               <span>{block.type}</span>
                               <span>{block.references?.length ? `${block.references.length} references` : "No refs"}</span>
                             </div>
@@ -1301,17 +1301,17 @@ function InspectorContent() {
                               {block.title ? (
                                 <p className="text-sm text-white font-semibold">{block.title}</p>
                               ) : (
-                                <p className="text-sm text-slate-100">Untitled block</p>
+                                <p className="text-sm " style={{ color: "var(--foreground)" }}>Untitled block</p>
                               )}
-                              <p className="text-[11px] text-slate-400 mt-1">
+                              <p className="text-[11px]  mt-1" style={{ color: "var(--muted-foreground)" }}>
                                 {summarizeBlockPayload(block)}
                               </p>
                             </div>
-                            <details className="bg-slate-950/60 border border-slate-800 rounded-xl p-2">
-                              <summary className="text-[10px] uppercase tracking-[0.2em] text-slate-400 cursor-pointer">
+                            <details className=" border  rounded-xl p-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                              <summary className="text-[10px] uppercase tracking-[0.2em]  cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
                                 View payload
                               </summary>
-                              <pre className="mt-2 text-[10px] text-slate-200 overflow-x-auto max-h-48">
+                              <pre className="mt-2 text-[10px]  overflow-x-auto max-h-48" style={{ color: "var(--foreground-secondary)" }}>
                                 {JSON.stringify(block, null, 2)}
                               </pre>
                             </details>
@@ -1319,29 +1319,29 @@ function InspectorContent() {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500">Blocks가 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Blocks가 없습니다.</p>
                     )}
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">UI Render Trace</p>
+                  <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                    <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>UI Render Trace</p>
                     {traceDetail.ui_render ? (
                       <div className="space-y-3">
-                        <div className="text-xs text-slate-400 uppercase tracking-[0.3em]">Rendered Blocks</div>
+                        <div className="text-xs  uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Rendered Blocks</div>
                         <div className="grid gap-2">
                           {traceDetail.ui_render.rendered_blocks.map((block: UIRenderedBlock, index: number) => (
-                            <div key={`${block.block_type}-${index}`} className="bg-slate-950/50 border border-slate-800 rounded-xl px-3 py-2 text-[11px]">
+                            <div key={`${block.block_type}-${index}`} className="/50 border  rounded-xl px-3 py-2 text-[11px]" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
                               <div className="flex items-center justify-between">
                                 <span>{block.block_type}</span>
                                 <span>{block.ok ? "ok" : "error"}</span>
                               </div>
-                              <p className="text-[11px] text-slate-400">{block.component_name}</p>
+                              <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>{block.component_name}</p>
                               {block.error && <p className="text-rose-300 text-[11px] mt-1">{block.error}</p>}
                             </div>
                           ))}
                         </div>
                         {traceDetail.ui_render.warnings.length > 0 && (
-                          <ul className="list-disc list-inside text-[11px] text-slate-400">
+                          <ul className="list-disc list-inside text-[11px] " style={{ color: "var(--muted-foreground)" }}>
                             {traceDetail.ui_render.warnings.map((warning: string, idx: number) => (
                               <li key={idx}>{warning}</li>
                             ))}
@@ -1349,21 +1349,21 @@ function InspectorContent() {
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs text-slate-500">UI 렌더 이벤트가 아직 없습니다.</p>
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>UI 렌더 이벤트가 아직 없습니다.</p>
                     )}
                   </section>
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between gap-4 flex-wrap">
                       <div className="flex items-center gap-2">
-                        <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Flow</p>
+                        <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Flow</p>
                         {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
-                          <span className="text-[10px] text-slate-400">{traceDetail.flow_spans.length} spans</span>
+                          <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{traceDetail.flow_spans.length} spans</span>
                         )}
                       </div>
                       {traceDetail.flow_spans && traceDetail.flow_spans.length > 0 && (
                         <div className="flex items-center gap-2 flex-wrap">
-                          <div className="flex gap-1 bg-slate-950 rounded-lg p-1">
+                          <div className="flex gap-1  rounded-lg p-1" style={{ backgroundColor: "var(--surface-base)" }}>
                             <button
                               data-testid="flow-toggle-timeline"
                               onClick={() => {
@@ -1371,9 +1371,9 @@ function InspectorContent() {
                                 setSelectedSpan(null);
                               }}
                               className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${flowViewMode === "timeline"
-                                ? "bg-slate-700 text-white"
-                                : "text-slate-400 hover:text-slate-300"
-                                }`}
+                                ? " text-white"
+                                : " hover:"
+                                }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
                             >
                               Timeline
                             </button>
@@ -1384,15 +1384,15 @@ function InspectorContent() {
                                 setSelectedSpan(null);
                               }}
                               className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${flowViewMode === "graph"
-                                ? "bg-slate-700 text-white"
-                                : "text-slate-400 hover:text-slate-300"
-                                }`}
+                                ? " text-white"
+                                : " hover:"
+                                }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
                             >
                               Graph
                             </button>
                           </div>
                           {flowViewMode === "graph" && (
-                            <label className="flex items-center gap-2 px-3 py-1 text-[10px] text-slate-400 bg-slate-950 rounded-lg cursor-pointer hover:text-slate-300">
+                            <label className="flex items-center gap-2 px-3 py-1 text-[10px]   rounded-lg cursor-pointer hover:" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}>
                               <input
                                 type="checkbox"
                                 checked={hideToolSpans}
@@ -1421,20 +1421,20 @@ function InspectorContent() {
                                   <div
                                     key={span.span_id}
                                     onClick={() => setSelectedSpan(span)}
-                                    className="bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 cursor-pointer hover:bg-slate-900/60 transition-colors"
+                                    className="/50 border  rounded-xl px-4 py-3 cursor-pointer hover: transition-colors" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" ,  backgroundColor: "var(--surface-overlay)" }}
                                   >
                                     <div className="flex items-center justify-between gap-3">
                                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <span className="text-xs font-mono text-slate-300 truncate">{span.name}</span>
+                                        <span className="text-xs font-mono  truncate" style={{ color: "var(--foreground-secondary)" }}>{span.name}</span>
                                         <span className={`px-2 py-1 rounded-full text-[10px] uppercase whitespace-nowrap ${statusClass}`}>
                                           {span.status}
                                         </span>
-                                        <span className="text-[11px] text-slate-400 whitespace-nowrap">{span.kind}</span>
+                                        <span className="text-[11px]  whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{span.kind}</span>
                                       </div>
-                                      <span className="text-[11px] text-slate-400 whitespace-nowrap">{span.duration_ms}ms</span>
+                                      <span className="text-[11px]  whitespace-nowrap" style={{ color: "var(--muted-foreground)" }}>{span.duration_ms}ms</span>
                                     </div>
                                     {span.summary.note && (
-                                      <p className="mt-2 text-[11px] text-slate-400">{span.summary.note}</p>
+                                      <p className="mt-2 text-[11px] " style={{ color: "var(--muted-foreground)" }}>{span.summary.note}</p>
                                     )}
                                     {span.summary.error_message && (
                                       <p className="mt-2 text-[11px] text-rose-300">{span.summary.error_message}</p>
@@ -1469,7 +1469,7 @@ function InspectorContent() {
                     ) : (
                       <p
                         data-testid="flow-empty-state"
-                        className="text-xs text-slate-500"
+                        className="text-xs " style={{ color: "var(--muted-foreground)" }}
                       >
                         Flow 데이터 없음 (구버전 trace)
                       </p>
@@ -1477,42 +1477,42 @@ function InspectorContent() {
                   </section>
 
                   {selectedSpan && (
-                    <section className="bg-slate-900/60 border border-slate-700 rounded-2xl p-5 space-y-3">
+                    <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-400">Span Details</p>
+                          <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Span Details</p>
                           <p className="text-sm font-semibold text-white mt-1">{selectedSpan.name}</p>
                         </div>
                         <button
                           onClick={() => setSelectedSpan(null)}
-                          className="text-slate-400 hover:text-white text-lg"
+                          className=" hover:text-white text-lg" style={{ color: "var(--muted-foreground)" }}
                         >
                           ✕
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 text-xs text-slate-300">
+                      <div className="grid grid-cols-2 gap-3 text-xs " style={{ color: "var(--foreground-secondary)" }}>
                         <div>
-                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Kind</p>
+                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{ color: "var(--muted-foreground)" }}>Kind</p>
                           <p className="mt-1">{selectedSpan.kind}</p>
                         </div>
                         <div>
-                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Status</p>
+                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{ color: "var(--muted-foreground)" }}>Status</p>
                           <p className="mt-1">{selectedSpan.status}</p>
                         </div>
                         <div>
-                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Duration</p>
+                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{ color: "var(--muted-foreground)" }}>Duration</p>
                           <p className="mt-1">{selectedSpan.duration_ms}ms</p>
                         </div>
                         <div>
-                          <p className="text-slate-500 uppercase tracking-[0.2em] text-[9px]">Span ID</p>
+                          <p className=" uppercase tracking-[0.2em] text-[9px]" style={{ color: "var(--muted-foreground)" }}>Span ID</p>
                           <p className="mt-1 font-mono text-[10px]">{selectedSpan.span_id}</p>
                         </div>
                       </div>
 
                       {selectedSpan.links.plan_path && (
-                        <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-3 space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Related Plan</p>
+                        <div className="/50 border  rounded-xl p-3 space-y-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                          <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Related Plan</p>
                           {renderJsonDetails(
                             selectedSpan.links.plan_path === "plan.raw" ? "Raw Plan" : "Validated Plan",
                             selectedSpan.links.plan_path === "plan.raw" ? traceDetail.plan_raw : traceDetail.plan_validated
@@ -1521,8 +1521,8 @@ function InspectorContent() {
                       )}
 
                       {selectedSpan.links.tool_call_id && traceDetail.execution_steps && (
-                        <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-3 space-y-2">
-                          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Related Tool Call</p>
+                        <div className="/50 border  rounded-xl p-3 space-y-2" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                          <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Related Tool Call</p>
                           {(() => {
                             const step = traceDetail.execution_steps?.find((s: ExecutionStep) => s.tool_name === selectedSpan.links.tool_call_id);
                             return step ? (
@@ -1531,7 +1531,7 @@ function InspectorContent() {
                                 {renderJsonDetails("Response", step.response)}
                               </div>
                             ) : (
-                              <p className="text-[11px] text-slate-400">Tool call not found</p>
+                              <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>Tool call not found</p>
                             );
                           })()}
                         </div>
@@ -1544,10 +1544,10 @@ function InspectorContent() {
                     <OrchestrationSection stageOutput={traceDetail} />
                   )}
 
-                  <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+                  <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
                     <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Audit Logs</p>
-                      <span className="text-[10px] text-slate-400">{traceAuditLogs.length} events</span>
+                      <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Audit Logs</p>
+                      <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{traceAuditLogs.length} events</span>
                     </div>
                     <AuditLogTable logs={traceAuditLogs} onViewDetails={setSelectedLog} />
                   </section>
@@ -1564,12 +1564,12 @@ function InspectorContent() {
       {/* Compare Modal */}
       {showCompareModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
-          <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 w-96 space-y-4">
+          <div className=" border  rounded-2xl p-6 w-96 space-y-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Compare with Trace</h3>
               <button
                 onClick={() => setShowCompareModal(false)}
-                className="text-slate-400 hover:text-white text-xl"
+                className=" hover:text-white text-xl" style={{ color: "var(--muted-foreground)" }}
               >
                 ✕
               </button>
@@ -1577,7 +1577,7 @@ function InspectorContent() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-[0.2em]  mb-2" style={{ color: "var(--muted-foreground)" }}>
                   Trace ID to Compare
                 </label>
                 <input
@@ -1585,7 +1585,7 @@ function InspectorContent() {
                   value={compareTraceId}
                   onChange={(e) => setCompareTraceId(e.target.value)}
                   placeholder="Paste trace_id..."
-                  className="w-full px-3 py-2 bg-slate-900/40 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-500"
+                  className="w-full px-3 py-2  border  rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleFetchCompareTrace();
@@ -1603,7 +1603,7 @@ function InspectorContent() {
               <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => setShowCompareModal(false)}
-                  className="px-3 py-2 rounded-lg border border-slate-700 text-xs uppercase tracking-[0.2em] hover:border-slate-500"
+                  className="px-3 py-2 rounded-lg border  text-xs uppercase tracking-[0.2em] hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" }}
                 >
                   Cancel
                 </button>
@@ -1668,7 +1668,7 @@ function InspectorContent() {
 export default function InspectorPage() {
   return (
     <ReactFlowProvider>
-      <Suspense fallback={<div className="p-4 text-slate-400">Loading...</div>}>
+      <Suspense fallback={<div className="p-4 " style={{ color: "var(--muted-foreground)" }}>Loading...</div>}>
         <InspectorContent />
       </Suspense>
     </ReactFlowProvider>

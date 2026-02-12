@@ -171,7 +171,7 @@ export default function ActionTab() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-white">Actions</h3>
-          <p className="text-xs text-slate-400">Manage action chains and execution flow</p>
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Manage action chains and execution flow</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -179,8 +179,11 @@ export default function ActionTab() {
             className={`rounded px-3 py-1.5 text-xs ${
               viewMode === "list"
                 ? "bg-sky-600 text-white"
-                : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                : ""
             }`}
+            style={viewMode === "list" ? {} : { backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}
+            onMouseEnter={(e) => { if (viewMode !== "list") e.currentTarget.style.backgroundColor = "var(--surface-overlay)"; }}
+            onMouseLeave={(e) => { if (viewMode !== "list") e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
           >
             List View
           </button>
@@ -189,8 +192,11 @@ export default function ActionTab() {
             className={`rounded px-3 py-1.5 text-xs ${
               viewMode === "flow"
                 ? "bg-sky-600 text-white"
-                : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                : ""
             }`}
+            style={viewMode === "flow" ? {} : { backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}
+            onMouseEnter={(e) => { if (viewMode !== "flow") e.currentTarget.style.backgroundColor = "var(--surface-overlay)"; }}
+            onMouseLeave={(e) => { if (viewMode !== "flow") e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
           >
             Flow View
           </button>
@@ -201,10 +207,11 @@ export default function ActionTab() {
         <button
           onClick={() => setActionKind("screen")}
           className={`flex-1 rounded px-3 py-2 text-xs ${
-            actionKind === "screen"
-              ? "bg-sky-600 text-white"
-              : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+            actionKind === "screen" ? "bg-sky-600 text-white" : ""
           }`}
+          style={actionKind === "screen" ? {} : { backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" }}
+          onMouseEnter={(e) => { if (actionKind !== "screen") e.currentTarget.style.backgroundColor = "var(--surface-overlay)"; }}
+          onMouseLeave={(e) => { if (actionKind !== "screen") e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
         >
           Screen Actions ({screenActions.length})
         </button>
@@ -212,12 +219,11 @@ export default function ActionTab() {
           onClick={() => setActionKind("component")}
           disabled={!editorState.selectedComponentId}
           className={`flex-1 rounded px-3 py-2 text-xs ${
-            actionKind === "component"
-              ? "bg-sky-600 text-white"
-              : editorState.selectedComponentId
-              ? "bg-slate-800 text-slate-400 hover:bg-slate-700"
-              : "cursor-not-allowed bg-slate-900 text-slate-600"
+            actionKind === "component" ? "bg-sky-600 text-white" : ""
           }`}
+          style={actionKind === "component" ? {} : editorState.selectedComponentId ? { backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" } : { backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", cursor: "not-allowed" }}
+          onMouseEnter={(e) => { if (actionKind !== "component" && editorState.selectedComponentId) e.currentTarget.style.backgroundColor = "var(--surface-overlay)"; }}
+          onMouseLeave={(e) => { if (actionKind !== "component" && editorState.selectedComponentId) e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
         >
           Component Actions ({componentActions.length})
         </button>
@@ -231,7 +237,7 @@ export default function ActionTab() {
         <>
           {actions.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3">
-              <div className="text-center text-slate-400">
+              <div className="text-center" style={{ color: "var(--muted-foreground)" }}>
                 <div className="text-sm">No actions</div>
                 <div className="text-xs">Create an action to start chaining workflows</div>
               </div>
@@ -244,11 +250,14 @@ export default function ActionTab() {
             </div>
           ) : (
             <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr] gap-3">
-              <div className="overflow-y-auto rounded border border-slate-700 bg-slate-900/40 p-2">
+              <div className="overflow-y-auto rounded border p-2" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}>
                 <div className="mb-2 flex justify-end">
                   <button
                     onClick={handleAddAction}
-                    className="rounded bg-slate-700 px-2 py-1 text-[11px] text-white hover:bg-slate-600"
+                    className="rounded px-2 py-1 text-[11px] text-white"
+                    style={{ backgroundColor: "var(--surface-elevated)" }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--surface-overlay)"}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--surface-elevated)"}
                   >
                     + Add
                   </button>
@@ -263,47 +272,51 @@ export default function ActionTab() {
                         setEditingAction(action);
                       }}
                       className={`w-full rounded border p-2 text-left ${
-                        selectedActionId === action.id
-                          ? "border-sky-500 bg-sky-500/10"
-                          : "border-slate-700 bg-slate-800/60 hover:border-slate-600"
+                        selectedActionId === action.id ? "" : ""
                       }`}
+                      style={selectedActionId === action.id
+                        ? { borderColor: "#0ea5e9", backgroundColor: "rgba(14, 165, 233, 0.1)" }
+                        : { borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+                      onMouseEnter={(e) => { if (selectedActionId !== action.id) e.currentTarget.style.borderColor = "var(--muted-foreground)"; }}
+                      onMouseLeave={(e) => { if (selectedActionId !== action.id) e.currentTarget.style.borderColor = "var(--border)"; }}
                     >
-                      <div className="text-xs font-mono text-sky-300">{action.id}</div>
-                      <div className="mt-1 text-[11px] text-slate-400">{action.handler || "(unset)"}</div>
+                      <div className="text-xs font-mono" style={{ color: "#7dd3fc" }}>{action.id}</div>
+                      <div className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>{action.handler || "(unset)"}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="overflow-y-auto rounded border border-slate-700 bg-slate-900/30 p-3">
-                {!editingAction && <div className="text-xs text-slate-400">Select an action to edit.</div>}
+              <div className="overflow-y-auto rounded border p-3" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}>
+                {!editingAction && <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>Select an action to edit.</div>}
                 {editingAction && (
                   <div className="space-y-3">
                     <div>
-                      <label className="mb-1 block text-xs text-slate-300">Action ID</label>
+                      <label className="mb-1 block text-xs" style={{ color: "var(--foreground-secondary)" }}>Action ID</label>
                       <input
                         type="text"
                         value={editingAction.id}
                         disabled
-                        className="w-full rounded border border-slate-700 bg-slate-900 p-2 text-xs text-slate-500"
+                        className="w-full rounded border p-2 text-xs"
+                        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)" }}
                       />
                     </div>
 
                     {/* Handler Select Dropdown */}
                     <div>
-                      <label className="mb-1 block text-xs text-slate-300">Handler</label>
+                      <label className="mb-1 block text-xs" style={{ color: "var(--foreground-secondary)" }}>Handler</label>
                       {isLoading ? (
-                        <div className="rounded border border-slate-700 bg-slate-900 p-2 text-xs text-slate-500">
+                        <div className="rounded border p-2 text-xs" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)" }}>
                           Loading catalog...
                         </div>
                       ) : (
                         <Select value={getSelectValue()} onValueChange={handleHandlerSelect}>
-                          <SelectTrigger className="h-8 border-slate-700 bg-slate-900 text-xs text-white">
+                          <SelectTrigger className="h-8 text-xs text-white" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
                             <SelectValue placeholder="Select a handler..." />
                           </SelectTrigger>
-                          <SelectContent className="border-slate-700 bg-slate-900">
+                          <SelectContent style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
                             <SelectGroup>
-                              <SelectLabel className="text-[11px] text-slate-400">Built-in Handlers</SelectLabel>
+                              <SelectLabel className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Built-in Handlers</SelectLabel>
                               {builtinOptions.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value} className="text-xs text-white">
                                   {opt.label}
@@ -312,7 +325,7 @@ export default function ActionTab() {
                             </SelectGroup>
                             {apiManagerOptions.length > 0 && (
                               <SelectGroup>
-                                <SelectLabel className="text-[11px] text-slate-400">API Manager</SelectLabel>
+                                <SelectLabel className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>API Manager</SelectLabel>
                                 {apiManagerOptions.map((opt) => (
                                   <SelectItem key={opt.value} value={opt.value} className="text-xs text-white">
                                     {opt.label}
@@ -330,25 +343,25 @@ export default function ActionTab() {
 
                     {/* Handler Metadata Inline Display */}
                     {catalogItem && (
-                      <div className="space-y-2 rounded border border-slate-700/50 bg-slate-800/30 p-2">
+                      <div className="space-y-2 rounded border p-2" style={{ borderColor: "rgba(71, 85, 105, 0.5)", backgroundColor: "rgba(30, 41, 59, 0.3)" }}>
                         {catalogItem.description && (
-                          <p className="text-[11px] text-slate-400">{catalogItem.description}</p>
+                          <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>{catalogItem.description}</p>
                         )}
 
                         {catalogItem.api_manager_meta && (
                           <div className="flex items-center gap-2 text-[11px]">
-                            <span className="rounded bg-violet-900/50 px-1.5 py-0.5 font-mono text-violet-300">
+                            <span className="rounded px-1.5 py-0.5 font-mono" style={{ backgroundColor: "rgba(109, 40, 217, 0.5)", color: "#d8b4fe" }}>
                               {catalogItem.api_manager_meta.method}
                             </span>
-                            <span className="font-mono text-slate-400">{catalogItem.api_manager_meta.path}</span>
+                            <span className="font-mono" style={{ color: "var(--muted-foreground)" }}>{catalogItem.api_manager_meta.path}</span>
                           </div>
                         )}
 
                         {catalogItem.output?.state_patch_keys && catalogItem.output.state_patch_keys.length > 0 && (
                           <div className="text-[11px]">
-                            <span className="text-slate-500">Output keys: </span>
+                            <span style={{ color: "var(--muted-foreground)" }}>Output keys: </span>
                             {catalogItem.output.state_patch_keys.map((key) => (
-                              <span key={key} className="mr-1 rounded bg-sky-900/40 px-1 py-0.5 font-mono text-sky-300">
+                              <span key={key} className="mr-1 rounded px-1 py-0.5 font-mono" style={{ backgroundColor: "rgba(14, 165, 233, 0.4)", color: "#7dd3fc" }}>
                                 {key}
                               </span>
                             ))}
@@ -359,17 +372,17 @@ export default function ActionTab() {
                         {catalogItem.input_schema?.properties &&
                           Object.keys(catalogItem.input_schema.properties).length > 0 && (
                             <details className="text-[11px]">
-                              <summary className="cursor-pointer text-slate-400 hover:text-slate-300">
+                              <summary className="cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
                                 Input Parameters ({Object.keys(catalogItem.input_schema.properties).length})
                               </summary>
                               <div className="mt-1 space-y-1 pl-2">
                                 {Object.entries(catalogItem.input_schema.properties).map(([key, prop]) => (
                                   <div key={key} className="flex items-center gap-1">
-                                    <span className="font-mono text-sky-300">{key}</span>
-                                    <span className="text-slate-600">:</span>
-                                    <span className="text-slate-500">{prop.type || "any"}</span>
+                                    <span className="font-mono" style={{ color: "#7dd3fc" }}>{key}</span>
+                                    <span style={{ color: "var(--foreground-secondary)" }}>:</span>
+                                    <span style={{ color: "var(--muted-foreground)" }}>{prop.type || "any"}</span>
                                     {catalogItem.input_schema?.required?.includes(key) && (
-                                      <span className="text-rose-400">*</span>
+                                      <span style={{ color: "#fb7185" }}>*</span>
                                     )}
                                   </div>
                                 ))}
@@ -380,10 +393,10 @@ export default function ActionTab() {
                         {/* Sample Output */}
                         {catalogItem.sample_output && (
                           <details className="text-[11px]">
-                            <summary className="cursor-pointer text-slate-400 hover:text-slate-300">
+                            <summary className="cursor-pointer" style={{ color: "var(--muted-foreground)" }}>
                               Sample Output
                             </summary>
-                            <pre className="mt-1 max-h-32 overflow-auto rounded bg-slate-900/60 p-1.5 font-mono text-[10px] text-emerald-300">
+                            <pre className="mt-1 max-h-32 overflow-auto rounded p-1.5 font-mono text-[10px]" style={{ backgroundColor: "var(--surface-overlay)", color: "#6ee7b7" }}>
                               {JSON.stringify(catalogItem.sample_output, null, 2)}
                             </pre>
                           </details>
@@ -395,13 +408,19 @@ export default function ActionTab() {
                     <div className="grid grid-cols-4 gap-2">
                       <button
                         onClick={handleSaveAction}
-                        className="rounded bg-sky-600 px-3 py-2 text-xs text-white hover:bg-sky-700"
+                        className="rounded px-3 py-2 text-xs text-white"
+                        style={{ backgroundColor: "#0284c7" }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#0369a1"}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#0284c7"}
                       >
                         Save
                       </button>
                       <button
                         onClick={() => handleDeleteAction(editingAction.id)}
-                        className="rounded bg-rose-900/60 px-3 py-2 text-xs text-rose-200 hover:bg-rose-900"
+                        className="rounded px-3 py-2 text-xs"
+                        style={{ backgroundColor: "rgba(127, 29, 29, 0.6)", color: "#fecdd3" }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(127, 29, 29, 1)"}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(127, 29, 29, 0.6)"}
                       >
                         Delete
                       </button>
@@ -409,13 +428,19 @@ export default function ActionTab() {
                         onClick={() => {
                           setEditingAction(selectedAction);
                         }}
-                        className="rounded bg-slate-700 px-3 py-2 text-xs text-white hover:bg-slate-600"
+                        className="rounded px-3 py-2 text-xs text-white"
+                        style={{ backgroundColor: "#334155" }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#475569"}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#334155"}
                       >
                         Reset
                       </button>
                       <button
                         onClick={() => setModalOpen(true)}
-                        className="rounded bg-violet-700 px-3 py-2 text-xs text-white hover:bg-violet-600"
+                        className="rounded px-3 py-2 text-xs text-white"
+                        style={{ backgroundColor: "#6d28d9" }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#7c3aed"}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#6d28d9"}
                       >
                         Full Editor
                       </button>

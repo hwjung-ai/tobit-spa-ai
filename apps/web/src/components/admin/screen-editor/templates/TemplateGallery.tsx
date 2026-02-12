@@ -134,22 +134,22 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl w-[720px] max-h-[80vh] flex flex-col shadow-2xl">
+      <div className="border rounded-xl w-[720px] max-h-[80vh] flex flex-col shadow-2xl" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-100">
+        <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "var(--border)"  }}>
+          <h2 className="text-lg font-semibold" style={{ color: "var(--foreground)"  }}>
             Template Gallery
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition-colors text-xl leading-none"
+            className="hover: transition-colors text-xl leading-none" style={{ color: "var(--foreground-secondary)", color: "var(--muted-foreground)"  }}
           >
             &times;
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-700 px-6">
+        <div className="flex border-b px-6" style={{ borderColor: "var(--border)"  }}>
           {(
             [
               { id: "builtin" as TabId, label: "Built-in Templates" },
@@ -162,8 +162,8 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
               className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
                 activeTab === tab.id
                   ? "border-sky-500 text-sky-400"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
-              }`}
+                  : "border-transparent  hover:"
+              }`} style={{ color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
             >
               {tab.label}
             </button>
@@ -177,13 +177,13 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
             placeholder="Search templates..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+            className="flex-1 border rounded px-3 py-1.5 text-sm placeholder-slate-500 focus:outline-none focus:border-sky-500" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", borderColor: "var(--border)"  }}
           />
           {activeTab === "published" && allTags.length > 0 && (
             <select
               value={selectedTag || ""}
               onChange={(e) => setSelectedTag(e.target.value || null)}
-              className="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-slate-200"
+              className="border rounded px-3 py-1.5 text-sm" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", borderColor: "var(--border)"  }}
             >
               <option value="">All Tags</option>
               {allTags.map((tag) => (
@@ -203,19 +203,19 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                 <button
                   key={template.id}
                   onClick={() => handleSelectBuiltin(template)}
-                  className="text-left border border-slate-700 rounded-lg p-4 hover:border-sky-500/50 hover:bg-slate-800/50 transition-all group"
+                  className="text-left border rounded-lg p-4 hover:border-sky-500/50 hover: transition-all group" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-sky-400 text-xs font-bold uppercase shrink-0 group-hover:bg-sky-950/50">
+                    <div className="w-10 h-10 rounded flex items-center justify-center text-sky-400 text-xs font-bold uppercase shrink-0 group-hover:bg-sky-950/50" style={{ backgroundColor: "var(--surface-elevated)"  }}>
                       {layoutIcons[template.id]
                         ? template.id.slice(0, 2).toUpperCase()
                         : "T"}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-slate-200 group-hover:text-sky-300 truncate">
+                      <h3 className="text-sm font-semibold group-hover:text-sky-300 truncate" style={{ color: "var(--foreground-secondary)"  }}>
                         {template.name}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                      <p className="text-xs mt-1 line-clamp-2" style={{ color: "var(--muted-foreground)"  }}>
                         {template.description}
                       </p>
                     </div>
@@ -223,7 +223,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                 </button>
               ))}
               {filteredBuiltin.length === 0 && (
-                <div className="col-span-2 py-8 text-center text-slate-500 text-sm">
+                <div className="col-span-2 py-8 text-center 0 text-sm" style={{ color: "var(--foreground)"  }}>
                   No templates match your search
                 </div>
               )}
@@ -232,7 +232,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
 
           {activeTab === "published" && loading && (
             <div className="flex items-center justify-center py-12">
-              <div className="text-slate-400 text-sm">Loading published screens...</div>
+              <div className="text-sm" style={{ color: "var(--muted-foreground)"  }}>Loading published screens...</div>
             </div>
           )}
 
@@ -242,17 +242,17 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                 <button
                   key={screen.asset_id}
                   onClick={() => handleSelectPublished(screen)}
-                  className="text-left border border-slate-700 rounded-lg p-4 hover:border-sky-500/50 hover:bg-slate-800/50 transition-all group"
+                  className="text-left border rounded-lg p-4 hover:border-sky-500/50 hover: transition-all group" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}
                 >
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 rounded bg-emerald-950/50 border border-emerald-800/50 flex items-center justify-center text-emerald-400 text-xs font-bold uppercase shrink-0">
                       v{screen.version}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-slate-200 group-hover:text-sky-300 truncate">
+                      <h3 className="text-sm font-semibold group-hover:text-sky-300 truncate" style={{ color: "var(--foreground-secondary)"  }}>
                         {screen.name}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2">
+                      <p className="text-xs mt-1 line-clamp-2" style={{ color: "var(--muted-foreground)"  }}>
                         {screen.description || screen.screen_id || "No description"}
                       </p>
                       {screen.tags && Object.keys(screen.tags).length > 0 && (
@@ -262,7 +262,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                             .map((tag) => (
                               <span
                                 key={tag}
-                                className="inline-flex px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 border border-slate-700"
+                                className="inline-flex px-1.5 py-0.5 rounded text-[10px] border" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"  }}
                               >
                                 {tag}
                               </span>
@@ -274,7 +274,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                 </button>
               ))}
               {filteredPublished.length === 0 && (
-                <div className="col-span-2 py-8 text-center text-slate-500 text-sm">
+                <div className="col-span-2 py-8 text-center 0 text-sm" style={{ color: "var(--foreground)"  }}>
                   {publishedScreens.length === 0
                     ? "No published screens available as templates"
                     : "No screens match your search"}

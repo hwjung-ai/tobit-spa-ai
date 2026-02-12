@@ -20,8 +20,8 @@ export function BasicInfoSection({
   onActiveChange,
 }: BasicInfoSectionProps) {
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-      <h3 className="text-sm font-semibold text-white">기본 정보</h3>
+    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
+      <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>기본 정보</h3>
 
       <FormFieldGroup
         label="규칙명"
@@ -33,7 +33,7 @@ export function BasicInfoSection({
           value={ruleName}
           onChange={(e) => onRuleNameChange(e.target.value)}
           placeholder="예: CPU 고가용 모니터링"
-          className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"
+          className="w-full rounded-lg px-3 py-2 text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
         />
       </FormFieldGroup>
 
@@ -46,11 +46,11 @@ export function BasicInfoSection({
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="이 규칙은..."
           rows={3}
-          className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-sky-500 focus:outline-none"
+          className="w-full rounded-lg px-3 py-2 text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
         />
       </FormFieldGroup>
 
-      <div className="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-900/40 p-3">
+      <div className="flex items-center gap-3 rounded-lg p-3" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}>
         <input
           type="checkbox"
           id="isActive"
@@ -60,11 +60,11 @@ export function BasicInfoSection({
         />
         <label
           htmlFor="isActive"
-          className="flex-1 text-sm font-medium text-white cursor-pointer"
+          className="flex-1 text-sm font-medium cursor-pointer" style={{ color: "var(--foreground)" }}
         >
           규칙 활성화
         </label>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
           {isActive ? "활성" : "비활성"}
         </span>
       </div>

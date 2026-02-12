@@ -120,7 +120,7 @@ const AdminDashboard: React.FC = () => {
       case 'critical':
         return 'text-red-600 bg-red-50';
       default:
-        return 'text-slate-600 bg-slate-50';
+        return 'text-[var(--muted-foreground)] bg-[var(--surface-elevated)]';
     }
   };
 
@@ -156,7 +156,7 @@ const AdminDashboard: React.FC = () => {
       {metrics?.resources && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* CPU and Memory Chart */}
-          <div className="bg-white p-6 rounded-lg border">
+          <div className="bg-[var(--background)] p-6 rounded-lg border">
             <h3 className="text-lg font-semibold mb-4">Resource Usage</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={metrics.resources.slice(-24)}>
@@ -173,7 +173,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* API Performance Chart */}
           {metrics?.api && (
-            <div className="bg-white p-6 rounded-lg border">
+            <div className="bg-[var(--background)] p-6 rounded-lg border">
               <h3 className="text-lg font-semibold mb-4">API Performance</h3>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={metrics.api.slice(-12)}>
@@ -214,14 +214,14 @@ const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen bg-slate-100">
+    <div className="flex h-screen " style={{ backgroundColor: "var(--surface-base)" }}>
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-slate-900 text-white transition-all duration-300`}>
+      <div className={`${sidebarOpen ? 'w-64' : 'w-20'}  text-white transition-all duration-300`} style={{ backgroundColor: "var(--surface-base)" }}>
         <div className="p-4 flex items-center justify-between">
           {sidebarOpen && <span className="font-bold text-lg">Admin</span>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 hover:bg-slate-800 rounded"
+            className="p-1 hover: rounded" style={{ backgroundColor: "var(--surface-elevated)" }}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -235,8 +235,8 @@ const AdminDashboard: React.FC = () => {
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === tab.id
                   ? 'bg-blue-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-800'
-              }`}
+                  : ' hover:'
+              }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}
             >
               {tab.icon}
               {sidebarOpen && <span>{tab.label}</span>}
@@ -247,8 +247,8 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-slate-900">Admin Dashboard</h1>
+        <header className="bg-[var(--background)] border-b  px-8 py-4 flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+          <h1 className="text-2xl font-bold " style={{ color: "var(--foreground)" }}>Admin Dashboard</h1>
           <button
             onClick={fetchDashboardData}
             disabled={loading}
@@ -306,22 +306,22 @@ const UserManagementPanel: React.FC = () => {
         <h2 className="text-xl font-bold">User Management</h2>
       </div>
 
-      <div className="bg-white rounded-lg border overflow-hidden">
+      <div className="bg-[var(--background)] rounded-lg border overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b">
+          <thead className=" border-b" style={{ backgroundColor: "var(--surface-base)" }}>
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Username</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Last Login</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-slate-900">Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Username</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Email</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Last Login</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {users.map((user) => (
-              <tr key={user.user_id} className="hover:bg-slate-50">
-                <td className="px-6 py-3 text-sm text-slate-900">{user.username}</td>
-                <td className="px-6 py-3 text-sm text-slate-600">{user.email}</td>
+              <tr key={user.user_id} className="hover:" style={{ backgroundColor: "var(--surface-base)" }}>
+                <td className="px-6 py-3 text-sm " style={{ color: "var(--foreground)" }}>{user.username}</td>
+                <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>{user.email}</td>
                 <td className="px-6 py-3 text-sm">
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${
                     user.is_active
@@ -331,7 +331,7 @@ const UserManagementPanel: React.FC = () => {
                     {user.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-6 py-3 text-sm text-slate-600">
+                <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>
                   {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
                 </td>
                 <td className="px-6 py-3 text-sm">
@@ -350,7 +350,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Monitoring</h2>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-white p-6 rounded-lg border">
+      <div className="bg-[var(--background)] p-6 rounded-lg border">
         <h3 className="text-lg font-semibold mb-4">Resource Metrics</h3>
         <div className="space-y-3">
           <div>
@@ -358,7 +358,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
               <span>CPU Usage</span>
               <span className="font-semibold">{systemHealth?.resource?.cpu_percent ? systemHealth.resource.cpu_percent.toFixed(1) : 'N/A'}%</span>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
+            <div className="w-full  rounded-full h-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
               <div
                 className="bg-blue-600 h-2 rounded-full"
                 style={{ width: `${Math.min(systemHealth?.resource?.cpu_percent || 0, 100)}%` }}
@@ -370,7 +370,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
               <span>Memory Usage</span>
               <span className="font-semibold">{systemHealth?.resource?.memory_percent ? systemHealth.resource.memory_percent.toFixed(1) : 'N/A'}%</span>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-2">
+            <div className="w-full  rounded-full h-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
               <div
                 className="bg-yellow-600 h-2 rounded-full"
                 style={{ width: `${Math.min(systemHealth?.resource?.memory_percent || 0, 100)}%` }}
@@ -413,8 +413,8 @@ const AlertsPanel: React.FC<{ alerts: Alert[] }> = ({ alerts }) => (
 const SettingsPanel: React.FC = () => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Settings</h2>
-    <div className="bg-white p-6 rounded-lg border">
-      <p className="text-slate-600">Settings management interface coming soon...</p>
+    <div className="bg-[var(--background)] p-6 rounded-lg border">
+      <p className="" style={{ color: "var(--muted-foreground)" }}>Settings management interface coming soon...</p>
     </div>
   </div>
 );

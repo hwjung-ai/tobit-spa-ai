@@ -210,25 +210,25 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
   }, [nodes, edges, workflowName]);
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/40 p-4">
-      <h3 className="text-xs uppercase tracking-normal text-slate-500">Workflow Builder</h3>
+    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+      <h3 className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Workflow Builder</h3>
 
       {/* Workflow Name */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal text-slate-500">Workflow Name</label>
+        <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Workflow Name</label>
         <input
           type="text"
           value={workflowName}
           onChange={(e) => setWorkflowName(e.target.value)}
           disabled={readOnly}
           placeholder="My Workflow"
-          className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
         />
       </div>
 
       {/* Node Type Selection */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal text-slate-500">Add Node</label>
+        <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>Add Node</label>
         <div className="flex gap-2">
           {(["sql", "http", "python"] as const).map((type) => (
             <button
@@ -251,7 +251,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
       </div>
 
       {/* Workflow Canvas */}
-      <div className="h-[600px] rounded-2xl border border-slate-800 bg-slate-950/60">
+      <div className="h-[600px] rounded-2xl border" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -261,7 +261,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           nodeTypes={nodeTypes}
           fitView
           deleteKeyCode="Delete"
-          className="bg-slate-950"
+          className="" style={{ backgroundColor: "var(--surface-base)" }}
         >
           <Background color="#0f172a" gap={16} />
           <Controls />
@@ -281,14 +281,14 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
 
       {/* Selected Node Configuration */}
       {selectedNode && (
-        <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+        <div className="space-y-3 rounded-2xl border p-4" style={{ border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
           <div className="flex items-center justify-between">
-            <h4 className="text-xs uppercase tracking-normal text-slate-500">
+            <h4 className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>
               Node Configuration: {selectedNode.data.label}
             </h4>
             <button
               onClick={() => setSelectedNode(null)}
-              className="rounded-full border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-400 hover:border-slate-500"
+              className="rounded-full border px-2 py-1 text-[10px]" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" }}
             >
               Close
             </button>
@@ -296,7 +296,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
 
           {/* Node Label */}
           <div className="space-y-1">
-            <label className="text-[10px] uppercase tracking-normal text-slate-500">Label</label>
+            <label className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Label</label>
             <input
               type="text"
               value={selectedNode.data.label}
@@ -304,14 +304,14 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                 updateNode(selectedNode.id, { label: e.target.value })
               }
               disabled={readOnly}
-              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500"
+              className="w-full rounded-xl border px-3 py-2 text-xs outline-none transition focus:border-sky-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
             />
           </div>
 
           {/* SQL Node Config */}
           {selectedNode.data.type === "sql" && (
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-normal text-slate-500">
+              <label className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
                 SQL Query
               </label>
               <textarea
@@ -324,7 +324,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                 disabled={readOnly}
                 rows={4}
                 placeholder="SELECT * FROM table WHERE condition = 'value'"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                className="w-full rounded-xl border   px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500 custom-scrollbar" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               />
             </div>
           )}
@@ -334,7 +334,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
             <div className="space-y-2">
               <div className="grid gap-2 grid-cols-2">
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-normal text-slate-500">
+                  <label className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
                     Method
                   </label>
                   <select
@@ -345,7 +345,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                       })
                     }
                     disabled={readOnly}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500"
+                    className="w-full rounded-xl border px-3 py-2 text-xs outline-none transition focus:border-sky-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                   >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
@@ -354,7 +354,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-normal text-slate-500">
+                  <label className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
                     URL
                   </label>
                   <input
@@ -367,7 +367,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                     }
                     disabled={readOnly}
                     placeholder="https://api.example.com/endpoint"
-                    className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500"
+                    className="w-full rounded-xl border px-3 py-2 text-xs outline-none transition focus:border-sky-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                   />
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           {/* Python Node Config */}
           {selectedNode.data.type === "python" && (
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-normal text-slate-500">
+              <label className="text-[10px] uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
                 Python Code
               </label>
               <textarea
@@ -390,7 +390,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                 disabled={readOnly}
                 rows={6}
                 placeholder="def main(params, input_payload):\n    # Your code here\n    pass"
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500 custom-scrollbar font-mono"
+                className="w-full rounded-xl border px-3 py-2 text-xs outline-none transition focus:border-sky-500 custom-scrollbar font-mono" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
               />
             </div>
           )}
@@ -412,7 +412,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
         <button
           onClick={clearWorkflow}
           disabled={readOnly}
-          className="rounded-full border border-slate-700/50 bg-slate-800/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-normal text-slate-300 transition hover:border-slate-600"
+          className="rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-normal transition" style={{ border: "1px solid rgba(30, 41, 59, 0.5)", backgroundColor: "rgba(30, 41, 59, 0.8)", color: "var(--muted-foreground)" }}
         >
           Clear Workflow
         </button>
@@ -441,19 +441,19 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
       </div>
 
       {/* Workflow JSON Preview */}
-      <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-        <h4 className="text-xs uppercase tracking-normal text-slate-500">
+      <div className="space-y-2 rounded-2xl border p-4" style={{ border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+        <h4 className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>
           Workflow JSON
         </h4>
-        <pre className="max-h-40 overflow-auto rounded-xl bg-slate-950/70 p-3 text-[11px] text-slate-100 custom-scrollbar font-mono">
+        <pre className="max-h-40 overflow-auto rounded-xl p-3 text-[11px] custom-scrollbar font-mono" style={{ backgroundColor: "rgba(15, 23, 42, 0.7)", color: "var(--muted-foreground)" }}>
           {generateWorkflowJSON()}
         </pre>
       </div>
 
       {/* Help Section */}
-      <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
-        <h4 className="text-xs uppercase tracking-normal text-slate-500">Quick Help</h4>
-        <div className="space-y-1 text-[11px] text-slate-300">
+      <div className="space-y-2 rounded-2xl border p-3" style={{ border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)" }}>
+        <h4 className="text-xs uppercase tracking-normal " style={{ color: "var(--muted-foreground)" }}>Quick Help</h4>
+        <div className="space-y-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
           <p>• Drag nodes to position them on the canvas</p>
           <p>• Connect nodes by dragging from one node's handle to another</p>
           <p>• Click on a node to configure its properties</p>

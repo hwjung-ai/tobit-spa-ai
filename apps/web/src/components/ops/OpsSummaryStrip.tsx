@@ -120,15 +120,15 @@ export default function OpsSummaryStrip({
 
   return (
     <div className={cn(
-      "flex flex-wrap items-center gap-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4",
+      "flex flex-wrap items-center gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-overlay)] p-4",
       className
     )}>
       {/* Overview Stats */}
       <div className="flex items-center gap-2">
-        <span className="text-[10px] text-slate-500">최근 24시간</span>
-        <div className="flex items-center gap-1 rounded-full border border-slate-700 px-2 py-1 bg-slate-900/50">
+        <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>최근 24시간</span>
+        <div className="flex items-center gap-1 rounded-full border  px-2 py-1 " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
           <BarChart3 className="h-3 w-3 text-sky-400" />
-          <span className="text-xs text-slate-300 font-medium">
+          <span className="text-xs  font-medium" style={{ color: "var(--foreground-secondary)" }}>
             총 {metrics.totalQueries.toLocaleString()} 건
           </span>
         </div>
@@ -149,7 +149,7 @@ export default function OpsSummaryStrip({
       {/* Response Time */}
       <div className="flex items-center gap-2">
         <Clock className="h-3 w-3 text-amber-400" />
-        <span className="text-xs text-slate-400">평균 응답시간</span>
+        <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>평균 응답시간</span>
         <span className="text-xs font-mono text-amber-300">
           {metrics.avgResponseTime}ms
         </span>
@@ -157,9 +157,9 @@ export default function OpsSummaryStrip({
 
       {/* Current Selection */}
       {selectedEntry && (
-        <div className="flex items-center gap-2 border-l border-slate-700 pl-4">
+        <div className="flex items-center gap-2 border-l  pl-4" style={{ borderColor: "var(--border)" }}>
           <Activity className="h-3 w-3 text-purple-400" />
-          <span className="text-xs text-slate-400">현재 선택</span>
+          <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>현재 선택</span>
           <span className="text-xs font-semibold text-purple-300">
             {getModeLabel(selectedEntry.uiMode)}
           </span>
@@ -171,13 +171,13 @@ export default function OpsSummaryStrip({
       )}
 
       {/* Recent Activity */}
-      <div className="flex items-center gap-2 border-l border-slate-700 pl-4">
+      <div className="flex items-center gap-2 border-l  pl-4" style={{ borderColor: "var(--border)" }}>
         <div className="flex -space-x-1">
           {metrics.recentActivity.slice(0, 5).reverse().map((activity, index) => (
             <div
               key={`${activity.timestamp}-${index}`}
               className={cn(
-                "w-2 h-2 rounded-full border border-slate-900",
+                "w-2 h-2 rounded-full border border-[var(--border)]",
                 activity.status === "ok"
                   ? "bg-emerald-400"
                   : "bg-rose-400"
@@ -185,20 +185,20 @@ export default function OpsSummaryStrip({
             />
           ))}
         </div>
-        <span className="text-xs text-slate-400">최근 활동</span>
+        <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>최근 활동</span>
       </div>
 
       {/* Refresh Button */}
       <button
         onClick={aggregateMetrics}
         disabled={isLoading}
-        className="ml-auto flex items-center gap-1 rounded-full border border-slate-700 px-2 py-1 bg-slate-900/50 transition hover:border-slate-600 disabled:opacity-50"
+        className="ml-auto flex items-center gap-1 rounded-full border  px-2 py-1  transition hover: disabled:opacity-50" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
       >
         <RefreshCw className={cn(
-          "h-3 w-3 text-slate-400",
+          "h-3 w-3 text-[var(--muted-foreground)]",
           isLoading && "animate-spin"
         )} />
-        <span className="text-xs text-slate-400">새로고침</span>
+        <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>새로고침</span>
       </button>
 
     </div>

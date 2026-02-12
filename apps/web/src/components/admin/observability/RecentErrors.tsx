@@ -106,7 +106,7 @@ export default function RecentErrors() {
                 />
               </svg>
             </div>
-            <p className="text-sm text-slate-400">No errors in the last 24 hours</p>
+            <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>No errors in the last 24 hours</p>
           </div>
         ) : (
           errors.map((err) => (
@@ -132,15 +132,15 @@ export default function RecentErrors() {
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-white font-semibold truncate">{err.rule_name}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                         {new Date(err.triggered_at).toLocaleString()}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                    <span className="text-xs text-slate-400">{err.duration_ms}ms</span>
+                    <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>{err.duration_ms}ms</span>
                     <svg
-                      className={`w-4 h-4 text-slate-400 transition ${
+                      className={`w-4 h-4 text-[var(--muted-foreground)] transition ${
                         expandedId === err.exec_id ? "rotate-180" : ""
                       }`}
                       fill="none"
@@ -167,22 +167,22 @@ export default function RecentErrors() {
 
               {/* Expanded Details */}
               {expandedId === err.exec_id && (
-                <div className="mt-4 pt-4 border-t border-slate-700/50 space-y-3">
+                <div className="mt-4 pt-4 border-t /50 space-y-3" style={{ borderColor: "var(--border)" }}>
                   <div>
-                    <p className="text-xs text-slate-400 mb-1">Execution ID</p>
-                    <p className="text-xs font-mono text-slate-300 break-all">
+                    <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Execution ID</p>
+                    <p className="text-xs font-mono  break-all" style={{ color: "var(--foreground-secondary)" }}>
                       {err.exec_id}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-400 mb-1">Rule ID</p>
-                    <p className="text-xs font-mono text-slate-300 break-all">
+                    <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Rule ID</p>
+                    <p className="text-xs font-mono  break-all" style={{ color: "var(--foreground-secondary)" }}>
                       {err.rule_id}
                     </p>
                   </div>
                   {err.error_message && (
                     <div>
-                      <p className="text-xs text-slate-400 mb-1">Error Message</p>
+                      <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Error Message</p>
                       <p className={`text-xs font-mono ${getSeverityColor(err.error_message)} break-words`}>
                         {err.error_message}
                       </p>
@@ -190,11 +190,11 @@ export default function RecentErrors() {
                   )}
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <p className="text-slate-400 mb-1">Duration</p>
+                      <p className=" mb-1" style={{ color: "var(--muted-foreground)" }}>Duration</p>
                       <p className="text-white font-semibold">{err.duration_ms}ms</p>
                     </div>
                     <div>
-                      <p className="text-slate-400 mb-1">Timestamp</p>
+                      <p className=" mb-1" style={{ color: "var(--muted-foreground)" }}>Timestamp</p>
                       <p className="text-white font-semibold">
                         {new Date(err.triggered_at).toLocaleTimeString()}
                       </p>

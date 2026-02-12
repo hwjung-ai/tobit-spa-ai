@@ -6,9 +6,9 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const variantStyles = {
   default: 'inline-flex items-center rounded-full border border-transparent bg-blue-600 px-2.5 py-0.5 text-xs font-semibold text-white',
-  secondary: 'inline-flex items-center rounded-full border border-transparent bg-slate-600 px-2.5 py-0.5 text-xs font-semibold text-white',
+  secondary: 'inline-flex items-center rounded-full border border-transparent bg-[var(--surface-elevated)] px-2.5 py-0.5 text-xs font-semibold text-white',
   destructive: 'inline-flex items-center rounded-full border border-transparent bg-red-600 px-2.5 py-0.5 text-xs font-semibold text-white',
-  outline: 'inline-flex items-center rounded-full border border-slate-300 px-2.5 py-0.5 text-xs font-semibold text-slate-700',
+  outline: 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
 };
 
 export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
@@ -17,6 +17,7 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
       <div
         ref={ref}
         className={`${variantStyles[variant]} ${className ?? ''}`}
+        style={variant === 'outline' ? { borderColor: 'var(--border)', color: 'var(--foreground)' } : {}}
         {...props}
       />
     );

@@ -10,45 +10,45 @@
 // ============================================================================
 
 export const colors = {
-  // Base colors (with dark mode variants)
+  // Base colors (with dark mode variants) - Using CSS variables
   background: {
     light: "bg-white",
-    dark: "bg-slate-950",
+    dark: "dark:bg-[var(--surface-base)]",
   },
   foreground: {
-    light: "text-slate-950",
-    dark: "text-slate-50",
+    light: "text-[var(--foreground)]",
+    dark: "dark:text-[var(--foreground)]",
   },
   border: {
-    light: "border-slate-200",
-    dark: "border-slate-800",
+    light: "border-[var(--border)]",
+    dark: "dark:border-[var(--border)]",
   },
 
   // Surface colors (containers, cards, panels)
   surface: {
     base: {
       light: "bg-white",
-      dark: "bg-slate-950",
+      dark: "dark:bg-[var(--surface-base)]",
     },
     elevated: {
-      light: "bg-slate-50",
-      dark: "bg-slate-900",
+      light: "bg-[var(--surface-elevated)]",
+      dark: "dark:bg-[var(--surface-elevated)]",
     },
     overlay: {
       light: "bg-white/95",
-      dark: "bg-slate-950/90",
+      dark: "dark:bg-[var(--surface-overlay)]",
     },
   },
 
   // Muted colors (secondary text, backgrounds)
   muted: {
     foreground: {
-      light: "text-slate-500",
-      dark: "text-slate-400",
+      light: "text-[var(--muted-foreground)]",
+      dark: "dark:text-[var(--muted-foreground)]",
     },
     background: {
-      light: "bg-slate-100",
-      dark: "bg-slate-800",
+      light: "bg-[var(--muted-background)]",
+      dark: "dark:bg-[var(--muted-background)]",
     },
   },
 
@@ -76,12 +76,12 @@ export const colors = {
 
   // Border colors for surfaces
   surfaceBorder: {
-    light: "border-slate-200",
-    dark: "border-slate-800",
+    light: "border-[var(--border)]",
+    dark: "dark:border-[var(--border)]",
   },
   inputBorder: {
-    light: "border-slate-300",
-    dark: "border-slate-700",
+    light: "border-[var(--border)]",
+    dark: "dark:border-[var(--border)]",
   },
 } as const;
 
@@ -188,7 +188,7 @@ export const focusRing = {
     "focus-visible:ring-2",
     "focus-visible:ring-sky-500",
     "focus-visible:ring-offset-2",
-    "dark:focus-visible:ring-offset-slate-950",
+    "dark:focus-visible:ring-offset-[var(--surface-base)]",
   ].join(" "),
 } as const;
 
@@ -289,10 +289,10 @@ export const buttonBaseStyles = [
   "transition-colors",
   "focus-visible:outline-none",
   "focus-visible:ring-2",
-  "focus-visible:ring-slate-950",
+  "focus-visible:ring-sky-500",
   "focus-visible:ring-offset-2",
   "disabled:pointer-events-none",
   "disabled:opacity-50",
-  "dark:ring-offset-slate-950",
-  "dark:focus-visible:ring-slate-300",
+  "dark:ring-offset-[var(--surface-base)]",
+  "dark:focus-visible:ring-[var(--border-muted)]",
 ].join(" ");

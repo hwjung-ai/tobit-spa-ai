@@ -59,31 +59,31 @@ export function EnrichmentSection({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white">
+        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
           데이터 보강 (선택사항)
         </h3>
-        <span className="text-xs text-slate-500">{enrichments.length}개</span>
+        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>{enrichments.length}개</span>
       </div>
-      <p className="text-xs text-slate-400">
+      <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
         외부 데이터나 머신러닝 결과를 이벤트에 추가합니다
       </p>
 
       {enrichments.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-700 bg-slate-900/20 py-4 text-center">
-          <p className="text-xs text-slate-400">데이터 보강을 추가해주세요</p>
+        <div className="rounded-lg border border-dashed py-4 text-center" style={{ borderColor: "var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.2)" }}>
+          <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>데이터 보강을 추가해주세요</p>
         </div>
       ) : (
         <div className="space-y-3">
           {enrichments.map((enrichment) => (
             <div
               key={enrichment.id}
-              className="rounded-lg border border-slate-700 bg-slate-900/40 p-3 space-y-2"
+              className="rounded-lg p-3 space-y-2" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="flex-1">
-                  <label className="text-xs text-slate-400">타입</label>
+                  <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>타입</label>
                   <select
                     value={enrichment.type}
                     onChange={(e) =>
@@ -91,7 +91,7 @@ export function EnrichmentSection({
                         type: e.target.value as any,
                       })
                     }
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white mt-1"
+                    className="w-full rounded-lg px-2 py-1 text-xs mt-1" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                   >
                     {ENRICHMENT_TYPES.map((et) => (
                       <option key={et.value} value={et.value}>
@@ -120,7 +120,7 @@ export function EnrichmentSection({
                       })
                     }
                     placeholder="데이터 소스 (예: Redis key)"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                    className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                   />
                   <input
                     type="text"
@@ -131,7 +131,7 @@ export function EnrichmentSection({
                       })
                     }
                     placeholder="조회 키 (예: user_id)"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                    className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                   />
                 </>
               )}
@@ -146,7 +146,7 @@ export function EnrichmentSection({
                     })
                   }
                   placeholder="집계 기간 (예: 1h, 24h)"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                  className="w-full rounded-lg border   px-2 py-1 text-xs text-white placeholder-slate-500" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                 />
               )}
 
@@ -160,7 +160,7 @@ export function EnrichmentSection({
                     })
                   }
                   placeholder="모델명 (예: anomaly_detection_v1)"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                  className="w-full rounded-lg border   px-2 py-1 text-xs text-white placeholder-slate-500" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                 />
               )}
 
@@ -173,7 +173,7 @@ export function EnrichmentSection({
                   })
                 }
                 placeholder="출력 필드명 (예: user_name)"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                className="w-full rounded-lg border   px-2 py-1 text-xs text-white placeholder-slate-500" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
               />
             </div>
           ))}

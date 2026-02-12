@@ -68,7 +68,7 @@ export default function ErrorDistribution() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-slate-400 text-sm">
+      <div className="rounded-2xl border /70  p-6  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
         Loading error distribution...
       </div>
     );
@@ -90,17 +90,17 @@ export default function ErrorDistribution() {
   }));
 
   return (
-    <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
+    <div className="rounded-2xl border /70  p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Error Distribution</h3>
-        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Last 24h</span>
+        <span className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Last 24h</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
         <div className="flex justify-center">
           {pieData.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+            <div className="h-64 flex items-center justify-center  text-sm" style={{ color: "var(--muted-foreground)" }}>
               No errors
             </div>
           ) : (
@@ -138,7 +138,7 @@ export default function ErrorDistribution() {
         <div className="space-y-3">
           <h4 className="text-sm font-semibold text-white mb-4">Error Types</h4>
           {Object.entries(data.error_distribution).length === 0 ? (
-            <p className="text-sm text-slate-400">No errors recorded</p>
+            <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>No errors recorded</p>
           ) : (
             Object.entries(data.error_distribution).map(([type, count]) => {
               const total = data.total_errors || 1;
@@ -158,11 +158,11 @@ export default function ErrorDistribution() {
                     </div>
                     <div className="text-sm">
                       <span className="text-white font-semibold">{count}</span>
-                      <span className="text-slate-400 ml-2">({percentage.toFixed(1)}%)</span>
+                      <span className=" ml-2" style={{ color: "var(--muted-foreground)" }}>({percentage.toFixed(1)}%)</span>
                     </div>
                   </div>
 
-                  <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
                     <div
                       className="h-full"
                       style={{
@@ -179,10 +179,10 @@ export default function ErrorDistribution() {
       </div>
 
       {/* Summary */}
-      <div className="mt-6 p-4 rounded-lg bg-slate-950/40 border border-slate-800">
-        <p className="text-xs text-slate-400 mb-2">Total Errors</p>
+      <div className="mt-6 p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+        <p className="text-xs  mb-2" style={{ color: "var(--muted-foreground)" }}>Total Errors</p>
         <p className="text-3xl font-semibold text-white">{data.total_errors}</p>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-xs  mt-2" style={{ color: "var(--muted-foreground)" }}>
           in {data.period}
         </p>
       </div>

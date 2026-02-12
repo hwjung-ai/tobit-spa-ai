@@ -130,23 +130,23 @@ export default function ObservabilityDashboard() {
 
   if (!payload) {
     return (
-      <div className="rounded-3xl border border-slate-700 bg-slate-900/60 p-6 text-sm text-slate-300">
+      <div className="rounded-3xl border   p-6 text-sm " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
         Loading observability KPIs...
       </div>
     );
   }
 
   return (
-    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-slate-950 p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
+    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto bg-[var(--surface-base)] p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">Observability</h1>
-          <p className="text-sm text-slate-400">Trace & Regression 핵심 KPI를 한 화면에서 파악합니다.</p>
+          <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>Trace & Regression 핵심 KPI를 한 화면에서 파악합니다.</p>
         </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/80 text-slate-400 hover:border-slate-500 hover:text-slate-200 transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border  /80  hover: hover: transition-colors" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-base)" }}
             title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
             {isFullScreen ? (
@@ -163,29 +163,29 @@ export default function ObservabilityDashboard() {
         {summaryLabels.map((item, idx) => (
           <article
             key={item.label}
-            className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-5 text-white shadow-[0_10px_40px_rgba(15,23,42,0.5)]"
+            className="rounded-2xl border /70  p-5 text-white shadow-[0_10px_40px_rgba(15,23,42,0.5)]" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
           >
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
+            <p className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>{item.label}</p>
             <p className="mt-3 text-3xl font-semibold">{item.value}</p>
-            {idx === 0 && <p className="text-xs text-slate-400">Goal ≥ 96%</p>}
+            {idx === 0 && <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Goal ≥ 96%</p>}
           </article>
         ))}
       </section>
 
-      <section className="rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6">
+      <section className="rounded-3xl border /80  p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Latency & Tool Health</h2>
-          <span className="text-xs text-slate-400">last 24h</span>
+          <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>last 24h</span>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800/70 bg-slate-950/40 p-4">
-            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">p50 Latency</p>
+          <div className="rounded-2xl border /70 /40 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+            <p className="text-sm uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>p50 Latency</p>
             <p className="mt-2 text-3xl font-semibold text-white">
               {payload.latency.p50 ? `${payload.latency.p50} ms` : "—"}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-800/70 bg-slate-950/40 p-4">
-            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">p95 Latency</p>
+          <div className="rounded-2xl border /70 /40 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+            <p className="text-sm uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>p95 Latency</p>
             <p className="mt-2 text-3xl font-semibold text-white">
               {payload.latency.p95 ? `${payload.latency.p95} ms` : "—"}
             </p>
@@ -194,13 +194,13 @@ export default function ObservabilityDashboard() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6">
+        <article className="rounded-3xl border /70  p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Regression trend</h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">last 7 days</span>
+            <span className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>last 7 days</span>
           </div>
           {payload.regression_trend.length === 0 ? (
-            <div className="mt-4 text-sm text-slate-400">No regression runs in the last 7 days.</div>
+            <div className="mt-4 text-sm " style={{ color: "var(--muted-foreground)" }}>No regression runs in the last 7 days.</div>
           ) : (
             <div className="mt-4 h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -220,21 +220,21 @@ export default function ObservabilityDashboard() {
               </ResponsiveContainer>
             </div>
           )}
-          <div className="mt-5 flex flex-wrap gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
-            <span className="rounded-full border border-slate-700 px-3 py-1">Regression FAIL/WARN focus</span>
-            <span className="rounded-full border border-slate-700 px-3 py-1">Trend & RCA</span>
+          <div className="mt-5 flex flex-wrap gap-3 text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>
+            <span className="rounded-full border  px-3 py-1" style={{ borderColor: "var(--border)" }}>Regression FAIL/WARN focus</span>
+            <span className="rounded-full border  px-3 py-1" style={{ borderColor: "var(--border)" }}>Trend & RCA</span>
           </div>
         </article>
 
-        <article className="rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6">
+        <article className="rounded-3xl border /70  p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Regression breakdown</h2>
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">kpi</span>
+            <span className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>kpi</span>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+          <div className="mt-4 grid grid-cols-3 gap-3 text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>
             {(["PASS", "WARN", "FAIL"] as const).map((key) => (
-              <div key={key} className="rounded-2xl border border-slate-800/60 bg-slate-950/40 p-4 text-center">
-                <p className="text-[10px] text-slate-400">{key}</p>
+              <div key={key} className="rounded-2xl border /60 /40 p-4 text-center" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+                <p className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{key}</p>
                 <p
                   className={
                     "mt-2 text-3xl font-semibold " +
@@ -275,9 +275,9 @@ export default function ObservabilityDashboard() {
             </div>
           )}
 
-          <div className="mt-4 text-sm text-slate-300">
+          <div className="mt-4 text-sm " style={{ color: "var(--foreground-secondary)" }}>
             RCA Top Causes
-            <ul className="mt-2 space-y-2 text-xs text-slate-400">
+            <ul className="mt-2 space-y-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
               {payload.top_causes.length === 0 && <li>No causes collected yet.</li>}
               {payload.top_causes.map((cause) => (
                 <li key={cause.reason} className="flex justify-between">

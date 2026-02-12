@@ -48,14 +48,14 @@ export function ConditionsSection({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-white">조건 설정 (선택사항)</h3>
+        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>조건 설정 (선택사항)</h3>
         <div className="flex items-center gap-2">
           <select
             value={logic}
             onChange={(e) => onLogicChange(e.target.value as any)}
-            className="rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white"
+            className="rounded-lg px-2 py-1 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
           >
             <option value="AND">AND</option>
             <option value="OR">OR</option>
@@ -69,10 +69,10 @@ export function ConditionsSection({
           {conditions.map((condition, index) => (
             <div
               key={condition.id}
-              className="flex items-end gap-2 rounded-lg border border-slate-700 bg-slate-900/40 p-3"
+              className="flex items-end gap-2 rounded-lg p-3" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
             >
               <div className="flex-1 space-y-1">
-                <label className="text-xs text-slate-400">필드</label>
+                <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>필드</label>
                 <input
                   type="text"
                   value={condition.field}
@@ -80,17 +80,17 @@ export function ConditionsSection({
                     updateCondition(condition.id, { field: e.target.value })
                   }
                   placeholder="예: cpu_usage"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                  className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                 />
               </div>
               <div className="w-20 space-y-1">
-                <label className="text-xs text-slate-400">연산자</label>
+                <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>연산자</label>
                 <select
                   value={condition.op}
                   onChange={(e) =>
                     updateCondition(condition.id, { op: e.target.value })
                   }
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white"
+                  className="w-full rounded-lg border   px-2 py-1 text-xs text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
                 >
                   {OPERATORS.map((op) => (
                     <option key={op} value={op}>
@@ -100,7 +100,7 @@ export function ConditionsSection({
                 </select>
               </div>
               <div className="flex-1 space-y-1">
-                <label className="text-xs text-slate-400">값</label>
+                <label className="text-xs" style={{ color: "var(--muted-foreground)" }}>값</label>
                 <input
                   type="text"
                   value={condition.value}
@@ -108,7 +108,7 @@ export function ConditionsSection({
                     updateCondition(condition.id, { value: e.target.value })
                   }
                   placeholder="값 입력"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-2 py-1 text-xs text-white placeholder-slate-500"
+                  className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                 />
               </div>
               <button

@@ -237,7 +237,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
     <div className="space-y-4">
       {/* Header with Create Button */}
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-slate-100">Screen Assets</h2>
+        <h2 className="text-lg font-semibold " style={{ color: "var(--foreground)" }}>Screen Assets</h2>
         <button
           onClick={() => setShowCreateModal(true)}
           className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -268,27 +268,27 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="bg-slate-900 border border-slate-700 rounded-lg p-6 w-full max-w-md"
+            className=" border  rounded-lg p-6 w-full max-w-md" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
             onClick={e => e.stopPropagation()}
             data-testid="modal-create-screen"
           >
-            <h3 className="text-lg font-semibold text-slate-100 mb-4">Create New Screen</h3>
+            <h3 className="text-lg font-semibold  mb-4" style={{ color: "var(--foreground)" }}>Create New Screen</h3>
 
             <div className="space-y-4 max-h-96 overflow-y-auto">
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Choose Template (Optional)</label>
+                <label className="block text-sm  mb-2" style={{ color: "var(--foreground-secondary)" }}>Choose Template (Optional)</label>
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   {/* Blank Option */}
                   <button
                     onClick={() => setSelectedTemplate(null)}
                     className={`p-3 rounded border transition-all text-sm font-medium ${selectedTemplate === null
                       ? "bg-sky-600 border-sky-400 text-white"
-                      : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-700/50"
-                      }`}
+                      : "   hover: hover:"
+                      }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground-secondary)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                     data-testid="template-blank"
                   >
                     <div className="font-semibold">Blank</div>
-                    <div className={`text-xs mt-1 ${selectedTemplate === null ? "text-sky-100" : "text-slate-400"}`}>Start from scratch</div>
+                    <div className={`text-xs mt-1 ${selectedTemplate === null ? "text-sky-100" : ""}`} style={{ color: "var(--muted-foreground)" }}>Start from scratch</div>
                   </button>
 
                   {/* Template Options */}
@@ -298,12 +298,12 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       onClick={() => setSelectedTemplate(template.id)}
                       className={`p-3 rounded border transition-all text-sm font-medium ${selectedTemplate === template.id
                         ? "bg-sky-600 border-sky-400 text-white"
-                        : "bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600 hover:bg-slate-700/50"
-                        }`}
+                        : "   hover: hover:"
+                        }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground-secondary)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                       data-testid={`template-${template.id}`}
                     >
                       <div className="font-semibold">{template.name}</div>
-                      <div className={`text-xs mt-1 line-clamp-2 ${selectedTemplate === template.id ? "text-sky-100" : "text-slate-400"}`}>
+                      <div className={`text-xs mt-1 line-clamp-2 ${selectedTemplate === template.id ? "text-sky-100" : ""}`} style={{ color: "var(--muted-foreground)" }}>
                         {template.description}
                       </div>
                     </button>
@@ -312,47 +312,47 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               </div>
 
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Screen ID *</label>
+                <label className="block text-sm  mb-2" style={{ color: "var(--foreground-secondary)" }}>Screen ID *</label>
                 <input
                   type="text"
                   value={newScreenData.screen_id}
                   onChange={e => setNewScreenData({ ...newScreenData, screen_id: e.target.value })}
                   placeholder="e.g., dashboard_main"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500"
+                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
                   data-testid="input-screen-id"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Screen Name *</label>
+                <label className="block text-sm  mb-2" style={{ color: "var(--foreground-secondary)" }}>Screen Name *</label>
                 <input
                   type="text"
                   value={newScreenData.name}
                   onChange={e => setNewScreenData({ ...newScreenData, name: e.target.value })}
                   placeholder="e.g., Main Dashboard"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500"
+                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
                   data-testid="input-screen-name"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Description (Optional)</label>
+                <label className="block text-sm  mb-2" style={{ color: "var(--foreground-secondary)" }}>Description (Optional)</label>
                 <textarea
                   value={newScreenData.description}
                   onChange={e => setNewScreenData({ ...newScreenData, description: e.target.value })}
                   placeholder="e.g., Main dashboard for user overview"
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500 resize-none"
+                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500 resize-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
                   rows={3}
                   data-testid="input-screen-description"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-300 mb-2">Tags (Optional JSON)</label>
+                <label className="block text-sm  mb-2" style={{ color: "var(--foreground-secondary)" }}>Tags (Optional JSON)</label>
                 <textarea
                   value={newScreenData.tags}
                   onChange={e => setNewScreenData({ ...newScreenData, tags: e.target.value })}
                   placeholder='e.g., {"team":"ops","audience":"mobile"}'
-                  className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-100 text-sm focus:outline-none focus:border-sky-500 resize-none"
+                  className="w-full px-3 py-2  border  rounded  text-sm focus:outline-none focus:border-sky-500 resize-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
                   rows={2}
                   data-testid="input-screen-tags"
                 />
@@ -362,7 +362,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-lg transition-colors text-sm font-medium"
+                className="flex-1 px-4 py-2  hover:  rounded-lg transition-colors text-sm font-medium" style={{ color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
                 data-testid="btn-cancel-create"
               >
                 Cancel
@@ -389,7 +389,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
             setSearchTerm(e.target.value);
             updateUrlParams(e.target.value, filterStatus);
           }}
-          className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-sky-500"
+          className="flex-1 px-4 py-2  border  rounded-lg  text-sm focus:outline-none focus:border-sky-500" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
           data-testid="input-search-screens"
         />
 
@@ -399,7 +399,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
             setFilterStatus(e.target.value as "all" | "draft" | "published");
             updateUrlParams(searchTerm, e.target.value as "all" | "draft" | "published");
           }}
-          className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-100 text-sm focus:outline-none focus:border-sky-500"
+          className="px-4 py-2  border  rounded-lg  text-sm focus:outline-none focus:border-sky-500" style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-elevated)" }}
           data-testid="select-filter-status"
         >
           <option value="all">All Statuses</option>
@@ -422,11 +422,11 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
 
       {/* Screens List */}
       {!loading && filteredScreens.length === 0 && (
-        <div className="text-center py-12 bg-slate-900/40 rounded-lg border border-slate-800">
-          <svg className="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="text-center py-12  rounded-lg border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+          <svg className="w-12 h-12  mx-auto mb-3" style={{ color: "var(--muted-foreground)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H5a2 2 0 00-2 2v10a2 2 0 002 2h5M16 6h5a2 2 0 012 2v10a2 2 0 01-2 2h-5m-4-6h4" />
           </svg>
-          <p className="text-slate-400 text-sm">No screens found</p>
+          <p className=" text-sm" style={{ color: "var(--muted-foreground)" }}>No screens found</p>
         </div>
       )}
 
@@ -435,7 +435,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
           {filteredScreens.map((screen) => (
             <div
               key={screen.asset_id}
-              className="bg-slate-900/40 border border-slate-800 rounded-lg p-4 hover:border-slate-700 transition-colors"
+              className=" border  rounded-lg p-4 hover: transition-colors" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}
               data-testid={`screen-asset-${screen.asset_id}`}
             >
               <div className="flex items-start justify-between">
@@ -451,27 +451,27 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     <span
                       className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${screen.status === "published"
                         ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
-                        : "bg-slate-800/50 text-slate-400 border border-slate-700/50"
-                        }`}
+                        : "  border /50"
+                        }`} style={{ backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)", borderColor: "var(--border)" }}
                       data-testid={`status-badge-${screen.asset_id}`}
                     >
                       {screen.status}
                     </span>
                   </div>
-                  <p className="text-slate-500 text-sm mb-2">{screen.screen_id}</p>
+                  <p className=" text-sm mb-2" style={{ color: "var(--muted-foreground)" }}>{screen.screen_id}</p>
                   {screen.description && (
-                    <p className="text-slate-400 text-xs">{screen.description}</p>
+                    <p className=" text-xs" style={{ color: "var(--muted-foreground)" }}>{screen.description}</p>
                   )}
                 </div>
                 <div className="text-right flex flex-col items-end">
-                  <p className="text-slate-500 text-xs font-mono">v{screen.version}</p>
-                  <p className="text-slate-600 text-xs mb-3">
+                  <p className=" text-xs font-mono" style={{ color: "var(--muted-foreground)" }}>v{screen.version}</p>
+                  <p className=" text-xs mb-3" style={{ color: "var(--muted-foreground)" }}>
                     {new Date(screen.updated_at).toLocaleDateString()}
                   </p>
                   <div className="flex gap-2 justify-end">
                     <Link
                       href={`/admin/screens/${screen.asset_id}`}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-medium transition-colors text-center"
+                      className="px-3 py-1.5  hover:  rounded text-xs font-medium transition-colors text-center" style={{ color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
                       data-testid={`btn-edit-${screen.asset_id}`}
                     >
                       Edit

@@ -108,7 +108,7 @@ export default function ExecutionTimeline() {
       {/* Chart */}
       <div className="mb-6">
         {chartData.length === 0 ? (
-          <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+          <div className="h-64 flex items-center justify-center  text-sm" style={{ color: "var(--muted-foreground)" }}>
             No errors in selected period
           </div>
         ) : (
@@ -147,13 +147,13 @@ export default function ExecutionTimeline() {
 
       {/* Summary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="p-4 rounded-lg bg-slate-950/40 border border-slate-800">
-          <p className="text-xs text-slate-400 mb-1">Total Errors</p>
+        <div className="p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+          <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Total Errors</p>
           <p className="text-2xl font-semibold text-white">{timeline.total_errors}</p>
         </div>
         {Object.entries(timeline.error_distribution).map(([type, count]) => (
-          <div key={type} className="p-4 rounded-lg bg-slate-950/40 border border-slate-800">
-            <p className="text-xs text-slate-400 mb-1 capitalize">{type}</p>
+          <div key={type} className="p-4 rounded-lg /40 border " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+            <p className="text-xs  mb-1 capitalize" style={{ color: "var(--muted-foreground)" }}>{type}</p>
             <p className="text-2xl font-semibold text-white">{count}</p>
           </div>
         ))}
@@ -164,25 +164,25 @@ export default function ExecutionTimeline() {
         <h4 className="text-sm font-semibold text-white mb-3">Recent Errors</h4>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {timeline.recent_errors.length === 0 ? (
-            <p className="text-xs text-slate-400">No errors recorded</p>
+            <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>No errors recorded</p>
           ) : (
             timeline.recent_errors.map((err) => (
               <div
                 key={err.exec_id}
-                className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/50 hover:border-rose-500/50 transition"
+                className="p-3 rounded-lg /40 border /50 hover:border-rose-500/50 transition" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-white truncate">
                     {err.rule_name}
                   </span>
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                     {new Date(err.triggered_at).toLocaleTimeString()}
                   </span>
                 </div>
                 {err.error_message && (
                   <p className="text-xs text-rose-400 truncate">{err.error_message}</p>
                 )}
-                <p className="text-xs text-slate-500">
+                <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                   Duration: {err.duration_ms}ms
                 </p>
               </div>

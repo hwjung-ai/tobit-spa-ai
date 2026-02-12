@@ -54,9 +54,9 @@ export function WindowingSection({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-      <h3 className="text-sm font-semibold text-white">윈도우 설정 (선택사항)</h3>
-      <p className="text-xs text-slate-400">
+    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
+      <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>윈도우 설정 (선택사항)</h3>
+      <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
         데이터를 시간 단위로 분할하여 집계합니다
       </p>
 
@@ -65,7 +65,7 @@ export function WindowingSection({
           {WINDOW_TYPES.map((wt) => (
             <label
               key={wt.value}
-              className="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-900/40 p-3 cursor-pointer hover:bg-slate-900/60"
+              className="flex items-start gap-3 rounded-lg p-3 cursor-pointer" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
             >
               <input
                 type="radio"
@@ -76,8 +76,8 @@ export function WindowingSection({
                 className="mt-1 rounded"
               />
               <div className="flex-1">
-                <div className="text-xs font-medium text-white">{wt.label}</div>
-                <div className="text-xs text-slate-400">{wt.description}</div>
+                <div className="text-xs font-medium" style={{ color: "var(--foreground)" }}>{wt.label}</div>
+                <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>{wt.description}</div>
               </div>
             </label>
           ))}
@@ -96,7 +96,7 @@ export function WindowingSection({
                     size: e.target.value,
                   })
                 }
-                className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-white"
+                className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
               >
                 {TIME_UNITS.map((unit) => (
                   <option key={unit} value={unit}>
@@ -116,7 +116,7 @@ export function WindowingSection({
                       slide: e.target.value,
                     })
                   }
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-white"
+                  className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                 >
                   {TIME_UNITS.map((unit) => (
                     <option key={unit} value={unit}>
@@ -137,7 +137,7 @@ export function WindowingSection({
                       timeout: e.target.value,
                     })
                   }
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-white"
+                  className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
                 >
                   {TIME_UNITS.map((unit) => (
                     <option key={unit} value={unit}>
@@ -149,8 +149,8 @@ export function WindowingSection({
             )}
           </div>
 
-          <div className="rounded-lg border border-slate-700 bg-slate-900/20 p-3">
-            <p className="text-xs text-slate-300">
+          <div className="rounded-lg p-3" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.2)" }}>
+            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
               {windowConfig.type === "tumbling" &&
                 `✓ ${windowConfig.size} 크기의 윈도우로 데이터를 분할합니다`}
               {windowConfig.type === "sliding" &&

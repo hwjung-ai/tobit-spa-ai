@@ -154,10 +154,10 @@ export default function ScreenEditorHeader({
                   size="sm"
                   className={`
                     ${isSaving || !isDirty
-                      ? "cursor-not-allowed bg-slate-900/50 text-slate-400 border-slate-800/50"
-                      : "cursor-pointer bg-slate-800 text-white border-slate-500 hover:bg-slate-700"
+                      ? "cursor-not-allowed   /50"
+                      : "cursor-pointer  text-white 0 hover:"
                     }
-                  `}
+                  `} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                   data-testid="btn-save-draft"
                 >
                   {isSaving ? "Saving..." : "Save Draft"}
@@ -195,10 +195,10 @@ export default function ScreenEditorHeader({
                 }}
                 variant="outline"
                 size="sm"
-                className={`flex items-center gap-1 border-slate-700 ${status === "draft" || !assetId
-                  ? "cursor-not-allowed bg-slate-900/50 text-slate-400"
-                  : "bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-slate-600"
-                  }`}
+                className={`flex items-center gap-1  ${status === "draft" || !assetId
+                  ? "cursor-not-allowed  "
+                  : "  hover: hover:text-white hover:"
+                  }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                 disabled={status === "draft" || !assetId}
                 data-testid="btn-open-runtime"
               >
@@ -211,9 +211,9 @@ export default function ScreenEditorHeader({
                   disabled={ctaDisabled}
                   size="sm"
                   className={`text-[11px] uppercase tracking-wider ${ctaDisabled
-                    ? "cursor-not-allowed bg-slate-900/50 text-slate-400 border border-slate-800/50"
-                    : "bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
-                    }`}
+                    ? "cursor-not-allowed   border /50"
+                    : " hover: text-white border "
+                    }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                 >
                   Run Regression
                 </Button>
@@ -223,16 +223,16 @@ export default function ScreenEditorHeader({
                   variant="outline"
                   size="sm"
                   className={`flex items-center gap-1 ${ctaDisabled
-                    ? "cursor-not-allowed bg-slate-900/50 text-slate-400 border-slate-800/50"
-                    : "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white"
-                    }`}
+                    ? "cursor-not-allowed   /50"
+                    : "   hover: hover:text-white"
+                    }`} style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                 >
                   <ExternalLink className="w-3 h-3" />
                   <span className="text-[11px]">Open Inspector</span>
                 </Button>
               </div>
               {publishHint && (
-                <p className="text-[10px] text-slate-500">{publishHint}</p>
+                <p className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>{publishHint}</p>
               )}
             </div>
           </div>

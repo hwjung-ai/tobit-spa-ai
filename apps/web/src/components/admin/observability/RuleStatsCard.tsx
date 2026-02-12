@@ -104,13 +104,13 @@ export default function RuleStatsCard({ onRuleSelect }: RuleStatsCardProps) {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400">Avg Duration:</span>
+                  <span className="" style={{ color: "var(--muted-foreground)" }}>Avg Duration:</span>
                   <span className="text-white font-semibold">
                     {rule.avg_duration_ms.toFixed(2)}ms
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div className="flex-1 h-1.5 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
                     <div
                       className={`h-full ${
                         rule.error_rate > 0.1

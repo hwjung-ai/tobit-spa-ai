@@ -62,7 +62,7 @@ export default function AlertChannelStatus() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 text-slate-400 text-sm">
+      <div className="rounded-2xl border /70  p-6  text-sm" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
         Loading channel status...
       </div>
     );
@@ -77,20 +77,20 @@ export default function AlertChannelStatus() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6">
+    <div className="rounded-2xl border /70  p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Alert Channels</h3>
-        <span className="text-xs uppercase tracking-[0.2em] text-slate-400">Last 24h</span>
+        <span className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Last 24h</span>
       </div>
 
       <div className="space-y-4">
         {channels.length === 0 ? (
-          <p className="text-sm text-slate-400">No channels configured</p>
+          <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>No channels configured</p>
         ) : (
           channels.map((channel) => (
             <div
               key={channel.type}
-              className="p-4 rounded-lg border border-slate-800 bg-slate-950/40 hover:border-slate-700 transition"
+              className="p-4 rounded-lg border  /40 hover: transition" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between mb-4">
@@ -98,7 +98,7 @@ export default function AlertChannelStatus() {
                   <span className="text-2xl">{channelIcons[channel.type] || "📬"}</span>
                   <div>
                     <h4 className="text-white font-semibold">{channel.display_name}</h4>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                       {channel.active} active • {channel.inactive} inactive
                     </p>
                   </div>
@@ -119,17 +119,17 @@ export default function AlertChannelStatus() {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                 <div>
-                  <p className="text-slate-400 text-xs mb-1">Total Sent</p>
+                  <p className=" text-xs mb-1" style={{ color: "var(--muted-foreground)" }}>Total Sent</p>
                   <p className="text-white font-semibold">{channel.total_sent}</p>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-xs mb-1">Failed</p>
-                  <p className={channel.total_failed > 0 ? "text-rose-400 font-semibold" : "text-slate-400"}>
+                  <p className=" text-xs mb-1" style={{ color: "var(--muted-foreground)" }}>Failed</p>
+                  <p className={channel.total_failed > 0 ? "text-rose-400 font-semibold" : "text-[var(--muted-foreground)]"}>
                     {channel.total_failed}
                   </p>
                 </div>
                 <div>
-                  <p className="text-slate-400 text-xs mb-1">Failure Rate</p>
+                  <p className=" text-xs mb-1" style={{ color: "var(--muted-foreground)" }}>Failure Rate</p>
                   <p className="text-white font-semibold">
                     {(channel.failure_rate * 100).toFixed(1)}%
                   </p>
@@ -138,7 +138,7 @@ export default function AlertChannelStatus() {
 
               {/* Progress bar */}
               <div className="mb-4">
-                <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                <div className="h-2 rounded-full  overflow-hidden" style={{ backgroundColor: "var(--surface-elevated)" }}>
                   <div
                     className={`h-full ${
                       channel.failure_rate === 0
@@ -155,9 +155,9 @@ export default function AlertChannelStatus() {
               </div>
 
               {/* Last sent */}
-              <div className="text-xs text-slate-400">
+              <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                 Last sent:{" "}
-                <span className="text-slate-300">
+                <span className="" style={{ color: "var(--foreground-secondary)" }}>
                   {channel.last_sent_at
                     ? new Date(channel.last_sent_at).toLocaleTimeString()
                     : "Never"}

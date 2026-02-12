@@ -131,14 +131,15 @@ export default function HttpFormBuilder({
   return (
     <div className="space-y-4">
       {/* Mode Toggle */}
-      <div className="flex items-center gap-2 border-b border-slate-700 pb-3">
+      <div className="flex items-center gap-2 border-b pb-3" style={{ borderColor: "var(--border-muted)" }}>
         <button
           onClick={() => setViewMode("form")}
           className={`px-3 py-1 rounded-md text-xs font-medium transition ${
             viewMode === "form"
               ? "bg-sky-500/20 text-sky-300 border border-sky-500/50"
-              : "text-slate-400 hover:text-slate-300"
+              : ""
           }`}
+          style={viewMode !== "form" ? { color: "var(--muted-foreground)" } : undefined}
           disabled={isReadOnly}
         >
           Form Builder
@@ -148,7 +149,7 @@ export default function HttpFormBuilder({
           className={`px-3 py-1 rounded-md text-xs font-medium transition ${
             viewMode === "json"
               ? "bg-sky-500/20 text-sky-300 border border-sky-500/50"
-              : "text-slate-400 hover:text-slate-300"
+              : ""
           }`}
           disabled={isReadOnly}
         >
@@ -165,7 +166,7 @@ export default function HttpFormBuilder({
                 value={value.method}
                 onChange={(e) => onChange({ ...value, method: e.target.value as any })}
                 disabled={isReadOnly}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
               >
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
@@ -180,7 +181,7 @@ export default function HttpFormBuilder({
                 value={value.url}
                 onChange={(e) => onChange({ ...value, url: e.target.value })}
                 disabled={isReadOnly}
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-xl border px-3 py-2 text-sm outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
                 placeholder="https://api.example.com/endpoint"
               />
             </FormFieldGroup>
@@ -200,7 +201,7 @@ export default function HttpFormBuilder({
                     onChange={(e) => handleHeaderChange(idx, "key", e.target.value)}
                     disabled={isReadOnly}
                     placeholder="Header name (e.g., Authorization)"
-                    className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-lg border px-3 py-2 text-xs outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
                   />
                   <input
                     type="text"
@@ -208,7 +209,7 @@ export default function HttpFormBuilder({
                     onChange={(e) => handleHeaderChange(idx, "value", e.target.value)}
                     disabled={isReadOnly}
                     placeholder="Header value"
-                    className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-lg border px-3 py-2 text-xs outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
                   />
                   {!isReadOnly && (
                     <button
@@ -245,7 +246,7 @@ export default function HttpFormBuilder({
                     onChange={(e) => handleParamChange(idx, "key", e.target.value)}
                     disabled={isReadOnly}
                     placeholder="Parameter name"
-                    className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-lg border px-3 py-2 text-xs outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
                   />
                   <input
                     type="text"
@@ -253,7 +254,7 @@ export default function HttpFormBuilder({
                     onChange={(e) => handleParamChange(idx, "value", e.target.value)}
                     disabled={isReadOnly}
                     placeholder="Parameter value"
-                    className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-white outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex-1 rounded-lg border px-3 py-2 text-xs outline-none focus:border-sky-500 disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
                   />
                   {!isReadOnly && (
                     <button
@@ -285,7 +286,7 @@ export default function HttpFormBuilder({
                     value={value.body}
                     onChange={(e) => onChange({ ...value, body: e.target.value })}
                     disabled={isReadOnly}
-                    className="w-full h-32 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full h-32 rounded-lg border px-3 py-2 font-mono text-xs outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
                     placeholder='{"key": "value"}'
                   />
                 </FormFieldGroup>
@@ -297,7 +298,7 @@ export default function HttpFormBuilder({
         /* JSON View */
         <div className="space-y-3">
           <div>
-            <label className="text-xs uppercase tracking-normal text-slate-400">
+            <label className="text-xs uppercase tracking-normal" style={{ color: "var(--muted-foreground)" }}>
               Full HTTP Specification (JSON)
             </label>
             <textarea
@@ -328,7 +329,7 @@ export default function HttpFormBuilder({
                 }
               }}
               disabled={isReadOnly}
-              className="w-full h-64 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 font-mono text-xs text-white outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full h-64 rounded-lg border px-3 py-2 font-mono text-xs outline-none focus:border-sky-500 custom-scrollbar disabled:cursor-not-allowed disabled:opacity-60" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
             />
           </div>
         </div>

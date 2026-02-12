@@ -209,11 +209,11 @@ export default function PublishGateModal({
         <div className="max-h-96 overflow-y-auto">
           {isRunning ? (
             <div className="py-12 flex flex-col items-center justify-center gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
-              <span className="text-sm text-slate-600">Running validation checks...</span>
+              <Loader2 className="w-6 h-6 animate-spin text-[var(--muted-foreground)]" />
+              <span className="text-sm text-[var(--muted-foreground)]">Running validation checks...</span>
             </div>
           ) : checks.length === 0 ? (
-            <div className="py-8 text-center text-sm text-slate-500">
+            <div className="py-8 text-center text-sm text-[var(--foreground)]0">
               No checks completed
             </div>
           ) : (

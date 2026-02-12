@@ -211,7 +211,7 @@ export default function RegressionWatchPanel() {
       case "FAIL":
         return "text-red-400 bg-red-950";
       default:
-        return "text-slate-400 bg-slate-950";
+        return "text-[var(--muted-foreground)] bg-[var(--surface-base)]";
     }
   };
 
@@ -224,7 +224,7 @@ export default function RegressionWatchPanel() {
       )}
       {contextScreenId && (
         <Alert
-          className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-300"
+          className="rounded-lg border   px-4 py-3 text-sm " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}
         >
           <AlertDescription>
             Regression context: screen{" "}
@@ -249,35 +249,35 @@ export default function RegressionWatchPanel() {
         </div>
 
         {loading ? (
-          <div className="text-center text-slate-400">Loading...</div>
+          <div className="text-center " style={{ color: "var(--muted-foreground)" }}>Loading...</div>
         ) : queries.length === 0 ? (
-          <div className="text-center text-slate-400 py-8">
+          <div className="text-center  py-8" style={{ color: "var(--muted-foreground)" }}>
             No golden queries yet
           </div>
         ) : (
-          <div className="bg-slate-900/40 border border-slate-800 rounded-lg overflow-hidden">
+          <div className=" border  rounded-lg overflow-hidden" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/60">
-                  <th className="px-4 py-3 text-left text-slate-300">Name</th>
-                  <th className="px-4 py-3 text-left text-slate-300">Type</th>
-                  <th className="px-4 py-3 text-left text-slate-300">Query</th>
-                  <th className="px-4 py-3 text-center text-slate-300">Status</th>
-                  <th className="px-4 py-3 text-right text-slate-300">Actions</th>
+                <tr className="border-b  " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                  <th className="px-4 py-3 text-left " style={{ color: "var(--foreground-secondary)" }}>Name</th>
+                  <th className="px-4 py-3 text-left " style={{ color: "var(--foreground-secondary)" }}>Type</th>
+                  <th className="px-4 py-3 text-left " style={{ color: "var(--foreground-secondary)" }}>Query</th>
+                  <th className="px-4 py-3 text-center " style={{ color: "var(--foreground-secondary)" }}>Status</th>
+                  <th className="px-4 py-3 text-right " style={{ color: "var(--foreground-secondary)" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {queries.map((query) => (
-                  <tr key={query.id} className="border-b border-slate-800">
+                  <tr key={query.id} className="border-b " style={{ borderColor: "var(--border)" }}>
                     <td className="px-4 py-3 text-white font-medium">
                       {query.name}
                     </td>
-                    <td className="px-4 py-3 text-slate-300 text-xs">
-                      <span className="bg-slate-800 px-2 py-1 rounded">
+                    <td className="px-4 py-3  text-xs" style={{ color: "var(--foreground-secondary)" }}>
+                      <span className=" px-2 py-1 rounded" style={{ backgroundColor: "var(--surface-elevated)" }}>
                         {query.ops_type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-slate-300 truncate max-w-xs">
+                    <td className="px-4 py-3  truncate max-w-xs" style={{ color: "var(--foreground-secondary)" }}>
                       {query.query_text}
                     </td>
                     <td className="px-4 py-3 text-center">
@@ -286,8 +286,8 @@ export default function RegressionWatchPanel() {
                         className={`px-3 py-1 rounded text-xs font-medium ${
                           query.enabled
                             ? "bg-green-900 text-green-300"
-                            : "bg-slate-800 text-slate-300"
-                        }`}
+                            : " "
+                        }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}
                       >
                         {query.enabled ? "Enabled" : "Disabled"}
                       </button>
@@ -334,32 +334,32 @@ export default function RegressionWatchPanel() {
         <h3 className="text-lg font-semibold text-white">Recent Runs</h3>
 
         {runsLoading ? (
-          <div className="text-center text-slate-400">Loading...</div>
+          <div className="text-center " style={{ color: "var(--muted-foreground)" }}>Loading...</div>
         ) : runs.length === 0 ? (
-          <div className="text-center text-slate-400 py-8">
+          <div className="text-center  py-8" style={{ color: "var(--muted-foreground)" }}>
             No regression runs yet
           </div>
         ) : (
-          <div className="bg-slate-900/40 border border-slate-800 rounded-lg overflow-hidden">
+          <div className=" border  rounded-lg overflow-hidden" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-900/60">
-                  <th className="px-4 py-3 text-left text-slate-300">
+                <tr className="border-b  " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                  <th className="px-4 py-3 text-left " style={{ color: "var(--foreground-secondary)" }}>
                     Query
                   </th>
-                  <th className="px-4 py-3 text-center text-slate-300">
+                  <th className="px-4 py-3 text-center " style={{ color: "var(--foreground-secondary)" }}>
                     Result
                   </th>
-                  <th className="px-4 py-3 text-left text-slate-300">Reason</th>
-                  <th className="px-4 py-3 text-left text-slate-300">Time</th>
-                  <th className="px-4 py-3 text-right text-slate-300">Actions</th>
+                  <th className="px-4 py-3 text-left " style={{ color: "var(--foreground-secondary)" }}>Reason</th>
+                  <th className="px-4 py-3 text-left " style={{ color: "var(--foreground-secondary)" }}>Time</th>
+                  <th className="px-4 py-3 text-right " style={{ color: "var(--foreground-secondary)" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {runs.map((run) => {
                   const query = queries.find((q) => q.id === run.golden_query_id);
                   return (
-                    <tr key={run.id} className="border-b border-slate-800">
+                    <tr key={run.id} className="border-b " style={{ borderColor: "var(--border)" }}>
                       <td className="px-4 py-3 text-white font-medium">
                         {query?.name || "Unknown"}
                       </td>
@@ -372,10 +372,10 @@ export default function RegressionWatchPanel() {
                           {run.judgment}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-slate-300 text-xs truncate max-w-xs">
+                      <td className="px-4 py-3  text-xs truncate max-w-xs" style={{ color: "var(--foreground-secondary)" }}>
                         {run.verdict_reason || "-"}
                       </td>
-                      <td className="px-4 py-3 text-slate-400 text-xs">
+                      <td className="px-4 py-3  text-xs" style={{ color: "var(--muted-foreground)" }}>
                         {new Date(run.created_at).toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -399,7 +399,7 @@ export default function RegressionWatchPanel() {
 
       {/* Create Query Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="bg-slate-950 border-slate-800">
+        <DialogContent className=" " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
           <DialogHeader>
             <DialogTitle className="text-white">Create Golden Query</DialogTitle>
             <DialogDescription>
@@ -409,37 +409,37 @@ export default function RegressionWatchPanel() {
 
           <div className="space-y-4">
             <div>
-              <Label className="text-slate-300">Name</Label>
+              <Label className="" style={{ color: "var(--foreground-secondary)" }}>Name</Label>
               <Input
                 value={createForm.name}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, name: e.target.value })
                 }
                 placeholder="e.g., Device Health Check"
-                className="bg-slate-900 border-slate-700"
+                className=" " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               />
             </div>
 
             <div>
-              <Label className="text-slate-300">Query Text</Label>
+              <Label className="" style={{ color: "var(--foreground-secondary)" }}>Query Text</Label>
               <Input
                 value={createForm.query_text}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, query_text: e.target.value })
                 }
                 placeholder="The actual question..."
-                className="bg-slate-900 border-slate-700"
+                className=" " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               />
             </div>
 
             <div>
-              <Label className="text-slate-300">OPS Type</Label>
+              <Label className="" style={{ color: "var(--foreground-secondary)" }}>OPS Type</Label>
               <select
                 value={createForm.ops_type}
                 onChange={(e) =>
                   setCreateForm({ ...createForm, ops_type: e.target.value })
                 }
-                className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white"
+                className="w-full  border  rounded px-3 py-2 text-white" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               >
                 <option>all</option>
                 <option>config</option>
@@ -468,7 +468,7 @@ export default function RegressionWatchPanel() {
 
       {/* Set Baseline Dialog */}
       <Dialog open={showBaselineDialog} onOpenChange={setShowBaselineDialog}>
-        <DialogContent className="bg-slate-950 border-slate-800">
+        <DialogContent className=" " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
           <DialogHeader>
             <DialogTitle className="text-white">Set Baseline</DialogTitle>
             <DialogDescription>
@@ -478,14 +478,14 @@ export default function RegressionWatchPanel() {
 
           <div className="space-y-4">
             <div>
-              <Label className="text-slate-300">Trace ID</Label>
+              <Label className="" style={{ color: "var(--foreground-secondary)" }}>Trace ID</Label>
               <Input
                 value={baselineForm.trace_id}
                 onChange={(e) =>
                   setBaselineForm({ ...baselineForm, trace_id: e.target.value })
                 }
                 placeholder="Paste trace ID..."
-                className="bg-slate-900 border-slate-700 text-xs font-mono"
+                className="  text-xs font-mono" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}
               />
             </div>
           </div>
@@ -493,7 +493,7 @@ export default function RegressionWatchPanel() {
           <DialogFooter>
             <Button
               onClick={() => setShowBaselineDialog(false)}
-              className="bg-slate-700 hover:bg-slate-600 text-white"
+              className=" hover: text-white" style={{ backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
             >
               Cancel
             </Button>
@@ -510,7 +510,7 @@ export default function RegressionWatchPanel() {
 
       {/* Run Regression Dialog */}
       <Dialog open={showRunDialog} onOpenChange={setShowRunDialog}>
-        <DialogContent className="bg-slate-950 border-slate-800">
+        <DialogContent className=" " style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
           <DialogHeader>
             <DialogTitle className="text-white">Run Regression</DialogTitle>
             <DialogDescription>
@@ -530,7 +530,7 @@ export default function RegressionWatchPanel() {
           <DialogFooter>
             <Button
               onClick={() => setShowRunDialog(false)}
-              className="bg-slate-700 hover:bg-slate-600 text-white"
+              className=" hover: text-white" style={{ backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
             >
               Cancel
             </Button>
@@ -546,7 +546,7 @@ export default function RegressionWatchPanel() {
 
       {/* Run Detail Dialog */}
       <Dialog open={showRunDetail} onOpenChange={setShowRunDetail}>
-        <DialogContent className="bg-slate-950 border-slate-800 max-w-2xl">
+        <DialogContent className="  max-w-2xl" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
           <DialogHeader>
             <DialogTitle className="text-white">Regression Run Details</DialogTitle>
           </DialogHeader>
@@ -555,7 +555,7 @@ export default function RegressionWatchPanel() {
             <div className="space-y-4 max-h-[600px] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-slate-400">Judgment</p>
+                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Judgment</p>
                   <p
                     className={`text-lg font-bold ${getJudgmentColor(
                       selectedRun.judgment
@@ -565,7 +565,7 @@ export default function RegressionWatchPanel() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400">Duration</p>
+                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>Duration</p>
                   <p className="text-lg font-bold text-white">
                     {selectedRun.execution_duration_ms}ms
                   </p>
@@ -574,8 +574,8 @@ export default function RegressionWatchPanel() {
 
               {selectedRun.verdict_reason && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-1">Reason</p>
-                  <p className="text-sm text-slate-200">
+                  <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Reason</p>
+                  <p className="text-sm " style={{ color: "var(--foreground-secondary)" }}>
                     {selectedRun.verdict_reason}
                   </p>
                 </div>
@@ -583,7 +583,7 @@ export default function RegressionWatchPanel() {
 
               {/* RCA Panel - Root Cause Analysis */}
               {(selectedRun.judgment === "FAIL" || selectedRun.judgment === "WARN") && (
-                <div className="border-t border-slate-800 pt-4">
+                <div className="border-t  pt-4" style={{ borderColor: "var(--border)" }}>
                   <RCAPanel
                     baselineTraceId={selectedRun.baseline_trace_id}
                     candidateTraceId={selectedRun.candidate_trace_id}
@@ -593,16 +593,16 @@ export default function RegressionWatchPanel() {
 
               {selectedRun.diff_summary && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-2">Diff Summary</p>
+                  <p className="text-xs  mb-2" style={{ color: "var(--muted-foreground)" }}>Diff Summary</p>
                   <div className="space-y-1 text-xs">
                     {Object.entries(selectedRun.diff_summary).map(
                       ([key, value]) => (
                         <div
                           key={key}
-                          className="flex justify-between text-slate-300"
+                          className="flex justify-between " style={{ color: "var(--foreground-secondary)" }}
                         >
                           <span>{key}:</span>
-                          <span className="text-slate-400">
+                          <span className="" style={{ color: "var(--muted-foreground)" }}>
                             {String(value)}
                           </span>
                         </div>
@@ -613,16 +613,16 @@ export default function RegressionWatchPanel() {
               )}
 
               <div>
-                <p className="text-xs text-slate-400 mb-1">Traces</p>
+                <p className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Traces</p>
                 <div className="space-y-1 text-xs">
                   <div className="flex gap-2">
-                    <span className="text-slate-400">Baseline:</span>
+                    <span className="" style={{ color: "var(--muted-foreground)" }}>Baseline:</span>
                     <code className="text-blue-400 font-mono truncate">
                       {selectedRun.baseline_trace_id}
                     </code>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-slate-400">Candidate:</span>
+                    <span className="" style={{ color: "var(--muted-foreground)" }}>Candidate:</span>
                     <code className="text-green-400 font-mono truncate">
                       {selectedRun.candidate_trace_id}
                     </code>

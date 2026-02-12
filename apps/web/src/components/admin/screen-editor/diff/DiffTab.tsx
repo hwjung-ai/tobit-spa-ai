@@ -20,14 +20,14 @@ export default function DiffTab() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
-          <div className="text-sm text-slate-500">No screen loaded</div>
+          <div className="text-sm text-[var(--foreground)]0">No screen loaded</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-950 text-slate-100">
+    <div className="h-full flex flex-col bg-[var(--surface-base)] text-[var(--foreground)]">
       <DiffControls />
       <DiffSummary diff={diff} />
       <DiffViewer diff={diff} />

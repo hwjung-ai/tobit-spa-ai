@@ -107,21 +107,21 @@ export default function ScreenEditorCopilotPanel({
 
   return (
     <div
-      className="flex h-full flex-col border-l border-slate-800 bg-slate-950 text-slate-100 transition-all duration-200"
+      className="flex h-full flex-col border-l  transition-all duration-200" style={{ color: "var(--foreground)" ,  borderLeft: "1px solid var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
       data-testid="copilot-panel"
     >
-      <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+      <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderBottom: "1px solid var(--border)" }}>
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Copilot</p>
-          <p className="text-[11px] text-slate-300">Patch suggestions</p>
+          <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Copilot</p>
+          <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Patch suggestions</p>
         </div>
-        <span className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
+        <span className="text-[11px] uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
           {previewStatusLabel}
         </span>
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-        <div className="space-y-1 text-[10px] text-slate-500">
+        <div className="space-y-1 text-[10px]" style={{ color: "var(--muted-foreground)" }}>
           <p>Screen ID: {screenId}</p>
           <p>Stage: {stage}</p>
           <p>Summary: {schemaSummary}</p>
@@ -133,7 +133,8 @@ export default function ScreenEditorCopilotPanel({
           value={inputValue}
           onChange={(event) => setInputValue(event.target.value)}
           placeholder="Describe what you want to change..."
-          className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
         />
 
         <button
@@ -144,9 +145,9 @@ export default function ScreenEditorCopilotPanel({
           Generate Proposal
         </button>
 
-        <div className="space-y-1 rounded-2xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-300">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Patch output (RFC6902)</p>
-          <p className="text-[10px] text-slate-500">
+        <div className="space-y-1 rounded-2xl border p-3 text-xs" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" }}>
+          <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Patch output (RFC6902)</p>
+          <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>
             Provide a JSON Patch array (or wrap it in {"{"} patch: [...] {"}"}) referencing ScreenSchemaV1.
           </p>
           <Textarea
@@ -156,7 +157,8 @@ export default function ScreenEditorCopilotPanel({
               setLocalError(null);
             }}
             placeholder='e.g. [{"op":"replace","path":"/components/0/props/label","value":"New"}]'
-            className="max-h-48 w-full rounded-xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[10px] font-mono text-slate-100 outline-none"
+            className="max-h-48 w-full rounded-xl border px-3 py-2 text-[10px] font-mono outline-none"
+            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
           />
         </div>
 
@@ -167,10 +169,13 @@ export default function ScreenEditorCopilotPanel({
         )}
       </div>
 
-      <div className="border-t border-slate-800 px-4 py-3 space-y-2">
+      <div className="px-4 py-3 space-y-2" style={{ borderTop: "1px solid var(--border)" }}>
         <button
           onClick={handlePreviewToggle}
-          className="w-full rounded-2xl bg-slate-800 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-slate-700"
+          className="w-full rounded-2xl px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition"
+          style={{ backgroundColor: "var(--surface-elevated)" }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--surface-overlay)"}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--surface-elevated)"}
         >
           {previewEnabled ? "Hide Preview" : "Preview Patch"}
         </button>
@@ -182,7 +187,10 @@ export default function ScreenEditorCopilotPanel({
         </button>
         <button
           onClick={handleDiscard}
-          className="w-full rounded-2xl border border-slate-700 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 transition hover:border-slate-500"
+          className="w-full rounded-2xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition"
+          style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border)"}
         >
           Discard Proposal
         </button>

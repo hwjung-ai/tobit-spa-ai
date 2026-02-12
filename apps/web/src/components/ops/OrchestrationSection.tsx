@@ -34,13 +34,13 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
   };
 
   return (
-    <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 space-y-3">
+    <section className=" border  rounded-2xl p-5 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-slate-500">Orchestration</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] " style={{ color: "var(--muted-foreground)" }}>Orchestration</p>
           {orchestrationTrace && (
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
               {orchestrationTrace.total_groups} group{orchestrationTrace.total_groups !== 1 ? 's' : ''} •{' '}
               {orchestrationTrace.total_tools} tool{orchestrationTrace.total_tools !== 1 ? 's' : ''}
             </span>
@@ -50,7 +50,7 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
         {/* View mode toggle */}
         {orchestrationTrace && (
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1 bg-slate-950 rounded-lg p-1">
+            <div className="flex gap-1  rounded-lg p-1" style={{ backgroundColor: "var(--surface-base)" }}>
               <button
                 onClick={() => {
                   setViewMode('timeline');
@@ -58,9 +58,9 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                 }}
                 className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${
                   viewMode === 'timeline'
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-400 hover:text-slate-300'
-                }`}
+                    ? ' text-white'
+                    : ' hover:'
+                }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
               >
                 Timeline
               </button>
@@ -71,9 +71,9 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                 }}
                 className={`px-3 py-1 rounded text-[10px] uppercase tracking-[0.2em] transition-colors ${
                   viewMode === 'graph'
-                    ? 'bg-slate-700 text-white'
-                    : 'text-slate-400 hover:text-slate-300'
-                }`}
+                    ? ' text-white'
+                    : ' hover:'
+                }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)" }}
               >
                 Graph
               </button>
@@ -105,23 +105,23 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
 
           {/* Tool Details Panel */}
           {selectedTool && (
-            <div className="bg-slate-950/40 border border-slate-700/50 rounded-lg p-4 space-y-3">
-              <div className="text-sm font-semibold text-slate-200">Tool: {selectedTool}</div>
+            <div className="/40 border /50 rounded-lg p-4 space-y-3" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+              <div className="text-sm font-semibold " style={{ color: "var(--foreground-secondary)" }}>Tool: {selectedTool}</div>
 
               {orchestrationTrace.execution_groups.map((group) => {
                 const tool = group.tools.find((t) => t.tool_id === selectedTool);
                 if (!tool) return null;
 
                 return (
-                  <div key={selectedTool} className="space-y-3 text-xs text-slate-400">
+                  <div key={selectedTool} className="space-y-3 text-xs " style={{ color: "var(--muted-foreground)" }}>
                     <div>
-                      <p className="text-slate-500 font-semibold mb-1">Type</p>
-                      <p className="text-slate-300">{tool.tool_type}</p>
+                      <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Type</p>
+                      <p className="" style={{ color: "var(--foreground-secondary)" }}>{tool.tool_type}</p>
                     </div>
 
                     {tool.depends_on.length > 0 && (
                       <div>
-                        <p className="text-slate-500 font-semibold mb-1">Dependencies</p>
+                        <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Dependencies</p>
                         <div className="flex flex-wrap gap-2">
                           {tool.depends_on.map((dep) => (
                             <span
@@ -137,11 +137,11 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
 
                     {Object.keys(tool.output_mapping).length > 0 && (
                       <div>
-                        <p className="text-slate-500 font-semibold mb-1">Data Flow Mappings</p>
+                        <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Data Flow Mappings</p>
                         <div className="space-y-1">
                           {Object.entries(tool.output_mapping).map(([key, value]) => (
                             <div key={key} className="flex items-start gap-2">
-                              <span className="text-slate-500 font-mono">{key}:</span>
+                              <span className=" font-mono" style={{ color: "var(--muted-foreground)" }}>{key}:</span>
                               <code className="text-emerald-400 font-mono break-all">{value as string}</code>
                             </div>
                           ))}
@@ -150,8 +150,8 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                     )}
 
                     <div>
-                      <p className="text-slate-500 font-semibold mb-1">Execution Group</p>
-                      <p className="text-slate-300">Group {group.group_index}</p>
+                      <p className=" font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>Execution Group</p>
+                      <p className="" style={{ color: "var(--foreground-secondary)" }}>Group {group.group_index}</p>
                     </div>
                   </div>
                 );

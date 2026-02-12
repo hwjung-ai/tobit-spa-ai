@@ -547,15 +547,16 @@ export default function SimPage() {
   );
 
   return (
-    <div className="space-y-6 py-6" style={{ backgroundColor: "var(--surface-base)" }}>
+    <div className="space-y-6 py-6" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}>
       {/* Header Section */}
-      <section className="rounded-2xl border p-6 shadow-sm" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+      <section className="rounded-2xl border p-6 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
         <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Simulation</p>
         <h1 className="mt-2 text-2xl font-semibold" style={{ color: "var(--foreground)" }}>SIM Workspace</h1>
         <p className="mt-2 max-w-4xl text-sm" style={{ color: "var(--muted-foreground)" }}>
           질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다.
         </p>
       </section>
+  +++++++ REPLACE
 
       {/* Main Content Grid */}
       <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">

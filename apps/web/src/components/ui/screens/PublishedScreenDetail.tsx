@@ -83,7 +83,7 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center text-slate-400">
+      <div className="rounded-xl border   p-6 text-center " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
         Loading screen...
       </div>
     );
@@ -100,30 +100,30 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex-shrink-0">
+      <div className="rounded-2xl border   p-4 flex-shrink-0" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-overlay)" }}>
         <h2 className="text-lg font-semibold text-white">
           {asset.name || asset.screen_id}
         </h2>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
           Screen ID: {asset.screen_id} · Version {asset.version}
         </p>
         {asset.description && (
-          <p className="text-sm text-slate-400 mt-1">{asset.description}</p>
+          <p className="text-sm  mt-1" style={{ color: "var(--muted-foreground)" }}>{asset.description}</p>
         )}
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
           Published: {formatTimestamp(asset.published_at)} · Last update: {formatTimestamp(asset.updated_at)}
         </p>
         {asset.tags && Object.keys(asset.tags).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {Object.entries(asset.tags).map(([key, value]) => (
-              <span key={key} className="rounded-full border border-slate-700 px-2 py-0.5 text-[11px] text-slate-300">
+              <span key={key} className="rounded-full border  px-2 py-0.5 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}>
                 {key}: {String(value)}
               </span>
             ))}
           </div>
         )}
       </div>
-      <div className="flex-1 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+      <div className="flex-1 overflow-auto rounded-2xl border  /70 p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
         <UIScreenRenderer
           block={previewBlock!}
           schemaOverride={(typeof asset.schema_json === "object" && asset.schema_json !== null && "screen_id" in asset.schema_json)

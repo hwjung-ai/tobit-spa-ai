@@ -136,7 +136,8 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-2.5 text-slate-500"
+            className="absolute right-3 top-2.5"
+            style={{ color: "var(--muted-foreground)" }}
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -165,14 +166,16 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           {Object.keys(changes).length > 0 && (
             <button
               onClick={() => setChanges({})}
-              className="px-4 py-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300"
+              className="px-4 py-2 rounded-lg hover:opacity-90"
+              style={{ color: "var(--foreground)", backgroundColor: "var(--muted-background)" }}
             >
               Cancel
             </button>
           )}
           <button
             onClick={handleResetDefaults}
-            className="px-4 py-2 flex items-center space-x-2 text-slate-700 bg-slate-200 rounded-lg hover:bg-slate-300"
+            className="px-4 py-2 flex items-center space-x-2 rounded-lg hover:opacity-90"
+            style={{ color: "var(--foreground)", backgroundColor: "var(--muted-background)" }}
           >
             <RotateCcw className="w-4 h-4" />
             <span>Reset Defaults</span>
@@ -207,8 +210,9 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                 className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
                   selectedCategory === category
                     ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
-                    : 'text-slate-700 hover:bg-slate-50'
+                    : ''
                 }`}
+                style={selectedCategory === category ? {} : { color: "var(--foreground)" }}
               >
                 <span className="capitalize">{category}</span>
               </button>
@@ -224,7 +228,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               </div>
             ) : currentSettings.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">No settings in this category</p>
+              <p className="text-center py-8" style={{ color: "var(--muted-foreground)" }}>No settings in this category</p>
             ) : (
               currentSettings.map((setting) => {
                 const settingKey = setting.key;
@@ -234,7 +238,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
 
                 return (
                   <div key={settingKey} className="border-b pb-4 last:border-b-0">
-                    <label className="block text-sm font-semibold text-slate-900 mb-2">
+                    <label className="block text-sm font-semibold mb-2" style={{ color: "var(--foreground)" }}>
                       {settingKey
                         .replace(/_/g, ' ')
                         .replace(/([A-Z])/g, ' $1')
@@ -248,7 +252,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                           .slice(1)
                       }
                     </label>
-                    <p className="text-xs text-slate-500 mb-2">Setting: {settingKey}</p>
+                    <p className="text-xs mb-2" style={{ color: "var(--muted-foreground)" }}>Setting: {settingKey}</p>
                     <div className={`mb-2 ${hasChanged ? 'p-3 bg-blue-50 rounded' : ''}`}>
                       {renderSettingInput(settingKey, settingValue, currentValue)}
                     </div>

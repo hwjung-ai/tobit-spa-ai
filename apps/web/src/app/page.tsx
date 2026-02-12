@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authenticatedFetch } from "@/lib/apiClient/index";
+import { cn } from "@/lib/utils";
 
 type ChunkType = "answer" | "summary" | "detail" | "done" | "error";
 
@@ -49,28 +50,21 @@ interface ReferenceItem {
   score?: number;
 }
 
-// Badge style helper using CSS variables for dark mode support
-const getBadgeStyle = (type: ChunkType): React.CSSProperties => {
-  const base: React.CSSProperties = {
-    borderRadius: "var(--radius-xl)",
-    borderWidth: "1px",
-    borderStyle: "solid",
-    padding: "3px 12px",
-    fontSize: "12px",
-  };
+// Badge style helper using Tailwind classes for dark mode support
+const getBadgeClasses = (type: ChunkType): string => {
   switch (type) {
     case "answer":
-      return { ...base, backgroundColor: "var(--primary)", color: "var(--primary-foreground)", borderColor: "var(--primary-dark)" };
+      return "bg-sky-600 text-white border-sky-700";
     case "summary":
-      return { ...base, backgroundColor: "#fef3c7", color: "#78350f", borderColor: "#fde68a" }; // amber
+      return "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800";
     case "detail":
-      return { ...base, backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)" };
+      return "bg-[var(--surface-elevated)] text-[var(--foreground)] border-[var(--border)] dark:bg-[var(--surface-base)] dark:text-[var(--foreground)] dark:border-[var(--border)]";
     case "done":
-      return { ...base, backgroundColor: "#dcfce7", color: "#14532d", borderColor: "#bbf7d0" }; // emerald
+      return "bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800";
     case "error":
-      return { ...base, backgroundColor: "#ffe4e6", color: "#881337", borderColor: "#fecdd3" }; // rose
+      return "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800";
     default:
-      return base;
+      return "bg-[var(--surface-elevated)] text-[var(--foreground)] border-[var(--border)] dark:bg-[var(--surface-base)] dark:text-[var(--foreground)] dark:border-[var(--border)]";
   }
 };
 
@@ -103,7 +97,6 @@ export default function Home() {
     setThreadsError(null);
     try {
       const payload = await authenticatedFetch<ThreadRead[] | { data: ThreadRead[] }>(`/threads`);
-      // Handle both direct array response and wrapped { data: [...] } response
       const threadList = Array.isArray(payload) ? payload : (payload.data ?? []);
       setThreads(threadList);
     } catch (error: unknown) {
@@ -124,7 +117,6 @@ export default function Home() {
   const fetchThreadDetail = useCallback(
     async (threadId: string) => {
       const payload = await authenticatedFetch<ThreadDetail | { data: ThreadDetail }>(`/threads/${threadId}`);
-      // Handle both direct response and wrapped { data: ... } response
       const detail = (payload as { data?: ThreadDetail }).data ?? (payload as ThreadDetail);
       setActiveThread(detail);
       setThreads((prev) => {
@@ -187,7 +179,6 @@ export default function Home() {
       method: "POST",
       body: JSON.stringify({ title: "New conversation" }),
     });
-    // Handle both direct response and wrapped { data: ... } response
     const thread = (payload as { data?: ThreadDetail }).data ?? (payload as ThreadDetail);
     setThreads((prev) => [thread, ...prev.filter((item) => item.id !== thread.id)]);
     setActiveThread(thread);
@@ -213,11 +204,9 @@ export default function Home() {
     const threadParam = `&thread_id=${thread.id}`;
     const token = localStorage.getItem("access_token");
 
-    // Build SSE URL - use Next.js API proxy for SSE to avoid firewall issues
     let streamUrl: string;
     if (!apiBaseUrl) {
       streamUrl = `/sse-proxy/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
-
     } else {
       streamUrl = `${apiBaseUrl}/chat/stream?message=${encodedPrompt}${threadParam}${token ? `&token=${token}` : ''}`;
     }
@@ -309,21 +298,18 @@ export default function Home() {
   }, [activeThread]);
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ backgroundColor: "var(--surface-elevated)" }}>
-      <div className="flex flex-1 gap-6 py-6" style={{ backgroundColor: "var(--background)" }}>
+    <div className="min-h-screen flex flex-col dark: dark:" style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-base)", color: "var(--foreground)", color: "var(--foreground)"  }}>
+      <div className="flex flex-1 gap-6 py-6">
         {historyVisible ? (
-          <aside className="w-[320px] space-y-4 rounded-2xl border p-4 shadow-md" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
+          <aside className="w-[320px] space-y-4 rounded-2xl border p-4 shadow-md dark: dark:" style={{ backgroundColor: "var(--surface-base)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider">History</p>
+              <p className="text-xs font-semibold uppercase tracking-wider dark:" style={{ color: "var(--foreground)", color: "var(--foreground)"  }}>History</p>
               {loadingThreads ? (
-                <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>Loading...</span>
+                <span className="text-xs 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Loading...</span>
               ) : null}
               <button
                 onClick={fetchThreads}
-                className="rounded-md border px-2 py-1 text-[10px] uppercase tracking-wider transition"
-                style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; e.currentTarget.style.backgroundColor = "transparent"; }}
+                className="rounded-md border px-2 py-1 text-[10px] uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)"  }}
               >
                 Refresh
               </button>
@@ -338,39 +324,30 @@ export default function Home() {
               {threads.map((thread) => (
                 <div
                   key={thread.id}
-                  className="group relative flex w-full flex-col rounded-2xl border px-3 py-3 transition"
+                  className={cn(
+                    "group relative flex w-full flex-col rounded-2xl border px-3 py-3 transition cursor-pointer",
+                    activeThread?.id === thread.id ? "border-sky-600 dark:border-sky-500" : ""
+                  )}
                   style={{
-                    backgroundColor: activeThread?.id === thread.id ? "var(--surface-elevated)" : "var(--surface-base)",
-                    borderColor: activeThread?.id === thread.id ? "var(--primary)" : "var(--border)",
-                    color: activeThread?.id === thread.id ? "var(--foreground)" : "var(--foreground)"
+                    backgroundColor: activeThread?.id === thread.id
+                      ? "var(--surface-elevated)"
+                      : "var(--background)",
+                    borderColor: activeThread?.id === thread.id
+                      ? ""
+                      : "var(--border)"
                   }}
-                  onMouseEnter={(e) => {
-                    if (activeThread?.id !== thread.id) {
-                      e.currentTarget.style.borderColor = "var(--border-muted)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (activeThread?.id !== thread.id) {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }
-                  }}
+                  onClick={() => selectThread(thread.id)}
                 >
-                  <button
-                    className="text-left"
-                    onClick={() => selectThread(thread.id)}
-                  >
+                  <div className="text-left">
                     <p className="font-semibold text-sm">{thread.title}</p>
-                    <p className="text-xs">{formatTimestamp(thread.updated_at)}</p>
-                  </button>
+                    <p className="text-xs dark:" style={{ color: "var(--muted-foreground)", color: "var(--muted-foreground)"  }}>{formatTimestamp(thread.updated_at)}</p>
+                  </div>
                   <button
-                    className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border text-[10px]"
-                    style={{ borderColor: "#fb7185", color: "#e11d48" }}
+                    className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border text-[10px] text-rose-600 border-rose-400 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-500 dark:hover:bg-rose-950/30"
                     onClick={(event) => {
                       event.stopPropagation();
                       deleteThread(thread.id);
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fef2f2"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                     aria-label="Delete thread"
                   >
                     X
@@ -381,35 +358,26 @@ export default function Home() {
           </aside>
         ) : null}
 
-        <main
-          className={`flex flex-1 flex-col gap-6 transition-all ${historyVisible ? "" : "w-full"
-            }`}
-        >
+        <main className={cn("flex flex-1 flex-col gap-6 transition-all", !historyVisible && "w-full")}>
           {/* Header Section */}
-          <div className="flex flex-col gap-3 rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+          <div className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{ backgroundColor: "var(--surface-base)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-lg font-semibold">Streaming Assistant</h1>
-                <p className="text-sm">
+                <h1 className="text-lg font-semibold dark:" style={{ color: "var(--foreground)", color: "var(--foreground)"  }}>Streaming Assistant</h1>
+                <p className="text-sm dark:" style={{ color: "var(--muted-foreground)", color: "var(--muted-foreground)"  }}>
                   메시지 기반 대화 기록을 저장하고, SSE로 Assistant 답변을 받습니다.
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setHistoryVisible((prev) => !prev)}
-                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition"
-                  style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.borderColor = "var(--border-muted)"; }}
+                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)"  }}
                 >
                   {historyVisible ? "Hide history" : "Show history"}
                 </button>
                 <button
                   onClick={startNewConversation}
-                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition"
-                  style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; e.currentTarget.style.borderColor = "var(--border)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.borderColor = "var(--border-muted)"; }}
+                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)"  }}
                 >
                   New conversation
                 </button>
@@ -418,25 +386,21 @@ export default function Home() {
           </div>
 
           {/* Input Section */}
-          <section className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{ backgroundColor: "var(--surface-base)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="flex flex-col gap-2 text-sm">
+              <label className="flex flex-col gap-2 text-sm dark:" style={{ color: "var(--foreground-secondary)", color: "var(--foreground)"  }}>
                 질문 입력
                 <input
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
-                  className="w-full rounded-2xl border px-4 py-3 text-base outline-none transition"
-                  style={{ borderColor: "var(--border-muted)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
-                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
-                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; }}
+                  className="w-full rounded-2xl border px-4 py-3 text-base outline-none transition focus:border-sky-500 dark: dark: dark:text-white dark:focus:border-sky-400" style={{ backgroundColor: "var(--surface-overlay)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}
                   placeholder="예: 새 프로젝트의 방향성을 요약해줘"
                 />
               </label>
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition disabled:opacity-40"
-                  style={{ backgroundColor: "var(--primary)" }}
+                  className="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-sky-500 disabled:opacity-40 dark:bg-sky-700 dark:hover:bg-sky-600"
                   disabled={!inputValue.trim() || status === "streaming"}
                 >
                   <span className={status === "streaming" ? "animate-pulse" : ""}>
@@ -444,14 +408,22 @@ export default function Home() {
                   </span>
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-wider ${status === "streaming" ? "animate-pulse" : ""}`}
-                  style={{ color: status === "error" ? "#e11d48" : "var(--muted-foreground)" }}
+                  className={cn(
+                    "text-xs uppercase tracking-wider",
+                    status === "streaming" && "animate-pulse"
+                  )}
                 >
-                  {status === "streaming" ? "SSE live" : status === "idle" ? "Ready" : "Error"}
+                  {status === "streaming" ? (
+                    <span className="text-sky-600 dark:text-sky-400">SSE live</span>
+                  ) : status === "idle" ? (
+                    <span className="0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Ready</span>
+                  ) : (
+                    <span className="text-rose-600 dark:text-rose-400">Error</span>
+                  )}
                 </span>
               </div>
             </form>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs" style={{ color: "var(--muted-foreground)" }}>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>
               <span>API: {apiBaseUrl}</span>
               <span>SSE</span>
               <span>chat/stream</span>
@@ -460,27 +432,25 @@ export default function Home() {
           </section>
 
           {/* Stream Feed Section */}
-          <section className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
-            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Stream feed</p>
-            <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--border)", paddingTop: "12px" }}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{ backgroundColor: "var(--surface-base)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}>
+            <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Stream feed</p>
+            <div className="mt-3 flex flex-col gap-3 border-t pt-3 dark:" style={{ borderColor: "var(--border)", borderColor: "var(--border)"  }}>
               {chunks.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Streaming responses will appear here.</p>
+                <p className="text-sm 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Streaming responses will appear here.</p>
               ) : null}
               {chunks.map((chunk, index) => (
                 <div
                   key={`${chunk.type}-${index}`}
-                  className="space-y-1 rounded-2xl border p-3 text-sm"
-                  style={{ ...getBadgeStyle(chunk.type), padding: "12px" }}
+                  className={cn("space-y-1 rounded-2xl border p-3 text-sm", getBadgeClasses(chunk.type))}
                 >
                   <span
-                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
-                    style={getBadgeStyle(chunk.type)}
+                    className={cn("inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs", getBadgeClasses(chunk.type))}
                   >
                     {chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--foreground)" }}>{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed dark:" style={{ color: "var(--foreground)", color: "var(--foreground)"  }}>{chunk.text}</p>
                   {chunk.thread_id ? (
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Thread: {chunk.thread_id}</p>
+                    <p className="text-xs 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Thread: {chunk.thread_id}</p>
                   ) : null}
                 </div>
               ))}
@@ -488,41 +458,35 @@ export default function Home() {
           </section>
 
           {/* References Section */}
-          <section className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{ backgroundColor: "var(--surface-base)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>References</p>
+              <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>References</p>
               <button
                 onClick={() => setReferences([])}
-                className="text-[10px] uppercase tracking-wider transition"
-                style={{ color: "var(--muted-foreground)" }}
-                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted-foreground)"; }}
+                className="text-[10px] uppercase tracking-wider transition 0 hover: dark: dark:hover:" style={{ color: "var(--foreground)", color: "var(--foreground-secondary)", color: "var(--muted-foreground)", color: "var(--foreground)"  }}
               >
                 Clear
               </button>
             </div>
             <div className="mt-3 space-y-3">
               {references.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>References from latest document chat will appear here.</p>
+                <p className="text-sm 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>References from latest document chat will appear here.</p>
               ) : (
                 references.map((reference) => (
                   <button
                     key={reference.chunk_id}
                     onClick={() => openReference(reference)}
-                    className="w-full rounded-2xl border p-4 text-left transition"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary-light)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                    className="w-full rounded-2xl border p-4 text-left transition hover:border-sky-500 dark: dark: dark:hover:border-sky-400" style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-base)", borderColor: "var(--border)", borderColor: "var(--border)"  }}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{reference.document_title}</p>
-                      <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                      <p className="text-sm font-semibold dark:" style={{ color: "var(--foreground)", color: "var(--foreground)"  }}>{reference.document_title}</p>
+                      <span className="text-[10px] uppercase tracking-wider 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>
                         {reference.page ? `Page ${reference.page}` : "Page unknown"}
                       </span>
                     </div>
-                    <p className="mt-2 text-xs" style={{ color: "var(--muted-foreground)" }}>{reference.snippet}</p>
+                    <p className="mt-2 text-xs dark:" style={{ color: "var(--muted-foreground)", color: "var(--muted-foreground)"  }}>{reference.snippet}</p>
                     {reference.score !== undefined ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                      <p className="mt-1 text-[10px] uppercase tracking-wider 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>
                         Similarity {reference.score.toFixed(2)}
                       </p>
                     ) : null}
@@ -533,18 +497,18 @@ export default function Home() {
           </section>
 
           {/* Conversation Section */}
-          <section className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{ backgroundColor: "var(--surface-base)", backgroundColor: "var(--background)", borderColor: "var(--border)", borderColor: "var(--border)"  }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Conversation</p>
+              <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Conversation</p>
               {activeThread ? (
-                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                <p className="text-xs 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>
                   {messageFeed.length} message{messageFeed.length === 1 ? "" : "s"}
                 </p>
               ) : null}
             </div>
             <div className="mt-3 space-y-3">
               {messageFeed.length === 0 ? (
-                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Select a thread or send a prompt to start.</p>
+                <p className="text-sm 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>Select a thread or send a prompt to start.</p>
               ) : (
                 messageFeed.map((message) =>
                   message.role === "user" ? (
@@ -552,14 +516,11 @@ export default function Home() {
                       key={message.id}
                       className="flex justify-end"
                     >
-                      <div
-                        className="max-w-[70%] rounded-2xl border px-4 py-2 text-sm font-medium shadow-lg"
-                        style={{ borderColor: "#38bdf8", backgroundColor: "#0284c7", color: "#ffffff" }}
-                      >
-                        <p className="text-xs uppercase tracking-wider" style={{ color: "#e0f2fe" }}>
+                      <div className="max-w-[70%] rounded-2xl border px-4 py-2 text-sm font-medium shadow-lg bg-sky-600 border-sky-500 text-white">
+                        <p className="text-xs uppercase tracking-wider text-sky-100">
                           {message.role} · {formatTimestamp(message.created_at)}
                         </p>
-                        <p className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "#ffffff" }}>
+                        <p className="whitespace-pre-wrap text-base leading-relaxed text-white">
                           {message.content}
                         </p>
                       </div>
@@ -567,13 +528,12 @@ export default function Home() {
                   ) : (
                     <div
                       key={message.id}
-                      className="rounded-2xl border p-4 text-sm shadow-sm"
-                      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+                      className="rounded-2xl border p-4 text-sm shadow-sm dark: dark:" style={{ backgroundColor: "var(--background)", backgroundColor: "var(--surface-base)", borderColor: "var(--border)", borderColor: "var(--border)"  }}
                     >
-                      <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+                      <p className="text-xs uppercase tracking-wider 0 dark:" style={{ color: "var(--foreground)", color: "var(--muted-foreground)"  }}>
                         {message.role} · {formatTimestamp(message.created_at)}
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--foreground)" }}>
+                      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed dark:" style={{ color: "var(--foreground)", color: "var(--foreground)"  }}>
                         {message.content}
                       </p>
                     </div>

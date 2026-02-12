@@ -29,14 +29,14 @@ interface ActionNodeData {
 
 function ActionNode({ data }: NodeProps<ActionNodeData>) {
   return (
-    <div className="min-w-[220px] rounded-lg border border-sky-500/60 bg-slate-900 px-3 py-2 shadow-md">
+    <div className="min-w-[220px] rounded-lg border border-sky-500/60 px-3 py-2 shadow-md" style={{ backgroundColor: "var(--surface-base)" }}>
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-sky-500" />
       <div className="text-xs font-semibold text-sky-300">{data.label}</div>
-      <div className="mt-1 text-[11px] text-slate-400">{data.handler}</div>
+      <div className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>{data.handler}</div>
       {data.policyText.length > 0 && (
         <div className="mt-2 space-y-1">
           {data.policyText.map((line) => (
-            <div key={`${data.handler}-${line}`} className="text-[10px] text-slate-300">
+            <div key={`${data.handler}-${line}`} className="text-[10px]" style={{ color: "var(--foreground-secondary)" }}>
               {line}
             </div>
           ))}
@@ -120,11 +120,11 @@ export default function ActionFlowVisualizer({ actions }: ActionFlowVisualizerPr
   }, [actions]);
 
   if (actions.length === 0) {
-    return <div className="flex h-full items-center justify-center text-sm text-slate-500">No actions to visualize</div>;
+    return <div className="flex h-full items-center justify-center text-sm" style={{ color: "var(--muted-foreground)" }}>No actions to visualize</div>;
   }
 
   return (
-    <div className="h-full w-full rounded border border-slate-700 bg-slate-950">
+    <div className="h-full w-full rounded border" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -156,9 +156,9 @@ export function PermissionManagementDashboard() {
       admin: "bg-red-100 text-red-800",
       manager: "bg-orange-100 text-orange-800",
       developer: "bg-blue-100 text-blue-800",
-      viewer: "bg-slate-100 text-slate-800",
+      viewer: "bg-[var(--surface-elevated)] text-[var(--foreground)]",
     };
-    return colors[role as keyof typeof colors] || "bg-slate-100";
+    return colors[role as keyof typeof colors] || "bg-[var(--surface-elevated)]";
   };
 
   const getPermissionStatusColor = (isGranted: boolean) => {
@@ -194,7 +194,7 @@ export function PermissionManagementDashboard() {
             <TabsContent value="users" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 " style={{ color: "var(--muted-foreground)" }} />
                   <Input
                     placeholder="Search by username or email..."
                     value={searchQuery}
@@ -216,7 +216,7 @@ export function PermissionManagementDashboard() {
                     <CardContent className="pt-6">
                       <div className="space-y-2">
                         <h3 className="font-semibold">{user.username}</h3>
-                        <p className="text-sm text-slate-600">{user.email}</p>
+                        <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>{user.email}</p>
                         <div className="flex items-center gap-2">
                           <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
                           {user.is_active ? (
@@ -224,7 +224,7 @@ export function PermissionManagementDashboard() {
                               Active
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="bg-slate-50">
+                            <Badge variant="outline" className="" style={{ backgroundColor: "var(--surface-base)" }}>
                               Inactive
                             </Badge>
                           )}
@@ -359,7 +359,7 @@ export function PermissionManagementDashboard() {
                                   )}
                                 </div>
                                 {perm.expires_at && (
-                                  <p className="text-xs text-slate-600">
+                                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
                                     Expires: {new Date(perm.expires_at).toLocaleString()}
                                   </p>
                                 )}
@@ -378,14 +378,14 @@ export function PermissionManagementDashboard() {
                         </Card>
                       ))
                     ) : (
-                      <div className="text-center py-8 text-slate-500">
+                      <div className="text-center py-8 " style={{ color: "var(--muted-foreground)" }}>
                         No permissions assigned yet
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12 text-slate-500">
+                <div className="text-center py-12 " style={{ color: "var(--muted-foreground)" }}>
                   Select a user from the Users tab to manage their permissions
                 </div>
               )}
@@ -413,7 +413,7 @@ export function PermissionManagementDashboard() {
                   <div className="space-y-2">
                     <Badge className={getRoleColor(item.role)}>{item.role.toUpperCase()}</Badge>
                     <p className="text-sm font-medium">{item.permissions} permissions</p>
-                    <p className="text-xs text-slate-600">{item.description}</p>
+                    <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{item.description}</p>
                   </div>
                 </CardContent>
               </Card>

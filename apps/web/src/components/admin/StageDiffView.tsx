@@ -106,46 +106,46 @@ function StageDiffSection({
   const current = comparison.current;
 
   return (
-    <div className={`border rounded-lg ${comparison.changed ? "border-amber-500/50 bg-amber-500/10" : "border-slate-700"}`}>
+    <div className={`border rounded-lg ${comparison.changed ? "border-amber-500/50 bg-amber-500/10" : ""}`} style={{ borderColor: "var(--border)" }}>
       <div
-        className="p-4 cursor-pointer hover:bg-slate-800/50 transition-colors"
+        className="p-4 cursor-pointer hover: transition-colors" style={{ backgroundColor: "var(--surface-overlay)" }}
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h3 className="font-semibold text-slate-200">
+            <h3 className="font-semibold " style={{ color: "var(--foreground-secondary)" }}>
               {STAGE_DISPLAY_NAMES[stage as keyof typeof STAGE_DISPLAY_NAMES] || stage}
             </h3>
             <StatusBadge status={baseline.status} />
-            <span className="text-slate-500">→</span>
+            <span className="" style={{ color: "var(--muted-foreground)" }}>→</span>
             <StatusBadge status={current.status} />
             {comparison.changed && (
               <span className="text-amber-400 text-xs">CHANGED</span>
             )}
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-slate-400">
+            <div className="flex items-center gap-2 text-sm " style={{ color: "var(--muted-foreground)" }}>
               <Clock className="h-4 w-4" />
               <DurationChange baseline={baseline.duration_ms} current={current.duration_ms} />
             </div>
-            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${expanded ? "rotate-180" : ""}`} />
+            <ChevronDown className={`h-4 w-4  transition-transform ${expanded ? "rotate-180" : ""}`} style={{ color: "var(--muted-foreground)" }} />
           </div>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-slate-700 p-4 space-y-4">
+        <div className="border-t  p-4 space-y-4" style={{ borderColor: "var(--border)" }}>
           {/* Counts Comparison */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-300 mb-2">Metrics</h4>
+            <h4 className="text-sm font-semibold  mb-2" style={{ color: "var(--foreground-secondary)" }}>Metrics</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               {Object.entries(baseline.counts).map(([key, value]) => {
                 const currentValue = current.counts[key] || 0;
                 const changed = value !== currentValue;
                 return (
                   <div key={key} className="flex justify-between">
-                    <span className="text-slate-400 capitalize">{key}:</span>
-                    <span className={changed ? "text-amber-400" : "text-slate-200"}>
+                    <span className=" capitalize" style={{ color: "var(--muted-foreground)" }}>{key}:</span>
+                    <span className={changed ? "text-amber-400" : "text-[var(--foreground-secondary)]"}>
                       {currentValue} {changed && `(was: ${value})`}
                     </span>
                   </div>
@@ -156,17 +156,17 @@ function StageDiffSection({
 
           {/* References Comparison */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-300 mb-2">References</h4>
+            <h4 className="text-sm font-semibold  mb-2" style={{ color: "var(--foreground-secondary)" }}>References</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-slate-400">Baseline:</span>
-                <div className={`mt-1 ${baseline.has_references ? "text-green-400" : "text-slate-500"}`}>
+                <span className="" style={{ color: "var(--muted-foreground)" }}>Baseline:</span>
+                <div className={`mt-1 ${baseline.has_references ? "text-green-400" : "0"}`} style={{ color: "var(--foreground)" }}>
                   {baseline.has_references ? "✓ Has references" : "✗ No references"}
                 </div>
               </div>
               <div>
-                <span className="text-slate-400">Current:</span>
-                <div className={`mt-1 ${current.has_references ? "text-green-400" : "text-slate-500"}`}>
+                <span className="" style={{ color: "var(--muted-foreground)" }}>Current:</span>
+                <div className={`mt-1 ${current.has_references ? "text-green-400" : "0"}`} style={{ color: "var(--foreground)" }}>
                   {current.has_references ? "✓ Has references" : "✗ No references"}
                 </div>
               </div>
@@ -175,17 +175,17 @@ function StageDiffSection({
 
           {/* Stage Results */}
           <div>
-            <h4 className="text-sm font-semibold text-slate-300 mb-2">Stage Results</h4>
+            <h4 className="text-sm font-semibold  mb-2" style={{ color: "var(--foreground-secondary)" }}>Stage Results</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <h5 className="text-xs text-slate-400 mb-1">Baseline</h5>
-                <pre className="text-xs bg-slate-900 p-2 rounded overflow-x-auto">
+                <h5 className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Baseline</h5>
+                <pre className="text-xs  p-2 rounded overflow-x-auto" style={{ backgroundColor: "var(--surface-base)" }}>
                   {JSON.stringify(comparison.baseline_result, null, 2)}
                 </pre>
               </div>
               <div>
-                <h5 className="text-xs text-slate-400 mb-1">Current</h5>
-                <pre className="text-xs bg-slate-900 p-2 rounded overflow-x-auto">
+                <h5 className="text-xs  mb-1" style={{ color: "var(--muted-foreground)" }}>Current</h5>
+                <pre className="text-xs  p-2 rounded overflow-x-auto" style={{ backgroundColor: "var(--surface-base)" }}>
                   {JSON.stringify(comparison.current_result, null, 2)}
                 </pre>
               </div>
@@ -233,10 +233,10 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-slate-900 border border-slate-700 rounded-xl p-6">
+        <div className=" border  rounded-xl p-6" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-            <p className="text-slate-300">Comparing stages...</p>
+            <p className="" style={{ color: "var(--foreground-secondary)" }}>Comparing stages...</p>
           </div>
         </div>
       </div>
@@ -246,9 +246,9 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
   if (error) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md">
-          <h2 className="text-xl font-semibold text-slate-200 mb-2">Error</h2>
-          <p className="text-slate-400 mb-4">{error}</p>
+        <div className=" border  rounded-xl p-6 max-w-md" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
+          <h2 className="text-xl font-semibold  mb-2" style={{ color: "var(--foreground-secondary)" }}>Error</h2>
+          <p className=" mb-4" style={{ color: "var(--muted-foreground)" }}>{error}</p>
           <button
             onClick={() => {
               setError(null);
@@ -272,36 +272,36 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className=" border  rounded-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-200">Stage Comparison</h2>
+          <h2 className="text-2xl font-bold " style={{ color: "var(--foreground-secondary)" }}>Stage Comparison</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+            className="p-2 hover: rounded-lg transition-colors" style={{ backgroundColor: "var(--surface-elevated)" }}
           >
-            <XCircle className="h-5 w-5 text-slate-400" />
+            <XCircle className="h-5 w-5 " style={{ color: "var(--muted-foreground)" }} />
           </button>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400">Total Stages</div>
-            <div className="text-2xl font-bold text-slate-200">{comparison.total_stages}</div>
+          <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+            <div className="text-sm " style={{ color: "var(--muted-foreground)" }}>Total Stages</div>
+            <div className="text-2xl font-bold " style={{ color: "var(--foreground-secondary)" }}>{comparison.total_stages}</div>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400">Changed Stages</div>
+          <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+            <div className="text-sm " style={{ color: "var(--muted-foreground)" }}>Changed Stages</div>
             <div className="text-2xl font-bold text-amber-400">{comparison.changed_stages}</div>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400">Regressions</div>
+          <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+            <div className="text-sm " style={{ color: "var(--muted-foreground)" }}>Regressions</div>
             <div className={`text-2xl font-bold ${hasRegression ? "text-red-400" : "text-green-400"}`}>
               {comparison.regressed_stages}
             </div>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-            <div className="text-sm text-slate-400">Change %</div>
+          <div className=" border  rounded-lg p-4" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-elevated)" }}>
+            <div className="text-sm " style={{ color: "var(--muted-foreground)" }}>Change %</div>
             <div className={`text-2xl font-bold ${changePercentage > 0 ? "text-red-400" : "text-green-400"}`}>
               {changePercentage.toFixed(1)}%
             </div>
@@ -317,10 +317,10 @@ export default function StageDiffView({ baselineTraceId, currentTraceId, onClose
               <CheckCircle className="h-6 w-6 text-green-400" />
             )}
             <div>
-              <h3 className="font-semibold text-slate-200">
+              <h3 className="font-semibold " style={{ color: "var(--foreground-secondary)" }}>
                 {hasRegression ? "Regressions Detected" : "No Regressions Detected"}
               </h3>
-              <p className="text-sm text-slate-400">
+              <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
                 {hasRegression
                   ? "Some stages have shown degradation in performance or functionality."
                   : "All stages are performing as expected."

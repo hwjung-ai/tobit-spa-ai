@@ -265,8 +265,8 @@ const TabsButton = ({
     onClick={onClick}
     className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.25em] transition ${active
       ? "border-sky-400 text-white"
-      : "border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-white"
-      }`}
+      : "  hover: hover: dark: dark: dark:hover:0 dark:hover:text-white"
+      }`} style={{ color: "var(--muted-foreground)", color: "var(--muted-foreground)", color: "var(--foreground)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)", borderColor: "var(--border)" }}
   >
     {children}
   </button>
@@ -564,11 +564,11 @@ export default function ExplorerPage() {
 
   if (!enableDataExplorer) {
     return (
-      <div className="min-h-screen bg-[#05070f] px-10 py-10 text-slate-200">
+      <div className="min-h-screen bg-[#05070f] px-10 py-10 " style={{ color: "var(--foreground-secondary)" }}>
         <h1 className="text-2xl font-semibold">Data Explorer</h1>
-        <p className="mt-4 text-sm text-slate-400">
+        <p className="mt-4 text-sm " style={{ color: "var(--muted-foreground)" }}>
           Data Explorer is disabled. Enable{" "}
-          <code className="rounded bg-slate-800 px-2 py-1 text-xs">
+          <code className="rounded  px-2 py-1 text-xs" style={{ backgroundColor: "var(--surface-elevated)" }}>
             NEXT_PUBLIC_ENABLE_DATA_EXPLORER
           </code>{" "}
           to continue.
@@ -581,19 +581,19 @@ export default function ExplorerPage() {
     if (sourceTab === "postgres") {
       return (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
+          <div className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
             Tables
           </div>
           <input
             value={tableSearch}
             onChange={(event) => setTableSearch(event.target.value)}
             placeholder="Search tables"
-            className="w-full rounded-full border border-slate-700 bg-transparent px-4 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none"
+            className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
           />
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {tablesQuery.isLoading && (
-              <div className="flex items-center gap-2 py-4 text-slate-400">
-                <div className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-sky-400 animate-spin" />
+              <div className="flex items-center gap-2 py-4 " style={{ color: "var(--muted-foreground)" }}>
+                <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{ borderColor: "var(--border)" }} />
                 <span className="text-xs">Loading tables...</span>
               </div>
             )}
@@ -623,8 +623,8 @@ export default function ExplorerPage() {
                     }}
                     className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
                       ? "border-sky-500 text-white"
-                      : "border-slate-800 text-slate-300 hover:border-slate-600"
-                      }`}
+                      : "  hover:"
+                      }`} style={{ color: "var(--foreground-secondary)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                   >
                     {fullName}
                   </button>
@@ -637,13 +637,13 @@ export default function ExplorerPage() {
     if (sourceTab === "neo4j") {
       return (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
+          <div className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
             Labels
           </div>
           <div className="custom-scrollbar max-h-[420px] space-y-2 overflow-auto pr-1">
             {labelsQuery.isLoading && (
-              <div className="flex items-center gap-2 py-4 text-slate-400">
-                <div className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-sky-400 animate-spin" />
+              <div className="flex items-center gap-2 py-4 " style={{ color: "var(--muted-foreground)" }}>
+                <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{ borderColor: "var(--border)" }} />
                 <span className="text-xs">Loading labels...</span>
               </div>
             )}
@@ -666,8 +666,8 @@ export default function ExplorerPage() {
                   }}
                   className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
                     ? "border-sky-500 text-white"
-                    : "border-slate-800 text-slate-300 hover:border-slate-600"
-                    }`}
+                    : "  hover:"
+                    }`} style={{ color: "var(--foreground-secondary)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                 >
                   {label}
                 </button>
@@ -679,26 +679,26 @@ export default function ExplorerPage() {
     }
     return (
       <div className="space-y-3">
-        <div className="text-xs uppercase tracking-[0.25em] text-slate-400">
+        <div className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
           Keys
         </div>
         <input
           value={redisPrefix}
           onChange={(event) => setRedisPrefix(event.target.value)}
           placeholder="Prefix (allowlist)"
-          className="w-full rounded-full border border-slate-700 bg-transparent px-4 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none"
+          className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
         />
         <input
           value={redisPattern}
           onChange={(event) => setRedisPattern(event.target.value)}
           placeholder="Pattern (optional)"
-          className="w-full rounded-full border border-slate-700 bg-transparent px-4 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none"
+          className="w-full rounded-full border  bg-transparent px-4 py-2 text-sm  focus:border-sky-500 focus:outline-none" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
         />
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs " style={{ color: "var(--muted-foreground)" }}>
           <button
             type="button"
             onClick={() => setRedisCursor(0)}
-            className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-300"
+            className="rounded-full border  px-3 py-1 text-xs uppercase tracking-[0.2em] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
           >
             Scan
           </button>
@@ -706,8 +706,8 @@ export default function ExplorerPage() {
         </div>
         <div className="custom-scrollbar max-h-[320px] space-y-2 overflow-auto pr-1">
           {redisScanQuery.isLoading && (
-            <div className="flex items-center gap-2 py-4 text-slate-400">
-              <div className="w-4 h-4 rounded-full border-2 border-slate-600 border-t-sky-400 animate-spin" />
+            <div className="flex items-center gap-2 py-4 " style={{ color: "var(--muted-foreground)" }}>
+              <div className="w-4 h-4 rounded-full border-2  border-t-sky-400 animate-spin" style={{ borderColor: "var(--border)" }} />
               <span className="text-xs">Scanning keys...</span>
             </div>
           )}
@@ -728,8 +728,8 @@ export default function ExplorerPage() {
                 }}
                 className={`w-full rounded-xl border px-3 py-2 text-left text-sm ${active
                   ? "border-sky-500 text-white"
-                  : "border-slate-800 text-slate-300 hover:border-slate-600"
-                  }`}
+                  : "  hover:"
+                  }`} style={{ color: "var(--foreground-secondary)", borderColor: "var(--border)", borderColor: "var(--border)" }}
               >
                 {key}
               </button>
@@ -743,18 +743,18 @@ export default function ExplorerPage() {
   return (
     <div className="py-6 tracking-tight builder-shell builder-text">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Data Explorer</h1>
-        <div className="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-500">
+        <h1 className="text-2xl font-semibold  dark:text-white" style={{ color: "var(--foreground)" }}>Data Explorer</h1>
+        <div className="text-xs uppercase tracking-[0.25em]  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
           Admin only
         </div>
       </div>
-      <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+      <p className="mb-4 text-sm  dark:" style={{ color: "var(--muted-foreground)" ,  color: "var(--muted-foreground)" }}>
         Read-only data access. Max {MAX_ROWS} rows.
       </p>
 
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] items-center uppercase tracking-[0.2em] text-slate-500">Source:</span>
+          <span className="text-[10px] items-center uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Source:</span>
           <TabsButton active={sourceTab === "postgres"} onClick={() => setSourceTab("postgres")}>
             Postgres
           </TabsButton>
@@ -765,9 +765,9 @@ export default function ExplorerPage() {
             Redis
           </TabsButton>
         </div >
-        <div className="h-4 w-px bg-slate-800 mx-2" />
+        <div className="h-4 w-px  mx-2" style={{ backgroundColor: "var(--surface-elevated)" }} />
         <div className="flex items-center gap-2">
-          <span className="text-[10px] items-center uppercase tracking-[0.2em] text-slate-500">Mode:</span>
+          <span className="text-[10px] items-center uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Mode:</span>
           <TabsButton active={modeTab === "browse"} onClick={() => setModeTab("browse")}>
             Browse
           </TabsButton>
@@ -787,7 +787,7 @@ export default function ExplorerPage() {
                   value={queryText}
                   onChange={(event) => setQueryText(event.target.value)}
                   rows={4}
-                  className="w-full resize-none rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-200 focus:border-sky-500 focus:outline-none custom-scrollbar"
+                  className="w-full resize-none rounded-xl border   px-4 py-3 text-sm  focus:border-sky-500 focus:outline-none custom-scrollbar" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}
                   placeholder={
                     sourceTab === "redis"
                       ? "GET cep:example"
@@ -796,12 +796,12 @@ export default function ExplorerPage() {
                         : "SELECT * FROM tb_cep_notification_log"
                   }
                 />
-                <div className="flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center justify-between text-xs " style={{ color: "var(--muted-foreground)" }}>
                   <span>Max {MAX_ROWS} rows</span>
                   <button
                     type="button"
                     onClick={() => runQueryMutation.mutate(queryText)}
-                    className="rounded-full border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.25em] text-slate-200 hover:border-sky-500"
+                    className="rounded-full border  px-4 py-2 text-xs uppercase tracking-[0.25em]  hover:border-sky-500" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" }}
                   >
                     Run
                   </button>
@@ -810,10 +810,10 @@ export default function ExplorerPage() {
             )}
 
             <div className="space-y-3">
-              <div className="text-xs uppercase tracking-[0.25em] text-slate-500">
+              <div className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
                 Results
               </div>
-              <div className="ag-theme-cep h-[520px] w-full rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden">
+              <div className="ag-theme-cep h-[520px] w-full rounded-2xl border  /70 overflow-hidden" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
                 <AgGridReact
                   theme="legacy"
                   columnDefs={gridColDefs}
@@ -824,7 +824,7 @@ export default function ExplorerPage() {
                 />
               </div>
               {statusMessage && (
-                <div className="mt-3 text-xs text-slate-400">{statusMessage}</div>
+                <div className="mt-3 text-xs " style={{ color: "var(--muted-foreground)" }}>{statusMessage}</div>
               )}
               {queryError && (
                 <div className="mt-2 rounded-2xl border border-rose-500/70 bg-rose-500/5 px-3 py-2 text-xs text-rose-200">
@@ -835,14 +835,14 @@ export default function ExplorerPage() {
             {sourceTab === "neo4j" && (
               <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Graph preview</p>
+                  <p className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>Graph preview</p>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "graph"
                         ? "border-sky-400 text-white"
-                        : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-                        }`}
+                        : "  hover:0 hover:text-white"
+                        }`} style={{ color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                       onClick={() => setNeo4jViewMode("graph")}
                       disabled={!graphAvailable}
                     >
@@ -852,8 +852,8 @@ export default function ExplorerPage() {
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "table"
                         ? "border-sky-400 text-white"
-                        : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-                        }`}
+                        : "  hover:0 hover:text-white"
+                        }`} style={{ color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                       onClick={() => {
                         setNeo4jViewMode("table");
                         setHighlightedNodeIds(new Set());
@@ -867,8 +867,8 @@ export default function ExplorerPage() {
                       type="button"
                       className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.2em] ${neo4jViewMode === "value"
                         ? "border-sky-400 text-white"
-                        : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
-                        }`}
+                        : "  hover:0 hover:text-white"
+                        }`} style={{ color: "var(--muted-foreground)", borderColor: "var(--border)", borderColor: "var(--border)" }}
                       onClick={() => setNeo4jViewMode("value")}
                       disabled={!valueAvailable}
                     >
@@ -876,18 +876,18 @@ export default function ExplorerPage() {
                     </button>
                   </div>
                 </div>
-                <div className="text-[10px] text-slate-500">
+                <div className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
                   Nodes: {neo4jGraphPreview.nodes.length} · Relations: {neo4jGraphPreview.edges.length}
                 </div>
                 {neo4jGraphPreview.warnings.length > 0 && (
-                  <div className="space-y-1 text-[10px] text-slate-400">
+                  <div className="space-y-1 text-[10px] " style={{ color: "var(--muted-foreground)" }}>
                     {neo4jGraphPreview.warnings.map((warning, index) => (
                       <p key={`warning-${index}`}>{warning}</p>
                     ))}
                   </div>
                 )}
                 {neo4jViewMode === "graph" && (
-                  <div className="h-[360px] w-full rounded-2xl border border-slate-800 bg-slate-950/70 shadow-inner">
+                  <div className="h-[360px] w-full rounded-2xl border  /70 shadow-inner" style={{ borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" }}>
                     {graphAvailable ? (
                       <Neo4jGraphFlow
                         nodes={neo4jGraphPreview.nodes}
@@ -897,15 +897,15 @@ export default function ExplorerPage() {
                         onNodeClick={handleGraphNodeClick}
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+                      <div className="flex h-full items-center justify-center text-sm " style={{ color: "var(--muted-foreground)" }}>
                         Run a Neo4j query returning nodes & relationships to visualize the graph.
                       </div>
                     )}
                   </div>
                 )}
                 {neo4jViewMode === "value" && valueAvailable && (
-                  <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-100">
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Scalar result</p>
+                  <div className="rounded-2xl border   p-4 text-sm " style={{ borderColor: "var(--border)" ,  color: "var(--foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
+                    <p className="text-xs uppercase tracking-[0.2em] " style={{ color: "var(--muted-foreground)" }}>Scalar result</p>
                     <p className="mt-2 text-lg font-semibold">{String(neo4jScalar)}</p>
                   </div>
                 )}
@@ -915,10 +915,10 @@ export default function ExplorerPage() {
         }
         rightPane={
           <div className="space-y-3">
-            <div className="text-xs uppercase tracking-[0.25em] text-slate-500">
+            <div className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
               Inspector
             </div>
-            <div className="custom-scrollbar mt-3 max-h-[620px] overflow-auto rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-xs text-slate-200">
+            <div className="custom-scrollbar mt-3 max-h-[620px] overflow-auto rounded-xl border   p-3 text-xs " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
               <pre className="whitespace-pre-wrap">
                 {inspectorContent ? JSON.stringify(inspectorContent, null, 2) : "No selection"}
               </pre>

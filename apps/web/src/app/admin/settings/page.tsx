@@ -133,22 +133,31 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Informational Banner */}
-            <div className="bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/20 rounded-2xl p-5 flex items-center gap-5 backdrop-blur-sm">
-                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0 shadow-lg shadow-orange-900/10">
+            <div className="rounded-2xl border p-5 flex items-center gap-5 backdrop-blur-sm" style={{
+                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                borderColor: "rgba(245, 158, 11, 0.3)"
+            }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg" style={{
+                    backgroundColor: "rgba(245, 158, 11, 0.2)",
+                    color: "var(--warning)"
+                }}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                 </div>
                 <div className="flex-1">
-                    <p className="text-orange-200 text-sm font-bold tracking-tight mb-0.5">Runtime Constraints Warning</p>
-                    <p className="text-orange-300/60 text-xs leading-relaxed">
-                        Settings marked with 🔄 require a service restart. Changes to <span className="text-blue-400 font-bold">Published</span> values override
-                        <span className="text-yellow-400 font-bold ml-1">Environment</span> and <span className="text-slate-400 font-bold ml-1">Default</span> configurations.
+                    <p className="text-sm font-bold tracking-tight mb-0.5" style={{ color: "var(--warning)" }}>Runtime Constraints Warning</p>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+                        Settings marked with 🔄 require a service restart. Changes to <span style={{ color: "var(--primary)" }}>Published</span> values override
+                        <span style={{ color: "var(--warning)" }} className="ml-1">Environment</span> and <span style={{ color: "var(--muted-foreground)" }} className="ml-1">Default</span> configurations.
                     </p>
                 </div>
                 <button
                     onClick={() => refetch()}
-                    className="px-4 py-2 text-slate-400 hover:text-white transition-colors text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2"
+                    className="px-4 py-2 transition-colors text-[10px] font-bold uppercase tracking-[0.2em] flex items-center gap-2"
+                    style={{ color: "var(--muted-foreground)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted-foreground)"; }}
                 >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -222,12 +231,12 @@ export default function SettingsPage() {
             <div className="rounded-2xl border overflow-hidden shadow-2xl" style={{ backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "var(--border)" }}>
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-32 gap-4">
-                        <div className="w-10 h-10 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(2, 132, 199, 0.2)", borderTopColor: "#0284c7" }}></div>
+                        <div className="w-10 h-10 border-2 rounded-full animate-spin" style={{ borderColor: "rgba(var(--primary-rgb), 0.2)", borderTopColor: "var(--primary)" }}></div>
                         <p className="text-[10px] font-bold uppercase tracking-[0.25em]" style={{ color: "var(--muted-foreground)" }}>Synchronizing Master Config...</p>
                     </div>
                 ) : error ? (
                     <div className="text-center py-24">
-                        <p className="font-medium mb-4 text-sm" style={{ color: "#f87171" }}>{(error as Error)?.message || "Unable to load settings"}</p>
+                        <p className="font-medium mb-4 text-sm" style={{ color: "var(--error)" }}>{(error as Error)?.message || "Unable to load settings"}</p>
                         <button
                             onClick={() => refetch()}
                             className="px-8 py-2.5 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest"

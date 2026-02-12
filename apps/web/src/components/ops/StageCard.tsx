@@ -72,11 +72,11 @@ const STAGE_COLORS = {
 };
 
 const STATUS_COLORS = {
-  pending: "text-slate-400",
+  pending: "text-[var(--muted-foreground)]",
   running: "text-blue-400 animate-pulse",
   success: "text-emerald-400",
   error: "text-rose-400",
-  skipped: "text-slate-500",
+  skipped: "text-[var(--muted-foreground)]",
 };
 
 const STATUS_ICONS = {
@@ -129,7 +129,7 @@ export default function StageCard({
       className
     )}>
       {/* Header */}
-      <div className="p-4 border-b border-slate-800">
+      <div className="p-4 border-b " style={{ borderColor: "var(--border)" }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn("p-1.5 rounded-lg", stageColors.bg)}>
@@ -143,7 +143,7 @@ export default function StageCard({
                 <span className={cn("text-xs", stageColors.text)}>
                   {stage.stageType.toUpperCase()}
                 </span>
-                <span className="text-slate-500">·</span>
+                <span className="" style={{ color: "var(--muted-foreground)" }}>·</span>
                 <div className="flex items-center gap-1">
                   {statusIcon}
                   <span className={cn("text-xs", statusColor)}>
@@ -156,19 +156,19 @@ export default function StageCard({
 
           <div className="flex items-center gap-2">
             {stage.duration && (
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-xs  font-mono" style={{ color: "var(--muted-foreground)" }}>
                 {formatDuration(stage.duration)}
               </span>
             )}
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-slate-400 hover:text-white transition"
+              className=" hover:text-white transition" style={{ color: "var(--muted-foreground)" }}
             >
               {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
             <button
               onClick={() => handleAction("more")}
-              className="text-slate-400 hover:text-white transition"
+              className=" hover:text-white transition" style={{ color: "var(--muted-foreground)" }}
             >
               <MoreVertical className="h-4 w-4" />
             </button>
@@ -180,7 +180,7 @@ export default function StageCard({
       {expanded && (
         <div className="p-4 space-y-4">
           {/* Timeline */}
-          <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center justify-between text-xs " style={{ color: "var(--muted-foreground)" }}>
             <div className="flex items-center gap-2">
               {stage.startTime && (
                 <>
@@ -222,7 +222,7 @@ export default function StageCard({
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition",
                 showInput
                   ? "bg-blue-500/10 text-blue-400 border border-blue-400/30"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                  : "bg-[var(--surface-elevated)] text-[var(--muted-foreground)] hover:bg-[var(--surface-elevated)]"
               )}
             >
               {showInput ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -234,7 +234,7 @@ export default function StageCard({
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition",
                 showOutput
                   ? "bg-purple-500/10 text-purple-400 border border-purple-400/30"
-                  : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                  : "bg-[var(--surface-elevated)] text-[var(--muted-foreground)] hover:bg-[var(--surface-elevated)]"
               )}
             >
               {showOutput ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
@@ -246,15 +246,15 @@ export default function StageCard({
           {showInput && stage.input && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-300">Input</p>
+                <p className="text-xs font-medium " style={{ color: "var(--foreground-secondary)" }}>Input</p>
                 <button
                   onClick={() => copyToClipboard(JSON.stringify(stage.input, null, 2))}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition"
+                  className="text-xs  hover: transition" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}
                 >
                   <Copy className="h-3 w-3" />
                 </button>
               </div>
-              <pre className="p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-300 overflow-x-auto max-h-60">
+              <pre className="p-3 rounded-lg  border  text-xs  overflow-x-auto max-h-60" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
                 {formatJsonPreview(stage.input)}
               </pre>
             </div>
@@ -264,22 +264,22 @@ export default function StageCard({
           {showOutput && stage.output && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium text-slate-300">Output</p>
+                <p className="text-xs font-medium " style={{ color: "var(--foreground-secondary)" }}>Output</p>
                 <button
                   onClick={() => copyToClipboard(JSON.stringify(stage.output, null, 2))}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition"
+                  className="text-xs  hover: transition" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}
                 >
                   <Copy className="h-3 w-3" />
                 </button>
               </div>
-              <pre className="p-3 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-300 overflow-x-auto max-h-60">
+              <pre className="p-3 rounded-lg  border  text-xs  overflow-x-auto max-h-60" style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}>
                 {formatJsonPreview(stage.output)}
               </pre>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex gap-2 pt-2 border-t border-slate-800">
+          <div className="flex gap-2 pt-2 border-t " style={{ borderColor: "var(--border)" }}>
             <button
               onClick={() => handleAction("rerun")}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-400/30 transition hover:bg-emerald-500/20"
@@ -289,14 +289,14 @@ export default function StageCard({
             </button>
             <button
               onClick={() => handleAction("debug")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-slate-800 text-slate-400 border border-slate-700 transition hover:bg-slate-700"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
             >
               <Settings className="h-3 w-3" />
               Debug
             </button>
             <button
               onClick={() => handleAction("delete")}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs bg-slate-800 text-slate-400 border border-slate-700 transition hover:bg-slate-700"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-elevated)" ,  backgroundColor: "var(--surface-elevated)" }}
             >
               <Trash2 className="h-3 w-3" />
               Delete
@@ -333,7 +333,7 @@ export function StageCardContainer({
 
       {hasMore && (
         <div className="text-center py-3">
-          <button className="text-sm text-slate-400 hover:text-slate-300 transition">
+          <button className="text-sm  hover: transition" style={{ color: "var(--muted-foreground)" ,  color: "var(--foreground-secondary)" }}>
             +{stages.length - maxStages} more stages
           </button>
         </div>

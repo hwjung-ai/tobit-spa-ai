@@ -69,7 +69,7 @@ export default function ComponentTreeView() {
             "rounded-md border px-2 py-2 transition-colors",
             isSelected
               ? "border-sky-500 bg-sky-950/30"
-              : "border-transparent hover:border-slate-700 bg-slate-900/60"
+              : "border-transparent hover:border-[var(--border)] bg-[var(--surface-base)]/60"
           )}
           style={{ marginLeft: `${node.depth * 12}px` }}
         >
@@ -78,17 +78,17 @@ export default function ComponentTreeView() {
             onClick={() => selectComponent(node.component.id)}
           >
             <div>
-              <p className="text-xs font-semibold text-slate-100 truncate">
+              <p className="text-xs font-semibold truncate" style={{ color: "var(--foreground)"  }}>
                 {node.component.label || node.component.id}
               </p>
-              <p className="text-[10px] text-slate-400 font-mono">
+              <p className="text-[10px] font-mono" style={{ color: "var(--muted-foreground)"  }}>
                 {node.component.type}
               </p>
             </div>
             <div className="flex gap-1">
               <Button
                 size="sm"
-                className="text-[10px] px-2 h-7 bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+                className="text-[10px] px-2 h-7 hover: hover:" style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", color: "var(--foreground-secondary)", borderColor: "var(--border)"  }}
                 onClick={(e) => {
                   e.stopPropagation();
                   moveComponent(node.component.id, "up");
@@ -100,7 +100,7 @@ export default function ComponentTreeView() {
               </Button>
               <Button
                 size="sm"
-                className="text-[10px] px-2 h-7 bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+                className="text-[10px] px-2 h-7 hover: hover:" style={{ backgroundColor: "var(--surface-elevated)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", color: "var(--foreground-secondary)", borderColor: "var(--border)"  }}
                 onClick={(e) => {
                   e.stopPropagation();
                   moveComponent(node.component.id, "down");
@@ -124,22 +124,22 @@ export default function ComponentTreeView() {
   };
 
   const selectedSummary = selectedComponentId && selectedNode ? (
-    <div className="space-y-1 border-b border-slate-800 pb-2">
-      <p className="text-xs font-semibold text-slate-300">
+    <div className="space-y-1 border-b pb-2" style={{ borderColor: "var(--border)"  }}>
+      <p className="text-xs font-semibold" style={{ color: "var(--foreground-secondary)"  }}>
         {selectedNode.component.label || selectedNode.component.id}
       </p>
-      <p className="text-[10px] text-slate-400">
+      <p className="text-[10px]" style={{ color: "var(--muted-foreground)"  }}>
         type: {selectedNode.component.type}
       </p>
-      <p className="text-[10px] text-slate-400">
+      <p className="text-[10px]" style={{ color: "var(--muted-foreground)"  }}>
         bindings: {selectedNode.component.bind ? "Yes" : "No"} · actions: {selectedNode.component.actions?.length ? `${selectedNode.component.actions.length}` : "0"}
       </p>
-      <p className="text-[10px] text-slate-500">
+      <p className="text-[10px] 0" style={{ color: "var(--foreground)"  }}>
         parent: {parentNode ? parentNode.component.label || parentNode.component.id : "Root"} · index: {selectedNode.index + 1}/{selectedNode.siblingCount}
       </p>
     </div>
   ) : (
-    <p className="text-xs text-slate-500">
+    <p className="text-xs 0" style={{ color: "var(--foreground)"  }}>
       Select a component
     </p>
   );
@@ -149,27 +149,27 @@ export default function ComponentTreeView() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/50">
-      <div className="border-b border-slate-800 p-3">
-        <h3 className="text-sm font-semibold text-slate-200">
+    <div className="flex flex-col h-full" style={{ backgroundColor: "var(--surface-overlay)"  }}>
+      <div className="border-b p-3" style={{ borderColor: "var(--border)"  }}>
+        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)"  }}>
           Component Tree
         </h3>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)"  }}>
           Hierarchy & selection
         </p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        <div className="text-[10px] uppercase tracking-[0.4em] text-slate-500">
+        <div className="text-[10px] uppercase tracking-[0.4em] 0" style={{ color: "var(--foreground)"  }}>
           Selection
         </div>
         {selectedSummary}
 
-        <div className="text-[10px] uppercase tracking-[0.4em] text-slate-500">
+        <div className="text-[10px] uppercase tracking-[0.4em] 0" style={{ color: "var(--foreground)"  }}>
           Tree
         </div>
         {tree.length === 0 ? (
-          <div className="text-xs text-slate-500">
+          <div className="text-xs 0" style={{ color: "var(--foreground)"  }}>
             No components yet
           </div>
         ) : (

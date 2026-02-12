@@ -399,37 +399,37 @@ export default function ScreenEditorTabs() {
         </div>
       )}
       <TabsList className="mx-6 mt-4 border-b gap-1 rounded-none" style={{ backgroundColor: "var(--surface-elevated)" }}>
-        <TabsTrigger value="visual" data-testid="tab-visual" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
+        <TabsTrigger value="visual" data-testid="tab-visual" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:" style={{ color: "var(--foreground-secondary)" }}>
           Visual Editor
         </TabsTrigger>
-        <TabsTrigger value="json" data-testid="tab-json" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
+        <TabsTrigger value="json" data-testid="tab-json" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:" style={{ color: "var(--foreground-secondary)" }}>
           JSON
         </TabsTrigger>
-        <TabsTrigger value="binding" data-testid="tab-binding" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
+        <TabsTrigger value="binding" data-testid="tab-binding" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:" style={{ color: "var(--foreground-secondary)" }}>
           Binding
         </TabsTrigger>
-        <TabsTrigger value="action" data-testid="tab-action" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
+        <TabsTrigger value="action" data-testid="tab-action" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:" style={{ color: "var(--foreground-secondary)" }}>
           Action
         </TabsTrigger>
-        <TabsTrigger value="preview" data-testid="tab-preview" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
+        <TabsTrigger value="preview" data-testid="tab-preview" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:" style={{ color: "var(--foreground-secondary)" }}>
           Preview
         </TabsTrigger>
-        <TabsTrigger value="diff" data-testid="tab-diff" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-slate-200">
+        <TabsTrigger value="diff" data-testid="tab-diff" className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:" style={{ color: "var(--foreground-secondary)" }}>
           Diff
         </TabsTrigger>
       </TabsList>
       {(presenceCount > 0 || collabConnected) && (
         <div
-          className="mx-6 mt-2 flex items-center justify-between rounded border border-slate-700/70 bg-slate-900/50 px-3 py-2 text-[11px] text-slate-300"
+          className="mx-6 mt-2 flex items-center justify-between rounded border /70  px-3 py-2 text-[11px] " style={{ borderColor: "var(--border)" ,  color: "var(--foreground-secondary)" ,  backgroundColor: "var(--surface-overlay)" }}
           data-testid="screen-editor-presence"
         >
           <span>
             Active editors: {presenceCount}
-            <span className={`ml-3 ${collabConnected ? "text-emerald-400" : "text-slate-500"}`}>
+            <span className={`ml-3 ${collabConnected ? "text-emerald-400" : "text-[var(--foreground)]0"}`}>
               {collabConnected ? "Live sync connected" : "Live sync disconnected"}
             </span>
           </span>
-          <span className="truncate text-slate-400">
+          <span className="truncate " style={{ color: "var(--muted-foreground)" }}>
             {presenceRows.join(", ") || "No active peer sessions"}
           </span>
         </div>

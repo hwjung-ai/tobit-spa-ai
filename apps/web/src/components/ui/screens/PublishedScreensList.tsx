@@ -58,7 +58,7 @@ export default function PublishedScreensList() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center text-slate-400">
+      <div className="rounded-xl border   p-6 text-center " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
         Loading published screens...
       </div>
     );
@@ -75,7 +75,7 @@ export default function PublishedScreensList() {
 
   if (!assets.length) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-center text-slate-500">
+      <div className="rounded-xl border   p-6 text-center " style={{ borderColor: "var(--border)" ,  color: "var(--muted-foreground)" ,  backgroundColor: "var(--surface-overlay)" }}>
         No published screens available
       </div>
     );
@@ -87,23 +87,23 @@ export default function PublishedScreensList() {
         <Link
           key={asset.asset_id}
           href={`/ui/screens/${asset.asset_id}`}
-          className="block rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900"
+          className="block rounded-2xl border   px-4 py-3 transition hover: hover:" style={{ borderColor: "var(--border)" ,  borderColor: "var(--border)" ,  backgroundColor: "var(--surface-base)" ,  backgroundColor: "var(--surface-overlay)" }}
         >
           <div className="flex items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold text-slate-100 truncate">
+            <h3 className="text-sm font-semibold  truncate" style={{ color: "var(--foreground)" }}>
               {asset.name || asset.screen_id}
             </h3>
-            <span className="text-[10px] uppercase tracking-[0.4em] text-slate-500">
+            <span className="text-[10px] uppercase tracking-[0.4em] " style={{ color: "var(--muted-foreground)" }}>
               v{asset.version}
             </span>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
             Screen ID: {asset.screen_id}
           </p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] " style={{ color: "var(--muted-foreground)" }}>
             {asset.description || "No description available"}
           </p>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[10px] " style={{ color: "var(--muted-foreground)" }}>
             Published: {formatTimestamp(asset.published_at)} · Updated: {formatTimestamp(asset.updated_at)}
           </p>
         </Link>
