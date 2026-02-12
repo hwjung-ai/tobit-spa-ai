@@ -1407,7 +1407,7 @@ export default function ApiManagerPage() {
                       {step.status}
                     </span>
                   </div>
-                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-xs text-muted-standard">
                     Duration {step.duration_ms} ms · Rows {step.row_count}
                   </p>
                   {step.error_message ? (
@@ -1503,7 +1503,7 @@ export default function ApiManagerPage() {
           )}
         </div>
       ) : (
-        <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-sm text-muted-standard">
           Execute the SQL to see results here.
         </p>
       )}
@@ -1646,50 +1646,30 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
                 }
-                className="h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
-                }}
+                className="api-textarea"
                 disabled={isSystemScope}
                 placeholder="Describe your API..."
               />
             </FormFieldGroup>
           </FormSection>
           {selectedDiscovered ? (
-            <div
-              className="space-y-2 rounded-2xl border p-3 text-sm"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
-            >
-              <p
-                className="text-xs uppercase tracking-normal"
-                style={{ color: "var(--muted-foreground)" }}
-              >
+            <div className="api-container">
+              <p className="text-label">
                 Supported actions / constraints
               </p>
               {selectedDiscovered.summary ? (
-                <p className="text-sm" style={{ color: "var(--foreground)" }}>
+                <p className="text-primary">
                   {selectedDiscovered.summary}
                 </p>
               ) : null}
               {discoveredConstraintLines.map((line, index) => (
-                <p key={index} className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+                <p key={index} className="text-muted-standard">
                   {line}
                 </p>
               ))}
               <button
                 onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
-                className="w-full rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-normal transition"
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
-                }}
+                className="api-button"
               >
                 Import to Custom
               </button>
@@ -1706,8 +1686,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                className="api-input"
                 disabled={isSystemScope}
                 placeholder="user, analytics, reporting"
               />
@@ -1726,14 +1705,7 @@ export default function ApiManagerPage() {
               <textarea
                 value={paramSchemaText}
                 onChange={(event) => setParamSchemaText(event.target.value)}
-                className="h-40 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
-                }}
+                className="api-textarea h-40"
                 disabled={isSystemScope && systemView !== "registered"}
                 placeholder='{"type": "object", "properties": {...}}'
               />
@@ -1743,22 +1715,12 @@ export default function ApiManagerPage() {
                 <textarea
                   value={runtimePolicyText}
                   onChange={(event) => setRuntimePolicyText(event.target.value)}
-                  className="h-40 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
-                  }}
+                  className="api-textarea h-40"
                   disabled={isSystemScope && systemView !== "registered"}
                   placeholder='{"timeout": 30000}'
                 />
               ) : (
-                <div
-                  className="flex h-40 flex-col justify-center rounded-2xl border p-3 text-sm"
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" }}
-                >
+                <div className="api-container text-muted-standard flex h-40 flex-col justify-center">
                   Runtime Policy editing is available only for System {">"} Registered or Custom
                   APIs.
                 </div>
@@ -1775,11 +1737,10 @@ export default function ApiManagerPage() {
                   onChange={(event) =>
                     setDefinitionDraft((prev) => ({ ...prev, is_active: event.target.checked }))
                   }
-                  className="h-4 w-4 rounded text-sky-400 ring-sky-400"
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                  className="api-checkbox"
                   disabled={isSystemScope}
                 />
-                <span className="text-sm " style={{ color: "rgb(71, 85, 105)" }}>
+                <span className="text-sm api-text-slate">
                   Enable this API
                 </span>
               </label>
@@ -1793,8 +1754,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                className="api-input"
                 placeholder="ops-builder"
                 disabled={isSystemScope}
               />
@@ -1805,10 +1765,7 @@ export default function ApiManagerPage() {
       {activeTab === "logic" && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p
-              className="text-xs uppercase tracking-normal "
-              style={{ color: "var(--muted-foreground)" }}
-            >
+            <p className="text-xs uppercase tracking-normal text-muted-standard">
               Logic ({logicTypeLabels[logicType]})
             </p>
             {!isSystemScope ? (
@@ -1864,18 +1821,14 @@ export default function ApiManagerPage() {
             ) : null}
           </div>
           {logicType === "script" && !isSystemScope ? (
-            <label
-              className="text-xs uppercase tracking-normal flex flex-col gap-2"
-              style={{ color: "var(--muted-foreground)" }}
-            >
+            <label className="text-label flex flex-col gap-2">
               Script language
               <select
                 value={scriptLanguage}
                 onChange={(event) =>
                   setScriptLanguage(event.target.value as "python" | "javascript")
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }}
+                className="api-select"
               >
                 <option value="python">Python</option>
                 <option value="javascript">JavaScript</option>
@@ -1885,8 +1838,7 @@ export default function ApiManagerPage() {
           <div
             className={`builder-json-shell rounded-2xl border transition-all ${
               logicType === "http" ? "h-auto max-h-[600px] overflow-y-auto" : "h-64 overflow-hidden"
-            }`}
-            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}
+            } bg-surface-base border-variant`}
           >
             {logicType === "http" ? (
               <div className="p-4">
@@ -1937,15 +1889,12 @@ export default function ApiManagerPage() {
             )}
           </div>
           {(bindingValidation.bindings.length > 0 || bindingValidation.errors.length > 0) && (
-            <div
-              className="rounded-2xl border px-3 py-2 text-sm"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-            >
-              <p className="" style={{ color: "var(--muted-foreground)" }}>
+            <div className="api-container-base">
+              <p className="text-label">
                 Binding scan
               </p>
               {bindingValidation.bindings.length > 0 && (
-                <p className="mt-1 " style={{ color: "rgb(71, 85, 105)" }}>
+                <p className="mt-1 api-text-slate">
                   Detected:{" "}
                   {bindingValidation.bindings.map((binding) => `{{${binding}}}`).join(", ")}
                 </p>
@@ -1961,20 +1910,16 @@ export default function ApiManagerPage() {
           )}
         </div>
       )}
-      <div
-        className="flex items-center justify-between mt-6 pt-4 border-t "
-        style={{ borderColor: "var(--border)" }}
-      >
+      <div className="api-border-top flex items-center justify-between mt-6 pt-4">
         <span
-          className={`text-sm uppercase tracking-wider px-3 py-1 rounded-full border ${
+          className={`api-status-badge ${
             statusMessage?.toLowerCase().includes("failed") ||
             statusMessage?.toLowerCase().includes("error")
               ? "text-rose-400 border-rose-500/30 bg-rose-500/5 font-semibold"
               : statusMessage && statusMessage.includes("Saved")
                 ? "text-emerald-400 border-emerald-500/30 bg-emerald-500/5"
-                : "0 border-transparent bg-transparent"
+                : "api-status-badge-default"
           }`}
-          style={{ color: "var(--foreground)" }}
         >
           {statusMessage ?? "정의/로직 저장 대기"}
         </span>
@@ -2795,12 +2740,14 @@ export default function ApiManagerPage() {
         title="API Manager"
         description="OPS와 오케스트레이션 도구에서 사용하는 실행형 API를 정의하고 관리하는 빌더 화면입니다."
       />
-      <BuilderShell
-        leftPane={leftPane}
-        centerTop={centerTop}
-        centerBottom={centerBottom}
-        rightPane={rightPane}
-      />
+      <main className="min-h-[calc(100vh-96px)] py-6">
+        <BuilderShell
+          leftPane={leftPane}
+          centerTop={centerTop}
+          centerBottom={centerBottom}
+          rightPane={rightPane}
+        />
+      </main>
     </div>
   );
 }

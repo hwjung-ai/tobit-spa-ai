@@ -11,7 +11,7 @@ export default function UICreatorChatRedirect() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white dark:bg-slate-950" style={{backgroundColor: "rgb(248, 250, 252)"}}>
+    <div className="flex items-center justify-center min-h-screen ui-redirect-bg">
       <div className="text-center">
         <p className="text-slate-600 dark:text-slate-400 mb-2">UI Creator has been deprecated.</p>
         <p className="text-slate-500 dark:text-slate-500">Redirecting to Admin &gt; Screens...</p>

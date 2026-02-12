@@ -223,36 +223,36 @@ export default function LlmLogsContent() {
             {/* Analytics Cards */}
             {analytics && (
                 <div className="grid grid-cols-4 gap-4">
-                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Total Calls</div>
-                        <div className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>{formatNumber(analytics.total_calls)}</div>
-                        <div className="flex gap-4 mt-2 text-xs">
+                    <div className="llm-stat-card">
+                        <div className="llm-stat-label">Total Calls</div>
+                        <div className="llm-stat-value">{formatNumber(analytics.total_calls)}</div>
+                        <div className="llm-stat-secondary">
                             <span className="text-green-400">{formatNumber(analytics.successful_calls)} success</span>
                             <span className="text-rose-400">{formatNumber(analytics.failed_calls)} error</span>
                         </div>
                     </div>
 
-                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Total Tokens</div>
-                        <div className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>{formatTokens(analytics.total_tokens)}</div>
-                        <div className="flex gap-4 mt-2 text-xs " style={{color: "var(--muted-foreground)"}}>
+                    <div className="llm-stat-card">
+                        <div className="llm-stat-label">Total Tokens</div>
+                        <div className="llm-stat-value">{formatTokens(analytics.total_tokens)}</div>
+                        <div className="llm-stat-secondary">
                             <span>In: {formatTokens(analytics.total_input_tokens)}</span>
                             <span>Out: {formatTokens(analytics.total_output_tokens)}</span>
                         </div>
                     </div>
 
-                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Avg Latency</div>
-                        <div className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>{formatDuration(analytics.avg_latency_ms)}</div>
-                        <div className="text-xs  mt-2" style={{color: "var(--muted-foreground)"}}>Total: {formatDuration(analytics.total_duration_ms)}</div>
+                    <div className="llm-stat-card">
+                        <div className="llm-stat-label">Avg Latency</div>
+                        <div className="llm-stat-value">{formatDuration(analytics.avg_latency_ms)}</div>
+                        <div className="llm-stat-secondary">Total: {formatDuration(analytics.total_duration_ms)}</div>
                     </div>
 
-                    <div className=" rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
-                        <div className="text-xs font-bold  uppercase tracking-widest mb-1" style={{color: "var(--muted-foreground)"}}>Top Model</div>
-                        <div className="text-lg font-bold truncate" style={{ color: "var(--foreground)" }}>
+                    <div className="llm-stat-card">
+                        <div className="llm-stat-label">Top Model</div>
+                        <div className="llm-stat-value text-lg truncate">
                             {Object.entries(analytics.model_breakdown).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A"}
                         </div>
-                        <div className="text-xs  mt-2" style={{color: "var(--muted-foreground)"}}>
+                        <div className="llm-stat-secondary">
                             {Object.keys(analytics.model_breakdown).length} models used
                         </div>
                     </div>
@@ -260,14 +260,14 @@ export default function LlmLogsContent() {
             )}
 
             {/* Filters */}
-            <div className="flex gap-4  rounded-xl border  p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
+            <div className="llm-filter-bar">
                 {/* Date Range Filter */}
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Date Range</label>
+                    <label className="llm-filter-label">Date Range</label>
                     <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value as DateRangeOption)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
+                        className="api-select"
                     >
                         <option value="1h">Last 1 Hour</option>
                         <option value="24h">Last 24 Hours</option>
@@ -282,32 +282,32 @@ export default function LlmLogsContent() {
                 {dateRange === "custom" && (
                     <>
                         <div className="flex-1">
-                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>From</label>
+                            <label className="llm-filter-label">From</label>
                             <input
                                 type="datetime-local"
                                 value={formatDateForInput(customFromDate)}
                                 onChange={(e) => setCustomFromDate(e.target.value)}
-                                className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
+                                className="api-input"
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>To</label>
+                            <label className="llm-filter-label">To</label>
                             <input
                                 type="datetime-local"
                                 value={formatDateForInput(customToDate)}
                                 onChange={(e) => setCustomToDate(e.target.value)}
-                                className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
+                                className="api-input"
                             />
                         </div>
                     </>
                 )}
 
                 <div className="flex-1">
-                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2" style={{color: "var(--muted-foreground)"}}>Status</label>
+                    <label className="llm-filter-label">Status</label>
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value as FilterStatus)}
-                        className="w-full px-3 py-2  border  rounded-lg  text-sm" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}
+                        className="api-select"
                     >
                         <option value="all">All Status</option>
                         <option value="success">Success</option>

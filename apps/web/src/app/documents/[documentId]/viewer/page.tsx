@@ -13,16 +13,14 @@ import { cn } from "@/lib/utils";
 
 // Lazy-load react-pdf to avoid SSR issues (uses browser-only APIs)
 const ReactPdfDocument = dynamic(
-  () => import("react-pdf").then((mod) => {
-    mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-    return mod.Document;
-  }),
-  { ssr: false }
+  () =>
+    import("react-pdf").then((mod) => {
+      mod.pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      return mod.Document;
+    }),
+  { ssr: false },
 );
-const ReactPdfPage = dynamic(
-  () => import("react-pdf").then((mod) => mod.Page),
-  { ssr: false }
-);
+const ReactPdfPage = dynamic(() => import("react-pdf").then((mod) => mod.Page), { ssr: false });
 
 const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
 
@@ -132,7 +130,7 @@ function DocumentViewerContent() {
       return;
     }
     const textLayer = document.querySelector(
-      `.react-pdf__Page[data-page-number="${currentPage}"] .react-pdf__Page__textContent`
+      `.react-pdf__Page[data-page-number="${currentPage}"] .react-pdf__Page__textContent`,
     );
     if (!textLayer) {
       return;
@@ -186,7 +184,7 @@ function DocumentViewerContent() {
       }
       router.replace(`/documents/${documentId}/viewer?${params.toString()}`);
     },
-    [chunkId, documentId, router, references]
+    [chunkId, documentId, router, references],
   );
 
   useEffect(() => {
@@ -206,15 +204,14 @@ function DocumentViewerContent() {
         return;
       }
       setChunkError(null);
-      const response = await fetch(
-        `${apiBaseUrl}/api/documents/${documentId}/chunks/${chunkId}`,
-        { headers: getAuthHeaders() }
-      );
+      const response = await fetch(`${apiBaseUrl}/api/documents/${documentId}/chunks/${chunkId}`, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         setChunkError(
           response.status === 404
             ? "해당 근거 청크를 찾을 수 없습니다. 문서가 재색인되었을 수 있습니다."
-            : `청크 조회 실패 (${response.status})`
+            : `청크 조회 실패 (${response.status})`,
         );
         return;
       }
@@ -256,7 +253,7 @@ function DocumentViewerContent() {
     const maxRetries = 5;
     const attemptHighlight = () => {
       const textLayer = document.querySelector(
-        `.react-pdf__Page[data-page-number="${currentPage}"] .react-pdf__Page__textContent`
+        `.react-pdf__Page[data-page-number="${currentPage}"] .react-pdf__Page__textContent`,
       );
       if (textLayer) {
         highlightSnippet();
@@ -296,10 +293,9 @@ function DocumentViewerContent() {
     setPdfLoading(true);
     setPdfError(null);
     const fetchPdf = async () => {
-      const response = await fetch(
-        `${apiBaseUrl}/api/documents/${documentId}/viewer`,
-        { headers: getAuthHeaders() }
-      );
+      const response = await fetch(`${apiBaseUrl}/api/documents/${documentId}/viewer`, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) {
         if (!revoked) {
           setPdfError(`PDF 로드 실패 (${response.status})`);
@@ -407,20 +403,21 @@ function DocumentViewerContent() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between rounded-2xl border p-6 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <header className="ui-box flex items-center justify-between p-6">
         <div>
-          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">문서 뷰어</p>
+          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            문서 뷰어
+          </p>
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
             {documentMeta?.filename ?? "문서 불러오는 중..."}
           </h2>
           {chunkInfo ? (
             <p className="text-xs text-slate-700 dark:text-slate-400">
-              근거 청크 하이라이트 중 · {chunkInfo.page != null ? `${chunkInfo.page}페이지` : "페이지 미확인"}
+              근거 청크 하이라이트 중 ·{" "}
+              {chunkInfo.page != null ? `${chunkInfo.page}페이지` : "페이지 미확인"}
             </p>
           ) : null}
-          {chunkError ? (
-            <p className="text-xs text-amber-400">{chunkError}</p>
-          ) : null}
+          {chunkError ? <p className="text-xs text-amber-400">{chunkError}</p> : null}
         </div>
         <div className="flex gap-3">
           <button
@@ -431,29 +428,26 @@ function DocumentViewerContent() {
               }
               router.push("/documents");
             }}
-            className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
+            className="btn-secondary px-4 py-2 text-xs"
           >
             문서 목록
           </button>
           {pdfBlobUrl && (
-            <button
-              onClick={handleDownload}
-              className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
-            >
+            <button onClick={handleDownload} className="btn-secondary px-4 py-2 text-xs">
               다운로드
             </button>
           )}
           <div className="flex gap-2">
             <button
               onClick={handlePrevious}
-              className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 disabled:opacity-50 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
+              className="btn-secondary px-4 py-2 text-xs disabled:opacity-50"
               disabled={currentPage <= 1}
             >
               이전
             </button>
             <button
               onClick={handleNext}
-              className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 disabled:opacity-50 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
+              className="btn-secondary px-4 py-2 text-xs disabled:opacity-50"
               disabled={numPages !== null && currentPage >= numPages}
             >
               다음
@@ -462,7 +456,7 @@ function DocumentViewerContent() {
         </div>
       </header>
 
-      <section className="rounded-2xl border p-6 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <section className="ui-box p-6">
         <div className="mb-4 flex items-center justify-between text-xs text-slate-700 dark:text-slate-400">
           <span>{currentPage}페이지</span>
           {numPages ? <span>전체 {numPages}페이지</span> : <span>페이지 로딩 중...</span>}
@@ -474,7 +468,9 @@ function DocumentViewerContent() {
               <div className="flex h-[600px] w-full items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
                   <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400 border-slate-300" />
-                  <span className="text-sm text-slate-700 dark:text-slate-400">PDF 불러오는 중...</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-400">
+                    PDF 불러오는 중...
+                  </span>
                 </div>
               </div>
             )}
@@ -484,7 +480,7 @@ function DocumentViewerContent() {
                   <p className="text-sm text-rose-400">{pdfError}</p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="mt-3 rounded-2xl border  px-4 py-2 text-xs  transition hover:" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+                    className="btn-secondary mt-3 px-4 py-2 text-xs"
                   >
                     다시 시도
                   </button>
@@ -500,10 +496,7 @@ function DocumentViewerContent() {
               </div>
             )}
             {pdfBlobUrl && (
-              <ReactPdfDocument
-                file={pdfBlobUrl}
-                onLoadSuccess={handleDocumentLoadSuccess}
-              >
+              <ReactPdfDocument file={pdfBlobUrl} onLoadSuccess={handleDocumentLoadSuccess}>
                 <ReactPdfPage pageNumber={currentPage} width={pageWidth} />
               </ReactPdfDocument>
             )}
@@ -513,7 +506,7 @@ function DocumentViewerContent() {
 
       {/* References Section */}
       {references.length > 0 && (
-        <section className="rounded-2xl border p-6 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <section className="ui-box p-6">
           <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-700 dark:text-slate-400">
             <span>근거 문서 ({references.length}건)</span>
           </div>
@@ -527,20 +520,24 @@ function DocumentViewerContent() {
                     "block rounded-2xl border p-4 transition",
                     isCurrentDocument
                       ? "border-amber-400 bg-amber-500/10"
-                      : "border-slate-200 bg-white hover:border-sky-500 dark:border-slate-700 dark:bg-slate-900"
+                      : "border-slate-200 bg-white hover:border-sky-500 dark:border-slate-700 dark:bg-slate-900",
                   )}
                 >
                   <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-700 dark:text-slate-400">
                     <span>{reference.document_title}</span>
-                    <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
+                    <span>
+                      {reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}
+                    </span>
                   </div>
-                  <p className="mt-2 text-xs  line-clamp-3" style={{color: "rgb(71, 85, 105)"}}>{reference.snippet}</p>
+                  <p className="mt-2 text-xs line-clamp-3 docviewer-snippet">
+                    {reference.snippet}
+                  </p>
                   {reference.score != null && (
-                    <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
+                    <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">
+                      유사도 {(reference.score * 100).toFixed(1)}%
+                    </p>
                   )}
-                  {isCurrentDocument && (
-                    <p className="mt-2 text-xs text-amber-400">현재 문서</p>
-                  )}
+                  {isCurrentDocument && <p className="mt-2 text-xs text-amber-400">현재 문서</p>}
                 </div>
               );
             })}
@@ -561,7 +558,13 @@ function DocumentViewerContent() {
 
 export default function DocumentViewerPage() {
   return (
-    <Suspense fallback={<div className="p-4 " style={{color: "rgb(71, 85, 105)"}}>불러오는 중...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-4 docviewer-loading">
+          불러오는 중...
+        </div>
+      }
+    >
       <DocumentViewerContent />
     </Suspense>
   );

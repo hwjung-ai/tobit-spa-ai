@@ -810,7 +810,7 @@ function DocumentsPageContent() {
   const formattedSize = useCallback((size: number) => `${Math.round(size / 1024)} KB`, []);
 
   return (
-    <div className="space-y-6">
+    <div>
       <PageHeader
         title="Documents"
         description="문서를 업로드하고 관리하며, 전문 검색과 벡터 유사도로 질의합니다."
@@ -823,37 +823,10 @@ function DocumentsPageContent() {
           </button>
         }
       />
-      <section className="container-section text-foreground">
-        <form onSubmit={handleUpload} className="flex flex-col gap-3">
-          <label className="text-sm text-foreground">
-            Select a file (txt/pdf/docx)
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="mt-2 block w-full input-container text-sm"
-            />
-          </label>
-          {uploadError ? (
-            <p className="text-xs text-rose-600 dark:text-rose-400">{uploadError}</p>
-          ) : null}
-          <div className="flex items-center justify-between gap-3">
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={uploading}
-            >
-              {uploading ? "Uploading…" : "문서 업로드"}
-            </button>
-            <span className="text-xs uppercase tracking-wider text-muted-standard">
-              API: /api/documents/upload
-            </span>
-          </div>
-        </form>
-      </section>
-
-      <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
+      <main className="min-h-[calc(100vh-96px)] space-y-6 py-6">
+      <div className="-mt-2 grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside
-          className="rounded-2xl border p-5 bg-surface-elevated dark:border-border"
+          className="rounded-2xl border border-border p-5 bg-surface-elevated"
         >
           <div className="flex items-center justify-between">
             <h2 className="section-title">Library</h2>
@@ -911,6 +884,33 @@ function DocumentsPageContent() {
         </aside>
 
         <div className="space-y-6">
+          <section className="container-section text-foreground">
+        <form onSubmit={handleUpload} className="flex flex-col gap-3">
+          <label className="ml-6 text-sm text-foreground">
+            Select a file (txt/pdf/docx)
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="mt-2 block w-full input-container text-sm"
+            />
+          </label>
+          {uploadError ? (
+            <p className="text-xs text-rose-600 dark:text-rose-400">{uploadError}</p>
+          ) : null}
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={uploading}
+            >
+              {uploading ? "Uploading…" : "문서 업로드"}
+            </button>
+            <span className="text-xs uppercase tracking-wider text-muted-standard">
+              API: /api/documents/upload
+            </span>
+          </div>
+        </form>
+      </section>
           <section
             className="group rounded-2xl border p-5 bg-surface-elevated dark:border-border"
           >
@@ -1003,8 +1003,10 @@ function DocumentsPageContent() {
                   ) : "메시지 전송"}
                 </button>
                 <span
-                  className="text-xs uppercase tracking-wider"
-                  style={{color: streamStatus === "error" ? "var(--error)" : "var(--muted-foreground)"}}
+                  className={cn(
+                    "text-xs uppercase tracking-wider",
+                    streamStatus === "error" ? "text-rose-600 dark:text-rose-400" : "text-muted-standard"
+                  )}
                 >
                   {streamStatus === "streaming" ? "SSE live" : streamStatus === "idle" ? "Ready" : "Error"}
                 </span>
@@ -1251,20 +1253,21 @@ function DocumentsPageContent() {
       </div>
 
       {/* PDF Viewer Modal */}
-      <PdfViewerModal
-        isOpen={pdfModalOpen}
-        onClose={() => {
-          setPdfModalOpen(false);
-          setPdfBlob(null);
-          setPdfHighlightSnippet(undefined);
-          setPdfViewerHref(undefined);
-        }}
-        pdfBlob={pdfBlob}
-        filename={pdfFilename}
-        initialPage={pdfInitialPage}
-        viewerHref={pdfViewerHref}
-        highlightSnippet={pdfHighlightSnippet}
-      />
+        <PdfViewerModal
+          isOpen={pdfModalOpen}
+          onClose={() => {
+            setPdfModalOpen(false);
+            setPdfBlob(null);
+            setPdfHighlightSnippet(undefined);
+            setPdfViewerHref(undefined);
+          }}
+          pdfBlob={pdfBlob}
+          filename={pdfFilename}
+          initialPage={pdfInitialPage}
+          viewerHref={pdfViewerHref}
+          highlightSnippet={pdfHighlightSnippet}
+        />
+      </main>
     </div>
   );
 }

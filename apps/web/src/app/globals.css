@@ -1644,6 +1644,27 @@ html {
   background-color: rgba(15, 23, 42, 0.95);
 }
 
+/* Unified box standards (DESIGN_SYSTEM_GUIDE baseline) */
+.ui-box {
+  @apply rounded-2xl border p-5 shadow-sm;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .ui-box {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.ui-subbox {
+  @apply rounded-xl border p-4;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+}
+
+.dark .ui-subbox {
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
 /* Input Container Classes */
 .input-container {
   @apply rounded-2xl border px-3 py-2 text-sm outline-none transition;
@@ -1661,6 +1682,28 @@ html {
 }
 
 .dark .input-container:focus {
+  border-color: #38bdf8; /* sky-400 */
+}
+
+/* Input Container with Border Hover (replaces inline style hover) */
+.input-container-hover {
+  @apply rounded-2xl border px-3 py-2 text-sm outline-none transition;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.input-container-hover:hover,
+.input-container-hover:focus {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .input-container-hover {
+  background-color: rgba(2, 6, 23, 0.5);
+}
+
+.dark .input-container-hover:hover,
+.dark .input-container-hover:focus {
   border-color: #38bdf8; /* sky-400 */
 }
 
@@ -2155,4 +2198,219 @@ html {
 .divider-vertical {
   width: 1px;
   background-color: var(--border);
+}
+
+/* ============================================================================
+ * API MANAGER SPECIFIC CLASSES (Phase 13)
+ * ============================================================================ */
+
+/* API Manager - Inline style replacements */
+.api-textarea {
+  @apply h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.api-textarea:focus {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .api-textarea {
+  background-color: rgba(2, 6, 23, 0.5);
+}
+
+.dark .api-textarea:focus {
+  border-color: #38bdf8; /* sky-400 */
+}
+
+.api-input {
+  @apply w-full rounded-2xl border px-3 py-2 text-sm outline-none transition;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.api-input:focus {
+  border-color: #0ea5e9;
+}
+
+.dark .api-input {
+  background-color: rgba(2, 6, 23, 0.5);
+}
+
+.dark .api-input:focus {
+  border-color: #38bdf8;
+}
+
+.api-select {
+  @apply w-full rounded-2xl border px-3 py-2 text-sm outline-none transition;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.api-select:focus {
+  border-color: #0ea5e9;
+}
+
+.dark .api-select {
+  background-color: rgba(2, 6, 23, 0.5);
+}
+
+.dark .api-select:focus {
+  border-color: #38bdf8;
+}
+
+.api-container {
+  @apply space-y-2 rounded-2xl border p-3 text-sm;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.api-container-base {
+  @apply space-y-2 rounded-2xl border p-3 text-sm;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.api-button {
+  @apply w-full rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-wider transition;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.api-button:hover {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.api-button-primary {
+  @apply rounded-full border px-5 py-2 text-sm font-bold uppercase tracking-wider transition;
+  border-color: #0ea5e9; /* sky-500 */
+  background-color: #0ea5e9;
+  color: white;
+}
+
+.api-button-primary:hover {
+  background-color: #0c4a6e; /* sky-600 */
+}
+
+.api-button-success {
+  @apply rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition;
+  border-color: #10b981; /* emerald-500 */
+  background-color: #10b981;
+  color: white;
+}
+
+.api-button-success:hover {
+  background-color: #059669; /* emerald-600 */
+}
+
+.api-checkbox {
+  @apply h-4 w-4 rounded text-sky-400 ring-sky-400;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.api-text-slate {
+  color: #475569; /* slate-600 */
+}
+
+.dark .api-text-slate {
+  color: #94a3b8; /* slate-400 */
+}
+
+.api-border-top {
+  @apply border-t pt-4;
+  border-color: var(--border);
+}
+
+.api-result-box {
+  @apply space-y-3 rounded-2xl border p-4 text-sm;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.dark .api-result-box {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.api-status-badge {
+  @apply text-sm uppercase tracking-wider px-3 py-1 rounded-full border;
+}
+
+.api-status-badge-default {
+  @apply border-transparent bg-transparent;
+}
+
+/* LLM Logs Page - Stat Cards */
+.llm-stat-card {
+  @apply rounded-xl border p-4;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+}
+
+.llm-stat-label {
+  @apply text-xs font-bold uppercase tracking-widest mb-1;
+  color: var(--muted-foreground);
+}
+
+.llm-stat-value {
+  @apply text-2xl font-bold;
+  color: var(--foreground);
+}
+
+.llm-stat-secondary {
+  @apply flex gap-4 mt-2 text-xs;
+  color: var(--muted-foreground);
+}
+
+.llm-filter-bar {
+  @apply flex gap-4 rounded-xl border p-4;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+}
+
+.llm-filter-label {
+  @apply block text-xs font-bold uppercase tracking-widest mb-2;
+  color: var(--muted-foreground);
+}
+
+/* UI Creator - Redirect page */
+.ui-redirect-bg {
+  background-color: #f8fafc; /* slate-50 */
+}
+
+/* Document Viewer - Button */
+.docviewer-retry-button {
+  @apply mt-3 rounded-2xl border px-4 py-2 text-xs transition;
+  border-color: #cbd5e1; /* slate-300 */
+  color: #475569; /* slate-600 */
+}
+
+.docviewer-retry-button:hover {
+  border-color: #0ea5e9;
+  background-color: var(--surface-elevated);
+}
+
+.docviewer-snippet {
+  @apply mt-2 text-xs line-clamp-3;
+  color: #475569; /* slate-600 */
+}
+
+.dark .docviewer-snippet {
+  color: #94a3b8; /* slate-400 */
+}
+
+.docviewer-loading {
+  @apply p-4;
+  color: #475569; /* slate-600 */
+}
+
+.dark .docviewer-loading {
+  color: #94a3b8; /* slate-400 */
 }
