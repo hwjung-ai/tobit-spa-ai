@@ -98,7 +98,7 @@ export default function PerformanceMetrics() {
     <div className="rounded-2xl border p-6" style={{borderColor: "rgba(51, 65, 85, 0.7)", backgroundColor: "rgba(15, 23, 42, 0.6)"}}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold" style={{color: "var(--foreground)"}}>Performance Metrics</h3>
-        <span className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Today</span>
+        <span className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Today</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

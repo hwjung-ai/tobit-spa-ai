@@ -112,7 +112,7 @@ export default function ScreenEditorCopilotPanel({
     >
       <div className="flex items-center justify-between border-b px-4 py-3" style={{borderBottom: "1px solid var(--border)"}}>
         <div>
-          <p className="text-xs uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Copilot</p>
+          <p className="text-sm uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Copilot</p>
           <p className="text-[11px]" style={{color: "var(--muted-foreground)"}}>Patch suggestions</p>
         </div>
         <span className="text-[11px] uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>

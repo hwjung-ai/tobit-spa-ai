@@ -117,7 +117,7 @@ function AssetsDiffSection({ diff, showOnlyChanges }: { diff: AssetsDiff; showOn
       {diff.queries.changeType !== "unchanged" && (
         <div className="rounded-xl px-4 py-3 space-y-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Queries</span>
+            <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>Queries</span>
             <ChangeIndicator changeType={diff.queries.changeType} />
           </div>
           {diff.queries.before && (
@@ -147,7 +147,7 @@ function AssetComparisonRow({ label, asset }: { label: string; asset: DiffItem<A
   return (
     <div className="rounded-xl px-4 py-3 space-y-2" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>{label}</span>
+        <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>{label}</span>
         <ChangeIndicator changeType={asset.changeType} />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -223,7 +223,7 @@ function PlanDiffSection({ diff, showOnlyChanges }: { diff: PlanDiff; showOnlyCh
   return (
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Plan Comparison</span>
+        <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>Plan Comparison</span>
         <ChangeIndicator changeType={diff.changeType} />
       </div>
       {/* Validated Plan Changes */}
@@ -278,7 +278,7 @@ function ToolCallsDiffSection({ diff, showOnlyChanges }: { diff: ToolCallsDiff; 
   return (
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Tool Calls</span>
+        <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>Tool Calls</span>
         <span className="text-[10px]" style={{color: "var(--muted-foreground)"}}>
           {diff.unchanged} unchanged, {diff.added.length + diff.removed.length + diff.modified.length} changed
         </span>
@@ -314,7 +314,7 @@ function ReferencesDiffSection({ diff, showOnlyChanges }: { diff: ReferencesDiff
   return (
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>References</span>
+        <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>References</span>
         <ChangeIndicator changeType={summary.changeType} />
       </div>
       <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
@@ -353,7 +353,7 @@ function AnswerBlocksDiffSection({ diff, showOnlyChanges }: { diff: AnswerBlocks
   return (
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>Answer Blocks</span>
+        <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>Answer Blocks</span>
         <ChangeIndicator changeType={hasChanges ? "modified" : "unchanged"} />
       </div>
       <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
@@ -406,7 +406,7 @@ function UIRenderDiffSection({ diff, showOnlyChanges }: { diff: UIRenderDiff; sh
   return (
     <div className="rounded-xl px-4 py-3 space-y-3" style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)", border: "1px solid var(--border)"}}>
       <div className="flex items-center gap-2">
-        <span className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>UI Render</span>
+        <span className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>UI Render</span>
         <ChangeIndicator changeType={hasChanges ? "modified" : "unchanged"} />
       </div>
       <div className="text-[11px] space-y-1" style={{color: "var(--muted-foreground)"}}>
@@ -508,7 +508,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
         {/* Trace Info Header */}
         <div className="grid grid-cols-2 gap-4 px-6 py-4" style={{backgroundColor: "var(--surface-elevated)"}}>
           <div>
-            <p className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace A</p>
+            <p className="text-sm uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace A</p>
             <p className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>{traceA.trace_id}</p>
             <p className="text-xs" style={{color: "var(--muted-foreground)"}}>
               {formatTimestamp(traceA.created_at)} • {traceA.status}
@@ -518,7 +518,7 @@ export default function TraceDiffView({ traceA, traceB, onClose }: TraceDiffView
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace B</p>
+            <p className="text-sm uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Trace B</p>
             <p className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>{traceB.trace_id}</p>
             <p className="text-xs" style={{color: "var(--muted-foreground)"}}>
               {formatTimestamp(traceB.created_at)} • {traceB.status}

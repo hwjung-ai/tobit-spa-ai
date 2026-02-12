@@ -609,7 +609,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                 className="border rounded-xl p-3"
                                 style={{ backgroundColor: "rgba(15, 23, 42, 0.6)", borderColor: "var(--border)" }}
                             >
-                                <summary className="text-xs font-semibold cursor-pointer" style={{ color: "var(--foreground)" }}>
+                                <summary className="text-sm font-semibold cursor-pointer" style={{ color: "var(--foreground)" }}>
                                     Raw Asset Content
                                 </summary>
                                 <pre className="mt-2 text-[11px] overflow-x-auto max-h-64" style={{ color: "var(--foreground)" }}>

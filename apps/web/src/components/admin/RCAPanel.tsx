@@ -127,7 +127,7 @@ export default function RCAPanel({
             {/* Evidence */}
             {hyp.evidence.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
                   Evidence
                 </p>
                 <ul className="space-y-1">
@@ -158,7 +158,7 @@ export default function RCAPanel({
             {/* Checks (Verification Steps) */}
             {hyp.checks.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
                   Verification Checklist
                 </p>
                 <ul className="space-y-1">
@@ -179,7 +179,7 @@ export default function RCAPanel({
             {/* Recommended Actions */}
             {hyp.recommended_actions.length > 0 && (
               <div className="space-y-2">
-                <p className="text-xs uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
                   Recommended Actions
                 </p>
                 <ul className="space-y-1">

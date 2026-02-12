@@ -36,7 +36,7 @@ function SpanNode({ data, selected }: NodeProps<SpanNodeData>) {
     >
       <Handle type="target" position={Position.Top} />
 
-      <div className="text-xs font-semibold truncate" style={{ color: "var(--foreground)" }}>{data.name}</div>
+      <div className="text-sm font-semibold truncate" style={{ color: "var(--foreground)" }}>{data.name}</div>
 
       <div className="mt-1 flex items-center gap-2 justify-between">
         <span className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>{data.kind}</span>

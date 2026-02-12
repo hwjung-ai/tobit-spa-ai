@@ -155,7 +155,7 @@ export default function PreviewTab() {
       data-testid="preview-renderer"
     >
       <div className="mb-6 rounded-lg border p-4 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}>
-        <p className="text-xs uppercase tracking-[0.25em]" style={{ color: "var(--muted-foreground)"  }}>Preview Data Overrides</p>
+        <p className="text-sm uppercase tracking-[0.25em]" style={{ color: "var(--muted-foreground)"  }}>Preview Data Overrides</p>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           <div className="lg:col-span-1">
             <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Viewport</p>
@@ -205,7 +205,7 @@ export default function PreviewTab() {
       </div>
 
       <div className="mb-6 rounded-lg border p-4 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}>
-        <p className="text-xs uppercase tracking-[0.25em]" style={{ color: "var(--muted-foreground)"  }}>Action Runner (Realtime Binding)</p>
+        <p className="text-sm uppercase tracking-[0.25em]" style={{ color: "var(--muted-foreground)"  }}>Action Runner (Realtime Binding)</p>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           <div className="lg:col-span-2">
             <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Action</p>

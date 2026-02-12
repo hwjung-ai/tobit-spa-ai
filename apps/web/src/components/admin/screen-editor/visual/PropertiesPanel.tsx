@@ -266,7 +266,7 @@ export default function PropertiesPanel() {
         {normalizedType === "table" && (
           <Accordion type="single" collapsible>
             <AccordionItem value="table-columns">
-              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-slate-300">
                 Table Columns
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">
@@ -379,7 +379,7 @@ export default function PropertiesPanel() {
         {normalizedType === "chart" && (
           <Accordion type="single" collapsible>
             <AccordionItem value="chart-series">
-              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-slate-300">
                 Chart Behavior
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">
@@ -601,7 +601,7 @@ export default function PropertiesPanel() {
         {/* Bindings Section */}
         <Accordion type="single" collapsible>
           <AccordionItem value="bindings">
-            <AccordionTrigger className="text-xs font-semibold text-slate-300">
+            <AccordionTrigger className="text-sm font-semibold text-slate-300">
               Bindings
             </AccordionTrigger>
             <AccordionContent className="space-y-3 pt-3">
@@ -635,7 +635,7 @@ export default function PropertiesPanel() {
         {/* Visibility Section */}
         <Accordion type="single" collapsible>
           <AccordionItem value="visibility">
-            <AccordionTrigger className="text-xs font-semibold text-slate-300">
+            <AccordionTrigger className="text-sm font-semibold text-slate-300">
               Visibility
             </AccordionTrigger>
             <AccordionContent className="space-y-2 pt-3">
@@ -662,7 +662,7 @@ export default function PropertiesPanel() {
         {/* Actions Section */}
         <Accordion type="single" collapsible>
           <AccordionItem value="actions">
-            <AccordionTrigger className="text-xs font-semibold text-slate-300">
+            <AccordionTrigger className="text-sm font-semibold text-slate-300">
               Actions ({selectedComponent.actions?.length || 0})
             </AccordionTrigger>
             <AccordionContent className="space-y-2 pt-3">
@@ -762,7 +762,7 @@ export default function PropertiesPanel() {
         {actionOptions.length > 0 && (
           <Accordion type="single" collapsible>
             <AccordionItem value="auto-refresh">
-              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-slate-300">
                 Auto Refresh
               </AccordionTrigger>
               <AccordionContent className="space-y-3 pt-3">
@@ -874,7 +874,7 @@ export default function PropertiesPanel() {
         {normalizedType === "table" && actionOptions.length > 0 && (
           <Accordion type="single" collapsible>
             <AccordionItem value="table-behavior">
-              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-slate-300">
                 Table Behavior
               </AccordionTrigger>
               <AccordionContent className="space-y-3 pt-3">
@@ -939,7 +939,7 @@ export default function PropertiesPanel() {
         {(normalizedType === "table" || normalizedType === "chart" || normalizedType === "badge") && (
           <Accordion type="single" collapsible>
             <AccordionItem value="component-conditional-styles">
-              <AccordionTrigger className="text-xs font-semibold text-slate-300">
+              <AccordionTrigger className="text-sm font-semibold text-slate-300">
                 Conditional Styles
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">

@@ -53,7 +53,7 @@ export default function JsonEditor() {
       {/* Errors */}
       {(localErrors.length > 0 || hasJsonErrors) && (
         <div className="rounded-lg border border-red-800 bg-red-950/50 p-3">
-          <p className="text-xs font-semibold text-red-300 mb-2">Errors:</p>
+          <p className="text-sm font-semibold text-red-300 mb-2">Errors:</p>
           <div className="space-y-1">
             {localErrors.map((err, idx) => (
               <p key={idx} className="text-xs text-red-400">{err}</p>

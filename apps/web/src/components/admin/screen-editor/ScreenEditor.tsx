@@ -461,7 +461,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         <div className="w-80 flex-shrink-0 flex flex-col border-l" style={{ borderColor: "var(--border)", backgroundColor: "var(--background)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
             <div>
-              <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Schema</p>
+              <p className="text-sm uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Schema</p>
               <p className="text-[11px]" style={{ color: "var(--foreground-secondary)" }}>{schemaSummary}</p>
             </div>
           </div>

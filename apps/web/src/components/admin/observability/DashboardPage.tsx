@@ -73,7 +73,7 @@ export default function DashboardPage() {
               <option value={300}>Every 5m</option>
             </select>
           )}
-          <span className="text-xs uppercase tracking-[0.3em] text-sky-400 animate-pulse">
+          <span className="text-sm uppercase tracking-[0.3em] text-sky-400 animate-pulse">
             Live
           </span>
         </div>

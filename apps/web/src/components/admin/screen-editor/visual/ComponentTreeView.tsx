@@ -78,7 +78,7 @@ export default function ComponentTreeView() {
             onClick={() => selectComponent(node.component.id)}
           >
             <div>
-              <p className="text-xs font-semibold truncate" style={{color: "var(--foreground)"}}>
+              <p className="text-sm font-semibold truncate" style={{color: "var(--foreground)"}}>
                 {node.component.label || node.component.id}
               </p>
               <p className="text-[10px] font-mono" style={{color: "var(--muted-foreground)"}}>
@@ -125,7 +125,7 @@ export default function ComponentTreeView() {
 
   const selectedSummary = selectedComponentId && selectedNode ? (
     <div className="space-y-1 border-b pb-2" style={{borderColor: "var(--border)"}}>
-      <p className="text-xs font-semibold" style={{color: "var(--foreground-secondary)"}}>
+      <p className="text-sm font-semibold" style={{color: "var(--foreground-secondary)"}}>
         {selectedNode.component.label || selectedNode.component.id}
       </p>
       <p className="text-[10px]" style={{color: "var(--muted-foreground)"}}>

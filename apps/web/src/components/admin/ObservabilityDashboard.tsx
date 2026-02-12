@@ -155,7 +155,7 @@ export default function ObservabilityDashboard() {
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
             )}
           </button>
-          <span className="text-xs uppercase tracking-[0.3em] text-sky-400">realtime</span>
+          <span className="text-sm uppercase tracking-[0.3em] text-sky-400">realtime</span>
         </div>
       </div>
 
@@ -165,7 +165,7 @@ export default function ObservabilityDashboard() {
             key={item.label}
             className="rounded-2xl border /70  p-5 text-white shadow-[0_10px_40px_rgba(15,23,42,0.5)]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
           >
-            <p className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>{item.label}</p>
+            <p className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>{item.label}</p>
             <p className="mt-3 text-3xl font-semibold">{item.value}</p>
             {idx === 0 && <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Goal ≥ 96%</p>}
           </article>
@@ -197,7 +197,7 @@ export default function ObservabilityDashboard() {
         <article className="rounded-3xl border /70  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Regression trend</h2>
-            <span className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>last 7 days</span>
+            <span className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>last 7 days</span>
           </div>
           {payload.regression_trend.length === 0 ? (
             <div className="mt-4 text-sm " style={{color: "var(--muted-foreground)"}}>No regression runs in the last 7 days.</div>
@@ -229,7 +229,7 @@ export default function ObservabilityDashboard() {
         <article className="rounded-3xl border /70  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-white">Regression breakdown</h2>
-            <span className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>kpi</span>
+            <span className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>kpi</span>
           </div>
           <div className="mt-4 grid grid-cols-3 gap-3 text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
             {(["PASS", "WARN", "FAIL"] as const).map((key) => (

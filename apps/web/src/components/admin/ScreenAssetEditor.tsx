@@ -422,7 +422,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
 
           {schemaErrors.length > 0 && (
             <div className="bg-red-950/50 border border-red-800/50 rounded p-3">
-              <p className="text-xs font-semibold text-red-300 mb-2">Schema Validation Errors:</p>
+              <p className="text-sm font-semibold text-red-300 mb-2">Schema Validation Errors:</p>
               <ul className="space-y-1 text-xs text-red-400">
                 {schemaErrors.map((err, idx) => (
                   <li key={idx}>• {err}</li>

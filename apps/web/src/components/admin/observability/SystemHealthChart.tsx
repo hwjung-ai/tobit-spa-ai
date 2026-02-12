@@ -87,7 +87,7 @@ export default function SystemHealthChart() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Total Rules</p>
+          <p className="text-sm uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Total Rules</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-semibold text-white">{stats.total_rules}</p>
             <span className="text-xs " style={{color: "var(--muted-foreground)"}}>
@@ -103,7 +103,7 @@ export default function SystemHealthChart() {
         </div>
 
         <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Today Executions</p>
+          <p className="text-sm uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Today Executions</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-semibold text-white">
               {stats.today_execution_count.toLocaleString()}
@@ -121,7 +121,7 @@ export default function SystemHealthChart() {
         </div>
 
         <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Error Count</p>
+          <p className="text-sm uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Error Count</p>
           <div className="flex items-baseline gap-2">
             <p className={`text-3xl font-semibold ${
               stats.today_error_count > 0 ? "text-rose-400" : "text-emerald-400"
@@ -139,7 +139,7 @@ export default function SystemHealthChart() {
         </div>
 
         <div className="rounded-2xl border /70  p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <p className="text-xs uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Avg Duration</p>
+          <p className="text-sm uppercase tracking-[0.2em]  mb-2" style={{color: "var(--muted-foreground)"}}>Avg Duration</p>
           <div className="flex items-baseline gap-2">
             <p className="text-3xl font-semibold text-white">
               {stats.today_avg_duration_ms.toFixed(0)}

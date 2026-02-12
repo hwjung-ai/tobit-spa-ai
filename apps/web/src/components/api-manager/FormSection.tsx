@@ -27,9 +27,9 @@ export default function FormSection({
   return (
     <div className={`space-y-3 rounded-xl p-4 ${className}`} style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.3)" }}>
       <div>
-        <h3 className="text-sm font-semibold" style={{ color: "var(--muted-foreground)" }}>{title}</h3>
+        <h3 className="text-lg font-semibold" style={{ color: "var(--muted-foreground)" }}>{title}</h3>
         {description && (
-          <p className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>{description}</p>
+          <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>{description}</p>
         )}
       </div>
       <div className={gridClass ? `grid ${gridClass} gap-4` : ""}>

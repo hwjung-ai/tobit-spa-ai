@@ -89,7 +89,7 @@ export default function BindingTab() {
       </div>
 
       <div className="rounded border p-3 space-y-2 bg-[var(--surface-overlay)] border-[var(--border)]">
-        <p className="text-xs font-semibold text-[var(--foreground-secondary)]">Binding Debugger Sample Data</p>
+        <p className="text-sm font-semibold text-[var(--foreground-secondary)]">Binding Debugger Sample Data</p>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
           <div>
             <p className="text-[11px] mb-1 text-[var(--muted-foreground)]">state (JSON)</p>
@@ -154,7 +154,7 @@ export default function BindingTab() {
 
       {selectedBinding && (
         <div className="border-t pt-4 border-[var(--border)]">
-          <h4 className="text-xs font-semibold text-[var(--foreground)] mb-3">Edit Binding</h4>
+          <h4 className="text-sm font-semibold text-[var(--foreground)] mb-3">Edit Binding</h4>
           <div className="space-y-3">
             <div>
               <label className="text-xs block mb-1 text-[var(--foreground-secondary)]">Target Path</label>

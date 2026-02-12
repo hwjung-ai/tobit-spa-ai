@@ -93,7 +93,7 @@ export default function ErrorDistribution() {
     <div className="rounded-2xl border /70  p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Error Distribution</h3>
-        <span className="text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Last 24h</span>
+        <span className="text-sm uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Last 24h</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

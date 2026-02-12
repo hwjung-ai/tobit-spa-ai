@@ -178,7 +178,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
 
       {catalogMap.tables && catalogMap.tables.length > 0 && (
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
+          <div className="text-sm uppercase tracking-[0.25em] " style={{ color: "var(--muted-foreground)" }}>
             Tables ({catalogMap.tables.length})
           </div>
           <div className="custom-scrollbar max-h-[400px] space-y-2 overflow-auto pr-1">
