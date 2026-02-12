@@ -47,17 +47,19 @@ export default function AdminLayout({
                                 key={tab.label}
                                 href={tab.href}
                                 className="rounded-full border px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em] transition"
-                                style={{borderColor: isActive ? "var(--primary)" : "var(--border-muted)", color: isActive ? "var(--foreground)" : "var(--muted-foreground)", backgroundColor: isActive ? "rgba(14, 165, 233, 0.1)" : "transparent"}}
+                                style={{borderColor: isActive ? "var(--primary)" : "transparent", color: isActive ? "var(--foreground)" : "var(--muted-foreground)", backgroundColor: isActive ? "var(--primary)" : "transparent"}}
                                 onMouseEnter={(e) => {
                                     if (!isActive) {
-                                        e.currentTarget.style.borderColor = "var(--border)";
+                                        e.currentTarget.style.borderColor = "var(--primary)";
                                         e.currentTarget.style.color = "var(--foreground)";
+                                        e.currentTarget.style.backgroundColor = "rgba(14, 165, 233, 0.1)";
                                     }
                                 }}
                                 onMouseLeave={(e) => {
                                     if (!isActive) {
-                                        e.currentTarget.style.borderColor = "var(--border-muted)";
+                                        e.currentTarget.style.borderColor = "transparent";
                                         e.currentTarget.style.color = "var(--muted-foreground)";
+                                        e.currentTarget.style.backgroundColor = "transparent";
                                     }
                                 }}
                             >
