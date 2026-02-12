@@ -92,7 +92,7 @@ export default function ErrorBanner({
               setIsVisible(false);
               onDismiss();
             }}
-            className="mt-1 transition" style={{ color: "var(--muted-foreground)" }}
+            className="error-banner-dismiss-button"
             title="Dismiss"
           >
             ✕

@@ -129,7 +129,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* Focus visible for accessibility */
@@ -590,7 +592,7 @@ body {
 
 /* Code/Debug Blocks - Pre-formatted text containers */
 .code-block {
-  @apply rounded-xl p-2 text-[11px] custom-scrollbar overflow-auto;
+  @apply rounded-xl p-2 text-[11px] overflow-auto;
   background-color: var(--surface-base);
   color: var(--muted-foreground);
   max-height: 12rem;
@@ -641,4 +643,185 @@ body {
 .page-sim .recharts-surface,
 .page-sim .recharts-wrapper {
   background: transparent !important;
+}
+
+/* ============================================================================
+ * BUILDER COMPONENTS - SQL, Python, Workflow Builders
+ * ============================================================================ */
+
+.builder-select-field {
+  @apply w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.builder-select-small {
+  @apply rounded-lg border px-2 py-1 text-xs outline-none transition focus:border-sky-500;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.builder-textarea {
+  @apply w-full rounded-xl border px-3 py-2 text-xs outline-none transition focus:border-sky-500 overflow-auto;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.builder-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.builder-textarea::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 4px;
+}
+
+.builder-textarea::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.builder-textarea-large {
+  @apply w-full rounded-xl border px-3 py-2 text-xs outline-none transition focus:border-sky-500 overflow-auto;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+  height: 11rem;
+}
+
+.builder-textarea-large::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-textarea-large::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.builder-textarea-large::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 4px;
+}
+
+.builder-textarea-large::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.builder-checkbox {
+  @apply h-4 w-4 rounded text-sky-400 focus:ring-sky-400;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.builder-label-text {
+  @apply text-xs uppercase tracking-normal;
+  color: var(--muted-foreground);
+}
+
+.builder-label-small {
+  @apply text-[10px] uppercase tracking-normal;
+  color: var(--muted-foreground);
+}
+
+.builder-label-checkbox {
+  @apply flex items-center gap-2 text-sm;
+  color: var(--muted-foreground);
+}
+
+.builder-border-overlay {
+  @apply rounded-2xl border p-3;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.builder-code-block {
+  @apply max-h-60 overflow-auto rounded-xl p-3 text-xs;
+  color: var(--foreground);
+  background-color: var(--surface-base);
+}
+
+.builder-code-block::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-code-block::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.builder-code-block::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 4px;
+}
+
+.builder-code-block::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.builder-preview-container {
+  @apply space-y-2 rounded-2xl border p-4;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.builder-config-panel {
+  @apply space-y-3 rounded-2xl border p-4;
+  border-color: var(--border);
+  background-color: rgba(15, 23, 42, 0.4);
+}
+
+.builder-help-text-small {
+  @apply text-[11px];
+  color: var(--muted-foreground);
+}
+
+.builder-button-secondary {
+  @apply rounded-full border px-2 py-1 text-[10px];
+  border-color: var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--muted-foreground);
+}
+
+.builder-button-reset {
+  @apply rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-normal transition;
+  border-color: rgba(30, 41, 59, 0.5);
+  background-color: rgba(30, 41, 59, 0.8);
+  color: var(--muted-foreground);
+}
+
+.builder-json-preview {
+  @apply max-h-40 overflow-auto rounded-xl p-3 text-[11px] font-mono;
+  background-color: rgba(15, 23, 42, 0.7);
+  color: var(--muted-foreground);
+}
+
+.builder-json-preview::-webkit-scrollbar {
+  width: 8px;
+}
+
+.builder-json-preview::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.builder-json-preview::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 4px;
+}
+
+.builder-json-preview::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+.builder-canvas-container {
+  @apply h-[600px] rounded-2xl border;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.builder-canvas-inner {
+  background-color: var(--surface-base);
 }

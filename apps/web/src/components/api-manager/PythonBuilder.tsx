@@ -166,12 +166,12 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
   };
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)"}}>
-      <h3 className="text-xs uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>Python Builder</h3>
+    <div className="builder-container">
+      <h3 className="builder-title">Python Builder</h3>
 
       {/* Template Selection */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Templates</label>
+        <label className="builder-section-label">Templates</label>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {Object.keys(PYTHON_TEMPLATES).map((template) => (
             <button
@@ -197,13 +197,13 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
       {/* Library Suggestions */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Add Library Import</label>
+        <label className="builder-section-label">Add Library Import</label>
         <div className="flex gap-2">
           <select
             value={selectedLibrary}
             onChange={(e) => setSelectedLibrary(e.target.value)}
             disabled={readOnly}
-            className="flex-1 rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+            className="builder-input-field"
           >
             <option value="">-- Select library --</option>
             {PYTHON_LIBRARIES.map((lib) => (
@@ -215,7 +215,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
           <button
             onClick={() => selectedLibrary && handleLibraryInsert(PYTHON_LIBRARIES.find(l => l.name === selectedLibrary)!)}
             disabled={!selectedLibrary || readOnly}
-            className="rounded-2xl border border-sky-500/30 bg-sky-500/80 px-4 py-2 text-[11px] font-bold uppercase tracking-normal text-white transition hover:bg-sky-400 disabled: disabled:" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+            className="builder-button builder-button-sky"
           >
             Insert
           </button>
@@ -224,13 +224,13 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
       {/* Function Templates */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Add Function Template</label>
+        <label className="builder-section-label">Add Function Template</label>
         <div className="flex gap-2">
           <select
             value={selectedFunction}
             onChange={(e) => setSelectedFunction(e.target.value)}
             disabled={readOnly}
-            className="flex-1 rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+            className="builder-input-field"
           >
             <option value="">-- Select function --</option>
             {FUNCTION_TEMPLATES.map((func) => (
@@ -242,7 +242,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
           <button
             onClick={() => selectedFunction && handleFunctionInsert(FUNCTION_TEMPLATES.find(f => f.name === selectedFunction)!)}
             disabled={!selectedFunction || readOnly}
-            className="rounded-2xl border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-[11px] font-bold uppercase tracking-normal text-white transition hover:bg-indigo-400 disabled: disabled:" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+            className="builder-button builder-button-indigo"
           >
             Insert
           </button>
@@ -251,8 +251,8 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
       {/* Code Editor */}
       <div className="space-y-2">
-        <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Python Code</label>
-        <div className="rounded-2xl border" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <label className="builder-section-label">Python Code</label>
+        <div className="builder-code-editor">
           <Editor
             height="400px"
             language="python"
@@ -277,22 +277,22 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-normal " style={{color: "var(--muted-foreground)"}}>
+        <div className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>
           Python 3.11+ syntax
         </div>
         <button
           onClick={testPythonCode}
           disabled={readOnly}
-          className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-[11px] font-bold uppercase tracking-wider text-white transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled: disabled:" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+          className="builder-button builder-button-emerald"
         >
           Test Code
         </button>
       </div>
 
       {/* Help Section */}
-      <div className="space-y-2 rounded-2xl border p-3" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)"}}>
-        <h4 className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Quick Help</h4>
-        <div className="space-y-1 text-[11px]" style={{color: "var(--muted-foreground)"}}>
+      <div className="builder-help-section">
+        <h4 className="builder-help-title">Quick Help</h4>
+        <div className="builder-help-text">
           <p>• <span className="font-mono text-sky-400">main()</span> function is required for execution</p>
           <p>• Return <span className="font-mono text-sky-400">{"{columns: [...], rows: [...]}"}</span> for table results</p>
           <p>• Use <span className="font-mono text-sky-400">params</span> dict for API parameters</p>
