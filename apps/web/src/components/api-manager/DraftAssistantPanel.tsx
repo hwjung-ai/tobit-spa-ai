@@ -73,15 +73,15 @@ export default function DraftAssistantPanel({
         onUserMessage={onUserMessage}
         inputPlaceholder="API 드래프트를 설명해 주세요..."
       />
-      <div className="space-y-3 rounded-3xl p-4 text-sm" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.6)", color: "var(--muted-foreground)"}}>
-        <div className="rounded-2xl p-3" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)"}}>
+      <div className="space-y-3 rounded-3xl p-4 text-sm" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)"}}>
+        <div className="rounded-2xl p-3" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-base)"}}>
           <p className="text-[11px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Scenario Functions</p>
           <div className="mt-2 space-y-2">
             {scenarioFunctions.map((fn) => (
-              <div key={fn.name} className="rounded-xl px-2 py-1.5" style={{border: "1px solid rgba(30, 41, 59, 0.8)", backgroundColor: "rgba(15, 23, 42, 0.4)"}}>
+              <div key={fn.name} className="rounded-xl px-2 py-1.5" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-base)"}}>
                 <p className="text-[11px] font-semibold" style={{color: "var(--muted-foreground)"}}>{fn.name}</p>
                 <p className="text-[10px]" style={{color: "var(--muted-foreground)"}}>{fn.summary}</p>
-                <p className="text-[10px] text-sky-300">{fn.signature}</p>
+                <p className="text-[10px] text-sky-400 dark:text-sky-300">{fn.signature}</p>
               </div>
             ))}
           </div>
@@ -154,16 +154,16 @@ export default function DraftAssistantPanel({
           </div>
         )}
         {previewSummary && previewJson ? (
-          <div className="space-y-2 rounded-2xl p-3 text-[11px]" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "var(--muted-foreground)"}}>
+          <div className="space-y-2 rounded-2xl p-3 text-[11px]" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
             <p className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Preview</p>
             <p className="text-sm" style={{color: "var(--foreground)"}}>{previewSummary}</p>
-            <pre className="max-h-48 overflow-auto rounded-xl p-2 text-[11px] custom-scrollbar" style={{backgroundColor: "rgba(15, 23, 42, 0.5)", color: "var(--muted-foreground)"}}>
+            <pre className="max-h-48 overflow-auto rounded-xl p-2 text-[11px] custom-scrollbar" style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
               {previewJson}
             </pre>
           </div>
         ) : null}
         {showDebug ? (
-          <details className="rounded-2xl p-3 text-[11px]" style={{border: "1px solid var(--border)", backgroundColor: "rgba(15, 23, 42, 0.4)", color: "var(--muted-foreground)"}}>
+          <details className="rounded-2xl p-3 text-[11px]" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)"}}>
             <summary className="cursor-pointer text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>
               Debug
             </summary>
@@ -185,13 +185,13 @@ export default function DraftAssistantPanel({
                 <p className="text-[11px] text-rose-300">Error: {lastParseError}</p>
               ) : null}
               <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Last assistant raw</p>
-              <pre className="max-h-32 overflow-auto rounded-xl p-2 text-[10px]" style={{backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)"}}>
+              <pre className="max-h-32 overflow-auto rounded-xl p-2 text-[10px] custom-scrollbar" style={{backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}}>
                 {lastAssistantRaw || "없음"}
               </pre>
               {draftApi ? (
                 <>
                   <p className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>Draft JSON</p>
-                  <pre className="max-h-32 overflow-auto rounded-xl  p-2 text-[10px]  custom-scrollbar" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+                  <pre className="max-h-32 overflow-auto rounded-xl p-2 text-[10px] custom-scrollbar" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-base)"}}>
                     {JSON.stringify(draftApi, null, 2)}
                   </pre>
                 </>
