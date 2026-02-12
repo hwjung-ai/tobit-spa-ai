@@ -91,9 +91,9 @@ export default function CatalogsContent() {
   return (
     <div className="space-y-4">
       {/* Info Banner */}
-      <div className="border border-slate-200 rounded-lg bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="mb-2 font-semibold text-slate-600 dark:text-slate-400">📊 Database Catalogs</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+      <div className="br-section p-4">
+        <h3 className="mb-2 font-semibold text-foreground">📊 Database Catalogs</h3>
+        <p className="text-sm text-muted-standard">
           Database schema 정보를 자동으로 스캔하고 저장합니다.
           Tool이 SQL 쿼리를 생성할 때 schema 정보를 참고하여 정확한 테이블/컬럼명을 사용합니다.
           {demoMode && " (데모 데이터 표시 중)"}
@@ -104,17 +104,17 @@ export default function CatalogsContent() {
       {/* Left Side: Catalog List */}
       <div className="lg:col-span-1">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-600 dark:text-slate-400">Catalogs</h2>
+          <h2 className="text-lg font-semibold text-foreground">Catalogs</h2>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-sky-500"
+            className="btn-primary"
           >
             + New Catalog
           </button>
         </div>
 
         {isLoading ? (
-          <div className="py-4 text-center text-slate-600 dark:text-slate-400">Loading...</div>
+          <div className="py-4 text-center text-muted-standard">Loading...</div>
         ) : (
           <CatalogTable
             catalogs={displayCatalogs}

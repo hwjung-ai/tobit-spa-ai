@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/shared";
 import BuilderShell from "../../components/builder/BuilderShell";
 import BuilderCopilotPanel from "../../components/chat/BuilderCopilotPanel";
 import { saveCepWithFallback } from "../../lib/cepBuilderSave";
@@ -969,7 +970,7 @@ export default function CepBuilderPage() {
 
       <div className="cep-builder-status-box p-4">
         <div className="flex items-center justify-between cursor-pointer p-2 br-section" style={{backgroundColor: "var(--surface-base)"}}>
-          <h3 className="text-sm font-semibold" style={{color: "var(--foreground)"}}>JSON 미리보기</h3>
+          <h3 className="section-title">JSON 미리보기</h3>
         </div>
         <div className="mt-3">
           <JsonPreview
@@ -1191,7 +1192,7 @@ export default function CepBuilderPage() {
         placeholder="Search rules"
         className="w-full cep-builder-input"
       />
-      <div className="space-y-2 max-h-[360px] overflow-y-auto">
+      <div className="space-y-2">
         {filteredRules.length === 0 ? (
           <p className="text-xs text-slate-500 dark:text-slate-400">No rules found.</p>
         ) : (
@@ -1207,8 +1208,10 @@ export default function CepBuilderPage() {
                 selectedId === rule.rule_id && "cep-builder-rule-item-selected"
               )}
             >
-              <p className="font-semibold">{rule.rule_name}</p>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">{rule.trigger_type}</p>
+              <p className="font-semibold line-clamp-2 break-all">{rule.rule_name}</p>
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 line-clamp-1 break-all">
+                {rule.trigger_type}
+              </p>
             </button>
           ))
         )}
@@ -1497,12 +1500,10 @@ export default function CepBuilderPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <header className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CEP Builder</h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Define, simulate, and trigger complex CEP rules that orchestrate runtime APIs.
-        </p>
-      </header>
+      <PageHeader
+        title="Event Rule Maker"
+        description="런타임 API와 연동되는 CEP 이벤트 규칙을 정의하고, 시뮬레이션하며, 트리거합니다."
+      />
       <main className="min-h-[calc(100vh-96px)] px-6 py-6">
         <BuilderShell leftPane={leftPane} centerTop={centerTop} centerBottom={centerBottom} rightPane={rightPane} />
       </main>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/shared";
 
 export default function AdminLayout({
     children,
@@ -25,20 +26,15 @@ export default function AdminLayout({
     ];
 
     return (
-        <div className="py-6 tracking-tight builder-shell builder-text text-primary">
-            {/* Header & Section Title */}
-            <div className="flex items-center justify-between mb-2">
-                <h1 className="text-2xl font-semibold text-primary">Admin Dashboard</h1>
-                <div className="text-label-sm">
-                    System Management
-                </div>
-            </div>
-            <p className="mb-6 text-sm text-muted-standard">
-                Configure operational parameters, manage core assets, and audit system activities.
-            </p>
+        <div className="tracking-tight builder-shell builder-text text-primary">
+            <PageHeader
+                title="Adminstrator"
+                description="운영 파라미터를 설정하고 핵심 자산을 관리하며 시스템 활동을 점검합니다."
+                actions={<div className="text-label-sm">시스템 관리</div>}
+            />
 
             {/* Sub Navigation (Capsule Style like Data page) */}
-            <div className="mb-6 flex flex-wrap items-center gap-4">
+            <div className="mb-6 mt-6 flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                     <span className="text-label-sm">Module:</span>
                     {tabs.map((tab) => {

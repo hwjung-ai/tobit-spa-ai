@@ -92,16 +92,13 @@ function AssetDetailPageContent() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen px-6 py-10">
-                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border p-12" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
-                    <div className="w-12 h-12 border-2 rounded-full animate-spin" style={{borderColor: "rgb(203, 213, 225)", borderTopColor: "var(--primary)"}}></div>
-                    <p className="text-[var(--muted-foreground)] font-medium" style={{color: "rgb(15, 23, 42)"}}>Loading asset details...</p>
+            <div className="min-h-screen px-4 py-6 md:px-6 md:py-8">
+                <div className="flex h-full flex-col items-center justify-center gap-4 rounded-3xl border p-12 bg-white border-border">
+                    <div className="w-12 h-12 border-2 rounded-full animate-spin border-border-t-primary"></div>
+                    <p className="text-muted-foreground font-medium text-foreground">Loading asset details...</p>
                     <Link
                         href={backUrl}
-                        className="mt-6 px-6 py-2 text-white rounded-lg transition-all font-medium inline-block"
-                        style={{backgroundColor: "rgb(241, 245, 249)"}}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--primary)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
+                        className="mt-6 px-6 py-2 text-white rounded-lg transition-all font-medium inline-block bg-slate-100 hover:bg-sky-600"
                     >
                         ← Return to Asset List
                     </Link>
@@ -136,15 +133,12 @@ function AssetDetailPageContent() {
     }
 
     return (
-        <div className="min-h-screen px-6 py-10 space-y-10">
+        <div className="min-h-screen px-4 py-6 md:px-6 md:py-8 space-y-10">
             <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:justify-between">
                 <div className="flex-1 space-y-4">
                     <Link
                         href={backUrl}
-                        className="font-medium text-sm flex items-center gap-1 transition-colors"
-                        style={{color: "var(--primary)"}}
-                        onMouseEnter={(e) => { e.currentTarget.style.color = "var(--primary-foreground)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.color = "var(--primary)"; }}
+                        className="font-medium text-sm flex items-center gap-1 transition-colors text-primary hover:text-primary-foreground"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -152,19 +146,24 @@ function AssetDetailPageContent() {
                         Back to Assets List
                     </Link>
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
-                        <h1 className="text-3xl font-bold tracking-tight leading-none" style={{color: "rgb(15, 23, 42)"}}>
+                        <h1 className="text-3xl font-bold tracking-tight leading-none text-foreground">
                             {asset.name}
                         </h1>
-                        <span className="inline-flex px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest border" style={{backgroundColor: asset.status === "published" ? "rgba(var(--success-rgb), 0.15)" : "var(--surface-elevated)", color: asset.status === "published" ? "var(--success)" : "var(--muted-foreground)", borderColor: asset.status === "published" ? "rgba(var(--success-rgb), 0.3)" : "var(--border)"}}>
+                        <span className={cn(
+                          "inline-flex px-3 py-1 rounded-full text-tiny uppercase font-bold tracking-widest border",
+                          asset.status === "published"
+                            ? "bg-success/15 text-success border-success/30"
+                            : "bg-surface-elevated text-muted-foreground border-border"
+                        )}>
                             {asset.status}
                         </span>
                     </div>
-                    <p className="text-sm leading-relaxed" style={{color: "rgb(71, 85, 105)"}}>
-                        Asset ID: <span className="font-mono" style={{color: "rgb(15, 23, 42)"}}>{asset.asset_id}</span>
-                        <span className="mx-2" style={{color: "rgb(15, 23, 42)"}}>|</span>
-                        Type: <span className="capitalize" style={{color: "rgb(15, 23, 42)"}}>{asset.asset_type}</span>
-                        <span className="mx-2" style={{color: "rgb(15, 23, 42)"}}>|</span>
-                        Version: <span className="font-mono" style={{color: "rgb(15, 23, 42)"}}>v{asset.version}</span>
+                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                        Asset ID: <span className="font-mono text-foreground">{asset.asset_id}</span>
+                        <span className="mx-2 text-foreground">|</span>
+                        Type: <span className="capitalize text-foreground">{asset.asset_type}</span>
+                        <span className="mx-2 text-foreground">|</span>
+                        Version: <span className="font-mono text-foreground">v{asset.version}</span>
                     </p>
                 </div>
 
@@ -176,10 +175,7 @@ function AssetDetailPageContent() {
                                     ? `/data/sources?asset_id=${asset.asset_id}`
                                     : `/data/resolvers?asset_id=${asset.asset_id}`
                             }
-                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest"
-                            style={{backgroundColor: "rgb(255, 255, 255)", color: "rgb(71, 85, 105)", borderColor: "rgb(203, 213, 225)"}}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgb(14, 165, 233)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgb(203, 213, 225)"; }}
+                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-white text-slate-700 border-slate-300 hover:border-sky-600 hover:bg-sky-600 dark:bg-slate-950 dark:text-slate-300 dark:border-slate-700 dark:hover:border-sky-500 dark:hover:bg-sky-600"
                         >
                             Open in Data
                         </Link>
@@ -187,10 +183,7 @@ function AssetDetailPageContent() {
                     {asset.status === "draft" && (
                         <button
                             onClick={handleDelete}
-                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest"
-                            style={{backgroundColor: "rgba(var(--error-rgb), 0.15)", color: "var(--error)", borderColor: "rgba(var(--error-rgb), 0.4)"}}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.25)"; e.currentTarget.style.borderColor = "var(--error)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.15)"; e.currentTarget.style.borderColor = "rgba(var(--error-rgb), 0.4)"; }}
+                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-error/15 text-error border-error/40 hover:bg-error/25 hover:border-error"
                         >
                             <div className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,10 +196,7 @@ function AssetDetailPageContent() {
                     {asset.status === "published" && (
                         <button
                             onClick={handleUnpublish}
-                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-[10px] uppercase tracking-widest"
-                            style={{backgroundColor: "rgba(var(--warning-rgb), 0.15)", color: "var(--warning)", borderColor: "rgba(var(--warning-rgb), 0.4)"}}
-                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(var(--warning-rgb), 0.25)"; e.currentTarget.style.borderColor = "var(--warning)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(var(--warning-rgb), 0.15)"; e.currentTarget.style.borderColor = "rgba(var(--warning-rgb), 0.4)"; }}
+                            className="px-5 py-2.5 border rounded-xl transition-all font-bold text-tiny uppercase tracking-widest bg-warning/15 text-warning border-warning/40 hover:bg-warning/25 hover:border-warning"
                         >
                             <div className="flex items-center gap-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,48 +214,43 @@ function AssetDetailPageContent() {
             </div>
 
             {shouldLoadTraces ? (
-                <div className="rounded-3xl border p-6 space-y-4" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
+                <div className="rounded-3xl border p-6 space-y-4 bg-white border-border">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <h2 className="text-lg font-semibold" style={{color: "rgb(15, 23, 42)"}}>Applied Traces</h2>
-                            <p className="text-xs" style={{color: "rgb(71, 85, 105)"}}>이 asset이 사용된 trace 목록</p>
+                            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Applied Traces</h2>
+                            <p className="text-xs text-slate-700 dark:text-slate-400">이 asset이 사용된 trace 목록</p>
                         </div>
                         <Link
                             href={`/admin/inspector?asset_id=${asset.asset_id}`}
-                            className="text-[10px] uppercase tracking-[0.2em] border rounded-full px-3 py-1 transition"
-                            style={{color: "rgb(71, 85, 105)", borderColor: "rgb(203, 213, 225)"}}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgb(14, 165, 233)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgb(203, 213, 225)"; }}
+                            className="text-tiny uppercase tracking-wider border border-slate-300 rounded-full px-3 py-1 transition hover:border-sky-500 text-slate-700 dark:border-slate-700 dark:text-slate-300"
                         >
                             Open in Inspector
                         </Link>
                     </div>
                     {tracesLoading ? (
-                        <p className="text-sm" style={{color: "rgb(15, 23, 42)"}}>Loading traces...</p>
+                        <p className="text-sm text-slate-900 dark:text-slate-50">Loading traces...</p>
                     ) : tracesError ? (
-                        <p className="text-sm" style={{color: "var(--error)"}}>
+                        <p className="text-sm text-rose-600 dark:text-rose-400">
                             {(tracesError as Error)?.message || "Failed to load traces"}
                         </p>
                     ) : traceData?.traces?.length ? (
-                        <div className="divide-y" style={{borderColor: "var(--border-muted)"}}>
+                        <div className="divide-y border-slate-200 dark:border-slate-700">
                             {traceData.traces.map((trace) => (
                                 <Link
                                     key={trace.trace_id}
                                     href={`/admin/inspector?trace_id=${trace.trace_id}`}
-                                    className="block py-3 rounded-xl transition"
-                                    style={{backgroundColor: "rgb(248, 250, 252)"}}
-                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
+                                    className="block py-3 rounded-xl transition bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700"
                                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-base)"; }}
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="text-sm font-medium" style={{color: "rgb(71, 85, 105)"}}>{trace.question_snippet}</div>
-                                        <div className="text-xs font-mono" style={{color: "rgb(15, 23, 42)"}}>
+                                        <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{trace.question_snippet}</div>
+                                        <div className="text-xs font-mono text-slate-900 dark:text-slate-50">
                                             {new Date(trace.created_at).toLocaleString("ko-KR")}
                                         </div>
                                     </div>
-                                    <div className="mt-1 flex items-center gap-3 text-xs" style={{color: "rgb(15, 23, 42)"}}>
-                                        <span className="uppercase tracking-[0.2em]">{trace.feature}</span>
-                                        <span style={{color: trace.status === "error" ? "var(--error)" : "var(--success)"}}>
+                                    <div className="mt-1 flex items-center gap-3 text-xs text-slate-900 dark:text-slate-50">
+                                        <span className="uppercase tracking-wider">{trace.feature}</span>
+                                        <span className={trace.status === "error" ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}>
                                             {trace.status}
                                         </span>
                                         <span>{trace.duration_ms} ms</span>
@@ -274,7 +259,7 @@ function AssetDetailPageContent() {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-sm" style={{color: "rgb(15, 23, 42)"}}>No traces found for this asset yet.</p>
+                        <p className="text-sm text-foreground">No traces found for this asset yet.</p>
                     )}
                 </div>
             ) : null}
@@ -286,7 +271,7 @@ function AssetDetailPageContent() {
 // Wrapper component with Suspense boundary for useSearchParams
 export default function AssetDetailPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen px-6 py-10 flex items-center justify-center" style={{color: "rgb(71, 85, 105)"}}>Loading asset details...</div>}>
+        <Suspense fallback={<div className="min-h-screen px-4 py-6 md:px-6 md:py-8 flex items-center justify-center text-slate-600">Loading asset details...</div>}>
             <AssetDetailPageContent />
         </Suspense>
     );

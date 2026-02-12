@@ -68,11 +68,21 @@ export default function AssetsPageContent() {
 
     return (
         <div className="space-y-6">
+            {/* Page Header - Admin Style */}
+            <header className="admin-page-header">
+                <div className="admin-header-title-group">
+                    <h1 className="admin-page-title">Assets</h1>
+                    <p className="admin-page-description">
+                        중앙 자산 레지스트리에서 프롬프트, 매핑, 정책, 쿼리, 소스, 리졸버를 관리합니다.
+                    </p>
+                </div>
+            </header>
+
             {/* Control Bar */}
-            <div className="flex justify-between items-center rounded-2xl border p-4 backdrop-blur-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
+            <div className="flex justify-between items-center rounded-2xl border bg-surface-elevated border-border p-4 backdrop-blur-sm">
                 <div className="flex gap-6">
                     <div className="min-w-[160px]">
-                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1.5 ml-1" style={{ color: "var(--muted-foreground)" }}>Asset Type</label>
+                        <label className="form-field-label">Asset Type</label>
                         <select
                             value={typeFilter}
                             onChange={(e) => {
@@ -83,8 +93,7 @@ export default function AssetsPageContent() {
                                     handleTypeFilterChange(value as AssetType);
                                 }
                             }}
-                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
-                            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
+                            className="input-container"
                         >
                             <option value="all">All Categories</option>
                             <option value="prompt">Prompts</option>
@@ -97,7 +106,7 @@ export default function AssetsPageContent() {
                     </div>
 
                     <div className="min-w-[160px]">
-                        <label className="block text-[10px] font-bold  uppercase tracking-widest mb-1.5 ml-1" style={{ color: "var(--muted-foreground)" }}>Lifecycle</label>
+                        <label className="form-field-label">Lifecycle</label>
                         <select
                             value={statusFilter}
                             onChange={(e) => {
@@ -106,8 +115,7 @@ export default function AssetsPageContent() {
                                     handleStatusFilterChange(value as AssetStatus);
                                 }
                             }}
-                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
-                            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
+                            className="input-container"
                         >
                             <option value="all">Any Status</option>
                             <option value="draft">Draft Only</option>
@@ -119,15 +127,14 @@ export default function AssetsPageContent() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => refetch()}
-                        className="hover: transition-colors text-[10px] font-bold uppercase tracking-widest px-2"
-                        style={{ color: "var(--muted-foreground)" }}
+                        className="text-label-sm font-bold uppercase tracking-widest text-muted-standard hover:text-primary"
                     >
                         Refresh
                     </button>
-                    <div className="w-px h-6" style={{ backgroundColor: "var(--border)" }} />
+                    <div className="w-px h-6 bg-border" />
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-sky-900/20 active:scale-95"
+                        className="btn-primary"
                     >
                         + New Asset
                     </button>
@@ -135,13 +142,13 @@ export default function AssetsPageContent() {
             </div>
 
             {/* Content Area */}
-            <div className=" rounded-2xl border  overflow-hidden shadow-2xl" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
+            <div className="insp-section">
                 {error ? (
                     <div className="text-center py-20">
-                        <p className="text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load assets"}</p>
+                        <p className="text-rose-500 dark:text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load assets"}</p>
                         <button
                             onClick={() => refetch()}
-                            className="px-6 py-2  hover:  rounded-lg text-xs font-bold uppercase tracking-widest transition-all" style={{color: "rgb(71, 85, 105)", backgroundColor: "rgb(241, 245, 249)"}}
+                            className="btn-secondary"
                         >
                             Try Again
                         </button>

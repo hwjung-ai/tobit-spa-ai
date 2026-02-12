@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/shared";
 import { OperationSetting, fetchApi } from "../../../lib/adminUtils";
 import SettingsTable from "../../../components/admin/SettingsTable";
 import SettingEditModal from "../../../components/admin/SettingEditModal";
@@ -133,93 +134,107 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Informational Banner */}
-            <div className="alert-box alert-warning">
-                <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg bg-amber-500/20 text-amber-400">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-bold tracking-tight mb-0.5 text-amber-300">Runtime Constraints Warning</p>
-                        <p className="text-xs leading-relaxed text-amber-200">
-                            Settings marked with 🔄 require a service restart. Changes to <span className="text-sky-400 ml-1">Published</span> values override
-                            <span className="text-amber-400 ml-1">Environment</span> and <span className="text-muted-standard ml-1">Default</span> configurations.
+            {/* Page Header - Admin Style */}
+            <header className="admin-page-header">
+                {/* Header with Title and Tabs */}
+                <div className="admin-page-header-content">
+                    <div className="admin-header-title-group">
+                        <h1 className="admin-page-title">Settings</h1>
+                        <p className="admin-page-description">
+                            운영 설정, LLM 구성, 런타임 API 인증 정책을 관리합니다.
                         </p>
                     </div>
-                    <button
-                        onClick={() => refetch()}
-                        className="px-4 py-2 transition-colors text-label-sm flex items-center gap-2 text-muted-standard hover:text-primary"
-                    >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Sync
-                    </button>
+                    <div className="admin-header-status">
+                        <div className="inline-flex rounded-xl border p-1 bg-surface-elevated border-border">
+                            <button
+                                onClick={() => setActiveTab("all")}
+                                className={cn(
+                                    "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                    activeTab === "all"
+                                        ? "bg-sky-600 text-white"
+                                        : "bg-transparent text-primary hover:bg-surface-elevated"
+                                )}
+                            >
+                                All Settings
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("llm")}
+                                className={cn(
+                                    "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                    activeTab === "llm"
+                                        ? "bg-sky-600 text-white"
+                                        : "bg-transparent text-primary hover:bg-surface-elevated"
+                                )}
+                            >
+                                LLM
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("auth")}
+                                className={cn(
+                                    "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
+                                    activeTab === "auth"
+                                        ? "bg-sky-600 text-white"
+                                        : "bg-transparent text-primary hover:bg-surface-elevated"
+                                )}
+                            >
+                                Auth
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-primary">
+                            <span className="badge-primary">
+                                Provider: <span className="font-semibold text-primary">{llmProvider}</span>
+                            </span>
+                            <span className="badge-primary">
+                                Model: <span className="font-semibold text-primary">{llmModel}</span>
+                            </span>
+                            <span className="badge-primary">
+                                Fallback: <span className="font-semibold text-primary">{llmFallbackEnabled ? "ON" : "OFF"}</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="insp-section">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="inline-flex rounded-xl border p-1 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+                {/* Informational Banner */}
+                <div className="admin-page-banner admin-page-banner--warning">
+                    <div className="flex items-center gap-5">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg bg-amber-500/20 text-amber-400">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold tracking-tight mb-0.5 text-amber-300">Runtime Constraints Warning</p>
+                            <p className="text-xs leading-relaxed text-amber-200">
+                                Settings marked with 🔄 require a service restart. Changes to <span className="text-sky-400 ml-1">Published</span> values override
+                                <span className="text-amber-400 ml-1">Environment</span> and <span className="text-muted-standard ml-1">Default</span> configurations.
+                            </p>
+                        </div>
                         <button
-                            onClick={() => setActiveTab("all")}
-                            className={cn(
-                                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
-                                activeTab === "all"
-                                    ? "bg-sky-600 text-white"
-                                    : "bg-transparent text-primary hover:bg-slate-200 dark:hover:bg-slate-800"
-                            )}
+                            onClick={() => refetch()}
+                            className="px-4 py-2 transition-colors text-label-sm flex items-center gap-2 text-muted-standard hover:text-primary"
                         >
-                            All Settings
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Sync
                         </button>
-                        <button
-                            onClick={() => setActiveTab("llm")}
-                            className={cn(
-                                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
-                                activeTab === "llm"
-                                    ? "bg-sky-600 text-white"
-                                    : "bg-transparent text-primary hover:bg-slate-200 dark:hover:bg-slate-800"
-                            )}
-                        >
-                            LLM
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("auth")}
-                            className={cn(
-                                "px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg",
-                                activeTab === "auth"
-                                    ? "bg-sky-600 text-white"
-                                    : "bg-transparent text-primary hover:bg-slate-200 dark:hover:bg-slate-800"
-                            )}
-                        >
-                            Auth
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-primary">
-                        <span className="badge-primary">
-                            Provider: <span className="font-semibold text-primary">{llmProvider}</span>
-                        </span>
-                        <span className="badge-primary">
-                            Model: <span className="font-semibold text-primary">{llmModel}</span>
-                        </span>
-                        <span className="badge-primary">
-                            Fallback: <span className="font-semibold text-primary">{llmFallbackEnabled ? "ON" : "OFF"}</span>
-                        </span>
                     </div>
                 </div>
-                {activeTab === "llm" ? (
-                    <p className="mt-3 text-xs text-muted-standard">
-                        LLM 운영 설정은 여기서 관리합니다. Provider, Base URL, Default/Fallback model, Timeout, Retry 정책을 수정할 수 있습니다.
-                    </p>
-                ) : null}
-                {activeTab === "auth" ? (
-                    <p className="mt-3 text-xs text-muted-standard">
-                        Runtime API 인증정책을 설정합니다. `jwt_only`, `jwt_or_api_key`, `api_key_only` 모드를 선택하고 필요한 scope를 관리할 수 있습니다.
-                    </p>
-                ) : null}
-            </div>
+
+                {/* Tabs */}
+                <div className="admin-header-tabs">
+                    {activeTab === "llm" ? (
+                        <p className="text-xs text-muted-standard">
+                            LLM 운영 설정은 여기서 관리합니다. Provider, Base URL, Default/Fallback model, Timeout, Retry 정책을 수정할 수 있습니다.
+                        </p>
+                    ) : null}
+                    {activeTab === "auth" ? (
+                        <p className="text-xs text-muted-standard">
+                            Runtime API 인증정책을 설정합니다. `jwt_only`, `jwt_or_api_key`, `api_key_only` 모드를 선택하고 필요한 scope를 관리할 수 있습니다.
+                        </p>
+                    ) : null}
+                </div>
+            </header>
 
             {/* Settings Grid Board */}
             <div className="insp-section overflow-hidden shadow-2xl">
@@ -233,7 +248,7 @@ export default function SettingsPage() {
                         <p className="font-medium mb-4 text-sm text-rose-600 dark:text-rose-400">{(error as Error)?.message || "Unable to load settings"}</p>
                         <button
                             onClick={() => refetch()}
-                            className="px-8 py-2.5 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700"
+                            className="px-8 py-2.5 text-white rounded-xl transition-all font-bold text-xs uppercase tracking-widest bg-surface-elevated hover:bg-surface-base"
                         >
                             Retry Connection
                         </button>
@@ -241,9 +256,9 @@ export default function SettingsPage() {
                 ) : (
                     <div>
                         <SettingsTable settings={visibleSettings} onEdit={setSelectedSetting} />
-                        <div className="p-4 flex justify-between items-center text-label-sm bg-slate-950/20 border-t border-border">
+                        <div className="p-4 flex justify-between items-center text-label-sm bg-surface-overlay/20 border-t border-border">
                             <span className="font-medium italic opacity-50 uppercase tracking-widest text-muted-standard">OperationSettingsProvider v1.0</span>
-                            <span className="font-bold px-3 py-1 rounded-full border text-muted-standard bg-slate-950/40 border-slate-700/30">
+                            <span className="font-bold px-3 py-1 rounded-full border text-muted-standard bg-surface-overlay/40 border-border/30">
                                 {visibleSettings.length} ACTIVE PARAMETERS
                             </span>
                         </div>
@@ -266,7 +281,7 @@ export default function SettingsPage() {
                         <div className="py-10 text-center text-sm text-muted-standard">Loading API policies...</div>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm bg-slate-950/40 text-muted-standard">
+                            <table className="w-full text-sm bg-surface-overlay/40 text-muted-standard">
                                 <thead>
                                     <tr>
                                         <th className="text-left px-4 py-2">API</th>
@@ -281,7 +296,7 @@ export default function SettingsPage() {
                                         const mode = draft?.auth_mode ?? api.auth_mode;
                                         const scopesText = draft?.required_scopes ?? api.required_scopes.join(", ");
                                         return (
-                                            <tr key={api.id} className="border-t border-slate-700">
+                                            <tr key={api.id} className="border-t border-border">
                                                 <td className="px-4 py-3 text-primary">
                                                     <div className="font-medium">{api.name}</div>
                                                     <div className="text-xs text-muted-standard">{api.method} {api.path}</div>

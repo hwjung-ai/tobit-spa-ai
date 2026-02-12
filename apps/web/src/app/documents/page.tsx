@@ -2,6 +2,7 @@
 
 import { FormEvent, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { authenticatedFetch, getAuthHeaders } from "@/lib/apiClient/index";
+import { PageHeader } from "@/components/shared";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -146,7 +147,7 @@ interface DocumentDetail extends DocumentItem {
 }
 
 const getBadgeStyle = (status: DocumentStatus): string => {
-  const base = "px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border border-solid border";
+  const base = "px-2.5 py-0.5 rounded-full text-tiny font-semibold uppercase tracking-wider border border-solid border";
   switch (status) {
     case "queued":
       return `${base} bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40`;
@@ -810,23 +811,21 @@ function DocumentsPageContent() {
 
   return (
     <div className="space-y-6">
-      <header className="page-header">
-        <div className="flex items-center justify-between">
-          <div className="page-header-content">
-            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Document index</p>
-            <h1 className="page-header-title">Upload and query documents</h1>
-          </div>
+      <PageHeader
+        title="Documents"
+        description="문서를 업로드하고 관리하며, 전문 검색과 벡터 유사도로 질의합니다."
+        actions={
           <button
             onClick={fetchDocuments}
-            className="br-btn border px-4 py-2 text-xs uppercase tracking-wider transition border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+            className="btn-secondary"
           >
             Refresh list
           </button>
-        </div>
-      </header>
-      <section className="container-section text-slate-900 dark:text-slate-50">
+        }
+      />
+      <section className="container-section text-foreground">
         <form onSubmit={handleUpload} className="flex flex-col gap-3">
-          <label className="text-sm text-slate-900 dark:text-slate-50">
+          <label className="text-sm text-foreground">
             Select a file (txt/pdf/docx)
             <input
               ref={fileInputRef}
@@ -845,7 +844,7 @@ function DocumentsPageContent() {
             >
               {uploading ? "Uploading…" : "문서 업로드"}
             </button>
-            <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <span className="text-xs uppercase tracking-wider text-muted-standard">
               API: /api/documents/upload
             </span>
           </div>
@@ -854,12 +853,12 @@ function DocumentsPageContent() {
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside
-          className="rounded-2xl border p-5 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+          className="rounded-2xl border p-5 bg-surface-elevated dark:border-border"
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Library</p>
+            <h2 className="section-title">Library</h2>
             {loadingDocuments ? (
-              <span className="text-xs text-slate-600 dark:text-slate-400">Loading...</span>
+              <span className="text-xs text-muted-standard">Loading...</span>
             ) : null}
           </div>
           {documentsError ? (
@@ -867,16 +866,16 @@ function DocumentsPageContent() {
           ) : null}
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
-              <p className="text-sm text-slate-600 dark:text-slate-400">No documents yet.</p>
+              <p className="text-sm text-muted-standard">No documents yet.</p>
             ) : null}
             {documents.map((document) => (
               <div
                 key={document.id}
                 className={cn(
-                  "group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition cursor-pointer text-slate-900 dark:text-slate-50",
+                  "group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition cursor-pointer text-foreground",
                   selectedDocumentId === document.id
                     ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
-                    : "border-slate-200 bg-slate-100 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500"
+                    : "border bg-surface-elevated hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:border-sky-500"
                 )}
                 role="button"
                 tabIndex={0}
@@ -894,10 +893,10 @@ function DocumentsPageContent() {
                     {document.status}
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400">{formatTimestamp(document.updated_at)}</p>
+                <p className="text-xs text-muted-standard">{formatTimestamp(document.updated_at)}</p>
                 <button
                   type="button"
-                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                   onClick={(event) => {
                     event.stopPropagation();
                     deleteDocument(document.id);
@@ -913,14 +912,12 @@ function DocumentsPageContent() {
 
         <div className="space-y-6">
           <section
-            className="group rounded-2xl border p-5 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+            className="group rounded-2xl border p-5 bg-surface-elevated dark:border-border"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  Document detail
-                </p>
-                <p className="text-sm text-slate-900 dark:text-slate-50">
+                <h3 className="section-title">Document detail</h3>
+                <p className="text-sm text-foreground">
                   {selectedDocument ? selectedDocument.filename : "Select a document to view metadata"}
                 </p>
               </div>
@@ -932,7 +929,7 @@ function DocumentsPageContent() {
                 ) : null}
                 <button
                   type="button"
-                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-surface-elevated text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                   onClick={handleDeleteSelectedDocument}
                   aria-label="Delete document"
                 >
@@ -942,7 +939,7 @@ function DocumentsPageContent() {
             </div>
             {selectedDocument ? (
               <>
-                <div className="mt-4 grid gap-3 text-xs sm:grid-cols-2 text-slate-600 dark:text-slate-400">
+                <div className="mt-4 grid gap-3 text-xs text-muted-standard">
                   <div>
                     <p>Size: {formattedSize(selectedDocument.size)}</p>
                     <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
@@ -960,7 +957,7 @@ function DocumentsPageContent() {
           </section>
 
           <section
-            className="rounded-2xl border p-5 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+            className="rounded-2xl border p-5 bg-surface-elevated dark:border-border"
           >
             <form
               onSubmit={(event) => {
@@ -970,17 +967,17 @@ function DocumentsPageContent() {
               className="space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <label className="flex-1 text-sm text-slate-900 dark:text-slate-50">
+                <label className="flex-1 text-sm text-foreground">
                   Ask a question
                   <input
                     value={queryValue}
                     onChange={(event) => setQueryValue(event.target.value)}
                     placeholder="질문 예: 이 문서의 핵심 요약은?"
-                    className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition border-slate-200 bg-slate-50 text-slate-900 focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                    className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition input-container"
                     disabled={!selectedDocument || selectedDocument.status !== "done"}
                   />
                 </label>
-                <div className="flex flex-col gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <div className="flex flex-col gap-2 text-xs text-muted-standard">
                   <span>Top K chunks</span>
                   <input
                     type="number"
@@ -988,14 +985,14 @@ function DocumentsPageContent() {
                     max={10}
                     value={topK}
                     onChange={(event) => setTopK(Number(event.target.value))}
-                    className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-200 bg-slate-50 text-slate-900 focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                    className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition input-container"
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-50 bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
+                  className="btn-primary"
                   disabled={!selectedDocument || selectedDocument.status !== "done" || streamStatus === "streaming"}
                 >
                   {streamStatus === "streaming" ? (
@@ -1016,19 +1013,19 @@ function DocumentsPageContent() {
             </form>
             <div className="mt-4 space-y-3">
               {streamChunks.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-400">Streaming answers will appear here.</p>
+                <p className="text-sm text-muted-standard">Streaming answers will appear here.</p>
               ) : null}
               {streamChunks.map((chunk, idx) => (
                 <div
                   key={`${chunk.type}-${idx}`}
-                  className="space-y-2 rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 dark:bg-slate-950 dark:border-slate-800"
+                  className="space-y-2 br-card border p-4 text-sm bg-surface-elevated dark:bg-slate-950"
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border-slate-200 text-slate-900 dark:border-slate-800 dark:text-slate-50">
+                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border bg-surface-base text-foreground dark:border-slate-800 dark:text-slate-50">
                     {chunkTypeLabel[chunk.type] ?? chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-50">{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground">{chunk.text}</p>
                   {chunk.meta ? (
-                    <div className="text-xs text-slate-600 dark:text-slate-400">
+                    <div className="text-xs text-muted-standard">
                       <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
                       <p>
                         {chunk.meta.chunks
@@ -1043,7 +1040,7 @@ function DocumentsPageContent() {
                 <section
                   className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
                 >
-                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     <span>근거 문서 ({references.length}건)</span>
                   </div>
                   <div className="space-y-3">
@@ -1052,13 +1049,13 @@ function DocumentsPageContent() {
                       const viewerHref = buildReferenceViewerHref(reference);
                       const content = (
                         <>
-                          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                          <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
                             <span className="text-slate-900 dark:text-slate-50">{reference.document_title}</span>
                             <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                           </div>
                           <p className="mt-2 text-xs line-clamp-3 text-slate-900 dark:text-slate-50">{reference.snippet}</p>
                           {reference.score != null ? (
-                            <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
+                            <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
                           ) : null}
                         </>
                       );
@@ -1152,7 +1149,7 @@ function DocumentsPageContent() {
                                     event.stopPropagation();
                                     handleRemoveDocHistory(entry.id);
                                   }}
-                                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                                   title="Delete history"
                                 >
                                   ✕
@@ -1179,7 +1176,7 @@ function DocumentsPageContent() {
                           type="button"
                           aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
                           onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
-                          className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
+                          className="hidden h-5 w-5 items-center justify-center rounded-full border text-tiny transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                           title="Delete history"
                         >
                           ✕
@@ -1191,7 +1188,7 @@ function DocumentsPageContent() {
                     </p>
                     {selectedDocHistoryEntry.references.length > 0 ? (
                       <div className="mt-3 text-xs text-slate-600 dark:text-slate-400">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">References</p>
+                        <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">References</p>
                         <div className="mt-2 space-y-2">
                           {selectedDocHistoryEntry.references.map((reference) => {
                             const viewerHref = buildReferenceViewerHref(reference);
@@ -1202,7 +1199,7 @@ function DocumentsPageContent() {
                                 <p className="text-slate-900 dark:text-slate-50">{reference.document_title}</p>
                                 <p className="text-slate-600 dark:text-slate-400">{reference.snippet}</p>
                                 {reference.page != null ? (
-                                  <p className="mt-1 text-[10px] text-sky-600 dark:text-sky-400">
+                                  <p className="mt-1 text-tiny text-sky-600 dark:text-sky-400">
                                     페이지 {reference.page}
                                   </p>
                                 ) : null}

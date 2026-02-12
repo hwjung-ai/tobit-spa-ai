@@ -106,15 +106,14 @@ export default function ToolsPageContent() {
     return (
         <div className="space-y-6">
             {/* Control Bar */}
-            <div className="flex justify-between items-center rounded-2xl border p-4 backdrop-blur-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}>
+            <div className="flex justify-between items-center rounded-2xl border p-4 backdrop-blur-sm border-border bg-surface-elevated">
                 <div className="flex gap-6">
                     <div className="min-w-[160px]">
-                        <label className="block text-[10px] font-bold uppercase tracking-widest mb-1.5 ml-1" style={{ color: "var(--muted-foreground)" }}>Tool Type</label>
+                        <label className="block text-tiny font-bold uppercase tracking-widest mb-1.5 ml-1 text-muted-foreground">Tool Type</label>
                         <select
                             value={toolTypeFilter}
                             onChange={(e) => handleToolTypeFilterChange(e.target.value as ToolType)}
-                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
-                            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
+                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer border-border text-foreground bg-surface-base"
                         >
                             <option value="all">All Types</option>
                             <option value="database_query">Database Query</option>
@@ -125,12 +124,11 @@ export default function ToolsPageContent() {
                     </div>
 
                     <div className="min-w-[160px]">
-                        <label className="block text-[10px] font-bold uppercase tracking-widest mb-1.5 ml-1" style={{ color: "var(--muted-foreground)" }}>Status</label>
+                        <label className="block text-tiny font-bold uppercase tracking-widest mb-1.5 ml-1 text-muted-foreground">Status</label>
                         <select
                             value={statusFilter}
                             onChange={(e) => handleStatusFilterChange(e.target.value as ToolStatus)}
-                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer"
-                            style={{ borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
+                            className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:border-sky-500/50 transition-all cursor-pointer border-border text-foreground bg-surface-base"
                         >
                             <option value="all">Any Status</option>
                             <option value="draft">Draft Only</option>
@@ -142,15 +140,14 @@ export default function ToolsPageContent() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => refetch()}
-                        className="hover: transition-colors text-[10px] font-bold uppercase tracking-widest px-2"
-                        style={{ color: "var(--muted-foreground)" }}
+                        className="hover: transition-colors text-tiny font-bold uppercase tracking-widest px-2 text-muted-foreground"
                     >
                         Refresh
                     </button>
-                    <div className="w-px h-6" style={{ backgroundColor: "var(--border)" }} />
+                    <div className="divider-vertical h-6" />
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-sky-900/20 active:scale-95"
+                        className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl transition-all font-bold text-tiny uppercase tracking-wider shadow-lg shadow-sky-900/20 active:scale-95"
                     >
                         + New Tool
                     </button>
@@ -161,15 +158,14 @@ export default function ToolsPageContent() {
             <div className="flex gap-6">
                 {/* Tool List */}
                 <div
-                    className={`rounded-2xl border overflow-hidden shadow-2xl transition-all ${selectedTool ? "flex-1" : "w-full"}`}
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+                    className={`rounded-2xl border border-variant bg-surface-elevated overflow-hidden shadow-2xl transition-all ${selectedTool ? "flex-1" : "w-full"}`}
                 >
                     {error ? (
                         <div className="text-center py-20">
                             <p className="text-rose-400 mb-4 text-sm font-medium">{error instanceof Error ? error.message : "Failed to load tools"}</p>
                             <button
                                 onClick={() => refetch()}
-                                className="px-6 py-2  hover:  rounded-lg text-xs font-bold uppercase tracking-widest transition-all" style={{color: "rgb(71, 85, 105)", backgroundColor: "rgb(241, 245, 249)"}}
+                                className="px-6 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-bold uppercase tracking-widest transition-all bg-slate-50 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
                             >
                                 Try Again
                             </button>

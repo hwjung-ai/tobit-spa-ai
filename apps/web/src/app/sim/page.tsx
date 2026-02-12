@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { PageHeader } from "@/components/shared";
 import {
   Bar,
   BarChart,
@@ -579,15 +580,10 @@ export default function SimPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <header className="page-header">
-        <h1 className="page-header-title">
-          SIM Workspace
-        </h1>
-        <p className="page-header-description">
-          질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트,
-          피드백/모델 근거를 함께 제공합니다.
-        </p>
-      </header>
+      <PageHeader
+        title="Simulation Workspace"
+        description="질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다."
+      />
       <main className="min-h-[calc(100vh-96px)] px-6 py-6">
         {/* Main Content Grid */}
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
@@ -595,19 +591,15 @@ export default function SimPage() {
           <aside
             className="space-y-4 container-section min-h-[320px]"
           >
-            <h2
-              className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-            >
-              Scenario Builder
-            </h2>
+            <h2 className="section-title">Scenario Builder</h2>
 
             <label
-              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
+              className="block br-card border p-3 text-label"
             >
               질문
               <textarea
                 data-testid="simulation-question-input"
-                className="mt-2 w-full br-section px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
+                className="mt-2 w-full br-section px-3 py-2 text-sm outline-none transition input-container"
                 rows={4}
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
@@ -620,10 +612,8 @@ export default function SimPage() {
               />
             </label>
 
-            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
-              <p
-                className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
+            <div className="br-card border bg-surface-elevated p-3">
+              <p className="text-label">
                 템플릿
               </p>
               <div className="mt-2 grid gap-2">
@@ -633,12 +623,12 @@ export default function SimPage() {
                     type="button"
                     data-testid="simulation-template-select"
                     onClick={() => applyTemplate(template)}
-                    className="br-card border px-3 py-2 text-left transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
+                    className="br-card border px-3 py-2 text-left transition border bg-surface-base text-foreground hover:border-primary"
                   >
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    <p className="text-sm font-semibold text-foreground">
                       {template.name}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-muted-standard">
                       {template.description}
                     </p>
                   </button>
@@ -653,26 +643,26 @@ export default function SimPage() {
                   >
                     Applied Template
                   </p>
-                  <p className="mt-1 text-sm text-slate-900 dark:text-slate-50">
+                  <p className="mt-1 text-sm text-foreground">
                     {selectedTemplate.name}
                   </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-muted-standard">
                     {selectedTemplate.description}
                   </p>
                 </div>
               ) : (
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                <p className="mt-2 text-xs text-muted-standard">
                   템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.
                 </p>
               )}
             </div>
 
             <label
-              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
+              className="block br-card border p-3 text-label"
             >
               시나리오 유형
               <select
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
+                className="mt-2 w-full input-container"
                 value={scenarioType}
                 onChange={(event) => setScenarioType(event.target.value as ScenarioType)}
               >
@@ -683,11 +673,11 @@ export default function SimPage() {
             </label>
 
             <label
-              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
+              className="block br-card border p-3 text-label"
             >
               Service
               <select
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
+                className="mt-2 w-full input-container"
                 value={service}
                 onChange={(event) => setService(event.target.value)}
               >
@@ -701,20 +691,18 @@ export default function SimPage() {
             </label>
 
             <label
-              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
+              className="block br-card border p-3 text-label"
             >
               Horizon
               <input
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
+                className="mt-2 w-full input-container"
                 value={horizon}
                 onChange={(event) => setHorizon(event.target.value)}
               />
             </label>
 
-            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
-              <p
-                className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
+            <div className="br-card border bg-surface-elevated p-3">
+              <p className="text-label">
                 가정값
               </p>
               {Object.entries(assumptions).map(([key, value]) => {
@@ -723,13 +711,13 @@ export default function SimPage() {
                 return (
                   <label
                     key={key}
-                    className="block rounded-2xl border px-3 py-2 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                    className="block rounded-2xl border px-3 py-2 border bg-surface-base dark:border-slate-800 dark:bg-slate-900"
                   >
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs text-slate-900 dark:text-slate-50">
+                      <span className="text-xs text-foreground">
                         {meta.label}
                       </span>
-                      <span className="text-xs text-slate-600 dark:text-slate-400">
+                      <span className="text-xs text-muted-standard">
                         {value}
                         {meta.unit}
                       </span>
@@ -753,10 +741,8 @@ export default function SimPage() {
               })}
             </div>
 
-            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
-              <p
-                className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
+            <div className="br-card border bg-surface-elevated p-3">
+              <p className="text-label">
                 전략 선택
               </p>
               {(Object.keys(strategyMeta) as Strategy[]).map((s) => (
@@ -766,7 +752,7 @@ export default function SimPage() {
                   onClick={() => setStrategy(s)}
                   className={cn(
                     "rounded-2xl border px-3 py-2 text-left transition",
-                    strategy === s ? "bg-sky-600 border-sky-600 text-white" : "border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50",
+                    strategy === s ? "bg-sky-600 border-sky-600 text-white" : "border bg-surface-base text-foreground dark:border-slate-800 dark:bg-slate-900",
                     strategy !== s && "hover:border-sky-600",
                   )}
                 >
@@ -779,14 +765,14 @@ export default function SimPage() {
                     <span
                       className={cn(
                         "text-xs uppercase tracking-wider",
-                        strategy === s ? "text-white" : "text-slate-600 dark:text-slate-400",
+                        strategy === s ? "text-white" : "text-muted-standard",
                       )}
                     >
                       {strategyMeta[s].badge}
                     </span>
                   </div>
                   <p
-                    className={cn("mt-1 text-xs", strategy === s ? "text-white" : "text-slate-600 dark:text-slate-400")}
+                    className={cn("mt-1 text-xs", strategy === s ? "text-white" : "text-muted-standard")}
                   >
                     {strategyMeta[s].desc}
                   </p>
@@ -794,14 +780,14 @@ export default function SimPage() {
               ))}
             </div>
 
-            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div className="br-card border bg-surface-elevated p-3">
               <button
                 data-testid="simulation-run-button"
                 className={cn(
-                  "w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed hover:opacity-90",
+                  "w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed hover:opacity-90 btn-primary",
                   loading || servicesLoading || !question.trim() || !service.trim()
-                    ? "bg-slate-300 opacity-60"
-                    : "bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600",
+                    ? "opacity-60"
+                    : "",
                 )}
                 onClick={handleRun}
                 disabled={loading || servicesLoading || !question.trim() || !service.trim()}
@@ -809,12 +795,12 @@ export default function SimPage() {
                 {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
               </button>
               {!question.trim() ? (
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-2 text-sm text-muted-standard">
                   질문을 입력하면 실행할 수 있습니다.
                 </p>
               ) : null}
               {!service.trim() ? (
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-2 text-sm text-muted-standard">
                   Service를 입력하거나 선택하면 실행할 수 있습니다.
                 </p>
               ) : null}
@@ -823,7 +809,7 @@ export default function SimPage() {
                 <button
                   type="button"
                   data-testid="simulation-backtest-button"
-                  className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-sky-500"
+                  className="btn-secondary"
                   onClick={handleBacktest}
                   disabled={servicesLoading || !service.trim()}
                 >
@@ -832,7 +818,7 @@ export default function SimPage() {
                 <button
                   type="button"
                   data-testid="simulation-export-button"
-                  className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-emerald-500"
+                  className="btn-secondary"
                   onClick={handleExportCsv}
                   disabled={servicesLoading || !service.trim()}
                 >
@@ -848,25 +834,25 @@ export default function SimPage() {
             <section className="container-section">
               <h2
                 data-testid="simulation-kpi-summary"
-                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                className="section-title"
               >
                 KPI Summary
               </h2>
               {!result ? (
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-3 text-sm text-muted-standard">
                   왼쪽에서 시나리오를 설정하고 실행하세요.
                 </p>
               ) : (
                 <>
-                  <p className="mt-3 text-sm text-slate-900 dark:text-slate-50">
+                  <p className="mt-3 text-sm text-foreground">
                     {result.summary}
                   </p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-muted-standard">
                     Confidence: {result.simulation.confidence.toFixed(2)} (
                     {getConfidenceLabel(result.simulation.confidence)})
                   </p>
                   {result.simulation.confidence_interval ? (
-                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                    <p className="mt-1 text-xs text-muted-standard">
                       CI: {result.simulation.confidence_interval[0].toFixed(2)} ~{" "}
                       {result.simulation.confidence_interval[1].toFixed(2)}
                       {result.simulation.error_bound
@@ -880,14 +866,14 @@ export default function SimPage() {
                       return (
                         <div
                           key={kpi.kpi}
-                          className="br-card border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                          className="br-card border p-3 border bg-surface-elevated dark:bg-slate-950"
                         >
                           <p
-                            className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                            className="text-xs uppercase tracking-wider text-muted-standard"
                           >
                             {formatKpiLabel(kpi.kpi)}
                           </p>
-                          <p className="mt-1 text-sm text-slate-900 dark:text-slate-50">
+                          <p className="mt-1 text-sm text-foreground">
                             {kpi.baseline} → {kpi.simulated} {kpi.unit}
                           </p>
                           <p
@@ -909,19 +895,15 @@ export default function SimPage() {
 
             {/* Comparison Charts Section */}
             <section className="container-section">
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
-                Comparison Charts
-              </h2>
+              <h2 className="section-title">Comparison Charts</h2>
               {!result ? (
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-3 text-sm text-muted-standard">
                   실행 후 차트가 표시됩니다.
                 </p>
               ) : (
                 <div className="mt-4 grid gap-4">
                   <div
-                    className="h-64 br-card border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="h-64 br-card border p-2 border bg-surface-elevated dark:bg-slate-950"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
@@ -957,7 +939,7 @@ export default function SimPage() {
                   </div>
 
                   <div
-                    className="h-64 br-card border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="h-64 br-card border p-2 border bg-surface-elevated dark:bg-slate-950"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -983,7 +965,7 @@ export default function SimPage() {
 
                   {compareData.length > 0 ? (
                     <div
-                      className="h-56 rounded-2xl border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                      className="h-56 br-card border p-2 border bg-surface-elevated"
                     >
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={compareData}>
@@ -1018,27 +1000,23 @@ export default function SimPage() {
 
             {/* Evidence Panel */}
             <section
-              className="rounded-2xl border p-5 min-h-[220px] border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+              className="container-panel min-h-[220px]"
             >
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
-                Algorithm & Evidence
-              </h2>
+              <h2 className="section-title">Algorithm & Evidence</h2>
               {!result ? (
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-3 text-sm text-muted-standard">
                   실행 후 알고리즘 설명과 근거가 표시됩니다.
                 </p>
               ) : (
-                <div className="mt-3 space-y-3 text-sm text-slate-900 dark:text-slate-50">
+                <div className="mt-3 space-y-3 text-sm text-foreground">
                   <p>
-                    <span className="text-slate-600 dark:text-slate-400">Strategy:</span>{" "}
+                    <span className="text-muted-standard">Strategy:</span>{" "}
                     {result.simulation.strategy.toUpperCase()} /
-                    <span className="text-slate-600 dark:text-slate-400"> Model:</span>{" "}
+                    <span className="text-muted-standard"> Model:</span>{" "}
                     {String(result.simulation.model_info.version ?? "n/a")}
                   </p>
                   {plan ? (
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-muted-standard">
                       Baseline Window: {plan.baseline_window} / Horizon: {plan.horizon} / Service:{" "}
                       {plan.service}
                     </p>
@@ -1046,7 +1024,7 @@ export default function SimPage() {
                   <p>{result.simulation.explanation}</p>
                   <div>
                     <p
-                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="text-xs uppercase tracking-wider text-muted-standard"
                     >
                       Recommended Actions
                     </p>
@@ -1057,7 +1035,7 @@ export default function SimPage() {
                     </ul>
                   </div>
                   <pre
-                    className="overflow-auto rounded-2xl border p-3 text-xs font-mono border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                    className="code-block"
                   >
                     {JSON.stringify(result.references, null, 2)}
                   </pre>
@@ -1074,56 +1052,52 @@ export default function SimPage() {
 
             {/* Backtest Report Section */}
             <section
-              className="rounded-2xl border p-5 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+              className="container-panel"
             >
-              <h2
-                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-              >
-                Backtest Report
-              </h2>
+              <h2 className="section-title">Backtest Report</h2>
               {!backtest ? (
-                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+                <p className="mt-3 text-sm text-muted-standard">
                   왼쪽에서 Backtest 버튼을 눌러 전략 성능 지표를 확인하세요.
                 </p>
               ) : (
-                <div className="mt-3 grid gap-3 text-sm text-slate-900 dark:text-slate-50">
+                <div className="mt-3 grid gap-3 text-sm text-foreground">
                   <div
-                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="br-card border p-3 bg-surface-elevated dark:bg-slate-950"
                   >
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-muted-standard">
                       R2
                     </p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    <p className="text-lg font-semibold text-foreground">
                       {backtest.metrics.r2.toFixed(4)}
                     </p>
                   </div>
                   <div
-                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="br-card border p-3 bg-surface-elevated"
                   >
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-muted-standard">
                       MAPE
                     </p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    <p className="text-lg font-semibold text-foreground">
                       {(backtest.metrics.mape * 100).toFixed(2)}%
                     </p>
                   </div>
                   <div
-                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="br-card border p-3 bg-surface-elevated"
                   >
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-muted-standard">
                       RMSE
                     </p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    <p className="text-lg font-semibold text-foreground">
                       {backtest.metrics.rmse.toFixed(3)}
                     </p>
                   </div>
                   <div
-                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="br-card border p-3 bg-surface-elevated"
                   >
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-muted-standard">
                       Coverage@90%
                     </p>
-                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                    <p className="text-lg font-semibold text-foreground">
                       {(backtest.metrics.coverage_90 * 100).toFixed(2)}%
                     </p>
                   </div>
@@ -1134,7 +1108,7 @@ export default function SimPage() {
 
           {/* Right Panel - AI Copilot */}
           <aside
-            className="min-h-[320px] rounded-2xl border p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            className="min-h-[320px] container-panel xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto"
           >
             <div className="space-y-4">
               <BuilderCopilotPanel
@@ -1157,15 +1131,15 @@ export default function SimPage() {
                 inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
               />
               <div
-                className="space-y-3 rounded-2xl border p-4 text-sm border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                className="space-y-3 br-card border p-4 text-sm bg-surface-elevated"
               >
                 <div className="flex items-center justify-between">
                   <span
-                    className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                    className="text-xs uppercase tracking-wider text-muted-standard"
                   >
                     Draft status
                   </span>
-                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  <span className="text-sm font-semibold text-foreground">
                     {draftStatus === "draft_ready"
                       ? "Ready"
                       : draftStatus === "error"
@@ -1174,7 +1148,7 @@ export default function SimPage() {
                   </span>
                 </div>
                 {draftNotes ? (
-                  <p className="text-sm text-slate-900 dark:text-slate-50">
+                  <p className="text-sm text-foreground">
                     {draftNotes}
                   </p>
                 ) : null}
@@ -1187,7 +1161,7 @@ export default function SimPage() {
                       setStatusMessage("AI 드래프트가 좌측 Scenario Builder에 반영되었습니다.");
                     }}
                     disabled={!simDraft}
-                    className="rounded-2xl px-3 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-40 bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
+                    className="btn-primary"
                   >
                     Apply
                   </button>
@@ -1201,42 +1175,42 @@ export default function SimPage() {
                       setLastParseError(null);
                       setLastAssistantRaw("");
                     }}
-                    className="rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-sky-600"
+                    className="btn-secondary"
                   >
                     Discard
                   </button>
                 </div>
                 {simDraft ? (
                   <div
-                    className="space-y-2 rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+                    className="space-y-2 br-card border p-3 bg-surface-elevated"
                   >
                     <p
-                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="text-xs uppercase tracking-wider text-muted-standard"
                     >
                       Draft JSON
                     </p>
                     <pre
-                      className="max-h-44 overflow-auto rounded-2xl border p-2 text-sm font-mono border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                      className="code-block"
                     >
                       {JSON.stringify(simDraft, null, 2)}
                     </pre>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-muted-standard">
                     No SIM draft yet. Ask Copilot to generate one.
                   </p>
                 )}
                 <details
-                  className="rounded-2xl border p-3 text-sm border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                  className="debug-section"
                 >
                   <summary
-                    className="cursor-pointer text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                    className="cursor-pointer text-xs uppercase tracking-wider text-muted-standard"
                   >
                     Debug
                   </summary>
                   <div className="mt-2 space-y-1">
                     <p
-                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="text-xs uppercase tracking-wider text-muted-standard"
                     >
                       Parse status: {lastParseStatus}
                     </p>
@@ -1246,12 +1220,12 @@ export default function SimPage() {
                       </p>
                     ) : null}
                     <p
-                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="text-xs uppercase tracking-wider text-muted-standard"
                     >
                       Last assistant raw
                     </p>
                     <pre
-                      className="max-h-24 overflow-auto rounded-2xl border p-2 text-sm font-mono border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+                      className="code-block"
                     >
                       {lastAssistantRaw || "없음"}
                     </pre>

@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { PageHeader } from "@/components/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
@@ -596,32 +597,28 @@ function CepEventBrowserContent() {
 
   return (
     <div className="space-y-6 builder-shell builder-text text-slate-900 dark:text-slate-50">
-      <header className="page-header">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="page-header-content">
-            <h1 className="page-header-title">CEP Event Browser</h1>
-            <p className="page-header-description">
-              알림 발화 이력과 ACK 상태를 확인합니다. (SSE 갱신)
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+      <PageHeader
+        title="CEP Event Browser"
+        description="알림 발화 이력과 ACK 상태를 확인합니다. (SSE 갱신)"
+        actions={
+          <div className="flex flex-wrap gap-3 rounded-lg border px-4 py-3 text-xs uppercase tracking-wider border bg-surface-elevated text-muted-standard dark:border-border">
             <span>Unacked: {summaryQuery.data?.unacked_count ?? "-"}</span>
-          {summaryQuery.data?.by_severity
-            ? Object.entries(summaryQuery.data.by_severity).map(([key, value]) => (
-              <span key={key}>
-                {key}: {value}
-              </span>
-            ))
-            : null}
+            {summaryQuery.data?.by_severity
+              ? Object.entries(summaryQuery.data.by_severity).map(([key, value]) => (
+                  <span key={key}>
+                    {key}: {value}
+                  </span>
+                ))
+              : null}
           </div>
-        </div>
-      </header>
+        }
+      />
       {runLoading ? (
-        <section className="br-section border border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-sm text-slate-600 dark:text-slate-400">Loading CEP run details …</p>
+        <section className="br-section border bg-surface-elevated px-5 py-4 dark:border-border">
+          <p className="text-sm text-muted-standard">Loading CEP run details …</p>
         </section>
       ) : runDetail ? (
-        <section className="space-y-3 br-section border border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800 dark:bg-slate-900">
+        <section className="space-y-3 br-section border bg-surface-elevated px-5 py-4 dark:border-border">
           {runError ? (
             <p className="text-sm text-rose-300">
               {runError}
@@ -629,7 +626,7 @@ function CepEventBrowserContent() {
           ) : null}
           {runDetail.found ? (
             <>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="cep-event-detail-label">Exec Log ID</p>
                   <p className="cep-event-detail-value">{runDetail.exec_log_id ?? "—"}</p>
@@ -667,7 +664,7 @@ function CepEventBrowserContent() {
                           (column) => (
                             <th
                               key={column}
-                              className="border-b px-2 py-1 font-semibold uppercase tracking-wider"
+                              className="border-b px-2 py-1 font-semibold uppercase tracking-wider border-border"
                             >
                               {column}
                             </th>
@@ -702,7 +699,7 @@ function CepEventBrowserContent() {
             </>
           ) : (
             <div className="text-sm">
-              <p className="font-semibold cep-text-foreground">CEP run not found</p>
+              <p className="font-semibold text-foreground">CEP run not found</p>
               <p>
                 Tenant: {runDetail.tenant_id ?? "unknown"}, exec_log_id: {runDetail.exec_log_id ?? "없음"}, simulation_id:{" "}
                 {runDetail.simulation_id ?? "없음"}

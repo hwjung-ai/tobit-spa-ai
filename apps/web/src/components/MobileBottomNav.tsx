@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { label: "Ops", href: "/ops", icon: Activity },
   { label: "API", href: "/api-manager", icon: Code2 },
   { label: "CEP", href: "/cep-builder", icon: Shield },
-  { label: "More", href: "/ui/screens", icon: LayoutGrid, adminOnly: true },
+  { label: "Pages", href: "/ui/screens", icon: LayoutGrid, adminOnly: true },
 ];
 
 export default function MobileBottomNav() {

@@ -137,7 +137,7 @@ export default function LogsPage() {
 
   const renderFileLog = (lines: string[]) => {
     return (
-      <div className="custom-scrollbar max-h-[600px] overflow-auto rounded-2xl border border-border bg-surface-base p-4 font-mono text-[10px]">
+      <div className="custom-scrollbar max-h-[600px] overflow-auto rounded-2xl border border-border bg-surface-base p-4 font-mono text-tiny">
         {lines.map((line, idx) => {
           const isError = line.includes("ERROR") || line.includes("error");
           const isWarning = line.includes("WARNING") || line.includes("WARN");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PageHeader } from "@/components/shared";
 import BuilderShell from "../../components/builder/BuilderShell";
 import { saveApiWithFallback } from "../../lib/apiManagerSave";
 import Editor from "@monaco-editor/react";
@@ -2789,13 +2790,11 @@ export default function ApiManagerPage() {
   );
 
   return (
-    <div className="api-manager-theme py-6">
-          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
-        API Manager
-      </h1>
-      <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
-        Builder shell for defining executable APIs that power OPS and orchestration tools.
-      </p>
+    <div className="api-manager-theme">
+      <PageHeader
+        title="API Manager"
+        description="OPS와 오케스트레이션 도구에서 사용하는 실행형 API를 정의하고 관리하는 빌더 화면입니다."
+      />
       <BuilderShell
         leftPane={leftPane}
         centerTop={centerTop}

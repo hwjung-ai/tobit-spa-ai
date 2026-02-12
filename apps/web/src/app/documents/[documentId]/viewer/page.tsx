@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getAuthHeaders } from "@/lib/apiClient/index";
+import { cn } from "@/lib/utils";
 
 // Lazy-load react-pdf to avoid SSR issues (uses browser-only APIs)
 const ReactPdfDocument = dynamic(
@@ -406,14 +407,14 @@ function DocumentViewerContent() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between rounded-2xl border dark: dark:/70 p-6" style={{backgroundColor: "rgb(248, 250, 252)", borderColor: "rgb(203, 213, 225)"}}>
+      <header className="flex items-center justify-between rounded-2xl border p-6 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] " style={{color: "rgb(71, 85, 105)"}}>문서 뷰어</p>
-          <h2 className="text-2xl font-semibold dark:" style={{color: "rgb(15, 23, 42)"}}>
+          <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">문서 뷰어</p>
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
             {documentMeta?.filename ?? "문서 불러오는 중..."}
           </h2>
           {chunkInfo ? (
-            <p className="text-xs " style={{color: "rgb(71, 85, 105)"}}>
+            <p className="text-xs text-slate-700 dark:text-slate-400">
               근거 청크 하이라이트 중 · {chunkInfo.page != null ? `${chunkInfo.page}페이지` : "페이지 미확인"}
             </p>
           ) : null}
@@ -430,14 +431,14 @@ function DocumentViewerContent() {
               }
               router.push("/documents");
             }}
-            className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover:" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+            className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
           >
             문서 목록
           </button>
           {pdfBlobUrl && (
             <button
               onClick={handleDownload}
-              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover:" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+              className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
             >
               다운로드
             </button>
@@ -445,14 +446,14 @@ function DocumentViewerContent() {
           <div className="flex gap-2">
             <button
               onClick={handlePrevious}
-              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover: disabled:opacity-50" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+              className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 disabled:opacity-50 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
               disabled={currentPage <= 1}
             >
               이전
             </button>
             <button
               onClick={handleNext}
-              className="rounded-2xl border  px-4 py-2 text-xs uppercase tracking-[0.3em]  transition hover: disabled:opacity-50" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
+              className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-wider transition hover:border-sky-500 disabled:opacity-50 border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
               disabled={numPages !== null && currentPage >= numPages}
             >
               다음
@@ -461,19 +462,19 @@ function DocumentViewerContent() {
         </div>
       </header>
 
-      <section className="rounded-2xl border dark: dark:/70 p-6" style={{backgroundColor: "rgb(248, 250, 252)", borderColor: "rgb(203, 213, 225)"}}>
-        <div className="mb-4 flex items-center justify-between text-xs " style={{color: "rgb(71, 85, 105)"}}>
+      <section className="rounded-2xl border p-6 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <div className="mb-4 flex items-center justify-between text-xs text-slate-700 dark:text-slate-400">
           <span>{currentPage}페이지</span>
           {numPages ? <span>전체 {numPages}페이지</span> : <span>페이지 로딩 중...</span>}
-          <span className="text-[10px] " style={{color: "rgb(71, 85, 105)"}}>방향키(←→)로 페이지 이동</span>
+          <span className="text-tiny">방향키(←→)로 페이지 이동</span>
         </div>
         <div className="relative flex justify-center">
           <div className="relative">
             {pdfLoading && (
               <div className="flex h-[600px] w-full items-center justify-center">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400" style={{borderColor: "rgb(203, 213, 225)"}} />
-                  <span className="text-sm " style={{color: "rgb(71, 85, 105)"}}>PDF 불러오는 중...</span>
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-t-sky-400 border-slate-300" />
+                  <span className="text-sm text-slate-700 dark:text-slate-400">PDF 불러오는 중...</span>
                 </div>
               </div>
             )}
@@ -493,7 +494,7 @@ function DocumentViewerContent() {
             {highlightVisible && (
               <div className="pointer-events-none absolute inset-0 z-10">
                 <div className="absolute inset-3 rounded-2xl border-2 border-amber-400 bg-amber-500/20" />
-                <p className="absolute left-4 top-4 max-w-[60vw] text-[10px] text-amber-100">
+                <p className="absolute left-4 top-4 max-w-[60vw] text-tiny text-amber-100">
                   {highlightInfo?.label}
                 </p>
               </div>
@@ -512,8 +513,8 @@ function DocumentViewerContent() {
 
       {/* References Section */}
       {references.length > 0 && (
-        <section className="rounded-2xl border dark: dark:/70 p-6" style={{backgroundColor: "rgb(248, 250, 252)", borderColor: "rgb(203, 213, 225)"}}>
-          <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] " style={{color: "rgb(71, 85, 105)"}}>
+        <section className="rounded-2xl border p-6 bg-slate-50 border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+          <div className="mb-3 flex items-center justify-between text-tiny uppercase tracking-wider text-slate-700 dark:text-slate-400">
             <span>근거 문서 ({references.length}건)</span>
           </div>
           <div className="space-y-3">
@@ -522,19 +523,20 @@ function DocumentViewerContent() {
               return (
                 <div
                   key={`${reference.document_id}-${reference.chunk_id}-${index}`}
-                  className={`block rounded-2xl border p-4 transition ${
+                  className={cn(
+                    "block rounded-2xl border p-4 transition",
                     isCurrentDocument
                       ? "border-amber-400 bg-amber-500/10"
-                      : " dark:  hover:"
-                  }`} style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}
+                      : "border-slate-200 bg-white hover:border-sky-500 dark:border-slate-700 dark:bg-slate-900"
+                  )}
                 >
-                  <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] " style={{color: "rgb(71, 85, 105)"}}>
+                  <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-slate-700 dark:text-slate-400">
                     <span>{reference.document_title}</span>
                     <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                   </div>
                   <p className="mt-2 text-xs  line-clamp-3" style={{color: "rgb(71, 85, 105)"}}>{reference.snippet}</p>
                   {reference.score != null && (
-                    <p className="mt-2 text-[10px] " style={{color: "rgb(71, 85, 105)"}}>유사도 {(reference.score * 100).toFixed(1)}%</p>
+                    <p className="mt-2 text-tiny text-slate-600 dark:text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
                   )}
                   {isCurrentDocument && (
                     <p className="mt-2 text-xs text-amber-400">현재 문서</p>
