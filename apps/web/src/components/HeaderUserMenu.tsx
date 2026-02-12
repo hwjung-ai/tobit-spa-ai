@@ -17,7 +17,7 @@ export default function HeaderUserMenu() {
   const router = useRouter();
 
   if (isLoading) {
-    return <div className="h-10 w-24 bg-slate-800 rounded animate-pulse" />;
+    return <div className="h-10 w-24 rounded animate-pulse" style={{ backgroundColor: "var(--surface-elevated)" }} />;
   }
 
   if (!isAuthenticated || !user) {
@@ -32,13 +32,13 @@ export default function HeaderUserMenu() {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "text-red-400";
+        return "#f87171"; // red-400
       case "manager":
-        return "text-orange-400";
+        return "#fb923c"; // orange-400
       case "developer":
-        return "text-blue-400";
+        return "#60a5fa"; // blue-400
       default:
-        return "text-slate-400";
+        return "var(--muted-foreground)";
     }
   };
 
@@ -47,34 +47,40 @@ export default function HeaderUserMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+          className="border transition"
+          style={{
+            backgroundColor: "var(--surface-elevated)",
+            color: "var(--foreground)",
+            borderColor: "var(--border)"
+          }}
         >
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--surface-elevated)" }}>
               <span className="text-xs font-bold">
                 {user.username.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="text-left">
               <div className="text-xs font-medium">{user.username}</div>
-              <div className={`text-xs ${getRoleColor(user.role)}`}>
+              <div className="text-xs" style={{ color: getRoleColor(user.role) }}>
                 {user.role}
               </div>
             </div>
           </div>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-slate-900 border-slate-700">
-        <DropdownMenuLabel className="text-slate-300">
+      <DropdownMenuContent align="end" className="border" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+        <DropdownMenuLabel style={{ color: "var(--foreground)" }}>
           <div className="flex flex-col gap-1">
             <div className="font-semibold">{user.username}</div>
-            <div className="text-xs text-slate-400">{user.email}</div>
+            <div className="text-xs" style={{ color: "var(--muted-foreground)" }}>{user.email}</div>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-slate-700" />
+        <DropdownMenuSeparator style={{ backgroundColor: "var(--border)" }} />
         <DropdownMenuItem
           onClick={handleLogout}
-          className="text-slate-300 hover:bg-slate-800 cursor-pointer"
+          className="cursor-pointer"
+          style={{ color: "var(--foreground)" }}
         >
           Sign out
         </DropdownMenuItem>

@@ -33,20 +33,20 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
-          <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+          <div className="min-h-screen">
             <a
               href="#main-content"
               className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-sky-600 focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-white focus:outline-none focus:ring-2 focus:ring-sky-400"
             >
               Skip to main content
             </a>
-            <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+            <header className="flex items-center justify-between border-b px-6 py-4" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
                 <div className="flex items-end gap-5">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
+                    <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
                       Tobit SPA AI
                     </p>
-                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Intelligent Ops Studio</h1>
+                    <h1 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>Intelligent Ops Studio</h1>
                   </div>
                   <SystemStatusIndicator />
                 </div>
@@ -59,7 +59,7 @@ export default function RootLayout({
                 <HeaderUserMenu />
               </nav>
             </header>
-            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full px-4 pb-16 pt-4 md:px-6 md:pb-4">
+            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full px-4 pb-16 pt-4 md:px-6 md:pb-4" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
               {children}
             </main>
             <MobileBottomNav />

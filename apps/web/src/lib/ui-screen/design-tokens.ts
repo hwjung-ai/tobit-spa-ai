@@ -64,30 +64,37 @@ export function tokensToCSSVariables(tokens: DesignTokenSet): Record<string, str
   const vars: Record<string, string> = {};
   const { colors, borderRadius, shadows } = tokens;
 
-  // Colors
-  vars["--theme-brand-primary"] = colors.brand.primary;
-  vars["--theme-brand-secondary"] = colors.brand.secondary;
-  vars["--theme-brand-accent"] = colors.brand.accent;
-  vars["--theme-success"] = colors.semantic.success;
-  vars["--theme-warning"] = colors.semantic.warning;
-  vars["--theme-error"] = colors.semantic.error;
-  vars["--theme-info"] = colors.semantic.info;
-  vars["--theme-bg"] = colors.surface.background;
-  vars["--theme-fg"] = colors.surface.foreground;
-  vars["--theme-muted"] = colors.surface.muted;
-  vars["--theme-card"] = colors.surface.card;
-  vars["--theme-border"] = colors.surface.border;
-  vars["--theme-input"] = colors.surface.input;
-  vars["--theme-text"] = colors.text.primary;
-  vars["--theme-text-secondary"] = colors.text.secondary;
-  vars["--theme-text-muted"] = colors.text.muted;
-  vars["--theme-text-inverse"] = colors.text.inverse;
+  // Colors - use globals.css variable names for consistency
+  vars["--background"] = colors.surface.background;
+  vars["--foreground"] = colors.surface.foreground;
+  vars["--surface-base"] = colors.surface.background;
+  vars["--surface-elevated"] = colors.surface.muted;
+  vars["--surface-overlay"] = colors.surface.card;
+
+  vars["--muted-foreground"] = colors.text.secondary;
+  vars["--muted-background"] = colors.surface.muted;
+  vars["--border"] = colors.surface.border;
+  vars["--border-muted"] = colors.surface.input;
+  vars["--input-border"] = colors.surface.input;
+
+  // Semantic colors
+  vars["--primary"] = colors.brand.primary;
+  vars["--primary-foreground"] = colors.surface.foreground;
+  vars["--primary-light"] = colors.brand.secondary;
+  vars["--primary-dark"] = colors.brand.primary;
+
+  vars["--destructive"] = colors.semantic.error;
+  vars["--destructive-foreground"] = "#ffffff";
+  vars["--success"] = colors.semantic.success;
+  vars["--success-foreground"] = "#ffffff";
+  vars["--warning"] = colors.semantic.warning;
+  vars["--warning-foreground"] = "#ffffff";
 
   // Border radius
-  vars["--theme-radius-sm"] = borderRadius.sm;
-  vars["--theme-radius-md"] = borderRadius.md;
-  vars["--theme-radius-lg"] = borderRadius.lg;
-  vars["--theme-radius-xl"] = borderRadius.xl;
+  vars["--radius-sm"] = borderRadius.sm;
+  vars["--radius-md"] = borderRadius.md;
+  vars["--radius-lg"] = borderRadius.lg;
+  vars["--radius-xl"] = borderRadius.xl;
 
   // Shadows
   vars["--theme-shadow-sm"] = shadows.sm;

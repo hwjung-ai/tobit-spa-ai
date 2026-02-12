@@ -29,7 +29,8 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-800 bg-slate-950/95 backdrop-blur-sm md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t backdrop-blur-sm md:hidden"
+      style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}
       aria-label="Mobile navigation"
     >
       <div className="flex items-center justify-around px-2 py-1">
@@ -45,11 +46,8 @@ export default function MobileBottomNav() {
               key={item.label}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] uppercase tracking-wider transition ${
-                isActive
-                  ? "text-sky-400"
-                  : "text-slate-500 active:text-slate-300"
-              }`}
+              className="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] uppercase tracking-wider transition"
+              style={{ color: isActive ? "var(--primary-light)" : "var(--muted-foreground)" }}
             >
               <Icon className="h-5 w-5" strokeWidth={isActive ? 2.2 : 1.5} />
               <span>{item.label}</span>

@@ -5,7 +5,7 @@
  * ============================================================================ */
 
 :root {
-  /* Base colors */
+  /* Base colors - LIGHT MODE */
   --background: #ffffff;
   --foreground: #020617; /* slate-950 */
 
@@ -57,22 +57,45 @@
   --focus-ring-offset: 2px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface-base: var(--surface-base);
-  --color-surface-elevated: var(--surface-elevated);
-  --color-surface-overlay: var(--surface-overlay);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted-background: var(--muted-background);
-  --color-border: var(--border);
-  --color-border-muted: var(--border-muted);
-  --color-input-border: var(--input-border);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* DARK MODE overrides */
+.dark {
+  /* Base colors - DARK MODE */
+  --background: #020617; /* slate-950 */
+  --foreground: #f8fafc; /* slate-50 */
+
+  /* Surface colors */
+  --surface-base: #020617; /* slate-950 */
+  --surface-elevated: #0f172a; /* slate-900 */
+  --surface-overlay: rgba(15, 23, 42, 0.95);
+
+  /* Muted colors */
+  --muted-foreground: #94a3b8; /* slate-400 */
+  --muted-background: #1e293b; /* slate-800 */
+
+  /* Border colors */
+  --border: #1e293b; /* slate-800 */
+  --border-muted: #334155; /* slate-700 */
+  --input-border: #334155; /* slate-700 */
+
+  /* Accent colors */
+  --primary: #0284c7; /* sky-600 */
+  --primary-foreground: #ffffff;
+  --primary-light: #38bdf8; /* sky-400 */
+  --primary-dark: #0369a1; /* sky-700 */
+
+  /* Semantic colors (same in dark mode) */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+
+  /* Focus ring - brighter in dark mode */
+  --focus-ring: 2px solid #38bdf8; /* sky-400 */
 }
+
+/* Note: @theme inline removed - using direct CSS variables instead */
 
 /* ============================================================================
  * BASE STYLES
@@ -82,7 +105,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Focus visible for accessibility */

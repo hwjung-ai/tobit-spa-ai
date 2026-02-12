@@ -20,7 +20,7 @@ export default function NavTabs() {
     process.env.NEXT_PUBLIC_ENABLE_ASSET_REGISTRY === "true";
 
   return (
-    <nav className="flex gap-4 text-sm uppercase tracking-[0.3em]" aria-label="Main navigation">
+    <nav className="flex gap-4 text-sm uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }} aria-label="Main navigation">
       {NAV_ITEMS.filter((item) =>
         item.adminOnly ? enableAdmin : true
       ).map((item) => {
@@ -32,10 +32,21 @@ export default function NavTabs() {
             key={item.label}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
-            className={`transition border-b-2 pb-1 ${isActive
-              ? "border-sky-400 text-white"
-              : "border-transparent text-slate-400 hover:border-slate-600 hover:text-white"
-            }`}
+            className="transition border-b-2 pb-1"
+            style={{
+              borderColor: isActive ? "var(--primary-light)" : "transparent",
+              color: isActive ? "var(--foreground)" : "var(--muted-foreground)"
+            }}
+            onMouseEnter={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.color = "var(--foreground)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) {
+                e.currentTarget.style.color = "var(--muted-foreground)";
+              }
+            }}
           >
             {item.label}
           </Link>
