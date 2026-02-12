@@ -121,7 +121,7 @@ export default function OpsTimelineTab({
 
   const getTypeIcon = (type: TimelineEntry["type"]) => {
     const icons = {
-      ci: <Server className="h-3 w-3 text-blue-400" />,
+      ci: <Server className="h-3 w-3 text-sky-400" />,
       metric: <Database className="h-3 w-3 text-amber-400" />,
       history: <Clock className="h-3 w-3 text-purple-400" />,
       relation: <Network className="h-3 w-3 text-green-400" />,

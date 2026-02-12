@@ -382,7 +382,7 @@ export default function ScreenEditorTabs() {
             </span>
             <button
               type="button"
-              className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+              className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-wider"
               onClick={() => {
                 if (!lockKey) return;
                 window.localStorage.setItem(
@@ -420,7 +420,7 @@ export default function ScreenEditorTabs() {
       </TabsList>
       {(presenceCount > 0 || collabConnected) && (
         <div
-          className="mx-6 mt-2 flex items-center justify-between rounded border /70  px-3 py-2 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
+          className="mx-6 mt-2 flex items-center justify-between rounded border /70  px-3 py-2 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
           data-testid="screen-editor-presence"
         >
           <span>

@@ -420,7 +420,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     <div className="mt-1 rounded p-2 space-y-1" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
                       {Object.entries(selectedActionMeta.input_schema.properties).map(
                         ([key, prop]) => (
-                          <div key={key} className="flex items-center gap-2 text-[11px]">
+                          <div key={key} className="flex items-center gap-2 text-xs">
                             <code
                               className={`font-mono ${
                                 selectedActionMeta.input_schema?.required?.includes(key)
@@ -454,7 +454,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   <summary className="text-xs cursor-pointer text-emerald-400 hover:text-emerald-300 font-medium">
                     Sample Output Preview
                   </summary>
-                  <pre className="mt-1 p-2 rounded text-[11px] overflow-x-auto max-h-32" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}>
+                  <pre className="mt-1 p-2 rounded text-xs overflow-x-auto max-h-32" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}>
                     {JSON.stringify(selectedActionMeta.sample_output, null, 2)}
                   </pre>
                 </details>
@@ -476,7 +476,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-[11px]"
+                  className="h-6 px-2 text-xs"
                   onClick={applySchemaTemplate}
                   disabled={!selectedActionMeta?.input_schema}
                 >
@@ -561,7 +561,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                 </label>
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   <div className="space-y-1 col-span-2">
-                    <Label className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Policy Preset</Label>
+                    <Label className="text-xs" style={{ color: "var(--muted-foreground)" }}>Policy Preset</Label>
                     <Select
                       value=""
                       onValueChange={(value) => {
@@ -586,7 +586,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Retry Count</Label>
+                    <Label className="text-xs" style={{ color: "var(--muted-foreground)" }}>Retry Count</Label>
                     <Input
                       type="number"
                       min={0}
@@ -602,7 +602,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Retry Delay (ms)</Label>
+                    <Label className="text-xs" style={{ color: "var(--muted-foreground)" }}>Retry Delay (ms)</Label>
                     <Input
                       type="number"
                       min={0}
@@ -619,7 +619,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   </div>
                 </div>
                 <div className="space-y-1 pt-2">
-                  <Label className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                  <Label className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     Run If (binding expression)
                   </Label>
                   <Input
@@ -635,7 +635,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   />
                 </div>
                 <div className="space-y-1 pt-2">
-                  <Label className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                  <Label className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     On Error Action Index
                   </Label>
                   <Input
@@ -651,12 +651,12 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     placeholder="-1"
                     className="h-8 text-xs"
                   />
-                  <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     -1 disables fallback. Otherwise run selected index when this action fails.
                   </p>
                 </div>
                 <div className="space-y-1 pt-2">
-                  <Label className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                  <Label className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     On Error Action Indexes (comma separated)
                   </Label>
                   <Input
@@ -678,7 +678,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     placeholder="2, 3, 4"
                     className="h-8 text-xs"
                   />
-                  <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                     Optional. Runs fallback actions in order until one succeeds.
                   </p>
                 </div>
@@ -706,7 +706,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                     <summary className="text-xs cursor-pointer text-emerald-300 font-medium">
                       State changes
                     </summary>
-                    <pre className="text-[11px] bg-emerald-900/30 p-1 rounded mt-1 overflow-x-auto max-h-32" style={{ color: "var(--foreground-secondary)" }}>
+                    <pre className="text-xs bg-emerald-900/30 p-1 rounded mt-1 overflow-x-auto max-h-32" style={{ color: "var(--foreground-secondary)" }}>
                       {JSON.stringify(testResult.state_patch, null, 2)}
                     </pre>
                   </details>

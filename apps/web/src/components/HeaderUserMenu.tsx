@@ -36,7 +36,7 @@ export default function HeaderUserMenu() {
       case "manager":
         return "#fb923c"; // orange-400
       case "developer":
-        return "#60a5fa"; // blue-400
+        return "#60a5fa"; // sky-400
       default:
         return "var(--muted-foreground)";
     }

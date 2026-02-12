@@ -347,7 +347,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <button
                         onClick={handleCreate}
                         disabled={isCreating}
-                        className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-xl transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+                        className="flex-[2] py-3 bg-sky-600 hover:bg-sky-500 disabled: disabled: text-white rounded-xl transition-all font-bold shadow-lg shadow-sky-900/20 active:scale-95 dark:bg-sky-700 dark:hover:bg-sky-600" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
                     >
                         {isCreating ? "Creating..." : "Create Tool Draft"}
                     </button>

@@ -60,7 +60,7 @@ const ASSET_TYPES: Record<string, AssetTypeConfig> = {
   prompt: {
     label: "Prompt",
     icon: Star,
-    color: "bg-blue-500/10 border-blue-400/30 text-blue-400",
+    color: "bg-sky-500/10 border-sky-400/30 text-sky-400",
   },
   policy: {
     label: "Policy",
@@ -186,7 +186,7 @@ export default function AssetOverrideModal({
         className={cn(
           "p-3 rounded-lg border cursor-pointer transition-all",
           isSelected
-            ? "ring-2 ring-blue-400 border-blue-400/30"
+            ? "ring-2 ring-sky-400 border-sky-400/30"
             : "",
           assetType.color
         )}
@@ -501,19 +501,19 @@ export default function AssetOverrideModal({
               <h3 className="text-sm font-medium text-white mb-3">Expected Changes</h3>
               <div className="space-y-2 text-xs " style={{color: "var(--muted-foreground)"}}>
                 <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5"></div>
+                  <div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5"></div>
                   <p>Asset versions will be temporarily overridden during test</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5"></div>
+                  <div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5"></div>
                   <p>Stage execution metrics will be collected and compared</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5"></div>
+                  <div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5"></div>
                   <p>Baseline vs test run comparison will be available</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5"></div>
+                  <div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5"></div>
                   <p>Original trace will not be modified</p>
                 </div>
               </div>

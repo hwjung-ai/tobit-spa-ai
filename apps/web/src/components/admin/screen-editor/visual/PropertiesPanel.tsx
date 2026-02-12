@@ -384,7 +384,7 @@ export default function PropertiesPanel() {
               </AccordionTrigger>
               <AccordionContent className="space-y-2 pt-3">
                 <div>
-                  <label className="text-[11px] text-slate-400">Chart Type</label>
+                  <label className="text-xs text-slate-400">Chart Type</label>
                   <Select
                     value={String(formData.chart_type || formData.type || "line")}
                     onValueChange={(val) => {
@@ -479,7 +479,7 @@ export default function PropertiesPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-400">Y-Axis Options (JSON)</label>
+                  <label className="text-xs text-slate-400">Y-Axis Options (JSON)</label>
                   <Textarea
                     value={JSON.stringify(formData.y_axis || {}, null, 2)}
                     onChange={(e) => {
@@ -494,7 +494,7 @@ export default function PropertiesPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-400">Legend Options (JSON)</label>
+                  <label className="text-xs text-slate-400">Legend Options (JSON)</label>
                   <Textarea
                     value={JSON.stringify(formData.legend || {}, null, 2)}
                     onChange={(e) => {
@@ -509,7 +509,7 @@ export default function PropertiesPanel() {
                   />
                 </div>
                 <div>
-                  <label className="text-[11px] text-slate-400">Tooltip Options (JSON)</label>
+                  <label className="text-xs text-slate-400">Tooltip Options (JSON)</label>
                   <Textarea
                     value={JSON.stringify(formData.tooltip || {}, null, 2)}
                     onChange={(e) => {
@@ -723,7 +723,7 @@ export default function PropertiesPanel() {
                             setEditingAction(action);
                             setActionModalOpen(true);
                           }}
-                          className="h-6 px-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-slate-700"
+                          className="h-6 px-2 text-xs text-sky-400 hover:text-sky-300 hover:bg-slate-700"
                         >
                           <Edit2 className="w-3 h-3" />
                         </Button>
@@ -1325,7 +1325,7 @@ function PropsFormField({ field, value, onChange }: PropsFormFieldProps) {
           data-testid={`prop-${field.name}`}
         />
         {jsonError && (
-          <p className="text-[11px] text-rose-300 mt-1">{jsonError}</p>
+          <p className="text-xs text-rose-300 mt-1">{jsonError}</p>
         )}
       </div>
     );

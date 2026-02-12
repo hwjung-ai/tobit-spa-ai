@@ -92,7 +92,7 @@ export default function BindingTab() {
         <p className="text-sm font-semibold text-[var(--foreground-secondary)]">Binding Debugger Sample Data</p>
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-2">
           <div>
-            <p className="text-[11px] mb-1 text-[var(--muted-foreground)]">state (JSON)</p>
+            <p className="text-xs mb-1 text-[var(--muted-foreground)]">state (JSON)</p>
             <Textarea
               value={sampleStateText}
               onChange={(e) => setSampleStateText(e.target.value)}
@@ -100,7 +100,7 @@ export default function BindingTab() {
             />
           </div>
           <div>
-            <p className="text-[11px] mb-1 text-[var(--muted-foreground)]">context (JSON)</p>
+            <p className="text-xs mb-1 text-[var(--muted-foreground)]">context (JSON)</p>
             <Textarea
               value={sampleContextText}
               onChange={(e) => setSampleContextText(e.target.value)}
@@ -108,7 +108,7 @@ export default function BindingTab() {
             />
           </div>
           <div>
-            <p className="text-[11px] mb-1 text-[var(--muted-foreground)]">inputs (JSON)</p>
+            <p className="text-xs mb-1 text-[var(--muted-foreground)]">inputs (JSON)</p>
             <Textarea
               value={sampleInputsText}
               onChange={(e) => setSampleInputsText(e.target.value)}
@@ -144,7 +144,7 @@ export default function BindingTab() {
             >
               <div className="text-xs font-mono text-sky-300">{targetPath}</div>
               <div className="text-xs mt-1 text-[var(--muted-foreground)]">→ {sourcePath}</div>
-              <div className="mt-1 text-[11px] text-emerald-300 truncate">
+              <div className="mt-1 text-xs text-emerald-300 truncate">
                 value: {JSON.stringify(evaluateBindingValue(sourcePath))}
               </div>
             </div>

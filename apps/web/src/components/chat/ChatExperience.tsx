@@ -276,7 +276,7 @@ export default function ChatExperience({
   return (
     <div className={panelClass}>
       <p className="text-xs uppercase tracking-[0.3em]  shrink-0" style={{color: "var(--muted-foreground)"}}>AI Copilot</p>
-      <div className="max-h-[min(440px,calc(100vh-14rem))] overflow-y-auto rounded-2xl border   p-3 text-[12px]  custom-scrollbar min-h-0" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="max-h-[min(440px,calc(100vh-14rem))] overflow-y-auto rounded-2xl border   p-3 text-xs  custom-scrollbar min-h-0" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-overlay)"}}>
         {messages.length === 0 ? (
           <p className="text-xs " style={{color: "var(--muted-foreground)"}}>질문을 입력하면 AI가 응답합니다.</p>
         ) : (

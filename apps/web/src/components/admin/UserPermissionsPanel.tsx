@@ -141,7 +141,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
   if (loading) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto"></div>
       </div>
     );
   }
@@ -159,8 +159,8 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
       {/* User Header */}
       <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6">
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-xl font-semibold text-blue-600">
+          <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
+            <span className="text-xl font-semibold text-sky-600">
               {user.username.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -206,7 +206,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
           onClick={() => setActiveTab('permissions')}
           className={`flex-1 px-4 py-3 font-semibold text-center border-b-2 ${
             activeTab === 'permissions'
-              ? 'border-blue-600 text-blue-600'
+              ? 'border-sky-600 text-sky-600'
               : 'border-transparent  hover:'
           }`} style={{color: "var(--foreground)"}}
         >
@@ -217,7 +217,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
           onClick={() => setActiveTab('audit')}
           className={`flex-1 px-4 py-3 font-semibold text-center border-b-2 ${
             activeTab === 'audit'
-              ? 'border-blue-600 text-blue-600'
+              ? 'border-sky-600 text-sky-600'
               : 'border-transparent  hover:'
           }`} style={{color: "var(--foreground)"}}
         >
@@ -240,7 +240,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
                 <select
                   value={newPermission}
                   onChange={(e) => setNewPermission(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 >
                   <option value="">Select a permission...</option>
                   {availablePermissions
@@ -262,14 +262,14 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Why is this permission being granted?"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
                 />
               </div>
 
               <button
                 onClick={handleGrantPermission}
                 disabled={!newPermission}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center space-x-2"
+                className="w-full px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center space-x-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>Grant Permission</span>
@@ -290,7 +290,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
                     className="flex items-center justify-between p-3 rounded-lg" style={{backgroundColor: "var(--background)"}}
                   >
                     <div className="flex items-center space-x-3">
-                      <Shield className="w-5 h-5 text-blue-600" />
+                      <Shield className="w-5 h-5 text-sky-600" />
                       <span className="font-medium " style={{color: "var(--foreground)"}}>
                         {permission.permission.replace(/_/g, ' ')}
                       </span>

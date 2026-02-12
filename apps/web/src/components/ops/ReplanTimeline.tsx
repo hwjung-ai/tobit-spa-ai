@@ -71,7 +71,7 @@ const TRIGGER_CONFIG = {
   },
   user_initiated: {
     icon: Lightbulb,
-    color: "bg-blue-500/10 border-blue-400/30 text-blue-400",
+    color: "bg-sky-500/10 border-sky-400/30 text-sky-400",
     label: "User",
     priority: 5
   }
@@ -80,12 +80,12 @@ const TRIGGER_CONFIG = {
 const SEVERITY_COLORS = {
   critical: "text-rose-400",
   high: "text-amber-400",
-  medium: "text-blue-400",
+  medium: "text-sky-400",
   low: "text-emerald-400",
 };
 
 const StageColors = {
-  route_plan: "bg-blue-500/10 border-blue-400/30",
+  route_plan: "bg-sky-500/10 border-sky-400/30",
   validate: "bg-emerald-500/10 border-emerald-400/30",
   execute: "bg-amber-500/10 border-amber-400/30",
   compose: "bg-purple-500/10 border-purple-400/30",
@@ -116,7 +116,7 @@ const PatchDiffViewer = ({ patch }: { patch: unknown }) => {
     <div className="mt-2">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+        className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1"
       >
         <Eye className="h-3 w-3" />
         {expanded ? "Hide" : "Show"} Patch Diff

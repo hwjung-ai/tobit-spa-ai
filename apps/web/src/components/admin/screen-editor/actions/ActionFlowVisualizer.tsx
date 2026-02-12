@@ -32,7 +32,7 @@ function ActionNode({ data }: NodeProps<ActionNodeData>) {
     <div className="min-w-[220px] rounded-lg border border-sky-500/60 px-3 py-2 shadow-md" style={{ backgroundColor: "var(--surface-base)" }}>
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-sky-500" />
       <div className="text-sm font-semibold text-sky-300">{data.label}</div>
-      <div className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>{data.handler}</div>
+      <div className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>{data.handler}</div>
       {data.policyText.length > 0 && (
         <div className="mt-2 space-y-1">
           {data.policyText.map((line) => (

@@ -166,10 +166,17 @@ export default function AssetTable({
 
   if (assets.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white py-20 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+      <div
+        className="rounded-2xl border py-20 text-center shadow-sm"
+        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+      >
+        <div
+          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border"
+          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+        >
           <svg
-            className="h-6 w-6 text-slate-500 dark:text-slate-400"
+            className="h-6 w-6"
+            style={{ color: "var(--muted-foreground)" }}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -182,7 +189,7 @@ export default function AssetTable({
             />
           </svg>
         </div>
-        <p className="text-sm font-medium italic text-slate-600 dark:text-slate-400">
+        <p className="text-sm font-medium italic" style={{ color: "var(--muted-foreground)" }}>
           No assets found
         </p>
       </div>
@@ -190,14 +197,30 @@ export default function AssetTable({
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2 dark:border-slate-800">
+    <div
+      className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-sm"
+      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+    >
+      <div
+        className="flex items-center justify-between border-b px-4 py-2"
+        style={{ borderColor: "var(--border)" }}
+      >
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400">
+          <span
+            className="text-[10px] font-bold uppercase tracking-[0.2em]"
+            style={{ color: "var(--muted-foreground)" }}
+          >
             Assets Registry
           </span>
-          <span className="rounded-full border border-slate-300 bg-slate-50 px-2 py-0.5 text-[10px] font-mono font-bold text-sky-600 dark:border-slate-700 dark:bg-slate-800 dark:text-sky-400">
+          <span
+            className="rounded-full border px-2 py-0.5 text-[10px] font-mono font-bold"
+            style={{
+              borderColor: "var(--border)",
+              backgroundColor: "var(--surface-elevated)",
+              color: "var(--primary)",
+            }}
+          >
             count: {assets.length}
           </span>
           {onStatusFilterChange && (
@@ -223,7 +246,10 @@ export default function AssetTable({
             </div>
           )}
         </div>
-        <div className="text-[10px] font-medium italic text-slate-500 dark:text-slate-400">
+        <div
+          className="text-[10px] font-medium italic"
+          style={{ color: "var(--muted-foreground)" }}
+        >
           Drag columns to reorder • Click headers to sort
         </div>
       </div>

@@ -115,7 +115,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
 
       {/* Error */}
       {executeMutation.isError && (
-        <div className="mt-3 px-4 py-3 border border-red-900/50 rounded bg-red-950/50 text-red-200">
+        <div className="mt-3 px-4 py-3 border border-rose-900/50 rounded bg-rose-950/50 text-rose-200">
           {executeMutation.error instanceof Error ? executeMutation.error.message : "Execution failed"}
         </div>
       )}
@@ -130,7 +130,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
                 href={`/admin/inspector?trace_id=${encodeURIComponent(actionTraceId)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-blue-400 hover:underline"
+                className="text-xs text-sky-400 hover:underline"
               >
                 Open in Inspector →
               </a>

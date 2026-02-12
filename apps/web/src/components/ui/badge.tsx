@@ -5,9 +5,9 @@ interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const variantStyles = {
-  default: 'inline-flex items-center rounded-full border border-transparent bg-blue-600 px-2.5 py-0.5 text-xs font-semibold text-white',
+  default: 'inline-flex items-center rounded-full border border-transparent bg-sky-600 px-2.5 py-0.5 text-xs font-semibold text-white',
   secondary: 'inline-flex items-center rounded-full border border-transparent bg-[var(--surface-elevated)] px-2.5 py-0.5 text-xs font-semibold text-white',
-  destructive: 'inline-flex items-center rounded-full border border-transparent bg-red-600 px-2.5 py-0.5 text-xs font-semibold text-white',
+  destructive: 'inline-flex items-center rounded-full border border-transparent bg-rose-600 px-2.5 py-0.5 text-xs font-semibold text-white',
   outline: 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
 };
 

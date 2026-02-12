@@ -51,9 +51,9 @@ interface StageInOutPanelProps {
 
 const STAGE_COLORS = {
   route_plan: {
-    bg: "bg-blue-500/10",
-    border: "border-blue-400/30",
-    text: "text-blue-400",
+    bg: "bg-sky-500/10",
+    border: "border-sky-400/30",
+    text: "text-sky-400",
   },
   validate: {
     bg: "bg-emerald-500/10",

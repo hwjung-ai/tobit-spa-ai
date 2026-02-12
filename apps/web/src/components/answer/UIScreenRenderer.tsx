@@ -1244,7 +1244,7 @@ export default function UIScreenRenderer({
           </table>
 
           {pageSize > 0 && (
-            <div className="flex items-center justify-between text-[11px] " style={{color: "var(--muted-foreground)"}}>
+            <div className="flex items-center justify-between text-xs " style={{color: "var(--muted-foreground)"}}>
               <span>
                 Page {safePage + 1}/{totalPages} · {processedRows.length} rows
               </span>
@@ -1579,7 +1579,7 @@ export default function UIScreenRenderer({
                 <button
                   key={`${comp.id}-tab-${index}`}
                   type="button"
-                  className={`rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] ${index === activeIndex ? " " : "border  "
+                  className={`rounded-full px-3 py-1 text-xs uppercase tracking-[0.2em] ${index === activeIndex ? " " : "border  "
                     }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)"}}
                   onClick={() => setActiveTabs((prev) => ({ ...prev, [comp.id]: index }))}
                 >
@@ -1889,7 +1889,7 @@ export default function UIScreenRenderer({
 
         {!hideDebugPanels && autoRefreshConfigs.length > 0 && (
           <div
-            className="mb-3 rounded-xl border /80  p-3 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
+            className="mb-3 rounded-xl border /80  p-3 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
             data-testid="auto-refresh-panel"
           >
             <p className="mb-2 uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Auto Refresh</p>
@@ -1916,7 +1916,7 @@ export default function UIScreenRenderer({
                     </div>
                     <button
                       type="button"
-                      className="rounded border  px-2 py-1 text-[10px] uppercase tracking-[0.15em] " style={{borderColor: "var(--border)", color: "var(--foreground)"}}
+                      className="rounded border  px-2 py-1 text-[10px] uppercase tracking-wider " style={{borderColor: "var(--border)", color: "var(--foreground)"}}
                       onClick={() => toggleAutoRefreshPaused(config.key)}
                       disabled={!!status?.stopped}
                     >
@@ -1930,14 +1930,14 @@ export default function UIScreenRenderer({
         )}
         {!hideDebugPanels && actionLogs.length > 0 && (
           <div
-            className="mb-3 rounded-xl border /80  p-3 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
+            className="mb-3 rounded-xl border /80  p-3 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
             data-testid="action-log-panel"
           >
             <div className="mb-2 flex items-center justify-between">
               <p className="uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>Action Log</p>
               <button
                 type="button"
-                className="rounded border  px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{borderColor: "var(--border)"}}
+                className="rounded border  px-2 py-1 text-[10px] uppercase tracking-wider" style={{borderColor: "var(--border)"}}
                 onClick={() => setActionLogs([])}
               >
                 Clear

@@ -155,7 +155,7 @@ export function PermissionManagementDashboard() {
     const colors = {
       admin: "bg-red-100 text-red-800",
       manager: "bg-orange-100 text-orange-800",
-      developer: "bg-blue-100 text-blue-800",
+      developer: "bg-sky-100 text-sky-800",
       viewer: "bg-[var(--surface-elevated)] text-[var(--foreground)]",
     };
     return colors[role as keyof typeof colors] || "bg-[var(--surface-elevated)]";
@@ -209,7 +209,7 @@ export function PermissionManagementDashboard() {
                   <Card
                     key={user.id}
                     className={`cursor-pointer transition ${
-                      selectedUser?.id === user.id ? "border-blue-500 bg-blue-50" : ""
+                      selectedUser?.id === user.id ? "border-sky-500 bg-sky-50" : ""
                     }`}
                     onClick={() => setSelectedUser(user)}
                   >
@@ -240,11 +240,11 @@ export function PermissionManagementDashboard() {
             <TabsContent value="permissions" className="space-y-4 mt-4">
               {selectedUser ? (
                 <div className="space-y-4">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h3 className="font-semibold text-blue-900">
+                  <div className="bg-sky-50 p-4 rounded-lg border border-sky-200">
+                    <h3 className="font-semibold text-sky-900">
                       Permissions for: {selectedUser.username}
                     </h3>
-                    <p className="text-sm text-blue-700 mt-1">
+                    <p className="text-sm text-sky-700 mt-1">
                       Role: <Badge className={getRoleColor(selectedUser.role)}>{selectedUser.role}</Badge>
                     </p>
                   </div>

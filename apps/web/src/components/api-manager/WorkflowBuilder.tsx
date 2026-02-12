@@ -40,8 +40,8 @@ interface WorkflowNodeData {
 
 // Custom node types
 const SqlNode = ({ data }: { data: WorkflowNodeData }) => (
-  <div className="rounded-2xl border-2 border-blue-500 bg-blue-500/10 px-4 py-2 text-center">
-    <div className="text-[10px] uppercase tracking-normal text-blue-400 font-semibold">
+  <div className="rounded-2xl border-2 border-sky-600 bg-sky-500/10 px-4 py-2 text-center">
+    <div className="text-[10px] uppercase tracking-normal text-sky-400 font-semibold">
       SQL
     </div>
     <div className="mt-1 text-xs font-semibold text-white truncate max-w-48">
@@ -235,9 +235,9 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
               key={type}
               onClick={() => addNode(type)}
               disabled={readOnly}
-              className={`flex-1 rounded-2xl border px-4 py-2 text-[11px] font-bold uppercase tracking-normal text-white transition ${
+              className={`flex-1 rounded-2xl border px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition ${
                 type === "sql"
-                  ? "border-blue-500/50 bg-blue-500/80 hover:bg-blue-400"
+                  ? "border-sky-500/50 bg-sky-600/80 hover:bg-sky-500 dark:hover:bg-sky-700"
                   : type === "http"
                   ? "border-emerald-500/50 bg-emerald-500/80 hover:bg-emerald-400"
                   : "border-amber-500/50 bg-amber-500/80 hover:bg-amber-400"
@@ -399,7 +399,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <button
             onClick={() => removeNode(selectedNode.id)}
             disabled={readOnly}
-            className="w-full flex items-center justify-center gap-2 rounded-xl border border-rose-500/50 bg-rose-500/80 px-4 py-2 text-[11px] font-bold uppercase tracking-normal text-white transition hover:bg-rose-400"
+            className="w-full flex items-center justify-center gap-2 rounded-xl border border-rose-500/50 bg-rose-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-rose-400"
           >
             <Trash2 className="h-4 w-4" />
             Remove Node
@@ -412,7 +412,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
         <button
           onClick={clearWorkflow}
           disabled={readOnly}
-          className="builder-button-reset rounded-full border px-4 py-2 text-[11px] font-semibold uppercase tracking-normal transition"
+          className="builder-button-reset rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-normal transition"
         >
           Clear Workflow
         </button>
@@ -420,7 +420,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <button
             onClick={() => generateWorkflowJSON()}
             disabled={readOnly}
-            className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-[11px] font-bold uppercase tracking-normal text-white transition hover:bg-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+            className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
           >
             <Save className="h-4 w-4" />
             Save
@@ -432,7 +432,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
               alert("Workflow execution would start here. (In production, integrate with Workflow Executor)");
             }}
             disabled={readOnly}
-            className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/80 px-4 py-2 text-[11px] font-bold uppercase tracking-normal text-white transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+            className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]"
           >
             <Play className="h-4 w-4" />
             Execute
@@ -445,7 +445,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
         <h4 className="builder-title text-xs uppercase tracking-normal">
           Workflow JSON
         </h4>
-        <pre className="builder-json-preview max-h-40 overflow-auto rounded-xl p-3 text-[11px] font-mono">
+        <pre className="builder-json-preview max-h-40 overflow-auto rounded-xl p-3 text-xs font-mono">
           {generateWorkflowJSON()}
         </pre>
       </div>
@@ -453,7 +453,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
       {/* Help Section */}
       <div className="builder-help-section space-y-2 rounded-2xl border p-3">
         <h4 className="builder-help-title text-xs uppercase tracking-normal">Quick Help</h4>
-        <div className="builder-help-text space-y-1 text-[11px]">
+        <div className="builder-help-text space-y-1 text-xs">
           <p>• Drag nodes to position them on the canvas</p>
           <p>• Connect nodes by dragging from one node's handle to another</p>
           <p>• Click on a node to configure its properties</p>

@@ -25,14 +25,14 @@ export default function Toast({ message, type = "success", onDismiss, duration =
         success: "bg-green-950/90 border-green-800",
         error: "bg-red-950/90 border-red-800",
         warning: "bg-yellow-950/90 border-yellow-800",
-        info: "bg-blue-950/90 border-blue-800",
+        info: "bg-sky-950/90 border-sky-800",
     }[type];
 
     const textColor = {
         success: "text-green-200",
         error: "text-red-200",
         warning: "text-yellow-200",
-        info: "text-blue-200",
+        info: "text-sky-200",
     }[type];
 
     const icon = {

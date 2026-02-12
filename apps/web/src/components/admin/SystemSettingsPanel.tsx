@@ -105,7 +105,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
         <select
           value={displayValue ? 'true' : 'false'}
           onChange={(e) => handleSettingChange(key, e.target.value === 'true')}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
         >
           <option value="true">Enabled</option>
           <option value="false">Disabled</option>
@@ -119,7 +119,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           type="number"
           value={displayValue}
           onChange={(e) => handleSettingChange(key, parseInt(e.target.value))}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
         />
       );
     }
@@ -131,7 +131,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
             type={showPassword ? 'text' : 'password'}
             value={String(displayValue || '')}
             onChange={(e) => handleSettingChange(key, e.target.value as string)}
-            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
           />
           <button
             type="button"
@@ -150,7 +150,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
         type="text"
         value={String(displayValue)}
         onChange={(e) => handleSettingChange(key, e.target.value)}
-        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500"
       />
     );
   };
@@ -185,12 +185,12 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
             disabled={Object.keys(changes).length === 0 || loading}
             className={`px-4 py-2 flex items-center space-x-2 rounded-lg font-semibold transition-colors ${
               saveStatus === 'saving'
-                ? 'bg-blue-400 text-white cursor-wait'
+                ? 'bg-sky-400 text-white cursor-wait'
                 : saveStatus === 'success'
                 ? 'bg-green-600 text-white'
                 : saveStatus === 'error'
                 ? 'bg-red-600 text-white'
-                : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                : 'bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed'
             }`}
           >
             <Save className="w-4 h-4" />
@@ -209,7 +209,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                 onClick={() => setSelectedCategory(category)}
                 className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
                   selectedCategory === category
-                    ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
+                    ? 'bg-sky-50 text-sky-700 border-l-4 border-sky-600'
                     : ''
                 }`}
                 style={selectedCategory === category ? {} : { color: "var(--foreground)" }}
@@ -225,7 +225,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6 space-y-6">
             {loading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto"></div>
               </div>
             ) : currentSettings.length === 0 ? (
               <p className="text-center py-8" style={{ color: "var(--muted-foreground)" }}>No settings in this category</p>
@@ -253,11 +253,11 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                       }
                     </label>
                     <p className="text-xs mb-2" style={{ color: "var(--muted-foreground)" }}>Setting: {settingKey}</p>
-                    <div className={`mb-2 ${hasChanged ? 'p-3 bg-blue-50 rounded' : ''}`}>
+                    <div className={`mb-2 ${hasChanged ? 'p-3 bg-sky-50 rounded' : ''}`}>
                       {renderSettingInput(settingKey, settingValue, currentValue)}
                     </div>
                     {hasChanged && (
-                      <p className="text-xs text-blue-600">
+                      <p className="text-xs text-sky-600">
                         Changed from: {JSON.stringify(settingValue)}
                       </p>
                     )}

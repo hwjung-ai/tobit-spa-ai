@@ -49,7 +49,7 @@ export default function ErrorBanner({
     <div
       className={`sticky top-0 z-40 rounded-xl border p-4 ${
         hasErrors
-          ? "border-red-800/50 bg-red-950/40"
+          ? "border-rose-800/50 bg-rose-950/40"
           : "border-yellow-800/50 bg-yellow-950/40"
       }`}
     >
@@ -57,17 +57,17 @@ export default function ErrorBanner({
         <div className="flex-1">
           <h3
             className={`text-sm font-semibold ${
-              hasErrors ? "text-red-300" : "text-yellow-300"
+              hasErrors ? "text-rose-300" : "text-yellow-300"
             }`}
           >
             {title}
           </h3>
 
           {errors.length > 0 && (
-            <ul className="mt-2 space-y-1 text-[12px] text-red-200">
+            <ul className="mt-2 space-y-1 text-xs text-rose-200">
               {errors.map((error, idx) => (
                 <li key={idx} className="flex gap-2">
-                  <span className="text-red-400">✕</span>
+                  <span className="text-rose-400">✕</span>
                   <span>{error}</span>
                 </li>
               ))}
@@ -75,7 +75,7 @@ export default function ErrorBanner({
           )}
 
           {warnings.length > 0 && (
-            <ul className="mt-2 space-y-1 text-[12px] text-yellow-200">
+            <ul className="mt-2 space-y-1 text-xs text-yellow-200">
               {warnings.map((warning, idx) => (
                 <li key={idx} className="flex gap-2">
                   <span className="text-yellow-400">!</span>

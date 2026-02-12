@@ -369,7 +369,7 @@ export default function AssetImpactAnalyzer({
                   className={cn(
                     "px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2",
                     isSelected
-                      ? "bg-blue-500 text-white"
+                      ? "bg-sky-500 text-white"
                       : isInCompare
                       ? "bg-purple-500/20 text-purple-400 border border-purple-400/30"
                       : isBaseline
@@ -407,7 +407,7 @@ export default function AssetImpactAnalyzer({
                 </p>
               </div>
               <div className="rounded-lg p-4" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
-                <div className="flex items-center gap-2 text-blue-400">
+                <div className="flex items-center gap-2 text-sky-400">
                   <Clock className="h-4 w-4" />
                   <span className="text-xs">Avg Duration</span>
                 </div>
@@ -517,7 +517,7 @@ export default function AssetImpactAnalyzer({
           <div className="space-y-2">
             {impactData.recommendations.map((rec, index) => (
               <div key={index} className="flex items-start gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5"></div>
+                <div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5"></div>
                 <p className="text-sm" style={{ color: "var(--foreground)" }}>{rec}</p>
               </div>
             ))}

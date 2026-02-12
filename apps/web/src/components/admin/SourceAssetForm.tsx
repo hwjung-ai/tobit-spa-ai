@@ -415,7 +415,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           </Button>
           <Button
             onClick={handleSaveSource}
-            className="bg-sky-600 hover:bg-sky-500 text-white font-semibold transition-all shadow-lg shadow-sky-900/20"
+            className="bg-sky-600 hover:bg-sky-500 text-white font-semibold transition-all shadow-lg shadow-sky-900/20 dark:bg-sky-700 dark:hover:bg-sky-600"
             disabled={
               !editingSource.name ||
               !editingSource.source_type ||

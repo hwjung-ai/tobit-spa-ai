@@ -590,7 +590,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                             </div>
                             <Link
                                 href={`/admin/screens/${asset.asset_id}`}
-                                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors font-medium text-sm"
+                                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg transition-colors font-medium text-sm dark:bg-sky-700 dark:hover:bg-sky-600"
                             >
                                 Open Screen Editor →
                             </Link>
@@ -612,7 +612,7 @@ export default function AssetForm({ asset, onSave, onLoadVersion }: AssetFormPro
                                 <summary className="text-sm font-semibold cursor-pointer" style={{ color: "var(--foreground)" }}>
                                     Raw Asset Content
                                 </summary>
-                                <pre className="mt-2 text-[11px] overflow-x-auto max-h-64" style={{ color: "var(--foreground)" }}>
+                                <pre className="mt-2 text-xs overflow-x-auto max-h-64" style={{ color: "var(--foreground)" }}>
                                     {JSON.stringify(asset.content, null, 2)}
                                 </pre>
                             </details>

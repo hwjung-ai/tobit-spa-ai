@@ -114,8 +114,8 @@ export default function PagerDutyChannelForm({ onSubmit }: PagerDutyChannelFormP
         </Select>
       </FormFieldGroup>
 
-      <Alert className="bg-blue-50 border-blue-200">
-        <AlertDescription className="text-blue-800 text-sm">
+      <Alert className="bg-sky-50 border-sky-200">
+        <AlertDescription className="text-sky-800 text-sm">
           💡 <strong>Note:</strong> Incidents will be created in PagerDuty with the severity you
           select above. You can also resolve incidents when alerts are acknowledged.
         </AlertDescription>

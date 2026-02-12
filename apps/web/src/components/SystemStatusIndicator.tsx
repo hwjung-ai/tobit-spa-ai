@@ -78,7 +78,7 @@ export default function SystemStatusIndicator() {
   }, [fetchHealth]);
 
   const color = (status: string) =>
-    status === "ok" ? "text-green-400" : status === "checking" ? "text-gray-400" : "text-rose-400";
+    status === "ok" ? "text-emerald-400" : status === "checking" ? "text-slate-400" : "text-rose-400";
 
   const items: { icon: typeof Server; key: string; label: string }[] = [
     { icon: Activity, key: "api", label: "API" },
@@ -104,7 +104,7 @@ export default function SystemStatusIndicator() {
             style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
           >
             <Icon className={`h-3.5 w-3.5 ${color(entry.status)}`} />
-            <span className={`text-[11px] font-medium ${color(entry.status)}`}>
+            <span className={`text-xs font-medium ${color(entry.status)}`}>
               {statusText}
             </span>
             <div

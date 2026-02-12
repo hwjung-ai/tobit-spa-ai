@@ -154,7 +154,7 @@ export default function CreateSchemaModal({ onClose, onSave }: CreateSchemaModal
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 px-4 py-3 bg-sky-600 hover:bg-sky-500 disabled: text-white rounded-lg shadow-lg font-medium text-sm disabled:opacity-50 uppercase tracking-wide transition-all" style={{backgroundColor: "var(--surface-elevated)"}}
+              className="flex-1 px-4 py-3 bg-sky-600 hover:bg-sky-500 disabled: text-white rounded-lg shadow-lg font-medium text-sm disabled:opacity-50 uppercase tracking-wide transition-all dark:bg-sky-700 dark:hover:bg-sky-600" style={{backgroundColor: "var(--surface-elevated)"}}
             >
               {loading ? "Creating..." : "Create"}
             </button>

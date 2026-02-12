@@ -46,7 +46,7 @@ export default function AuditLogTable({ logs, onViewDetails }: AuditLogTableProp
                             </td>
                             <td className="py-3 px-4">
                                 <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${log.action === "create" ? "bg-green-950/50 text-green-300" :
-                                        log.action === "update" ? "bg-blue-950/50 text-blue-300" :
+                                        log.action === "update" ? "bg-sky-950/50 text-sky-300" :
                                             log.action === "publish" ? "bg-purple-950/50 text-purple-300" :
                                                 log.action === "rollback" ? "bg-yellow-950/50 text-yellow-300" :
                                                     " "

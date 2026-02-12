@@ -110,13 +110,13 @@ export default function PublishedScreenDetail({ assetId }: PublishedScreenDetail
         {asset.description && (
           <p className="text-sm  mt-1" style={{color: "var(--muted-foreground)"}}>{asset.description}</p>
         )}
-        <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
           Published: {formatTimestamp(asset.published_at)} · Last update: {formatTimestamp(asset.updated_at)}
         </p>
         {asset.tags && Object.keys(asset.tags).length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {Object.entries(asset.tags).map(([key, value]) => (
-              <span key={key} className="rounded-full border  px-2 py-0.5 text-[11px] " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}>
+              <span key={key} className="rounded-full border  px-2 py-0.5 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)"}}>
                 {key}: {String(value)}
               </span>
             ))}

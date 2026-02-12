@@ -242,7 +242,7 @@ export default function RegressionWatchPanel() {
           <Button
             size="sm"
             onClick={() => setShowCreateDialog(true)}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-sky-600 hover:bg-sky-700"
           >
             + New Query
           </Button>
@@ -299,7 +299,7 @@ export default function RegressionWatchPanel() {
                           setSelectedQuery(query);
                           setShowBaselineDialog(true);
                         }}
-                        className="text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                        className="text-xs h-8 bg-sky-600 hover:bg-sky-700 text-white"
                       >
                         Set Baseline
                       </Button>
@@ -459,7 +459,7 @@ export default function RegressionWatchPanel() {
             >
               Cancel
             </Button>
-            <Button onClick={handleCreateQuery} className="bg-blue-600">
+            <Button onClick={handleCreateQuery} className="bg-sky-600">
               Create
             </Button>
           </DialogFooter>
@@ -499,7 +499,7 @@ export default function RegressionWatchPanel() {
             </Button>
             <Button
               onClick={handleSetBaseline}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-sky-600 hover:bg-sky-700 text-white"
               disabled={!baselineForm.trace_id}
             >
               Set Baseline
@@ -519,8 +519,8 @@ export default function RegressionWatchPanel() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <Alert className="bg-blue-950 border-blue-800">
-              <AlertDescription className="text-blue-200">
+            <Alert className="bg-sky-950 border-sky-800">
+              <AlertDescription className="text-sky-200">
                 This will execute the golden query and compare against the
                 baseline trace using deterministic judgment rules.
               </AlertDescription>
@@ -617,7 +617,7 @@ export default function RegressionWatchPanel() {
                 <div className="space-y-1 text-xs">
                   <div className="flex gap-2">
                     <span className="" style={{color: "var(--muted-foreground)"}}>Baseline:</span>
-                    <code className="text-blue-400 font-mono truncate">
+                    <code className="text-sky-400 font-mono truncate">
                       {selectedRun.baseline_trace_id}
                     </code>
                   </div>

@@ -103,7 +103,7 @@ export default function PublishedScreensList() {
           <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
             Screen ID: {asset.screen_id}
           </p>
-          <p className="text-[11px] " style={{color: "var(--muted-foreground)"}}>
+          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
             {asset.description || "No description available"}
           </p>
           <p className="text-[10px] " style={{color: "var(--muted-foreground)"}}>

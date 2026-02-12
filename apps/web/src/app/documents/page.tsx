@@ -144,28 +144,19 @@ interface DocumentDetail extends DocumentItem {
   chunk_count: number;
 }
 
-const getBadgeStyle = (status: DocumentStatus): React.CSSProperties => {
-  const base: React.CSSProperties = {
-    padding: "2px 10px",
-    borderRadius: "9999px",
-    fontSize: "10px",
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    borderWidth: "1px",
-    borderStyle: "solid",
-  };
+const getBadgeStyle = (status: DocumentStatus): string => {
+  const base = "px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border border-solid border";
   switch (status) {
     case "queued":
-      return { ...base, backgroundColor: "rgba(245, 158, 11, 0.2)", color: "var(--warning)", borderColor: "rgba(245, 158, 11, 0.4)" };
+      return `${base} bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40`;
     case "processing":
-      return { ...base, backgroundColor: "rgba(14, 165, 233, 0.15)", color: "var(--info)", borderColor: "rgba(14, 165, 233, 0.4)" };
+      return `${base} bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/40`;
     case "done":
-      return { ...base, backgroundColor: "rgba(16, 185, 129, 0.15)", color: "var(--success)", borderColor: "rgba(16, 185, 129, 0.4)" };
+      return `${base} bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40`;
     case "failed":
-      return { ...base, backgroundColor: "rgba(244, 63, 94, 0.15)", color: "var(--error)", borderColor: "rgba(244, 63, 94, 0.4)" };
+      return `${base} bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/40`;
     default:
-      return { ...base, borderColor: "var(--border)" };
+      return `${base} border-slate-200 dark:border-slate-800`;
   }
 };
 
@@ -819,49 +810,41 @@ function DocumentsPageContent() {
   return (
     <div className="space-y-6">
       <section
-        className="rounded-2xl border p-6"
-        style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)"}}
+        className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Document index</p>
-            <h2 className="text-2xl font-semibold" style={{color: "var(--foreground)"}}>Upload and query documents</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">Document index</p>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Upload and query documents</h2>
           </div>
           <button
             onClick={fetchDocuments}
-            className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-[0.3em] transition"
-            style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)"}}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+            className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-[0.3em] transition border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
           >
             Refresh list
           </button>
         </div>
         <form onSubmit={handleUpload} className="mt-4 flex flex-col gap-3">
-          <label className="text-sm" style={{color: "var(--foreground)"}}>
+          <label className="text-sm text-slate-900 dark:text-slate-50">
             Select a file (txt/pdf/docx)
             <input
               ref={fileInputRef}
               type="file"
-              className="mt-2 block w-full rounded-2xl border px-4 py-2 text-sm outline-none transition"
-              style={{borderColor: "var(--border-muted)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
-              onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
-              onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; }}
+              className="mt-2 block w-full rounded-2xl border px-4 py-2 text-sm outline-none transition border-slate-200 bg-slate-50 text-slate-900 focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
             />
           </label>
           {uploadError ? (
-            <p className="text-xs" style={{color: "var(--error)"}}>{uploadError}</p>
+            <p className="text-xs text-rose-600 dark:text-rose-400">{uploadError}</p>
           ) : null}
           <div className="flex items-center justify-between gap-3">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition disabled:opacity-40"
-              style={{backgroundColor: "var(--primary)"}}
+              className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-40 bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
               disabled={uploading}
             >
               {uploading ? "Uploading…" : "문서 업로드"}
             </button>
-            <span className="text-xs uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+            <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
               API: /api/documents/upload
             </span>
           </div>
@@ -870,40 +853,33 @@ function DocumentsPageContent() {
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside
-          className="rounded-2xl border p-5"
-          style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)"}}
+          className="rounded-2xl border p-5 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
         >
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Library</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Library</p>
             {loadingDocuments ? (
-              <span className="text-xs" style={{color: "var(--muted-foreground)"}}>Loading...</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400">Loading...</span>
             ) : null}
           </div>
           {documentsError ? (
-            <p className="mt-3 text-xs" style={{color: "var(--error)"}}>{documentsError}</p>
+            <p className="mt-3 text-xs text-rose-600 dark:text-rose-400">{documentsError}</p>
           ) : null}
           <div className="mt-4 space-y-3">
             {documents.length === 0 ? (
-              <p className="text-sm" style={{color: "var(--muted-foreground)"}}>No documents yet.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">No documents yet.</p>
             ) : null}
             {documents.map((document) => (
               <div
                 key={document.id}
-                className="group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition"
-                style={{borderColor: selectedDocumentId === document.id ? "var(--primary)" : "var(--border)", backgroundColor: selectedDocumentId === document.id ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-elevated)", color: "var(--foreground)"}}
+                className={cn(
+                  "group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition cursor-pointer text-slate-900 dark:text-slate-50",
+                  selectedDocumentId === document.id
+                    ? "border-sky-500 bg-sky-500/10 dark:bg-sky-500/10"
+                    : "border-slate-200 bg-slate-100 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500"
+                )}
                 role="button"
                 tabIndex={0}
                 onClick={() => selectDocument(document.id)}
-                onMouseEnter={(e) => {
-                  if (selectedDocumentId !== document.id) {
-                    e.currentTarget.style.borderColor = "var(--primary)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedDocumentId !== document.id) {
-                    e.currentTarget.style.borderColor = "var(--border)";
-                  }
-                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
@@ -913,21 +889,14 @@ function DocumentsPageContent() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-left text-sm font-semibold">{document.filename}</span>
-                  <span style={getBadgeStyle(document.status)}>
+                  <span className={getBadgeStyle(document.status)}>
                     {document.status}
                   </span>
                 </div>
-                <p className="text-xs" style={{color: "var(--muted-foreground)"}}>{formatTimestamp(document.updated_at)}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{formatTimestamp(document.updated_at)}</p>
                 <button
                   type="button"
-                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
-                  style={{borderColor: "var(--error)", backgroundColor: "var(--surface-elevated)", color: "var(--error)"}}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-                  }}
+                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                   onClick={(event) => {
                     event.stopPropagation();
                     deleteDocument(document.id);
@@ -943,34 +912,26 @@ function DocumentsPageContent() {
 
         <div className="space-y-6">
           <section
-            className="group rounded-2xl border p-5"
-            style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)"}}
+            className="group rounded-2xl border p-5 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Document detail
                 </p>
-                <p className="text-sm" style={{color: "var(--foreground)"}}>
+                <p className="text-sm text-slate-900 dark:text-slate-50">
                   {selectedDocument ? selectedDocument.filename : "Select a document to view metadata"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 {selectedDocument ? (
-                  <span style={getBadgeStyle(selectedDocument.status)}>
+                  <span className={getBadgeStyle(selectedDocument.status)}>
                     {selectedDocument.status}
                   </span>
                 ) : null}
                 <button
                   type="button"
-                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
-                  style={{borderColor: "var(--error)", backgroundColor: "var(--surface-elevated)", color: "var(--error)"}}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-                  }}
+                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                   onClick={handleDeleteSelectedDocument}
                   aria-label="Delete document"
                 >
@@ -980,7 +941,7 @@ function DocumentsPageContent() {
             </div>
             {selectedDocument ? (
               <>
-                <div className="mt-4 grid gap-3 text-xs sm:grid-cols-2" style={{color: "var(--muted-foreground)"}}>
+                <div className="mt-4 grid gap-3 text-xs sm:grid-cols-2 text-slate-600 dark:text-slate-400">
                   <div>
                     <p>Size: {formattedSize(selectedDocument.size)}</p>
                     <p>Uploaded: {formatTimestamp(selectedDocument.created_at)}</p>
@@ -989,7 +950,7 @@ function DocumentsPageContent() {
                   <div>
                     <p>Updated: {formatTimestamp(selectedDocument.updated_at)}</p>
                     {selectedDocument.error_message ? (
-                      <p style={{color: "var(--error)"}}>Error: {selectedDocument.error_message}</p>
+                      <p className="text-rose-600 dark:text-rose-400">Error: {selectedDocument.error_message}</p>
                     ) : null}
                   </div>
                 </div>
@@ -998,8 +959,7 @@ function DocumentsPageContent() {
           </section>
 
           <section
-            className="rounded-2xl border p-5"
-            style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)", color: "var(--foreground)"}}
+            className="rounded-2xl border p-5 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
           >
             <form
               onSubmit={(event) => {
@@ -1009,24 +969,17 @@ function DocumentsPageContent() {
               className="space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <label className="flex-1 text-sm" style={{color: "var(--foreground)"}}>
+                <label className="flex-1 text-sm text-slate-900 dark:text-slate-50">
                   Ask a question
                   <input
                     value={queryValue}
                     onChange={(event) => setQueryValue(event.target.value)}
                     placeholder="질문 예: 이 문서의 핵심 요약은?"
-                    className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition"
-                    style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--primary)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }}
+                    className="mt-2 w-full rounded-2xl border px-4 py-3 text-base outline-none transition border-slate-200 bg-slate-50 text-slate-900 focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                     disabled={!selectedDocument || selectedDocument.status !== "done"}
                   />
                 </label>
-                <div className="flex flex-col gap-2 text-xs" style={{color: "var(--muted-foreground)"}}>
+                <div className="flex flex-col gap-2 text-xs text-slate-600 dark:text-slate-400">
                   <span>Top K chunks</span>
                   <input
                     type="number"
@@ -1034,22 +987,14 @@ function DocumentsPageContent() {
                     max={10}
                     value={topK}
                     onChange={(event) => setTopK(Number(event.target.value))}
-                    className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition"
-                    style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = "var(--primary)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }}
+                    className="w-20 rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-200 bg-slate-50 text-slate-900 focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition disabled:opacity-50"
-                  style={{backgroundColor: "var(--primary)"}}
+                  className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-50 bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
                   disabled={!selectedDocument || selectedDocument.status !== "done" || streamStatus === "streaming"}
                 >
                   {streamStatus === "streaming" ? (
@@ -1060,30 +1005,29 @@ function DocumentsPageContent() {
                   ) : "메시지 전송"}
                 </button>
                 <span
-                  className="text-xs uppercase tracking-[0.3em]"
+                  className="text-xs uppercase tracking-wider"
                   style={{color: streamStatus === "error" ? "var(--error)" : "var(--muted-foreground)"}}
                 >
                   {streamStatus === "streaming" ? "SSE live" : streamStatus === "idle" ? "Ready" : "Error"}
                 </span>
               </div>
-              {streamError ? <p className="text-xs" style={{color: "var(--error)"}}>{streamError}</p> : null}
+              {streamError ? <p className="text-xs text-rose-600 dark:text-rose-400">{streamError}</p> : null}
             </form>
             <div className="mt-4 space-y-3">
               {streamChunks.length === 0 ? (
-                <p className="text-sm" style={{color: "var(--muted-foreground)"}}>Streaming answers will appear here.</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Streaming answers will appear here.</p>
               ) : null}
               {streamChunks.map((chunk, idx) => (
                 <div
                   key={`${chunk.type}-${idx}`}
-                  className="space-y-2 rounded-2xl border p-4 text-sm"
-                  style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)"}}
+                  className="space-y-2 rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 dark:bg-slate-950 dark:border-slate-800"
                 >
-                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs" style={{color: "var(--foreground)", borderColor: "var(--border)"}}>
+                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs border-slate-200 text-slate-900 dark:border-slate-800 dark:text-slate-50">
                     {chunkTypeLabel[chunk.type] ?? chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed" style={{color: "var(--foreground)"}}>{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-50">{chunk.text}</p>
                   {chunk.meta ? (
-                    <div className="text-xs" style={{color: "var(--muted-foreground)"}}>
+                    <div className="text-xs text-slate-600 dark:text-slate-400">
                       <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
                       <p>
                         {chunk.meta.chunks
@@ -1096,10 +1040,9 @@ function DocumentsPageContent() {
               ))}
               {references.length > 0 && (
                 <section
-                  className="rounded-2xl border p-4 text-sm"
-                  style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+                  className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
                 >
-                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+                  <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     <span>근거 문서 ({references.length}건)</span>
                   </div>
                   <div className="space-y-3">
@@ -1108,13 +1051,13 @@ function DocumentsPageContent() {
                       const viewerHref = buildReferenceViewerHref(reference);
                       const content = (
                         <>
-                          <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
-                            <span style={{color: "var(--foreground)"}}>{reference.document_title}</span>
+                          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                            <span className="text-slate-900 dark:text-slate-50">{reference.document_title}</span>
                             <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                           </div>
-                          <p className="mt-2 text-xs line-clamp-3" style={{color: "var(--foreground)"}}>{reference.snippet}</p>
+                          <p className="mt-2 text-xs line-clamp-3 text-slate-900 dark:text-slate-50">{reference.snippet}</p>
                           {reference.score != null ? (
-                            <p className="mt-2 text-[10px]" style={{color: "var(--muted-foreground)"}}>유사도 {(reference.score * 100).toFixed(1)}%</p>
+                            <p className="mt-2 text-[10px] text-slate-600 dark:text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
                           ) : null}
                         </>
                       );
@@ -1145,22 +1088,14 @@ function DocumentsPageContent() {
                               console.error('Failed to open document:', error);
                             }
                           }}
-                          className="block rounded-2xl border px-4 py-3 transition cursor-pointer"
-                          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "var(--primary)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.borderColor = "var(--border)";
-                          }}
+                          className="block rounded-2xl border px-4 py-3 transition cursor-pointer border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                         >
                           {content}
                         </button>
                       ) : (
                         <div
                           key={`${reference.document_id}-${reference.chunk_id}`}
-                          className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed"
-                          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
+                          className="rounded-2xl border px-4 py-3 opacity-60 cursor-not-allowed border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                           title="문서 정보가 부족하여 원문을 열 수 없습니다"
                         >
                           {content}
@@ -1171,22 +1106,21 @@ function DocumentsPageContent() {
                 </section>
               )}
               <section
-                className="rounded-2xl border p-4 text-sm"
-                style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+                className="rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Document history</p>
-                    <p className="text-[11px]" style={{color: "var(--muted-foreground)"}}>Select a prior question to review its answer.</p>
+                    <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Document history</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">Select a prior question to review its answer.</p>
                   </div>
-                  {docHistoryLoading ? <span className="text-xs" style={{color: "var(--muted-foreground)"}}>Loading…</span> : null}
+                  {docHistoryLoading ? <span className="text-xs text-slate-600 dark:text-slate-400">Loading…</span> : null}
                 </div>
                 {docHistoryError ? (
-                  <p className="mt-2 text-[11px]" style={{color: "var(--error)"}}>{docHistoryError}</p>
+                  <p className="mt-2 text-xs text-rose-600 dark:text-rose-400">{docHistoryError}</p>
                 ) : null}
                 <div className="mt-4 space-y-2">
                   {documentHistoryEntries.length === 0 ? (
-                    <p className="text-sm" style={{color: "var(--muted-foreground)"}}>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       {selectedDocument ? "No documented questions yet." : "Select a document to view history."}
                     </p>
                   ) : (
@@ -1195,20 +1129,18 @@ function DocumentsPageContent() {
                       return (
                         <div
                           key={entry.id}
-                          className="group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer"
-                          style={{borderColor: isSelected ? "var(--primary)" : "var(--border)", backgroundColor: isSelected ? "rgba(var(--primary-rgb), 0.1)" : "var(--surface-base)", color: "var(--foreground)"}}
-                          onMouseEnter={(e) => {
-                            if (!isSelected) e.currentTarget.style.borderColor = "var(--primary)";
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) e.currentTarget.style.borderColor = "var(--border)";
-                          }}
+                          className={cn(
+                            "group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition cursor-pointer text-slate-900 dark:text-slate-50",
+                            isSelected
+                              ? "border-sky-500 bg-sky-500/10"
+                              : "border-slate-200 bg-slate-50 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:hover:border-sky-500"
+                          )}
                         >
                           <div
                             onClick={() => setSelectedDocHistoryId(entry.id)}
                             className="text-left"
                           >
-                            <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+                            <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
                               <span>{entry.status === "error" ? "Error" : "OK"}</span>
                               <div className="flex items-center gap-2">
                                 <span>{formatTimestamp(entry.createdAt)}</span>
@@ -1219,22 +1151,15 @@ function DocumentsPageContent() {
                                     event.stopPropagation();
                                     handleRemoveDocHistory(entry.id);
                                   }}
-                                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
-                                  style={{borderColor: "var(--error)", backgroundColor: "var(--surface-elevated)", color: "var(--error)"}}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-                                  }}
+                                  className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                                   title="Delete history"
                                 >
                                   ✕
                                 </button>
                               </div>
                             </div>
-                            <p className="mt-2 text-sm font-semibold" style={{color: "var(--foreground)"}}>{entry.question}</p>
-                            <p className="text-[12px]" style={{color: "var(--muted-foreground)"}}>{entry.summary}</p>
+                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">{entry.question}</p>
+                            <p className="text-[12px] text-slate-600 dark:text-slate-400">{entry.summary}</p>
                           </div>
                         </div>
                       );
@@ -1243,37 +1168,29 @@ function DocumentsPageContent() {
                 </div>
                 {selectedDocHistoryEntry ? (
                   <div
-                    className="group relative mt-4 rounded-2xl border p-4 text-sm"
-                    style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+                    className="group relative mt-4 rounded-2xl border p-4 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-xs uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Answer</p>
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">Answer</p>
                       <div className="flex items-center gap-3">
-                        <span className="text-[11px]" style={{color: "var(--muted-foreground)"}}>{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
+                        <span className="text-xs text-slate-600 dark:text-slate-400">{formatTimestamp(selectedDocHistoryEntry.createdAt)}</span>
                         <button
                           type="button"
                           aria-label={`Delete history entry ${selectedDocHistoryEntry.question}`}
                           onClick={() => handleRemoveDocHistory(selectedDocHistoryEntry.id)}
-                          className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex"
-                          style={{borderColor: "var(--error)", backgroundColor: "var(--surface-elevated)", color: "var(--error)"}}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "rgba(var(--error-rgb), 0.1)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-                          }}
+                          className="hidden h-5 w-5 items-center justify-center rounded-full border text-[10px] transition group-hover:flex border-rose-600 bg-slate-100 text-rose-600 hover:bg-rose-500/10 dark:border-rose-500 dark:bg-slate-950 dark:text-rose-400 dark:hover:bg-rose-500/10"
                           title="Delete history"
                         >
                           ✕
                         </button>
                       </div>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm" style={{color: "var(--foreground)"}}>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
                       {selectedDocHistoryEntry.answer || "No answer recorded."}
                     </p>
                     {selectedDocHistoryEntry.references.length > 0 ? (
-                      <div className="mt-3 text-xs" style={{color: "var(--muted-foreground)"}}>
-                        <p className="text-[10px] uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>References</p>
+                      <div className="mt-3 text-xs text-slate-600 dark:text-slate-400">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">References</p>
                         <div className="mt-2 space-y-2">
                           {selectedDocHistoryEntry.references.map((reference) => {
                             const viewerHref = buildReferenceViewerHref(reference);
@@ -1281,10 +1198,10 @@ function DocumentsPageContent() {
 
                             const content = (
                               <>
-                                <p style={{color: "var(--foreground)"}}>{reference.document_title}</p>
-                                <p style={{color: "var(--muted-foreground)"}}>{reference.snippet}</p>
+                                <p className="text-slate-900 dark:text-slate-50">{reference.document_title}</p>
+                                <p className="text-slate-600 dark:text-slate-400">{reference.snippet}</p>
                                 {reference.page != null ? (
-                                  <p className="mt-1 text-[10px]" style={{color: "var(--primary)"}}>
+                                  <p className="mt-1 text-[10px] text-sky-600 dark:text-sky-400">
                                     페이지 {reference.page}
                                   </p>
                                 ) : null}
@@ -1311,22 +1228,14 @@ function DocumentsPageContent() {
                                     console.error('Failed to open document:', error);
                                   }
                                 }}
-                                className="block rounded-xl border px-3 py-2 text-[11px] transition cursor-pointer w-full text-left"
-                                style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.borderColor = "var(--primary)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.borderColor = "var(--border)";
-                                }}
+                                className="block rounded-xl border px-3 py-2 text-xs transition cursor-pointer w-full text-left border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                               >
                                 {content}
                               </button>
                             ) : (
                               <div
                                 key={`${reference.document_id}-${reference.chunk_id}`}
-                                className="rounded-xl border px-3 py-2 text-[11px] opacity-60"
-                                style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
+                                className="rounded-xl border px-3 py-2 text-xs opacity-60 border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                               >
                                 {content}
                               </div>
@@ -1365,7 +1274,7 @@ function DocumentsPageContent() {
 // Wrapper component with Suspense boundary for useSearchParams
 export default function DocumentsPage() {
   return (
-    <Suspense fallback={<div className="p-4" style={{color: "var(--muted-foreground)"}}>Loading documents...</div>}>
+    <Suspense fallback={<div className="p-4 text-slate-600 dark:text-slate-400">Loading documents...</div>}>
       <DocumentsPageContent />
     </Suspense>
   );

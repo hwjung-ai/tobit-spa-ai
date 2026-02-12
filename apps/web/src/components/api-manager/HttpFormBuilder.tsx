@@ -214,7 +214,7 @@ export default function HttpFormBuilder({
                   {!isReadOnly && (
                     <button
                       onClick={() => removeHeader(idx)}
-                      className="px-2 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition text-xs font-medium"
+                      className="px-2 py-2 rounded-lg text-rose-400 hover:bg-rose-500/10 transition text-xs font-medium"
                     >
                       Remove
                     </button>
@@ -259,7 +259,7 @@ export default function HttpFormBuilder({
                   {!isReadOnly && (
                     <button
                       onClick={() => removeParam(idx)}
-                      className="px-2 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition text-xs font-medium"
+                      className="px-2 py-2 rounded-lg text-rose-400 hover:bg-rose-500/10 transition text-xs font-medium"
                     >
                       Remove
                     </button>

@@ -1377,31 +1377,20 @@ export default function ApiManagerPage() {
   const testResultsArea = (
     <div className="space-y-4">
       <p
-        className="text-sm font-semibold uppercase tracking-normal "
-        style={{ color: "var(--muted-foreground)" }}
+        className="text-sm font-semibold uppercase tracking-normal text-slate-600 dark:text-slate-400"
       >
         Execution result
       </p>
       {selectedApi?.logic_type === "workflow" ? (
         workflowResult ? (
           <div
-            className="space-y-3 rounded-2xl border p-4 text-sm "
-            style={{
-              borderColor: "var(--border)",
-              color: "var(--foreground-secondary)",
-              backgroundColor: "var(--surface-overlay)",
-            }}
+            className="space-y-3 rounded-2xl border p-4 text-sm border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
           >
             <div className="space-y-2">
               {workflowSteps.map((step) => (
                 <div
                   key={step.node_id}
-                  className="rounded-2xl border p-3 text-xs "
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--foreground)",
-                    backgroundColor: "var(--surface-base)",
-                  }}
+                  className="rounded-2xl border p-3 text-xs border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">
@@ -1428,38 +1417,30 @@ export default function ApiManagerPage() {
             </div>
             <div>
               <p
-                className="text-xs uppercase tracking-normal "
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
               >
                 Final output
               </p>
               <pre
-                className="mt-2 max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar"
-                style={{ color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
+                className="mt-2 max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50"
               >
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
               <p
-                className="mt-2 text-xs uppercase tracking-normal "
-                style={{ color: "var(--muted-foreground)" }}
+                className="mt-2 text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
               >
                 References: {workflowReferences.length}
               </p>
             </div>
           </div>
         ) : (
-          <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Execute the workflow to see results here.
           </p>
         )
       ) : executionResult ? (
         <div
-          className="space-y-3 rounded-2xl border p-4 text-sm "
-          style={{
-            borderColor: "var(--border)",
-            color: "var(--foreground-secondary)",
-            backgroundColor: "var(--surface-overlay)",
-          }}
+          className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-400"
         >
           <div className="flex items-center justify-between">
             <div>
@@ -1468,36 +1449,32 @@ export default function ApiManagerPage() {
             </div>
             <button
               onClick={() => setShowJsonResult((prev) => !prev)}
-              className="text-xs uppercase tracking-normal underline"
-              style={{ color: "var(--muted-foreground)" }}
+              className="text-xs uppercase tracking-normal underline text-slate-600 dark:text-slate-400"
             >
               {showJsonResult ? "Hide JSON" : "Show JSON"}
             </button>
           </div>
           {showJsonResult ? (
             <pre
-              className="max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar"
-              style={{ color: "var(--foreground)", backgroundColor: "var(--surface-base)" }}
+              className="max-h-60 overflow-auto rounded-xl p-3 text-xs custom-scrollbar bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50"
             >
               {JSON.stringify(executionResult, null, 2)}
             </pre>
           ) : executionColumns.length === 0 ? (
-            <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               No columns returned.
             </p>
           ) : (
             <div className="overflow-auto custom-scrollbar">
               <table
-                className="min-w-full text-left text-xs "
-                style={{ color: "var(--foreground-secondary)" }}
+                className="min-w-full text-left text-xs text-slate-700 dark:text-slate-300"
               >
                 <thead>
                   <tr>
                     {executionColumns.map((column) => (
                       <th
                         key={column}
-                        className="border-b px-2 py-1 uppercase tracking-normal "
-                        style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                        className="border-b px-2 py-1 uppercase tracking-normal border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
                       >
                         {column}
                       </th>
@@ -1508,15 +1485,11 @@ export default function ApiManagerPage() {
                   {executionRows.map((row, rowIndex) => (
                     <tr
                       key={`row-${rowIndex}`}
-                      className={
-                        rowIndex % 2 === 0
-                          ? "bg-[var(--surface-overlay)]"
-                          : "bg-[var(--surface-overlay)]"
-                      }
+                      className="bg-slate-100 dark:bg-slate-900"
                     >
                       {executionColumns.map((column) => (
                         <td key={`${rowIndex}-${column}`} className="px-2 py-1 align-top">
-                          <pre className="m-0 text-sm " style={{ color: "var(--foreground)" }}>
+                          <pre className="m-0 text-sm text-slate-900 dark:text-slate-50">
                             {String(row[column] ?? "")}
                           </pre>
                         </td>
@@ -1534,29 +1507,26 @@ export default function ApiManagerPage() {
         </p>
       )}
       <div
-        className="space-y-3 rounded-2xl border p-4"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+        className="space-y-3 rounded-2xl border p-4 border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900/90"
       >
         <div className="flex items-center justify-between">
           <p
-            className="text-xs uppercase tracking-normal "
-            style={{ color: "var(--muted-foreground)" }}
+            className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
           >
             Execution logs
           </p>
           <span
-            className="text-xs uppercase tracking-normal "
-            style={{ color: "var(--muted-foreground)" }}
+            className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
           >
             {execLogs.length} entries
           </span>
         </div>
         {logsLoading ? (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             Loading logs…
           </p>
         ) : execLogs.length === 0 ? (
-          <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             No executions yet.
           </p>
         ) : (
@@ -1565,16 +1535,10 @@ export default function ApiManagerPage() {
               <button
                 key={log.exec_id}
                 onClick={() => applyLogParams(log)}
-                className="w-full rounded-2xl border p-3 text-left text-xs transition "
-                style={{
-                  borderColor: "var(--border)",
-                  color: "var(--foreground-secondary)",
-                  backgroundColor: "var(--surface-base)",
-                }}
+                className="w-full rounded-2xl border p-3 text-left text-xs transition border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
               >
                 <div
-                  className="flex items-center justify-between text-sm "
-                  style={{ color: "var(--muted-foreground)" }}
+                  className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400"
                 >
                   <span>
                     {log.status.toUpperCase()} ·{" "}
@@ -1584,13 +1548,12 @@ export default function ApiManagerPage() {
                     {log.row_count} rows · {log.duration_ms} ms
                   </span>
                 </div>
-                <p className="mt-1 text-sm " style={{ color: "var(--foreground-secondary)" }}>
+                <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                   by {log.executed_by ?? "ops-builder"}
                 </p>
                 {log.request_params ? (
                   <pre
-                    className="mt-2 max-h-20 overflow-auto text-xs custom-scrollbar"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="mt-2 max-h-20 overflow-auto text-xs custom-scrollbar text-slate-600 dark:text-slate-400"
                   >
                     {JSON.stringify(log.request_params, null, 2)}
                   </pre>
@@ -1629,12 +1592,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{
-                  backgroundColor: "var(--surface-overlay)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
+                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 disabled={isSystemScope}
                 placeholder="e.g., User Management API"
               />
@@ -1655,12 +1613,7 @@ export default function ApiManagerPage() {
                     method: event.target.value as ApiDraft["method"],
                   }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{
-                  backgroundColor: "var(--surface-overlay)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
+                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 disabled={isSystemScope}
               >
                 <option value="GET">GET</option>
@@ -1675,12 +1628,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
                 }
-                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{
-                  backgroundColor: "var(--surface-overlay)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
+                className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 disabled={isSystemScope}
                 placeholder="/api/endpoint"
               />
@@ -1698,16 +1646,12 @@ export default function ApiManagerPage() {
                   setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
                 }
                 className="h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
+                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
+                  e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
                 }}
                 disabled={isSystemScope}
                 placeholder="Describe your API..."
@@ -1717,11 +1661,7 @@ export default function ApiManagerPage() {
           {selectedDiscovered ? (
             <div
               className="space-y-2 rounded-2xl border p-3 text-sm"
-              style={{
-                borderColor: "var(--border)",
-                backgroundColor: "var(--surface-elevated)",
-                color: "var(--foreground)",
-              }}
+              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" }}
             >
               <p
                 className="text-xs uppercase tracking-normal"
@@ -1742,16 +1682,12 @@ export default function ApiManagerPage() {
               <button
                 onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
                 className="w-full rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-normal transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
+                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
+                  e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
                 }}
               >
                 Import to Custom
@@ -1770,11 +1706,7 @@ export default function ApiManagerPage() {
                   setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))
                 }
                 className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{
-                  backgroundColor: "var(--surface-overlay)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
+                style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }}
                 disabled={isSystemScope}
                 placeholder="user, analytics, reporting"
               />
@@ -1794,16 +1726,12 @@ export default function ApiManagerPage() {
                 value={paramSchemaText}
                 onChange={(event) => setParamSchemaText(event.target.value)}
                 className="h-40 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
+                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
                 onFocus={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
+                  e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
                 }}
                 onBlur={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
                 }}
                 disabled={isSystemScope && systemView !== "registered"}
                 placeholder='{"type": "object", "properties": {...}}'
@@ -1815,16 +1743,12 @@ export default function ApiManagerPage() {
                   value={runtimePolicyText}
                   onChange={(event) => setRuntimePolicyText(event.target.value)}
                   className="h-40 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition custom-scrollbar"
-                  style={{
-                    borderColor: "var(--border)",
-                    backgroundColor: "var(--surface-base)",
-                    color: "var(--foreground)",
-                  }}
+                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
                   onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "var(--primary)";
+                    e.currentTarget.style.borderColor = "rgb(14, 165, 233)";
                   }}
                   onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.borderColor = "rgb(203, 213, 225)";
                   }}
                   disabled={isSystemScope && systemView !== "registered"}
                   placeholder='{"timeout": 30000}'
@@ -1832,11 +1756,7 @@ export default function ApiManagerPage() {
               ) : (
                 <div
                   className="flex h-40 flex-col justify-center rounded-2xl border p-3 text-sm"
-                  style={{
-                    borderColor: "var(--border)",
-                    backgroundColor: "var(--surface-elevated)",
-                    color: "var(--muted-foreground)",
-                  }}
+                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)" }}
                 >
                   Runtime Policy editing is available only for System {">"} Registered or Custom
                   APIs.
@@ -1858,7 +1778,7 @@ export default function ApiManagerPage() {
                   style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
                   disabled={isSystemScope}
                 />
-                <span className="text-sm " style={{ color: "var(--foreground-secondary)" }}>
+                <span className="text-sm " style={{ color: "rgb(71, 85, 105)" }}>
                   Enable this API
                 </span>
               </label>
@@ -1873,11 +1793,7 @@ export default function ApiManagerPage() {
                   setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
                 }
                 className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{
-                  backgroundColor: "var(--surface-overlay)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
+                style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }}
                 placeholder="ops-builder"
                 disabled={isSystemScope}
               />
@@ -1905,23 +1821,23 @@ export default function ApiManagerPage() {
                     style={
                       logicType === type
                         ? {
-                            borderColor: "var(--primary)",
-                            backgroundColor: "var(--primary)",
-                            color: "white",
+                            borderColor: "rgb(14, 165, 233)",
+                            backgroundColor: "rgb(14, 165, 233)",
+                            color: "#ffffff",
                           }
                         : {
                             borderColor: "var(--border)",
                             backgroundColor: "var(--surface-base)",
-                            color: "var(--foreground-secondary)",
+                            color: "rgb(71, 85, 105)",
                           }
                     }
                     onMouseEnter={(e) => {
                       if (logicType !== type)
-                        e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
+                        e.currentTarget.style.backgroundColor = "rgb(241, 245, 249)";
                     }}
                     onMouseLeave={(e) => {
                       if (logicType !== type)
-                        e.currentTarget.style.backgroundColor = "var(--surface-base)";
+                        e.currentTarget.style.backgroundColor = "rgb(248, 250, 252)";
                     }}
                   >
                     {logicTypeLabels[type]}
@@ -1931,18 +1847,7 @@ export default function ApiManagerPage() {
                   type="button"
                   onClick={handleLogicUndo}
                   disabled={logicHistoryIndex <= 0}
-                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition"
-                  style={
-                    logicHistoryIndex <= 0
-                      ? {opacity: "0.4", cursor: "not-allowed"}
-                      : {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground-secondary)"}
-                  }
-                  onMouseEnter={(e) => {
-                    if (logicHistoryIndex > 0) e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (logicHistoryIndex > 0) e.currentTarget.style.backgroundColor = "var(--surface-base)";
-                  }}
+                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Undo
                 </button>
@@ -1950,22 +1855,10 @@ export default function ApiManagerPage() {
                   type="button"
                   onClick={handleLogicRedo}
                   disabled={logicHistoryIndex >= logicHistory.length - 1}
-                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition"
-                  style={
-                    logicHistoryIndex >= logicHistory.length - 1
-                      ? {opacity: "0.4", cursor: "not-allowed"}
-                      : {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground-secondary)"}
-                  }
-                  onMouseEnter={(e) => {
-                    if (logicHistoryIndex < logicHistory.length - 1) e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (logicHistoryIndex < logicHistory.length - 1) e.currentTarget.style.backgroundColor = "var(--surface-base)";
-                  }}
+                  className="rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Redo
                 </button>
-  ++++++++ REPLACE
               </div>
             ) : null}
           </div>
@@ -1981,11 +1874,7 @@ export default function ApiManagerPage() {
                   setScriptLanguage(event.target.value as "python" | "javascript")
                 }
                 className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                style={{
-                  backgroundColor: "var(--surface-overlay)",
-                  color: "var(--foreground)",
-                  borderColor: "var(--border)",
-                }}
+                style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground)", borderColor: "var(--border)" }}
               >
                 <option value="python">Python</option>
                 <option value="javascript">JavaScript</option>
@@ -1996,7 +1885,7 @@ export default function ApiManagerPage() {
             className={`builder-json-shell rounded-2xl border transition-all ${
               logicType === "http" ? "h-auto max-h-[600px] overflow-y-auto" : "h-64 overflow-hidden"
             }`}
-            style={{ backgroundColor: "var(--background)", borderColor: "var(--border)" }}
+            style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}
           >
             {logicType === "http" ? (
               <div className="p-4">
@@ -2049,13 +1938,13 @@ export default function ApiManagerPage() {
           {(bindingValidation.bindings.length > 0 || bindingValidation.errors.length > 0) && (
             <div
               className="rounded-2xl border px-3 py-2 text-sm"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
             >
               <p className="" style={{ color: "var(--muted-foreground)" }}>
                 Binding scan
               </p>
               {bindingValidation.bindings.length > 0 && (
-                <p className="mt-1 " style={{ color: "var(--foreground-secondary)" }}>
+                <p className="mt-1 " style={{ color: "rgb(71, 85, 105)" }}>
                   Detected:{" "}
                   {bindingValidation.bindings.map((binding) => `{{${binding}}}`).join(", ")}
                 </p>
@@ -2076,7 +1965,7 @@ export default function ApiManagerPage() {
         style={{ borderColor: "var(--border)" }}
       >
         <span
-          className={`text-sm uppercase tracking-[0.1em] px-3 py-1 rounded-full border ${
+          className={`text-sm uppercase tracking-wider px-3 py-1 rounded-full border ${
             statusMessage?.toLowerCase().includes("failed") ||
             statusMessage?.toLowerCase().includes("error")
               ? "text-rose-400 border-rose-500/30 bg-rose-500/5 font-semibold"
@@ -2102,14 +1991,14 @@ export default function ApiManagerPage() {
                 }`}
                 style={
                   isExecuting
-                    ? {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}
-                    : {borderColor: "var(--primary)", backgroundColor: "var(--primary)", color: "white"}
+                    ? { borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)" }
+                    : { borderColor: "rgb(14, 165, 233)", backgroundColor: "rgb(14, 165, 233)", color: "#fff" }
                 }
                 onMouseEnter={(e) => {
-                  if (!isExecuting) e.currentTarget.style.backgroundColor = "var(--primary-hover)";
+                  if (!isExecuting) e.currentTarget.style.backgroundColor = "rgb(14, 101, 192)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!isExecuting) e.currentTarget.style.backgroundColor = "var(--primary)";
+                  if (!isExecuting) e.currentTarget.style.backgroundColor = "rgb(14, 165, 233)";
                 }}
               >
                 {isExecuting ? "Running…" : `Test ${logicTypeLabels[logicType]} (Dry-run)`}
@@ -2121,20 +2010,19 @@ export default function ApiManagerPage() {
             className="rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition"
             style={
               isSaving || isSystemScope
-                ? {borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)"}
-                : {borderColor: "var(--success)", backgroundColor: "var(--success)", color: "white"}
+                ? { borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)" }
+                : { borderColor: "rgb(16, 185, 129)", backgroundColor: "rgb(16, 185, 129)", color: "#fff" }
             }
             onMouseEnter={(e) => {
-              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "var(--success-hover)";
+              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "rgb(5, 150, 105)";
             }}
             onMouseLeave={(e) => {
-              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "var(--success)";
+              if (!isSaving && !isSystemScope) e.currentTarget.style.backgroundColor = "rgb(16, 185, 129)";
             }}
           >
             {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
           </button>
         </div>
-  ++++++++ REPLACE
       </div>
       {showLogicResult && activeTab === "logic" && (
         <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
@@ -2148,7 +2036,7 @@ export default function ApiManagerPage() {
             <button
               onClick={() => setShowLogicResult(false)}
               className="text-xs "
-              style={{ color: "var(--foreground-secondary)" }}
+              style={{ color: "rgb(71, 85, 105)" }}
             >
               Close
             </button>
@@ -2158,8 +2046,8 @@ export default function ApiManagerPage() {
               className="space-y-3 rounded-2xl border p-4 text-sm "
               style={{
                 borderColor: "var(--border)",
-                color: "var(--foreground-secondary)",
-                backgroundColor: "var(--surface-overlay)",
+                color: "rgb(71, 85, 105)",
+                backgroundColor: "var(--surface-base)",
               }}
             >
               <div className="flex items-center justify-between">
@@ -2190,7 +2078,7 @@ export default function ApiManagerPage() {
                 <div className="overflow-auto custom-scrollbar">
                   <table
                     className="min-w-full text-left text-xs "
-                    style={{ color: "var(--foreground-secondary)" }}
+                    style={{ color: "rgb(71, 85, 105)" }}
                   >
                     <thead>
                       <tr>
@@ -2214,8 +2102,8 @@ export default function ApiManagerPage() {
                           key={`row-${rowIndex}`}
                           className={
                             rowIndex % 2 === 0
-                              ? "bg-[var(--surface-overlay)]"
-                              : "bg-[var(--surface-overlay)]"
+                              ? "bg-white dark:bg-slate-950"
+                              : "bg-white dark:bg-slate-950"
                           }
                         >
                           {executionColumns.map((column) => (
@@ -2249,51 +2137,38 @@ export default function ApiManagerPage() {
   const testTabContent = (
     <div className="space-y-3">
       {selectedApi ? (
-        <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           Runtime URL:{" "}
-          <span className="font-mono text-xs " style={{ color: "var(--foreground-secondary)" }}>
+          <span className="font-mono text-xs text-slate-700 dark:text-slate-300">
             {`${apiBaseUrl}${selectedApi.endpoint}`}
           </span>
         </p>
       ) : null}
       <label
-        className="text-xs uppercase tracking-normal "
-        style={{ color: "var(--muted-foreground)" }}
+        className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
       >
         Params JSON
         <textarea
           value={testParams}
           onChange={(event) => setTestParams(event.target.value)}
-          className="mt-2 h-32 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500 custom-scrollbar"
-          style={{
-            backgroundColor: "var(--surface-overlay)",
-            color: "var(--foreground)",
-            borderColor: "var(--border)",
-          }}
+          className="mt-2 h-32 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 custom-scrollbar"
         />
       </label>
       {isWorkflowApi ? (
         <label
-          className="text-xs uppercase tracking-normal "
-          style={{ color: "var(--muted-foreground)" }}
+          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
         >
           Input JSON (optional)
           <textarea
             value={testInput}
             onChange={(event) => setTestInput(event.target.value)}
-            className="mt-2 h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500 custom-scrollbar"
-            style={{
-              backgroundColor: "var(--surface-overlay)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-            }}
+            className="mt-2 h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 custom-scrollbar"
           />
         </label>
       ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
         <label
-          className="text-xs uppercase tracking-normal "
-          style={{ color: "var(--muted-foreground)" }}
+          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
         >
           Limit
           <input
@@ -2302,40 +2177,24 @@ export default function ApiManagerPage() {
             max={1000}
             value={testLimit}
             onChange={(event) => setTestLimit(event.target.value)}
-            className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-            style={{
-              backgroundColor: "var(--surface-overlay)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-            }}
+            className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
           />
         </label>
         <label
-          className="text-xs uppercase tracking-normal "
-          style={{ color: "var(--muted-foreground)" }}
+          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
         >
           Executed by
           <input
             value={executedBy}
             onChange={(event) => setExecutedBy(event.target.value)}
-            className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-            style={{
-              backgroundColor: "var(--surface-overlay)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-            }}
+            className="mt-2 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
             placeholder="ops-builder"
           />
         </label>
         <div className="flex items-end">
           <button
             onClick={handleExecute}
-            className="w-full rounded-2xl border bg-sky-500/90 px-3 py-2 text-sm font-semibold uppercase tracking-normal transition bg-sky-400 "
-            style={{
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-              backgroundColor: "var(--surface-elevated)",
-            }}
+            className="w-full rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-normal transition bg-slate-100 text-slate-900 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 dark:hover:bg-slate-800"
             disabled={!selectedId || isExecuting || (!isSqlApi && !isWorkflowApi && !isHttpApi)}
           >
             {isExecuting ? "Executing…" : isWorkflowApi ? "Execute Workflow" : "Execute API"}
@@ -2343,7 +2202,7 @@ export default function ApiManagerPage() {
         </div>
       </div>
       {selectedApi && selectedApi.logic_type === "script" ? (
-        <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           Script APIs are saved for future execution support in MVP-5.
         </p>
       ) : null}
@@ -2379,22 +2238,16 @@ export default function ApiManagerPage() {
       ) : (
         <>
           <p
-            className="text-xs uppercase tracking-normal "
-            style={{ color: "var(--muted-foreground)" }}
+            className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
           >
             Metadata (Current Editor)
           </p>
           <div
-            className="space-y-2 rounded-2xl border p-3 text-sm "
-            style={{
-              borderColor: "var(--border)",
-              color: "var(--foreground-secondary)",
-              backgroundColor: "var(--surface-overlay)",
-            }}
+            className="space-y-2 rounded-2xl border p-3 text-sm border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-300"
           >
             <p>
               Endpoint:{" "}
-              <span className="" style={{ color: "var(--foreground)" }}>
+              <span className="text-slate-900 dark:text-slate-50">
                 {definitionDraft.endpoint || "(new)"}
               </span>
             </p>
@@ -2404,8 +2257,7 @@ export default function ApiManagerPage() {
             </p>
             {selectedApi && (
               <p
-                className="border-t pt-2 text-xs "
-                style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                className="border-t pt-2 text-xs border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
               >
                 Editing: {selectedApi.api_name} ({selectedApi.api_id})
               </p>
@@ -2421,8 +2273,7 @@ export default function ApiManagerPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3
-          className="text-xs uppercase tracking-normal "
-          style={{ color: "var(--muted-foreground)" }}
+          className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
         >
           API 목록
         </h3>
@@ -2448,8 +2299,7 @@ export default function ApiManagerPage() {
         <>
           <div className="space-y-2">
             <div
-              className="flex items-center justify-between text-xs uppercase tracking-normal "
-              style={{ color: "var(--muted-foreground)" }}
+              className="flex items-center justify-between text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
             >
               <div className="flex items-center gap-2">
                 {(["discovered", "registered"] as SystemView[]).map((view) => (
@@ -2469,18 +2319,17 @@ export default function ApiManagerPage() {
             </div>
             {systemView === "discovered" ? (
               <>
-                <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Discovered endpoints are read-only.
                 </p>
-                <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Discovered from source (OpenAPI). These are not DB-registered APIs.
                 </p>
                 <div
-                  className="text-xs uppercase tracking-normal "
-                  style={{ color: "var(--muted-foreground)" }}
+                  className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
                 >
                   Last fetch:{" "}
-                  <span className=" " style={{ color: "var(--foreground-secondary)" }}>
+                  <span className="text-slate-700 dark:text-slate-300">
                     {discoveredFetchAt
                       ? new Date(discoveredFetchAt).toLocaleString("ko-KR", {
                           timeZone: "Asia/Seoul",
@@ -2492,7 +2341,7 @@ export default function ApiManagerPage() {
                     className={
                       discoveredFetchStatus === "error"
                         ? "text-rose-300"
-                        : "text-[var(--foreground)] text-[var(--foreground-secondary)]"
+                        : "text-slate-700 dark:text-slate-300"
                     }
                   >
                     {discoveredFetchStatus}
@@ -2504,7 +2353,7 @@ export default function ApiManagerPage() {
               </>
             ) : (
               <>
-                <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
                   Registered APIs are read-only.
                 </p>
                 {systemFetchStatus === "error" ? (
@@ -2513,11 +2362,10 @@ export default function ApiManagerPage() {
                   </div>
                 ) : null}
                 <div
-                  className="text-xs uppercase tracking-normal "
-                  style={{ color: "var(--muted-foreground)" }}
+                  className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400"
                 >
                   Last fetch:{" "}
-                  <span className=" " style={{ color: "var(--foreground-secondary)" }}>
+                  <span className="text-slate-700 dark:text-slate-300">
                     {systemFetchAt
                       ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                       : "-"}
@@ -2527,7 +2375,7 @@ export default function ApiManagerPage() {
                     className={
                       systemFetchStatus === "error"
                         ? "text-rose-300"
-                        : "text-[var(--foreground)] text-[var(--foreground-secondary)]"
+                        : "text-slate-700 dark:text-slate-300"
                     }
                   >
                     {systemFetchStatus}
@@ -2546,44 +2394,30 @@ export default function ApiManagerPage() {
                   value={discoveredSearchTerm}
                   onChange={(event) => setDiscoveredSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                  style={{
-                    backgroundColor: "var(--surface-overlay)",
-                    color: "var(--foreground)",
-                    borderColor: "var(--border)",
-                  }}
+                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
                 <button
                   onClick={loadDiscoveredEndpoints}
-                  className="ml-2 rounded-full border px-3 py-2 text-xs uppercase tracking-normal transition "
-                  style={{
-                    borderColor: "var(--border)",
-                    color: "var(--muted-foreground)",
-                    backgroundColor: "var(--surface-base)",
-                  }}
+                  className="ml-2 rounded-full border px-3 py-2 text-xs uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                 >
                   Refresh
                 </button>
               </div>
               {discoveredError ? <p className="text-xs text-rose-400">{discoveredError}</p> : null}
               <div
-                className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar"
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
               >
                 <table
-                  className="min-w-full table-auto text-left text-xs "
-                  style={{ color: "var(--foreground-secondary)" }}
+                  className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300"
                 >
                   <thead
-                    className="sticky top-0 "
-                    style={{ backgroundColor: "var(--surface-base)" }}
+                    className="sticky top-0 bg-slate-100 dark:bg-slate-900"
                   >
                     <tr>
                       {["method", "path", "summary", "tags", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b px-2 py-2 uppercase tracking-normal whitespace-nowrap"
-                          style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
+                          className="border-b px-2 py-2 uppercase tracking-normal whitespace-nowrap border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
                         >
                           {column}
                         </th>
@@ -2595,57 +2429,51 @@ export default function ApiManagerPage() {
                       <tr>
                         <td
                           colSpan={5}
-                          className="px-3 py-3 "
-                          style={{ color: "var(--muted-foreground)" }}
+                          className="px-3 py-3 text-slate-600 dark:text-slate-400"
                         >
                           No discovered endpoints found.
                         </td>
                       </tr>
                     ) : (
-                      filteredDiscoveredEndpoints.map((endpoint) => (
-                        <tr
-                          key={`${endpoint.method}-${endpoint.path}`}
-                          className={`cursor-pointer border-b transition ${
-                            selectedDiscovered?.path === endpoint.path &&
-                            selectedDiscovered?.method === endpoint.method
-                              ? "bg-sky-600/20 text-slate-900 dark:text-slate-50"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
-                          style={{
-                            borderColor: "var(--border)",
-                          }}
-                          onClick={() => {
-                            setSelectedDiscovered(endpoint);
-                            setSelectedId(null);
-                            const draft = buildDraftFromDiscovered(endpoint);
-                            applyFinalToForm(draft);
-                            setStatusMessage("Discovered endpoint loaded (read-only).");
-                            setFormBaselineSnapshot(JSON.stringify(draft));
-                            setAppliedDraftSnapshot(null);
-                            setDraftApi(null);
-                            setDraftStatus("idle");
-                            setDraftNotes(null);
-                          }}
-                        >
-                          <td className="px-2 py-2 whitespace-nowrap">{endpoint.method}</td>
-                          <td className="px-2 py-2 whitespace-nowrap">{endpoint.path}</td>
-                          <td className="px-2 py-2 whitespace-nowrap">{endpoint.summary ?? "-"}</td>
-                          <td className="px-2 py-2 whitespace-nowrap">
-                            {endpoint.tags?.join(", ") || "-"}
-                          </td>
-                          <td className="px-2 py-2 whitespace-nowrap">
-                            <span
-                              className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal "
-                              style={{
-                                borderColor: "var(--border)",
-                                color: "var(--muted-foreground)",
-                              }}
-                            >
-                              {endpoint.source}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      filteredDiscoveredEndpoints.map((endpoint) => {
+                        return (
+                          <tr
+                            key={`${endpoint.method}-${endpoint.path}`}
+                            className={
+                              selectedDiscovered?.path === endpoint.path &&
+                              selectedDiscovered?.method === endpoint.method
+                                ? "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900 bg-sky-600/20 text-slate-900 dark:text-slate-50"
+                                : "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900"
+                            }
+                            onClick={() => {
+                              setSelectedDiscovered(endpoint);
+                              setSelectedId(null);
+                              const draft = buildDraftFromDiscovered(endpoint);
+                              applyFinalToForm(draft);
+                              setStatusMessage("Discovered endpoint loaded (read-only).");
+                              setFormBaselineSnapshot(JSON.stringify(draft));
+                              setAppliedDraftSnapshot(null);
+                              setDraftApi(null);
+                              setDraftStatus("idle");
+                              setDraftNotes(null);
+                            }}
+                          >
+                            <td className="px-2 py-2 whitespace-nowrap">{endpoint.method}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">{endpoint.path}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">{endpoint.summary ?? "-"}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">
+                              {endpoint.tags?.join(", ") || "-"}
+                            </td>
+                            <td className="px-2 py-2 whitespace-nowrap">
+                              <span
+                                className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400"
+                              >
+                                {endpoint.source}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -2659,22 +2487,12 @@ export default function ApiManagerPage() {
                   value={systemSearchTerm}
                   onChange={(event) => setSystemSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-                  style={{
-                    backgroundColor: "var(--surface-overlay)",
-                    color: "var(--foreground)",
-                    borderColor: "var(--border)",
-                  }}
+                  className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
                 <div className="ml-2 flex items-center gap-2">
                   <button
                     onClick={() => loadApis(selectedId ?? undefined)}
-                    className="rounded-full border px-3 py-2 text-xs uppercase tracking-normal transition "
-                    style={{
-                      borderColor: "var(--border)",
-                      color: "var(--muted-foreground)",
-                      backgroundColor: "var(--surface-base)",
-                    }}
+                    className="rounded-full border px-3 py-2 text-xs uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     Refresh
                   </button>
@@ -2682,27 +2500,20 @@ export default function ApiManagerPage() {
               </div>
               {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
               <div
-                className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar"
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                className="max-h-[420px] overflow-auto rounded-2xl border custom-scrollbar border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
               >
                 <table
-                  className="min-w-full table-auto text-left text-xs "
-                  style={{ color: "var(--foreground-secondary)" }}
+                  className="min-w-full table-auto text-left text-xs text-slate-700 dark:text-slate-300"
                 >
                   <thead
-                    className="sticky top-0 "
-                    style={{ backgroundColor: "var(--surface-base)" }}
+                    className="sticky top-0 bg-slate-100 dark:bg-slate-900"
                   >
                     <tr>
                       {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map(
                         (column) => (
                           <th
                             key={column}
-                            className="border-b px-2 py-2 uppercase tracking-normal whitespace-nowrap"
-                            style={{
-                              borderColor: "var(--border)",
-                              color: "var(--muted-foreground)",
-                            }}
+                            className="border-b px-2 py-2 uppercase tracking-normal whitespace-nowrap border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
                           >
                             {column}
                           </th>
@@ -2715,55 +2526,49 @@ export default function ApiManagerPage() {
                       <tr>
                         <td
                           colSpan={6}
-                          className="px-3 py-3 "
-                          style={{ color: "var(--muted-foreground)" }}
+                          className="px-3 py-3 text-slate-600 dark:text-slate-400"
                         >
                           No registered APIs found.
                         </td>
                       </tr>
                     ) : (
-                      filteredSystemApis.map((api) => (
-                        <tr
-                          key={api.api_id}
-                          className={`cursor-pointer border-b transition ${
-                            selectedApi?.api_id === api.api_id
-                              ? "bg-sky-600/20 text-slate-900 dark:text-slate-50"
-                              : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                          }`}
-                          style={{
-                            borderColor: "var(--border)",
-                          }}
-                          onClick={() => {
-                            setSelectedId(api.api_id);
-                            setDraftApi(null);
-                            setDraftStatus("idle");
-                            setDraftNotes(null);
-                          }}
-                        >
-                          <td className="px-2 py-2 whitespace-nowrap">{api.method}</td>
-                          <td className="px-2 py-2 whitespace-nowrap">{api.endpoint}</td>
-                          <td className="px-2 py-2 whitespace-nowrap">{api.api_name}</td>
-                          <td className="px-2 py-2 whitespace-nowrap">
-                            {api.tags.join(", ") || "-"}
-                          </td>
-                          <td className="px-2 py-2 whitespace-nowrap">
-                            {new Date(api.updated_at).toLocaleString("ko-KR", {
-                              timeZone: "Asia/Seoul",
-                            })}
-                          </td>
-                          <td className="px-2 py-2 whitespace-nowrap">
-                            <span
-                              className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal "
-                              style={{
-                                borderColor: "var(--border)",
-                                color: "var(--muted-foreground)",
-                              }}
-                            >
-                              {api.source}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                      filteredSystemApis.map((api) => {
+                        return (
+                          <tr
+                            key={api.api_id}
+                            className={
+                              selectedApi?.api_id === api.api_id
+                                ? "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900 bg-sky-600/20 text-slate-900 dark:text-slate-50"
+                                : "cursor-pointer border-b transition border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-900"
+                            }
+                            onClick={() => {
+                              setSelectedId(api.api_id);
+                              setDraftApi(null);
+                              setDraftStatus("idle");
+                              setDraftNotes(null);
+                            }}
+                          >
+                            <td className="px-2 py-2 whitespace-nowrap">{api.method}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">{api.endpoint}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">{api.api_name}</td>
+                            <td className="px-2 py-2 whitespace-nowrap">
+                              {api.tags.join(", ") || "-"}
+                            </td>
+                            <td className="px-2 py-2 whitespace-nowrap">
+                              {new Date(api.updated_at).toLocaleString("ko-KR", {
+                                timeZone: "Asia/Seoul",
+                              })}
+                            </td>
+                            <td className="px-2 py-2 whitespace-nowrap">
+                              <span
+                                className="rounded-full border px-2 py-1 text-xs uppercase tracking-normal border-slate-300 text-slate-700 dark:border-slate-800 dark:text-slate-400"
+                              >
+                                {api.source}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -2799,16 +2604,11 @@ export default function ApiManagerPage() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="검색"
-            className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-sky-500"
-            style={{
-              backgroundColor: "var(--surface-overlay)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-            }}
+            className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition border-slate-300 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
           />
           <div className="space-y-2 max-h-[360px] overflow-auto custom-scrollbar">
             {filteredApis.length === 0 ? (
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 검색 결과 없음
               </p>
             ) : (
@@ -2825,8 +2625,7 @@ export default function ApiManagerPage() {
                   <div className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex items-center gap-2 overflow-hidden">
                       <span
-                        className="text-xs uppercase min-w-8"
-                        style={{ color: "var(--muted-foreground)" }}
+                        className="text-xs uppercase min-w-8 text-slate-600 dark:text-slate-400"
                       >
                         {api.method}
                       </span>
@@ -2838,7 +2637,7 @@ export default function ApiManagerPage() {
                         </span>
                       )}
                     </div>
-                    <span className="text-xs truncate" style={{ color: "var(--muted-foreground)" }}>
+                    <span className="text-xs truncate text-slate-600 dark:text-slate-400">
                       {api.endpoint}
                     </span>
                   </div>
@@ -2850,14 +2649,9 @@ export default function ApiManagerPage() {
       )}
       <button
         onClick={handleNew}
-        className={`w-full rounded-2xl border px-3 py-2 text-xs uppercase tracking-normal transition ${
-          scope === "system" ? " cursor-not-allowed" : " "
+        className={`w-full rounded-2xl border px-3 py-2 text-xs uppercase tracking-normal transition border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 ${
+          scope === "system" ? " cursor-not-allowed" : ""
         }`}
-        style={{
-          backgroundColor: "var(--surface-base)",
-          color: "var(--muted-foreground)",
-          borderColor: "var(--border)",
-        }}
         disabled={scope === "system"}
       >
         New API
@@ -2996,10 +2790,10 @@ export default function ApiManagerPage() {
 
   return (
     <div className="api-manager-theme py-6">
-      <h1 style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
         API Manager
       </h1>
-      <p className="mb-6 text-sm" style={{ color: "var(--muted-foreground)" }}>
+      <p className="mb-6 text-sm text-slate-600 dark:text-slate-400">
         Builder shell for defining executable APIs that power OPS and orchestration tools.
       </p>
       <BuilderShell

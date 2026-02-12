@@ -205,7 +205,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
           <label className="builder-label-text text-xs uppercase tracking-normal">WHERE Conditions</label>
           <div className="builder-border-overlay rounded-2xl border p-3 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="builder-label-small text-[11px]">Combinator</span>
+              <span className="builder-label-small text-xs">Combinator</span>
               <select
                 value={whereConditions.combinator}
                 onChange={(e) => setWhereConditions((prev) => ({ ...prev, combinator: e.target.value }))}
@@ -231,7 +231,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
             </div>
 
             {whereConditions.rules.length === 0 ? (
-              <p className="builder-label-small text-[11px]">
+              <p className="builder-label-small text-xs">
                 No conditions. Click "+ Rule" to add.
               </p>
             ) : (
@@ -386,7 +386,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       <div className="builder-preview-container space-y-2 rounded-2xl border p-4">
         <label className="builder-label-text text-xs uppercase tracking-normal">Generated SQL</label>
         {!selectedTable && query?.trim() ? (
-          <p className="builder-help-text-small text-[11px]">
+          <p className="builder-help-text-small text-xs">
             Current SQL is loaded. Select a table to rebuild it with the visual builder.
           </p>
         ) : null}
@@ -398,7 +398,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       <div className="builder-preview-container space-y-2 rounded-2xl border p-4">
         <label className="builder-label-text text-xs uppercase tracking-normal">SQL Editor</label>
         {selectedTable ? (
-          <p className="builder-help-text-small text-[11px]">
+          <p className="builder-help-text-small text-xs">
             Visual builder is active. Editing here is allowed, but builder interactions can regenerate SQL.
           </p>
         ) : null}

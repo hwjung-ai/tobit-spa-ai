@@ -251,7 +251,7 @@ export default function ActionTab() {
                 <div className="mb-2 flex justify-end">
                   <button
                     onClick={handleAddAction}
-                    className="rounded px-2 py-1 text-[11px] text-[var(--foreground)] bg-[var(--surface-elevated)] hover:bg-[var(--surface-overlay)] transition"
+                    className="rounded px-2 py-1 text-xs text-[var(--foreground)] bg-[var(--surface-elevated)] hover:bg-[var(--surface-overlay)] transition"
                   >
                     + Add
                   </button>
@@ -273,7 +273,7 @@ export default function ActionTab() {
                       )}
                     >
                       <div className="text-xs font-mono text-sky-300">{action.id}</div>
-                      <div className="mt-1 text-[11px] text-[var(--muted-foreground)]">{action.handler || "(unset)"}</div>
+                      <div className="mt-1 text-xs text-[var(--muted-foreground)]">{action.handler || "(unset)"}</div>
                     </button>
                   ))}
                 </div>
@@ -307,7 +307,7 @@ export default function ActionTab() {
                           </SelectTrigger>
                           <SelectContent className="border-[var(--border)] bg-[var(--surface-base)]">
                             <SelectGroup>
-                              <SelectLabel className="text-[11px] text-[var(--muted-foreground)]">Built-in Handlers</SelectLabel>
+                              <SelectLabel className="text-xs text-[var(--muted-foreground)]">Built-in Handlers</SelectLabel>
                               {builtinOptions.map((opt) => (
                                 <SelectItem key={opt.value} value={opt.value} className="text-xs text-[var(--foreground)]">
                                   {opt.label}
@@ -316,7 +316,7 @@ export default function ActionTab() {
                             </SelectGroup>
                             {apiManagerOptions.length > 0 && (
                               <SelectGroup>
-                                <SelectLabel className="text-[11px] text-[var(--muted-foreground)]">API Manager</SelectLabel>
+                                <SelectLabel className="text-xs text-[var(--muted-foreground)]">API Manager</SelectLabel>
                                 {apiManagerOptions.map((opt) => (
                                   <SelectItem key={opt.value} value={opt.value} className="text-xs text-[var(--foreground)]">
                                     {opt.label}
@@ -336,11 +336,11 @@ export default function ActionTab() {
                     {catalogItem && (
                       <div className="space-y-2 rounded border p-2 border-[var(--border)] bg-[var(--surface-base)]">
                         {catalogItem.description && (
-                          <p className="text-[11px] text-[var(--muted-foreground)]">{catalogItem.description}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">{catalogItem.description}</p>
                         )}
 
                         {catalogItem.api_manager_meta && (
-                          <div className="flex items-center gap-2 text-[11px]">
+                          <div className="flex items-center gap-2 text-xs">
                             <span className="rounded px-1.5 py-0.5 font-mono bg-violet-900/50 text-violet-300">
                               {catalogItem.api_manager_meta.method}
                             </span>
@@ -349,7 +349,7 @@ export default function ActionTab() {
                         )}
 
                         {catalogItem.output?.state_patch_keys && catalogItem.output.state_patch_keys.length > 0 && (
-                          <div className="text-[11px]">
+                          <div className="text-xs">
                             <span className="text-[var(--muted-foreground)]">Output keys: </span>
                             {catalogItem.output.state_patch_keys.map((key) => (
                               <span key={key} className="mr-1 rounded px-1 py-0.5 font-mono bg-sky-500/30 text-sky-300">
@@ -362,7 +362,7 @@ export default function ActionTab() {
                         {/* Input Parameters */}
                         {catalogItem.input_schema?.properties &&
                           Object.keys(catalogItem.input_schema.properties).length > 0 && (
-                            <details className="text-[11px]">
+                            <details className="text-xs">
                               <summary className="cursor-pointer text-[var(--muted-foreground)]">
                                 Input Parameters ({Object.keys(catalogItem.input_schema.properties).length})
                               </summary>
@@ -383,7 +383,7 @@ export default function ActionTab() {
 
                         {/* Sample Output */}
                         {catalogItem.sample_output && (
-                          <details className="text-[11px]">
+                          <details className="text-xs">
                             <summary className="cursor-pointer text-[var(--muted-foreground)]">
                               Sample Output
                             </summary>

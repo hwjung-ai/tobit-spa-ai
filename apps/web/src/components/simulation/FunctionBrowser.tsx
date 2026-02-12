@@ -192,7 +192,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
       {/* Filters */}
       <section className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-4 rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Filters</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Filters</h2>
 
           {/* Search */}
           <label className="block text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
@@ -268,7 +268,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
                         <h3 className={`font-semibold ${getCategoryColor(func.category)}`}>
                           {func.name}
                         </h3>
-                        <span className={`text-[10px] uppercase tracking-[0.15em] px-2 py-0.5 rounded ${getComplexityBadge(func.complexity)}`}>
+                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded ${getComplexityBadge(func.complexity)}`}>
                           {func.complexity}
                         </span>
                       </div>
@@ -322,7 +322,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           {/* Parameters */}
           {selectedFunction.parameters && selectedFunction.parameters.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Parameters</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Parameters</h3>
               <div className="mt-3 grid gap-2">
                 {selectedFunction.parameters.map((param) => (
                   <div key={param.name} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
@@ -352,7 +352,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           {/* Outputs */}
           {selectedFunction.outputs && selectedFunction.outputs.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Outputs</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Outputs</h3>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {selectedFunction.outputs.map((output) => (
                   <div key={output.name} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
@@ -370,7 +370,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           {/* Metadata */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Assumptions</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Assumptions</h3>
               <ul className="mt-2 space-y-1">
                 {selectedFunction.assumptions.map((assumption, idx) => (
                   <li key={idx} className="text-xs " style={{color: "var(--muted-foreground)"}}>• {assumption}</li>
@@ -378,7 +378,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>References</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>References</h3>
               <ul className="mt-2 space-y-1">
                 {selectedFunction.references.map((ref, idx) => (
                   <li key={idx} className="text-xs  truncate" style={{color: "var(--muted-foreground)"}}>{ref}</li>
@@ -386,7 +386,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>Version</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Version</h3>
               <p className="mt-2 text-xs " style={{color: "var(--muted-foreground)"}}>{selectedFunction.version}</p>
             </div>
           </div>

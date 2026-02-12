@@ -11,7 +11,7 @@ const buttonVariants = cva(
       variant: {
         default: "hover:bg-opacity-90",
         destructive:
-          "bg-red-500 hover:bg-red-500/90",
+          "bg-rose-500 hover:bg-rose-500/90",
         outline:
           "hover:bg-opacity-80 dark:hover:bg-opacity-80",
         secondary:

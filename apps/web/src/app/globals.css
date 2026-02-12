@@ -1022,3 +1022,162 @@ body {
   @apply flex items-center gap-2 text-sm font-medium;
   color: var(--foreground);
 }
+
+/* ============================================================================
+ * CONSISTENCY UTILITY CLASSES (Phase 1-5)
+ * ============================================================================ */
+
+/* Standard Button Classes - Replace inline bg-sky-500/400 variations */
+.btn-primary {
+  @apply rounded-xl px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition;
+  background-color: #0284c7; /* sky-600 */
+}
+
+.btn-primary:hover {
+  background-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .btn-primary {
+  background-color: #0284c7; /* sky-600 */
+}
+
+.dark .btn-primary:hover {
+  background-color: #0369a1; /* sky-700 */
+}
+
+.btn-primary-small {
+  @apply rounded-lg px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition;
+  background-color: #0284c7; /* sky-600 */
+}
+
+.btn-primary-small:hover {
+  background-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .btn-primary-small:hover {
+  background-color: #0369a1; /* sky-700 */
+}
+
+.btn-secondary {
+  @apply rounded-xl border px-4 py-2 text-sm font-medium transition;
+  border-color: var(--border-muted);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.btn-secondary:hover {
+  background-color: var(--muted-background);
+}
+
+.dark .btn-secondary:hover {
+  background-color: var(--surface-base);
+}
+
+/* Standard Badge/Tab Classes */
+.badge-primary {
+  @apply inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition;
+  border-color: var(--border-muted);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.badge-primary:hover {
+  background-color: var(--muted-background);
+}
+
+.dark .badge-primary:hover {
+  background-color: var(--surface-base);
+}
+
+.badge-active {
+  @apply inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider transition;
+  background-color: #0284c7; /* sky-600 */
+  color: white;
+}
+
+.badge-active:hover {
+  opacity: 0.9;
+}
+
+/* Standard Text Label Classes - Replace tracking-[...] variations */
+.text-label {
+  @apply text-xs font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+.text-label-sm {
+  @apply text-[10px] font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+.text-label-normal {
+  @apply text-sm font-semibold uppercase tracking-wider;
+  color: var(--foreground);
+}
+
+/* Standard Tab Button Classes */
+.tab-button {
+  @apply px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition rounded-lg;
+  color: var(--foreground);
+}
+
+.tab-button-active {
+  @apply bg-sky-600 text-white;
+}
+
+.tab-button-inactive {
+  @apply bg-transparent text-slate-700 hover:bg-slate-200;
+}
+
+.dark .tab-button-inactive {
+  @apply text-slate-300 hover:bg-slate-800;
+}
+
+/* Standard Page Section Class */
+.page-section {
+  @apply rounded-2xl border p-5 shadow-sm;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .page-section {
+  background-color: rgba(15, 23, 42, 0.9); /* slate-900/90 */
+}
+
+/* Standard Input Classes */
+.input-standard {
+  @apply w-full rounded-lg border px-4 py-3 text-base outline-none transition;
+  border-color: var(--input-border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.input-standard:focus {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .input-standard {
+  background-color: rgba(2, 6, 23, 0.5); /* slate-950/50 */
+  color: var(--foreground);
+}
+
+.dark .input-standard:focus {
+  border-color: #38bdf8; /* sky-400 */
+}
+
+/* Standard Text Colors */
+.text-primary {
+  color: var(--foreground);
+}
+
+.text-muted-standard {
+  color: var(--muted-foreground);
+}
+
+.text-disabled {
+  color: #94a3b8; /* slate-400 */
+}
+
+.dark .text-disabled {
+  color: #475569; /* slate-600 */
+}

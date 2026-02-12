@@ -133,7 +133,7 @@ const AdminDashboard: React.FC = () => {
           <div className="text-2xl font-bold capitalize">{systemHealth?.status || 'Unknown'}</div>
         </div>
 
-        <div className="p-6 rounded-lg border bg-blue-50 text-blue-600">
+        <div className="p-6 rounded-lg border bg-sky-50 text-sky-600">
           <div className="text-sm font-medium mb-2">Active Alerts</div>
           <div className="text-2xl font-bold">{alerts.length}</div>
         </div>
@@ -234,7 +234,7 @@ const AdminDashboard: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-sky-600 text-white'
                   : ' hover:'
               }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}
             >
@@ -252,7 +252,7 @@ const AdminDashboard: React.FC = () => {
           <button
             onClick={fetchDashboardData}
             disabled={loading}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="flex items-center space-x-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
@@ -335,7 +335,7 @@ const UserManagementPanel: React.FC = () => {
                   {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
                 </td>
                 <td className="px-6 py-3 text-sm">
-                  <button className="text-blue-600 hover:underline">Manage</button>
+                  <button className="text-sky-600 hover:underline">Manage</button>
                 </td>
               </tr>
             ))}
@@ -360,7 +360,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
             </div>
             <div className="w-full  rounded-full h-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
               <div
-                className="bg-blue-600 h-2 rounded-full"
+                className="bg-sky-600 h-2 rounded-full"
                 style={{ width: `${Math.min(systemHealth?.resource?.cpu_percent || 0, 100)}%` }}
               />
             </div>

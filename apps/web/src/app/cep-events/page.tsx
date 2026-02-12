@@ -598,12 +598,12 @@ function CepEventBrowserContent() {
     <div className="space-y-6 builder-shell builder-text">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold " style={{color: "var(--muted-foreground)"}}>CEP Event Browser</h2>
-          <p className="text-sm " style={{color: "var(--muted-foreground)"}}>
+          <h2 className="text-2xl font-semibold " style={{color: "rgb(71, 85, 105)"}}>CEP Event Browser</h2>
+          <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>
             알림 발화 이력과 ACK 상태를 확인합니다. (SSE 갱신)
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 rounded-2xl border  dark: bg-[var(--background)] dark: px-4 py-3 text-xs uppercase tracking-wider " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
+        <div className="flex flex-wrap gap-3 rounded-2xl border  dark: bg-[var(--background)] dark: px-4 py-3 text-xs uppercase tracking-wider " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}>
           <span>Unacked: {summaryQuery.data?.unacked_count ?? "-"}</span>
           {summaryQuery.data?.by_severity
             ? Object.entries(summaryQuery.data.by_severity).map(([key, value]) => (
@@ -615,11 +615,11 @@ function CepEventBrowserContent() {
         </div>
       </header>
       {runLoading ? (
-        <section className="rounded-2xl border  dark: /70 px-5 py-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-          <p className="text-sm " style={{color: "var(--muted-foreground)"}}>Loading CEP run details …</p>
+        <section className="rounded-2xl border  dark: /70 px-5 py-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
+          <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>Loading CEP run details …</p>
         </section>
       ) : runDetail ? (
-        <section className="rounded-2xl border  dark: /70 px-5 py-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+        <section className="rounded-2xl border  dark: /70 px-5 py-4 space-y-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
           {runError ? (
             <p className="text-sm text-rose-300">
               {runError}
@@ -627,45 +627,45 @@ function CepEventBrowserContent() {
           ) : null}
           {runDetail.found ? (
             <>
-              <div className="grid grid-cols-2 gap-4 text-sm  dark:" style={{color: "var(--foreground-secondary)"}}>
+              <div className="grid grid-cols-2 gap-4 text-sm  dark:" style={{color: "rgb(71, 85, 105)"}}>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Exec Log ID</p>
-                  <p className="" style={{color: "var(--foreground)"}}>{runDetail.exec_log_id ?? "—"}</p>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Exec Log ID</p>
+                  <p className="" style={{color: "rgb(15, 23, 42)"}}>{runDetail.exec_log_id ?? "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Simulation ID</p>
-                  <p className="" style={{color: "var(--foreground)"}}>{runDetail.simulation_id ?? "—"}</p>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Simulation ID</p>
+                  <p className="" style={{color: "rgb(15, 23, 42)"}}>{runDetail.simulation_id ?? "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Rule ID</p>
-                  <p className="" style={{color: "var(--foreground)"}}>{runDetail.rule_id ?? "—"}</p>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Rule ID</p>
+                  <p className="" style={{color: "rgb(15, 23, 42)"}}>{runDetail.rule_id ?? "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Created</p>
-                  <p className="" style={{color: "var(--foreground)"}}>{runDetail.created_at ? formatTimestamp(runDetail.created_at) : "—"}</p>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Created</p>
+                  <p className="" style={{color: "rgb(15, 23, 42)"}}>{runDetail.created_at ? formatTimestamp(runDetail.created_at) : "—"}</p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Condition</p>
-                  <p className="" style={{color: "var(--foreground)"}}>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Condition</p>
+                  <p className="" style={{color: "rgb(15, 23, 42)"}}>
                     {runDetail.condition_evaluated == null ? "—" : String(runDetail.condition_evaluated)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Tenant</p>
-                  <p className="" style={{color: "var(--foreground)"}}>{runDetail.tenant_id ?? "—"}</p>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Tenant</p>
+                  <p className="" style={{color: "rgb(15, 23, 42)"}}>{runDetail.tenant_id ?? "—"}</p>
                 </div>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Evidence</p>
+                <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Evidence</p>
                 <div className="mt-2 overflow-x-auto">
-                  <table className="min-w-full text-left text-xs  dark:" style={{color: "var(--foreground-secondary)"}}>
+                  <table className="min-w-full text-left text-xs  dark:" style={{color: "rgb(71, 85, 105)"}}>
                     <thead>
                       <tr>
                         {["endpoint", "method", "value_path", "op", "threshold", "extracted_value", "evaluated", "status", "error"].map(
                           (column) => (
                             <th
                               key={column}
-                              className="border-b  dark: px-2 py-1 font-semibold uppercase tracking-[0.3em] " style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+                              className="border-b  dark: px-2 py-1 font-semibold uppercase tracking-wider " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)"}}
                             >
                               {column}
                             </th>
@@ -674,7 +674,7 @@ function CepEventBrowserContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr className="" style={{backgroundColor: "var(--surface-overlay)"}}>
+                      <tr className="" style={{backgroundColor: "rgb(255, 255, 255)"}}>
                         <td className="px-2 py-1">{runDetail.evidence?.runtime_endpoint as ReactNode ?? "—"}</td>
                         <td className="px-2 py-1">{runDetail.evidence?.method as ReactNode ?? "—"}</td>
                         <td className="px-2 py-1">{runDetail.evidence?.value_path as ReactNode ?? "—"}</td>
@@ -690,8 +690,8 @@ function CepEventBrowserContent() {
                 </div>
               </div>
               {runDetail.raw ? (
-                <details className="rounded-2xl border  dark:  p-3 text-xs " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
-                  <summary className="cursor-pointer uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>
+                <details className="rounded-2xl border  dark:  p-3 text-xs " style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}>
+                  <summary className="cursor-pointer uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>
                     Raw references
                   </summary>
                   <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap">{runDetail.raw}</pre>
@@ -699,8 +699,8 @@ function CepEventBrowserContent() {
               ) : null}
             </>
           ) : (
-            <div className="text-sm " style={{color: "var(--muted-foreground)"}}>
-              <p className=" font-semibold" style={{color: "var(--foreground)"}}>CEP run not found</p>
+            <div className="text-sm " style={{color: "rgb(71, 85, 105)"}}>
+              <p className=" font-semibold" style={{color: "rgb(15, 23, 42)"}}>CEP run not found</p>
               <p>
                 Tenant: {runDetail.tenant_id ?? "unknown"}, exec_log_id: {runDetail.exec_log_id ?? "없음"}, simulation_id:{" "}
                 {runDetail.simulation_id ?? "없음"}
@@ -715,12 +715,12 @@ function CepEventBrowserContent() {
         className="grid gap-0"
         style={{gridTemplateColumns: `${leftWidth ?? 0}px 12px minmax(0, 1fr)`}}
       >
-        <section className="rounded-2xl border  dark: bg-[var(--background)] dark: p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <section className="rounded-2xl border  dark: bg-[var(--background)] dark: p-4" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <select
               value={ackedFilter}
               onChange={(event) => setAckedFilter(event.target.value as typeof ackedFilter)}
-              className="rounded-xl border  dark: /70 px-3 py-2 text-[11px]  dark: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /70 px-3 py-2 text-xs  dark: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             >
               <option value="all">All</option>
               <option value="unacked">Unacked</option>
@@ -729,7 +729,7 @@ function CepEventBrowserContent() {
             <select
               value={severityFilter}
               onChange={(event) => setSeverityFilter(event.target.value)}
-              className="rounded-xl border  dark: /70 px-3 py-2 text-[11px]  dark: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /70 px-3 py-2 text-xs  dark: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             >
               <option value="all">Severity</option>
               <option value="info">info</option>
@@ -740,23 +740,23 @@ function CepEventBrowserContent() {
               value={ruleFilter}
               onChange={(event) => setRuleFilter(event.target.value)}
               placeholder="Rule ID"
-              className="rounded-xl border  dark: /70 px-3 py-2 text-[11px]  dark: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /70 px-3 py-2 text-xs  dark: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             />
             <input
               type="datetime-local"
               value={sinceFilter}
               onChange={(event) => setSinceFilter(event.target.value)}
-              className="rounded-xl border  dark: /70 px-3 py-2 text-[11px]  dark: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /70 px-3 py-2 text-xs  dark: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             />
             <input
               type="datetime-local"
               value={untilFilter}
               onChange={(event) => setUntilFilter(event.target.value)}
-              className="rounded-xl border  dark: /70 px-3 py-2 text-[11px]  dark: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /70 px-3 py-2 text-xs  dark: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             />
             <button
               onClick={() => eventsQuery.refetch()}
-              className="rounded-xl border  dark: /80 px-3 py-2 text-[11px]  dark: transition hover: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /80 px-3 py-2 text-xs  dark: transition hover: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             >
               Refresh
             </button>
@@ -768,21 +768,21 @@ function CepEventBrowserContent() {
                 setSinceFilter("");
                 setUntilFilter("");
               }}
-              className="rounded-xl border  dark: /80 px-3 py-2 text-[11px]  dark: transition hover: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /80 px-3 py-2 text-xs  dark: transition hover: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             >
               Reset
             </button>
             <select
               value={exportFormat}
               onChange={(event) => setExportFormat(event.target.value as "csv" | "json")}
-              className="rounded-xl border  dark: /70 px-3 py-2 text-[11px]  dark: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /70 px-3 py-2 text-xs  dark: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             >
               <option value="csv">CSV</option>
               <option value="json">JSON</option>
             </select>
             <button
               onClick={handleExport}
-              className="rounded-xl border  dark: /80 px-3 py-2 text-[11px]  dark: transition hover: tracking-normal" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              className="rounded-xl border  dark: /80 px-3 py-2 text-xs  dark: transition hover: tracking-normal" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(248, 250, 252)"}}
             >
               Export
             </button>
@@ -792,7 +792,7 @@ function CepEventBrowserContent() {
               {normalizeError(eventsQuery.error)}
             </p>
           ) : null}
-          <div className="ag-theme-cep h-[540px] w-full rounded-2xl border  dark: /70" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+          <div className="ag-theme-cep h-[540px] w-full rounded-2xl border  dark: /70" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)"}}>
             <AgGridReact<CepEventSummary>
               rowData={eventsQuery.data ?? []}
               columnDefs={columnDefs}
@@ -817,20 +817,20 @@ function CepEventBrowserContent() {
               setIsResizing(true);
               setIsUserSized(true);
             }}
-            className={`mx-2 w-2 cursor-col-resize rounded-full border  dark:  ${isResizing ? "bg-sky-500/40" : ""
-              }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
+            className={`mx-2 w-2 cursor-col-resize rounded-full border  dark:  ${isResizing ? "bg-sky-600/40" : ""
+              }`} style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}
             aria-hidden="true"
           />
         </div>
 
-        <aside className="space-y-4 rounded-2xl border  dark: bg-[var(--background)] dark: p-4 overflow-y-auto custom-scrollbar max-h-[610px]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <aside className="space-y-4 rounded-2xl border  dark: bg-[var(--background)] dark: p-4 overflow-y-auto custom-scrollbar max-h-[610px]" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Event detail</p>
-              <h3 className="text-lg font-semibold dark:" style={{color: "var(--foreground)"}}>
+              <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Event detail</p>
+              <h3 className="text-lg font-semibold dark:" style={{color: "rgb(15, 23, 42)"}}>
                 {selectedEvent?.rule_name ?? "Select an event"}
               </h3>
-              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
+              <p className="text-xs " style={{color: "rgb(71, 85, 105)"}}>
                 {selectedEvent ? formatTimestamp(selectedEvent.triggered_at) : "No event selected"}
               </p>
             </div>
@@ -838,7 +838,7 @@ function CepEventBrowserContent() {
               <button
                 onClick={handleAck}
                 disabled={selectedEvent.ack}
-                className="rounded-2xl border dark: bg-emerald-500/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{color: "var(--foreground)", borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}
+                className="rounded-2xl border dark: bg-emerald-500/80 px-3 py-2 text-xs font-semibold uppercase tracking-wider dark: transition hover:bg-emerald-400 disabled:" style={{color: "rgb(15, 23, 42)", borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(241, 245, 249)"}}
               >
                 {selectedEvent.ack ? "ACKED" : "ACK"}
               </button>
@@ -846,12 +846,12 @@ function CepEventBrowserContent() {
           </div>
           {detailError ? <p className="text-sm text-rose-400">{detailError}</p> : null}
           {selectedEvent ? (
-            <div className="space-y-3 text-sm  dark:" style={{color: "var(--foreground-secondary)"}}>
-              <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Summary</p>
-                <p className="mt-2 text-sm  dark:" style={{color: "var(--foreground-secondary)"}}>{selectedEvent.summary}</p>
+            <div className="space-y-3 text-sm  dark:" style={{color: "rgb(71, 85, 105)"}}>
+              <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
+                <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Summary</p>
+                <p className="mt-2 text-sm  dark:" style={{color: "rgb(71, 85, 105)"}}>{selectedEvent.summary}</p>
               </div>
-              <div className="grid gap-2 rounded-2xl border  dark: bg-[var(--background)] dark: p-3 text-xs  dark:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+              <div className="grid gap-2 rounded-2xl border  dark: bg-[var(--background)] dark: p-3 text-xs  dark:" style={{borderColor: "rgb(203, 213, 225)", color: "rgb(71, 85, 105)", backgroundColor: "rgb(255, 255, 255)"}}>
                 <p>Severity: {selectedEvent.severity}</p>
                 <p>Status: {selectedEvent.status}</p>
                 <p>ACK: {selectedEvent.ack ? "true" : "false"}</p>
@@ -860,23 +860,23 @@ function CepEventBrowserContent() {
                 <p>Condition evaluated: {String(selectedEvent.condition_evaluated ?? "-")}</p>
                 <p>Extracted value: {String(selectedEvent.extracted_value ?? "-")}</p>
               </div>
-              <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Payload</p>
-                <pre className="mt-2 max-h-72 overflow-auto text-xs  dark: custom-scrollbar" style={{color: "var(--foreground-secondary)"}}>
+              <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
+                <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Payload</p>
+                <pre className="mt-2 max-h-72 overflow-auto text-xs  dark: custom-scrollbar" style={{color: "rgb(71, 85, 105)"}}>
                   {JSON.stringify(selectedEvent.payload, null, 2)}
                 </pre>
               </div>
               {selectedEvent.exec_log ? (
-                <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                  <p className="text-xs uppercase tracking-wider " style={{color: "var(--muted-foreground)"}}>Exec log</p>
-                  <pre className="mt-2 max-h-64 overflow-auto text-xs  dark: custom-scrollbar" style={{color: "var(--foreground-secondary)"}}>
+                <div className="rounded-2xl border  dark: bg-[var(--background)] dark: p-3" style={{borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(255, 255, 255)"}}>
+                  <p className="text-xs uppercase tracking-wider " style={{color: "rgb(71, 85, 105)"}}>Exec log</p>
+                  <pre className="mt-2 max-h-64 overflow-auto text-xs  dark: custom-scrollbar" style={{color: "rgb(71, 85, 105)"}}>
                     {JSON.stringify(selectedEvent.exec_log, null, 2)}
                   </pre>
                 </div>
               ) : null}
             </div>
           ) : (
-            <p className="text-sm " style={{color: "var(--muted-foreground)"}}>이벤트를 선택하면 상세 정보가 표시됩니다.</p>
+            <p className="text-sm " style={{color: "rgb(71, 85, 105)"}}>이벤트를 선택하면 상세 정보가 표시됩니다.</p>
           )}
         </aside>
       </div>
@@ -886,7 +886,7 @@ function CepEventBrowserContent() {
 
 export default function CepEventBrowserPage() {
   return (
-    <Suspense fallback={<div className="p-4 " style={{color: "var(--muted-foreground)"}}>Loading...</div>}>
+    <Suspense fallback={<div className="p-4 " style={{color: "rgb(71, 85, 105)"}}>Loading...</div>}>
       <CepEventBrowserContent />
     </Suspense>
   );

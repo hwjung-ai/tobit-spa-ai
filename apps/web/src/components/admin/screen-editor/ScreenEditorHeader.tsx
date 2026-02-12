@@ -203,14 +203,14 @@ export default function ScreenEditorHeader({
                 data-testid="btn-open-runtime"
               >
                 <ExternalLink className="w-3 h-3" />
-                <span className="text-[11px]">Open in UI</span>
+                <span className="text-xs">Open in UI</span>
               </Button>
               <div className="flex gap-2">
                 <Button
                   onClick={handleRunRegression}
                   disabled={ctaDisabled}
                   size="sm"
-                  className={`text-[11px] uppercase tracking-wider ${ctaDisabled
+                  className={`text-xs uppercase tracking-wider ${ctaDisabled
                     ? "cursor-not-allowed   border /50"
                     : " hover: text-white border "
                     }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
@@ -228,7 +228,7 @@ export default function ScreenEditorHeader({
                     }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
                 >
                   <ExternalLink className="w-3 h-3" />
-                  <span className="text-[11px]">Open Inspector</span>
+                  <span className="text-xs">Open Inspector</span>
                 </Button>
               </div>
               {publishHint && (
@@ -240,10 +240,10 @@ export default function ScreenEditorHeader({
       </div>
 
       {justPublished && screenId && (
-        <div className="bg-blue-950/50 border-b border-blue-800/50 px-6 py-3 flex items-center justify-between">
+        <div className="bg-sky-950/50 border-b border-sky-800/50 px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-blue-400" />
-            <span className="text-sm text-blue-300">
+            <CheckCircle className="w-4 h-4 text-sky-400" />
+            <span className="text-sm text-sky-300">
               Screen published successfully. Run regression tests to verify?
             </span>
           </div>
@@ -252,7 +252,7 @@ export default function ScreenEditorHeader({
               onClick={handleOpenInspector}
               variant="outline"
               size="sm"
-              className="text-blue-300 border-blue-700 hover:bg-blue-950/50"
+              className="text-sky-300 border-sky-700 hover:bg-sky-950/50"
             >
               <ExternalLink className="w-3 h-3 mr-1" />
               View Traces
@@ -260,7 +260,7 @@ export default function ScreenEditorHeader({
             <Button
               onClick={handleRunRegression}
               size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-sky-600 hover:bg-sky-700 text-white"
             >
               Run Regression (Recommended)
             </Button>

@@ -279,7 +279,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                       </p>
                     ) : null}
                     {renderReferencePayload(reference.payload) ? (
-                      <pre className="mt-3 max-h-40 overflow-auto rounded-xl /80 px-3 py-2 text-[11px] " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
+                      <pre className="mt-3 max-h-40 overflow-auto rounded-xl /80 px-3 py-2 text-xs " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
                         {renderReferencePayload(reference.payload)}
                       </pre>
                     ) : null}
@@ -747,7 +747,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                           </p>
                         ) : null}
                         {renderReferencePayload(reference.payload) ? (
-                          <pre className="mt-3 max-h-40 overflow-auto rounded-xl /80 px-3 py-2 text-[11px] " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
+                          <pre className="mt-3 max-h-40 overflow-auto rounded-xl /80 px-3 py-2 text-xs " style={{color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
                             {renderReferencePayload(reference.payload)}
                           </pre>
                         ) : null}
@@ -1056,7 +1056,7 @@ function renderNodeTable(nodes: NetworkNode[], heading = "Nodes") {
   return (
     <div className="mt-3 overflow-x-auto rounded-2xl border  /30 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
       <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>{heading}</p>
-      <table className="min-w-full text-left text-[11px] " style={{color: "var(--foreground-secondary)"}}>
+      <table className="min-w-full text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
         <thead>
           <tr>
             <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>ID</th>
@@ -1082,7 +1082,7 @@ function renderEdgeTable(edges: NetworkEdge[]) {
   return (
     <div className="mt-3 overflow-x-auto rounded-2xl border  /30 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
       <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Edges</p>
-      <table className="min-w-full text-left text-[11px] " style={{color: "var(--foreground-secondary)"}}>
+      <table className="min-w-full text-left text-xs " style={{color: "var(--foreground-secondary)"}}>
         <thead>
           <tr>
             <th scope="col" className="px-2 py-1 " style={{color: "var(--muted-foreground)"}}>Source</th>

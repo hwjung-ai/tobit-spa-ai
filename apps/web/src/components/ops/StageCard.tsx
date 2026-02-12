@@ -46,10 +46,10 @@ interface StageCardProps {
 
 const STAGE_COLORS = {
   planner: {
-    bg: "bg-blue-500/10",
-    border: "border-blue-400/30",
-    text: "text-blue-400",
-    icon: <PlayCircle className="h-4 w-4 text-blue-400" />,
+    bg: "bg-sky-500/10",
+    border: "border-sky-400/30",
+    text: "text-sky-400",
+    icon: <PlayCircle className="h-4 w-4 text-sky-400" />,
   },
   executor: {
     bg: "bg-emerald-500/10",
@@ -73,7 +73,7 @@ const STAGE_COLORS = {
 
 const STATUS_COLORS = {
   pending: "text-[var(--muted-foreground)]",
-  running: "text-blue-400 animate-pulse",
+  running: "text-sky-400 animate-pulse",
   success: "text-emerald-400",
   error: "text-rose-400",
   skipped: "text-[var(--muted-foreground)]",
@@ -221,7 +221,7 @@ export default function StageCard({
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition",
                 showInput
-                  ? "bg-blue-500/10 text-blue-400 border border-blue-400/30"
+                  ? "bg-sky-500/10 text-sky-400 border border-sky-400/30"
                   : "bg-[var(--surface-elevated)] text-[var(--muted-foreground)] hover:bg-[var(--surface-elevated)]"
               )}
             >

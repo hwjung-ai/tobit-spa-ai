@@ -178,9 +178,9 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
               key={template}
               onClick={() => handleTemplateChange(template)}
               disabled={readOnly}
-              className={`rounded-2xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-normal transition ${
+              className={`rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-normal transition ${
                 selectedTemplate === template
-                  ? "border-sky-500 bg-sky-500/10 text-white"
+                  ? "border-sky-600 bg-sky-500/10 text-white"
                   : "hover:"
               }`}
               style={

@@ -342,7 +342,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
             </div>
 
             {executeActionMutation.isError && (
-              <div className="rounded-lg border border-red-500/70 bg-red-500/5 p-3 text-xs text-red-200">
+              <div className="rounded-lg border border-rose-500/70 bg-rose-500/5 p-3 text-xs text-rose-200">
                 Error: {formatError(executeActionMutation.error)}
               </div>
             )}

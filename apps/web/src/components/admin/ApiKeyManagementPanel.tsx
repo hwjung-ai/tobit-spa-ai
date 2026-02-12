@@ -175,11 +175,11 @@ export function ApiKeyManagementPanel() {
   };
 
   const getScopeColor = (scope: string) => {
-    if (scope.includes("api")) return "bg-blue-100 text-blue-800";
-    if (scope.includes("ci")) return "bg-purple-100 text-purple-800";
-    if (scope.includes("metric") || scope.includes("graph")) return "bg-green-100 text-green-800";
-    if (scope.includes("cep")) return "bg-orange-100 text-orange-800";
-    return "bg-gray-100 text-gray-800"; // Keep default style
+    if (scope.includes("api")) return "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300";
+    if (scope.includes("ci")) return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
+    if (scope.includes("metric") || scope.includes("graph")) return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300";
+    if (scope.includes("cep")) return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
+    return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300";
   };
 
   const activeKeysCount = apiKeys.filter(k => k.is_active).length;

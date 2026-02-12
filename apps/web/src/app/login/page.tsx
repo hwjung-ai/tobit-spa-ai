@@ -31,16 +31,15 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: "var(--background)" }}>
+    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
       <div
-        className="w-full max-w-md space-y-6 rounded-2xl border p-6 shadow-sm"
-        style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}
+        className="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         <div>
-          <h2 className="text-center text-2xl font-semibold" style={{ color: "var(--foreground)" }}>
+          <h2 className="text-center text-2xl font-semibold text-slate-900 dark:text-slate-50">
             Tobit SPA AI
           </h2>
-          <p className="mt-2 text-center text-sm" style={{ color: "var(--muted-foreground)" }}>
+          <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
             Sign in to your account
           </p>
         </div>
@@ -48,7 +47,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email" style={{ color: "var(--foreground)" }}>
+              <Label htmlFor="email" className="text-slate-900 dark:text-slate-50">
                 Email Address
               </Label>
               <Input
@@ -63,7 +62,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Label htmlFor="password" style={{ color: "var(--foreground)" }}>
+              <Label htmlFor="password" className="text-slate-900 dark:text-slate-50">
                 Password
               </Label>
               <Input
@@ -93,10 +92,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div
-          className="rounded-lg border p-4 text-xs"
-          style={{ backgroundColor: "var(--surface-base)", color: "var(--muted-foreground)", borderColor: "var(--border)" }}
-        >
+        <div className="rounded-lg border border-slate-200 bg-white p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           <p className="font-semibold mb-2">Demo Credentials:</p>
           <p>Email: admin@tobit.local</p>
           <p>Password: admin123</p>

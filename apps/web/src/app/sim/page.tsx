@@ -578,9 +578,11 @@ export default function SimPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <header className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">SIM Workspace</h1>
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+      <header className="border-b px-6 py-4 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+          SIM Workspace
+        </h1>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
           질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트,
           피드백/모델 근거를 함께 제공합니다.
@@ -591,35 +593,21 @@ export default function SimPage() {
         <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
           {/* Left Panel - Scenario Builder */}
           <aside
-            className="space-y-4 rounded-2xl border p-5 min-h-[320px]"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+            className="space-y-4 rounded-2xl border p-5 min-h-[320px] border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
           >
             <h2
-              className="text-sm font-semibold uppercase tracking-wider"
-              style={{ color: "var(--muted-foreground)" }}
+              className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               Scenario Builder
             </h2>
 
             <label
-              className="block text-xs uppercase tracking-wider"
-              style={{ color: "var(--muted-foreground)" }}
+              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               질문
               <textarea
                 data-testid="simulation-question-input"
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
                 rows={4}
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
@@ -634,8 +622,7 @@ export default function SimPage() {
 
             <div>
               <p
-                className="text-xs uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 템플릿
               </p>
@@ -646,23 +633,12 @@ export default function SimPage() {
                     type="button"
                     data-testid="simulation-template-select"
                     onClick={() => applyTemplate(template)}
-                    className="rounded-2xl border px-3 py-2 text-left transition"
-                    style={{
-                      borderColor: "var(--border)",
-                      backgroundColor: "var(--surface-base)",
-                      color: "var(--foreground)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "var(--primary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }}
+                    className="rounded-2xl border px-3 py-2 text-left transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
                   >
-                    <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                       {template.name}
                     </p>
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       {template.description}
                     </p>
                   </button>
@@ -670,50 +646,33 @@ export default function SimPage() {
               </div>
               {selectedTemplate ? (
                 <div
-                  className="mt-3 rounded-2xl border px-3 py-2"
-                  style={{
-                    borderColor: "var(--success)",
-                    backgroundColor: "rgba(var(--success-rgb), 0.15)",
-                  }}
+                  className="mt-3 rounded-2xl border px-3 py-2 border-emerald-500 bg-emerald-500/15"
                 >
                   <p
-                    className="text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: "var(--success)" }}
+                    className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
                   >
                     Applied Template
                   </p>
-                  <p className="mt-1 text-sm" style={{ color: "var(--foreground)" }}>
+                  <p className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                     {selectedTemplate.name}
                   </p>
-                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     {selectedTemplate.description}
                   </p>
                 </div>
               ) : (
-                <p className="mt-2 text-xs" style={{ color: "var(--muted-foreground)" }}>
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
                   템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.
                 </p>
               )}
             </div>
 
             <label
-              className="block text-xs uppercase tracking-wider"
-              style={{ color: "var(--muted-foreground)" }}
+              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               시나리오 유형
               <select
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
                 value={scenarioType}
                 onChange={(event) => setScenarioType(event.target.value as ScenarioType)}
               >
@@ -724,23 +683,11 @@ export default function SimPage() {
             </label>
 
             <label
-              className="block text-xs uppercase tracking-wider"
-              style={{ color: "var(--muted-foreground)" }}
+              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               Service
               <select
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
                 value={service}
                 onChange={(event) => setService(event.target.value)}
               >
@@ -754,23 +701,11 @@ export default function SimPage() {
             </label>
 
             <label
-              className="block text-xs uppercase tracking-wider"
-              style={{ color: "var(--muted-foreground)" }}
+              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               Horizon
               <input
-                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="mt-2 w-full rounded-2xl px-3 py-2 text-sm outline-none transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 focus:border-sky-500"
                 value={horizon}
                 onChange={(event) => setHorizon(event.target.value)}
               />
@@ -778,8 +713,7 @@ export default function SimPage() {
 
             <div>
               <p
-                className="text-xs uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 가정값
               </p>
@@ -789,14 +723,13 @@ export default function SimPage() {
                 return (
                   <label
                     key={key}
-                    className="block rounded-2xl border px-3 py-2"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="block rounded-2xl border px-3 py-2 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
                   >
                     <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs" style={{ color: "var(--foreground)" }}>
+                      <span className="text-xs text-slate-900 dark:text-slate-50">
                         {meta.label}
                       </span>
-                      <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">
                         {value}
                         {meta.unit}
                       </span>
@@ -813,8 +746,7 @@ export default function SimPage() {
                           [key]: Number(event.target.value),
                         }))
                       }
-                      className="w-full"
-                      style={{ accentColor: "var(--primary)" }}
+                      className="w-full accent-sky-500"
                     />
                   </label>
                 );
@@ -823,8 +755,7 @@ export default function SimPage() {
 
             <div>
               <p
-                className="text-xs uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 전략 선택
               </p>
@@ -835,23 +766,9 @@ export default function SimPage() {
                   onClick={() => setStrategy(s)}
                   className={cn(
                     "rounded-2xl border px-3 py-2 text-left transition",
-                    strategy === s ? "text-white" : "",
+                    strategy === s ? "bg-sky-600 border-sky-600 text-white" : "border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50",
+                    strategy !== s && "hover:border-sky-600",
                   )}
-                  style={
-                    strategy === s
-                      ? { borderColor: "var(--primary)", backgroundColor: "var(--primary)" }
-                      : {
-                          borderColor: "var(--border)",
-                          backgroundColor: "var(--surface-base)",
-                          color: "var(--foreground)",
-                        }
-                  }
-                  onMouseEnter={(e) => {
-                    if (strategy !== s) e.currentTarget.style.borderColor = "var(--primary)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (strategy !== s) e.currentTarget.style.borderColor = "var(--border)";
-                  }}
                 >
                   <div className="flex items-center justify-between">
                     <span
@@ -862,16 +779,14 @@ export default function SimPage() {
                     <span
                       className={cn(
                         "text-xs uppercase tracking-wider",
-                        strategy === s ? "text-white" : "",
+                        strategy === s ? "text-white" : "text-slate-600 dark:text-slate-400",
                       )}
-                      style={{ color: strategy === s ? undefined : "var(--muted-foreground)" }}
                     >
                       {strategyMeta[s].badge}
                     </span>
                   </div>
                   <p
-                    className={cn("mt-1 text-xs", strategy === s ? "text-white" : "")}
-                    style={{ color: strategy === s ? undefined : "var(--muted-foreground)" }}
+                    className={cn("mt-1 text-xs", strategy === s ? "text-white" : "text-slate-600 dark:text-slate-400")}
                   >
                     {strategyMeta[s].desc}
                   </p>
@@ -882,37 +797,23 @@ export default function SimPage() {
             <button
               data-testid="simulation-run-button"
               className={cn(
-                "w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed",
-                loading || servicesLoading || !question.trim() || !service.trim() ? "" : "",
+                "w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed hover:opacity-90",
+                loading || servicesLoading || !question.trim() || !service.trim()
+                  ? "bg-slate-300 opacity-60"
+                  : "bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600",
               )}
-              style={{
-                backgroundColor:
-                  loading || servicesLoading || !question.trim() || !service.trim()
-                    ? "var(--muted-background)"
-                    : "var(--primary)",
-                opacity:
-                  loading || servicesLoading || !question.trim() || !service.trim() ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!(loading || servicesLoading || !question.trim() || !service.trim()))
-                  e.currentTarget.style.opacity = "0.9";
-              }}
-              onMouseLeave={(e) => {
-                if (!(loading || servicesLoading || !question.trim() || !service.trim()))
-                  e.currentTarget.style.opacity = "1";
-              }}
               onClick={handleRun}
               disabled={loading || servicesLoading || !question.trim() || !service.trim()}
             >
               {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
             </button>
             {!question.trim() ? (
-              <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 질문을 입력하면 실행할 수 있습니다.
               </p>
             ) : null}
             {!service.trim() ? (
-              <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Service를 입력하거나 선택하면 실행할 수 있습니다.
               </p>
             ) : null}
@@ -921,18 +822,7 @@ export default function SimPage() {
               <button
                 type="button"
                 data-testid="simulation-backtest-button"
-                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--primary)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-sky-500"
                 onClick={handleBacktest}
                 disabled={servicesLoading || !service.trim()}
               >
@@ -941,18 +831,7 @@ export default function SimPage() {
               <button
                 type="button"
                 data-testid="simulation-export-button"
-                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "var(--success)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-emerald-500"
                 onClick={handleExportCsv}
                 disabled={servicesLoading || !service.trim()}
               >
@@ -965,31 +844,29 @@ export default function SimPage() {
           <main className="space-y-4">
             {/* KPI Summary Section */}
             <section
-              className="rounded-2xl border p-5"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border p-5 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             >
               <h2
                 data-testid="simulation-kpi-summary"
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 KPI Summary
               </h2>
               {!result ? (
-                <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
                   왼쪽에서 시나리오를 설정하고 실행하세요.
                 </p>
               ) : (
                 <>
-                  <p className="mt-3 text-sm" style={{ color: "var(--foreground)" }}>
+                  <p className="mt-3 text-sm text-slate-900 dark:text-slate-50">
                     {result.summary}
                   </p>
-                  <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                     Confidence: {result.simulation.confidence.toFixed(2)} (
                     {getConfidenceLabel(result.simulation.confidence)})
                   </p>
                   {result.simulation.confidence_interval ? (
-                    <p className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                       CI: {result.simulation.confidence_interval[0].toFixed(2)} ~{" "}
                       {result.simulation.confidence_interval[1].toFixed(2)}
                       {result.simulation.error_bound
@@ -1003,27 +880,21 @@ export default function SimPage() {
                       return (
                         <div
                           key={kpi.kpi}
-                          className="rounded-2xl border p-3"
-                          style={{
-                            borderColor: "var(--border)",
-                            backgroundColor: "var(--surface-base)",
-                          }}
+                          className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                         >
                           <p
-                            className="text-xs uppercase tracking-wider"
-                            style={{ color: "var(--muted-foreground)" }}
+                            className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                           >
                             {formatKpiLabel(kpi.kpi)}
                           </p>
-                          <p className="mt-1 text-sm" style={{ color: "var(--foreground)" }}>
+                          <p className="mt-1 text-sm text-slate-900 dark:text-slate-50">
                             {kpi.baseline} → {kpi.simulated} {kpi.unit}
                           </p>
                           <p
                             className={cn(
                               "text-sm font-semibold",
-                              changePct >= 0 ? "text-amber-600" : "text-emerald-600",
+                              changePct >= 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400",
                             )}
-                            style={{ color: changePct >= 0 ? "var(--warning)" : "var(--success)" }}
                           >
                             {changePct >= 0 ? "+" : ""}
                             {changePct}%
@@ -1038,24 +909,21 @@ export default function SimPage() {
 
             {/* Comparison Charts Section */}
             <section
-              className="rounded-2xl border p-5"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border p-5 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             >
               <h2
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 Comparison Charts
               </h2>
               {!result ? (
-                <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
                   실행 후 차트가 표시됩니다.
                 </p>
               ) : (
                 <div className="mt-4 grid gap-4">
                   <div
-                    className="h-64 rounded-2xl border p-2"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="h-64 rounded-2xl border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart
@@ -1091,8 +959,7 @@ export default function SimPage() {
                   </div>
 
                   <div
-                    className="h-64 rounded-2xl border p-2"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="h-64 rounded-2xl border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
@@ -1118,11 +985,7 @@ export default function SimPage() {
 
                   {compareData.length > 0 ? (
                     <div
-                      className="h-56 rounded-2xl border p-2"
-                      style={{
-                        borderColor: "var(--border)",
-                        backgroundColor: "var(--surface-base)",
-                      }}
+                      className="h-56 rounded-2xl border p-2 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                     >
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={compareData}>
@@ -1157,29 +1020,27 @@ export default function SimPage() {
 
             {/* Evidence Panel */}
             <section
-              className="rounded-2xl border p-5 min-h-[220px]"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border p-5 min-h-[220px] border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             >
               <h2
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 Algorithm & Evidence
               </h2>
               {!result ? (
-                <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
                   실행 후 알고리즘 설명과 근거가 표시됩니다.
                 </p>
               ) : (
-                <div className="mt-3 space-y-3 text-sm" style={{ color: "var(--foreground)" }}>
+                <div className="mt-3 space-y-3 text-sm text-slate-900 dark:text-slate-50">
                   <p>
-                    <span style={{ color: "var(--muted-foreground)" }}>Strategy:</span>{" "}
+                    <span className="text-slate-600 dark:text-slate-400">Strategy:</span>{" "}
                     {result.simulation.strategy.toUpperCase()} /
-                    <span style={{ color: "var(--muted-foreground)" }}> Model:</span>{" "}
+                    <span className="text-slate-600 dark:text-slate-400"> Model:</span>{" "}
                     {String(result.simulation.model_info.version ?? "n/a")}
                   </p>
                   {plan ? (
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       Baseline Window: {plan.baseline_window} / Horizon: {plan.horizon} / Service:{" "}
                       {plan.service}
                     </p>
@@ -1187,8 +1048,7 @@ export default function SimPage() {
                   <p>{result.simulation.explanation}</p>
                   <div>
                     <p
-                      className="text-xs uppercase tracking-wider"
-                      style={{ color: "var(--muted-foreground)" }}
+                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                     >
                       Recommended Actions
                     </p>
@@ -1199,17 +1059,12 @@ export default function SimPage() {
                     </ul>
                   </div>
                   <pre
-                    className="overflow-auto rounded-2xl border p-3 text-xs font-mono"
-                    style={{
-                      borderColor: "var(--border)",
-                      backgroundColor: "var(--surface-base)",
-                      color: "var(--foreground)",
-                    }}
+                    className="overflow-auto rounded-2xl border p-3 text-xs font-mono border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                   >
                     {JSON.stringify(result.references, null, 2)}
                   </pre>
                   {result.simulation.warnings.length > 0 ? (
-                    <ul className="list-disc pl-5" style={{ color: "var(--warning)" }}>
+                    <ul className="list-disc pl-5 text-amber-600 dark:text-amber-400">
                       {result.simulation.warnings.map((warning) => (
                         <li key={warning}>{warning}</li>
                       ))}
@@ -1221,62 +1076,56 @@ export default function SimPage() {
 
             {/* Backtest Report Section */}
             <section
-              className="rounded-2xl border p-5"
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+              className="rounded-2xl border p-5 border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             >
               <h2
-                className="text-sm font-semibold uppercase tracking-wider"
-                style={{ color: "var(--muted-foreground)" }}
+                className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
                 Backtest Report
               </h2>
               {!backtest ? (
-                <p className="mt-3 text-sm" style={{ color: "var(--muted-foreground)" }}>
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
                   왼쪽에서 Backtest 버튼을 눌러 전략 성능 지표를 확인하세요.
                 </p>
               ) : (
-                <div className="mt-3 grid gap-3 text-sm" style={{ color: "var(--foreground)" }}>
+                <div className="mt-3 grid gap-3 text-sm text-slate-900 dark:text-slate-50">
                   <div
-                    className="rounded-2xl border p-3"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       R2
                     </p>
-                    <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                       {backtest.metrics.r2.toFixed(4)}
                     </p>
                   </div>
                   <div
-                    className="rounded-2xl border p-3"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       MAPE
                     </p>
-                    <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                       {(backtest.metrics.mape * 100).toFixed(2)}%
                     </p>
                   </div>
                   <div
-                    className="rounded-2xl border p-3"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       RMSE
                     </p>
-                    <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                       {backtest.metrics.rmse.toFixed(3)}
                     </p>
                   </div>
                   <div
-                    className="rounded-2xl border p-3"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
-                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
                       Coverage@90%
                     </p>
-                    <p className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                       {(backtest.metrics.coverage_90 * 100).toFixed(2)}%
                     </p>
                   </div>
@@ -1287,8 +1136,7 @@ export default function SimPage() {
 
           {/* Right Panel - AI Copilot */}
           <aside
-            className="min-h-[320px] rounded-2xl border p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+            className="min-h-[320px] rounded-2xl border p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="space-y-4">
               <BuilderCopilotPanel
@@ -1311,21 +1159,15 @@ export default function SimPage() {
                 inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
               />
               <div
-                className="space-y-3 rounded-2xl border p-4 text-sm"
-                style={{
-                  borderColor: "var(--border)",
-                  backgroundColor: "var(--surface-base)",
-                  color: "var(--foreground)",
-                }}
+                className="space-y-3 rounded-2xl border p-4 text-sm border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
               >
                 <div className="flex items-center justify-between">
                   <span
-                    className="text-xs uppercase tracking-wider"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                   >
                     Draft status
                   </span>
-                  <span className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                     {draftStatus === "draft_ready"
                       ? "Ready"
                       : draftStatus === "error"
@@ -1334,7 +1176,7 @@ export default function SimPage() {
                   </span>
                 </div>
                 {draftNotes ? (
-                  <p className="text-sm" style={{ color: "var(--foreground)" }}>
+                  <p className="text-sm text-slate-900 dark:text-slate-50">
                     {draftNotes}
                   </p>
                 ) : null}
@@ -1347,14 +1189,7 @@ export default function SimPage() {
                       setStatusMessage("AI 드래프트가 좌측 Scenario Builder에 반영되었습니다.");
                     }}
                     disabled={!simDraft}
-                    className="rounded-2xl px-3 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-40"
-                    style={{ backgroundColor: "var(--primary)" }}
-                    onMouseEnter={(e) => {
-                      if (simDraft) e.currentTarget.style.opacity = "0.9";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (simDraft) e.currentTarget.style.opacity = "1";
-                    }}
+                    className="rounded-2xl px-3 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-40 bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
                   >
                     Apply
                   </button>
@@ -1368,88 +1203,57 @@ export default function SimPage() {
                       setLastParseError(null);
                       setLastAssistantRaw("");
                     }}
-                    className="rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-wider transition"
-                    style={{
-                      borderColor: "var(--border)",
-                      backgroundColor: "var(--surface-base)",
-                      color: "var(--foreground)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "var(--primary)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }}
+                    className="rounded-2xl border px-3 py-2 text-sm font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-sky-600"
                   >
                     Discard
                   </button>
                 </div>
                 {simDraft ? (
                   <div
-                    className="space-y-2 rounded-2xl border p-3"
-                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+                    className="space-y-2 rounded-2xl border p-3 border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
                   >
                     <p
-                      className="text-xs uppercase tracking-wider"
-                      style={{ color: "var(--muted-foreground)" }}
+                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                     >
                       Draft JSON
                     </p>
                     <pre
-                      className="max-h-44 overflow-auto rounded-2xl border p-2 text-sm font-mono"
-                      style={{
-                        borderColor: "var(--border)",
-                        backgroundColor: "var(--background)",
-                        color: "var(--foreground)",
-                      }}
+                      className="max-h-44 overflow-auto rounded-2xl border p-2 text-sm font-mono border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                     >
                       {JSON.stringify(simDraft, null, 2)}
                     </pre>
                   </div>
                 ) : (
-                  <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     No SIM draft yet. Ask Copilot to generate one.
                   </p>
                 )}
                 <details
-                  className="rounded-2xl border p-3 text-sm"
-                  style={{
-                    borderColor: "var(--border)",
-                    backgroundColor: "var(--surface-base)",
-                    color: "var(--foreground)",
-                  }}
+                  className="rounded-2xl border p-3 text-sm border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                 >
                   <summary
-                    className="cursor-pointer text-xs uppercase tracking-wider"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="cursor-pointer text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                   >
                     Debug
                   </summary>
                   <div className="mt-2 space-y-1">
                     <p
-                      className="text-xs uppercase tracking-wider"
-                      style={{ color: "var(--muted-foreground)" }}
+                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                     >
                       Parse status: {lastParseStatus}
                     </p>
                     {lastParseError ? (
-                      <p className="text-sm" style={{ color: "var(--error)" }}>
+                      <p className="text-sm text-rose-600 dark:text-rose-400">
                         Error: {lastParseError}
                       </p>
                     ) : null}
                     <p
-                      className="text-xs uppercase tracking-wider"
-                      style={{ color: "var(--muted-foreground)" }}
+                      className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
                     >
                       Last assistant raw
                     </p>
                     <pre
-                      className="max-h-24 overflow-auto rounded-2xl border p-2 text-sm font-mono"
-                      style={{
-                        borderColor: "var(--border)",
-                        backgroundColor: "var(--background)",
-                        color: "var(--foreground)",
-                      }}
+                      className="max-h-24 overflow-auto rounded-2xl border p-2 text-sm font-mono border-slate-200 bg-slate-50 text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
                     >
                       {lastAssistantRaw || "없음"}
                     </pre>

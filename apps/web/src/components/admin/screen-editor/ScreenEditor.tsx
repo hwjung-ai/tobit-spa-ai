@@ -395,7 +395,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   {draftConflict.autoMergedScreen && (
                     <button
                       type="button"
-                      className="rounded border border-sky-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                      className="rounded border border-sky-500/60 px-2 py-1 text-[10px] uppercase tracking-wider"
                       onClick={() => {
                         applyAutoMergedConflict();
                         setToast({ message: "Auto-merge applied to draft", type: "success" });
@@ -406,7 +406,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   )}
                   <button
                     type="button"
-                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{ borderColor: "var(--border)" }}
+                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider" style={{ borderColor: "var(--border)" }}
                     onClick={() => {
                       void (async () => {
                         try {
@@ -424,7 +424,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]"
+                    className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-wider"
                     onClick={() => {
                       void (async () => {
                         try {
@@ -442,7 +442,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-[0.15em]" style={{ borderColor: "var(--border)" }}
+                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider" style={{ borderColor: "var(--border)" }}
                     onClick={() => clearDraftConflict()}
                   >
                     Dismiss
@@ -462,7 +462,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
             <div>
               <p className="text-sm uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>Schema</p>
-              <p className="text-[11px]" style={{ color: "var(--foreground-secondary)" }}>{schemaSummary}</p>
+              <p className="text-xs" style={{ color: "var(--foreground-secondary)" }}>{schemaSummary}</p>
             </div>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -478,8 +478,8 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           {editorState.proposedPatch && (
             <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: "var(--border)" }}>
               {proposedPatchSummary.length > 0 && (
-                <div className="rounded-xl border p-2 text-[11px]" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)", color: "var(--foreground-secondary)" }}>
-                  <p className="text-[10px] uppercase tracking-[0.15em]" style={{ color: "var(--muted-foreground)" }}>Patch Diff</p>
+                <div className="rounded-xl border p-2 text-xs" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)", color: "var(--foreground-secondary)" }}>
+                  <p className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Patch Diff</p>
                   {proposedPatchSummary.map((line) => (
                     <p key={line}>{line}</p>
                   ))}
@@ -499,14 +499,14 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                       });
                     }
                   }}
-                  className="flex-1 rounded-2xl bg-emerald-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500"
+                  className="flex-1 rounded-2xl bg-emerald-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500"
                 >
                   Apply
                 </button>
                 <button
                   type="button"
                   onClick={() => editorState.discardProposal()}
-                  className="flex-1 rounded-2xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition"
+                  className="flex-1 rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition"
                   style={{ borderColor: "var(--border)", color: "var(--muted-foreground)" }}
                 >
                   Discard
@@ -516,7 +516,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           )}
           {livePreviewBlock && (
             <div className="border-t px-4 py-3" style={{ borderColor: "var(--border)" }}>
-              <p className="mb-2 text-[10px] uppercase tracking-[0.15em]" style={{ color: "var(--muted-foreground)" }}>Live Preview</p>
+              <p className="mb-2 text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Live Preview</p>
               <div className="max-h-60 overflow-auto rounded-lg border p-2" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)" }}>
                 <UIScreenRenderer block={livePreviewBlock} schemaOverride={screen} />
               </div>

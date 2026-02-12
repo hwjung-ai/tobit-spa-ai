@@ -43,7 +43,7 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
                                     : String(setting.value)}
                             </td>
                             <td className="py-3 px-4">
-                                <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-blue-950/50 text-blue-300" :
+                                <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-sky-950/50 text-sky-300" :
                                         setting.source === "env" ? "bg-yellow-950/50 text-yellow-300" :
                                             " dark:  dark:"
                                     }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}>

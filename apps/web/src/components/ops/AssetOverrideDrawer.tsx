@@ -31,7 +31,7 @@ interface AssetOverrideDrawerProps {
 }
 
 const ASSET_TYPES = [
-  { value: "prompt", label: "Prompt", color: "bg-blue-500" },
+  { value: "prompt", label: "Prompt", color: "bg-sky-500" },
   { value: "policy", label: "Policy", color: "bg-purple-500" },
   { value: "query", label: "Query", color: "bg-green-500" },
   { value: "mapping", label: "Mapping", color: "bg-orange-500" },
@@ -269,7 +269,7 @@ export default function AssetOverrideDrawer({
                     role="switch"
                     aria-checked={testMode}
                     onClick={() => setTestMode(!testMode)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${testMode ? 'bg-blue-600' : ''}`} style={{ backgroundColor: "var(--surface-elevated)" }}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${testMode ? 'bg-sky-600' : ''}`} style={{ backgroundColor: "var(--surface-elevated)" }}
                   >
                     <span
                       aria-hidden="true"

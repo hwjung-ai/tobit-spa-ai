@@ -70,7 +70,7 @@ export function OrchestrationVisualization({
       case 'parallel':
         return 'bg-emerald-900/40 text-emerald-200 border-emerald-400/50';
       case 'dag':
-        return 'bg-blue-900/40 text-blue-200 border-blue-400/50';
+        return 'bg-sky-900/40 text-sky-200 border-sky-400/50';
       case 'serial':
       default:
         return 'bg-amber-900/40 text-amber-200 border-amber-400/50';
@@ -165,7 +165,7 @@ export function OrchestrationVisualization({
                     onClick={() => onToolSelect?.(tool.tool_id)}
                     className={`p-3 rounded-lg border cursor-pointer transition-all ${
                       selectedTool === tool.tool_id
-                        ? 'bg-blue-900/30 border-blue-400/50 ring-1 ring-blue-400/30'
+                        ? 'bg-sky-900/30 border-sky-400/50 ring-1 ring-sky-400/30'
                         : ' /30 hover:/50 hover:'
                     }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
                   >

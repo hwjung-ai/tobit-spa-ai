@@ -45,7 +45,7 @@ const STATUS_STYLES: Record<StageStatusType, { badge: string; icon: React.ReactE
 };
 
 const STAGE_STYLES: Record<string, string> = {
-  route_plan: "border-blue-400/50 bg-blue-500/10",
+  route_plan: "border-sky-400/50 bg-sky-500/10",
   validate: "border-emerald-400/50 bg-emerald-500/10",
   execute: "border-amber-400/50 bg-amber-500/10",
   compose: "border-purple-400/50 bg-purple-500/10",
@@ -53,7 +53,7 @@ const STAGE_STYLES: Record<string, string> = {
 };
 
 const ASSET_CONFIG: Record<string, { icon: React.ReactElement; color: string; label: string }> = {
-  prompt: { icon: <Star className="h-3 w-3" />, color: "text-blue-400", label: "Prompt" },
+  prompt: { icon: <Star className="h-3 w-3" />, color: "text-sky-400", label: "Prompt" },
   policy: { icon: <Shield className="h-3 w-3" />, color: "text-emerald-400", label: "Policy" },
   query: { icon: <Search className="h-3 w-3" />, color: "text-purple-400", label: "Query" },
   mapping: { icon: <Map className="h-3 w-3" />, color: "text-amber-400", label: "Mapping" },
@@ -225,8 +225,8 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
             <p className="text-xs  font-mono break-all" style={{color: "var(--muted-foreground)"}}>{asset.fullId}</p>
           </div>
 
-          <div className="bg-blue-500/5 border border-blue-400/20 rounded-lg p-3">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-blue-400 mb-1">Asset Registry</p>
+          <div className="bg-sky-500/5 border border-sky-400/20 rounded-lg p-3">
+            <p className="text-[9px] uppercase tracking-[0.2em] text-sky-400 mb-1">Asset Registry</p>
             <p className="text-xs " style={{color: "var(--foreground-secondary)"}}>
               상세 정보는 Asset Registry 페이지에서 확인할 수 있습니다.
             </p>
@@ -313,7 +313,7 @@ export default function InspectorStagePipeline({
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] uppercase tracking-[0.3em]" style={{color: isSelected ? "var(--foreground)" : "var(--muted-foreground)"}}>
+                      <span className="text-xs uppercase tracking-[0.3em]" style={{color: isSelected ? "var(--foreground)" : "var(--muted-foreground)"}}>
                         {stage.label}
                       </span>
                       <span className={cn("px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1", statusStyle.badge)}>
@@ -357,7 +357,7 @@ export default function InspectorStagePipeline({
                 <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
                   Stage Input
                 </summary>
-                <pre className="mt-2 text-[11px]  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
+                <pre className="mt-2 text-xs  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
                   {selectedStage.input ? prettyJson(selectedStage.input) : "No input captured"}
                 </pre>
               </details>
@@ -365,7 +365,7 @@ export default function InspectorStagePipeline({
                 <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
                   Stage Output
                 </summary>
-                <pre className="mt-2 text-[11px]  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
+                <pre className="mt-2 text-xs  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
                   {selectedStage.output ? prettyJson(selectedStage.output) : "No output captured"}
                 </pre>
               </details>

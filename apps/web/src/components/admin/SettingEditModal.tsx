@@ -117,7 +117,7 @@ export default function SettingEditModal({ setting, onClose, onSuccess }: Settin
                         <div>
                             <label className="text-xs  uppercase tracking-wider" style={{color: "var(--muted-foreground)"}}>Current Source</label>
                             <p className=" text-sm mt-1" style={{color: "var(--foreground-secondary)"}}>
-                                <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-blue-950/50 text-blue-300" :
+                                <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${setting.source === "published" ? "bg-sky-950/50 text-sky-300" :
                                     setting.source === "env" ? "bg-yellow-950/50 text-yellow-300" :
                                         " "
                                     }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)"}}>

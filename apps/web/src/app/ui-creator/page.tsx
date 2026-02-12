@@ -12,10 +12,10 @@ export default function UICreatorRedirect() {
   }, [router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: "var(--surface-base)" }}>
+    <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: "rgb(248, 250, 252)" }}>
       <div className="text-center">
-        <p className="mb-2" style={{ color: "var(--foreground)" }}>UI Creator has been deprecated.</p>
-        <p style={{ color: "var(--muted-foreground)" }}>Redirecting to Admin &gt; Screens...</p>
+        <p className="mb-2" style={{ color: "rgb(15, 23, 42)" }}>UI Creator has been deprecated.</p>
+        <p style={{ color: "rgb(71, 85, 105)" }}>Redirecting to Admin &gt; Screens...</p>
       </div>
     </div>
   );

@@ -26,7 +26,7 @@ function SpanNode({ data, selected }: NodeProps<SpanNodeData>) {
       : "bg-rose-900/40 border-rose-700 text-rose-200";
 
   const nodeClass = selected
-    ? "border-2 border-blue-500 shadow-lg shadow-blue-500/50"
+    ? "border-2 border-sky-500 shadow-lg shadow-sky-500/50"
     : "border";
 
   return (

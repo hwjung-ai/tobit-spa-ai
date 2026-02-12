@@ -58,13 +58,13 @@ const getBadgeClasses = (type: ChunkType): string => {
     case "summary":
       return "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800";
     case "detail":
-      return "bg-[var(--surface-elevated)] text-[var(--foreground)] border-[var(--border)] dark:bg-[var(--surface-base)] dark:text-[var(--foreground)] dark:border-[var(--border)]";
+      return "bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-950 dark:text-slate-900 dark:border-slate-300";
     case "done":
       return "bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800";
     case "error":
       return "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-900/30 dark:text-rose-200 dark:border-rose-800";
     default:
-      return "bg-[var(--surface-elevated)] text-[var(--foreground)] border-[var(--border)] dark:bg-[var(--surface-base)] dark:text-[var(--foreground)] dark:border-[var(--border)]";
+      return "bg-slate-100 text-slate-900 border-slate-300 dark:bg-slate-950 dark:text-slate-900 dark:border-slate-300";
   }
 };
 
@@ -298,18 +298,18 @@ export default function Home() {
   }, [activeThread]);
 
   return (
-    <div className="min-h-screen flex flex-col dark: dark:" style={{backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}>
+    <div className="min-h-screen flex flex-col dark: dark:" style={{backgroundColor: "rgb(248, 250, 252)", color: "rgb(15, 23, 42)"}}>
       <div className="flex flex-1 gap-6 py-6">
         {historyVisible ? (
-          <aside className="w-[320px] space-y-4 rounded-2xl border p-4 shadow-md dark: dark:" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}>
+          <aside className="w-[320px] space-y-4 rounded-2xl border p-4 shadow-md dark: dark:" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider dark:" style={{color: "var(--foreground)"}}>History</p>
+              <p className="text-xs font-semibold uppercase tracking-wider dark:" style={{color: "rgb(15, 23, 42)"}}>History</p>
               {loadingThreads ? (
-                <span className="text-xs 0 dark:" style={{color: "var(--muted-foreground)"}}>Loading...</span>
+                <span className="text-xs 0 dark:" style={{color: "rgb(71, 85, 105)"}}>Loading...</span>
               ) : null}
               <button
                 onClick={fetchThreads}
-                className="rounded-md border px-2 py-1 text-[10px] uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)"}}
+                className="rounded-md border px-2 py-1 text-[10px] uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{backgroundColor: "rgb(241, 245, 249)", color: "rgb(15, 23, 42)", borderColor: "rgb(203, 213, 225)"}}
               >
                 Refresh
               </button>
@@ -337,7 +337,7 @@ export default function Home() {
                 >
                   <div className="text-left">
                     <p className="font-semibold text-sm">{thread.title}</p>
-                    <p className="text-xs dark:" style={{color: "var(--muted-foreground)"}}>{formatTimestamp(thread.updated_at)}</p>
+                    <p className="text-xs dark:" style={{color: "rgb(71, 85, 105)"}}>{formatTimestamp(thread.updated_at)}</p>
                   </div>
                   <button
                     className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border text-[10px] text-rose-600 border-rose-400 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-500 dark:hover:bg-rose-950/30"
@@ -357,24 +357,24 @@ export default function Home() {
 
         <main className={cn("flex flex-1 flex-col gap-6 transition-all", !historyVisible && "w-full")}>
           {/* Header Section */}
-          <div className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}>
+          <div className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-lg font-semibold dark:" style={{color: "var(--foreground)"}}>Streaming Assistant</h1>
-                <p className="text-sm dark:" style={{color: "var(--muted-foreground)"}}>
+                <h1 className="text-lg font-semibold dark:" style={{color: "rgb(15, 23, 42)"}}>Streaming Assistant</h1>
+                <p className="text-sm dark:" style={{color: "rgb(71, 85, 105)"}}>
                   메시지 기반 대화 기록을 저장하고, SSE로 Assistant 답변을 받습니다.
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setHistoryVisible((prev) => !prev)}
-                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)"}}
+                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{backgroundColor: "rgb(241, 245, 249)", color: "rgb(15, 23, 42)", borderColor: "rgb(203, 213, 225)"}}
                 >
                   {historyVisible ? "Hide history" : "Show history"}
                 </button>
                 <button
                   onClick={startNewConversation}
-                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)"}}
+                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition hover: dark: dark: dark:hover:" style={{backgroundColor: "rgb(241, 245, 249)", color: "rgb(15, 23, 42)", borderColor: "rgb(203, 213, 225)"}}
                 >
                   New conversation
                 </button>
@@ -383,14 +383,14 @@ export default function Home() {
           </div>
 
           {/* Input Section */}
-          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="flex flex-col gap-2 text-sm dark:" style={{color: "var(--foreground)"}}>
+              <label className="flex flex-col gap-2 text-sm dark:" style={{color: "rgb(15, 23, 42)"}}>
                 질문 입력
                 <input
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
-                  className="w-full rounded-2xl border px-4 py-3 text-base outline-none transition focus:border-sky-500 dark: dark: dark:text-white dark:focus:border-sky-400" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}
+                  className="w-full rounded-2xl border px-4 py-3 text-base outline-none transition focus:border-sky-500 dark: dark: dark:text-white dark:focus:border-sky-400" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}
                   placeholder="예: 새 프로젝트의 방향성을 요약해줘"
                 />
               </label>
@@ -413,14 +413,14 @@ export default function Home() {
                   {status === "streaming" ? (
                     <span className="text-sky-600 dark:text-sky-400">SSE live</span>
                   ) : status === "idle" ? (
-                    <span className="0 dark:" style={{color: "var(--muted-foreground)"}}>Ready</span>
+                    <span className="0 dark:" style={{color: "rgb(71, 85, 105)"}}>Ready</span>
                   ) : (
                     <span className="text-rose-600 dark:text-rose-400">Error</span>
                   )}
                 </span>
               </div>
             </form>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs 0 dark:" style={{color: "var(--muted-foreground)"}}>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs 0 dark:" style={{color: "rgb(71, 85, 105)"}}>
               <span>API: {apiBaseUrl}</span>
               <span>SSE</span>
               <span>chat/stream</span>
@@ -429,11 +429,11 @@ export default function Home() {
           </section>
 
           {/* Stream Feed Section */}
-          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}>
-            <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{color: "var(--muted-foreground)"}}>Stream feed</p>
-            <div className="mt-3 flex flex-col gap-3 border-t pt-3 dark:" style={{borderColor: "var(--border)"}}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
+            <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{color: "rgb(71, 85, 105)"}}>Stream feed</p>
+            <div className="mt-3 flex flex-col gap-3 border-t pt-3 dark:" style={{borderColor: "rgb(203, 213, 225)"}}>
               {chunks.length === 0 ? (
-                <p className="text-sm 0 dark:" style={{color: "var(--muted-foreground)"}}>Streaming responses will appear here.</p>
+                <p className="text-sm 0 dark:" style={{color: "rgb(71, 85, 105)"}}>Streaming responses will appear here.</p>
               ) : null}
               {chunks.map((chunk, index) => (
                 <div
@@ -445,9 +445,9 @@ export default function Home() {
                   >
                     {chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed dark:" style={{color: "var(--foreground)"}}>{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed dark:" style={{color: "rgb(15, 23, 42)"}}>{chunk.text}</p>
                   {chunk.thread_id ? (
-                    <p className="text-xs 0 dark:" style={{color: "var(--muted-foreground)"}}>Thread: {chunk.thread_id}</p>
+                    <p className="text-xs 0 dark:" style={{color: "rgb(71, 85, 105)"}}>Thread: {chunk.thread_id}</p>
                   ) : null}
                 </div>
               ))}
@@ -455,35 +455,35 @@ export default function Home() {
           </section>
 
           {/* References Section */}
-          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{color: "var(--muted-foreground)"}}>References</p>
+              <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{color: "rgb(71, 85, 105)"}}>References</p>
               <button
                 onClick={() => setReferences([])}
-                className="text-[10px] uppercase tracking-wider transition 0 hover: dark: dark:hover:" style={{color: "var(--foreground)"}}
+                className="text-[10px] uppercase tracking-wider transition 0 hover: dark: dark:hover:" style={{color: "rgb(15, 23, 42)"}}
               >
                 Clear
               </button>
             </div>
             <div className="mt-3 space-y-3">
               {references.length === 0 ? (
-                <p className="text-sm 0 dark:" style={{color: "var(--muted-foreground)"}}>References from latest document chat will appear here.</p>
+                <p className="text-sm 0 dark:" style={{color: "rgb(71, 85, 105)"}}>References from latest document chat will appear here.</p>
               ) : (
                 references.map((reference) => (
                   <button
                     key={reference.chunk_id}
                     onClick={() => openReference(reference)}
-                    className="w-full rounded-2xl border p-4 text-left transition hover:border-sky-500 dark: dark: dark:hover:border-sky-400" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
+                    className="w-full rounded-2xl border p-4 text-left transition hover:border-sky-500 dark: dark: dark:hover:border-sky-400" style={{backgroundColor: "rgb(248, 250, 252)", borderColor: "rgb(203, 213, 225)"}}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold dark:" style={{color: "var(--foreground)"}}>{reference.document_title}</p>
-                      <span className="text-[10px] uppercase tracking-wider 0 dark:" style={{color: "var(--muted-foreground)"}}>
+                      <p className="text-sm font-semibold dark:" style={{color: "rgb(15, 23, 42)"}}>{reference.document_title}</p>
+                      <span className="text-[10px] uppercase tracking-wider 0 dark:" style={{color: "rgb(71, 85, 105)"}}>
                         {reference.page ? `Page ${reference.page}` : "Page unknown"}
                       </span>
                     </div>
-                    <p className="mt-2 text-xs dark:" style={{color: "var(--muted-foreground)"}}>{reference.snippet}</p>
+                    <p className="mt-2 text-xs dark:" style={{color: "rgb(71, 85, 105)"}}>{reference.snippet}</p>
                     {reference.score !== undefined ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-wider 0 dark:" style={{color: "var(--muted-foreground)"}}>
+                      <p className="mt-1 text-[10px] uppercase tracking-wider 0 dark:" style={{color: "rgb(71, 85, 105)"}}>
                         Similarity {reference.score.toFixed(2)}
                       </p>
                     ) : null}
@@ -494,18 +494,18 @@ export default function Home() {
           </section>
 
           {/* Conversation Section */}
-          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "var(--background)", borderColor: "var(--border)"}}>
+          <section className="rounded-2xl border p-5 shadow-sm dark: dark:" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{color: "var(--muted-foreground)"}}>Conversation</p>
+              <p className="text-xs font-semibold uppercase tracking-wider 0 dark:" style={{color: "rgb(71, 85, 105)"}}>Conversation</p>
               {activeThread ? (
-                <p className="text-xs 0 dark:" style={{color: "var(--muted-foreground)"}}>
+                <p className="text-xs 0 dark:" style={{color: "rgb(71, 85, 105)"}}>
                   {messageFeed.length} message{messageFeed.length === 1 ? "" : "s"}
                 </p>
               ) : null}
             </div>
             <div className="mt-3 space-y-3">
               {messageFeed.length === 0 ? (
-                <p className="text-sm 0 dark:" style={{color: "var(--muted-foreground)"}}>Select a thread or send a prompt to start.</p>
+                <p className="text-sm 0 dark:" style={{color: "rgb(71, 85, 105)"}}>Select a thread or send a prompt to start.</p>
               ) : (
                 messageFeed.map((message) =>
                   message.role === "user" ? (
@@ -525,12 +525,12 @@ export default function Home() {
                   ) : (
                     <div
                       key={message.id}
-                      className="rounded-2xl border p-4 text-sm shadow-sm dark: dark:" style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
+                      className="rounded-2xl border p-4 text-sm shadow-sm dark: dark:" style={{backgroundColor: "rgb(248, 250, 252)", borderColor: "rgb(203, 213, 225)"}}
                     >
-                      <p className="text-xs uppercase tracking-wider 0 dark:" style={{color: "var(--muted-foreground)"}}>
+                      <p className="text-xs uppercase tracking-wider 0 dark:" style={{color: "rgb(71, 85, 105)"}}>
                         {message.role} · {formatTimestamp(message.created_at)}
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed dark:" style={{color: "var(--foreground)"}}>
+                      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed dark:" style={{color: "rgb(15, 23, 42)"}}>
                         {message.content}
                       </p>
                     </div>

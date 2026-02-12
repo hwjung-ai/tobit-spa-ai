@@ -170,7 +170,7 @@ export default function ConversationSummaryModal({
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
-                <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-4  border-t-blue-500" style={{borderColor: "var(--border)"}} />
+                <div className="mb-3 inline-block h-8 w-8 animate-spin rounded-full border-4  border-t-sky-500" style={{borderColor: "var(--border)"}} />
                 <p className="text-sm " style={{color: "var(--muted-foreground)"}}>요약을 불러오는 중...</p>
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function ConversationSummaryModal({
                       className="rounded-lg border   p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
                     >
                       <div className="mb-2 flex items-start justify-between">
-                        <span className="text-xs font-medium text-blue-400">
+                        <span className="text-xs font-medium text-sky-400">
                           Q{idx + 1}. {qa.mode} 모드
                         </span>
                         {qa.timestamp && (
@@ -281,7 +281,7 @@ export default function ConversationSummaryModal({
             <button
               onClick={exportToPDF}
               disabled={exporting}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {exporting ? (
                 <>

@@ -628,7 +628,7 @@ export function PdfViewerModal({
           {pdfError && (
             <div className="text-center">
               <div className="mb-3 text-4xl">⚠️</div>
-              <p className="text-red-400">{pdfError}</p>
+              <p className="text-rose-400">{pdfError}</p>
             </div>
           )}
 
@@ -638,13 +638,13 @@ export function PdfViewerModal({
                 file={pdfFile}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={onDocumentLoadError}
-                error={<div className="text-red-400">PDF 로드 실패</div>}
+                error={<div className="text-rose-400">PDF 로드 실패</div>}
                 className="flex flex-col items-center"
               >
                 <ReactPdfPage
                   pageNumber={currentPage}
                   width={pageWidth}
-                  error={<div className="text-red-400">페이지 로드 실패</div>}
+                  error={<div className="text-rose-400">페이지 로드 실패</div>}
                 />
               </ReactPdfDocument>
             </div>

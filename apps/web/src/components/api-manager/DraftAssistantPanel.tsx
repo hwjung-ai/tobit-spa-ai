@@ -94,7 +94,7 @@ export default function DraftAssistantPanel({
         </div>
         {draftNotes ? <p className="text-sm" style={{color: "var(--muted-foreground)"}}>{draftNotes}</p> : null}
         {draftDiff ? (
-          <ul className="space-y-1 text-[11px]" style={{color: "var(--muted-foreground)"}}>
+          <ul className="space-y-1 text-xs" style={{color: "var(--muted-foreground)"}}>
             {draftDiff.map((item, index) => (
               <li key={index}>{item}</li>
             ))}
@@ -172,7 +172,7 @@ export default function DraftAssistantPanel({
                 Save target: {saveTarget ?? "none"}
               </p>
               {lastSaveError ? (
-                <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p>
+                <p className="text-xs text-rose-300">Save error: {lastSaveError}</p>
               ) : null}
               <p className="debug-section-label">Selected API</p>
               <p className="debug-section-value">
@@ -182,7 +182,7 @@ export default function DraftAssistantPanel({
                 Parse status: {lastParseStatus}
               </p>
               {lastParseError ? (
-                <p className="text-[11px] text-rose-300">Error: {lastParseError}</p>
+                <p className="text-xs text-rose-300">Error: {lastParseError}</p>
               ) : null}
               <p className="debug-section-label">Last assistant raw</p>
               <pre className="code-block">

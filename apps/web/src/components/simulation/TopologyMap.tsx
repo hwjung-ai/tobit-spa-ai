@@ -120,7 +120,7 @@ export default function TopologyMap({
 
   return (
     <div className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-      <h2 className="text-sm font-semibold uppercase tracking-[0.25em] " style={{color: "var(--foreground-secondary)"}}>
+      <h2 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>
         System Topology Map
       </h2>
       <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>

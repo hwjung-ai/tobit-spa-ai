@@ -113,9 +113,9 @@ export default function ScreenEditorCopilotPanel({
       <div className="flex items-center justify-between border-b px-4 py-3" style={{borderBottom: "1px solid var(--border)"}}>
         <div>
           <p className="text-sm uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>Copilot</p>
-          <p className="text-[11px]" style={{color: "var(--muted-foreground)"}}>Patch suggestions</p>
+          <p className="text-xs" style={{color: "var(--muted-foreground)"}}>Patch suggestions</p>
         </div>
-        <span className="text-[11px] uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+        <span className="text-xs uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
           {previewStatusLabel}
         </span>
       </div>
@@ -140,7 +140,7 @@ export default function ScreenEditorCopilotPanel({
         <button
           onClick={handleGenerateProposal}
           disabled={!inputValue.trim()}
-          className="w-full rounded-2xl bg-sky-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-500 disabled:opacity-40"
+          className="w-full rounded-2xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-500 disabled:opacity-40"
         >
           Generate Proposal
         </button>
@@ -172,7 +172,7 @@ export default function ScreenEditorCopilotPanel({
       <div className="px-4 py-3 space-y-2" style={{borderTop: "1px solid var(--border)"}}>
         <button
           onClick={handlePreviewToggle}
-          className="w-full rounded-2xl px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition"
+          className="w-full rounded-2xl px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition"
           style={{backgroundColor: "var(--surface-elevated)"}}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--surface-overlay)"}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--surface-elevated)"}
@@ -181,13 +181,13 @@ export default function ScreenEditorCopilotPanel({
         </button>
         <button
           onClick={handleApply}
-          className="w-full rounded-2xl bg-emerald-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500"
+          className="w-full rounded-2xl bg-emerald-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-emerald-500"
         >
           Apply to Draft
         </button>
         <button
           onClick={handleDiscard}
-          className="w-full rounded-2xl border px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] transition"
+          className="w-full rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition"
           style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}
           onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--primary)"}
           onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--border)"}

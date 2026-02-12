@@ -126,7 +126,7 @@ export function OrchestrationSection({ stageOutput }: OrchestrationSectionProps)
                           {tool.depends_on.map((dep) => (
                             <span
                               key={dep}
-                              className="px-2 py-1 rounded bg-blue-900/30 text-blue-300 border border-blue-400/30"
+                              className="px-2 py-1 rounded bg-sky-900/30 text-sky-300 border border-sky-400/30"
                             >
                               {dep}
                             </span>

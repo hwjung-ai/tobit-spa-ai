@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -59,13 +59,13 @@ export default function RootLayout({
             >
               Skip to main content
             </a>
-            <header className="flex items-center justify-between border-b px-6 py-4" style={{ backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)" }}>
+            <header className="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-950">
                 <div className="flex items-end gap-5">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.3em]" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
                       Tobit SPA AI
                     </p>
-                    <h1 className="text-2xl font-semibold" style={{ color: "var(--foreground)" }}>Intelligent Ops Studio</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Intelligent Ops Studio</h1>
                   </div>
                   <SystemStatusIndicator />
                 </div>
@@ -78,7 +78,7 @@ export default function RootLayout({
                 <HeaderUserMenu />
               </nav>
             </header>
-            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full px-4 pb-16 pt-4 md:px-6 md:pb-4" style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}>
+            <main id="main-content" className="min-h-[calc(100vh-96px)] w-full bg-white px-4 pb-16 pt-4 text-slate-900 md:px-6 md:pb-4 dark:bg-slate-950 dark:text-slate-50">
               {children}
             </main>
             <MobileBottomNav />
