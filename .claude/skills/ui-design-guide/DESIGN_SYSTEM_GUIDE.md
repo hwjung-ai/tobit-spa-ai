@@ -16,8 +16,9 @@
 6. [Component Patterns](#component-patterns)
 7. [Dark Mode](#dark-mode)
 8. [Code Style Guidelines](#code-style-guidelines)
-9. [ADMIN Page Standards](#admin-page-standards)
-10. [Migration Checklist](#migration-checklist)
+9. [Universal Page Standards](#universal-page-standards)
+10. [ADMIN Page Standards](#admin-page-standards)
+11. [Migration Checklist](#migration-checklist)
 
 ---
 
@@ -637,3 +638,120 @@ Use this checklist for ADMIN pages:
 - [ ] Tables use consistent border colors (\`border-slate-200\` / \`dark:border-slate-800\`)
 - [ ] Loading skeletons follow page section pattern
 - [ ] All text has dark mode variants
+
+## 🌐 Universal Page Standards
+
+### All Page Layout
+
+Applies to ALL pages (Main, OPS, SIM, ADMIN, etc.):
+
+```typescript
+<div className="min-h-screen bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+  <header className="border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+    {/* Header content */}
+  </header>
+  <main className="min-h-[calc(100vh-96px)] w-full px-4 pb-16 pt-4 md:px-6 md:pb-4">
+    {/* Page content */}
+  </main>
+</div>
+```
+
+### Universal Card/Section
+
+All content sections use this pattern:
+
+```typescript
+<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Title</h2>
+  {/* Content */}
+</section>
+```
+
+### Universal Input
+
+All form inputs follow this pattern:
+
+```typescript
+<input
+  className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
+/>
+```
+
+### Universal Button Standards
+
+All buttons follow these variants:
+
+| Variant | Classes |
+|---------|----------|
+| Primary | `bg-sky-600 text-white hover:bg-sky-500 dark:bg-sky-700` |
+| Secondary | `border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800` |
+| Destructive | `bg-rose-600 text-white hover:bg-rose-500 dark:bg-rose-900` |
+| Ghost | `hover:bg-slate-100 text-slate-700 dark:hover:bg-slate-800 dark:text-slate-300` |
+
+### Universal Text Standards
+
+All text follows these rules:
+
+| Element | Light | Dark |
+|----------|--------|--------|
+| Heading (h1) | `text-slate-900` | `dark:text-slate-50` |
+| Heading (h2) | `text-slate-900` | `dark:text-white` |
+| Heading (h3) | `text-slate-900` | `dark:text-white` |
+| Body (p) | `text-slate-900` | `dark:text-slate-50` |
+| Muted (secondary) | `text-slate-600` | `dark:text-slate-400` |
+| Disabled | `text-slate-400` | `dark:text-slate-600` |
+
+### Universal Form Standards
+
+All forms follow these patterns:
+
+```typescript
+// ✅ Good - Consistent form layout
+<form className="space-y-4">
+  <div className="space-y-2">
+    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Field Name</label>
+    <input className="w-full rounded-md border border-slate-300 bg-white px-4 py-3 text-base outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400" />
+  </div>
+</form>
+```
+
+### Empty State Standards
+
+All empty states follow this pattern:
+
+```typescript
+<div className="flex flex-col items-center justify-center py-20">
+  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4 border border-slate-300 dark:bg-slate-800 dark:border-slate-700">
+    {/* Icon */}
+  </div>
+  <p className="text-slate-700 dark:text-slate-400 text-sm font-medium">No data found</p>
+  <p className="text-slate-500 dark:text-slate-500 text-xs">Create your first item to get started</p>
+</div>
+```
+
+### Loading State Standards
+
+All loading states follow this pattern:
+
+```typescript
+<div className="flex flex-col items-center justify-center py-20">
+  <div className="w-10 h-10 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
+  <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">Loading...</p>
+</div>
+```
+
+---
+
+## 🎯 Complete Design Checklist
+
+Use this checklist for ANY page/component:
+
+- [ ] Page wrapper: `bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-50`
+- [ ] Sections: `rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90`
+- [ ] Inputs: `rounded-md border border-slate-300 bg-white px-4 py-3` (with dark variants)
+- [ ] Buttons use standard variants (Primary, Secondary, Destructive, Ghost)
+- [ ] Text has proper dark mode variants
+- [ ] Forms use `space-y-4` for vertical spacing
+- [ ] Empty states follow universal pattern
+- [ ] Loading states follow universal pattern
+
