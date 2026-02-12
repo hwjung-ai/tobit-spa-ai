@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { QueryBuilder, formatQuery } from "react-querybuilder";
-import "react-querybuilder/dist/query-builder.css";
 
 interface SQLQueryBuilderProps {
   query?: string;
@@ -18,10 +16,8 @@ interface QueryRule {
 
 interface QueryGroup {
   combinator: string;
-  rules: (QueryRule | QueryGroup)[];
+  rules: QueryRule[];
 }
-
-type QueryBuilderControlProps = Record<string, unknown>;
 
 // Sample tables and columns (in production, fetch from API)
 const TABLES = {
@@ -66,34 +62,14 @@ const formatRuleToSQL = (rule: QueryRule, tableName: string): string => {
   }
 };
 
-const formatGroupToSQL = (group: QueryGroup, tableName: string): string => {
-  const rules = group.rules.map((rule) => 
-    typeof rule === 'string' ? rule : formatRuleToSQL(rule as QueryRule, tableName)
-  );
-  
+const formatGroupToSQL = (group: QueryGroup): string => {
+  const rules = group.rules
+    .filter((rule) => rule.field && rule.operator)
+    .map((rule) => formatRuleToSQL(rule, ""));
   return rules.join(` ${group.combinator} `);
 };
 
 export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryBuilderProps) {
-  const getControlValue = (props: QueryBuilderControlProps): string => {
-    const raw = props.value;
-    return typeof raw === "string" || typeof raw === "number" ? String(raw) : "";
-  };
-
-  const runHandleOnChange = (props: QueryBuilderControlProps, value: string) => {
-    const handler = props.handleOnChange;
-    if (typeof handler === "function") {
-      (handler as (nextValue: string) => void)(value);
-    }
-  };
-
-  const runHandleOnClick = (props: QueryBuilderControlProps) => {
-    const handler = props.handleOnClick;
-    if (typeof handler === "function") {
-      (handler as () => void)();
-    }
-  };
-
   const [selectedTable, setSelectedTable] = useState<string>("");
   const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
   const [whereConditions, setWhereConditions] = useState<QueryGroup>({
@@ -126,7 +102,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
     
     // WHERE
     if (whereConditions.rules.length > 0) {
-      const whereSQL = formatGroupToSQL(whereConditions, selectedTable);
+      const whereSQL = formatGroupToSQL(whereConditions);
       sql += `\nWHERE ${whereSQL}`;
     }
     
@@ -227,128 +203,111 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
       {selectedTable && (
         <div className="space-y-2">
           <label className="text-xs uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>WHERE Conditions</label>
-          <div className="rounded-2xl border   p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-            <QueryBuilder
-              query={whereConditions}
-              onQueryChange={handleQueryChange}
-              fields={TABLES[selectedTable].map((column) => ({
-                name: column,
-                label: column,
-              }))}
-              operators={OPERATORS}
-              combinators={["AND", "OR"]}
-              controlElements={{
-                queryBuilder: (props) => (
-                  <div className="query-builder">
-                    <QueryBuilder {...props} />
-                  </div>
-                ),
-                combinatorSelector: (props) => (
-                  <select
-                    value={getControlValue(props as QueryBuilderControlProps)}
-                    onChange={(event) =>
-                      runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
-                    }
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
-                  >
-                    <option value="AND">AND</option>
-                    <option value="OR">OR</option>
-                  </select>
-                ),
-                fieldSelector: (props) => (
-                  <select
-                    value={getControlValue(props as QueryBuilderControlProps)}
-                    onChange={(event) =>
-                      runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
-                    }
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
-                  >
-                    <option value="">-- Select field --</option>
-                    {props.options.map((opt: { name: string; label: string }) => (
-                      <option key={opt.name} value={opt.name}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                ),
-                operatorSelector: (props) => (
-                  <select
-                    value={getControlValue(props as QueryBuilderControlProps)}
-                    onChange={(event) =>
-                      runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
-                    }
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
-                  >
-                    <option value="">-- Select operator --</option>
-                    {props.options.map((opt: { name: string; label: string }) => (
-                      <option key={opt.name} value={opt.name}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                ),
-                valueEditor: (props) => (
-                  <input
-                    value={getControlValue(props as QueryBuilderControlProps)}
-                    onChange={(event) =>
-                      runHandleOnChange(props as QueryBuilderControlProps, event.target.value)
-                    }
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    type="text"
-                    className="rounded-lg border   px-2 py-1 text-xs " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
-                    placeholder="Value"
-                  />
-                ),
-                addRuleAction: (props) => (
-                  <button
-                    type="button"
-                    onClick={() => runHandleOnClick(props as QueryBuilderControlProps)}
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-sky-400 transition hover:border-sky-500"
-                  >
-                    + Rule
-                  </button>
-                ),
-                addGroupAction: (props) => (
-                  <button
-                    type="button"
-                    onClick={() => runHandleOnClick(props as QueryBuilderControlProps)}
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-indigo-400 transition hover:border-indigo-500"
-                  >
-                    + Group
-                  </button>
-                ),
-                removeRuleAction: (props) => (
-                  <button
-                    type="button"
-                    onClick={() => runHandleOnClick(props as QueryBuilderControlProps)}
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
-                  >
-                    ×
-                  </button>
-                ),
-                removeGroupAction: (props) => (
-                  <button
-                    type="button"
-                    onClick={() => runHandleOnClick(props as QueryBuilderControlProps)}
-                    disabled={Boolean((props as QueryBuilderControlProps).disabled)}
-                    className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
-                  >
-                    ×
-                  </button>
-                ),
-              }}
-              controlClassnames={{
-                queryBuilder: "query-builder-class",
-                ruleGroup: "rule-group-class",
-                rule: "rule-class",
-              }}
-            />
+          <div className="rounded-2xl border p-3 space-y-2" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>Combinator</span>
+              <select
+                value={whereConditions.combinator}
+                onChange={(e) => setWhereConditions((prev) => ({ ...prev, combinator: e.target.value }))}
+                disabled={readOnly}
+                className="rounded-lg border px-2 py-1 text-xs"
+                style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+              >
+                <option value="AND">AND</option>
+                <option value="OR">OR</option>
+              </select>
+              <button
+                type="button"
+                disabled={readOnly}
+                onClick={() =>
+                  setWhereConditions((prev) => ({
+                    ...prev,
+                    rules: [...prev.rules, { field: "", operator: "=", value: "" }],
+                  }))
+                }
+                className="ml-auto rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-sky-400 transition hover:border-sky-500"
+              >
+                + Rule
+              </button>
+            </div>
+
+            {whereConditions.rules.length === 0 ? (
+              <p className="text-[11px]" style={{ color: "var(--muted-foreground)" }}>
+                No conditions. Click "+ Rule" to add.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {whereConditions.rules.map((rule, idx) => {
+                  const nullOp = rule.operator === "IS NULL" || rule.operator === "IS NOT NULL";
+                  return (
+                    <div key={`where-rule-${idx}`} className="grid grid-cols-[1fr_140px_1fr_auto] gap-2">
+                      <select
+                        value={rule.field}
+                        onChange={(e) =>
+                          setWhereConditions((prev) => {
+                            const next = [...prev.rules];
+                            next[idx] = { ...next[idx], field: e.target.value };
+                            return { ...prev, rules: next };
+                          })
+                        }
+                        disabled={readOnly}
+                        className="rounded-lg border px-2 py-1 text-xs"
+                        style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+                      >
+                        <option value="">-- Field --</option>
+                        {TABLES[selectedTable as keyof typeof TABLES].map((column) => (
+                          <option key={column} value={column}>{column}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={rule.operator}
+                        onChange={(e) =>
+                          setWhereConditions((prev) => {
+                            const next = [...prev.rules];
+                            next[idx] = { ...next[idx], operator: e.target.value };
+                            return { ...prev, rules: next };
+                          })
+                        }
+                        disabled={readOnly}
+                        className="rounded-lg border px-2 py-1 text-xs"
+                        style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+                      >
+                        {OPERATORS.map((op) => (
+                          <option key={op.name} value={op.name}>{op.label}</option>
+                        ))}
+                      </select>
+                      <input
+                        value={rule.value}
+                        onChange={(e) =>
+                          setWhereConditions((prev) => {
+                            const next = [...prev.rules];
+                            next[idx] = { ...next[idx], value: e.target.value };
+                            return { ...prev, rules: next };
+                          })
+                        }
+                        disabled={readOnly || nullOp}
+                        placeholder={nullOp ? "N/A" : "Value"}
+                        className="rounded-lg border px-2 py-1 text-xs"
+                        style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setWhereConditions((prev) => ({
+                            ...prev,
+                            rules: prev.rules.filter((_, i) => i !== idx),
+                          }))
+                        }
+                        disabled={readOnly}
+                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
