@@ -2,7 +2,7 @@
 
 > Project: tobit-spa-ai
 > Framework: Next.js 16 + React 19 + Tailwind CSS 4 + Radix UI
-> Last Updated: 2026-02-12 (Phase 1: Consistency Fixes Applied)
+> Last Updated: 2026-02-12 (Phase 2: Primary Colors & Letter Spacing Standardized)
 
 ---
 
@@ -18,40 +18,71 @@
 8. [Code Style Guidelines](#code-style-guidelines)
 9. [Universal Page Standards](#universal-page-standards)
 10. [ADMIN Page Standards](#admin-page-standards)
-11. [Migration Checklist](#migration-checklist)
+11. [Visual Hierarchy Guidelines](#visual-hierarchy-guidelines) 🆕
+12. [Common Anti-Patterns](#common-anti-patterns) 🆕
+13. [Migration Checklist](#migration-checklist)
 
 ---
 
-## ✅ Consistency Fixes Applied (Phase 1)
+## ✅ Consistency Fixes Applied (Phase 1-2)
 
 ### Files Modified (2026-02-12)
-- ✅ `/apps/web/src/app/globals.css` - CSS variables defined
-- ✅ `/apps/web/src/lib/design-tokens.ts` - Design token system created
-- ✅ `/apps/web/src/components/builder/BuilderShell.tsx` - Dark mode support added
-- ✅ `/apps/web/src/app/page.tsx` - Full consistency pass
-- ✅ `/apps/web/src/app/admin/screens/page.tsx` - Dark mode support added
+
+**Phase 1-2 (Primary Colors & Letter Spacing):**
+- ✅ `/apps/web/src/app/globals.css` - Added consistency utility classes (btn-primary, text-label, etc.)
+- ✅ `/apps/web/src/app/documents/page.tsx` - Primary colors + letter spacing standardized
+- ✅ `/apps/web/src/app/sim/page.tsx` - Primary colors + letter spacing standardized
+- ✅ `/apps/web/src/app/ops/page.tsx` - Primary colors + letter spacing standardized
+- ✅ `/apps/web/src/app/cep-events/page.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/app/api-manager/page.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/app/admin/settings/page.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/components/admin/CreateAssetModal.tsx` - Primary color dark mode added
+- ✅ `/apps/web/src/components/admin/CreateToolModal.tsx` - Primary color dark mode added
+- ✅ `/apps/web/src/components/admin/SourceAssetForm.tsx` - Primary color dark mode added
+- ✅ `/apps/web/src/components/admin/AssetForm.tsx` - Primary color dark mode added
+- ✅ `/apps/web/src/components/admin/CreateCatalogModal.tsx` - Primary color dark mode added
+- ✅ `/apps/web/src/components/admin/screen-editor/ScreenEditor.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/components/admin/screen-editor/ScreenEditorTabs.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/components/api-manager/WorkflowBuilder.tsx` - Primary colors standardized
+- ✅ `/apps/web/src/components/api-manager/PythonBuilder.tsx` - Primary colors standardized
+- ✅ `/apps/web/src/components/simulation/FunctionBrowser.tsx` - Letter spacing standardized
+- ✅ `/apps/web/src/components/answer/UIScreenRenderer.tsx` - Letter spacing standardized
+
+**Phase 0 (Previous - Inline Styles):**
+- ✅ `globals.css` - Component-specific CSS variables added
+- ✅ `FormSection.tsx` - 100% 클래스 기반
+- ✅ `FormFieldGroup.tsx` - 100% 클래스 기반
+- ✅ `DraftAssistantPanel.tsx` - 99+ inline styles 제거
+- ✅ SQLQueryBuilder, WorkflowBuilder, PythonBuilder - inline styles 제거
+- ✅ CEP Form Builder (11개 파일) - inline styles 제거
 
 ### Key Changes
 
-1. **Dark Mode Support**
+**Phase 1-2 (Primary Colors & Letter Spacing):**
+1. **Primary Color Standardization**
+   - All primary buttons now use `bg-sky-600` (not `bg-sky-500`)
+   - Hover states use `hover:bg-sky-500` (not `hover:bg-sky-400`)
+   - Dark mode: `dark:bg-sky-700 dark:hover:bg-sky-600`
+
+2. **Letter Spacing Standardization**
+   - All uppercase labels now use `tracking-wider` (not `tracking-[0.3em]`, `tracking-[0.2em]`, etc.)
+   - Removed hardcoded letter-spacing values
+   - Consistent `tracking-wider` for all uppercase labels, badges, buttons
+
+3. **New CSS Utility Classes** (globals.css)
+   - `.btn-primary` - Standard primary button
+   - `.btn-primary-small` - Small primary button
+   - `.btn-secondary` - Standard secondary button
+   - `.badge-primary`, `.badge-active` - Badge styles
+   - `.text-label`, `.text-label-sm`, `.text-label-normal` - Label text styles
+   - `.tab-button`, `.tab-button-active`, `.tab-button-inactive` - Tab styles
+   - `.page-section` - Standard page section
+   - `.input-standard` - Standard input field
+   - `.text-primary`, `.text-muted-standard`, `.text-disabled` - Text colors
+
+4. **Dark Mode Support**
    - All pages now support light/dark mode
    - Pattern: `dark:` prefix for dark variants
-
-2. **Border Radius Standardized**
-   - `rounded-2xl` - Page sections, large containers
-   - `rounded-md` - Buttons, inputs, interactive elements
-   - `rounded-lg` - Cards
-
-3. **Color System**
-   - Text: `text-slate-900` (light) / `text-slate-50` (dark)
-   - Muted: `text-slate-600` (light) / `text-slate-400` (dark)
-   - Background: `bg-white` (light) / `bg-slate-950` (dark)
-   - Border: `border-slate-200` (light) / `border-slate-800` (dark)
-
-4. **Spacing**
-   - Page sections: `p-5` (20px)
-   - Buttons: `px-4 py-2` or `px-6 py-3`
-   - Gaps: `gap-2` to `gap-6`
 
 ---
 
@@ -737,6 +768,246 @@ All loading states follow this pattern:
 <div className="flex flex-col items-center justify-center py-20">
   <div className="w-10 h-10 border-2 border-sky-500/20 border-t-sky-500 rounded-full animate-spin"></div>
   <p className="text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-widest">Loading...</p>
+</div>
+```
+
+---
+
+## 🎨 Visual Hierarchy Guidelines 🆕
+
+### Purpose
+Create clear visual hierarchy through consistent sizing, spacing, and contrast. Users should instantly understand:
+- What is most important (primary actions)
+- What is related (grouped content)
+- What is secondary (metadata, timestamps)
+
+### Visual Hierarchy Levels
+
+| Level | Size | Spacing | Usage | Example |
+|--------|------|----------|-------|---------|
+| **H1 (Page Heading)** | `text-2xl` (24px) | Large | Page titles, hero sections | "Create API Asset" |
+| **H2 (Section Title)** | `text-lg` (18px) | Medium-Large | Section headers, card titles | "Basic Information" |
+| **H3 (Subsection)** | `text-base` (16px) | Medium | Subsection titles | "Request Parameters" |
+| **Body (Primary)** | `text-sm` (14px) | Default | Main content, descriptions | Default paragraph text |
+| **Body (Secondary)** | `text-xs` (12px) | Compact | Labels, timestamps, metadata | "Updated 2 hours ago" |
+| **Tiny (Labels)** | `text-[10px]` (10px) | Minimal | Status badges, tiny tags | "PROD", "v2.1" |
+
+### Hierarchy Guidelines
+
+1. **Font Size Steps**
+   - Always use at least 2 steps between hierarchy levels
+   - Never jump from `text-2xl` to `text-xs` directly
+   - Example: `text-2xl` → `text-lg` → `text-base` → `text-sm` → `text-xs`
+
+2. **Contrast Requirements**
+   - Page headings: `text-slate-900` / `dark:text-slate-50` (strongest)
+   - Section titles: `text-slate-900` / `dark:text-white`
+   - Body text: `text-slate-700` / `dark:text-slate-300`
+   - Secondary text: `text-slate-500` / `dark:text-slate-400`
+   - Disabled text: `text-slate-400` / `dark:text-slate-600`
+
+3. **Spacing Hierarchy**
+   - Page sections: `p-5` (20px padding)
+   - Card content: `p-4` (16px padding)
+   - Dense content: `p-3` (12px padding)
+   - Tight groups: `space-y-2` (8px gaps)
+   - Default: `space-y-4` (16px gaps)
+
+4. **Interactive Element Hierarchy**
+   - Primary buttons: `bg-sky-600 hover:bg-sky-500` (most prominent)
+   - Secondary actions: `border border-slate-300 hover:bg-slate-100` (less prominent)
+   - Ghost buttons: `hover:bg-slate-100 dark:hover:bg-slate-800` (subtle)
+   - Links: `text-sky-600 hover:text-sky-500 dark:text-sky-400`
+
+5. **Border Radius Hierarchy**
+   - Page sections: `rounded-2xl` (16px) - most prominent
+   - Cards: `rounded-lg` (8px) - medium prominence
+   - Buttons/Inputs: `rounded-md` (6px) - subtle
+   - Badges/Tags: `rounded-full` - circular indicators
+
+---
+
+## 🚫 Common Anti-Patterns 🆕
+
+### Purpose
+Identify and avoid common UI/UX mistakes that reduce clarity and consistency.
+
+### 1. Magic Numbers in Styles
+
+❌ **Bad**:
+```typescript
+// Arbitrary values without clear purpose
+<div style={{ padding: "13px", fontSize: "11.5px" }}>
+<button className="px-3.5 py-1.5 rounded-[7px]">
+```
+
+✅ **Good**:
+```typescript
+// Use design tokens or standard Tailwind classes
+<div className="p-4">  // 16px standard
+<div className="p-5">  // 20px page section
+<button className="px-6 py-3">  // 24px 12px standard
+<button className="px-4 py-2">  // 16px 8px small
+<button className="px-3 py-1.5 text-xs rounded-full">  // tiny button with badge
+```
+
+### 2. Inconsistent Hierarchy
+
+❌ **Bad**:
+```typescript
+// All text same size, no clear hierarchy
+<h1 className="text-sm">Title</h1>
+<p className="text-sm">Body text</p>
+<span className="text-sm">Label</span>
+```
+
+✅ **Good**:
+```typescript
+// Clear visual hierarchy
+<h1 className="text-2xl font-semibold">Page Title</h1>
+<h2 className="text-lg font-semibold">Section Title</h2>
+<h3 className="text-base font-medium">Subsection</h3>
+<p className="text-sm">Body content</p>
+<span className="text-xs">Secondary label</span>
+```
+
+### 3. Border Radius Soup
+
+❌ **Bad**:
+```typescript
+// Mixed border radius without clear purpose
+<div className="rounded-sm rounded-xl rounded-2xl">
+<button className="rounded-md rounded-full rounded-lg">
+```
+
+✅ **Good**:
+```typescript
+// Consistent border radius by element type
+<section className="rounded-2xl">  {/* page sections */}
+<div className="rounded-lg">          {/* cards */}
+<button className="rounded-md">       {/* buttons */}
+<input className="rounded-md">       {/* inputs */}
+<span className="rounded-full">       {/* badges, indicators */}
+```
+
+### 4. Color Chaos
+
+❌ **Bad**:
+```typescript
+// Random colors without semantic meaning
+<span style={{ color: "#a83f39" }}>
+<button className="bg-blue-500 bg-green-600 bg-purple">
+```
+
+✅ **Good**:
+```typescript
+// Semantic color tokens
+<span className="text-slate-900 dark:text-slate-50">  {/* primary text */}
+<span className="text-slate-600 dark:text-slate-400">  {/* muted text */}
+<button className="bg-sky-600 hover:bg-sky-500">  {/* primary button */}
+<button className="bg-rose-600 hover:bg-rose-500">  {/* destructive */}
+<button className="bg-emerald-600">  {/* success */}
+```
+
+### 5. Hardcoded Dark Styles
+
+❌ **Bad**:
+```typescript
+// Dark mode hardcoded, not responsive
+<div className="bg-slate-950 text-slate-100">
+<span className="text-white">
+```
+
+✅ **Good**:
+```typescript
+// Use dark: prefix for dark variants
+<div className="bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50">
+<span className="text-slate-900 dark:text-slate-50">
+```
+
+### 6. Template Literal className Soup
+
+❌ **Bad**:
+```typescript
+// Hard to read, error-prone
+<div className={`base-styles ${isActive ? "active" : ""} ${disabled ? "opacity-50" : ""}`}>
+```
+
+✅ **Good**:
+```typescript
+// Use cn() utility for clean className merging
+import { cn } from "@/lib/utils";
+
+<div className={cn("base-styles", isActive && "active", disabled && "opacity-50")}>
+```
+
+### 7. Accessibility Ignored
+
+❌ **Bad**:
+```typescript
+// No focus states, no ARIA labels
+<button className="bg-sky-600">
+<div onClick={handleClick}>
+```
+
+✅ **Good**:
+```typescript
+// Focus visible, keyboard accessible, proper ARIA
+<button className="bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+<div role="button" tabIndex={0} onClick={handleClick} onKeyDown={handleKeyDown}>
+<button aria-label="Close dialog">
+```
+
+### 8. Spacing Inconsistency
+
+❌ **Bad**:
+```typescript
+// Random spacing values
+<div className="space-y-2 space-x-5 gap-1.5 p-7">
+```
+
+✅ **Good**:
+```typescript
+// Consistent spacing scale
+<div className="space-y-2">  {/* tight */}
+<div className="space-y-3">  {/* compact */}
+<div className="space-y-4">  {/* default */}
+<div className="p-4">  {/* card padding */}
+<div className="p-5">  {/* page section */}
+```
+
+### Quick Reference Table
+
+| Category | Anti-Pattern | Solution |
+|----------|--------------|----------|
+| **Font Sizes** | `text-[11px]`, `text-[13px]` | Use `text-xs`, `text-sm` |
+| **Border Radius** | Mixed arbitrary values | Use `rounded-2xl`, `rounded-lg`, `rounded-md`, `rounded-full` |
+| **Colors** | Hex codes, random colors | Use semantic tokens: `text-slate-900`, `bg-sky-600` |
+| **Dark Mode** | Hardcoded dark styles | Use `dark:` prefix variants |
+| **Spacing** | `px-3.5`, `gap-1.5` | Use `px-3`, `px-4`, `gap-2`, `gap-3` |
+| **Letter Spacing** | `tracking-[0.2em]`, `tracking-[0.3em]` | Use `tracking-wider` for uppercase |
+
+### Common Violations to Avoid
+
+❌ **Bad Hierarchy**:
+- Same font size for title and body (`text-sm` everywhere)
+- Insufficient contrast between hierarchy levels
+- Random font sizes without clear progression
+- Inconsistent spacing between related elements
+
+✅ **Good Hierarchy**:
+```typescript
+// Clear visual progression
+<div>
+  <h1 className="text-2xl font-semibold">Page Title</h1>
+  <section className="p-5">
+    <h2 className="text-lg font-semibold">Section Title</h2>
+    <div className="space-y-4">
+      <h3 className="text-base font-medium">Subsection</h3>
+      <p className="text-sm">Body content</p>
+      <p className="text-xs">Secondary info</p>
+    </div>
+  </section>
 </div>
 ```
 
