@@ -569,6 +569,17 @@ export default function OpsPage() {
 
   return (
     <div className="ops-theme">
+      {/* Page Header */}
+      <div className="space-y-6 px-6 py-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">OPS Workspace</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            OPS Query System을 통해 데이터를 조회하고 분석합니다. 질문과 답변 내용을 추적하고 관리합니다.
+          </p>
+        </div>
+      </div>
+
+      <div className="px-6 pb-6">
     {/* Summary Modal */}
     {summaryModalOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/60">
@@ -885,19 +896,20 @@ export default function OpsPage() {
             ...(isFullScreen ? { gridColumn: "span 2" } : {}),
           }}
         >
-          <header className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">OPS answer</p>
-              <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-                {selectedLabel}
-                {selectedEntry ? ` · ${formatTimestamp(selectedEntry.createdAt)}` : ""}
-              </h1>
-              {selectedEntry ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">{selectedEntry.question}</p>
-              ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-400">질의를 실행하면 결과가 여기 표시됩니다.</p>
-              )}
-            </div>
+          <header className="page-header">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="page-header-content">
+                <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">OPS answer</p>
+                <h1 className="page-header-title">
+                  {selectedLabel}
+                  {selectedEntry ? ` · ${formatTimestamp(selectedEntry.createdAt)}` : ""}
+                </h1>
+                {selectedEntry ? (
+                  <p className="page-header-description">{selectedEntry.question}</p>
+                ) : (
+                  <p className="page-header-description">질의를 실행하면 결과가 여기 표시됩니다.</p>
+                )}
+              </div>
             <div className="flex items-center gap-2">
               {selectedEntry ? (
                 <span
@@ -912,11 +924,12 @@ export default function OpsPage() {
               {canFullScreen ? (
                 <button
                   onClick={() => setIsFullScreen((prev) => !prev)}
-                  className="rounded-full border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
+                  className="br-badge border px-3 py-1 text-xs uppercase tracking-wider transition hover:bg-slate-50 dark:hover:bg-slate-800 border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
                 >
                   {isFullScreen ? "Exit full screen" : "Full screen"}
                 </button>
               ) : null}
+            </div>
             </div>
           </header>
           <details className="rounded-2xl border border-slate-200/40 p-3 text-sm bg-slate-50 text-slate-700 dark:border-slate-800/40 dark:bg-slate-950 dark:text-slate-300">
@@ -1060,6 +1073,7 @@ export default function OpsPage() {
       pdfBlobUrl={pdfBlobUrl}
       filename={pdfFilename}
     />
+    </div>
     </div>
   );
  }

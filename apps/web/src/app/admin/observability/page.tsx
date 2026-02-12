@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ObservabilityDashboard from "@/components/admin/ObservabilityDashboard";
 import CEPDashboard from "@/components/admin/observability/DashboardPage";
+import { cn } from "@/lib/utils";
 
 type DashboardTab = "system" | "cep";
 
@@ -12,77 +13,33 @@ export default function ObservabilityPage() {
   return (
     <div className="space-y-6">
       {/* Tab Navigation */}
-      <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: "var(--border)" }}>
-        <button
-          onClick={() => setActiveTab("system")}
-          className="px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-[0.2em] transition-all"
-          style={
-            activeTab === "system"
-              ? {
-                  backgroundColor: "rgba(56, 189, 248, 0.12)",
-                  border: "1px solid rgba(56, 189, 248, 0.45)",
-                  color: "#38bdf8",
-                  boxShadow: "0 0 15px rgba(56, 189, 248, 0.1)",
-                }
-              : {
-                  border: "1px solid var(--border)",
-                  backgroundColor: "var(--surface-elevated)",
-                  color: "var(--muted-foreground)",
-                }
-          }
-          onMouseEnter={(e) => {
-            if (activeTab !== "system") {
-              e.currentTarget.style.borderColor = "var(--primary)";
-              e.currentTarget.style.color = "var(--foreground)";
-              e.currentTarget.style.backgroundColor = "var(--surface-base)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (activeTab !== "system") {
-              e.currentTarget.style.borderColor = "var(--border)";
-              e.currentTarget.style.color = "var(--muted-foreground)";
-              e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-            }
-          }}
-        >
-          System Monitoring
-        </button>
-        <button
-          onClick={() => setActiveTab("cep")}
-          className="px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-[0.2em] transition-all"
-          style={
-            activeTab === "cep"
-              ? {
-                  backgroundColor: "rgba(52, 211, 153, 0.12)",
-                  border: "1px solid rgba(52, 211, 153, 0.45)",
-                  color: "#34d399",
-                  boxShadow: "0 0 15px rgba(52, 211, 153, 0.1)",
-                }
-              : {
-                  border: "1px solid var(--border)",
-                  backgroundColor: "var(--surface-elevated)",
-                  color: "var(--muted-foreground)",
-                }
-          }
-          onMouseEnter={(e) => {
-            if (activeTab !== "cep") {
-              e.currentTarget.style.borderColor = "var(--primary)";
-              e.currentTarget.style.color = "var(--foreground)";
-              e.currentTarget.style.backgroundColor = "var(--surface-base)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (activeTab !== "cep") {
-              e.currentTarget.style.borderColor = "var(--border)";
-              e.currentTarget.style.color = "var(--muted-foreground)";
-              e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-            }
-          }}
-        >
-          CEP Monitoring
-        </button>
-        <div className="ml-auto text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
-          {activeTab === "system" ? "Trace & Regression KPIs" : "Rules & Channels & Events"}
+      <div className="page-header">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setActiveTab("system")}
+            className={cn(
+              "px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
+              activeTab === "system"
+                ? "bg-sky-500/10 border border-sky-400/50 text-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.1)]"
+                : "border border-slate-300 bg-slate-50 text-slate-500 hover:border-sky-600 hover:text-slate-900 hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-sky-400 dark:hover:text-slate-100 dark:hover:bg-slate-950"
+            )}
+          >
+            System Monitoring
+          </button>
+          <button
+            onClick={() => setActiveTab("cep")}
+            className={cn(
+              "px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all",
+              activeTab === "cep"
+                ? "bg-emerald-500/10 border border-emerald-400/50 text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.1)]"
+                : "border border-slate-300 bg-slate-50 text-slate-500 hover:border-sky-600 hover:text-slate-900 hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-sky-400 dark:hover:text-slate-100 dark:hover:bg-slate-950"
+            )}
+          >
+            CEP Monitoring
+          </button>
+          <div className="ml-auto text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            {activeTab === "system" ? "Trace & Regression KPIs" : "Rules & Channels & Events"}
+          </div>
         </div>
       </div>
 

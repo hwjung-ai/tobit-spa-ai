@@ -579,11 +579,11 @@ export default function SimPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50">
-      <header className="border-b px-6 py-4 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+      <header className="page-header">
+        <h1 className="page-header-title">
           SIM Workspace
         </h1>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        <p className="page-header-description">
           질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트,
           피드백/모델 근거를 함께 제공합니다.
         </p>
@@ -602,7 +602,7 @@ export default function SimPage() {
             </h2>
 
             <label
-              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
             >
               질문
               <textarea
@@ -620,7 +620,7 @@ export default function SimPage() {
               />
             </label>
 
-            <div>
+            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
               <p
                 className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
@@ -668,7 +668,7 @@ export default function SimPage() {
             </div>
 
             <label
-              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
             >
               시나리오 유형
               <select
@@ -683,7 +683,7 @@ export default function SimPage() {
             </label>
 
             <label
-              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
             >
               Service
               <select
@@ -701,7 +701,7 @@ export default function SimPage() {
             </label>
 
             <label
-              className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
+              className="block br-card border border-slate-200 bg-white/80 p-3 text-xs uppercase tracking-wider text-slate-600 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-400"
             >
               Horizon
               <input
@@ -711,7 +711,7 @@ export default function SimPage() {
               />
             </label>
 
-            <div>
+            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
               <p
                 className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
@@ -753,7 +753,7 @@ export default function SimPage() {
               })}
             </div>
 
-            <div>
+            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
               <p
                 className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400"
               >
@@ -794,49 +794,51 @@ export default function SimPage() {
               ))}
             </div>
 
-            <button
-              data-testid="simulation-run-button"
-              className={cn(
-                "w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed hover:opacity-90",
-                loading || servicesLoading || !question.trim() || !service.trim()
-                  ? "bg-slate-300 opacity-60"
-                  : "bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600",
-              )}
-              onClick={handleRun}
-              disabled={loading || servicesLoading || !question.trim() || !service.trim()}
-            >
-              {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
-            </button>
-            {!question.trim() ? (
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                질문을 입력하면 실행할 수 있습니다.
-              </p>
-            ) : null}
-            {!service.trim() ? (
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Service를 입력하거나 선택하면 실행할 수 있습니다.
-              </p>
-            ) : null}
+            <div className="br-card border border-slate-200 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <button
+                data-testid="simulation-run-button"
+                className={cn(
+                  "w-full rounded-2xl px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed hover:opacity-90",
+                  loading || servicesLoading || !question.trim() || !service.trim()
+                    ? "bg-slate-300 opacity-60"
+                    : "bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600",
+                )}
+                onClick={handleRun}
+                disabled={loading || servicesLoading || !question.trim() || !service.trim()}
+              >
+                {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
+              </button>
+              {!question.trim() ? (
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  질문을 입력하면 실행할 수 있습니다.
+                </p>
+              ) : null}
+              {!service.trim() ? (
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  Service를 입력하거나 선택하면 실행할 수 있습니다.
+                </p>
+              ) : null}
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                data-testid="simulation-backtest-button"
-                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-sky-500"
-                onClick={handleBacktest}
-                disabled={servicesLoading || !service.trim()}
-              >
-                Run Backtest
-              </button>
-              <button
-                type="button"
-                data-testid="simulation-export-button"
-                className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-emerald-500"
-                onClick={handleExportCsv}
-                disabled={servicesLoading || !service.trim()}
-              >
-                Export CSV
-              </button>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  data-testid="simulation-backtest-button"
+                  className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-sky-500"
+                  onClick={handleBacktest}
+                  disabled={servicesLoading || !service.trim()}
+                >
+                  Run Backtest
+                </button>
+                <button
+                  type="button"
+                  data-testid="simulation-export-button"
+                  className="rounded-2xl border px-3 py-2 text-xs font-semibold uppercase tracking-wider transition border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50 hover:border-emerald-500"
+                  onClick={handleExportCsv}
+                  disabled={servicesLoading || !service.trim()}
+                >
+                  Export CSV
+                </button>
+              </div>
             </div>
           </aside>
 

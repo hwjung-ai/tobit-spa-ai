@@ -396,6 +396,202 @@ body {
   background: var(--surface-base) !important;
 }
 
+/* ============================================================================
+ * CEP EVENTS PAGE - Component Classes (Phase A)
+ * ========================================================================== */
+
+/* Event Type Badge */
+.cep-event-badge {
+  @apply inline-flex items-center px-2 py-1 rounded-md text-xs font-medium;
+}
+
+.cep-event-badge-normal {
+  background-color: hsl(var(--success) / 0.12);
+  color: hsl(var(--success));
+}
+
+.cep-event-badge-warning {
+  background-color: hsl(var(--warning) / 0.12);
+  color: hsl(var(--warning));
+}
+
+.cep-event-badge-critical {
+  background-color: hsl(var(--destructive) / 0.12);
+  color: hsl(var(--destructive));
+}
+
+.cep-event-badge-info {
+  background-color: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+}
+
+/* Event Row */
+.cep-event-row {
+  @apply flex items-center justify-between py-3 px-4 rounded-lg border;
+  background-color: var(--surface-base);
+  border-color: var(--border);
+  transition: all 0.15s ease;
+}
+
+.cep-event-row:hover {
+  background-color: var(--surface-elevated);
+  border-color: var(--border-muted);
+}
+
+/* Event Cell */
+.cep-event-cell {
+  @apply flex items-center gap-2;
+}
+
+.cep-event-cell-primary {
+  @apply text-sm font-medium;
+  color: var(--foreground);
+}
+
+.cep-event-cell-secondary {
+  @apply text-sm;
+  color: var(--muted-foreground);
+}
+
+.cep-event-cell-mono {
+  @apply text-xs font-mono;
+  color: var(--muted-foreground);
+}
+
+/* Event Detail Section */
+.cep-event-detail {
+  @apply flex flex-col gap-1.5;
+}
+
+.cep-event-detail-label {
+  @apply text-xs font-medium uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+.cep-event-detail-value {
+  @apply text-sm;
+  color: var(--foreground);
+}
+
+/* Event Action Button */
+.cep-event-action-btn {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium;
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+
+.cep-event-action-btn:hover {
+  background-color: var(--surface-overlay);
+  border-color: var(--border-muted);
+}
+
+.cep-event-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Event Filter Group */
+.cep-filter-group {
+  @apply flex flex-col gap-2;
+}
+
+.cep-filter-label {
+  @apply text-xs font-medium uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+.cep-filter-input {
+  @apply px-3 py-2 rounded-md text-sm;
+  background-color: var(--surface-base);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  color-scheme: light;
+  transition: all 0.15s ease;
+}
+
+.dark .cep-filter-input {
+  background-color: var(--surface-base) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+  color-scheme: dark;
+}
+
+.cep-filter-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
+}
+
+/* Event Stat Card */
+.cep-stat-card {
+  @apply p-4 rounded-lg border;
+  background-color: var(--surface-base);
+  border-color: var(--border);
+}
+
+.cep-stat-value {
+  @apply text-2xl font-semibold;
+  color: var(--foreground);
+}
+
+.cep-stat-label {
+  @apply text-xs font-medium uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+/* Event Timeline */
+.cep-timeline-item {
+  @apply flex gap-3 py-3 border-l-2;
+  border-color: var(--border);
+  padding-left: 1rem;
+}
+
+.cep-timeline-dot {
+  @apply w-2 h-2 rounded-full;
+  background-color: var(--primary);
+  margin-left: -5px;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.cep-timeline-content {
+  @apply flex flex-col gap-1;
+}
+
+/* Event Empty State */
+.cep-empty-state {
+  @apply flex flex-col items-center justify-center py-12 px-4;
+}
+
+.cep-empty-icon {
+  @apply w-12 h-12 mb-4;
+  color: var(--muted-foreground);
+}
+
+.cep-empty-text {
+  @apply text-sm;
+  color: var(--muted-foreground);
+}
+
+/* CEP Event Utility Classes */
+.cep-text-muted {
+  color: var(--muted-foreground);
+}
+
+.cep-text-foreground {
+  color: var(--foreground);
+}
+
+.cep-border {
+  border-color: var(--border);
+}
+
+.cep-table-container {
+  border-color: var(--border);
+}
+
 /* Custom scrollbar utility for non-grid containers */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -1485,4 +1681,169 @@ body {
 
 .dark .code-block-lg {
   background-color: rgba(2, 6, 23, 0.8);
+}
+
+/* ============================================================================
+ * PAGE HEADER STANDARDIZATION (Phase 11)
+ * ============================================================================ */
+
+/* Standard Page Header Container */
+.page-header {
+  @apply border-b px-6 py-4;
+  border-color: var(--border);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.dark .page-header {
+  border-color: var(--border);
+}
+
+/* Page Header Title - H1 */
+.page-header-title {
+  @apply text-2xl font-semibold;
+  color: var(--foreground);
+}
+
+/* Page Header Description */
+.page-header-description {
+  @apply mt-2 text-sm;
+  color: var(--muted-foreground);
+}
+
+/* Page Header Subtitle (optional) */
+.page-header-subtitle {
+  @apply text-xs font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+/* Page Header Actions Container */
+.page-header-actions {
+  @apply flex items-center gap-3;
+}
+
+/* Page Header Content Wrapper (title + description) */
+.page-header-content {
+  @apply flex-1;
+}
+
+/* ============================================================================
+ * CEP BUILDER STANDARDIZATION (Phase 11)
+ * ============================================================================ */
+
+/* CEP Builder - Input Fields */
+.cep-builder-input {
+  @apply w-full px-3 py-2 text-sm outline-none transition;
+  border: 1px solid var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.cep-builder-input:focus {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .cep-builder-input {
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.dark .cep-builder-input:focus {
+  border-color: #38bdf8; /* sky-400 */
+}
+
+/* CEP Builder - Textarea */
+.cep-builder-textarea {
+  @apply w-full px-3 py-2 text-xs outline-none transition resize-y;
+  border: 1px solid var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.dark .cep-builder-textarea {
+  background-color: var(--surface-elevated);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+/* CEP Builder - Label */
+.cep-builder-label {
+  @apply text-xs uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+/* CEP Builder - Tab Button */
+.cep-builder-tab {
+  @apply px-3 py-2 text-xs font-medium uppercase tracking-wider transition rounded-lg;
+  border: 1px solid var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.cep-builder-tab-active {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.cep-builder-tab:hover:not(.cep-builder-tab-active) {
+  border-color: #0ea5e9; /* sky-500 */
+}
+
+.dark .cep-builder-tab:hover:not(.cep-builder-tab-active) {
+  border-color: #38bdf8; /* sky-400 */
+}
+
+/* CEP Builder - Status Box */
+.cep-builder-status-box {
+  @apply rounded-xl border px-4 py-3 text-sm;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+/* CEP Builder - JSON Preview */
+.cep-builder-json-preview {
+  @apply h-72 resize-y overflow-auto rounded-2xl border p-3 text-xs font-mono;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+/* CEP Builder - Checkbox Container */
+.cep-builder-checkbox-label {
+  @apply flex items-center gap-2 text-sm;
+  color: var(--muted-foreground);
+}
+
+.cep-builder-checkbox {
+  @apply h-4 w-4 rounded;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+}
+
+/* CEP Builder - Rule List Item */
+.cep-builder-rule-item {
+  @apply w-full rounded-lg p-3 text-left transition;
+  border: 1px solid var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.cep-builder-rule-item:hover {
+  background-color: var(--surface-elevated);
+}
+
+.cep-builder-rule-item-selected {
+  background-color: rgba(var(--primary-rgb), 0.1);
+  border-color: var(--primary);
+}
+
+/* CEP Builder - Log Entry */
+.cep-builder-log-entry {
+  @apply rounded-lg border p-3 text-xs;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
 }

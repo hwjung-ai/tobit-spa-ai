@@ -357,7 +357,7 @@ export default function Home() {
           <div className="container-section">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-50">Streaming Assistant</h1>
+                <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Streaming Assistant</h1>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   메시지 기반 대화 기록을 저장하고, SSE로 Assistant 답변을 받습니다.
                 </p>

@@ -582,6 +582,17 @@ function InspectorContent() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="space-y-6 px-6 py-6">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Inspector</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/쿼리/렌더를 확인하는 전용 도구입니다.
+          </p>
+        </div>
+      </div>
+
+      <div className="px-6 pb-6">
       <div className="space-y-6">
         <p className="insp-body">
           Inspector는 운영자가 실행 기록을 trace_id 기준으로 분석하고 적용된 자산/컬럼을 보여줍니다.
@@ -2204,8 +2215,7 @@ function InspectorContent() {
       {showCompareModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
           <div
-            className=" border rounded-2xl p-6 w-96 space-y-4"
-            style={{ borderColor: "rgb(203, 213, 225)", backgroundColor: "rgb(248, 250, 252)" }}
+            className="border rounded-2xl p-6 w-96 space-y-4 border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/50"
           >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-white">Compare with Trace</h3>

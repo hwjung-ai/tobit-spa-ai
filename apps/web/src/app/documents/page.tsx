@@ -810,26 +810,28 @@ function DocumentsPageContent() {
 
   return (
     <div className="space-y-6">
-      <section className="container-section text-slate-900 dark:text-slate-50">
+      <header className="page-header">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">Document index</p>
-            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Upload and query documents</h2>
+          <div className="page-header-content">
+            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">Document index</p>
+            <h1 className="page-header-title">Upload and query documents</h1>
           </div>
           <button
             onClick={fetchDocuments}
-            className="rounded-2xl border px-4 py-2 text-xs uppercase tracking-[0.3em] transition border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+            className="br-btn border px-4 py-2 text-xs uppercase tracking-wider transition border-slate-200 bg-slate-50 text-slate-900 hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
           >
             Refresh list
           </button>
         </div>
-        <form onSubmit={handleUpload} className="mt-4 flex flex-col gap-3">
+      </header>
+      <section className="container-section text-slate-900 dark:text-slate-50">
+        <form onSubmit={handleUpload} className="flex flex-col gap-3">
           <label className="text-sm text-slate-900 dark:text-slate-50">
             Select a file (txt/pdf/docx)
             <input
               ref={fileInputRef}
               type="file"
-              className="mt-2 block w-full rounded-2xl border px-4 py-2 text-sm outline-none transition border-slate-200 bg-slate-50 text-slate-900 focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-50"
+              className="mt-2 block w-full input-container text-sm"
             />
           </label>
           {uploadError ? (
@@ -838,7 +840,7 @@ function DocumentsPageContent() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white transition disabled:opacity-40 bg-sky-600 hover:bg-sky-500 dark:bg-sky-700 dark:hover:bg-sky-600"
+              className="btn-primary"
               disabled={uploading}
             >
               {uploading ? "Uploading…" : "문서 업로드"}
