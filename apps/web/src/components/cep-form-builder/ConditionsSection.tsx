@@ -48,14 +48,14 @@ export function ConditionsSection({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{color: "var(--foreground)"}}>조건 설정 (선택사항)</h3>
+    <div className="cep-section-container">
+      <div className="cep-section-header">
+        <h3 className="cep-section-title">조건 설정 (선택사항)</h3>
         <div className="flex items-center gap-2">
           <select
             value={logic}
             onChange={(e) => onLogicChange(e.target.value as any)}
-            className="rounded-lg px-2 py-1 text-xs" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+            className="cep-select"
           >
             <option value="AND">AND</option>
             <option value="OR">OR</option>
@@ -69,10 +69,10 @@ export function ConditionsSection({
           {conditions.map((condition, index) => (
             <div
               key={condition.id}
-              className="flex items-end gap-2 rounded-lg p-3" style={{border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)"}}
+              className="cep-condition-group flex items-end gap-2"
             >
               <div className="flex-1 space-y-1">
-                <label className="text-xs" style={{color: "var(--muted-foreground)"}}>필드</label>
+                <label className="cep-window-label">필드</label>
                 <input
                   type="text"
                   value={condition.field}
@@ -80,17 +80,17 @@ export function ConditionsSection({
                     updateCondition(condition.id, { field: e.target.value })
                   }
                   placeholder="예: cpu_usage"
-                  className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                  className="cep-input-full"
                 />
               </div>
               <div className="w-20 space-y-1">
-                <label className="text-xs" style={{color: "var(--muted-foreground)"}}>연산자</label>
+                <label className="cep-window-label">연산자</label>
                 <select
                   value={condition.op}
                   onChange={(e) =>
                     updateCondition(condition.id, { op: e.target.value })
                   }
-                  className="w-full rounded-lg border   px-2 py-1 text-xs text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                  className="cep-select-primary w-full"
                 >
                   {OPERATORS.map((op) => (
                     <option key={op} value={op}>
@@ -100,7 +100,7 @@ export function ConditionsSection({
                 </select>
               </div>
               <div className="flex-1 space-y-1">
-                <label className="text-xs" style={{color: "var(--muted-foreground)"}}>값</label>
+                <label className="cep-window-label">값</label>
                 <input
                   type="text"
                   value={condition.value}
@@ -108,7 +108,7 @@ export function ConditionsSection({
                     updateCondition(condition.id, { value: e.target.value })
                   }
                   placeholder="값 입력"
-                  className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                  className="cep-input-full"
                 />
               </div>
               <button

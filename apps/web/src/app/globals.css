@@ -825,3 +825,200 @@ body {
 .builder-canvas-inner {
   background-color: var(--surface-base);
 }
+
+/* CEP Form Builder - Section & Container Styles */
+.cep-section-container {
+  @apply space-y-4 rounded-2xl p-4;
+  border: 1px solid var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.cep-section-header {
+  @apply flex items-center justify-between;
+}
+
+.cep-section-title {
+  @apply text-sm font-semibold;
+  color: var(--foreground);
+}
+
+.cep-section-counter {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+/* CEP Empty State */
+.cep-empty-state {
+  @apply rounded-lg border border-dashed py-6 text-center;
+  border-color: var(--border-muted);
+  background-color: rgba(30, 41, 59, 0.2);
+}
+
+.cep-empty-state-text {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+/* CEP Item Cards */
+.cep-item-card {
+  @apply rounded-lg p-3 space-y-3;
+  border: 1px solid var(--border-muted);
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+.cep-item-card-label {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+.cep-item-field-label {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+/* CEP Form Inputs */
+.cep-input {
+  @apply rounded-lg px-2 py-1 text-xs placeholder-slate-500;
+  border: 1px solid var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.cep-input-lg {
+  @apply rounded-lg px-3 py-2 text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none;
+  border: 1px solid var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.cep-input-full {
+  @apply w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500;
+  border: 1px solid var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.cep-input-full-lg {
+  @apply w-full rounded-lg px-3 py-2 text-sm placeholder-slate-500 focus:border-sky-500 focus:outline-none;
+  border: 1px solid var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+/* CEP Select */
+.cep-select {
+  @apply rounded-lg px-2 py-1 text-xs;
+  border: 1px solid var(--border-muted);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.cep-select-primary {
+  @apply rounded-lg border px-2 py-1 text-xs text-white;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+/* CEP Conditions & Operators */
+.cep-condition-group {
+  @apply space-y-2 rounded-lg border p-3;
+  border-color: var(--border-muted);
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+.cep-condition-row {
+  @apply flex gap-2;
+}
+
+.cep-operator-badge {
+  @apply flex items-center justify-center rounded-lg px-2 py-1 text-xs font-semibold;
+  background-color: var(--surface-overlay);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border-muted);
+}
+
+.cep-operator-text {
+  @apply text-xs font-semibold;
+  color: var(--muted-foreground);
+}
+
+/* CEP Toggle Container */
+.cep-toggle-container {
+  @apply flex items-center gap-3 rounded-lg p-3;
+  border: 1px solid var(--border-muted);
+  background-color: rgba(30, 41, 59, 0.4);
+}
+
+.cep-toggle-label {
+  @apply flex-1 text-sm font-medium cursor-pointer;
+  color: var(--foreground);
+}
+
+/* CEP Text Utilities */
+.cep-text-muted {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+.cep-text-muted-sm {
+  @apply text-[11px];
+  color: var(--muted-foreground);
+}
+
+.cep-help-text {
+  @apply text-xs italic;
+  color: var(--muted-foreground);
+}
+
+/* CEP Detail Section */
+.cep-detail-section {
+  @apply space-y-2 text-xs;
+}
+
+.cep-detail-row {
+  @apply flex gap-2;
+}
+
+.cep-detail-label {
+  @apply min-w-fit font-semibold;
+  color: var(--foreground);
+}
+
+.cep-detail-value {
+  @apply flex-1;
+  color: var(--muted-foreground);
+}
+
+/* CEP Window Settings */
+.cep-window-setting {
+  @apply space-y-1;
+}
+
+.cep-window-label {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+/* CEP Condition Label */
+.cep-condition-label {
+  @apply text-xs font-semibold;
+  color: var(--foreground);
+}
+
+/* CEP Parenthesis */
+.cep-parenthesis {
+  @apply text-xs font-bold;
+  color: var(--muted-foreground);
+}
+
+/* CEP Button Bar */
+.cep-button-bar {
+  @apply flex gap-3 sticky bottom-0 p-4 rounded-lg backdrop-blur;
+  background-color: rgba(15, 23, 42, 0.8);
+}
+
+/* Form Field Label (non-uppercase variant) */
+.form-field-label-text {
+  @apply flex items-center gap-2 text-sm font-medium;
+  color: var(--foreground);
+}

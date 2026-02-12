@@ -1,42 +1,42 @@
 "use client";
 
-import { FormFieldGroup } from "./FormFieldGroup";
+import { useState } from "react";
 
 interface Aggregation {
   id: string;
-  type: "avg" | "sum" | "min" | "max" | "count" | "stddev";
-  field?: string;
-  outputAlias?: string;
+  type: "count" | "sum" | "avg" | "min" | "max" | "std" | "percentile";
+  fieldName?: string;
+  outputName?: string;
+  percentile?: number;
 }
 
 interface AggregationSectionProps {
   aggregations: Aggregation[];
-  groupByFields?: string[];
   onAggregationsChange: (aggregations: Aggregation[]) => void;
-  onGroupByChange?: (fields: string[]) => void;
+  onAiGenerate?: () => void;
 }
 
-const AGGREGATION_TYPES = [
-  { value: "avg", label: "평균" },
-  { value: "sum", label: "합계" },
-  { value: "min", label: "최소값" },
-  { value: "max", label: "최대값" },
-  { value: "count", label: "개수" },
-  { value: "stddev", label: "표준편차" },
-] as const;
+const AGG_TYPES = [
+  { value: "count", label: "Count" },
+  { value: "sum", label: "Sum" },
+  { value: "avg", label: "Average" },
+  { value: "min", label: "Min" },
+  { value: "max", label: "Max" },
+  { value: "std", label: "Std Dev" },
+  { value: "percentile", label: "Percentile" },
+];
 
 export function AggregationSection({
   aggregations,
-  groupByFields = [],
   onAggregationsChange,
-  onGroupByChange,
+  onAiGenerate,
 }: AggregationSectionProps) {
+  const [fieldInput, setFieldInput] = useState("");
+
   const addAggregation = () => {
     const newAggregation: Aggregation = {
       id: `agg-${Date.now()}`,
-      type: "avg",
-      field: "",
-      outputAlias: "",
+      type: "count",
     };
     onAggregationsChange([...aggregations, newAggregation]);
   };
@@ -46,49 +46,37 @@ export function AggregationSection({
   };
 
   const updateAggregation = (id: string, updates: Partial<Aggregation>) => {
-    onAggregationsChange(
-      aggregations.map((a) => (a.id === id ? { ...a, ...updates } : a))
-    );
+    onAggregationsChange(aggregations.map((a) => (a.id === id ? { ...a, ...updates } : a)));
   };
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{color: "var(--foreground)"}}>집계 설정 (선택사항)</h3>
-        <span className="text-xs" style={{color: "var(--muted-foreground)"}}>{aggregations.length}개</span>
+    <div className="cep-section-container">
+      <div className="cep-section-header">
+        <h3 className="cep-section-title">집계 설정 (선택사항)</h3>
+        <span className="cep-section-counter">{aggregations.length}개</span>
       </div>
 
-      <FormFieldGroup label="그룹화 필드" help="선택적으로 특정 필드로 데이터를 그룹화합니다">
+      <div className="space-y-3">
         <input
           type="text"
-          value={groupByFields.join(", ")}
-          onChange={(e) =>
-            onGroupByChange?.(
-              e.target.value
-                .split(",")
-                .map((f) => f.trim())
-                .filter((f) => f.length > 0)
-            )
-          }
-          placeholder="예: region, service_name (쉼표로 구분)"
-          className="w-full rounded-lg px-3 py-2 text-xs placeholder-slate-500" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+          value={fieldInput}
+          onChange={(e) => setFieldInput(e.target.value)}
+          placeholder="필드명 입력"
+          className="cep-input-full-lg"
         />
-      </FormFieldGroup>
-
-      {aggregations.length === 0 ? (
-        <div className="rounded-lg border border-dashed py-4 text-center" style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.2)"}}>
-          <p className="text-xs" style={{color: "var(--muted-foreground)"}}>집계 함수를 추가해주세요</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {aggregations.map((agg) => (
-            <div
-              key={agg.id}
-              className="rounded-lg p-3 space-y-2" style={{border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)"}}
-            >
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <label className="text-xs" style={{color: "var(--muted-foreground)"}}>집계 타입</label>
+        {aggregations.length === 0 ? (
+          <div className="cep-empty-state">
+            <p className="cep-empty-state-text">집계 함수를 추가해주세요</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {aggregations.map((agg) => (
+              <div
+                key={agg.id}
+                className="cep-item-card"
+              >
+                <div className="cep-window-setting">
+                  <label className="cep-window-label">집계 타입</label>
                   <select
                     value={agg.type}
                     onChange={(e) =>
@@ -96,66 +84,91 @@ export function AggregationSection({
                         type: e.target.value as any,
                       })
                     }
-                    className="w-full rounded-lg px-2 py-1 text-xs mt-1" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                    className="cep-select cep-input-full mt-1"
                   >
-                    {AGGREGATION_TYPES.map((at) => (
-                      <option key={at.value} value={at.value}>
-                        {at.label}
+                    {AGG_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 {agg.type !== "count" && (
-                  <div className="flex-1">
-                    <label className="text-xs" style={{color: "var(--muted-foreground)"}}>필드명</label>
+                  <div className="cep-window-setting">
+                    <label className="cep-window-label">필드명</label>
                     <input
                       type="text"
-                      value={agg.field || ""}
+                      value={agg.fieldName || ""}
                       onChange={(e) =>
-                        updateAggregation(agg.id, {
-                          field: e.target.value,
-                        })
+                        updateAggregation(agg.id, { fieldName: e.target.value })
                       }
-                      placeholder="예: cpu_usage"
-                      className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500 mt-1" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                      placeholder="대상 필드명"
+                      className="cep-input-full-lg mt-1"
                     />
                   </div>
                 )}
 
-                <div className="flex-1">
-                  <label className="text-xs" style={{color: "var(--muted-foreground)"}}>출력명</label>
+                <div className="cep-window-setting">
+                  <label className="cep-window-label">출력명</label>
                   <input
                     type="text"
-                    value={agg.outputAlias || ""}
+                    value={agg.outputName || ""}
                     onChange={(e) =>
-                      updateAggregation(agg.id, {
-                        outputAlias: e.target.value,
-                      })
+                      updateAggregation(agg.id, { outputName: e.target.value })
                     }
-                    placeholder="예: avg_cpu"
-                    className="w-full rounded-lg border   px-2 py-1 text-xs text-white placeholder-slate-500 mt-1" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                    placeholder="결과 필드명"
+                    className="cep-select-primary cep-input-full-lg mt-1"
                   />
                 </div>
 
+                {agg.type === "percentile" && (
+                  <div className="cep-window-setting">
+                    <label className="cep-window-label">백분위</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={agg.percentile || 50}
+                      onChange={(e) =>
+                        updateAggregation(agg.id, {
+                          percentile: parseFloat(e.target.value),
+                        })
+                      }
+                      placeholder="0-100"
+                      className="cep-input-full mt-1"
+                    />
+                  </div>
+                )}
+
                 <button
                   onClick={() => removeAggregation(agg.id)}
-                  className="rounded-lg border border-rose-500/50 bg-rose-500/10 px-2 py-1 text-xs text-rose-400 hover:bg-rose-500/20 mt-5"
+                  className="w-full rounded-lg border border-rose-500/50 bg-rose-500/10 px-2 py-1 text-xs text-rose-400 hover:bg-rose-500/20"
                 >
                   삭제
                 </button>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
-      <button
-        onClick={addAggregation}
-        className="w-full rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20"
-      >
-        + 집계 추가
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={addAggregation}
+          className="flex-1 rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20"
+        >
+          + 집계 추가
+        </button>
+        {onAiGenerate && (
+          <button
+            onClick={onAiGenerate}
+            className="flex-1 rounded-lg border border-purple-500/50 bg-purple-500/10 px-3 py-2 text-xs font-semibold text-purple-400 hover:bg-purple-500/20"
+          >
+            🤖 AI 생성
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -51,10 +51,10 @@ export function SimulationPanel({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>규칙 시뮬레이션</h3>
-        <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>저장 전 테스트</span>
+    <div className="cep-section-container">
+      <div className="cep-section-header">
+        <h3 className="cep-section-title">규칙 시뮬레이션</h3>
+        <span className="cep-section-counter">저장 전 테스트</span>
       </div>
 
       <FormFieldGroup label="테스트 데이터 (JSON)" required={true}>
@@ -62,7 +62,7 @@ export function SimulationPanel({
           value={testPayload}
           onChange={(e) => setTestPayload(e.target.value)}
           rows={6}
-          className="w-full rounded-lg px-3 py-2 font-mono text-xs placeholder-slate-500 focus:border-sky-500 focus:outline-none" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+          className="cep-input-full-lg font-mono"
           placeholder='{"cpu_usage": 85, "memory_percent": 75}'
         />
       </FormFieldGroup>
@@ -95,10 +95,10 @@ export function SimulationPanel({
                 {result.matched ? "✅" : "⚪"}
               </span>
               <div>
-                <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>
+                <p className="cep-condition-label">
                   {result.matched ? "조건 일치됨" : "조건 일치 안 됨"}
                 </p>
-                <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
+                <p className="cep-text-muted mt-1">
                   {result.explanation}
                 </p>
               </div>
@@ -107,17 +107,17 @@ export function SimulationPanel({
 
           {Object.keys(result.conditionResults).length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold" style={{ color: "var(--muted-foreground)" }}>조건 결과:</p>
+              <p className="cep-text-muted-sm font-semibold">조건 결과:</p>
               {Object.entries(result.conditionResults).map(([name, value]) => (
                 <div
                   key={name}
-                  className="flex items-center gap-2 rounded-lg p-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)" }}
+                  className="cep-condition-group flex items-center gap-2"
                 >
                   <span className="text-sm">
                     {value ? "✓" : "✗"}
                   </span>
-                  <span className="" style={{ color: "var(--muted-foreground)" }}>{name}</span>
-                  <span className={value ? "text-emerald-400" : ""} style={{ color: value ? undefined : "var(--muted-foreground)" }}>
+                  <span className="cep-text-muted">{name}</span>
+                  <span className={value ? "text-emerald-400" : "cep-text-muted"}>
                     {value ? "일치" : "불일치"}
                   </span>
                 </div>
@@ -127,7 +127,7 @@ export function SimulationPanel({
 
           {result.triggeredActions.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold" style={{ color: "var(--muted-foreground)" }}>실행될 액션:</p>
+              <p className="cep-text-muted-sm font-semibold">실행될 액션:</p>
               {result.triggeredActions.map((action, index) => (
                 <div
                   key={index}

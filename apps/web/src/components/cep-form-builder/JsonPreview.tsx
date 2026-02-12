@@ -26,17 +26,17 @@ export function JsonPreview({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>{title}</p>
+        <p className="cep-condition-label">{title}</p>
         {copyable && (
           <button
             onClick={handleCopy}
-            className="text-xs transition-colors" style={{ color: "var(--muted-foreground)" }}
+            className="cep-text-muted"
           >
             {copied ? "✓ 복사됨" : "📋 복사"}
           </button>
         )}
       </div>
-      <pre className="rounded-lg p-3 overflow-x-auto text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)", color: "var(--muted-foreground)" }}>
+      <pre className="cep-item-card overflow-x-auto">
         <code>{jsonString}</code>
       </pre>
     </div>

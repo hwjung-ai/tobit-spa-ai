@@ -52,7 +52,6 @@ interface CepRuleFormData {
   conditionLogic: "AND" | "OR" | "NOT";
   windowConfig: Record<string, any>;
   aggregations: Aggregation[];
-  groupByFields: string[];
   enrichments: Enrichment[];
   actions: Action[];
 }
@@ -80,7 +79,6 @@ export function CepRuleFormPage({
     conditionLogic: "AND",
     windowConfig: {},
     aggregations: [],
-    groupByFields: [],
     enrichments: [],
     actions: [],
     ...initialData,
@@ -149,7 +147,6 @@ export function CepRuleFormPage({
           field: a.field,
           output_alias: a.outputAlias,
         })),
-        group_by_fields: formData.groupByFields,
       }),
       ...(formData.enrichments.length > 0 && {
         enrichments: formData.enrichments.map((e) => ({
@@ -171,8 +168,6 @@ export function CepRuleFormPage({
 
   const handleSimulate = useCallback(
     async (testPayload: Record<string, any>) => {
-      // 실제 API 호출로 대체 필요
-      // POST /api/cep/rules/preview
       const response = await fetch("/api/cep/rules/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -197,8 +192,8 @@ export function CepRuleFormPage({
     <div className="max-w-4xl mx-auto space-y-6 py-6">
       {/* 헤더 */}
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold" style={{ color: "var(--foreground)" }}>CEP 규칙 빌더</h1>
-        <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+        <h1 className="text-2xl font-bold text-foreground">CEP 규칙 빌더</h1>
+        <p className="text-sm text-muted-foreground">
           폼 기반으로 복합 이벤트 처리 규칙을 만들어보세요
         </p>
       </div>
@@ -219,15 +214,15 @@ export function CepRuleFormPage({
       {/* 기본 정보 */}
       <BasicInfoSection
         ruleName={formData.ruleName}
-        description={formData.description}
-        isActive={formData.isActive}
-        onRuleNameChange={(name) =>
+        ruleDescription={formData.description}
+        isEnabled={formData.isActive}
+        onNameChange={(name) =>
           setFormData({ ...formData, ruleName: name })
         }
         onDescriptionChange={(desc) =>
           setFormData({ ...formData, description: desc })
         }
-        onActiveChange={(active) =>
+        onEnabledChange={(active) =>
           setFormData({ ...formData, isActive: active })
         }
       />
@@ -240,7 +235,7 @@ export function CepRuleFormPage({
           setFormData({
             ...formData,
             triggerType: type,
-            triggerSpec: {}, // 트리거 타입 변경 시 초기화
+            triggerSpec: {},
           });
         }}
         onTriggerSpecChange={(spec) =>
@@ -271,12 +266,8 @@ export function CepRuleFormPage({
       {/* 집계 */}
       <AggregationSection
         aggregations={formData.aggregations}
-        groupByFields={formData.groupByFields}
         onAggregationsChange={(aggs) =>
           setFormData({ ...formData, aggregations: aggs })
-        }
-        onGroupByChange={(fields) =>
-          setFormData({ ...formData, groupByFields: fields })
         }
       />
 
@@ -303,13 +294,13 @@ export function CepRuleFormPage({
       />
 
       {/* JSON 미리보기 */}
-      <div className="rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
+      <div className="cep-section-container">
         <div
-          className="flex items-center justify-between cursor-pointer p-2 rounded-lg" style={{ backgroundColor: "transparent" }}
+          className="flex items-center justify-between cursor-pointer p-2 rounded-lg"
           onClick={() => setShowJsonPreview(!showJsonPreview)}
         >
-          <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>JSON 미리보기</h3>
-          <span className="text-sm" style={{ color: "var(--muted-foreground)" }}>
+          <h3 className="cep-section-title">JSON 미리보기</h3>
+          <span className="cep-text-muted">
             {showJsonPreview ? "▼" : "▶"}
           </span>
         </div>
@@ -321,10 +312,10 @@ export function CepRuleFormPage({
       </div>
 
       {/* 버튼 */}
-      <div className="flex gap-3 sticky bottom-0 p-4 rounded-lg backdrop-blur" style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}>
+      <div className="cep-button-bar">
         <button
           onClick={onCancel}
-          className="flex-1 rounded-lg px-4 py-2 text-sm font-semibold hover:opacity-80" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)" }}
+          className="flex-1 rounded-lg px-4 py-2 text-sm font-semibold hover:opacity-80 cep-select"
         >
           취소
         </button>

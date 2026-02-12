@@ -51,22 +51,22 @@ export function ActionsSection({
   };
 
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{color: "var(--foreground)"}}>액션 설정 (필수)</h3>
-        <span className="text-xs" style={{color: "var(--muted-foreground)"}}>{actions.length}개</span>
+    <div className="cep-section-container">
+      <div className="cep-section-header">
+        <h3 className="cep-section-title">액션 설정 (필수)</h3>
+        <span className="cep-section-counter">{actions.length}개</span>
       </div>
 
       {actions.length === 0 ? (
-        <div className="rounded-lg border border-dashed py-6 text-center" style={{borderColor: "var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.2)"}}>
-          <p className="text-xs" style={{color: "var(--muted-foreground)"}}>액션을 추가해주세요</p>
+        <div className="cep-empty-state">
+          <p className="cep-empty-state-text">액션을 추가해주세요</p>
         </div>
       ) : (
         <div className="space-y-3">
           {actions.map((action) => (
             <div
               key={action.id}
-              className="rounded-lg p-3 space-y-3" style={{border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)"}}
+              className="cep-item-card"
             >
               <div className="flex items-center justify-between">
                 <select
@@ -76,7 +76,7 @@ export function ActionsSection({
                       type: e.target.value as any,
                     })
                   }
-                  className="rounded-lg px-2 py-1 text-xs" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                  className="cep-select"
                 >
                   {ACTION_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -101,7 +101,7 @@ export function ActionsSection({
                       updateAction(action.id, { endpoint: e.target.value })
                     }
                     placeholder="엔드포인트 URL"
-                    className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                    className="cep-input-full"
                   />
                   <select
                     value={action.method || "POST"}
@@ -110,7 +110,7 @@ export function ActionsSection({
                         method: e.target.value as any,
                       })
                     }
-                    className="w-full rounded-lg border   px-2 py-1 text-xs text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                    className="cep-select-primary"
                   >
                     <option value="GET">GET</option>
                     <option value="POST">POST</option>
@@ -129,13 +129,13 @@ export function ActionsSection({
                       updateAction(action.id, { message: e.target.value })
                     }
                     placeholder="알림 메시지"
-                    className="w-full rounded-lg px-2 py-1 text-xs placeholder-slate-500" style={{border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+                    className="cep-input-full"
                   />
                   <div className="flex flex-wrap gap-2">
                     {CHANNELS.map((channel) => (
                       <label
                         key={channel}
-                        className="flex items-center gap-1 text-xs" style={{color: "var(--muted-foreground)"}}
+                        className="cep-text-muted flex items-center gap-1"
                       >
                         <input
                           type="checkbox"

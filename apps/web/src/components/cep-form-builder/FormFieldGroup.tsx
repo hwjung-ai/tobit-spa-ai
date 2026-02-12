@@ -19,13 +19,13 @@ export function FormFieldGroup({
 }: FormFieldGroupProps) {
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-2 text-sm font-medium" style={{ color: "var(--foreground)" }}>
+      <label className="form-field-label-text">
         {label}
         {required && <span className="text-rose-400">*</span>}
       </label>
       {children}
       {error && <p className="text-xs text-rose-400">{error}</p>}
-      {help && !error && <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>{help}</p>}
+      {help && !error && <p className="form-field-help">{help}</p>}
     </div>
   );
 }

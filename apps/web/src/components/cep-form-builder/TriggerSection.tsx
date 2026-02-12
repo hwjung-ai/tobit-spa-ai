@@ -33,9 +33,9 @@ export function TriggerSection({
   onTriggerSpecChange,
 }: TriggerSectionProps) {
   return (
-    <div className="space-y-4 rounded-2xl p-4" style={{ border: "1px solid var(--border)", backgroundColor: "var(--surface-overlay)" }}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>트리거 설정 (필수)</h3>
+    <div className="cep-section-container">
+      <div className="cep-section-header">
+        <h3 className="cep-section-title">트리거 설정 (필수)</h3>
       </div>
 
       <FormFieldGroup label="트리거 타입" required={true}>
@@ -47,9 +47,8 @@ export function TriggerSection({
               className={`px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
                 triggerType === type
                   ? "border-sky-500 bg-sky-500/20 text-sky-300"
-                  : ""
+                  : "border-border-muted bg-slate-600/40 text-muted-foreground"
               }`}
-              style={triggerType !== type ? { border: "1px solid var(--border-muted)", backgroundColor: "rgba(30, 41, 59, 0.4)", color: "var(--muted-foreground)" } : undefined}
             >
               {type === "metric" && "📊 메트릭"}
               {type === "event" && "📢 이벤트"}
@@ -97,7 +96,7 @@ function MetricTriggerForm({
             onChange({ ...spec, metricName: e.target.value })
           }
           placeholder="예: cpu_usage, memory_percent"
-          className="w-full rounded-lg px-3 py-2 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+          className="cep-input-full-lg"
         />
       </FormFieldGroup>
 
@@ -109,7 +108,7 @@ function MetricTriggerForm({
               onChange={(e) =>
                 onChange({ ...spec, operator: e.target.value })
               }
-              className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+              className="cep-select-primary w-full"
             >
               {OPERATORS.map((op) => (
                 <option key={op} value={op}>
@@ -129,7 +128,7 @@ function MetricTriggerForm({
                 onChange({ ...spec, threshold: e.target.value })
               }
               placeholder="80"
-              className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+              className="cep-input-full-lg"
             />
           </FormFieldGroup>
         </div>
@@ -143,7 +142,7 @@ function MetricTriggerForm({
               onChange={(e) =>
                 onChange({ ...spec, aggregation: e.target.value })
               }
-              className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+              className="cep-select-primary w-full"
             >
               {AGGREGATIONS.map((agg) => (
                 <option key={agg} value={agg}>
@@ -161,7 +160,7 @@ function MetricTriggerForm({
               onChange={(e) =>
                 onChange({ ...spec, duration: e.target.value })
               }
-              className="w-full rounded-lg px-3 py-2 text-xs" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+              className="cep-select-primary w-full"
             >
               {DURATIONS.map((dur) => (
                 <option key={dur} value={dur}>
@@ -193,7 +192,7 @@ function EventTriggerForm({
             onChange({ ...spec, eventType: e.target.value })
           }
           placeholder="예: error, warning, alert"
-          className="w-full rounded-lg px-3 py-2 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+          className="cep-input-full-lg"
         />
       </FormFieldGroup>
     </div>
@@ -221,7 +220,7 @@ function ScheduleTriggerForm({
             onChange({ ...spec, scheduleExpression: e.target.value })
           }
           placeholder="0 9 * * *"
-          className="w-full rounded-lg px-3 py-2 text-xs placeholder-slate-500" style={{ border: "1px solid var(--border-muted)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)" }}
+          className="cep-input-full-lg"
         />
       </FormFieldGroup>
     </div>
