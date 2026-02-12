@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import { PdfViewerModal } from "@/components/pdf/PdfViewerModal";
 import {
   Line,
   LineChart,
@@ -144,6 +145,14 @@ const normalizeApiBaseUrl = (value?: string) => value?.replace(/\/+$/, "") ?? ""
 export default function BlockRenderer({ blocks, nextActions, onAction, traceId }: BlockRendererProps) {
   const router = useRouter();
   const [fullscreenGraph, setFullscreenGraph] = useState<GraphBlock | null>(null);
+
+  // PDF viewer modal state (for references)
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [pdfFilename, setPdfFilename] = useState<string>("document.pdf");
+  const [pdfHighlightSnippet, setPdfHighlightSnippet] = useState<string | undefined>(undefined);
+  const [pdfInitialPage, setPdfInitialPage] = useState<number>(1);
+
   const candidateActionMap = useMemo(() => {
     const map = new Map<string, NextAction>();
     nextActions?.forEach((action) => {
@@ -226,6 +235,7 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
   const answerBlocks = blocks.filter(block => block.type !== "references") as AnswerBlock[];
 
   return (
+    <>
     <div className="space-y-6">
       {/* Render reference blocks first (at the top) */}
       {referenceBlocks.map((block, index) => {
@@ -276,52 +286,43 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                   </>
                 );
 
-                // Handle document URLs - create proper navigation
+                // Handle document URLs - use button with authenticated fetch (same as docs page)
                 if (reference.url && reference.kind === "document") {
-                  // Check if it's a PDF URL
-                  const isPdf = reference.url.toLowerCase().endsWith('.pdf');
+                  const handleDocumentClick = async () => {
+                    try {
+                      // Use fetchWithAuth to get the PDF with auth headers
+                      const { fetchWithAuth } = await import("@/lib/apiClient");
+                      const response = await fetchWithAuth(reference.url);
 
-                  if (isPdf) {
-                    // For PDF files, embed in iframe
-                    return (
-                      <div
-                        key={`${reference.title}-${refIndex}`}
-                        className={cardClass}
-                      >
-                        {cardContent}
-                        <div className="mt-3">
-                          <iframe
-                            src={reference.url}
-                            className="w-full h-96 rounded-lg border border-slate-700"
-                            title={reference.title}
-                            onError={(e) => {
-                              // Fallback to direct link if iframe fails
-                              const iframe = e.target as HTMLIFrameElement;
-                              iframe.style.display = 'none';
-                              const fallbackLink = document.createElement('a');
-                              fallbackLink.href = reference.url;
-                              fallbackLink.target = '_blank';
-                              fallbackLink.rel = 'noopener noreferrer';
-                              fallbackLink.className = 'text-sky-400 hover:text-sky-300 text-sm underline';
-                              fallbackLink.textContent = 'PDF 파일 열기 (새 탭)';
-                              iframe.parentNode?.appendChild(fallbackLink);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  } else {
-                    // For other documents, use Next.js Link
-                    return (
-                      <Link
-                        key={`${reference.title}-${refIndex}`}
-                        href={reference.url}
-                        className={cardClass}
-                      >
-                        {cardContent}
-                      </Link>
-                    );
-                  }
+                      // Get PDF blob
+                      const blob = await response.blob();
+
+                      // Debug: Log snippet value
+                      console.log('[OPS Reference] snippet:', reference.snippet);
+                      console.log('[OPS Reference] full reference:', reference);
+
+                      // Open PDF in modal (same as docs page)
+                      setPdfBlob(blob);
+                      setPdfFilename(reference.title || "document.pdf");
+                      setPdfInitialPage(1);
+                      setPdfHighlightSnippet(reference.snippet || undefined);
+                      setPdfViewerOpen(true);
+                    } catch (error) {
+                      console.error("Error opening document:", error);
+                    }
+                  };
+
+                  return (
+                    <button
+                      key={`${reference.title}-${refIndex}`}
+                      type="button"
+                      onClick={handleDocumentClick}
+                      className={`${cardClass} text-left w-full pointer-events-auto !cursor-pointer`}
+                      data-testid="reference-item"
+                    >
+                      {cardContent}
+                    </button>
+                  );
                 }
 
                 // Use <a> for external URLs
@@ -763,20 +764,15 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
                           const { fetchWithAuth } = await import("@/lib/apiClient");
                           const response = await fetchWithAuth(reference.url);
 
-                          // Get PDF blob and create object URL
+                          // Get PDF blob
                           const blob = await response.blob();
-                          const blobUrl = URL.createObjectURL(blob);
 
-                          // Open in new tab
-                          const newWindow = window.open(blobUrl, '_blank');
-                          if (newWindow) {
-                            newWindow.opener = null; // Security
-                          }
-
-                          // Clean up blob URL after a delay
-                          setTimeout(() => {
-                            URL.revokeObjectURL(blobUrl);
-                          }, 60000);
+                          // Open PDF in modal (same as docs page)
+                          setPdfBlob(blob);
+                          setPdfFilename(reference.title || "document.pdf");
+                          setPdfInitialPage(1);
+                          setPdfHighlightSnippet(reference.snippet || undefined);
+                          setPdfViewerOpen(true);
                         } catch (error) {
                           console.error('Error opening document:', error);
                         }
@@ -910,6 +906,21 @@ export default function BlockRenderer({ blocks, nextActions, onAction, traceId }
         </section>
       ) : null}
     </div>
+
+    {/* PDF Viewer Modal for references */}
+    <PdfViewerModal
+      isOpen={pdfViewerOpen}
+      onClose={() => {
+        setPdfViewerOpen(false);
+        setPdfBlob(null);
+        setPdfHighlightSnippet(undefined);
+      }}
+      pdfBlob={pdfBlob}
+      filename={pdfFilename}
+      initialPage={pdfInitialPage}
+      highlightSnippet={pdfHighlightSnippet}
+    />
+    </>
   );
 }
 
