@@ -1903,7 +1903,7 @@ export default function ApiManagerPage() {
                     disabled={!!selectedId}
                     className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
                       logicType === type
-                        ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                        ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
                         : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     } ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""}`}
                   >
@@ -2311,7 +2311,7 @@ export default function ApiManagerPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${
               activeTab === tab.id
-                ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
                 : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             }`}
           >
@@ -2386,7 +2386,7 @@ export default function ApiManagerPage() {
                 onClick={() => setScope(item as ScopeType)}
                 className={`rounded-full border px-3 py-1 transition font-semibold text-sm ${
                   scope === item
-                    ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                    ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
                     : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 }`}
               >
@@ -2409,7 +2409,7 @@ export default function ApiManagerPage() {
                     onClick={() => setSystemView(view)}
                     className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-normal transition ${
                       systemView === view
-                        ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                        ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
                         : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     }`}
                   >
@@ -2738,7 +2738,7 @@ export default function ApiManagerPage() {
                 onClick={() => setLogicFilter(item.id as "all" | LogicType)}
                 className={`rounded-full border px-3 py-1 transition text-xs font-semibold ${
                   logicFilter === item.id
-                    ? "border-sky-600 bg-sky-600 text-white shadow-sm"
+                    ? "border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-700 dark:text-white"
                     : "border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                 }`}
               >
