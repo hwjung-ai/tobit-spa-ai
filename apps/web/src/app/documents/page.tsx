@@ -801,26 +801,26 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+      <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Document index</p>
-            <h2 className="text-2xl font-semibold text-white">Upload and query documents</h2>
+            <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">Upload and query documents</h2>
           </div>
           <button
             onClick={fetchDocuments}
-            className="rounded-2xl border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-200 transition hover:border-slate-500"
+            className="rounded-2xl border border-slate-700 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-800 dark:text-slate-200 transition hover:border-slate-500"
           >
             Refresh list
           </button>
         </div>
         <form onSubmit={handleUpload} className="mt-4 flex flex-col gap-3">
-          <label className="text-sm text-slate-300">
+          <label className="text-sm text-slate-700 dark:text-slate-300">
             Select a file (txt/pdf/docx)
             <input
               ref={fileInputRef}
               type="file"
-              className="mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-950/50 px-4 py-2 text-sm text-white outline-none transition focus:border-slate-500"
+              className="mt-2 block w-full rounded-2xl border border-slate-700 bg-slate-950/50 px-4 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
             />
           </label>
           {uploadError ? (
@@ -829,7 +829,7 @@ export default function DocumentsPage() {
           <div className="flex items-center justify-between gap-3">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+              className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 disabled:bg-slate-700"
               disabled={uploading}
             >
               {uploading ? "Uploading…" : "문서 업로드"}
@@ -842,7 +842,7 @@ export default function DocumentsPage() {
       </section>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
-        <aside className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+        <aside className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Library</p>
             {loadingDocuments ? (
@@ -860,8 +860,8 @@ export default function DocumentsPage() {
               <div
                 key={document.id}
                 className={`group relative flex flex-col gap-1 rounded-2xl border px-4 py-3 transition ${selectedDocumentId === document.id
-                    ? "border-sky-400 bg-sky-500/10 text-white"
-                    : "border-slate-800 bg-slate-900 hover:border-slate-600"
+                    ? "border-sky-400 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+                    : "border-slate-200 dark:border-slate-800 bg-slate-900 hover:border-slate-600"
                   }`}
                 role="button"
                 tabIndex={0}
@@ -897,13 +897,13 @@ export default function DocumentsPage() {
         </aside>
 
         <div className="space-y-6">
-          <section className="group rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+          <section className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                   Document detail
                 </p>
-                <p className="text-sm text-slate-300">
+                <p className="text-sm text-slate-700 dark:text-slate-300">
                   {selectedDocument ? selectedDocument.filename : "Select a document to view metadata"}
                 </p>
               </div>
@@ -942,7 +942,7 @@ export default function DocumentsPage() {
             ) : null}
           </section>
 
-          <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5">
+          <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-5">
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -951,13 +951,13 @@ export default function DocumentsPage() {
               className="space-y-4"
             >
               <div className="flex items-center justify-between gap-3">
-                <label className="flex-1 text-sm text-slate-300">
+                <label className="flex-1 text-sm text-slate-700 dark:text-slate-300">
                   Ask a question
                   <input
                     value={queryValue}
                     onChange={(event) => setQueryValue(event.target.value)}
                     placeholder="질문 예: 이 문서의 핵심 요약은?"
-                    className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-base text-white outline-none transition focus:border-slate-500"
+                    className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-4 py-3 text-base text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
                     disabled={!selectedDocument || selectedDocument.status !== "done"}
                   />
                 </label>
@@ -969,14 +969,14 @@ export default function DocumentsPage() {
                     max={10}
                     value={topK}
                     onChange={(event) => setTopK(Number(event.target.value))}
-                    className="w-20 rounded-2xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-white outline-none transition focus:border-slate-500"
+                    className="w-20 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-slate-500"
                   />
                 </div>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+                  className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-6 py-3 text-sm font-semibold uppercase tracking-[0.3em] text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 disabled:bg-slate-700"
                   disabled={!selectedDocument || selectedDocument.status !== "done" || streamStatus === "streaming"}
                 >
                   {streamStatus === "streaming" ? (
@@ -1000,11 +1000,11 @@ export default function DocumentsPage() {
                 <p className="text-sm text-slate-500">Streaming answers will appear here.</p>
               ) : null}
               {streamChunks.map((chunk, idx) => (
-                <div key={`${chunk.type}-${idx}`} className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm">
-                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-300">
+                <div key={`${chunk.type}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 p-4 text-sm">
+                  <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-700 dark:text-slate-300">
                     {chunkTypeLabel[chunk.type] ?? chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-white">{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-50">{chunk.text}</p>
                   {chunk.meta ? (
                     <div className="text-xs text-slate-400">
                       <p>{selectedDocument?.filename ?? chunk.meta.document_id}</p>
@@ -1018,7 +1018,7 @@ export default function DocumentsPage() {
                 </div>
               ))}
               {references.length > 0 && (
-                <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
+                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-700 dark:text-slate-300">
                   <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
                     <span>근거 문서 ({references.length}건)</span>
                   </div>
@@ -1027,14 +1027,14 @@ export default function DocumentsPage() {
                       const href = buildReferencePdfHref(reference);
                       const viewerHref = buildReferenceViewerHref(reference);
                       const containerClass =
-                        "block rounded-2xl border border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90 cursor-pointer";
+                        "block rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/80 px-4 py-3 transition hover:border-slate-600 hover:bg-slate-900/90 cursor-pointer";
                       const content = (
                         <>
                           <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
                             <span>{reference.document_title}</span>
                             <span>{reference.page != null ? `${reference.page}페이지` : "페이지 미확인"}</span>
                           </div>
-                          <p className="mt-2 text-xs text-slate-200 line-clamp-3">{reference.snippet}</p>
+                          <p className="mt-2 text-xs text-slate-800 dark:text-slate-200 line-clamp-3">{reference.snippet}</p>
                           {reference.score != null ? (
                             <p className="mt-2 text-[10px] text-slate-400">유사도 {(reference.score * 100).toFixed(1)}%</p>
                           ) : null}
@@ -1084,7 +1084,7 @@ export default function DocumentsPage() {
                   </div>
                 </section>
               )}
-              <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-300">
+              <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 p-4 text-sm text-slate-700 dark:text-slate-300">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Document history</p>
@@ -1107,8 +1107,8 @@ export default function DocumentsPage() {
                         <div
                           key={entry.id}
                           className={`group relative flex w-full flex-col rounded-2xl border px-4 py-3 transition ${isSelected
-                              ? "border-sky-500 bg-sky-500/10 text-white"
-                              : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                              ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+                              : "border-slate-200 dark:border-slate-800 bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-600"
                             }`}
                         >
                           <div
@@ -1133,7 +1133,7 @@ export default function DocumentsPage() {
                                 </button>
                               </div>
                             </div>
-                            <p className="mt-2 text-sm font-semibold text-white">{entry.question}</p>
+                            <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">{entry.question}</p>
                             <p className="text-[12px] text-slate-400">{entry.summary}</p>
                           </div>
                         </div>
@@ -1142,7 +1142,7 @@ export default function DocumentsPage() {
                   )}
                 </div>
                 {selectedDocHistoryEntry ? (
-                  <div className="group relative mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-200">
+                  <div className="group relative mt-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-800 dark:text-slate-200">
                     <div className="flex items-center justify-between">
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Answer</p>
                       <div className="flex items-center gap-3">
@@ -1158,7 +1158,7 @@ export default function DocumentsPage() {
                         </button>
                       </div>
                     </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-white">
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-50">
                       {selectedDocHistoryEntry.answer || "No answer recorded."}
                     </p>
                     {selectedDocHistoryEntry.references.length > 0 ? (
@@ -1171,7 +1171,7 @@ export default function DocumentsPage() {
 
                             const content = (
                               <>
-                                <p className="text-white">{reference.document_title}</p>
+                                <p className="text-slate-900 dark:text-slate-50">{reference.document_title}</p>
                                 <p className="text-slate-400">{reference.snippet}</p>
                                 {reference.page != null ? (
                                   <p className="mt-1 text-[10px] text-sky-400">
@@ -1201,14 +1201,14 @@ export default function DocumentsPage() {
                                     console.error('Failed to open document:', error);
                                   }
                                 }}
-                                className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
+                                className="block rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] hover:border-sky-500 hover:bg-slate-900/80 transition cursor-pointer w-full text-left"
                               >
                                 {content}
                               </button>
                             ) : (
                               <div
                                 key={`${reference.document_id}-${reference.chunk_id}`}
-                                className="rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] opacity-60"
+                                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/50 px-3 py-2 text-[11px] opacity-60"
                               >
                                 {content}
                               </div>

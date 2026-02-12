@@ -31,13 +31,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950">
-      <div className="w-full max-w-md space-y-8 rounded-lg border border-slate-800 bg-slate-900 p-8">
+    <div className="flex min-h-screen items-center justify-center bg-white dark:bg-slate-950">
+      <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-md">
         <div>
-          <h2 className="text-center text-3xl font-bold text-white">
+          <h2 className="text-center text-2xl font-semibold text-slate-900 dark:text-white">
             Tobit SPA AI
           </h2>
-          <p className="mt-2 text-center text-sm text-slate-400">
+          <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
             Sign in to your account
           </p>
         </div>
@@ -45,7 +45,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email" className="text-slate-200">
+              <Label htmlFor="email" className="text-slate-700 dark:text-slate-200">
                 Email Address
               </Label>
               <Input
@@ -54,13 +54,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
+                className="mt-1"
                 placeholder="admin@tobit.local"
               />
             </div>
 
             <div>
-              <Label htmlFor="password" className="text-slate-200">
+              <Label htmlFor="password" className="text-slate-700 dark:text-slate-200">
                 Password
               </Label>
               <Input
@@ -69,28 +69,28 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 bg-slate-800 border-slate-700 text-white placeholder-slate-400"
-                placeholder="••••••••"
+                className="mt-1"
+                placeholder="•••••••"
               />
             </div>
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-900/20 border border-red-900 p-3">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="rounded-lg bg-rose-50 border border-rose-200 p-3 dark:bg-rose-900/20 dark:border-rose-800">
+              <p className="text-sm text-rose-700 dark:text-rose-300">{error}</p>
             </div>
           )}
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full"
           >
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
-        <div className="rounded-md bg-slate-800 p-4 text-xs text-slate-300">
+        <div className="rounded-lg bg-slate-50 border border-slate-200 p-4 text-xs text-slate-600 dark:bg-slate-900/60 dark:border-slate-800 dark:text-slate-400">
           <p className="font-semibold mb-2">Demo Credentials:</p>
           <p>Email: admin@tobit.local</p>
           <p>Password: admin123</p>

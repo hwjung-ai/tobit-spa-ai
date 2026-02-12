@@ -265,7 +265,7 @@ const TabsButton = ({
     onClick={onClick}
     className={`rounded-full border px-3 py-1 text-xs uppercase tracking-[0.25em] transition ${active
       ? "border-sky-400 text-white"
-      : "border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white"
+      : "border-slate-300 text-slate-600 hover:border-slate-400 hover:text-slate-900 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-500 dark:hover:text-white"
       }`}
   >
     {children}
@@ -743,12 +743,12 @@ export default function ExplorerPage() {
   return (
     <div className="py-6 tracking-tight builder-shell builder-text">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-white">Data Explorer</h1>
-        <div className="text-xs uppercase tracking-[0.25em] text-slate-500">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Data Explorer</h1>
+        <div className="text-xs uppercase tracking-[0.25em] text-slate-500 dark:text-slate-500">
           Admin only
         </div>
       </div>
-      <p className="mb-4 text-sm text-slate-400">
+      <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
         Read-only data access. Max {MAX_ROWS} rows.
       </p>
 

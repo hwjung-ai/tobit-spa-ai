@@ -602,7 +602,7 @@ function CepEventBrowserContent() {
             알림 발화 이력과 ACK 상태를 확인합니다. (SSE 갱신)
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs uppercase tracking-wider text-slate-400">
+        <div className="flex flex-wrap gap-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-4 py-3 text-xs uppercase tracking-wider text-slate-400">
           <span>Unacked: {summaryQuery.data?.unacked_count ?? "-"}</span>
           {summaryQuery.data?.by_severity
             ? Object.entries(summaryQuery.data.by_severity).map(([key, value]) => (
@@ -614,11 +614,11 @@ function CepEventBrowserContent() {
         </div>
       </header>
       {runLoading ? (
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/70 px-5 py-4">
           <p className="text-sm text-slate-400">Loading CEP run details …</p>
         </section>
       ) : runDetail ? (
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 px-5 py-4 space-y-3">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/70 px-5 py-4 space-y-3">
           {runError ? (
             <p className="text-sm text-rose-300">
               {runError}
@@ -626,7 +626,7 @@ function CepEventBrowserContent() {
           ) : null}
           {runDetail.found ? (
             <>
-              <div className="grid grid-cols-2 gap-4 text-sm text-slate-300">
+              <div className="grid grid-cols-2 gap-4 text-sm text-slate-700 dark:text-slate-300">
                 <div>
                   <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Exec Log ID</p>
                   <p className="text-slate-100">{runDetail.exec_log_id ?? "—"}</p>
@@ -657,14 +657,14 @@ function CepEventBrowserContent() {
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Evidence</p>
                 <div className="mt-2 overflow-x-auto">
-                  <table className="min-w-full text-left text-xs text-slate-300">
+                  <table className="min-w-full text-left text-xs text-slate-700 dark:text-slate-300">
                     <thead>
                       <tr>
                         {["endpoint", "method", "value_path", "op", "threshold", "extracted_value", "evaluated", "status", "error"].map(
                           (column) => (
                             <th
                               key={column}
-                              className="border-b border-slate-800 px-2 py-1 font-semibold uppercase tracking-[0.3em] text-slate-500"
+                              className="border-b border-slate-200 dark:border-slate-800 px-2 py-1 font-semibold uppercase tracking-[0.3em] text-slate-500"
                             >
                               {column}
                             </th>
@@ -689,7 +689,7 @@ function CepEventBrowserContent() {
                 </div>
               </div>
               {runDetail.raw ? (
-                <details className="rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
+                <details className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-3 text-xs text-slate-400">
                   <summary className="cursor-pointer uppercase tracking-[0.3em] text-slate-500">
                     Raw references
                   </summary>
@@ -716,12 +716,12 @@ function CepEventBrowserContent() {
           gridTemplateColumns: `${leftWidth ?? 0}px 12px minmax(0, 1fr)`,
         }}
       >
-        <section className="rounded-3xl border border-slate-800 bg-slate-950/60 p-4">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-4">
           <div className="mb-4 flex flex-wrap items-center gap-3">
             <select
               value={ackedFilter}
               onChange={(event) => setAckedFilter(event.target.value as typeof ackedFilter)}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 tracking-normal"
             >
               <option value="all">All</option>
               <option value="unacked">Unacked</option>
@@ -730,7 +730,7 @@ function CepEventBrowserContent() {
             <select
               value={severityFilter}
               onChange={(event) => setSeverityFilter(event.target.value)}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 tracking-normal"
             >
               <option value="all">Severity</option>
               <option value="info">info</option>
@@ -741,23 +741,23 @@ function CepEventBrowserContent() {
               value={ruleFilter}
               onChange={(event) => setRuleFilter(event.target.value)}
               placeholder="Rule ID"
-              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 tracking-normal"
             />
             <input
               type="datetime-local"
               value={sinceFilter}
               onChange={(event) => setSinceFilter(event.target.value)}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 tracking-normal"
             />
             <input
               type="datetime-local"
               value={untilFilter}
               onChange={(event) => setUntilFilter(event.target.value)}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 tracking-normal"
             />
             <button
               onClick={() => eventsQuery.refetch()}
-              className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-200 transition hover:border-slate-600 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 transition hover:border-slate-600 tracking-normal"
             >
               Refresh
             </button>
@@ -769,21 +769,21 @@ function CepEventBrowserContent() {
                 setSinceFilter("");
                 setUntilFilter("");
               }}
-              className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-200 transition hover:border-slate-600 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 transition hover:border-slate-600 tracking-normal"
             >
               Reset
             </button>
             <select
               value={exportFormat}
               onChange={(event) => setExportFormat(event.target.value as "csv" | "json")}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-200 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950/70 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 tracking-normal"
             >
               <option value="csv">CSV</option>
               <option value="json">JSON</option>
             </select>
             <button
               onClick={handleExport}
-              className="rounded-xl border border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-200 transition hover:border-slate-600 tracking-normal"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900/80 px-3 py-2 text-[11px] text-slate-800 dark:text-slate-200 transition hover:border-slate-600 tracking-normal"
             >
               Export
             </button>
@@ -793,7 +793,7 @@ function CepEventBrowserContent() {
               {normalizeError(eventsQuery.error)}
             </p>
           ) : null}
-          <div className="ag-theme-cep h-[540px] w-full rounded-2xl border border-slate-800 bg-slate-950/70">
+          <div className="ag-theme-cep h-[540px] w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/70">
             <AgGridReact<CepEventSummary>
               rowData={eventsQuery.data ?? []}
               columnDefs={columnDefs}
@@ -818,17 +818,17 @@ function CepEventBrowserContent() {
               setIsResizing(true);
               setIsUserSized(true);
             }}
-            className={`mx-2 w-2 cursor-col-resize rounded-full border border-slate-800 bg-slate-900/80 ${isResizing ? "bg-sky-500/40" : ""
+            className={`mx-2 w-2 cursor-col-resize rounded-full border border-slate-200 dark:border-slate-800 bg-slate-900/80 ${isResizing ? "bg-sky-500/40" : ""
               }`}
             aria-hidden="true"
           />
         </div>
 
-        <aside className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/60 p-4 overflow-y-auto custom-scrollbar max-h-[610px]">
+        <aside className="space-y-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-4 overflow-y-auto custom-scrollbar max-h-[610px]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-wider text-slate-500">Event detail</p>
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                 {selectedEvent?.rule_name ?? "Select an event"}
               </h3>
               <p className="text-xs text-slate-400">
@@ -839,7 +839,7 @@ function CepEventBrowserContent() {
               <button
                 onClick={handleAck}
                 disabled={selectedEvent.ack}
-                className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+                className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-emerald-500/80 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-emerald-400 disabled:bg-slate-700"
               >
                 {selectedEvent.ack ? "ACKED" : "ACK"}
               </button>
@@ -847,12 +847,12 @@ function CepEventBrowserContent() {
           </div>
           {detailError ? <p className="text-sm text-rose-400">{detailError}</p> : null}
           {selectedEvent ? (
-            <div className="space-y-3 text-sm text-slate-200">
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="space-y-3 text-sm text-slate-800 dark:text-slate-200">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-3">
                 <p className="text-xs uppercase tracking-wider text-slate-500">Summary</p>
-                <p className="mt-2 text-sm text-slate-200">{selectedEvent.summary}</p>
+                <p className="mt-2 text-sm text-slate-800 dark:text-slate-200">{selectedEvent.summary}</p>
               </div>
-              <div className="grid gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-xs text-slate-300">
+              <div className="grid gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-3 text-xs text-slate-700 dark:text-slate-300">
                 <p>Severity: {selectedEvent.severity}</p>
                 <p>Status: {selectedEvent.status}</p>
                 <p>ACK: {selectedEvent.ack ? "true" : "false"}</p>
@@ -861,16 +861,16 @@ function CepEventBrowserContent() {
                 <p>Condition evaluated: {String(selectedEvent.condition_evaluated ?? "-")}</p>
                 <p>Extracted value: {String(selectedEvent.extracted_value ?? "-")}</p>
               </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-3">
                 <p className="text-xs uppercase tracking-wider text-slate-500">Payload</p>
-                <pre className="mt-2 max-h-72 overflow-auto text-xs text-slate-200 custom-scrollbar">
+                <pre className="mt-2 max-h-72 overflow-auto text-xs text-slate-800 dark:text-slate-200 custom-scrollbar">
                   {JSON.stringify(selectedEvent.payload, null, 2)}
                 </pre>
               </div>
               {selectedEvent.exec_log ? (
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-3">
                   <p className="text-xs uppercase tracking-wider text-slate-500">Exec log</p>
-                  <pre className="mt-2 max-h-64 overflow-auto text-xs text-slate-200 custom-scrollbar">
+                  <pre className="mt-2 max-h-64 overflow-auto text-xs text-slate-800 dark:text-slate-200 custom-scrollbar">
                     {JSON.stringify(selectedEvent.exec_log, null, 2)}
                   </pre>
                 </div>

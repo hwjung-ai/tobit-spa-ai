@@ -144,7 +144,7 @@ const strategyMeta: Record<Strategy, { title: string; desc: string; badge: strin
   stat: {
     title: "Stat",
     desc: "EMA + 회귀 기반으로 추세를 반영합니다.",
-    badge: "균형형",
+    badge: "규칙형",
   },
   ml: {
     title: "ML",
@@ -153,7 +153,7 @@ const strategyMeta: Record<Strategy, { title: string; desc: string; badge: strin
   },
   dl: {
     title: "DL",
-    desc: "시퀀스형 비선형 패턴을 반영하는 딥러닝 surrogate입니다.",
+    desc: "신경망 기반 비선형 패턴을 반영하는 딥러닝 surrogate입니다.",
     badge: "심화형",
   },
 };
@@ -226,7 +226,7 @@ export default function SimPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [services, setServices] = useState<string[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
-  const [question, setQuestion] = useState("트래픽이 20% 증가하면 서비스 지표가 어떻게 변하나?");
+  const [question, setQuestion] = useState("트래픽이 20% 증가하면 서비스 지표가 어떻게 변화나?");
   const [scenarioType, setScenarioType] = useState<ScenarioType>("what_if");
   const [strategy, setStrategy] = useState<Strategy>("rule");
   const [horizon, setHorizon] = useState("7d");
@@ -512,7 +512,7 @@ export default function SimPage() {
       recordCopilotMetric("sim-workspace", "parse_failure", result.error ?? null);
       setSimDraft(null);
       setDraftStatus("error");
-      setDraftNotes(result.error ?? "SIM 드래프트를 해석할 수 없습니다.");
+      setDraftNotes("SIM 드래프트를 해석할 수 없습니다.");
       return;
     }
 
@@ -547,24 +547,27 @@ export default function SimPage() {
   );
 
   return (
-    <div className="space-y-6 py-6">
-      <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Simulation</p>
-        <h1 className="mt-2 text-2xl font-semibold text-white">SIM Workspace</h1>
-        <p className="mt-2 max-w-4xl text-sm text-slate-300">
-          질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 룰/모델 근거를 함께 제공합니다.
+    <div className="space-y-6 py-6 bg-slate-50 dark:bg-slate-950">
+      {/* Header Section */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+        <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">Simulation</p>
+        <h1 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">SIM Workspace</h1>
+        <p className="mt-2 max-w-4xl text-sm text-slate-700 dark:text-slate-400">
+          질문과 가정값을 기반으로 계획을 검증한 뒤 실행합니다. 결과는 KPI 변화, 비교 차트, 피드백/모델 근거를 함께 제공합니다.
         </p>
       </section>
 
+      {/* Main Content Grid */}
       <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)_320px]">
-        <aside className="space-y-4 rounded-3xl border border-slate-800 bg-slate-900/60 p-5 min-h-[320px]">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">Scenario Builder</h2>
+        {/* Left Panel - Scenario Builder */}
+        <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 min-h-[320px]">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Scenario Builder</h2>
 
-          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
+          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
             질문
             <textarea
               data-testid="simulation-question-input"
-              className="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none focus:border-sky-500"
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
               rows={4}
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
@@ -578,7 +581,7 @@ export default function SimPage() {
           </label>
 
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">템플릿</p>
+            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">템플릿</p>
             <div className="mt-2 grid gap-2">
               {templates.map((template) => (
                 <button
@@ -586,28 +589,28 @@ export default function SimPage() {
                   type="button"
                   data-testid="simulation-template-select"
                   onClick={() => applyTemplate(template)}
-                  className="rounded-2xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-left transition hover:border-sky-500"
+                  className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-left transition hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/60 dark:hover:border-sky-400"
                 >
-                  <p className="text-sm font-semibold text-white">{template.name}</p>
-                  <p className="text-xs text-slate-400">{template.description}</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{template.name}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">{template.description}</p>
                 </button>
               ))}
             </div>
             {selectedTemplate ? (
-              <div className="mt-3 rounded-xl border border-emerald-700/40 bg-emerald-950/20 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">Applied Template</p>
-                <p className="mt-1 text-sm text-slate-200">{selectedTemplate.name}</p>
-                <p className="text-xs text-slate-400">{selectedTemplate.description}</p>
+              <div className="mt-3 rounded-2xl border border-emerald-600 bg-emerald-50 px-3 py-2 dark:border-emerald-500 dark:bg-emerald-900/30">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Applied Template</p>
+                <p className="mt-1 text-sm text-slate-800 dark:text-slate-200">{selectedTemplate.name}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">{selectedTemplate.description}</p>
               </div>
             ) : (
-              <p className="mt-2 text-xs text-slate-500">템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.</p>
+              <p className="mt-2 text-xs text-slate-600 dark:text-slate-500">템플릿을 클릭하면 질문/전략/가정값이 자동 적용됩니다.</p>
             )}
           </div>
 
-          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
-            시나리오 타입
+          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+            시나리오 유형
             <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
               value={scenarioType}
               onChange={(event) => setScenarioType(event.target.value as ScenarioType)}
             >
@@ -617,10 +620,10 @@ export default function SimPage() {
             </select>
           </label>
 
-          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
+          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
             Service
             <select
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
               value={service}
               onChange={(event) => setService(event.target.value)}
             >
@@ -635,25 +638,25 @@ export default function SimPage() {
             </select>
           </label>
 
-          <label className="block text-xs uppercase tracking-[0.2em] text-slate-400">
+          <label className="block text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
             Horizon
             <input
-              className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+              className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-400"
               value={horizon}
               onChange={(event) => setHorizon(event.target.value)}
             />
           </label>
 
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">가정값</p>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">가정값</p>
             {Object.entries(assumptions).map(([key, value]) => {
               const meta = assumptionMeta[key];
               if (!meta) return null;
               return (
-                <label key={key} className="block rounded-xl border border-slate-800 bg-slate-950/50 px-3 py-2">
+                <label key={key} className="block rounded-2xl border border-slate-300 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950/50">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs text-slate-300">{meta.label}</span>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-700 dark:text-slate-300">{meta.label}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-400">
                       {value}
                       {meta.unit}
                     </span>
@@ -677,8 +680,8 @@ export default function SimPage() {
             })}
           </div>
 
-          <div className="grid gap-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-400">전략 선택</p>
+          <div>
+            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">전략 선택</p>
             {(Object.keys(strategyMeta) as Strategy[]).map((s) => (
               <button
                 key={s}
@@ -686,35 +689,35 @@ export default function SimPage() {
                 onClick={() => setStrategy(s)}
                 className={`rounded-2xl border px-3 py-2 text-left transition ${
                   strategy === s
-                    ? "border-sky-500 bg-sky-500/10"
-                    : "border-slate-700 bg-slate-950/60 hover:border-slate-500"
+                    ? "border-sky-600 bg-sky-600 dark:border-sky-500 dark:bg-sky-600"
+                    : "border-slate-300 bg-white hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/60 dark:hover:border-sky-400"
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-white">{strategyMeta[s].title}</span>
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">{strategyMeta[s].badge}</span>
+                  <span className="text-sm font-semibold text-white dark:text-slate-100">{strategyMeta[s].title}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">{strategyMeta[s].badge}</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">{strategyMeta[s].desc}</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">{strategyMeta[s].desc}</p>
               </button>
             ))}
           </div>
 
           <button
             data-testid="simulation-run-button"
-            className="w-full rounded-2xl bg-emerald-500/90 px-4 py-2 text-sm font-semibold uppercase tracking-[0.25em] text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+            className="w-full rounded-2xl bg-sky-600 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-400 dark:disabled:bg-slate-700"
             onClick={handleRun}
             disabled={loading || servicesLoading || !question.trim() || !service.trim()}
           >
             {loading ? "Running..." : servicesLoading ? "Loading Services..." : "Run Simulation"}
           </button>
-          {!question.trim() ? <p className="text-[11px] text-slate-500">질문을 입력하면 실행할 수 있습니다.</p> : null}
-          {!service.trim() ? <p className="text-[11px] text-slate-500">Service를 입력 또는 선택하면 실행할 수 있습니다.</p> : null}
+          {!question.trim() ? <p className="text-[11px] text-slate-600 dark:text-slate-500">질문을 입력하면 실행할 수 있습니다.</p> : null}
+          {!service.trim() ? <p className="text-[11px] text-slate-600 dark:text-slate-500">Service를 입력하거나 선택하면 실행할 수 있습니다.</p> : null}
 
-          <div className="grid grid-cols-2 gap-2">
+          <div>
             <button
               type="button"
               data-testid="simulation-backtest-button"
-              className="rounded-2xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-200 hover:border-sky-500"
+              className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 dark:hover:border-sky-400"
               onClick={handleBacktest}
               disabled={servicesLoading || !service.trim()}
             >
@@ -723,7 +726,7 @@ export default function SimPage() {
             <button
               type="button"
               data-testid="simulation-export-button"
-              className="rounded-2xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-slate-200 hover:border-emerald-500"
+              className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:border-emerald-600 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 dark:hover:border-emerald-500"
               onClick={handleExportCsv}
               disabled={servicesLoading || !service.trim()}
             >
@@ -732,40 +735,42 @@ export default function SimPage() {
           </div>
         </aside>
 
+        {/* Main Content */}
         <main className="space-y-4">
-          <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5">
-            <h2 data-testid="simulation-kpi-summary" className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">
+          {/* KPI Summary Section */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <h2 data-testid="simulation-kpi-summary" className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">
               KPI Summary
             </h2>
             {!result ? (
-              <p className="mt-3 text-sm text-slate-400">왼쪽에서 시나리오를 설정하고 실행하세요.</p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">왼쪽에서 시나리오를 설정하고 실행하세요.</p>
             ) : (
               <>
-                <p className="mt-3 text-sm text-slate-300">{result.summary}</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-3 text-sm text-slate-700 dark:text-slate-300">{result.summary}</p>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
                   Confidence: {result.simulation.confidence.toFixed(2)} ({getConfidenceLabel(result.simulation.confidence)})
                 </p>
                 {result.simulation.confidence_interval ? (
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-500">
                     CI: {result.simulation.confidence_interval[0].toFixed(2)} ~ {result.simulation.confidence_interval[1].toFixed(2)}
                     {result.simulation.error_bound ? ` / Error Bound: ±${result.simulation.error_bound}` : ""}
                   </p>
                 ) : null}
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="mt-3 grid gap-3">
                   {result.simulation.kpis.map((kpi) => (
-                    <div key={kpi.kpi} className="rounded-2xl border border-slate-800 bg-slate-950/50 p-3">
+                    <div key={kpi.kpi} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
                       {(() => {
                         const changePct = calculateChangePct(kpi);
                         return (
                           <>
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">{formatKpiLabel(kpi.kpi)}</p>
-                      <p className="mt-1 text-sm text-slate-300">
-                        {kpi.baseline} → {kpi.simulated} {kpi.unit}
-                      </p>
-                      <p className={`text-sm font-semibold ${changePct >= 0 ? "text-amber-300" : "text-emerald-300"}`}>
-                        {changePct >= 0 ? "+" : ""}
-                        {changePct}%
-                      </p>
+                            <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">{formatKpiLabel(kpi.kpi)}</p>
+                            <p className="mt-1 text-sm text-slate-800 dark:text-slate-200">
+                              {kpi.baseline} → {kpi.simulated} {kpi.unit}
+                            </p>
+                            <p className={`text-sm font-semibold ${changePct >= 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                              {changePct >= 0 ? "+" : ""}
+                              {changePct}%
+                            </p>
                           </>
                         );
                       })()}
@@ -776,50 +781,51 @@ export default function SimPage() {
             )}
           </section>
 
-          <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 min-h-[420px]">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">Comparison Charts</h2>
+          {/* Comparison Charts Section */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Comparison Charts</h2>
             {!result ? (
-              <p className="mt-3 text-sm text-slate-400">실행 후 차트가 표시됩니다.</p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">실행 후 차트가 표시됩니다.</p>
             ) : (
               <div className="mt-4 grid gap-4">
-                <div data-testid="simulation-chart-timeseries" className="h-64 rounded-2xl border border-slate-800 bg-slate-950/50 p-2">
+                <div className="h-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="kpi" stroke="#94a3b8" />
                       <YAxis stroke="#94a3b8" />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="baseline" stroke="#38bdf8" strokeWidth={2} />
+                      <Line type="monotone" dataKey="baseline" stroke="#0ea5e9" strokeWidth={2} />
                       <Line type="monotone" dataKey="simulated" stroke="#f59e0b" strokeWidth={2} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
 
-                <div data-testid="simulation-chart-delta" className="h-64 rounded-2xl border border-slate-800 bg-slate-950/50 p-2">
+                <div className="h-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                       <XAxis dataKey="kpi" stroke="#94a3b8" />
                       <YAxis stroke="#94a3b8" />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="changePct" fill="#22d3ee" name="Change %" />
+                      <Bar dataKey="changePct" fill="#22c55e" name="Change %" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
 
                 {compareData.length > 0 ? (
-                  <div className="h-56 rounded-2xl border border-slate-800 bg-slate-950/50 p-2">
+                  <div className="h-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={compareData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                         <XAxis dataKey="kpi" stroke="#94a3b8" />
                         <YAxis stroke="#94a3b8" />
                         <Tooltip />
                         <Legend />
                         <Bar dataKey="previous" fill="#64748b" name="Previous Run" />
-                        <Bar dataKey="current" fill="#14b8a6" name="Current Run" />
+                        <Bar dataKey="current" fill="#3b82f6" name="Current Run" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -828,7 +834,7 @@ export default function SimPage() {
             )}
           </section>
 
-          {/* 토폴로지 맵 시각화 */}
+          {/* Topology Map Section */}
           <section>
             <TopologyMap
               service={service}
@@ -838,35 +844,36 @@ export default function SimPage() {
             />
           </section>
 
-          <section data-testid="simulation-evidence-panel" className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5 min-h-[220px]">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">Algorithm & Evidence</h2>
+          {/* Evidence Panel */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 min-h-[220px]">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Algorithm & Evidence</h2>
             {!result ? (
-              <p className="mt-3 text-sm text-slate-400">실행 후 알고리즘 설명과 근거가 표시됩니다.</p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">실행 후 알고리즘 설명과 근거가 표시됩니다.</p>
             ) : (
-              <div className="mt-3 space-y-3 text-sm text-slate-300">
+              <div className="mt-3 space-y-3 text-sm text-slate-700 dark:text-slate-300">
                 <p>
-                  <span className="text-slate-500">Strategy:</span> {result.simulation.strategy.toUpperCase()} /
-                  <span className="text-slate-500"> Model:</span> {String(result.simulation.model_info.version ?? "n/a")}
+                  <span className="text-slate-600 dark:text-slate-500">Strategy:</span> {result.simulation.strategy.toUpperCase()} /
+                  <span className="text-slate-600 dark:text-slate-500"> Model:</span> {String(result.simulation.model_info.version ?? "n/a")}
                 </p>
                 {plan ? (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">
                     Baseline Window: {plan.baseline_window} / Horizon: {plan.horizon} / Service: {plan.service}
                   </p>
                 ) : null}
                 <p>{result.simulation.explanation}</p>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Recommended Actions</p>
+                  <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">Recommended Actions</p>
                   <ul className="mt-1 list-disc pl-5">
                     {result.simulation.recommended_actions.map((action) => (
                       <li key={action}>{action}</li>
                     ))}
                   </ul>
                 </div>
-                <pre className="overflow-auto rounded-xl border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-300">
+                <pre className="overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
                   {JSON.stringify(result.references, null, 2)}
                 </pre>
                 {result.simulation.warnings.length > 0 ? (
-                  <ul data-testid="simulation-warning-list" className="list-disc pl-5 text-amber-300">
+                  <ul className="list-disc pl-5 text-amber-600 dark:text-amber-400">
                     {result.simulation.warnings.map((warning) => (
                       <li key={warning}>{warning}</li>
                     ))}
@@ -874,36 +881,38 @@ export default function SimPage() {
                 ) : null}
               </div>
             )}
-          </section>
+            </section>
 
-          <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-5">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-300">Backtest Report</h2>
+          {/* Backtest Report Section */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-400">Backtest Report</h2>
             {!backtest ? (
-              <p className="mt-3 text-sm text-slate-400">좌측에서 Backtest 버튼을 눌러 전략 성능 지표를 확인하세요.</p>
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-500">왼쪽에서 Backtest 버튼을 눌러 전략 성능 지표를 확인하세요.</p>
             ) : (
-              <div className="mt-3 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
-                <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-                  <p className="text-xs text-slate-500">R2</p>
-                  <p className="text-lg font-semibold">{backtest.metrics.r2.toFixed(4)}</p>
+              <div className="mt-3 grid gap-3 text-sm text-slate-700 dark:text-slate-300">
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">R2</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{backtest.metrics.r2.toFixed(4)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-                  <p className="text-xs text-slate-500">MAPE</p>
-                  <p className="text-lg font-semibold">{(backtest.metrics.mape * 100).toFixed(2)}%</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">MAPE</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{(backtest.metrics.mape * 100).toFixed(2)}%</p>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-                  <p className="text-xs text-slate-500">RMSE</p>
-                  <p className="text-lg font-semibold">{backtest.metrics.rmse.toFixed(3)}</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">RMSE</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{backtest.metrics.rmse.toFixed(3)}</p>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-3">
-                  <p className="text-xs text-slate-500">Coverage@90</p>
-                  <p className="text-lg font-semibold">{(backtest.metrics.coverage_90 * 100).toFixed(2)}%</p>
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50">
+                  <p className="text-xs text-slate-600 dark:text-slate-500">Coverage@90%</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{(backtest.metrics.coverage_90 * 100).toFixed(2)}%</p>
                 </div>
               </div>
             )}
           </section>
         </main>
 
-        <aside className="min-h-[320px] rounded-3xl border border-slate-800 bg-slate-900/60 p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-8rem)] xl:overflow-y-auto">
+        {/* Right Panel - AI Copilot */}
+        <aside className="min-h-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto dark:border-slate-800 dark:bg-slate-900/60">
           <div className="space-y-4">
             <BuilderCopilotPanel
               builderSlug="sim-workspace"
@@ -922,10 +931,10 @@ export default function SimPage() {
               }}
               inputPlaceholder="Ask AI Copilot to generate a SIM draft..."
             />
-            <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
+            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-[0.2em] text-slate-500">Draft status</span>
-                <span className="text-sm font-semibold text-white">
+                <span className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">Draft status</span>
+                <span className="text-sm font-semibold text-slate-900 dark:text-white">
                   {draftStatus === "draft_ready"
                     ? "Ready"
                     : draftStatus === "error"
@@ -933,17 +942,17 @@ export default function SimPage() {
                       : "Idle"}
                 </span>
               </div>
-              {draftNotes ? <p className="text-sm text-slate-300">{draftNotes}</p> : null}
-              <div className="grid gap-2 sm:grid-cols-2">
+              {draftNotes ? <p className="text-sm text-slate-700 dark:text-slate-200">{draftNotes}</p> : null}
+              <div className="grid gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     if (!simDraft) return;
                     applySimDraftToForm(simDraft);
-                    setStatusMessage("AI draft가 좌측 Scenario Builder에 반영되었습니다.");
+                    setStatusMessage("AI 드래프트가 좌측 Scenario Builder에 반영되었습니다.");
                   }}
                   disabled={!simDraft}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-white transition hover:border-emerald-500 disabled:opacity-40"
+                  className="rounded-2xl border border-slate-300 bg-sky-600 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500 disabled:opacity-40 dark:border-slate-700 dark:bg-sky-700 dark:disabled:bg-slate-700"
                 >
                   Apply
                 </button>
@@ -953,33 +962,36 @@ export default function SimPage() {
                     setSimDraft(null);
                     setDraftStatus("idle");
                     setDraftNotes(null);
+                    setLastParseStatus("idle");
+                    setLastParseError(null);
+                    setLastAssistantRaw("");
                   }}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-300 transition hover:border-slate-500"
+                  className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-700 hover:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-300 transition hover:border-sky-400"
                 >
                   Discard
                 </button>
               </div>
               {simDraft ? (
-                <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Draft JSON</p>
-                  <pre className="max-h-44 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[11px] text-slate-200">
+                <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">Draft JSON</p>
+                  <pre className="max-h-44 overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
                     {JSON.stringify(simDraft, null, 2)}
                   </pre>
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">No SIM draft yet. Ask Copilot to generate one.</p>
+                <p className="text-xs text-slate-600 dark:text-slate-500">No SIM draft yet. Ask Copilot to generate one.</p>
               )}
-              <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
-                <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-slate-400">
+              <details className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/40">
+                <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
                   Debug
                 </summary>
                 <div className="mt-2 space-y-1">
-                  <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">
                     Parse status: {lastParseStatus}
                   </p>
-                  {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
-                  <p className="text-[10px] uppercase tracking-[0.15em] text-slate-500">Last assistant raw</p>
-                  <pre className="max-h-24 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                  {lastParseError ? <p className="text-[11px] text-rose-600 dark:text-rose-400">Error: {lastParseError}</p> : null}
+                  <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-500">Last assistant raw</p>
+                  <pre className="max-h-24 overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-200">
                     {lastAssistantRaw || "없음"}
                   </pre>
                 </div>
@@ -989,6 +1001,7 @@ export default function SimPage() {
         </aside>
       </section>
 
+      {/* Toast Notification */}
       <Toast
         message={statusMessage ?? ""}
         type={

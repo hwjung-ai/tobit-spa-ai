@@ -63,7 +63,7 @@ export default function BuilderShell({
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left Pane */}
         <div
-          className="flex-shrink-0 space-y-4 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-inner shadow-black/40"
+          className="flex-shrink-0 space-y-4 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-md dark:border-slate-800 dark:bg-slate-950/90 dark:shadow-xl dark:shadow-black/20"
           style={{ width: `${leftWidth}px` }}
         >
           {leftPane}
@@ -78,17 +78,17 @@ export default function BuilderShell({
           className={`group flex w-4 cursor-col-resize items-center justify-center transition-colors ${isResizingLeft ? "bg-sky-500/10" : "hover:bg-sky-500/5"
             }`}
         >
-          <div className={`h-12 w-1 rounded-full bg-slate-800 transition-colors group-hover:bg-slate-700 ${isResizingLeft ? "bg-sky-500/50" : ""
+          <div className={`h-12 w-1 rounded-full bg-slate-300 transition-colors group-hover:bg-slate-400 dark:bg-slate-700 dark:group-hover:bg-slate-600 ${isResizingLeft ? "bg-sky-500/50" : ""
             }`} />
         </div>
 
         {/* Center Pane */}
         <div className="flex flex-1 flex-col gap-4 overflow-hidden">
-          <div className="flex-[3] overflow-auto rounded-3xl border border-slate-800 bg-slate-900/70 p-4 shadow-inner shadow-black/40 custom-scrollbar">
+          <div className="flex-[3] overflow-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl dark:shadow-black/20 custom-scrollbar">
             {centerTop}
           </div>
           {centerBottom && (
-            <div className="flex-shrink-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/70 p-4 shadow-inner shadow-black/40">
+            <div className="flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl dark:shadow-black/20">
               {centerBottom}
             </div>
           )}
@@ -103,13 +103,13 @@ export default function BuilderShell({
           className={`group flex w-4 cursor-col-resize items-center justify-center transition-colors ${isResizingRight ? "bg-sky-500/10" : "hover:bg-sky-500/5"
             }`}
         >
-          <div className={`h-12 w-1 rounded-full bg-slate-800 transition-colors group-hover:bg-slate-700 ${isResizingRight ? "bg-sky-500/50" : ""
+          <div className={`h-12 w-1 rounded-full bg-slate-300 transition-colors group-hover:bg-slate-400 dark:bg-slate-700 dark:group-hover:bg-slate-600 ${isResizingRight ? "bg-sky-500/50" : ""
             }`} />
         </div>
 
         {/* Right Pane */}
         <div
-          className="flex-shrink-0 overflow-hidden rounded-3xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400 shadow-inner shadow-black/40"
+          className="flex-shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 p-4 text-sm text-slate-600 shadow-md dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-400 dark:shadow-xl dark:shadow-black/20"
           style={{ width: `${rightWidth}px` }}
         >
           {rightPane}

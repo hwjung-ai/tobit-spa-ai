@@ -1299,12 +1299,12 @@ export default function ApiManagerPage() {
       <p className="text-xs uppercase tracking-normal text-slate-500">Execution result</p>
       {selectedApi?.logic_type === "workflow" ? (
         workflowResult ? (
-          <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
+          <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
             <div className="space-y-2">
               {workflowSteps.map((step) => (
                 <div
                   key={step.node_id}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/30 p-3 text-xs text-slate-100"
+                  className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/30 p-3 text-xs text-slate-100"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">
@@ -1342,7 +1342,7 @@ export default function ApiManagerPage() {
           <p className="text-sm text-slate-500">Execute the workflow to see results here.</p>
         )
       ) : executionResult ? (
-        <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
+        <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
           <div className="flex items-center justify-between">
             <div>
               <p>Rows: {executionResult.row_count}</p>
@@ -1369,7 +1369,7 @@ export default function ApiManagerPage() {
                     {executionColumns.map((column) => (
                       <th
                         key={column}
-                        className="border-b border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
+                        className="border-b border-slate-200 dark:border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
                       >
                         {column}
                       </th>
@@ -1397,7 +1397,7 @@ export default function ApiManagerPage() {
       ) : (
         <p className="text-sm text-slate-500">Execute the SQL to see results here.</p>
       )}
-      <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+      <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-4">
         <div className="flex items-center justify-between">
           <p className="text-xs uppercase tracking-normal text-slate-500">Execution logs</p>
           <span className="text-[10px] uppercase tracking-normal text-slate-400">
@@ -1414,7 +1414,7 @@ export default function ApiManagerPage() {
               <button
                 key={log.exec_id}
                 onClick={() => applyLogParams(log)}
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/30 p-3 text-left text-xs text-slate-200 transition hover:border-slate-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/30 p-3 text-left text-xs text-slate-200 transition hover:border-slate-500"
               >
                 <div className="flex items-center justify-between text-[11px] text-slate-400">
                   <span>
@@ -1424,7 +1424,7 @@ export default function ApiManagerPage() {
                     {log.row_count} rows · {log.duration_ms} ms
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] text-slate-300">by {log.executed_by ?? "ops-builder"}</p>
+                <p className="mt-1 text-[11px] text-slate-700 dark:text-slate-300">by {log.executed_by ?? "ops-builder"}</p>
                 {log.request_params ? (
                   <pre className="mt-2 max-h-20 overflow-auto text-[10px] text-slate-400 custom-scrollbar">
                     {JSON.stringify(log.request_params, null, 2)}
@@ -1468,7 +1468,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, api_name: event.target.value }))
                 }
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 disabled={isSystemScope}
                 placeholder="e.g., User Management API"
               />
@@ -1486,7 +1486,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, method: event.target.value as ApiDraft["method"] }))
                 }
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 disabled={isSystemScope}
               >
                 <option value="GET">GET</option>
@@ -1501,7 +1501,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, endpoint: event.target.value }))
                 }
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 disabled={isSystemScope}
                 placeholder="/api/endpoint"
               />
@@ -1515,14 +1515,14 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, description: event.target.value }))
                 }
-                className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                className="h-24 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500 custom-scrollbar"
                 disabled={isSystemScope}
                 placeholder="Describe your API..."
               />
             </FormFieldGroup>
           </FormSection>
           {selectedDiscovered ? (
-            <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-200">
+            <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-200">
               <p className="text-[10px] uppercase tracking-normal text-slate-500">Supported actions / constraints</p>
               {selectedDiscovered.summary ? (
                 <p className="text-sm text-slate-200">{selectedDiscovered.summary}</p>
@@ -1534,7 +1534,7 @@ export default function ApiManagerPage() {
               ))}
               <button
                 onClick={() => handleImportDiscoveredEndpoint(selectedDiscovered)}
-                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:border-slate-500"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-slate-900 dark:text-slate-50 transition hover:border-slate-500"
               >
                 Import to Custom
               </button>
@@ -1549,7 +1549,7 @@ export default function ApiManagerPage() {
               <input
                 value={definitionDraft.tags}
                 onChange={(event) => setDefinitionDraft((prev) => ({ ...prev, tags: event.target.value }))}
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 disabled={isSystemScope}
                 placeholder="user, analytics, reporting"
               />
@@ -1568,7 +1568,7 @@ export default function ApiManagerPage() {
               <textarea
                 value={paramSchemaText}
                 onChange={(event) => setParamSchemaText(event.target.value)}
-                className="h-40 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                className="h-40 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500 custom-scrollbar"
                 disabled={isSystemScope && systemView !== "registered"}
                 placeholder='{"type": "object", "properties": {...}}'
               />
@@ -1581,12 +1581,12 @@ export default function ApiManagerPage() {
                 <textarea
                   value={runtimePolicyText}
                   onChange={(event) => setRuntimePolicyText(event.target.value)}
-                  className="h-40 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+                  className="h-40 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500 custom-scrollbar"
                   disabled={isSystemScope && systemView !== "registered"}
                   placeholder='{"timeout": 30000}'
                 />
               ) : (
-                <div className="flex h-40 flex-col justify-center rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-400">
+                <div className="flex h-40 flex-col justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-3 text-[11px] text-slate-400">
                   Runtime Policy editing is available only for System {'>'} Registered or Custom APIs.
                 </div>
               )}
@@ -1605,7 +1605,7 @@ export default function ApiManagerPage() {
                   className="h-4 w-4 rounded border-slate-600 bg-slate-900 text-sky-400 focus:ring-sky-400"
                   disabled={isSystemScope}
                 />
-                <span className="text-sm text-slate-300">Enable this API</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">Enable this API</span>
               </label>
             </FormFieldGroup>
             <FormFieldGroup
@@ -1617,7 +1617,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setDefinitionDraft((prev) => ({ ...prev, created_by: event.target.value }))
                 }
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 placeholder="ops-builder"
                 disabled={isSystemScope}
               />
@@ -1639,8 +1639,8 @@ export default function ApiManagerPage() {
                     onClick={() => setLogicType(type)}
                     disabled={!!selectedId}
                     className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal transition ${logicType === type
-                      ? "border-sky-500 bg-sky-500/10 text-white"
-                      : "border-slate-800 bg-slate-950 text-slate-400"
+                      ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+                      : "border-slate-200 dark:border-slate-800 bg-slate-950 text-slate-400"
                       } ${!!selectedId ? "opacity-40 cursor-not-allowed" : "hover:border-slate-600 shadow-sm"}`}
                   >
                     {logicTypeLabels[type]}
@@ -1649,7 +1649,7 @@ export default function ApiManagerPage() {
                 <button
                   type="button"
                   onClick={handleLogicUndo}
-                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-normal text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
+                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-normal text-slate-700 dark:text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
                   disabled={logicHistoryIndex <= 0}
                 >
                   Undo
@@ -1657,7 +1657,7 @@ export default function ApiManagerPage() {
                 <button
                   type="button"
                   onClick={handleLogicRedo}
-                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-normal text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
+                  className="rounded-full border border-slate-700 px-3 py-1 text-[10px] uppercase tracking-normal text-slate-700 dark:text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
                   disabled={logicHistoryIndex >= logicHistory.length - 1}
                 >
                   Redo
@@ -1673,7 +1673,7 @@ export default function ApiManagerPage() {
                 onChange={(event) =>
                   setScriptLanguage(event.target.value as "python" | "javascript")
                 }
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
               >
                 <option value="python">Python</option>
                 <option value="javascript">JavaScript</option>
@@ -1681,7 +1681,7 @@ export default function ApiManagerPage() {
             </label>
           ) : null}
           <div
-            className={`builder-json-shell rounded-2xl border border-slate-800 bg-slate-950/60 transition-all ${
+            className={`builder-json-shell rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 transition-all ${
               logicType === "http" ? "h-auto max-h-[600px] overflow-y-auto" : "h-64 overflow-hidden"
             }`}
           >
@@ -1736,10 +1736,10 @@ export default function ApiManagerPage() {
             )}
           </div>
           {(bindingValidation.bindings.length > 0 || bindingValidation.errors.length > 0) && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 px-3 py-2 text-[11px]">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 px-3 py-2 text-[11px]">
               <p className="text-slate-400">Binding scan</p>
               {bindingValidation.bindings.length > 0 && (
-                <p className="mt-1 text-slate-300">
+                <p className="mt-1 text-slate-700 dark:text-slate-300">
                   Detected: {bindingValidation.bindings.map((binding) => `{{${binding}}}`).join(", ")}
                 </p>
               )}
@@ -1754,7 +1754,7 @@ export default function ApiManagerPage() {
           )}
         </div>
       )}
-      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800/60">
+      <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-800/60">
         <span className={`text-[11px] uppercase tracking-[0.1em] px-3 py-1 rounded-full border ${statusMessage?.toLowerCase().includes("failed") || statusMessage?.toLowerCase().includes("error")
           ? "text-rose-400 border-rose-500/30 bg-rose-500/5 font-semibold"
           : statusMessage && statusMessage.includes("Saved")
@@ -1767,7 +1767,7 @@ export default function ApiManagerPage() {
           {activeTab === "logic" && (logicType === "sql" || logicType === "http" || logicType === "script" || logicType === "python") && (
             <button
               onClick={handleDryRunFromEditor}
-              className="rounded-full border border-sky-500/30 bg-sky-500/80 px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-white transition hover:bg-sky-400 hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled:bg-slate-800 disabled:text-slate-500"
+              className="rounded-full border border-sky-500/30 bg-sky-500/80 px-5 py-2 text-[12px] font-bold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 hover:shadow-[0_0_15px_rgba(14,165,233,0.3)] disabled:bg-slate-800 disabled:text-slate-500"
               disabled={isExecuting}
             >
               {isExecuting ? "Running…" : `Test ${logicTypeLabels[logicType]} (Dry-run)`}
@@ -1775,7 +1775,7 @@ export default function ApiManagerPage() {
           )}
           <button
             onClick={handleSave}
-            className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-[12px] font-bold uppercase tracking-wider text-white transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled:bg-slate-800 disabled:text-slate-500"
+            className="rounded-full border border-emerald-500/30 bg-emerald-500/80 px-6 py-2 text-[12px] font-bold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] disabled:bg-slate-800 disabled:text-slate-500"
             disabled={isSaving || isSystemScope}
           >
             {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
@@ -1783,18 +1783,18 @@ export default function ApiManagerPage() {
         </div>
       </div>
       {showLogicResult && activeTab === "logic" && (
-        <div className="mt-4 border-t border-slate-800 pt-4">
+        <div className="mt-4 border-t border-slate-200 dark:border-slate-800 pt-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs uppercase tracking-normal text-slate-500">Query Result</span>
             <button
               onClick={() => setShowLogicResult(false)}
-              className="text-[10px] text-slate-500 hover:text-slate-300"
+              className="text-[10px] text-slate-500 hover:text-slate-700 dark:text-slate-300"
             >
               Close
             </button>
           </div>
           {executionResult ? (
-            <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
+            <div className="space-y-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p>Rows: {executionResult.row_count}</p>
@@ -1821,7 +1821,7 @@ export default function ApiManagerPage() {
                         {executionColumns.map((column) => (
                           <th
                             key={column}
-                            className="border-b border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
+                            className="border-b border-slate-200 dark:border-slate-800 px-2 py-1 uppercase tracking-normal text-slate-500"
                           >
                             {column}
                           </th>
@@ -1873,7 +1873,7 @@ export default function ApiManagerPage() {
         <textarea
           value={testParams}
           onChange={(event) => setTestParams(event.target.value)}
-          className="mt-2 h-32 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+          className="mt-2 h-32 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500 custom-scrollbar"
         />
       </label>
       {isWorkflowApi ? (
@@ -1882,7 +1882,7 @@ export default function ApiManagerPage() {
           <textarea
             value={testInput}
             onChange={(event) => setTestInput(event.target.value)}
-            className="mt-2 h-24 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500 custom-scrollbar"
+            className="mt-2 h-24 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500 custom-scrollbar"
           />
         </label>
       ) : null}
@@ -1895,7 +1895,7 @@ export default function ApiManagerPage() {
             max={1000}
             value={testLimit}
             onChange={(event) => setTestLimit(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+            className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
           />
         </label>
         <label className="text-xs uppercase tracking-normal text-slate-500">
@@ -1903,14 +1903,14 @@ export default function ApiManagerPage() {
           <input
             value={executedBy}
             onChange={(event) => setExecutedBy(event.target.value)}
-            className="mt-2 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+            className="mt-2 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
             placeholder="ops-builder"
           />
         </label>
         <div className="flex items-end">
           <button
             onClick={handleExecute}
-            className="w-full rounded-2xl border border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+            className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-sky-500/90 px-3 py-2 text-[11px] font-semibold uppercase tracking-normal text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 disabled:bg-slate-700"
             disabled={
               !selectedId || isExecuting || (!isSqlApi && !isWorkflowApi && !isHttpApi)
             }
@@ -1940,8 +1940,8 @@ export default function ApiManagerPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-normal ${activeTab === tab.id
-              ? "border-sky-500 bg-sky-500/10 text-white"
-              : "border-slate-800 bg-slate-950 text-slate-400"
+              ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+              : "border-slate-200 dark:border-slate-800 bg-slate-950 text-slate-400"
               }`}
           >
             {tab.label}
@@ -1959,7 +1959,7 @@ export default function ApiManagerPage() {
       ) : (
         <>
           <p className="text-xs uppercase tracking-normal text-slate-500">Metadata (Current Editor)</p>
-          <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-300">
+          <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900/40 p-3 text-sm text-slate-700 dark:text-slate-300">
             <p>
               Endpoint: <span className="text-slate-100">{definitionDraft.endpoint || "(new)"}</span>
             </p>
@@ -1967,7 +1967,7 @@ export default function ApiManagerPage() {
               Logic type: <span className="text-sky-400 font-mono">{logicTypeLabels[logicType]}</span>
             </p>
             {selectedApi && (
-              <p className="border-t border-slate-800/60 pt-2 text-[10px] text-slate-500">
+              <p className="border-t border-slate-200 dark:border-slate-800/60 pt-2 text-[10px] text-slate-500">
                 Editing: {selectedApi.api_name} ({selectedApi.api_id})
               </p>
             )}
@@ -1990,7 +1990,7 @@ export default function ApiManagerPage() {
                 key={item}
                 onClick={() => setScope(item as ScopeType)}
                 className={`rounded-full border px-3 py-1 transition ${scope === item
-                  ? "border-sky-500 bg-sky-500/10 text-white"
+                  ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
                   : "border-slate-700 bg-slate-950 text-slate-400"
                   }`}
               >
@@ -2009,7 +2009,7 @@ export default function ApiManagerPage() {
                     key={view}
                     onClick={() => setSystemView(view)}
                     className={`rounded-full border px-2 py-1 text-[10px] uppercase tracking-normal transition ${systemView === view
-                      ? "border-sky-500 bg-sky-500/10 text-white"
+                      ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
                       : "border-slate-700 bg-slate-950 text-slate-400"
                       }`}
                   >
@@ -2026,13 +2026,13 @@ export default function ApiManagerPage() {
                 </p>
                 <div className="text-[10px] uppercase tracking-normal text-slate-500">
                   Last fetch:{" "}
-                  <span className="text-slate-300">
+                  <span className="text-slate-700 dark:text-slate-300">
                     {discoveredFetchAt
                       ? new Date(discoveredFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                       : "-"}
                   </span>{" "}
                   · Status:{" "}
-                  <span className={discoveredFetchStatus === "error" ? "text-rose-300" : "text-slate-300"}>
+                  <span className={discoveredFetchStatus === "error" ? "text-rose-300" : "text-slate-700 dark:text-slate-300"}>
                     {discoveredFetchStatus}
                   </span>
                   {discoveredError ? (
@@ -2050,13 +2050,13 @@ export default function ApiManagerPage() {
                 ) : null}
                 <div className="text-[10px] uppercase tracking-normal text-slate-500">
                   Last fetch:{" "}
-                  <span className="text-slate-300">
+                  <span className="text-slate-700 dark:text-slate-300">
                     {systemFetchAt
                       ? new Date(systemFetchAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })
                       : "-"}
                   </span>{" "}
                   · Status:{" "}
-                  <span className={systemFetchStatus === "error" ? "text-rose-300" : "text-slate-300"}>
+                  <span className={systemFetchStatus === "error" ? "text-rose-300" : "text-slate-700 dark:text-slate-300"}>
                     {systemFetchStatus}
                   </span>
                   {systemError ? (
@@ -2073,7 +2073,7 @@ export default function ApiManagerPage() {
                   value={discoveredSearchTerm}
                   onChange={(event) => setDiscoveredSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 />
                 <button
                   onClick={loadDiscoveredEndpoints}
@@ -2083,14 +2083,14 @@ export default function ApiManagerPage() {
                 </button>
               </div>
               {discoveredError ? <p className="text-xs text-rose-400">{discoveredError}</p> : null}
-              <div className="max-h-[420px] overflow-auto rounded-2xl border border-slate-800 bg-slate-950/40 custom-scrollbar">
+              <div className="max-h-[420px] overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/40 custom-scrollbar">
                 <table className="min-w-full table-auto text-left text-xs text-slate-200">
                   <thead className="sticky top-0 bg-slate-950/90">
                     <tr>
                       {["method", "path", "summary", "tags", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-normal text-slate-500 whitespace-nowrap"
+                          className="border-b border-slate-200 dark:border-slate-800 px-2 py-2 uppercase tracking-normal text-slate-500 whitespace-nowrap"
                         >
                           {column}
                         </th>
@@ -2110,7 +2110,7 @@ export default function ApiManagerPage() {
                           key={`${endpoint.method}-${endpoint.path}`}
                           className={`cursor-pointer border-b border-slate-900/60 ${selectedDiscovered?.path === endpoint.path &&
                             selectedDiscovered?.method === endpoint.method
-                            ? "bg-sky-500/10 text-white"
+                            ? "bg-sky-500/10 text-slate-900 dark:text-slate-50"
                             : "hover:bg-slate-900/60"
                             }`}
                           onClick={() => {
@@ -2150,7 +2150,7 @@ export default function ApiManagerPage() {
                   value={systemSearchTerm}
                   onChange={(event) => setSystemSearchTerm(event.target.value)}
                   placeholder="검색"
-                  className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
                 />
                 <div className="ml-2 flex items-center gap-2">
                   <button
@@ -2162,14 +2162,14 @@ export default function ApiManagerPage() {
                 </div>
               </div>
               {systemError ? <p className="text-xs text-rose-400">{systemError}</p> : null}
-              <div className="max-h-[420px] overflow-auto rounded-2xl border border-slate-800 bg-slate-950/40 custom-scrollbar">
+              <div className="max-h-[420px] overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950/40 custom-scrollbar">
                 <table className="min-w-full table-auto text-left text-xs text-slate-200">
                   <thead className="sticky top-0 bg-slate-950/90">
                     <tr>
                       {["method", "endpoint", "api_name", "tags", "updated_at", "source"].map((column) => (
                         <th
                           key={column}
-                          className="border-b border-slate-800 px-2 py-2 uppercase tracking-normal text-slate-500 whitespace-nowrap"
+                          className="border-b border-slate-200 dark:border-slate-800 px-2 py-2 uppercase tracking-normal text-slate-500 whitespace-nowrap"
                         >
                           {column}
                         </th>
@@ -2188,7 +2188,7 @@ export default function ApiManagerPage() {
                         <tr
                           key={api.api_id}
                           className={`cursor-pointer border-b border-slate-900/60 ${selectedApi?.api_id === api.api_id
-                            ? "bg-sky-500/10 text-white"
+                            ? "bg-sky-500/10 text-slate-900 dark:text-slate-50"
                             : "hover:bg-slate-900/60"
                             }`}
                           onClick={() => {
@@ -2234,7 +2234,7 @@ export default function ApiManagerPage() {
                 key={item.id}
                 onClick={() => setLogicFilter(item.id as "all" | LogicType)}
                 className={`rounded-full border px-3 py-1 transition ${logicFilter === item.id
-                  ? "border-sky-500 bg-sky-500/10 text-white"
+                  ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
                   : "border-slate-700 bg-slate-950 text-slate-400"
                   }`}
               >
@@ -2246,7 +2246,7 @@ export default function ApiManagerPage() {
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder="검색"
-            className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+            className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
           />
           <div className="space-y-2 max-h-[360px] overflow-auto custom-scrollbar">
             {filteredApis.length === 0 ? (
@@ -2257,8 +2257,8 @@ export default function ApiManagerPage() {
                   key={api.api_id}
                   onClick={() => setSelectedId(api.api_id)}
                   className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition flex items-center gap-3 whitespace-nowrap overflow-hidden ${selectedId === api.api_id
-                    ? "border-sky-400 bg-sky-500/10 text-white"
-                    : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                    ? "border-sky-400 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+                    : "border-slate-200 dark:border-slate-800 bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-600"
                     }`}
                 >
                   <div className="flex flex-col flex-1 overflow-hidden">
@@ -2283,7 +2283,7 @@ export default function ApiManagerPage() {
         onClick={handleNew}
         className={`w-full rounded-2xl border px-3 py-2 text-[10px] uppercase tracking-normal transition ${scope === "system"
           ? "border-slate-700 bg-slate-900 text-slate-600 cursor-not-allowed"
-          : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600"
+          : "border-slate-200 dark:border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-600"
           }`}
         disabled={scope === "system"}
       >
@@ -2415,7 +2415,7 @@ export default function ApiManagerPage() {
 
   return (
     <div className="py-6">
-      <h1 className="text-2xl font-semibold text-white">API Manager</h1>
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">API Manager</h1>
       <p className="mb-6 text-sm text-slate-400">
         Builder shell for defining executable APIs that power OPS and orchestration tools.
       </p>

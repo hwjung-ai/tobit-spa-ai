@@ -406,10 +406,10 @@ function DocumentViewerContent() {
 
   return (
     <div className="space-y-6">
-      <header className="flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+      <header className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-500">문서 뷰어</p>
-          <h2 className="text-2xl font-semibold text-white">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
             {documentMeta?.filename ?? "문서 불러오는 중..."}
           </h2>
           {chunkInfo ? (
@@ -461,7 +461,7 @@ function DocumentViewerContent() {
         </div>
       </header>
 
-      <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+      <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6">
         <div className="mb-4 flex items-center justify-between text-xs text-slate-400">
           <span>{currentPage}페이지</span>
           {numPages ? <span>전체 {numPages}페이지</span> : <span>페이지 로딩 중...</span>}
@@ -492,7 +492,7 @@ function DocumentViewerContent() {
             )}
             {highlightVisible && (
               <div className="pointer-events-none absolute inset-0 z-10">
-                <div className="absolute inset-3 rounded-3xl border-2 border-amber-400 bg-amber-500/20" />
+                <div className="absolute inset-3 rounded-2xl border-2 border-amber-400 bg-amber-500/20" />
                 <p className="absolute left-4 top-4 max-w-[60vw] text-[10px] text-amber-100">
                   {highlightInfo?.label}
                 </p>
@@ -512,7 +512,7 @@ function DocumentViewerContent() {
 
       {/* References Section */}
       {references.length > 0 && (
-        <section className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6">
+        <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-6">
           <div className="mb-3 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">
             <span>근거 문서 ({references.length}건)</span>
           </div>
@@ -525,7 +525,7 @@ function DocumentViewerContent() {
                   className={`block rounded-2xl border p-4 transition ${
                     isCurrentDocument
                       ? "border-amber-400 bg-amber-500/10"
-                      : "border-slate-800 bg-slate-900/80 hover:border-slate-600"
+                      : "border-slate-200 dark:border-slate-800 bg-slate-900/80 hover:border-slate-600"
                   }`}
                 >
                   <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-slate-500">

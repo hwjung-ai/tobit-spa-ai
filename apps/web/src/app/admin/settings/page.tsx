@@ -133,7 +133,7 @@ export default function SettingsPage() {
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             {/* Informational Banner */}
-            <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-5 flex items-center gap-5 backdrop-blur-sm">
+            <div className="bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/20 rounded-2xl p-5 flex items-center gap-5 backdrop-blur-sm">
                 <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0 shadow-lg shadow-orange-900/10">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -157,15 +157,15 @@ export default function SettingsPage() {
                 </button>
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
+            <div className="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/40 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="inline-flex rounded-xl border border-slate-700 bg-slate-950/70 p-1">
+                    <div className="inline-flex rounded-xl border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-950/70 p-1">
                         <button
                             onClick={() => setActiveTab("all")}
                             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
                                 activeTab === "all"
                                     ? "rounded-lg bg-sky-600 text-white"
-                                    : "text-slate-300 hover:text-white"
+                                    : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                             }`}
                         >
                             All Settings
@@ -175,7 +175,7 @@ export default function SettingsPage() {
                             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
                                 activeTab === "llm"
                                     ? "rounded-lg bg-sky-600 text-white"
-                                    : "text-slate-300 hover:text-white"
+                                    : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                             }`}
                         >
                             LLM
@@ -185,13 +185,13 @@ export default function SettingsPage() {
                             className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] transition ${
                                 activeTab === "auth"
                                     ? "rounded-lg bg-sky-600 text-white"
-                                    : "text-slate-300 hover:text-white"
+                                    : "bg-slate-200 text-slate-700 hover:bg-slate-300 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                             }`}
                         >
                             Auth
                         </button>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300">
                         <span className="rounded-full border border-slate-700 bg-slate-950/60 px-3 py-1 text-slate-300">
                             Provider: <span className="font-semibold text-white">{llmProvider}</span>
                         </span>

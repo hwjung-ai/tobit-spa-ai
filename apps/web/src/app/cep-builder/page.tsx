@@ -838,7 +838,7 @@ export default function CepBuilderPage() {
         <input
           value={ruleName}
           onChange={(event) => setRuleName(event.target.value)}
-          className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
         />
       </div>
       <div className="flex flex-col gap-2">
@@ -846,7 +846,7 @@ export default function CepBuilderPage() {
         <textarea
           value={ruleDescription}
           onChange={(event) => setRuleDescription(event.target.value)}
-          className="h-20 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="h-20 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
         />
       </div>
       <div className="flex items-center gap-1 text-xs uppercase tracking-wider text-slate-500">
@@ -855,8 +855,8 @@ export default function CepBuilderPage() {
             key={type}
             onClick={() => setTriggerType(type)}
             className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider transition ${triggerType === type
-              ? "border-sky-500 bg-sky-500/10 text-white"
-              : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
+              ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+              : "border-slate-200 dark:border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-600"
               }`}
           >
             {type}
@@ -866,7 +866,7 @@ export default function CepBuilderPage() {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <p className="text-[10px] uppercase tracking-wider text-slate-500">Trigger spec (JSON)</p>
-          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60">
             <Editor
               height="100%"
               defaultLanguage="json"
@@ -879,7 +879,7 @@ export default function CepBuilderPage() {
         </div>
         <div className="space-y-2">
           <p className="text-[10px] uppercase tracking-wider text-slate-500">Action spec (JSON)</p>
-          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+          <div className="builder-json-shell h-72 resize-y overflow-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60">
             <Editor
               height="100%"
               defaultLanguage="json"
@@ -891,14 +891,14 @@ export default function CepBuilderPage() {
           </div>
         </div>
       </div>
-      <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white">
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 px-4 py-3 text-sm text-slate-900 dark:text-slate-50">
         <span className="text-[11px] uppercase tracking-wider text-slate-500">
           {statusMessage}
         </span>
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-emerald-400 disabled:bg-slate-700"
         >
           {isSaving ? "Saving…" : selectedRule ? "Update rule" : "Create rule"}
         </button>
@@ -966,9 +966,9 @@ export default function CepBuilderPage() {
         onActionsChange={setFormActions}
       />
 
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 p-4">
         <div className="flex items-center justify-between cursor-pointer hover:bg-slate-900/40 p-2 rounded-lg">
-          <h3 className="text-sm font-semibold text-white">JSON 미리보기</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">JSON 미리보기</h3>
         </div>
         <div className="mt-3">
           <JsonPreview
@@ -1022,27 +1022,27 @@ export default function CepBuilderPage() {
     <div className="space-y-4">
       <p className="text-[11px] uppercase tracking-wider text-slate-500">
         Action endpoint:&nbsp;
-        <span className="font-mono text-[10px] text-slate-200">{actionEndpointLabel}</span>
+        <span className="font-mono text-[10px] text-slate-800 dark:text-slate-200">{actionEndpointLabel}</span>
       </p>
       <div className="flex flex-col gap-2">
         <span className="text-xs uppercase tracking-wider text-slate-500">Payload</span>
         <textarea
           value={payloadText}
           onChange={(event) => setPayloadText(event.target.value)}
-          className="h-32 w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+          className="h-32 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
         />
       </div>
       <div className="flex flex-wrap gap-3">
         <button
           onClick={handleSimulate}
-          className="rounded-2xl border border-slate-800 bg-sky-500/90 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-white transition hover:bg-sky-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-sky-500/90 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-sky-400 disabled:bg-slate-700"
           disabled={!selectedRule || isSimulating}
         >
           {isSimulating ? "Simulating…" : "Simulate"}
         </button>
         <button
           onClick={handleTrigger}
-          className="rounded-2xl border border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400 disabled:bg-slate-700"
+          className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-emerald-500/80 px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-emerald-400 disabled:bg-slate-700"
           disabled={!selectedRule || isTriggering}
         >
           {isTriggering ? "Triggering…" : "Manual trigger"}
@@ -1062,7 +1062,7 @@ export default function CepBuilderPage() {
         logs.map((log) => (
           <div
             key={log.exec_id}
-            className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-xs text-slate-200"
+            className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 text-xs text-slate-800 dark:text-slate-200"
           >
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>{new Date(log.triggered_at).toLocaleString("ko-KR")}</span>
@@ -1070,14 +1070,14 @@ export default function CepBuilderPage() {
                 className={`rounded-full border px-2 py-0.5 uppercase tracking-wider ${log.status === "success"
                   ? "border-emerald-400 text-emerald-300"
                   : log.status === "dry_run"
-                    ? "border-slate-500 text-slate-300"
+                    ? "border-slate-500 text-slate-700 dark:text-slate-300"
                     : "border-rose-500 text-rose-300"
                   }`}
               >
                 {log.status}
               </span>
             </div>
-            <p className="mt-1 text-[12px] text-slate-300">
+            <p className="mt-1 text-[12px] text-slate-700 dark:text-slate-300">
               Duration {log.duration_ms} ms
             </p>
             {log.error_message ? (
@@ -1097,8 +1097,8 @@ export default function CepBuilderPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider ${activeTab === tab.id
-              ? "border-sky-500 bg-sky-500/10 text-white"
-              : "border-slate-800 bg-slate-950 text-slate-400"
+              ? "border-sky-500 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+              : "border-slate-200 dark:border-slate-800 bg-slate-950 text-slate-400"
               }`}
           >
             {tab.label}
@@ -1118,7 +1118,7 @@ export default function CepBuilderPage() {
   const centerBottom = (
     <div className="space-y-3">
       {activeTab === "definition" || activeTab === "definition-form" ? (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-200">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 text-xs text-slate-800 dark:text-slate-200">
           <p className="text-[11px] uppercase tracking-wider text-slate-500">Metadata</p>
           {selectedRule ? (
             <div className="mt-2 space-y-1 text-[11px] text-slate-400">
@@ -1132,31 +1132,31 @@ export default function CepBuilderPage() {
       ) : activeTab === "test" ? (
         <div className="space-y-3">
           {draftTestOk === true && simulateResult && (
-            <div className="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-xs text-slate-200">
+            <div className="rounded-2xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-xs text-slate-800 dark:text-slate-200">
               <div className="flex items-center justify-between">
                 <p className="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold">Draft Simulation Result</p>
                 <span className="text-[10px] rounded-full border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">Pass</span>
               </div>
-              <pre className="mt-2 max-h-60 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200 custom-scrollbar">
+              <pre className="mt-2 max-h-60 overflow-auto rounded-xl bg-white dark:bg-slate-950/60 p-3 text-[11px] text-slate-800 dark:text-slate-200 custom-scrollbar">
                 {JSON.stringify(simulateResult, null, 2)}
               </pre>
             </div>
           )}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 text-xs text-slate-800 dark:text-slate-200">
             <p className="text-[11px] uppercase tracking-wider text-slate-500">Simulation result</p>
-            <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200">
+            <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-white dark:bg-slate-950/60 p-3 text-[11px] text-slate-800 dark:text-slate-200">
               {simulateResult ? JSON.stringify(simulateResult, null, 2) : "Run a simulation to inspect payload."}
             </pre>
           </div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 text-xs text-slate-800 dark:text-slate-200">
             <p className="text-[11px] uppercase tracking-wider text-slate-500">Manual trigger result</p>
-            <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-slate-950/60 p-3 text-[11px] text-slate-200">
+            <pre className="mt-2 max-h-40 overflow-auto rounded-xl bg-white dark:bg-slate-950/60 p-3 text-[11px] text-slate-800 dark:text-slate-200">
               {triggerResult ? JSON.stringify(triggerResult, null, 2) : "Trigger once to record an execution log."}
             </pre>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-200">
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 text-xs text-slate-800 dark:text-slate-200">
           <p className="text-[11px] uppercase tracking-wider text-slate-500">Logs</p>
           <p className="mt-2 text-[11px] text-slate-400">
             Click reload to refresh logs or trigger a rule to write entries.
@@ -1182,7 +1182,7 @@ export default function CepBuilderPage() {
         value={searchTerm}
         onChange={(event) => setSearchTerm(event.target.value)}
         placeholder="Search rules"
-        className="w-full rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+        className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-sm text-slate-900 dark:text-slate-50 outline-none transition focus:border-sky-500"
       />
       <div className="space-y-2 max-h-[360px] overflow-y-auto">
         {filteredRules.length === 0 ? (
@@ -1196,8 +1196,8 @@ export default function CepBuilderPage() {
                 setActiveTab("definition");
               }}
               className={`w-full rounded-2xl border px-3 py-2 text-left text-sm transition ${selectedId === rule.rule_id
-                ? "border-sky-400 bg-sky-500/10 text-white"
-                : "border-slate-800 bg-slate-900 text-slate-300 hover:border-slate-600"
+                ? "border-sky-400 bg-sky-500/10 text-slate-900 dark:text-slate-50"
+                : "border-slate-200 dark:border-slate-800 bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-slate-600"
                 }`}
             >
               <p className="font-semibold">{rule.rule_name}</p>
@@ -1319,16 +1319,16 @@ export default function CepBuilderPage() {
         }}
         inputPlaceholder="CEP 룰 드래프트를 설명해 주세요..."
       />
-      <div className="space-y-3 rounded-3xl border border-slate-800 bg-slate-900/60 p-4 text-sm text-slate-300">
+      <div className="space-y-3 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-4 text-sm text-slate-700 dark:text-slate-300">
         <div className="flex items-center justify-between">
           <span className="text-xs uppercase tracking-wider text-slate-500">Draft status</span>
-          <span className="text-sm font-semibold text-white">
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
         </div>
-        {draftNotes ? <p className="text-sm text-slate-300">{draftNotes}</p> : null}
+        {draftNotes ? <p className="text-sm text-slate-700 dark:text-slate-300">{draftNotes}</p> : null}
         {draftDiff && (
-          <div className="space-y-1 rounded-2xl border border-slate-800 bg-slate-950/40 px-3 py-2 text-[11px] text-slate-300">
+          <div className="space-y-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 px-3 py-2 text-[11px] text-slate-700 dark:text-slate-300">
             <p className="text-[10px] uppercase tracking-wider text-slate-500">Auto Diff</p>
             {draftDiff.map((item) => (
               <p key={item}>{item}</p>
@@ -1344,26 +1344,26 @@ export default function CepBuilderPage() {
           <div className="grid gap-2 sm:grid-cols-2">
             <button
               onClick={handlePreviewDraft}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-sky-500"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:border-sky-500"
             >
               Preview
             </button>
             <button
               onClick={handleTestDraftWithSimulation}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-emerald-400"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:border-emerald-400"
             >
               Test (Simulate)
             </button>
             <button
               onClick={handleApplyDraft}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:border-indigo-400"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/60 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:border-indigo-400"
               disabled={!draftApi || draftTestOk !== true}
             >
               Apply
             </button>
             <button
               onClick={handleSaveDraft}
-              className="rounded-2xl border border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:bg-emerald-400"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-emerald-500/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-900 dark:text-slate-50 transition hover:bg-emerald-400"
               disabled={!draftApi || draftTestOk !== true}
             >
               Save
@@ -1391,15 +1391,15 @@ export default function CepBuilderPage() {
           </div>
         )}
         {draftPreviewSummary && draftPreviewJson ? (
-          <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-200">
+          <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 text-[11px] text-slate-800 dark:text-slate-200">
             <p className="text-xs uppercase tracking-wider text-slate-500">Preview</p>
-            <p className="text-sm text-white">{draftPreviewSummary}</p>
-            <pre className="max-h-48 overflow-auto rounded-xl bg-slate-900/50 p-2 text-[11px] text-slate-300">
+            <p className="text-sm text-slate-900 dark:text-slate-50">{draftPreviewSummary}</p>
+            <pre className="max-h-48 overflow-auto rounded-xl bg-slate-900/50 p-2 text-[11px] text-slate-700 dark:text-slate-300">
               {draftPreviewJson}
             </pre>
           </div>
         ) : null}
-        <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+        <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 text-[11px] text-slate-700 dark:text-slate-300">
           <p className="text-xs uppercase tracking-wider text-slate-500">Multi Draft Compare</p>
           <select
             value={selectedCompareDraftId ?? ""}
@@ -1421,7 +1421,7 @@ export default function CepBuilderPage() {
             </div>
           )}
         </div>
-        <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+        <div className="space-y-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 text-[11px] text-slate-700 dark:text-slate-300">
           <p className="text-xs uppercase tracking-wider text-slate-500">Example Prompts</p>
           <div className="max-h-40 space-y-1 overflow-auto">
             {CEP_COPILOT_EXAMPLE_PROMPTS.map((prompt) => (
@@ -1429,7 +1429,7 @@ export default function CepBuilderPage() {
                 key={prompt}
                 type="button"
                 onClick={() => navigator.clipboard.writeText(prompt)}
-                className="w-full rounded-md border border-slate-800 px-2 py-1 text-left text-[11px] text-slate-300 transition hover:border-sky-600 hover:text-white"
+                className="w-full rounded-md border border-slate-200 dark:border-slate-800 px-2 py-1 text-left text-[11px] text-slate-700 dark:text-slate-300 transition hover:border-sky-600 hover:text-slate-900 dark:text-slate-50"
                 title="클릭하면 프롬프트가 클립보드에 복사됩니다."
               >
                 {prompt}
@@ -1437,7 +1437,7 @@ export default function CepBuilderPage() {
             ))}
           </div>
         </div>
-        <details className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] text-slate-300">
+        <details className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-3 text-[11px] text-slate-700 dark:text-slate-300">
           <summary className="cursor-pointer text-xs uppercase tracking-wider text-slate-400">
             Debug
           </summary>
@@ -1447,7 +1447,7 @@ export default function CepBuilderPage() {
             </p>
             {lastSaveError ? <p className="text-[11px] text-rose-300">Save error: {lastSaveError}</p> : null}
             <p className="text-[10px] uppercase tracking-wider text-slate-500">Selected rule</p>
-            <p className="text-[11px] text-slate-200">
+            <p className="text-[11px] text-slate-800 dark:text-slate-200">
               {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
             </p>
             <p className="text-[10px] uppercase tracking-wider text-slate-500">
@@ -1455,13 +1455,13 @@ export default function CepBuilderPage() {
             </p>
             {lastParseError ? <p className="text-[11px] text-rose-300">Error: {lastParseError}</p> : null}
             <p className="text-[10px] uppercase tracking-wider text-slate-500">Last assistant raw</p>
-            <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+            <pre className="max-h-32 overflow-auto rounded-xl bg-white dark:bg-slate-900/60 p-2 text-[10px] text-slate-800 dark:text-slate-200">
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
               <>
                 <p className="text-[10px] uppercase tracking-wider text-slate-500">Draft JSON</p>
-                <pre className="max-h-32 overflow-auto rounded-xl bg-slate-900/60 p-2 text-[10px] text-slate-200">
+                <pre className="max-h-32 overflow-auto rounded-xl bg-white dark:bg-slate-900/60 p-2 text-[10px] text-slate-800 dark:text-slate-200">
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
               </>
@@ -1474,7 +1474,7 @@ export default function CepBuilderPage() {
 
   return (
     <div className="py-6 tracking-tight builder-shell builder-text">
-      <h1 className="text-2xl font-semibold text-white">CEP Builder</h1>
+      <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">CEP Builder</h1>
       <p className="mb-6 text-sm text-slate-400">
         Define, simulate, and trigger complex CEP rules that orchestrate runtime APIs.
       </p>

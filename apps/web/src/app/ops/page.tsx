@@ -570,8 +570,8 @@ export default function OpsPage() {
     <>
     {/* Summary Modal */}
     {summaryModalOpen && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="relative w-full max-w-2xl rounded-3xl border border-slate-700 bg-slate-900/95 shadow-2xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm dark:bg-slate-950/80">
+        <div className="relative w-full max-w-2xl rounded-3xl border border-slate-300 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
             <div className="flex items-center gap-3">
