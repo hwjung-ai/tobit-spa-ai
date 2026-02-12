@@ -46,9 +46,13 @@ const filterBtnClass = (active: boolean) =>
     active
       ? "bg-sky-600 text-white"
       : "border text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
-    { "bg-slate-50": !active, "dark:bg-slate-900": !active, "border-slate-300": !active, "dark:border-slate-700": !active }
+    {
+      "bg-slate-50": !active,
+      "dark:bg-slate-900": !active,
+      "border-slate-300": !active,
+      "dark:border-slate-700": !active,
+    },
   );
-  ++++++++ REPLACE
 
 export default function ToolTable({
   tools,

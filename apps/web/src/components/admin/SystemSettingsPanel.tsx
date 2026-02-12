@@ -202,7 +202,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Category Sidebar */}
         <div className="lg:col-span-1">
-          <nav className="space-y-1 bg-white rounded-lg border overflow-hidden">
+          <nav className="space-y-1 bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 overflow-hidden">
             {categoryList.map((category) => (
               <button
                 key={category}
@@ -222,7 +222,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
 
         {/* Settings Content */}
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-lg border p-6 space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6 space-y-6">
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>

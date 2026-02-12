@@ -132,7 +132,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
 
   if (!userId) {
     return (
-      <div className="bg-white rounded-lg border p-8 text-center">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-8 text-center">
         <p className="" style={{color: "var(--muted-foreground)"}}>Select a user to manage permissions</p>
       </div>
     );
@@ -140,7 +140,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border p-8">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
       </div>
     );
@@ -148,7 +148,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
 
   if (!user) {
     return (
-      <div className="bg-white rounded-lg border p-8 text-center">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-8 text-center">
         <p className="" style={{color: "var(--muted-foreground)"}}>User not found</p>
       </div>
     );
@@ -157,7 +157,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
   return (
     <div className="space-y-6">
       {/* User Header */}
-      <div className="bg-white rounded-lg border p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
             <span className="text-xl font-semibold text-blue-600">
@@ -201,7 +201,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b bg-white rounded-t-lg">
+      <div className="flex border-b dark:border-slate-700 bg-white dark:bg-slate-900 rounded-t-lg">
         <button
           onClick={() => setActiveTab('permissions')}
           className={`flex-1 px-4 py-3 font-semibold text-center border-b-2 ${
@@ -230,7 +230,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
       {activeTab === 'permissions' && (
         <div className="space-y-6">
           {/* Grant New Permission */}
-          <div className="bg-white rounded-lg border p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Grant Permission</h3>
             <div className="space-y-4">
               <div>
@@ -278,7 +278,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
           </div>
 
           {/* Current Permissions */}
-          <div className="bg-white rounded-lg border p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6">
             <h3 className="text-lg font-semibold mb-4">Current Permissions ({permissions.length})</h3>
             {permissions.length === 0 ? (
               <p className=" text-center py-8" style={{color: "var(--muted-foreground)"}}>No permissions granted</p>
@@ -312,7 +312,7 @@ const UserPermissionsPanel: React.FC<UserPermissionsPanelProps> = ({ userId }) =
 
       {/* Audit Log Tab */}
       {activeTab === 'audit' && (
-        <div className="bg-white rounded-lg border overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b" style={{backgroundColor: "var(--background)"}}>

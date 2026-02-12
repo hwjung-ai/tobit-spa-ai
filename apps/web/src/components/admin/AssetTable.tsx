@@ -22,10 +22,16 @@ interface AssetTableProps {
 
 const filterBtnClass = (active: boolean) =>
   cn(
-    "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition",
+    "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition hover:border-sky-500",
     active
       ? "bg-sky-600 text-white"
-      : "border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800",
+      : "border text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
+    {
+      "bg-slate-50": !active,
+      "dark:bg-slate-900": !active,
+      "border-slate-300": !active,
+      "dark:border-slate-700": !active,
+    },
   );
 
 export default function AssetTable({

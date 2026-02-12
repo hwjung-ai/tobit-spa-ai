@@ -44,7 +44,7 @@ interface SystemHealthCardProps {
 const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = false }) => {
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border p-6 animate-pulse">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6 animate-pulse">
         <div className="h-6 rounded w-1/3 mb-4" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
         <div className="space-y-3">
           <div className="h-4 rounded" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
@@ -57,7 +57,7 @@ const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = fal
 
   if (!data) {
     return (
-      <div className="bg-white rounded-lg border p-6">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6">
         <p className="" style={{ color: "var(--muted-foreground)" }}>No health data available</p>
       </div>
     );

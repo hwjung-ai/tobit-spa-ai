@@ -108,27 +108,26 @@ export default function FunctionComparison({
     "cost",
   ];
 
-  const sectionClass =
-    "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90";
-  const cardClass =
-    "rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950/40";
+  const sectionClass = "rounded-2xl border p-5 shadow-sm";
+  const cardClass = "rounded-lg border p-4";
 
   return (
     <div className="space-y-6">
-      <section className={sectionClass}>
+      <section style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} className={sectionClass}>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+            <h1 style={{color: "var(--foreground)"}} className="text-2xl font-semibold">
               Function Comparison
             </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-sm" style={{color: "var(--muted-foreground)"}}>
               Compare simulation outputs across different functions side by side.
             </p>
           </div>
           <button
             onClick={() => void runComparison()}
             disabled={loading}
-            className="rounded-md bg-sky-600 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{backgroundColor: "var(--primary)"}}
+            className="rounded-md px-4 py-2 text-sm font-semibold uppercase tracking-wider text-white transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Running..." : "Re-run"}
           </button>
@@ -136,27 +135,27 @@ export default function FunctionComparison({
       </section>
 
       {loading ? (
-        <section className={cn(sectionClass, "text-center text-slate-600 dark:text-slate-400")}>
+        <section style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)"}} className={cn(sectionClass, "text-center")}>
           Running comparison...
         </section>
       ) : error ? (
-        <section className="rounded-2xl border border-rose-300 bg-rose-50 p-5 dark:border-rose-800 dark:bg-rose-950/20">
-          <p className="text-rose-700 dark:text-rose-300">{error}</p>
+        <section style={{borderColor: "var(--error)", backgroundColor: "rgba(var(--error-rgb), 0.1)"}} className="rounded-2xl border p-5">
+          <p style={{color: "var(--error)"}}>{error}</p>
         </section>
       ) : (
         <>
-          <section className={sectionClass}>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          <section style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} className={sectionClass}>
+            <h2 style={{color: "var(--muted-foreground)"}} className="text-sm font-semibold uppercase tracking-wider">
               Confidence Comparison
             </h2>
             <div className="mt-4 h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={comparisonData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
-                  <XAxis dataKey="function" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-muted)" />
+                  <XAxis dataKey="function" stroke="var(--border-muted)" />
+                  <YAxis stroke="var(--border-muted)" />
                   <Tooltip />
-                  <Bar dataKey="confidence" fill="#0ea5e9" name="Confidence %" />
+                  <Bar dataKey="confidence" fill="var(--primary)" name="Confidence %" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -164,24 +163,25 @@ export default function FunctionComparison({
 
           <div className="grid gap-4 lg:grid-cols-2">
             {kpiNames.map((kpi) => (
-              <section key={kpi} className={sectionClass}>
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <section key={kpi} style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} className={sectionClass}>
+                <h2 style={{color: "var(--muted-foreground)"}} className="text-sm font-semibold uppercase tracking-wider">
                   {kpi.replace(/([A-Z])/g, " $1").trim()} Comparison
                 </h2>
                 <div className="mt-4 h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={comparisonData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#64748b" />
-                      <XAxis dataKey="function" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border-muted)" />
+                      <XAxis dataKey="function" stroke="var(--border-muted)" />
+                      <YAxis stroke="var(--border-muted)" />
                       <Tooltip />
-                      <Bar dataKey={kpi} fill="#f59e0b" name={kpi} />
+                      <Bar dataKey={kpi} fill="var(--warning)" name={kpi} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </section>
             ))}
           </div>
+  ++++++++ REPLACE
 
           <section className={sectionClass}>
             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">

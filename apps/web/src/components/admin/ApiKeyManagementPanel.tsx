@@ -322,8 +322,8 @@ export function ApiKeyManagementPanel() {
                 <p className="mb-3">
                   This is the only time you will see this key. Please save it in a secure location.
                 </p>
-                <div className="bg-white p-3 rounded border border-amber-300 mb-3 flex items-center justify-between">
-                  <code className="text-sm font-mono break-all flex-1">
+                <div className="bg-white dark:bg-slate-950 p-3 rounded border border-amber-300 dark:border-amber-700 mb-3 flex items-center justify-between">
+                  <code className="text-sm font-mono break-all flex-1 text-slate-900 dark:text-slate-100">
                     {showKeySecret ? createdKey : "•".repeat(32)}
                   </code>
                   <div className="flex gap-2 ml-2 flex-shrink-0">
