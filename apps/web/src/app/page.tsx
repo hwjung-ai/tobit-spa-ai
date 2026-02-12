@@ -49,13 +49,29 @@ interface ReferenceItem {
   score?: number;
 }
 
-// Badge styles with dark mode support
-const badgeStyles: Record<ChunkType, string> = {
-  answer: "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-700",
-  summary: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700",
-  detail: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  done: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700",
-  error: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-700",
+// Badge style helper using CSS variables for dark mode support
+const getBadgeStyle = (type: ChunkType): React.CSSProperties => {
+  const base: React.CSSProperties = {
+    borderRadius: "var(--radius-xl)",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    padding: "3px 12px",
+    fontSize: "12px",
+  };
+  switch (type) {
+    case "answer":
+      return { ...base, backgroundColor: "var(--primary)", color: "var(--primary-foreground)", borderColor: "var(--primary-dark)" };
+    case "summary":
+      return { ...base, backgroundColor: "#fef3c7", color: "#78350f", borderColor: "#fde68a" }; // amber
+    case "detail":
+      return { ...base, backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border)" };
+    case "done":
+      return { ...base, backgroundColor: "#dcfce7", color: "#14532d", borderColor: "#bbf7d0" }; // emerald
+    case "error":
+      return { ...base, backgroundColor: "#ffe4e6", color: "#881337", borderColor: "#fecdd3" }; // rose
+    default:
+      return base;
+  }
 };
 
 const sanitizeUrl = (value: string | undefined) => value?.replace(/\/+$/, "") ?? "";
@@ -293,50 +309,68 @@ export default function Home() {
   }, [activeThread]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-white dark:bg-slate-950">
-      <div className="flex flex-1 gap-6 bg-slate-50 py-6 dark:bg-slate-950">
+    <div className="flex min-h-screen flex-col" style={{ backgroundColor: "var(--surface-elevated)" }}>
+      <div className="flex flex-1 gap-6 py-6" style={{ backgroundColor: "var(--background)" }}>
         {historyVisible ? (
-          <aside className="w-[320px] space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-xl">
+          <aside className="w-[320px] space-y-4 rounded-2xl border p-4 shadow-md" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">History</p>
+              <p className="text-xs font-semibold uppercase tracking-wider">History</p>
               {loadingThreads ? (
-                <span className="text-xs text-slate-500">Loading...</span>
+                <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>Loading...</span>
               ) : null}
               <button
                 onClick={fetchThreads}
-                className="rounded-md border border-slate-300 px-2 py-1 text-[10px] uppercase tracking-wider text-slate-600 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-600"
+                className="rounded-md border px-2 py-1 text-[10px] uppercase tracking-wider transition"
+                style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; e.currentTarget.style.backgroundColor = "transparent"; }}
               >
                 Refresh
               </button>
             </div>
             {threadsError ? (
-              <p className="text-xs text-rose-600 dark:text-rose-400">로드 실패: {threadsError}</p>
+              <p className="text-xs">로드 실패: {threadsError}</p>
             ) : null}
             <div className="space-y-3">
               {threads.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500">No conversations yet.</p>
+                <p className="text-sm">No conversations yet.</p>
               ) : null}
               {threads.map((thread) => (
                 <div
                   key={thread.id}
-                  className={`group relative flex w-full flex-col rounded-2xl border px-3 py-3 transition ${activeThread?.id === thread.id
-                    ? "border-sky-500 bg-sky-50 text-slate-900 dark:border-sky-400 dark:bg-sky-900/30 dark:text-slate-50"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-slate-700"
-                    }`}
+                  className="group relative flex w-full flex-col rounded-2xl border px-3 py-3 transition"
+                  style={{
+                    backgroundColor: activeThread?.id === thread.id ? "var(--surface-elevated)" : "var(--surface-base)",
+                    borderColor: activeThread?.id === thread.id ? "var(--primary)" : "var(--border)",
+                    color: activeThread?.id === thread.id ? "var(--foreground)" : "var(--foreground)"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeThread?.id !== thread.id) {
+                      e.currentTarget.style.borderColor = "var(--border-muted)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeThread?.id !== thread.id) {
+                      e.currentTarget.style.borderColor = "var(--border)";
+                    }
+                  }}
                 >
                   <button
                     className="text-left"
                     onClick={() => selectThread(thread.id)}
                   >
                     <p className="font-semibold text-sm">{thread.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{formatTimestamp(thread.updated_at)}</p>
+                    <p className="text-xs">{formatTimestamp(thread.updated_at)}</p>
                   </button>
                   <button
-                    className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border border-rose-400 text-[10px] text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 pointer-events-none dark:text-rose-400"
+                    className="absolute right-3 bottom-2 opacity-0 transition duration-200 group-hover:opacity-100 group-hover:pointer-events-auto flex h-5 w-5 items-center justify-center rounded-full border text-[10px]"
+                    style={{ borderColor: "#fb7185", color: "#e11d48" }}
                     onClick={(event) => {
                       event.stopPropagation();
                       deleteThread(thread.id);
                     }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fef2f2"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
                     aria-label="Delete thread"
                   >
                     X
@@ -352,24 +386,30 @@ export default function Home() {
             }`}
         >
           {/* Header Section */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <div className="flex flex-col gap-3 rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Streaming Assistant</h1>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
+                <h1 className="text-lg font-semibold">Streaming Assistant</h1>
+                <p className="text-sm">
                   메시지 기반 대화 기록을 저장하고, SSE로 Assistant 답변을 받습니다.
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setHistoryVisible((prev) => !prev)}
-                  className="rounded-2xl border border-slate-300 px-4 py-2 text-sm uppercase tracking-wider text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600"
+                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition"
+                  style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.borderColor = "var(--border-muted)"; }}
                 >
                   {historyVisible ? "Hide history" : "Show history"}
                 </button>
                 <button
                   onClick={startNewConversation}
-                  className="rounded-2xl border border-slate-300 px-4 py-2 text-sm uppercase tracking-wider text-slate-700 transition hover:border-slate-400 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600"
+                  className="rounded-2xl border px-4 py-2 text-sm uppercase tracking-wider transition"
+                  style={{ borderColor: "var(--border-muted)", color: "var(--foreground)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.borderColor = "var(--border-muted)"; }}
                 >
                   New conversation
                 </button>
@@ -378,21 +418,25 @@ export default function Home() {
           </div>
 
           {/* Input Section */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <section className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="flex flex-col gap-2 text-sm text-slate-700 dark:text-slate-300">
+              <label className="flex flex-col gap-2 text-sm">
                 질문 입력
                 <input
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
+                  className="w-full rounded-2xl border px-4 py-3 text-base outline-none transition"
+                  style={{ borderColor: "var(--border-muted)", backgroundColor: "var(--surface-base)", color: "var(--foreground)" }}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "var(--primary)"; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; }}
                   placeholder="예: 새 프로젝트의 방향성을 요약해줘"
                 />
               </label>
               <div className="flex items-center justify-between gap-3">
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:bg-sky-500 disabled:bg-slate-400 dark:disabled:bg-slate-700"
+                  className="inline-flex items-center justify-center rounded-2xl px-6 py-3 text-sm font-semibold uppercase tracking-wide text-white transition disabled:opacity-40"
+                  style={{ backgroundColor: "var(--primary)" }}
                   disabled={!inputValue.trim() || status === "streaming"}
                 >
                   <span className={status === "streaming" ? "animate-pulse" : ""}>
@@ -400,14 +444,14 @@ export default function Home() {
                   </span>
                 </button>
                 <span
-                  className={`text-xs uppercase tracking-wider ${status === "streaming" ? "animate-pulse" : ""
-                    } ${status === "error" ? "text-rose-600 dark:text-rose-400" : "text-slate-500"}`}
+                  className={`text-xs uppercase tracking-wider ${status === "streaming" ? "animate-pulse" : ""}`}
+                  style={{ color: status === "error" ? "#e11d48" : "var(--muted-foreground)" }}
                 >
                   {status === "streaming" ? "SSE live" : status === "idle" ? "Ready" : "Error"}
                 </span>
               </div>
             </form>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <div className="mt-3 flex flex-wrap gap-2 text-xs" style={{ color: "var(--muted-foreground)" }}>
               <span>API: {apiBaseUrl}</span>
               <span>SSE</span>
               <span>chat/stream</span>
@@ -416,25 +460,27 @@ export default function Home() {
           </section>
 
           {/* Stream Feed Section */}
-          <section className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Stream feed</p>
-            <div className="flex flex-col gap-3 divide-y divide-slate-200 dark:divide-slate-800">
+          <section className="flex flex-col gap-4 rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Stream feed</p>
+            <div className="flex flex-col gap-3" style={{ borderTop: "1px solid var(--border)", paddingTop: "12px" }}>
               {chunks.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500">Streaming responses will appear here.</p>
+                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Streaming responses will appear here.</p>
               ) : null}
               {chunks.map((chunk, index) => (
                 <div
                   key={`${chunk.type}-${index}`}
-                  className="space-y-1 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 dark:border-slate-800/70 dark:bg-slate-950/50 dark:text-slate-100"
+                  className="space-y-1 rounded-2xl border p-3 text-sm"
+                  style={{ ...getBadgeStyle(chunk.type), padding: "12px" }}
                 >
                   <span
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${badgeStyles[chunk.type]}`}
+                    className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs"
+                    style={getBadgeStyle(chunk.type)}
                   >
                     {chunk.type}
                   </span>
-                  <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-100">{chunk.text}</p>
+                  <p className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--foreground)" }}>{chunk.text}</p>
                   {chunk.thread_id ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Thread: {chunk.thread_id}</p>
+                    <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>Thread: {chunk.thread_id}</p>
                   ) : null}
                 </div>
               ))}
@@ -442,35 +488,41 @@ export default function Home() {
           </section>
 
           {/* References Section */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <section className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">References</p>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>References</p>
               <button
                 onClick={() => setReferences([])}
-                className="text-[10px] uppercase tracking-wider text-slate-600 transition hover:text-slate-900 dark:text-slate-500 dark:hover:text-slate-300"
+                className="text-[10px] uppercase tracking-wider transition"
+                style={{ color: "var(--muted-foreground)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "var(--foreground)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "var(--muted-foreground)"; }}
               >
                 Clear
               </button>
             </div>
             <div className="mt-3 space-y-3">
               {references.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500">References from latest document chat will appear here.</p>
+                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>References from latest document chat will appear here.</p>
               ) : (
                 references.map((reference) => (
                   <button
                     key={reference.chunk_id}
                     onClick={() => openReference(reference)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-sky-500 dark:border-slate-800 dark:bg-slate-950/60 dark:hover:border-sky-400"
+                    className="w-full rounded-2xl border p-4 text-left transition"
+                    style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--primary-light)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{reference.document_title}</p>
-                      <span className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>{reference.document_title}</p>
+                      <span className="text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
                         {reference.page ? `Page ${reference.page}` : "Page unknown"}
                       </span>
                     </div>
-                    <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{reference.snippet}</p>
+                    <p className="mt-2 text-xs" style={{ color: "var(--muted-foreground)" }}>{reference.snippet}</p>
                     {reference.score !== undefined ? (
-                      <p className="mt-1 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <p className="mt-1 text-[10px] uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
                         Similarity {reference.score.toFixed(2)}
                       </p>
                     ) : null}
@@ -481,18 +533,18 @@ export default function Home() {
           </section>
 
           {/* Conversation Section */}
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/90">
+          <section className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
             <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Conversation</p>
+              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>Conversation</p>
               {activeThread ? (
-                <p className="text-xs text-slate-600 dark:text-slate-500">
+                <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
                   {messageFeed.length} message{messageFeed.length === 1 ? "" : "s"}
                 </p>
               ) : null}
             </div>
             <div className="mt-3 space-y-3">
               {messageFeed.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-500">Select a thread or send a prompt to start.</p>
+                <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Select a thread or send a prompt to start.</p>
               ) : (
                 messageFeed.map((message) =>
                   message.role === "user" ? (
@@ -500,11 +552,14 @@ export default function Home() {
                       key={message.id}
                       className="flex justify-end"
                     >
-                      <div className="max-w-[70%] rounded-2xl border border-sky-400 bg-sky-600 px-4 py-2 text-sm font-medium text-white shadow-lg dark:bg-sky-500">
-                        <p className="text-xs uppercase tracking-wider text-sky-100">
+                      <div
+                        className="max-w-[70%] rounded-2xl border px-4 py-2 text-sm font-medium shadow-lg"
+                        style={{ borderColor: "#38bdf8", backgroundColor: "#0284c7", color: "#ffffff" }}
+                      >
+                        <p className="text-xs uppercase tracking-wider" style={{ color: "#e0f2fe" }}>
                           {message.role} · {formatTimestamp(message.created_at)}
                         </p>
-                        <p className="whitespace-pre-wrap text-base leading-relaxed text-white">
+                        <p className="whitespace-pre-wrap text-base leading-relaxed" style={{ color: "#ffffff" }}>
                           {message.content}
                         </p>
                       </div>
@@ -512,12 +567,13 @@ export default function Home() {
                   ) : (
                     <div
                       key={message.id}
-                      className="rounded-2xl border border-slate-200 bg-slate-100 p-4 text-sm text-slate-900 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100 dark:shadow-md"
+                      className="rounded-2xl border p-4 text-sm shadow-sm"
+                      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
                     >
-                      <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-500">
+                      <p className="text-xs uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
                         {message.role} · {formatTimestamp(message.created_at)}
                       </p>
-                      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-900 dark:text-slate-100">
+                      <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed" style={{ color: "var(--foreground)" }}>
                         {message.content}
                       </p>
                     </div>
