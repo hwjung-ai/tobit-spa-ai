@@ -288,7 +288,7 @@ export default function ToolTable({
             sortable: true,
             filter: true,
             resizable: true,
-            suppressMovable: false,
+            suppressMovable: true,
             unSortIcon: true,
           }}
           rowSelection="single"
