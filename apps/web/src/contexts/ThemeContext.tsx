@@ -45,6 +45,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true);
     const savedTheme = getInitialTheme();
+    // Log for debugging
+    console.log('[ThemeContext] Initial theme:', savedTheme, 'localStorage:', localStorage.getItem(STORAGE_KEY));
     setCurrentTheme(savedTheme);
     setTokens(THEME_PRESETS[savedTheme]);
   }, []);
@@ -54,6 +56,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return; // Skip on first render (before mount)
     const vars = tokensToCSSVariables(tokens);
     const root = document.documentElement;
+    console.log('[ThemeContext] Applying theme:', currentTheme, 'surface-overlay:', vars['--surface-overlay']);
     for (const [key, value] of Object.entries(vars)) {
       root.style.setProperty(key, value);
     }
@@ -62,8 +65,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Apply "dark" class for Tailwind dark: classes
     if (currentTheme === "dark") {
       root.classList.add("dark");
+      console.log('[ThemeContext] Added dark class');
     } else {
       root.classList.remove("dark");
+      console.log('[ThemeContext] Removed dark class');
     }
   }, [tokens, currentTheme, mounted]);
 
