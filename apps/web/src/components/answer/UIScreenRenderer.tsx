@@ -1296,11 +1296,11 @@ export default function UIScreenRenderer({
             );
             return {
               dataKey,
-              stroke: String(def.color || def.stroke || "#38bdf8"),
+              stroke: String(def.color || def.stroke || "var(--primary-light)"),
               name: String(def.name || dataKey),
             };
           })
-          : [{ dataKey: "y", stroke: "#38bdf8", name: "y" }];
+          : [{ dataKey: "y", stroke: "var(--primary-light)", name: "y" }];
       const conditionalRules = toConditionalStyleRules(props.conditional_styles);
       const latestRow =
         Array.isArray(data) && data.length > 0

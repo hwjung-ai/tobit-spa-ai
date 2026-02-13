@@ -78,10 +78,10 @@ export default function Neo4jGraphFlow({
     ...node,
     style: highlightNodeIds?.has(node.id ?? "")
           ? {
-              border: "2px solid #38bdf8",
-              background: "#0f172a",
+              border: "2px solid var(--primary-light)",
+              background: "var(--chart-tooltip-bg)",
               boxShadow: "0 0 10px rgba(56, 189, 248, 0.6)",
-              color: "#e0f2fe",
+              color: "var(--primary-light)",
               fontWeight: 600,
             }
       : node.style,
@@ -112,7 +112,7 @@ export default function Neo4jGraphFlow({
           onNodeClick?.(node);
         }}
       >
-        <Background gap={12} size={1} color="#0f172a" />
+        <Background gap={12} size={1} color="var(--chart-tooltip-bg)" />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>

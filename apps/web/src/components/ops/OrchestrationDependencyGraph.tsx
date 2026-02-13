@@ -54,7 +54,7 @@ function generateOrchestrationNodes(trace: OrchestrationTrace): Node[] {
             border: '1px solid rgba(148, 163, 184, 0.5)',
             borderRadius: '0.5rem',
             padding: '10px',
-            color: '#e2e8f0',
+            color: 'var(--foreground)',
             fontSize: '12px',
             minWidth: '120px',
             textAlign: 'center',

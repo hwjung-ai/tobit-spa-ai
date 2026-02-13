@@ -586,7 +586,7 @@ export default function PropertiesPanel() {
                       {
                         name: `Series ${chartSeries.length + 1}`,
                         data_key: chartSeries.length === 0 ? "y" : `y${chartSeries.length + 1}`,
-                        color: "#38bdf8",
+                        color: "var(--primary-light)",
                       },
                     ])
                   }
@@ -1039,7 +1039,7 @@ export default function PropertiesPanel() {
                             next[index] = { ...next[index], color: e.target.value };
                             handlePropChange("conditional_styles", next);
                           }}
-                          placeholder="#fca5a5"
+                          placeholder="var(--chart-error-color)"
                           className="h-8 text-xs bg-slate-800 border-slate-700"
                         />
                         <Input
@@ -1113,7 +1113,7 @@ export default function PropertiesPanel() {
                         field: "",
                         operator: "eq",
                         value: "",
-                        color: "#fca5a5",
+                        color: "var(--chart-error-color)",
                         bg_color: "",
                         border_color: "",
                         series_name: "",

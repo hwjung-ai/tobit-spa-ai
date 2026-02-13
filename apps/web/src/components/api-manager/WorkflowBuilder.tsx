@@ -263,7 +263,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           deleteKeyCode="Delete"
           className="builder-canvas-inner"
         >
-          <Background color="#0f172a" gap={16} />
+          <Background color="var(--chart-tooltip-bg)" gap={16} />
           <Controls />
           <MiniMap
             nodeColor={(n: Node) => {

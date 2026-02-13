@@ -38,7 +38,7 @@ const colors: Record<string, string> = {
   other: "#94a3b8",
 };
 
-const colorList = ["#f87171", "#fb923c", "#facc15", "#a78bfa", "#94a3b8"];
+const colorList = ["var(--chart-error-color)", "#fb923c", "#facc15", "#a78bfa", "var(--chart-text-color)"];
 
 export default function ErrorDistribution() {
   const [data, setData] = useState<ErrorData | null>(null);
@@ -125,7 +125,7 @@ export default function ErrorDistribution() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#0f172a", border: "1px solid #1e293b" }}
+                    contentStyle={{ backgroundColor: "var(--chart-tooltip-bg)", border: "1px solid var(--chart-tooltip-border)" }}
                     formatter={(value) => value}
                   />
                 </PieChart>
@@ -165,7 +165,7 @@ export default function ErrorDistribution() {
                   <div className="h-2 rounded-full bg-surface-elevated overflow-hidden">
                     <div
                       className="h-full"
-                      style={{backgroundColor: colors[type] || "#94a3b8", width: `${percentage}%`}}
+                      style={{backgroundColor: colors[type] || "var(--chart-text-color)", width: `${percentage}%`}}
                     />
                   </div>
                 </div>
