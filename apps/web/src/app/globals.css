@@ -2567,3 +2567,288 @@ html {
   height: calc(100% - 4px);
   background-color: var(--primary);
 }
+
+/* ============================================================================
+ * ANSWER BLOCK & UI RENDERER STANDARDIZATION (Phase 13)
+ * ============================================================================ */
+
+/* Answer Block Container */
+.answer-block {
+  @apply rounded-3xl border p-5;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .answer-block {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+/* Answer Block Card (for reference cards) */
+.answer-card {
+  @apply rounded-2xl border p-4 text-sm transition;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+  color: var(--foreground-secondary);
+}
+
+.answer-card:hover {
+  border-color: var(--border);
+}
+
+.answer-card-link {
+  @apply cursor-pointer hover:border-sky-500 hover:text-white;
+}
+
+.answer-card-link:hover {
+  background-color: var(--surface-overlay);
+}
+
+/* Answer Block Title */
+.answer-title {
+  @apply mb-3 text-xs font-semibold uppercase tracking-wider;
+  color: var(--muted-foreground);
+}
+
+/* Answer Block Badge */
+.answer-badge {
+  @apply text-[10px] uppercase tracking-wider px-2 py-0.5 rounded;
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--muted-foreground);
+}
+
+/* Answer Block Text */
+.answer-text-primary {
+  @apply text-sm;
+  color: var(--foreground);
+}
+
+.answer-text-secondary {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+.answer-text-sky {
+  @apply text-[10px] uppercase tracking-wider text-sky-400;
+}
+
+/* Answer Block Button */
+.answer-button {
+  @apply rounded border px-2 py-0.5 text-[10px] uppercase tracking-wider transition;
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+.answer-button:hover {
+  color: white;
+}
+
+.answer-button-disabled {
+  @apply opacity-40;
+}
+
+/* Answer Block Table */
+.answer-table {
+  @apply min-w-full text-left text-sm;
+  color: var(--foreground-secondary);
+}
+
+.answer-table-header {
+  @apply border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider;
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+.answer-table-row {
+  @apply px-3 py-2;
+}
+
+.answer-table-row-even {
+  background-color: var(--surface-overlay);
+}
+
+.answer-table-row-odd {
+  background-color: var(--surface-overlay);
+}
+
+/* Answer Block Code */
+.answer-code {
+  @apply mt-3 max-h-40 overflow-auto rounded-xl px-3 py-2 text-xs;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.dark .answer-code {
+  background-color: rgba(2, 6, 23, 0.8);
+}
+
+/* Answer Block Empty */
+.answer-empty {
+  @apply rounded-3xl border p-6;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.answer-empty-text {
+  @apply text-sm;
+  color: var(--muted-foreground);
+}
+
+/* Answer Block Divider */
+.answer-divider {
+  @apply border-b;
+  border-color: var(--border);
+}
+
+/* Answer Block Section */
+.answer-section {
+  @apply rounded-3xl border p-5;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dark .answer-section {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+/* Answer Block Prose (Markdown) */
+.answer-prose {
+  max-width: none;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+
+/* Answer Block Download Button */
+.answer-download-btn {
+  @apply rounded border px-2 py-0.5 text-[10px] uppercase tracking-wider transition;
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+
+.answer-download-btn:hover {
+  color: white;
+}
+
+/* ============================================================================
+ * UI SCREEN RENDERER STANDARDIZATION (Phase 13)
+ * ============================================================================ */
+
+/* UI Screen Container */
+.ui-screen-container {
+  @apply rounded-2xl border p-4 space-y-4;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+/* UI Screen Input Group */
+.ui-screen-input-group {
+  @apply mt-4 border-t pt-4 space-y-3;
+  border-color: var(--border);
+}
+
+/* UI Screen Label */
+.ui-screen-label {
+  @apply block text-xs;
+  color: var(--foreground-secondary);
+}
+
+/* UI Screen Input */
+.ui-screen-input {
+  @apply w-full rounded-xl border px-3 py-2 text-sm;
+  border-color: var(--border);
+  color: var(--foreground);
+  background-color: var(--surface-base);
+}
+
+/* UI Screen Button */
+.ui-screen-button {
+  @apply rounded-full border px-4 py-2 text-xs uppercase tracking-wider;
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+/* UI Screen Tabs Container */
+.ui-screen-tabs-container {
+  @apply space-y-3 rounded-2xl border p-4;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+/* UI Screen Tab Button */
+.ui-screen-tab-btn {
+  @apply rounded-full px-3 py-1 text-xs uppercase tracking-wider;
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+/* UI Screen Panel */
+.ui-screen-panel {
+  @apply rounded-2xl border p-4;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+/* UI Screen Accordion */
+.ui-screen-accordion {
+  @apply rounded-lg border overflow-hidden;
+  border-color: var(--border);
+}
+
+.ui-screen-accordion-header {
+  @apply flex w-full items-center justify-between px-3 py-2 text-left text-xs;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.ui-screen-accordion-header:hover {
+  background-color: var(--surface-elevated);
+}
+
+.ui-screen-accordion-content {
+  @apply px-3 py-2 text-xs;
+  color: var(--muted-foreground);
+}
+
+/* UI Screen Key-Value */
+.ui-screen-kv {
+  @apply rounded-2xl border p-4 text-xs;
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.ui-screen-kv-row {
+  @apply flex items-center justify-between border-b py-1 last:border-b-0;
+  border-color: var(--border);
+}
+
+.ui-screen-kv-key {
+  @apply text-xs;
+  color: var(--muted-foreground);
+}
+
+.ui-screen-kv-value {
+  @apply text-xs;
+  color: var(--foreground);
+}
+
+/* UI Screen Modal */
+.ui-screen-modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background-color: var(--surface-base);
+}
+
+.ui-screen-modal {
+  @apply w-full max-w-xl rounded-2xl border p-5;
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+/* UI Screen Loading */
+.ui-screen-loading {
+  @apply rounded-xl border p-4 text-sm animate-pulse;
+  border-color: var(--border);
+  color: var(--foreground-secondary);
+  background-color: var(--surface-overlay);
+}
