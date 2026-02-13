@@ -2449,6 +2449,10 @@ html {
 }
 
 /* Text Size Normalization (replace magic numbers) */
+.text-xs-9px {
+  @apply text-[9px];
+}
+
 .text-tiny {
   @apply text-[10px];
 }

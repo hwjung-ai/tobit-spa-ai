@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { useEditorState } from "@/lib/ui-screen/editor-state";
 import { COMPONENT_REGISTRY } from "@/lib/ui-screen/component-registry";
 import { Input } from "@/components/ui/input";

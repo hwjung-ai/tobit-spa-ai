@@ -71,7 +71,7 @@ export default function ComponentTreeView() {
               ? "border-sky-500 bg-sky-950/30"
               : "border-transparent hover:border-border bg-surface-base/60"
           )}
-          style={{marginLeft: `${node.depth * 12}px`}}
+          style={{paddingLeft: `${node.depth * 12}px`}}
         >
           <div
             className="flex items-center justify-between gap-2 cursor-pointer"

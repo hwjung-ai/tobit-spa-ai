@@ -342,7 +342,7 @@ export default function ChatExperience({
                     <span className="text-tiny uppercase tracking-wider text-muted-foreground">
                       {message.role === "user" ? "User" : "Assistant"}
                     </span>
-                    <span className="text-[9px] text-muted-foreground">
+                    <span className="text-xs-9px text-muted-foreground">
                       {formatTimestamp(message.timestamp)}
                     </span>
                   </div>

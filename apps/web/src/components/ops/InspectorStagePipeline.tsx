@@ -159,7 +159,7 @@ function AssetLegend() {
       {Object.entries(ASSET_CONFIG).map(([type, config]) => (
         <div key={type} className="flex items-center gap-1.5">
           <span className={config.color}>{config.icon}</span>
-          <span className="text-[9px] text-muted-foreground">{config.label}</span>
+           <span className="text-xs-9px text-muted-foreground">{config.label}</span>
         </div>
       ))}
     </div>
@@ -205,28 +205,28 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
 
         <div className="space-y-3">
           <div className="rounded-lg p-3 bg-surface-overlay">
-            <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Asset ID</p>
+            <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Asset ID</p>
             <p className="text-xs font-mono break-all text-foreground">{asset.id}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-lg p-3 bg-surface-overlay">
-              <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Type</p>
+              <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Type</p>
               <p className="text-xs capitalize text-foreground">{asset.type}</p>
             </div>
             <div className="rounded-lg p-3 bg-surface-overlay">
-              <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Version</p>
+              <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Version</p>
               <p className="text-xs text-foreground">v{asset.version}</p>
             </div>
           </div>
 
           <div className="rounded-lg p-3 bg-surface-overlay">
-            <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Full Identifier</p>
+            <p className="text-xs-9px uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Full Identifier</p>
             <p className="text-xs font-mono break-all text-muted-foreground">{asset.fullId}</p>
           </div>
 
           <div className="bg-sky-500/5 border border-sky-400/20 rounded-lg p-3">
-            <p className="text-[9px] uppercase tracking-wider text-sky-400 mb-1">Asset Registry</p>
+            <p className="text-xs-9px uppercase tracking-wider text-sky-400 mb-1">Asset Registry</p>
             <p className="text-xs text-foreground">
               상세 정보는 Asset Registry 페이지에서 확인할 수 있습니다.
             </p>
