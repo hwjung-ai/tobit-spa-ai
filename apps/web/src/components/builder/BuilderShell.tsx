@@ -54,17 +54,19 @@ export default function BuilderShell({
     };
   }, [isResizingLeft, isResizingRight]);
 
+  const userSelectStyle = (isResizingLeft || isResizingRight) ? "none" : "auto";
+
   return (
     <div
       ref={containerRef}
       className="flex h-full flex-col gap-3 overflow-hidden"
-      style={{userSelect: isResizingLeft || isResizingRight ? "none" : "auto"}}
+      style={{ userSelect: userSelectStyle }}
     >
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left Pane */}
         <div
-          className="flex-shrink-0 space-y-3 overflow-hidden rounded-2xl border p-3 shadow-md"
-          style={{width: `${leftWidth}px`, backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)"}}
+          className="flex-shrink-0 space-y-3 overflow-hidden rounded-2xl border p-3 shadow-md bg-surface-elevated border-variant"
+          style={{ width: `${leftWidth}px` }}
         >
           {leftPane}
         </div>
@@ -85,15 +87,13 @@ export default function BuilderShell({
 
         {/* Center Pane */}
         <div className="flex flex-1 flex-col gap-3 overflow-hidden">
-          <div className="flex-[3] overflow-auto rounded-2xl border p-3 shadow-sm custom-scrollbar"
-            style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
+          <div className="flex-[3] overflow-auto rounded-2xl border p-3 shadow-sm custom-scrollbar bg-surface-base border-variant"
           >
             {centerTop}
           </div>
           {centerBottom && (
             <div
-              className="flex-shrink-0 overflow-hidden rounded-2xl border p-3 shadow-sm"
-              style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
+              className="flex-shrink-0 overflow-hidden rounded-2xl border p-3 shadow-sm bg-surface-base border-variant"
             >
               {centerBottom}
             </div>
@@ -116,8 +116,8 @@ export default function BuilderShell({
 
         {/* Right Pane */}
         <div
-          className="flex-shrink-0 overflow-hidden rounded-2xl border p-3 text-sm shadow-md"
-          style={{width: `${rightWidth}px`, backgroundColor: "var(--surface-elevated)", borderColor: "var(--border)", color: "var(--muted-foreground)"}}
+          className="flex-shrink-0 overflow-hidden rounded-2xl border p-3 text-sm shadow-md bg-surface-elevated border-variant text-muted-foreground"
+          style={{ width: `${rightWidth}px` }}
         >
           {rightPane}
         </div>

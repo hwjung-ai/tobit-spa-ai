@@ -238,43 +238,37 @@ export default function RealTimeSimulation({
         }))
       : [];
 
-  const sectionClass = "ui-box";
-  const cardClass = "ui-subbox";
+  const sectionClass = "container-section";
+  const cardClass = "container-card";
 
   return (
     <div className="space-y-6">
       <section className={sectionClass}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
               Real-time Simulation
             </h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Streaming simulation results as they compute
             </p>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <div
-                style={{ borderColor: "var(--border)" }}
                 className={cn(
-                  "h-3 w-3 rounded-full border",
+                  "h-3 w-3 rounded-full border border-slate-300 dark:border-slate-700",
                   isConnected ? "bg-emerald-500" : "bg-slate-400",
                 )}
               />
-              <span style={{ color: "var(--muted-foreground)" }} className="text-sm">
+              <span className="text-sm text-slate-600 dark:text-slate-400">
                 {isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
             {isConnected && (
               <button
                 onClick={handleStop}
-                style={{
-                  borderColor: "var(--error)",
-                  backgroundColor: "rgba(var(--error-rgb), 0.1)",
-                  color: "var(--error)",
-                }}
-                className="rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80"
+                className="rounded-lg border border-rose-500 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:opacity-80"
               >
                 Stop
               </button>
@@ -282,12 +276,7 @@ export default function RealTimeSimulation({
             {!isConnected && result && (
               <button
                 onClick={handleRestart}
-                style={{
-                  borderColor: "var(--success)",
-                  backgroundColor: "rgba(var(--success-rgb), 0.1)",
-                  color: "var(--success)",
-                }}
-                className="rounded-lg border px-4 py-2 text-sm font-semibold hover:opacity-80"
+                className="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:opacity-80"
               >
                 Restart
               </button>
@@ -297,69 +286,46 @@ export default function RealTimeSimulation({
       </section>
 
       {progress && (
-        <section
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-          className={sectionClass}
-        >
+        <section className="container-section">
           <div className="flex items-center justify-between">
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Progress
             </h2>
-            <span style={{ color: "var(--muted-foreground)" }} className="text-xs">
+            <span className="text-xs text-slate-600 dark:text-slate-400">
               {progress.step}
             </span>
           </div>
-          <div
-            style={{ backgroundColor: "var(--muted-background)" }}
-            className="mt-3 h-2 overflow-hidden rounded-full"
-          >
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
             <div
-              className="h-full transition-all duration-300 ease-out"
+              className="h-full transition-all duration-300 ease-out bg-sky-600"
               style={{
-                backgroundColor: "var(--primary)",
                 width: progress.total
                   ? `${((progress.current || 0) / progress.total) * 100}%`
                   : "50%",
               }}
             />
           </div>
-          <p style={{ color: "var(--foreground-secondary)" }} className="mt-2 text-sm">
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
             {progress.message}
           </p>
         </section>
       )}
 
       {baseline && (
-        <section
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-          className={sectionClass}
-        >
+        <section className="container-section">
           <div className="flex items-center justify-between">
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Baseline KPIs
             </h2>
             <span
               className={cn(
                 "rounded-md px-2 py-1 text-xs font-semibold",
-                baseline.dataQuality?.metrics_available ? "text-white" : "",
-              )}
-              style={
                 baseline.dataQuality?.metrics_available
-                  ? { backgroundColor: "rgba(var(--success-rgb), 0.4)", color: "var(--success)" }
+                  ? "bg-emerald-500/40 text-emerald-600 dark:text-emerald-400"
                   : baseline.dataQuality?.using_fallback
-                    ? { backgroundColor: "rgba(var(--warning-rgb), 0.4)", color: "var(--warning)" }
-                    : {
-                        backgroundColor: "var(--surface-base)",
-                        borderColor: "var(--border)",
-                        color: "var(--foreground-secondary)",
-                      }
-              }
+                    ? "bg-amber-500/40 text-amber-600 dark:text-amber-400"
+                    : "border border-slate-300 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-400"
+              )}
             >
               {baseline.dataQuality?.metrics_available
                 ? "Real Metrics"
@@ -368,20 +334,16 @@ export default function RealTimeSimulation({
                   : "Unknown Source"}
             </span>
           </div>
-          <p style={{ color: "var(--muted-foreground)" }} className="mt-1 text-xs">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             {baseline.dataQuality?.note || `Source: ${baseline.source}`}
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(baseline.kpis).map(([key, value]) => (
-              <div
-                key={key}
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-                className="rounded-lg border p-3"
-              >
-                <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+              <div key={key} className="container-card">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   {key}
                 </p>
-                <p style={{ color: "var(--foreground)" }} className="text-lg font-semibold">
+                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
                   {typeof value === "number" ? value.toFixed(2) : value}
                 </p>
               </div>
@@ -391,33 +353,23 @@ export default function RealTimeSimulation({
       )}
 
       {kpis.length > 0 && (
-        <section
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-          className={sectionClass}
-        >
-          <h2
-            style={{ color: "var(--muted-foreground)" }}
-            className="text-sm font-semibold uppercase tracking-wider"
-          >
+        <section className="container-section">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
             KPI Results ({kpis.length})
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {kpis.map((kpi) => {
               const changePct = ((kpi.simulated - kpi.baseline) / kpi.baseline) * 100;
               return (
-                <div
-                  key={kpi.kpi}
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-                  className="rounded-lg border p-3"
-                >
-                  <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+                <div key={kpi.kpi} className="container-card">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
                     {kpi.kpi}
                   </p>
-                  <p style={{ color: "var(--foreground-secondary)" }} className="mt-1 text-sm">
+                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                     {kpi.baseline.toFixed(2)} → {kpi.simulated.toFixed(2)} {kpi.unit}
                   </p>
                   <p
-                    className={cn("text-sm font-semibold", changePct >= 0 ? "" : "")}
+                    className={cn("text-sm font-semibold")}
                     style={{ color: changePct >= 0 ? "var(--warning)" : "var(--success)" }}
                   >
                     {changePct >= 0 ? "+" : ""}
@@ -432,14 +384,8 @@ export default function RealTimeSimulation({
 
       {chartData.length > 0 && (
         <section className="grid gap-4 lg:grid-cols-2">
-          <div
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-            className={sectionClass}
-          >
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+          <div className="container-section">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Comparison Chart
             </h2>
             <div className="mt-4 h-56">

@@ -194,7 +194,7 @@ export function PermissionManagementDashboard() {
             <TabsContent value="users" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 " style={{ color: "var(--muted-foreground)" }} />
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search by username or email..."
                     value={searchQuery}
@@ -216,7 +216,7 @@ export function PermissionManagementDashboard() {
                     <CardContent className="pt-6">
                       <div className="space-y-2">
                         <h3 className="font-semibold">{user.username}</h3>
-                        <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>{user.email}</p>
+                        <p className="text-sm text-muted-foreground">{user.email}</p>
                         <div className="flex items-center gap-2">
                           <Badge className={getRoleColor(user.role)}>{user.role}</Badge>
                           {user.is_active ? (
@@ -359,7 +359,7 @@ export function PermissionManagementDashboard() {
                                   )}
                                 </div>
                                 {perm.expires_at && (
-                                  <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                                  <p className="text-xs text-muted-foreground">
                                     Expires: {new Date(perm.expires_at).toLocaleString()}
                                   </p>
                                 )}
@@ -378,14 +378,14 @@ export function PermissionManagementDashboard() {
                         </Card>
                       ))
                     ) : (
-                      <div className="text-center py-8 " style={{ color: "var(--muted-foreground)" }}>
+                      <div className="text-center py-8 text-muted-foreground">
                         No permissions assigned yet
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12 " style={{ color: "var(--muted-foreground)" }}>
+                <div className="text-center py-12 text-muted-foreground">
                   Select a user from the Users tab to manage their permissions
                 </div>
               )}
@@ -413,7 +413,7 @@ export function PermissionManagementDashboard() {
                   <div className="space-y-2">
                     <Badge className={getRoleColor(item.role)}>{item.role.toUpperCase()}</Badge>
                     <p className="text-sm font-medium">{item.permissions} permissions</p>
-                    <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{item.description}</p>
+                    <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
                 </CardContent>
               </Card>

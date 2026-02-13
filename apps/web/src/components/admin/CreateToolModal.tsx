@@ -324,15 +324,15 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-            <div className=" rounded-2xl border  max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh]" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-                <div className="flex items-center justify-between p-6 border-b " style={{borderColor: "var(--border)"}}>
+            <div className="rounded-2xl border max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] bg-surface-base border-variant">
+                <div className="flex items-center justify-between p-6 border-b border-variant">
                     <div>
                         <h2 className="text-xl font-bold text-white">Create New Tool</h2>
-                        <p className=" text-xs mt-1" style={{color: "var(--muted-foreground)"}}>Define a new orchestration tool asset</p>
+                        <p className="text-xs mt-1 text-muted-foreground">Define a new orchestration tool asset</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className=" hover:text-white transition-colors" style={{color: "var(--muted-foreground)"}}
+                        className="hover:text-white transition-colors text-muted-foreground"
                     >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -348,7 +348,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <div className="space-y-6">
                         {/* Tool Type (always shown) */}
                         <div>
-                            <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                            <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                 Tool Type
                             </label>
                             <div className="grid grid-cols-2 gap-3">
@@ -371,15 +371,15 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         className={`px-4 py-3 rounded-xl border text-left transition-all ${
                                             toolType === type.value
                                                 ? "bg-sky-600/20 border-sky-500 shadow-lg shadow-sky-900/10"
-                                                : "  hover:"
-                                        }`} style={{backgroundColor: "var(--surface-base)", borderColor: "var(--border)"}}
+                                                : "hover:"
+                                        } bg-surface-base border-variant`}
                                     >
                                         <span className={`block font-bold text-sm ${
                                             toolType === type.value ? "text-sky-400" : ""
-                                        }`} style={{color: "var(--foreground-secondary)"}}>
+                                        } text-foreground`}>
                                             {type.label}
                                         </span>
-                                        <span className="block  text-xs mt-0.5" style={{color: "var(--muted-foreground)"}}>
+                                        <span className="block text-xs mt-0.5 text-muted-foreground">
                                             {type.description}
                                         </span>
                                     </button>
@@ -390,13 +390,13 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                         {/* API Manager Selection (HTTP API Tools) */}
                         {toolType === "http_api" && (
                             <div>
-                                <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                     API Manager API (Optional)
                                 </label>
                                 <select
                                     value={selectedApiId}
                                     onChange={(e) => handleApiSelection(e.target.value)}
-                                    className="w-full px-4 py-3  border  rounded-xl  focus:outline-none focus:border-sky-500 transition-all" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                    className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                 >
                                     <option value="">-- Select API Manager API --</option>
                                     {apiManagerApis.map((api) => (
@@ -405,7 +405,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         </option>
                                     ))}
                                 </select>
-                                <p className=" text-xs mt-1 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                <p className="text-xs mt-1 ml-1 text-muted-foreground">
                                     선택 시 Tool Config/Input Schema가 API 실행용으로 자동 채워집니다.
                                 </p>
                             </div>
@@ -413,31 +413,29 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
 
                         {/* ============ MCP Server Discovery Section ============ */}
                         {toolType === "mcp" && (
-                            <div className="space-y-4 p-4 rounded-xl border" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
-                                <p className="text-xs font-bold uppercase tracking-widest" style={{color: "var(--muted-foreground)"}}>
+                            <div className="space-y-4 p-4 rounded-xl border border-variant bg-surface-elevated">
+                                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                                     MCP Server Discovery
                                 </p>
 
                                 {/* Server URL + Transport */}
                                 <div className="flex gap-3">
                                     <div className="flex-1">
-                                        <label className="block text-xs font-medium mb-1 ml-1" style={{color: "var(--muted-foreground)"}}>Server URL</label>
+                                        <label className="block text-xs font-medium mb-1 ml-1 text-muted-foreground">Server URL</label>
                                         <input
                                             type="text"
                                             value={mcpServerUrl}
                                             onChange={(e) => setMcpServerUrl(e.target.value)}
                                             placeholder="e.g. http://localhost:3100/sse"
-                                            className="w-full px-3 py-2.5 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all"
-                                            style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                            className="w-full px-3 py-2.5 border rounded-lg font-mono text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                         />
                                     </div>
                                     <div className="w-[180px]">
-                                        <label className="block text-xs font-medium mb-1 ml-1" style={{color: "var(--muted-foreground)"}}>Transport</label>
+                                        <label className="block text-xs font-medium mb-1 ml-1 text-muted-foreground">Transport</label>
                                         <select
                                             value={mcpTransport}
                                             onChange={(e) => setMcpTransport(e.target.value as "sse" | "streamable_http")}
-                                            className="w-full px-3 py-2.5 border rounded-lg text-xs focus:outline-none focus:border-sky-500 transition-all"
-                                            style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                            className="w-full px-3 py-2.5 border rounded-lg text-xs focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                         >
                                             <option value="sse">SSE</option>
                                             <option value="streamable_http">Streamable HTTP</option>
@@ -465,7 +463,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 {mcpDiscoveredTools.length > 0 && (
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between">
-                                            <p className="text-xs font-bold" style={{color: "var(--foreground-secondary)"}}>
+                                            <p className="text-xs font-bold text-foreground">
                                                 {mcpDiscoveredTools.length} tool{mcpDiscoveredTools.length !== 1 ? "s" : ""} found
                                             </p>
                                             <button
@@ -486,8 +484,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                             isSelected
                                                                 ? "border-cyan-500/50 bg-cyan-500/10"
                                                                 : "hover:border-cyan-500/20"
-                                                        }`}
-                                                        style={{borderColor: isSelected ? undefined : "var(--border)", backgroundColor: isSelected ? undefined : "var(--surface-base)"}}
+                                                        } ${isSelected ? "" : "border-variant bg-surface-base"}`}
                                                         onClick={() => handleMcpToggleTool(tool.name)}
                                                     >
                                                         {/* Checkbox */}
@@ -510,15 +507,14 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                                         e.stopPropagation();
                                                                         handleMcpSelectSingle(tool);
                                                                     }}
-                                                                    className="text-[10px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors"
-                                                                    style={{color: "var(--muted-foreground)"}}
+                                                                    className="text-[10px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
                                                                     title="Fill form with this tool's data"
                                                                 >
                                                                     Fill Form
                                                                 </button>
                                                             </div>
                                                             {tool.description && (
-                                                                <p className="text-xs mt-0.5 line-clamp-2" style={{color: "var(--muted-foreground)"}}>
+                                                                <p className="text-xs mt-0.5 line-clamp-2 text-muted-foreground">
                                                                     {tool.description}
                                                                 </p>
                                                             )}
@@ -570,7 +566,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                         {!isMcpBatchMode && (
                             <>
                                 <div>
-                                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                         Tool Name
                                     </label>
                                     <input
@@ -578,15 +574,15 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="e.g. equipment_search, inventory_list"
-                                        className="w-full px-4 py-3  border  rounded-xl  placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all font-mono" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                        className="w-full px-4 py-3 border rounded-xl placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all font-mono border-variant text-foreground bg-surface-base"
                                         autoFocus={toolType !== "mcp"}
                                     />
-                                    <p className=" text-xs mt-1 ml-1" style={{color: "var(--muted-foreground)"}}>Use snake_case for tool names</p>
+                                    <p className="text-xs mt-1 ml-1 text-muted-foreground">Use snake_case for tool names</p>
                                 </div>
 
                                 {/* Description */}
                                 <div>
-                                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                         Description
                                         <span className="text-amber-500 ml-2 normal-case tracking-normal">
                                             (Important for LLM tool selection)
@@ -597,19 +593,19 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Describe what this tool does and include keywords that help LLM select it. E.g., 'Search equipment inventory. Keywords: equipment, 장비, machine, 설비'"
                                         rows={3}
-                                        className="w-full px-4 py-3  border  rounded-xl  placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                        className="w-full px-4 py-3 border rounded-xl placeholder-slate-600 focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base"
                                     />
                                 </div>
 
                                 {/* Catalog Reference (Optional) */}
                                 <div>
-                                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                         Database Catalog (Optional)
                                     </label>
                                     <select
                                         value={catalogRef}
                                         onChange={(e) => setCatalogRef(e.target.value)}
-                                        className="w-full px-4 py-3  border  rounded-xl  focus:outline-none focus:border-sky-500 transition-all" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:border-sky-500 transition-all border-variant text-foreground bg-surface-base"
                                     >
                                         <option value="">-- No Catalog Selected --</option>
                                         {catalogsData?.map((catalog: any) => (
@@ -618,34 +614,34 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             </option>
                                         ))}
                                     </select>
-                                    <p className=" text-xs mt-1 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                    <p className="text-xs mt-1 ml-1 text-muted-foreground">
                                         Select a catalog to provide database schema information to LLM for accurate SQL generation
                                     </p>
                                 </div>
 
                                 {/* Tool Config */}
                                 <div>
-                                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                         Tool Configuration (JSON)
                                     </label>
                                     <textarea
                                         value={toolConfig}
                                         onChange={(e) => setToolConfig(e.target.value)}
                                         rows={5}
-                                        className="w-full px-4 py-3  border  rounded-xl  font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                        className="w-full px-4 py-3 border rounded-xl font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base"
                                     />
                                 </div>
 
                                 {/* Input Schema */}
                                 <div>
-                                    <label className="block text-xs font-bold  uppercase tracking-widest mb-2 ml-1" style={{color: "var(--muted-foreground)"}}>
+                                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 ml-1 text-muted-foreground">
                                         Input Schema (JSON Schema)
                                     </label>
                                     <textarea
                                         value={inputSchema}
                                         onChange={(e) => setInputSchema(e.target.value)}
                                         rows={6}
-                                        className="w-full px-4 py-3  border  rounded-xl  font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}
+                                        className="w-full px-4 py-3 border rounded-xl font-mono text-xs focus:outline-none focus:border-sky-500 transition-all resize-none border-variant text-foreground bg-surface-base"
                                     />
                                 </div>
                             </>
@@ -655,10 +651,10 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
 
                 {/* Footer: show Create button only for non-batch mode */}
                 {!isMcpBatchMode && (
-                    <div className="p-6 border-t  flex gap-3" style={{borderColor: "var(--border)"}}>
+                    <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3  hover:text-white transition-colors font-bold uppercase tracking-widest text-xs" style={{color: "var(--muted-foreground)"}}
+                            className="flex-1 py-3 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
                         >
                             Cancel
                         </button>
@@ -674,10 +670,10 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
 
                 {/* Footer: MCP batch mode - just close */}
                 {isMcpBatchMode && (
-                    <div className="p-6 border-t flex gap-3" style={{borderColor: "var(--border)"}}>
+                    <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs" style={{color: "var(--muted-foreground)"}}
+                            className="flex-1 py-3 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
                         >
                             Close
                         </button>
