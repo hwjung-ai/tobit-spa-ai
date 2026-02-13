@@ -11,7 +11,7 @@ Loads baseline KPIs using Tool-based data access with fallbacks.
    - Benefit: Fast, reliable, works offline
 
 2. **Real-Time Mode** (load_baseline_kpis_realtime):
-   - Fetches directly from Prometheus/CloudWatch
+   - Fetches directly from CloudWatch
    - Use when: Latest data needed, no DB dependency
    - Benefit: Always fresh, no storage needed
 
@@ -21,7 +21,7 @@ Priority (for DB mode):
 3. Topology-based derivation (Neo4j)
 
 Priority (for Real-Time mode):
-1. Direct API call (Prometheus/CloudWatch)
+1. Direct API call (CloudWatch)
 2. Topology-based derivation (Neo4j)
 """
 from __future__ import annotations
@@ -257,16 +257,15 @@ async def load_baseline_kpis_realtime(
     """
     **REAL-TIME MODE**: Load baseline KPIs directly from external source.
 
-    This bypasses the database and fetches metrics in real-time.
+    This bypasses database and fetches metrics in real-time.
 
     Args:
         tenant_id: Tenant identifier
         service: Service name
         source_config: Configuration for external source
             {
-                "source": "prometheus" | "cloudwatch",
-                "query": "PromQL" | JSON string,
-                "prometheus_url": "...",
+                "source": "cloudwatch",
+                "query": JSON string,
                 "cloudwatch_region": "...",
             }
 
@@ -275,49 +274,15 @@ async def load_baseline_kpis_realtime(
 
     Example:
         source_config = {
-            "source": "prometheus",
-            "prometheus_url": "http://prometheus:9090",
-            "query": "rate(http_requests_total[5m])"
-        }
-
-        source_config = {
             "source": "cloudwatch",
             "cloudwatch_region": "us-east-1",
             "query": '{"namespace": "AWS/EC2", "metric_name": "CPUUtilization"}'
         }
     """
-    source = source_config.get("source", "prometheus")
+    source = source_config.get("source", "cloudwatch")
 
     try:
-        if source == "prometheus":
-            from app.workers.metric_collector import MetricCollector, STANDARD_PROMETHEUS_QUERIES
-
-            config = MetricCollector.MetricCollectorConfig(
-                prometheus_url=source_config.get("prometheus_url"),
-            )
-            collector = MetricCollector(config)
-
-            # Use standard queries for each KPI
-            kpis = {}
-
-            for metric_name, query in STANDARD_PROMETHEUS_QUERIES.items():
-                result = await collector.fetch_realtime(
-                    source="prometheus",
-                    query=query,
-                    hours_back=1,  # Last 1 hour
-                )
-
-                if "error" not in result and result.get("metrics"):
-                    # Extract latest value for each metric series
-                    for key, data in result["metrics"].items():
-                        if ":" in key:  # format: "service:metric_name"
-                            kpi_name = key.split(":")[1]
-                            if kpi_name == metric_name or metric_name in kpi_name:
-                                kpis[metric_name] = data.get("value", 0.0)
-
-            return kpis
-
-        elif source == "cloudwatch":
+        if source == "cloudwatch":
             from app.workers.metric_collector import MetricCollector
 
             config = MetricCollector.MetricCollectorConfig(

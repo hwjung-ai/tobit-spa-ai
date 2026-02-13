@@ -253,6 +253,12 @@ export function getToolTypeColor(toolType: string): {
         border: 'border-amber-400/50',
         text: 'text-amber-300',
       };
+    case 'mcp':
+      return {
+        bg: 'bg-cyan-900/20',
+        border: 'border-cyan-400/50',
+        text: 'text-cyan-300',
+      };
     default:
       return {
         bg: 'bg-[var(--surface-overlay)]', // Using CSS variable

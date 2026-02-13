@@ -9,13 +9,6 @@ type SummaryPayload = {
   by_severity: Record<string, number>;
 };
 
-const normalizeBaseUrl = (value?: string) => {
-  if (!value) {
-    return "";
-  }
-  return value.endsWith("/") ? value.slice(0, -1) : value;
-};
-
 const normalizeError = (error: unknown) => {
   if (error instanceof Error) {
     return error.message;
@@ -31,8 +24,8 @@ const normalizeError = (error: unknown) => {
 };
 
 export default function CepEventBell() {
-  const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
   const disableRealtime = process.env.NEXT_PUBLIC_E2E_DISABLE_REALTIME === "true";
+  const enableAuth = process.env.NEXT_PUBLIC_ENABLE_AUTH === "true";
   const [pulse, setPulse] = useState(false);
   const previousCount = useRef<number>(0);
   const queryClient = useQueryClient();
@@ -40,7 +33,14 @@ export default function CepEventBell() {
   const summaryQuery = useQuery({
     queryKey: ["cep-events-summary"],
     queryFn: async () => {
-      const response = await fetch(`${apiBaseUrl}/cep/events/summary`);
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const headers: HeadersInit = {};
+      if (enableAuth && token) {
+        (headers as Record<string, string>).Authorization = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/cep/events/summary`, { headers });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message ?? "Failed to load summary");
@@ -70,7 +70,11 @@ export default function CepEventBell() {
       if (isClosing) return;
 
       try {
-        const streamUrl = !apiBaseUrl ? `/sse-proxy/cep/events/stream` : `${apiBaseUrl}/cep/events/stream`;
+        const token =
+          typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+        const streamUrl = token
+          ? `/sse-proxy/cep/events/stream?token=${encodeURIComponent(token)}`
+          : `/sse-proxy/cep/events/stream`;
 
         eventSource = new EventSource(streamUrl);
 
@@ -93,7 +97,8 @@ export default function CepEventBell() {
           console.error("SSE connection error (bell):", {
             url: streamUrl,
             readyState: eventSource?.readyState,
-            error
+            type: error.type,
+            isTrusted: error.isTrusted,
           });
 
           if (eventSource?.readyState === EventSource.CLOSED) {
@@ -134,7 +139,7 @@ export default function CepEventBell() {
         reconnectTimeout = null;
       }
     };
-  }, [apiBaseUrl, disableRealtime, queryClient]);
+  }, [disableRealtime, queryClient]);
 
   const summary = summaryQuery.data ?? null;
   const error = summaryQuery.error ? normalizeError(summaryQuery.error) : null;
@@ -143,7 +148,7 @@ export default function CepEventBell() {
   return (
     <Link
       href="/cep-events"
-      className="relative flex h-9 w-9 items-center justify-center rounded-full border  /70  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}
+      className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-surface-base text-foreground-secondary transition hover:bg-surface-elevated"
       title={error ? `Event summary error: ${error}` : "CEP Event Browser"}
     >
       <svg

@@ -5,17 +5,13 @@ Metric Collector for Simulation System
 
 This module provides CLIENT CODE to connect to EXISTING monitoring systems:
 
-- Prometheus (user's existing Prometheus server)
 - AWS CloudWatch (user's existing AWS account)
-- Datadog (optional)
 
 Users must already have these monitoring systems running.
 This code only fetches data from them via their APIs.
 
 For actual data collection agents, see:
-- Prometheus exporters (node_exporter, blackbox_exporter, etc.)
 - CloudWatch agents (Amazon CloudWatch Agent)
-- Kubernetes metrics server
 """
 from __future__ import annotations
 
@@ -25,10 +21,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
-import httpx
 from pydantic import BaseModel, Field
 
-from core.config import get_settings
 from core.db import get_session_context
 
 logger = logging.getLogger(__name__)
@@ -51,14 +45,9 @@ class MetricSeries(BaseModel):
 
 class MetricCollectorConfig(BaseModel):
     """Configuration for metric collection"""
-    prometheus_url: Optional[str] = None
-    prometheus_token: Optional[str] = None
     cloudwatch_region: Optional[str] = None
     cloudwatch_access_key: Optional[str] = None
     cloudwatch_secret_key: Optional[str] = None
-    datadog_api_key: Optional[str] = None
-    datadog_app_key: Optional[str] = None
-    datadog_site: str = "datadoghq.com"
 
 
 class BaseMetricCollector(ABC):
@@ -74,107 +63,6 @@ class BaseMetricCollector(ABC):
     ) -> list[MetricSeries]:
         """Collect metrics within time range"""
         pass
-
-
-class PrometheusCollector(BaseMetricCollector):
-    """Collect metrics from Prometheus"""
-
-    def __init__(self, url: str, token: Optional[str] = None):
-        self.url = url.rstrip("/")
-        self.token = token
-        self.headers = {}
-        if token:
-            self.headers["Authorization"] = f"Bearer {token}"
-
-    async def collect(
-        self,
-        query: str,
-        start_time: datetime,
-        end_time: datetime,
-        step_seconds: int = 60,
-    ) -> list[MetricSeries]:
-        """
-        Collect metrics using Prometheus range query API.
-
-        Args:
-            query: PromQL query (e.g., 'rate(http_requests_total[5m])')
-            start_time: Start timestamp
-            end_time: End timestamp
-            step_seconds: Resolution in seconds
-
-        Returns:
-            List of MetricSeries
-        """
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            params = {
-                "query": query,
-                "start": int(start_time.timestamp()),
-                "end": int(end_time.timestamp()),
-                "step": f"{step_seconds}s",
-            }
-
-            response = await client.get(
-                f"{self.url}/api/v1/query_range",
-                params=params,
-                headers=self.headers,
-            )
-            response.raise_for_status()
-            data = response.json()
-
-        if data.get("status") != "success":
-            logger.error(f"Prometheus query failed: {data}")
-            return []
-
-        result_data = data.get("data", {}).get("result", [])
-        return self._parse_prometheus_result(result_data)
-
-    def _parse_prometheus_result(
-        self, result_data: list[dict]
-    ) -> list[MetricSeries]:
-        """Parse Prometheus API response into MetricSeries"""
-        series_list = []
-
-        for item in result_data:
-            metric = item.get("metric", {})
-            values = item.get("values", [])
-
-            metric_name = metric.get("__name__", "unknown")
-            service = metric.get("service", metric.get("job", "unknown"))
-
-            # Determine unit from metric name
-            unit = self._infer_unit(metric_name)
-
-            points = []
-            for ts, val in values:
-                points.append(MetricPoint(
-                    timestamp=datetime.fromtimestamp(ts, tz=timezone.utc),
-                    value=float(val),
-                    labels={k: v for k, v in metric.items() if not k.startswith("__")},
-                ))
-
-            series_list.append(MetricSeries(
-                metric_name=metric_name,
-                service=service,
-                unit=unit,
-                points=points,
-            ))
-
-        return series_list
-
-    def _infer_unit(self, metric_name: str) -> str:
-        """Infer unit from metric name"""
-        name_lower = metric_name.lower()
-        if "latency" in name_lower or "duration" in name_lower or "seconds" in name_lower:
-            return "ms"
-        elif "requests" in name_lower or "rps" in name_lower or "throughput" in name_lower:
-            return "rps"
-        elif "error" in name_lower or "failures" in name_lower:
-            return "pct"
-        elif "cost" in name_lower or "dollars" in name_lower:
-            return "usd"
-        elif "cpu" in name_lower or "memory" in name_lower:
-            return "pct"
-        return "unknown"
 
 
 class CloudWatchCollector(BaseMetricCollector):
@@ -302,7 +190,7 @@ class CloudWatchCollector(BaseMetricCollector):
 
 class MetricCollector:
     """
-    Unified Metric Collector
+    Unified Metric Collector for CloudWatch
 
     Two modes of operation:
 
@@ -312,7 +200,7 @@ class MetricCollector:
        - Benefit: Fast simulation, historical analysis
 
     2. **Real-Time Collection (On-Demand)**: Fetch directly for simulation
-       - Use: from_prometheus() / from_cloudwatch() directly
+       - Use: from_cloudwatch() directly
        - Run: When user requests simulation
        - Benefit: Always fresh data, no storage needed
 
@@ -323,18 +211,7 @@ class MetricCollector:
 
     def __init__(self, config: Optional[MetricCollectorConfig] = None):
         self.config = config or MetricCollectorConfig()
-        self._prometheus: Optional[PrometheusCollector] = None
         self._cloudwatch: Optional[CloudWatchCollector] = None
-
-    @property
-    def prometheus(self) -> Optional[PrometheusCollector]:
-        """Lazy initialization of Prometheus collector"""
-        if self._prometheus is None and self.config.prometheus_url:
-            self._prometheus = PrometheusCollector(
-                url=self.config.prometheus_url,
-                token=self.config.prometheus_token,
-            )
-        return self._prometheus
 
     @property
     def cloudwatch(self) -> Optional[CloudWatchCollector]:
@@ -346,37 +223,6 @@ class MetricCollector:
                 secret_key=self.config.cloudwatch_secret_key or "",
             )
         return self._cloudwatch
-
-    async def from_prometheus(
-        self,
-        query: str,
-        hours_back: int = 24,
-        step_seconds: int = 60,
-    ) -> list[MetricSeries]:
-        """
-        Collect metrics from Prometheus.
-
-        Args:
-            query: PromQL query
-            hours_back: Hours of historical data to collect
-            step_seconds: Resolution in seconds
-
-        Returns:
-            List of MetricSeries
-        """
-        if not self.prometheus:
-            logger.warning("Prometheus not configured")
-            return []
-
-        end_time = datetime.now(timezone.utc)
-        start_time = end_time - timedelta(hours=hours_back)
-
-        return await self.prometheus.collect(
-            query=query,
-            start_time=start_time,
-            end_time=end_time,
-            step_seconds=step_seconds,
-        )
 
     async def from_cloudwatch(
         self,
@@ -476,21 +322,15 @@ class MetricCollector:
 
         Args:
             tenant_id: Tenant identifier
-            source: Source type ("prometheus" or "cloudwatch")
-            query: Query string (PromQL or JSON for CloudWatch)
+            source: Source type ("cloudwatch")
+            query: Query string (JSON for CloudWatch)
             hours_back: Hours of historical data
             step_seconds: Resolution in seconds
 
         Returns:
             Summary dict with collection stats
         """
-        if source == "prometheus":
-            metrics = await self.from_prometheus(
-                query=query,
-                hours_back=hours_back,
-                step_seconds=step_seconds,
-            )
-        elif source == "cloudwatch":
+        if source == "cloudwatch":
             # Parse JSON query for CloudWatch
             try:
                 query_data = json.loads(query)
@@ -538,26 +378,15 @@ class MetricCollector:
         - Testing without database
 
         Args:
-            source: Source type ("prometheus" or "cloudwatch")
-            query: Query string (PromQL or JSON for CloudWatch)
+            source: Source type ("cloudwatch")
+            query: Query string (JSON for CloudWatch)
             hours_back: Hours of historical data (default: 1 for real-time)
             step_seconds: Resolution in seconds
 
         Returns:
             Metrics directly (not saved to DB)
         """
-        if source == "prometheus":
-            if not self.prometheus:
-                return {"error": "Prometheus not configured"}
-            end_time = datetime.now(timezone.utc)
-            start_time = end_time - timedelta(hours=hours_back)
-            metrics = await self.prometheus.collect(
-                query=query,
-                start_time=start_time,
-                end_time=end_time,
-                step_seconds=step_seconds,
-            )
-        elif source == "cloudwatch":
+        if source == "cloudwatch":
             if not self.cloudwatch:
                 return {"error": "CloudWatch not configured"}
             try:
@@ -598,54 +427,3 @@ class MetricCollector:
             "metrics": metrics_dict,
             "fetched_at": datetime.now(timezone.utc).isoformat(),
         }
-
-
-# Standard Prometheus queries for simulation metrics
-STANDARD_PROMETHEUS_QUERIES = {
-    "latency_ms": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m])) * 1000",
-    "throughput_rps": "sum(rate(http_requests_total[5m]))",
-    "error_rate_pct": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
-    "cpu_utilization_pct": "avg(rate(process_cpu_seconds_total[5m])) * 100",
-    "memory_utilization_pct": "avg(process_resident_memory_bytes) / 1024 / 1024 / 1024 * 100",
-}
-
-
-async def collect_standard_metrics(
-    tenant_id: str,
-    prometheus_url: str,
-    prometheus_token: Optional[str] = None,
-    hours_back: int = 24,
-) -> dict[str, Any]:
-    """
-    Collect standard simulation metrics from Prometheus.
-
-    Args:
-        tenant_id: Tenant identifier
-        prometheus_url: Prometheus server URL
-        prometheus_token: Optional auth token
-        hours_back: Hours of historical data
-
-    Returns:
-        Collection summary
-    """
-    config = MetricCollectorConfig(
-        prometheus_url=prometheus_url,
-        prometheus_token=prometheus_token,
-    )
-    collector = MetricCollector(config)
-
-    results = {}
-    for metric_name, query in STANDARD_PROMETHEUS_QUERIES.items():
-        try:
-            result = await collector.collect_and_save(
-                tenant_id=tenant_id,
-                source="prometheus",
-                query=query,
-                hours_back=hours_back,
-            )
-            results[metric_name] = result
-        except Exception as e:
-            logger.error(f"Failed to collect {metric_name}: {e}")
-            results[metric_name] = {"error": str(e)}
-
-    return results

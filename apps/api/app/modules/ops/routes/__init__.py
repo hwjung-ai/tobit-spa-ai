@@ -5,7 +5,7 @@ This package contains modularized routes for the OPS module, organized by functi
 
 Routes:
     - query: Standard OPS query processing (@router.post("/query"), @router.get("/observability/kpis"))
-    - ask: OPS asking and planning (@router.post("/ask"))
+    - ask: OPS orchestration with LLM-driven planning (@router.post("/ask"))
     - ui_actions: UI action execution (@router.post("/ui-actions"))
     - rca: Root cause analysis (@router.post("/rca/analyze-trace"), @router.post("/rca/analyze-regression"))
     - regression: Golden queries and regression testing

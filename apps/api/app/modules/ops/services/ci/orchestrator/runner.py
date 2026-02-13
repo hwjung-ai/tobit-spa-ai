@@ -5028,6 +5028,7 @@ class OpsOrchestratorRunner:
             current_load=await self._get_system_load(),
             cache_status={},
             estimated_time=self._estimate_tool_times(),
+            mode_hint=getattr(self.plan, "mode_hint", None),  # Pass mode hint for filtering
         )
         ranked = await self._tool_selector.select_tools(context)
         return [tool for tool, _ in ranked]
@@ -6023,6 +6024,79 @@ class OpsOrchestratorRunner:
             "trace": trace,
             "next_actions": self.next_actions,
             "meta": meta,
+        }
+
+    def _build_orchestration_trace(
+        self,
+        execution_steps: List[Dict[str, Any]],
+        route_kind: str,
+        plan_output: PlanOutput,
+    ) -> Dict[str, Any]:
+        """
+        Build UI-friendly orchestration trace from execution steps.
+
+        Converts linear execution_steps into grouped format with dependencies,
+        strategy, and parallel/sequential execution info.
+
+        Args:
+            execution_steps: List of tool execution steps in order
+            route_kind: Route type (orch, etc.)
+            plan_output: Plan output for reference
+
+        Returns:
+            Orchestration trace dict matching UI component expectations
+        """
+        from app.modules.ops.services.ci.tools.base import get_tool_registry
+
+        registry = get_tool_registry()
+        tools_info = registry.get_all_tools_info()
+
+        # Build tool info map
+        tool_info_map = {t["name"]: t for t in tools_info}
+
+        # Group execution steps by dependencies to determine execution strategy
+        execution_groups = []
+        tools_seen = set()
+        tool_ids = []
+
+        for step_idx, step in enumerate(execution_steps):
+            tool_name = step.get("tool_name", "unknown")
+            if tool_name not in tools_seen:
+                # Determine group index
+                group_index = len(execution_groups)
+
+                # Get tool type
+                tool_info = tool_info_map.get(tool_name, {})
+                tool_type = tool_info.get("type", "unknown")
+
+                # Start new execution group
+                tools_in_group = [{tool_id: tool_name, tool_type: tool_type}]
+                tools_seen.add(tool_name)
+                tool_ids.append(tool_name)
+
+                execution_groups.append({
+                    "group_index": group_index,
+                    "tools": tools_in_group,
+                    "parallel_execution": False,  # Default: sequential
+                })
+
+        # Determine strategy from execution_groups
+        if len(execution_groups) == 1:
+            strategy = "serial"
+        elif any(g.get("parallel_execution", False) for g in execution_groups):
+            strategy = "parallel"
+        elif len(execution_groups) > 1:
+            strategy = "dag"
+        else:
+            strategy = "serial"
+
+        return {
+            "strategy": strategy,
+            "execution_groups": execution_groups,
+            "total_groups": len(execution_groups),
+            "total_tools": len(tools_seen),
+            "tool_ids": tool_ids,
+            "error": None,
         }
 
     def _build_stage_input(

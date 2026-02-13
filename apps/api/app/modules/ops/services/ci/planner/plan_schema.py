@@ -288,6 +288,11 @@ class Plan(BaseModel):
     execution_strategy: ExecutionStrategy = ExecutionStrategy.SERIAL
     tool_dependencies: List[ToolDependency] = []
     enable_intermediate_llm: bool = False
+    # Mode hint for tool selection filtering
+    mode_hint: str | None = Field(
+        default=None,
+        description="Mode hint to guide tool selection (config, metric, graph, history, document, all)"
+    )
 
     @field_validator("view", mode="before")
     @classmethod

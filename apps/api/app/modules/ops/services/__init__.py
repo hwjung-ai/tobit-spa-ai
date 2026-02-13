@@ -247,6 +247,8 @@ def _create_simple_plan(mode: str, question: str = "") -> Any:
     output = OutputSpec()
 
     # Configure based on mode
+    mode_hint = mode  # Store mode for tool selection filtering
+
     if mode == "config":
         # Config mode: Lookup CI with aggregation
         intent = Intent.LOOKUP
@@ -327,6 +329,7 @@ def _create_simple_plan(mode: str, question: str = "") -> Any:
         history=history,
         output=output,
         execution_strategy=ExecutionStrategy.SERIAL,
+        mode_hint=mode_hint,  # Pass mode hint for tool selection
     )
 
 
@@ -1168,6 +1171,7 @@ def _create_all_plan(question: str) -> Any:
         history=history,
         output=output,
         execution_strategy=ExecutionStrategy.SERIAL,
+        mode_hint="all",  # ALL mode: no filtering
     )
 
 

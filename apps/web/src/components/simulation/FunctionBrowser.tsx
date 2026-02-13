@@ -166,7 +166,7 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
       case "statistical": return "text-sky-400";
       case "ml": return "text-purple-400";
       case "domain": return "text-amber-400";
-      default: return "text-[var(--muted-foreground)]";
+      default: return "text-muted-foreground";
     }
   };
 
@@ -195,15 +195,8 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           <h2 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Filters</h2>
 
           {/* Search */}
-          <label className="block text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
+          <label className="block text-xs uppercase tracking-wider text-muted-foreground">
             Search
-            <input
-              type="text"
-              className="mt-2 w-full rounded-xl border   px-3 py-2 text-sm text-white outline-none focus:border-sky-500" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
-              placeholder="Name, description, tags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
           </label>
 
           {/* Category Filter */}

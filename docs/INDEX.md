@@ -25,6 +25,7 @@
 ### 기능 구현
 1. **기능 명세서**: `FEATURES.md`
 2. **테스트 표준**: `TESTING_STRUCTURE.md` (data-testid 네이밍 규칙 포함)
+3. **UI 디자인 시스템 가이드**: `UI_DESIGN_SYSTEM_GUIDE.md`
 
 ### 사용자 가이드
 1. **OPS 사용자 가이드**: `USER_GUIDE_OPS.md`

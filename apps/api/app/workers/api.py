@@ -56,8 +56,8 @@ def _get_model_registry():
 # ============================================================================
 
 class MetricCollectionRequest(BaseModel):
-    source: str = Field(..., description="Source type: prometheus or cloudwatch")
-    query: str = Field(..., description="Query string (PromQL or JSON)")
+    source: str = Field(..., description="Source type: cloudwatch")
+    query: str = Field(..., description="Query string (JSON)")
     hours_back: int = Field(24, description="Hours of historical data")
     step_seconds: int = Field(60, description="Resolution in seconds")
 
@@ -96,16 +96,7 @@ async def collect_metrics(
     Use this for scheduled data collection to build historical dataset.
 
     Sources:
-    - prometheus: Requires prometheus_url in query
     - cloudwatch: Query should be JSON with namespace, metric_name, dimensions
-
-    Example (Prometheus):
-    POST /workers/metrics/collect
-    {
-      "source": "prometheus",
-      "query": "rate(http_requests_total[5m])",
-      "hours_back": 24
-    }
 
     Example (CloudWatch):
     POST /workers/metrics/collect
@@ -116,16 +107,7 @@ async def collect_metrics(
     """
     tenant_id = current_user.tenant_id
 
-    if request.source == "prometheus":
-        collector = MetricCollector()
-        result = await collector.collect_and_save(
-            tenant_id=tenant_id,
-            source=request.source,
-            query=request.query,
-            hours_back=request.hours_back,
-            step_seconds=request.step_seconds,
-        )
-    elif request.source == "cloudwatch":
+    if request.source == "cloudwatch":
         collector = MetricCollector()
         result = await collector.collect_and_save(
             tenant_id=tenant_id,
@@ -165,14 +147,6 @@ async def fetch_metrics_realtime(
     Difference from /collect:
     - /collect: Saves to DB for future use (slower, but persistent)
     - /fetch: Returns immediately (faster, but not saved)
-
-    Example (Prometheus):
-    POST /workers/metrics/fetch
-    {
-      "source": "prometheus",
-      "query": "rate(http_requests_total[5m])",
-      "hours_back": 1
-    }
 
     Example (CloudWatch):
     POST /workers/metrics/fetch
@@ -217,17 +191,9 @@ def get_metric_sources(
     settings = get_settings()
 
     sources = {
-        "prometheus": {
-            "available": bool(settings.prometheus_url),
-            "url": settings.prometheus_url or "Not configured",
-        },
         "cloudwatch": {
             "available": bool(settings.aws_region),
             "region": settings.aws_region or "Not configured",
-        },
-        "datadog": {
-            "available": False,
-            "note": "Not implemented",
         },
     }
 
@@ -370,7 +336,7 @@ def train_model(
         data = generate_synthetic_training_data(n_samples=request.training_samples)
     else:
         # Load from metric timeseries
-        # This would require actual data in the database
+        # This would require actual data in database
         from app.modules.simulation.services.simulation.metric_loader import _get_metric_timeseries
         from core.db import get_session_context
 
@@ -570,7 +536,6 @@ def get_workers_status(
 
     status = {
         "metric_collection": {
-            "prometheus": bool(settings.prometheus_url),
             "cloudwatch": bool(settings.aws_region),
         },
         "topology_collection": {

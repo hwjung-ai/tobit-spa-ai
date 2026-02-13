@@ -76,9 +76,9 @@ def ask_ops(
 ):
     """Process OPS question with planning and execution.
 
-    This is the primary endpoint for OPS orchestration. It performs:
+    OPS orchestration flow:
     1. Question normalization with resolver rules
-    2. Plan generation (raw and validated)
+    2. Plan generation with LLM-driven tool selection
     3. Route determination (direct/reject/orchestration)
     4. Stage execution (validate, execute, compose, present)
     5. Fallback replanning on error

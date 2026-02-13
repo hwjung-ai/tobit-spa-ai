@@ -30,7 +30,7 @@ export interface ToolAsset {
 }
 
 type ToolStatus = "all" | "draft" | "published";
-type ToolType = "all" | "database_query" | "http_api" | "graph_query" | "python_script";
+type ToolType = "all" | "database_query" | "http_api" | "graph_query" | "mcp" | "python_script";
 
 export default function ToolsPageContent() {
     const router = useRouter();
@@ -50,7 +50,7 @@ export default function ToolsPageContent() {
             setStatusFilter(statusParam);
         }
 
-        if (typeParam && ["all", "database_query", "http_api", "graph_query", "python_script"].includes(typeParam)) {
+        if (typeParam && ["all", "database_query", "http_api", "graph_query", "mcp", "python_script"].includes(typeParam)) {
             setToolTypeFilter(typeParam);
         }
 
@@ -119,6 +119,7 @@ export default function ToolsPageContent() {
                             <option value="database_query">Database Query</option>
                             <option value="http_api">HTTP API</option>
                             <option value="graph_query">Graph Query</option>
+                            <option value="mcp">MCP Server</option>
                             <option value="python_script">Python Script</option>
                         </select>
                     </div>

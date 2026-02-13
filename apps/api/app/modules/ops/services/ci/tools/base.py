@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 
 # Tool type is now a string literal type instead of enum
 # This enables dynamic registration of new tool types
-ToolType = Union[str, Literal["ci", "graph", "metric", "history", "cep"]]
+ToolType = Union[str, Literal["ci", "graph", "metric", "history", "cep", "mcp"]]
 
 # Common tool types for backward compatibility
 class CommonToolTypes:
@@ -33,6 +33,7 @@ class CommonToolTypes:
     METRIC = "metric"  # Metrics aggregation and time series
     HISTORY = "history"  # Event logs and historical data
     CEP = "cep"  # Complex event processing
+    MCP = "mcp"  # MCP (Model Context Protocol) server tools
 
 
 @dataclass

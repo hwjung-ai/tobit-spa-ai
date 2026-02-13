@@ -21,7 +21,7 @@ export default function SettingsPage() {
         queryKey: ["settings"],
         queryFn: async () => {
             try {
-                const response = await fetchApi<{ settings: Record<string, Omit<OperationSetting, "key">> }>("/api/settings/operations");
+                const response = await fetchApi<{ settings: Record<string, Omit<OperationSetting, "key">> }>("/settings/operations");
                 // ResponseEnvelope.success(data={settings: {...}})
                 const settingsData = response.data?.settings;
                 if (!settingsData || typeof settingsData !== "object") {
@@ -68,11 +68,11 @@ export default function SettingsPage() {
     const llmFallbackEnabled = Boolean(
         llmSettings.find((setting) => setting.key === "llm_enable_fallback")?.value
     );
-    const { data: apiPolicies = [], isLoading: isPolicyLoading, refetch: refetchPolicies } = useQuery({
+    const { data: apiPolicies = [], isLoading: isPolicyLoading, error: policyError, refetch: refetchPolicies } = useQuery({
         queryKey: ["settings", "api-auth-policies"],
         enabled: activeTab === "auth",
         queryFn: async () => {
-            const response = await fetchApi<{ apis: Array<Record<string, unknown>> }>("/api/api-manager/apis");
+            const response = await fetchApi<{ apis: Array<Record<string, unknown>> }>("/api-manager/apis");
             const rows = Array.isArray(response.data?.apis) ? response.data.apis : [];
             return rows.map((item) => ({
                 id: String(item.id || ""),
@@ -109,7 +109,7 @@ export default function SettingsPage() {
             .filter(Boolean);
         try {
             setSavingPolicyId(apiId);
-            await fetchApi(`/api/api-manager/apis/${apiId}/auth-policy`, {
+            await fetchApi(`/api-manager/apis/${apiId}/auth-policy`, {
                 method: "PUT",
                 body: JSON.stringify({
                     auth_mode: authMode,
@@ -270,6 +270,15 @@ export default function SettingsPage() {
                     </div>
                     {isPolicyLoading ? (
                         <div className="py-10 text-center text-sm text-muted-standard">Loading API policies...</div>
+                    ) : policyError ? (
+                        <div className="py-10 px-4 text-center">
+                            <p className="text-sm text-rose-600 dark:text-rose-400 mb-2">
+                                {(policyError as Error)?.message || "Failed to load API policies"}
+                            </p>
+                            <p className="text-xs text-muted-standard">
+                                Please ensure you are logged in and have the necessary permissions.
+                            </p>
+                        </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm bg-surface-overlay/40 text-muted-standard">

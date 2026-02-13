@@ -122,7 +122,7 @@ async def run_simulation_realtime_endpoint(
     """
     **REAL-TIME MODE**: Run simulation with live metrics.
 
-    Fetches metrics directly from Prometheus/CloudWatch without using database.
+    Fetches metrics directly from CloudWatch without using database.
 
     Use this when:
     - Latest metrics are needed (no scheduled collection)
@@ -132,10 +132,9 @@ async def run_simulation_realtime_endpoint(
     Request body:
     - Standard SimulationRunRequest fields
     - `source_config`: {
-        "source": "prometheus" | "cloudwatch",
-        "prometheus_url": "...",
+        "source": "cloudwatch",
         "cloudwatch_region": "...",
-        "query": "PromQL" | JSON
+        "query": JSON
       }
 
     Example:
@@ -148,9 +147,9 @@ async def run_simulation_realtime_endpoint(
       "horizon": "24h",
       "assumptions": {"traffic_change_pct": 20},
       "source_config": {
-        "source": "prometheus",
-        "prometheus_url": "http://prometheus:9090",
-        "query": "rate(http_requests_total[5m])"
+        "source": "cloudwatch",
+        "cloudwatch_region": "us-east-1",
+        "query": "{\"namespace\": \"AWS/EC2\", \"metric_name\": \"CPUUtilization\"}"
       }
     }
     """

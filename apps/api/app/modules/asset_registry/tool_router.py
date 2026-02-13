@@ -829,6 +829,261 @@ async def sync_tool_from_api(
 
 
 # ============================================================================
+# MCP Server Integration Endpoints
+# ============================================================================
+
+
+@router.post("/discover-mcp-tools", response_model=ResponseEnvelope)
+async def discover_mcp_tools(
+    body: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """
+    Discover available tools from an MCP server.
+
+    Connects to the MCP server and calls tools/list to retrieve
+    the list of tools provided by that server.
+
+    Body:
+        server_url: MCP server endpoint (e.g. "http://localhost:3100/sse")
+        transport: "sse" (default) or "streamable_http"
+        headers: Optional extra HTTP headers
+    """
+    import httpx
+
+    server_url = body.get("server_url")
+    transport = body.get("transport", "sse")
+    extra_headers = body.get("headers", {})
+    timeout_sec = body.get("timeout_ms", 15000) / 1000
+
+    if not server_url:
+        raise HTTPException(400, "server_url is required")
+
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/list",
+        "params": {},
+    }
+
+    try:
+        if transport == "streamable_http":
+            # Streamable HTTP: direct POST
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json, text/event-stream",
+            }
+            headers.update(extra_headers)
+
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    server_url, json=payload, headers=headers, timeout=timeout_sec
+                )
+                response.raise_for_status()
+                result = response.json()
+        else:
+            # SSE: discover message endpoint first, then POST
+            headers = {"Content-Type": "application/json"}
+            headers.update(extra_headers)
+
+            async with httpx.AsyncClient(timeout=timeout_sec) as client:
+                # Step 1: Connect to SSE to get message endpoint
+                message_url = None
+                async with client.stream(
+                    "GET", server_url, headers={"Accept": "text/event-stream"}
+                ) as sse_init:
+                    async for line in sse_init.aiter_lines():
+                        if line.startswith("event: endpoint"):
+                            continue
+                        if line.startswith("data: "):
+                            endpoint_path = line[6:].strip()
+                            if endpoint_path.startswith("http"):
+                                message_url = endpoint_path
+                            else:
+                                from urllib.parse import urljoin
+                                message_url = urljoin(server_url, endpoint_path)
+                            break
+
+                if not message_url:
+                    raise HTTPException(
+                        502, "Failed to discover MCP message endpoint from SSE"
+                    )
+
+                # Step 2: Send tools/list
+                response = await client.post(
+                    message_url, json=payload, headers=headers
+                )
+                response.raise_for_status()
+                result = response.json()
+
+        # Parse JSON-RPC response
+        if "error" in result:
+            err = result["error"]
+            raise HTTPException(
+                502,
+                f"MCP server error ({err.get('code', '?')}): {err.get('message', 'Unknown')}",
+            )
+
+        mcp_tools = result.get("result", {}).get("tools", [])
+
+        # Normalize tool list
+        tools = []
+        for t in mcp_tools:
+            tools.append({
+                "name": t.get("name", ""),
+                "description": t.get("description", ""),
+                "inputSchema": t.get("inputSchema", {}),
+            })
+
+        return ResponseEnvelope.success(data={
+            "tools": tools,
+            "total": len(tools),
+            "server_url": server_url,
+            "transport": transport,
+        })
+
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            502,
+            f"MCP server returned HTTP {exc.response.status_code}: {exc.response.text[:500]}",
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            502,
+            f"Failed to connect to MCP server: {str(exc)}",
+        )
+
+
+@router.post("/import-from-mcp", response_model=ResponseEnvelope)
+def import_from_mcp(
+    body: dict[str, Any] = Body(...),
+    current_user: TbUser = Depends(get_current_user),
+):
+    """
+    Import one or more tools from an MCP server as Tool Assets.
+
+    Body:
+        server_url: MCP server endpoint
+        transport: "sse" or "streamable_http"
+        headers: Optional extra HTTP headers for the MCP server
+        tools: List of tools to import, each with:
+            - name: Tool name on the MCP server
+            - description: Tool description
+            - inputSchema: Tool input JSON Schema
+            - custom_name: (optional) Override the tool asset name
+    """
+    server_url = body.get("server_url")
+    transport = body.get("transport", "sse")
+    extra_headers = body.get("headers", {})
+    tools_to_import = body.get("tools", [])
+
+    if not server_url:
+        raise HTTPException(400, "server_url is required")
+    if not tools_to_import:
+        raise HTTPException(400, "tools list is required (at least one tool)")
+
+    imported = []
+    errors = []
+
+    with get_session_context() as session:
+        for tool_info in tools_to_import:
+            mcp_tool_name = tool_info.get("name")
+            if not mcp_tool_name:
+                errors.append({"name": None, "error": "Tool name is required"})
+                continue
+
+            # Use custom name or prefix with mcp_
+            asset_name = tool_info.get("custom_name") or f"mcp_{mcp_tool_name}"
+            description = tool_info.get("description") or f"MCP tool: {mcp_tool_name}"
+            input_schema = tool_info.get("inputSchema", {
+                "type": "object",
+                "properties": {"query": {"type": "string"}},
+                "required": ["query"],
+            })
+
+            # Check for existing tool with same name
+            existing = session.exec(
+                select(TbAssetRegistry)
+                .where(TbAssetRegistry.asset_type == "tool")
+                .where(TbAssetRegistry.name == asset_name)
+            ).first()
+
+            if existing:
+                errors.append({
+                    "name": asset_name,
+                    "mcp_tool": mcp_tool_name,
+                    "error": f"Tool '{asset_name}' already exists",
+                })
+                continue
+
+            # Create Tool Asset
+            tool_config = {
+                "server_url": server_url,
+                "transport": transport,
+                "tool_name": mcp_tool_name,
+                "timeout_ms": 30000,
+            }
+            if extra_headers:
+                tool_config["headers"] = extra_headers
+
+            asset = TbAssetRegistry(
+                asset_type="tool",
+                name=asset_name,
+                description=description,
+                tool_type="mcp",
+                tool_config=tool_config,
+                tool_input_schema=input_schema,
+                tool_output_schema=None,
+                tags={
+                    "source": "mcp_import",
+                    "mcp_server_url": server_url,
+                    "mcp_transport": transport,
+                    "mcp_tool_name": mcp_tool_name,
+                },
+                created_by=str(current_user.id),
+                status="draft",
+                version=1,
+            )
+
+            session.add(asset)
+            session.flush()  # Get asset_id
+
+            # Version history
+            history = TbAssetVersionHistory(
+                asset_id=asset.asset_id,
+                version=1,
+                snapshot={
+                    "name": asset.name,
+                    "description": asset.description,
+                    "tool_type": "mcp",
+                    "tool_config": tool_config,
+                    "tool_input_schema": input_schema,
+                    "mcp_server_url": server_url,
+                    "mcp_tool_name": mcp_tool_name,
+                },
+            )
+            session.add(history)
+
+            imported.append({
+                "asset_id": str(asset.asset_id),
+                "name": asset.name,
+                "mcp_tool": mcp_tool_name,
+                "status": "draft",
+            })
+
+        session.commit()
+
+    return ResponseEnvelope.success(data={
+        "imported": imported,
+        "errors": errors,
+        "total_imported": len(imported),
+        "total_errors": len(errors),
+    })
+
+
+# ============================================================================
 # Helper Functions
 # ============================================================================
 

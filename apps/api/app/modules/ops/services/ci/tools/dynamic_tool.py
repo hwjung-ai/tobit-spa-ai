@@ -31,7 +31,7 @@ class DynamicTool(BaseTool):
             tool_asset: Dictionary containing tool configuration with keys:
                 - name: Tool name
                 - asset_id: Asset ID (optional)
-                - tool_type: Type of tool (database_query, http_api, graph_query, custom)
+                - tool_type: Type of tool (database_query, http_api, graph_query, mcp, custom)
                 - tool_config: Tool configuration dict
                 - tool_input_schema: Input schema dict
                 - tool_output_schema: Output schema dict (optional)
@@ -97,6 +97,8 @@ class DynamicTool(BaseTool):
             return await self._execute_http_api(context, input_data)
         elif tool_type == "graph_query":
             return await self._execute_graph_query(context, input_data)
+        elif tool_type == "mcp":
+            return await self._execute_mcp(context, input_data)
         elif tool_type == "custom":
             return await self._execute_custom(context, input_data)
         else:
@@ -854,6 +856,218 @@ class DynamicTool(BaseTool):
                     postgres_connection.close()
                 except Exception:
                     pass
+
+    async def _execute_mcp(
+        self, context: ToolContext, input_data: dict[str, Any]
+    ) -> ToolResult:
+        """Execute tool via MCP (Model Context Protocol) server.
+
+        tool_config expected keys:
+            - server_url: MCP server endpoint (e.g. "http://localhost:3100/sse")
+            - transport: "sse" (default) or "streamable_http"
+            - tool_name: Name of the tool to call on the MCP server
+            - timeout_ms: Request timeout in milliseconds (default 30000)
+            - headers: Optional dict of extra HTTP headers
+        """
+        import httpx
+
+        server_url = self.tool_config.get("server_url")
+        transport = self.tool_config.get("transport", "sse")
+        tool_name = self.tool_config.get("tool_name")
+        timeout_ms = self.tool_config.get("timeout_ms", 30000)
+        extra_headers = self.tool_config.get("headers", {})
+
+        if not server_url:
+            return ToolResult(
+                success=False,
+                error="server_url not provided in tool_config for MCP tool",
+                error_details=self.tool_config,
+            )
+        if not tool_name:
+            return ToolResult(
+                success=False,
+                error="tool_name not provided in tool_config for MCP tool",
+                error_details=self.tool_config,
+            )
+
+        timeout_sec = timeout_ms / 1000
+
+        if transport == "streamable_http":
+            # Streamable HTTP transport: single POST with JSON-RPC
+            return await self._mcp_call_streamable_http(
+                server_url, tool_name, input_data, timeout_sec, extra_headers
+            )
+        else:
+            # SSE transport: POST JSON-RPC to /message endpoint discovered from SSE
+            return await self._mcp_call_sse(
+                server_url, tool_name, input_data, timeout_sec, extra_headers
+            )
+
+    async def _mcp_call_streamable_http(
+        self,
+        server_url: str,
+        tool_name: str,
+        input_data: dict[str, Any],
+        timeout_sec: float,
+        extra_headers: dict[str, str],
+    ) -> ToolResult:
+        """Call MCP server using Streamable HTTP transport (JSON-RPC over POST)."""
+        import httpx
+
+        payload = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": tool_name,
+                "arguments": input_data,
+            },
+        }
+
+        headers = {"Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
+        headers.update(extra_headers)
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    server_url, json=payload, headers=headers, timeout=timeout_sec
+                )
+                response.raise_for_status()
+                result = response.json()
+
+            if "error" in result:
+                err = result["error"]
+                return ToolResult(
+                    success=False,
+                    error=f"MCP error ({err.get('code', '?')}): {err.get('message', 'Unknown')}",
+                    error_details=err,
+                )
+
+            mcp_result = result.get("result", {})
+            content = mcp_result.get("content", [])
+            is_error = mcp_result.get("isError", False)
+
+            # Extract text content from MCP content array
+            text_parts = [
+                item.get("text", "") for item in content if item.get("type") == "text"
+            ]
+            combined_text = "\n".join(text_parts) if text_parts else str(content)
+
+            if is_error:
+                return ToolResult(
+                    success=False,
+                    error=f"MCP tool returned error: {combined_text}",
+                    error_details={"content": content},
+                )
+
+            return ToolResult(success=True, data={"result": combined_text, "content": content})
+
+        except httpx.HTTPStatusError as exc:
+            return ToolResult(
+                success=False,
+                error=f"MCP HTTP {exc.response.status_code}: {exc.response.text[:500]}",
+                error_details={"status_code": exc.response.status_code},
+            )
+        except Exception as exc:
+            logger.error(f"MCP streamable_http call failed: {exc}")
+            return ToolResult(
+                success=False,
+                error=f"MCP call failed: {str(exc)}",
+                error_details={"exception": str(exc)},
+            )
+
+    async def _mcp_call_sse(
+        self,
+        server_url: str,
+        tool_name: str,
+        input_data: dict[str, Any],
+        timeout_sec: float,
+        extra_headers: dict[str, str],
+    ) -> ToolResult:
+        """Call MCP server using SSE transport.
+
+        1. Connect to SSE endpoint to get session and message URL
+        2. Send JSON-RPC tools/call via POST to the message endpoint
+        3. Collect the response from SSE stream
+        """
+        import httpx
+
+        headers = {"Content-Type": "application/json"}
+        headers.update(extra_headers)
+
+        try:
+            async with httpx.AsyncClient(timeout=timeout_sec) as client:
+                # Step 1: Initialize SSE connection to discover message endpoint
+                message_url = None
+                async with client.stream("GET", server_url, headers={"Accept": "text/event-stream"}) as sse_init:
+                    async for line in sse_init.aiter_lines():
+                        if line.startswith("event: endpoint"):
+                            continue
+                        if line.startswith("data: "):
+                            endpoint_path = line[6:].strip()
+                            # Resolve relative URL against server_url
+                            if endpoint_path.startswith("http"):
+                                message_url = endpoint_path
+                            else:
+                                from urllib.parse import urljoin
+                                message_url = urljoin(server_url, endpoint_path)
+                            break
+
+                if not message_url:
+                    return ToolResult(
+                        success=False,
+                        error="Failed to discover MCP message endpoint from SSE",
+                        error_details={"server_url": server_url},
+                    )
+
+                # Step 2: Send tools/call via POST
+                payload = {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {
+                        "name": tool_name,
+                        "arguments": input_data,
+                    },
+                }
+
+                response = await client.post(message_url, json=payload, headers=headers)
+                response.raise_for_status()
+                result = response.json()
+
+            if "error" in result:
+                err = result["error"]
+                return ToolResult(
+                    success=False,
+                    error=f"MCP error ({err.get('code', '?')}): {err.get('message', 'Unknown')}",
+                    error_details=err,
+                )
+
+            mcp_result = result.get("result", {})
+            content = mcp_result.get("content", [])
+            is_error = mcp_result.get("isError", False)
+
+            text_parts = [
+                item.get("text", "") for item in content if item.get("type") == "text"
+            ]
+            combined_text = "\n".join(text_parts) if text_parts else str(content)
+
+            if is_error:
+                return ToolResult(
+                    success=False,
+                    error=f"MCP tool returned error: {combined_text}",
+                    error_details={"content": content},
+                )
+
+            return ToolResult(success=True, data={"result": combined_text, "content": content})
+
+        except Exception as exc:
+            logger.error(f"MCP SSE call failed: {exc}")
+            return ToolResult(
+                success=False,
+                error=f"MCP SSE call failed: {str(exc)}",
+                error_details={"exception": str(exc)},
+            )
 
     async def _execute_custom(
         self, context: ToolContext, input_data: dict[str, Any]

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { cn } from "@/lib/utils";
 
 // Font size mapping from prop values to Tailwind classes
 const FONT_SIZE_MAP: Record<string, string> = {

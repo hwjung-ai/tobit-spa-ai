@@ -31,8 +31,7 @@ class SimulationRunRequest(BaseModel):
 
 
 class SimulationRealtimeSourceConfig(BaseModel):
-    source: Literal["prometheus", "cloudwatch"] = "prometheus"
-    prometheus_url: str | None = None
+    source: Literal["cloudwatch"] = "cloudwatch"
     cloudwatch_region: str | None = None
     query: str | dict[str, Any] | None = None
 
