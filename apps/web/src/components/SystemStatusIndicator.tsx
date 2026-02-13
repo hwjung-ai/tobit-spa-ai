@@ -117,8 +117,7 @@ export default function SystemStatusIndicator() {
               {tooltipLines.map((line, i) => (
                 <div
                   key={i}
-                  className={i === 0 ? "font-semibold" : "mt-0.5"}
-                  className={i === 0 ? "" : "text-muted-foreground"}
+                  className={i === 0 ? "font-semibold" : "mt-0.5 text-muted-foreground"}
                 >
                   {line}
                 </div>
