@@ -286,7 +286,7 @@ export default function RegressionWatchPanel() {
                             ? "bg-green-900 text-green-300"
                             : ""
                         }`}
-                        style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)"}}
+
                       >
                         {query.enabled ? "Enabled" : "Disabled"}
                       </button>
@@ -342,7 +342,7 @@ export default function RegressionWatchPanel() {
           <div className="insp-section overflow-hidden p-0">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border" style={{ backgroundColor: "var(--surface-overlay)"}}>
+                <tr className="border-b border-border">
                   <th className="px-4 py-3 text-left text-muted-standard">
                     Query
                   </th>

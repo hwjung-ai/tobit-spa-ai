@@ -136,7 +136,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("state", "")}>
-                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(root)</span>
+                            <span className="text-xs">(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             stateTree,
@@ -158,7 +158,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("context", "")}>
-                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(root)</span>
+                            <span className="text-xs">(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             contextTree,
@@ -180,7 +180,7 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                           <DropdownMenuItem onClick={() => handleSelectPath("inputs", "")}>
-                            <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(root)</span>
+                            <span className="text-xs">(root)</span>
                           </DropdownMenuItem>
                           {renderPathTree(
                             inputsTree,
@@ -207,8 +207,8 @@ export const PathPicker = React.forwardRef<HTMLDivElement, PathPickerProps>(
                   onMouseEnter={(e) => { if (!error) e.currentTarget.style.backgroundColor = "var(--surface-base)"; }}
                   onMouseLeave={(e) => { if (!error) e.currentTarget.style.backgroundColor = "var(--background)"; }}
                 >
-                  <span style={{ color: "var(--foreground)" }}>{displayLabel}</span>
-                  <ChevronDown className="w-4 h-4" style={{ color: "var(--muted-foreground)" }} />
+                  <span>{displayLabel}</span>
+                  <ChevronDown className="w-4 h-4" />
                 </button>
               </DropdownMenu>
             )}
@@ -253,7 +253,7 @@ function renderPathTree(
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
             <DropdownMenuItem onClick={() => onSelect(source, currentPath)}>
-              <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>(this level)</span>
+              <span className="text-xs">(this level)</span>
             </DropdownMenuItem>
             {renderPathTree(node.children, source, onSelect, currentPath)}
           </DropdownMenuSubContent>

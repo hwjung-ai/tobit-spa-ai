@@ -246,10 +246,10 @@ export default function RealTimeSimulation({
       <section className={sectionClass}>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+            <h1 className="text-2xl font-semibold text-foreground">
               Real-time Simulation
             </h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Streaming simulation results as they compute
             </p>
           </div>
@@ -257,18 +257,18 @@ export default function RealTimeSimulation({
             <div className="flex items-center gap-2">
               <div
                 className={cn(
-                  "h-3 w-3 rounded-full border border-slate-300 dark:border-slate-700",
+                  "h-3 w-3 rounded-full border border-variant",
                   isConnected ? "bg-emerald-500" : "bg-slate-400",
                 )}
               />
-              <span className="text-sm text-slate-600 dark:text-slate-400">
+              <span className="text-sm text-muted-foreground">
                 {isConnected ? "Connected" : "Disconnected"}
               </span>
             </div>
             {isConnected && (
               <button
                 onClick={handleStop}
-                className="rounded-lg border border-rose-500 bg-rose-500/10 px-4 py-2 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:opacity-80"
+                className="btn-error"
               >
                 Stop
               </button>
@@ -276,7 +276,7 @@ export default function RealTimeSimulation({
             {!isConnected && result && (
               <button
                 onClick={handleRestart}
-                className="rounded-lg border border-emerald-500 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:opacity-80"
+                className="btn-success"
               >
                 Restart
               </button>
@@ -288,14 +288,14 @@ export default function RealTimeSimulation({
       {progress && (
         <section className="container-section">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <h2 className="text-label">
               Progress
             </h2>
-            <span className="text-xs text-slate-600 dark:text-slate-400">
+            <span className="text-xs text-muted-foreground">
               {progress.step}
             </span>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted-background">
             <div
               className="h-full transition-all duration-300 ease-out bg-sky-600"
               style={{
@@ -305,7 +305,7 @@ export default function RealTimeSimulation({
               }}
             />
           </div>
-          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+          <p className="mt-2 text-sm text-muted-foreground">
             {progress.message}
           </p>
         </section>
@@ -314,7 +314,7 @@ export default function RealTimeSimulation({
       {baseline && (
         <section className="container-section">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <h2 className="text-label">
               Baseline KPIs
             </h2>
             <span
@@ -334,16 +334,16 @@ export default function RealTimeSimulation({
                   : "Unknown Source"}
             </span>
           </div>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             {baseline.dataQuality?.note || `Source: ${baseline.source}`}
           </p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(baseline.kpis).map(([key, value]) => (
               <div key={key} className="container-card">
-                <p className="text-xs text-slate-600 dark:text-slate-400">
+                <p className="text-xs text-muted-foreground">
                   {key}
                 </p>
-                <p className="text-lg font-semibold text-slate-900 dark:text-slate-50">
+                <p className="text-lg font-semibold text-foreground">
                   {typeof value === "number" ? value.toFixed(2) : value}
                 </p>
               </div>
@@ -354,7 +354,7 @@ export default function RealTimeSimulation({
 
       {kpis.length > 0 && (
         <section className="container-section">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          <h2 className="text-label">
             KPI Results ({kpis.length})
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -362,15 +362,14 @@ export default function RealTimeSimulation({
               const changePct = ((kpi.simulated - kpi.baseline) / kpi.baseline) * 100;
               return (
                 <div key={kpi.kpi} className="container-card">
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {kpi.kpi}
                   </p>
-                  <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {kpi.baseline.toFixed(2)} → {kpi.simulated.toFixed(2)} {kpi.unit}
                   </p>
                   <p
-                    className={cn("text-sm font-semibold")}
-                    style={{ color: changePct >= 0 ? "var(--warning)" : "var(--success)" }}
+                    className={cn("text-sm font-semibold", changePct >= 0 ? "text-warning" : "text-success")}
                   >
                     {changePct >= 0 ? "+" : ""}
                     {changePct.toFixed(2)}%
@@ -385,7 +384,7 @@ export default function RealTimeSimulation({
       {chartData.length > 0 && (
         <section className="grid gap-4 lg:grid-cols-2">
           <div className="container-section">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <h2 className="text-label">
               Comparison Chart
             </h2>
             <div className="mt-4 h-56">
@@ -403,14 +402,8 @@ export default function RealTimeSimulation({
             </div>
           </div>
 
-          <div
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-            className={sectionClass}
-          >
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+          <div className="container-section">
+            <h2 className="text-label">
               Change Percentage
             </h2>
             <div className="mt-4 h-56">
@@ -429,59 +422,41 @@ export default function RealTimeSimulation({
       )}
 
       {result && (
-        <section
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-          className={sectionClass}
-        >
-          <h2
-            style={{ color: "var(--muted-foreground)" }}
-            className="text-sm font-semibold uppercase tracking-wider"
-          >
+        <section className="container-section">
+          <h2 className="text-label">
             Final Result
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-              className={cardClass}
-            >
-              <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+            <div className="container-card">
+              <p className="text-xs text-muted-foreground">
                 Strategy
               </p>
-              <p style={{ color: "var(--foreground)" }} className="text-lg font-semibold uppercase">
+              <p className="text-lg font-semibold uppercase text-foreground">
                 {result.simulation.strategy}
               </p>
             </div>
-            <div
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-              className={cardClass}
-            >
-              <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+            <div className="container-card">
+              <p className="text-xs text-muted-foreground">
                 Confidence
               </p>
-              <p style={{ color: "var(--success)" }} className="text-lg font-semibold">
+              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
                 {(result.simulation.confidence * 100).toFixed(0)}%
               </p>
             </div>
-            <div
-              style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-              className={cardClass}
-            >
-              <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+            <div className="container-card">
+              <p className="text-xs text-muted-foreground">
                 Scenario ID
               </p>
-              <p style={{ color: "var(--foreground-secondary)" }} className="truncate text-sm">
+              <p className="truncate text-sm text-muted-foreground">
                 {result.simulation.scenario_id}
               </p>
             </div>
           </div>
-          <div
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-            className={cn(cardClass, "mt-4")}
-          >
-            <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+          <div className={cn(cardClass, "mt-4")}>
+            <p className="text-xs text-muted-foreground">
               Explanation
             </p>
-            <p style={{ color: "var(--foreground-secondary)" }} className="mt-1 text-sm">
+            <p className="mt-1 text-sm text-muted-foreground">
               {result.simulation.explanation}
             </p>
           </div>
@@ -490,33 +465,23 @@ export default function RealTimeSimulation({
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               {result.data_source && (
                 <div
-                  style={
+                  className={cn(
+                    "rounded-lg border p-4",
                     result.data_source === "metric_timeseries"
-                      ? {
-                          borderColor: "var(--success)",
-                          backgroundColor: "rgba(var(--success-rgb), 0.1)",
-                        }
-                      : {
-                          borderColor: "var(--warning)",
-                          backgroundColor: "rgba(var(--warning-rgb), 0.1)",
-                        }
-                  }
-                  className="rounded-lg border p-4"
+                      ? "border-emerald-500 bg-emerald-500/10"
+                      : "border-amber-500 bg-amber-500/10"
+                  )}
                 >
-                  <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+                  <p className="text-xs text-muted-foreground">
                     Data Source
                   </p>
                   <p
                     className={cn(
                       "text-sm font-semibold",
-                      result.data_source === "metric_timeseries" ? "" : "",
+                      result.data_source === "metric_timeseries"
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-amber-600 dark:text-amber-400"
                     )}
-                    style={{
-                      color:
-                        result.data_source === "metric_timeseries"
-                          ? "var(--success)"
-                          : "var(--warning)",
-                    }}
                   >
                     {result.data_source === "metric_timeseries"
                       ? "Real Metric Data"
@@ -527,17 +492,14 @@ export default function RealTimeSimulation({
                 </div>
               )}
               {result.timing && (
-                <div
-                  style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-                  className={cardClass}
-                >
-                  <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+                <div className="container-card">
+                  <p className="text-xs text-muted-foreground">
                     Computation Time
                   </p>
-                  <p style={{ color: "var(--primary)" }} className="text-sm font-semibold">
+                  <p className="text-sm font-semibold text-sky-600 dark:text-sky-400">
                     {result.timing.total_ms.toFixed(0)}ms total
                   </p>
-                  <p style={{ color: "var(--muted-foreground)" }} className="mt-1 text-xs">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Planning: {result.timing.planning_ms.toFixed(0)}ms | Baseline:{" "}
                     {result.timing.baseline_loading_ms.toFixed(0)}ms | Strategy:{" "}
                     {result.timing.strategy_execution_ms.toFixed(0)}ms
@@ -550,11 +512,8 @@ export default function RealTimeSimulation({
       )}
 
       {error && (
-        <section
-          style={{ borderColor: "var(--error)", backgroundColor: "rgba(var(--error-rgb), 0.1)" }}
-          className="rounded-2xl border p-5"
-        >
-          <p style={{ color: "var(--error)" }}>{error}</p>
+        <section className="container-section border-error bg-error/10">
+          <p className="text-rose-600 dark:text-rose-400">{error}</p>
         </section>
       )}
     </div>

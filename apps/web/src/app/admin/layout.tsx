@@ -40,7 +40,7 @@ export default function AdminLayout({
     };
 
     return (
-        <div className="tracking-tight builder-shell builder-text text-primary">
+        <div className="tracking-tight builder-shell builder-text text-foreground">
             <PageHeader
                 title="Adminstrator"
                 description="운영 파라미터를 설정하고 핵심 자산을 관리하며 시스템 활동을 점검합니다."
@@ -59,8 +59,8 @@ export default function AdminLayout({
                                 className={cn(
                                     "rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition",
                                     isActive
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : "border-transparent text-muted-standard hover:border-sky-500 hover:text-primary hover:bg-sky-500/10"
+                                        ? "border-sky-600 bg-sky-600 text-white dark:border-sky-700 dark:bg-sky-700"
+                                        : "border-slate-300 text-slate-700 hover:border-sky-500 hover:bg-sky-50 hover:text-sky-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-500 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                                 )}
                             >
                                 {tab.label}

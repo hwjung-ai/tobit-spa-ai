@@ -88,13 +88,13 @@ export default function DraftAssistantPanel({
         </div>
         <div className="flex items-center justify-between">
           <span className="draft-panel-label">Draft status</span>
-          <span className="text-sm font-semibold" style={{color: "var(--foreground)"}}>
+          <span className="text-sm font-semibold">
             {draftStatusLabels[draftStatus] ?? draftStatus}
           </span>
         </div>
-        {draftNotes ? <p className="text-sm" style={{color: "var(--muted-foreground)"}}>{draftNotes}</p> : null}
+        {draftNotes ? <p className="text-sm">{draftNotes}</p> : null}
         {draftDiff ? (
-          <ul className="space-y-1 text-xs" style={{color: "var(--muted-foreground)"}}>
+          <ul className="space-y-1 text-xs">
             {draftDiff.map((item, index) => (
               <li key={index}>{item}</li>
             ))}
@@ -134,7 +134,7 @@ export default function DraftAssistantPanel({
           </button>
         </div>
         {!draftApi && (
-          <p className="text-xs" style={{color: "var(--muted-foreground)"}}>
+          <p className="text-xs">
             No draft yet. Ask the copilot to generate one.
             {lastParseError ? ` Parse error: ${lastParseError}` : ""}
           </p>
@@ -156,7 +156,7 @@ export default function DraftAssistantPanel({
         {previewSummary && previewJson ? (
           <div className="draft-panel-section space-y-2">
             <p className="draft-panel-label">Preview</p>
-            <p className="text-sm" style={{color: "var(--foreground)"}}>{previewSummary}</p>
+            <p className="text-sm">{previewSummary}</p>
             <pre className="code-block code-block-lg">
               {previewJson}
             </pre>

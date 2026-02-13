@@ -96,7 +96,7 @@ export function OrchestrationVisualization({
     <div className="space-y-4">
       {/* Header with strategy badge */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold " style={{color: "var(--foreground-secondary)"}}>Execution Plan</h3>
+        <h3 className="text-sm font-semibold text-foreground-secondary">Execution Plan</h3>
         <div className={`flex items-center gap-2 px-3 py-1 rounded-lg border ${strategyColor}`}>
           {strategyIcon}
           {strategyLabel}
@@ -115,28 +115,28 @@ export function OrchestrationVisualization({
       {/* Execution groups */}
       <div className="space-y-3">
         {trace.execution_groups.map((group, groupIdx) => (
-          <div key={groupIdx} className="rounded-lg  border /50 overflow-hidden" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <div key={groupIdx} className="rounded-lg border border-variant bg-surface-overlay overflow-hidden">
             {/* Group header */}
             <button
               onClick={() => onGroupToggle?.(groupIdx)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover: transition-colors" style={{backgroundColor: "var(--surface-overlay)"}}
+              className="w-full flex items-center gap-3 px-4 py-3 bg-surface-overlay hover:bg-surface-elevated transition-colors"
             >
               {/* Expand/collapse icon */}
               <div className="flex-shrink-0">
                 {expandedGroups.includes(groupIdx) ? (
-                  <ChevronDown className="w-4 h-4 " style={{color: "var(--muted-foreground)"}} />
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 " style={{color: "var(--muted-foreground)"}} />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 )}
               </div>
 
               {/* Group info */}
               <div className="flex-1 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono  px-2 py-1 rounded " style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}>
+                  <span className="text-xs font-mono px-2 py-1 rounded text-foreground-secondary bg-surface-elevated">
                     Group {groupIdx}
                   </span>
-                  <span className="text-sm " style={{color: "var(--foreground-secondary)"}}>
+                  <span className="text-sm text-foreground-secondary">
                     {group.tools.length} tool{group.tools.length !== 1 ? 's' : ''}
                   </span>
                   {group.parallel_execution && (
@@ -148,7 +148,7 @@ export function OrchestrationVisualization({
 
                 {/* Dependency info if not first group */}
                 {groupIdx > 0 && group.tools[0]?.dependency_groups.length > 0 && (
-                  <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
+                  <span className="text-[10px] text-muted-foreground">
                     Depends on group{group.tools[0].dependency_groups.length !== 1 ? 's' : ''}{' '}
                     {group.tools[0].dependency_groups.map((g) => `${g}`).join(', ')}
                   </span>
@@ -158,44 +158,44 @@ export function OrchestrationVisualization({
 
             {/* Group content - tools */}
             {expandedGroups.includes(groupIdx) && (
-              <div className="border-t /50 px-4 py-3 space-y-2 /30" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+              <div className="border-t border-variant bg-surface-base px-4 py-3 space-y-2">
                 {group.tools.map((tool, toolIdx) => (
                   <div
                     key={toolIdx}
                     onClick={() => onToolSelect?.(tool.tool_id)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    className={`p-3 rounded-lg border border-variant bg-surface-overlay cursor-pointer transition-all ${
                       selectedTool === tool.tool_id
                         ? 'bg-sky-900/30 border-sky-400/50 ring-1 ring-sky-400/30'
-                        : ' /30 hover:/50 hover:'
-                    }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
+                        : 'hover:bg-surface-elevated hover:border-primary-hover'
+                    }`}
                   >
                     {/* Tool header */}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono " style={{color: "var(--foreground)"}}>{tool.tool_id}</span>
-                        <span className="px-2 py-1 rounded text-[10px]   border /50" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+                        <span className="text-sm font-mono text-foreground">{tool.tool_id}</span>
+                        <span className="px-2 py-1 rounded text-[10px] border border-variant text-foreground-secondary bg-surface-overlay">
                           {tool.tool_type}
                         </span>
                       </div>
-                      <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>#{toolIdx + 1}</span>
+                      <span className="text-[10px] text-muted-foreground">#{toolIdx + 1}</span>
                     </div>
 
                     {/* Tool details */}
                     {(tool.depends_on.length > 0 || Object.keys(tool.output_mapping).length > 0) && (
-                      <div className="space-y-1 text-xs " style={{color: "var(--muted-foreground)"}}>
+                      <div className="space-y-1 text-xs text-muted-foreground">
                         {/* Dependencies */}
                         {tool.depends_on.length > 0 && (
                           <div className="flex gap-2">
-                            <span className="" style={{color: "var(--muted-foreground)"}}>Depends on:</span>
-                            <span className="" style={{color: "var(--foreground-secondary)"}}>{tool.depends_on.join(', ')}</span>
+                            <span className="text-muted-foreground">Depends on:</span>
+                            <span className="text-foreground-secondary">{tool.depends_on.join(', ')}</span>
                           </div>
                         )}
 
                         {/* Data flow mappings */}
                         {Object.keys(tool.output_mapping).length > 0 && (
                           <div className="flex gap-2">
-                            <span className="" style={{color: "var(--muted-foreground)"}}>Data flow:</span>
-                            <span className="" style={{color: "var(--foreground-secondary)"}}>{Object.keys(tool.output_mapping).length} mapping(s)</span>
+                            <span className="text-muted-foreground">Data flow:</span>
+                            <span className="text-foreground-secondary">{Object.keys(tool.output_mapping).length} mapping(s)</span>
                           </div>
                         )}
                       </div>
@@ -209,13 +209,13 @@ export function OrchestrationVisualization({
       </div>
 
       {/* Summary footer */}
-      <div className="flex items-center justify-between text-xs  border-t /30 pt-3" style={{borderColor: "var(--border)", color: "var(--muted-foreground)"}}>
+      <div className="flex items-center justify-between text-xs border-t border-variant text-muted-foreground pt-3">
         <span>
           {trace.total_groups} group{trace.total_groups !== 1 ? 's' : ''} • {trace.total_tools} tool
           {trace.total_tools !== 1 ? 's' : ''}
         </span>
         {!hasExpandedGroups && (
-          <span className="" style={{color: "var(--muted-foreground)"}}>Click to expand groups</span>
+          <span className="text-muted-foreground">Click to expand groups</span>
         )}
       </div>
     </div>

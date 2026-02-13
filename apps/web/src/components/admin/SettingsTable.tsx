@@ -9,7 +9,7 @@ interface SettingsTableProps {
 
 export default function SettingsTable({ settings, onEdit }: SettingsTableProps) {
   if (settings.length === 0) {
-    return <div className="py-8 text-center text-sm text-slate-600 dark:text-slate-400">No settings found</div>;
+    return <div className="py-8 text-center text-sm text-muted-foreground">No settings found</div>;
   }
 
   return (
@@ -17,11 +17,11 @@ export default function SettingsTable({ settings, onEdit }: SettingsTableProps) 
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-800">
-            <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Key</th>
-            <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Value</th>
-            <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Source</th>
-            <th className="px-4 py-3 text-center font-medium text-slate-600 dark:text-slate-400">Restart</th>
-            <th className="px-4 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Actions</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Key</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Value</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Source</th>
+            <th className="px-4 py-3 text-center font-medium text-muted-foreground">Restart</th>
+            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Actions</th>
           </tr>
         </thead>
         <tbody>

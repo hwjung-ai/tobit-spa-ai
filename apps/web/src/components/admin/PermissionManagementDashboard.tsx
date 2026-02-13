@@ -224,7 +224,7 @@ export function PermissionManagementDashboard() {
                               Active
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="" style={{ backgroundColor: "var(--surface-base)" }}>
+                            <Badge variant="outline" className="">
                               Inactive
                             </Badge>
                           )}

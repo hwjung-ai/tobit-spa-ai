@@ -101,18 +101,18 @@ export default function SystemStatusIndicator() {
           <div
             key={key}
             className="group relative flex items-center gap-1 rounded-full border px-2 py-1"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
+
           >
             <Icon className={`h-3.5 w-3.5 ${color(entry.status)}`} />
             <span className={`text-xs font-medium ${color(entry.status)}`}>
               {statusText}
             </span>
             <div
-              className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded px-2.5 py-1.5 text-[10px] text-white opacity-0 transition group-hover:opacity-100 z-50"
-              style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
+              className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded px-2.5 py-1.5 text-[10px] text-foreground opacity-0 transition group-hover:opacity-100 z-50"
+
             >
               <div className="absolute left-1/2 bottom-full -mb-1 -translate-x-1/2">
-                <div className="h-2 w-2 rotate-45" style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }} />
+                <div className="h-2 w-2 rotate-45" />
               </div>
               {tooltipLines.map((line, i) => (
                 <div

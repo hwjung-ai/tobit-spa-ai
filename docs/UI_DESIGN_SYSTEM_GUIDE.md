@@ -26,15 +26,86 @@
 
 ## ✅ Consistency Fixes Applied
 
-### Files Modified (2026-02-12)
+### Files Modified (2026-02-13) 🆕
 
-**Admin Pages Inline Styles → CSS Classes:**
-- ✅ `RegressionWatchPanel.tsx` - Convert all inline styles to CSS classes
-- ✅ `admin/layout.tsx` - Navigation tabs use cn() utility
-- ✅ `admin/settings/page.tsx` - Alert banners and table use CSS classes
-- ✅ `AssetTable.tsx` - Loading/empty states use CSS classes
-- ✅ `ui/label.tsx` - Remove inline color style
-- ✅ `admin/regression/page.tsx` - Fix Suspense fallback styling
+**Inline Style Removal Phase 16 (Latest):**
+- ✅ `UIScreenRenderer.tsx` - 20+ inline styles → CSS classes
+  - `style={{borderColor: "var(--border)"}}` → `border-variant`
+  - `style={{backgroundColor: "var(--surface-overlay)"}}` → `bg-surface-overlay`
+  - `style={{color: "var(--muted-foreground)"}}` → `text-muted-foreground`
+  - Tables, modals, accordions, tabs, key-value lists all normalized
+- ✅ `OrchestrationVisualization.tsx` - Complete rewrite with CSS classes
+  - All inline styles removed
+  - Consistent use of `text-foreground-secondary`, `bg-surface-*`, `border-variant`
+- ✅ `ThemeToggle.tsx` - All inline styles → CSS classes with hover states
+- ✅ `MobileBottomNav.tsx` - All inline styles → CSS classes
+- ✅ `dialog.tsx` - All inline styles → CSS classes
+- ✅ `drawer.tsx` - All inline styles → CSS classes
+- ✅ `textarea.tsx` - Inline styles → CSS classes
+- ✅ `PublishedScreensList.tsx` - All inline styles → CSS classes
+- ✅ `CatalogTable.tsx` - All inline styles → CSS classes
+- ✅ `globals.css` - Added new utility classes:
+  - `.text-primary-light` - Primary light color
+  - `.text-foreground-secondary` - Secondary foreground color
+  - `.border-border-muted` - Muted border color
+
+**CSS Variable Inline Usage & Tracking Standardization (Phase 15):**
+- ✅ `UIPanelRenderer.tsx` - Removed all `style={}` for border/background/text colors → CSS classes
+  - `style={{borderColor: "var(--border)"}}` → `border-variant`
+  - `style={{backgroundColor: "var(--surface-overlay)"}}` → `bg-surface-overlay`
+  - `style={{color: "var(--foreground-secondary)"}}` → `text-muted-foreground`
+- ✅ `BlockRenderer.tsx` - Removed CSS variable inline usage → CSS classes
+  - `border-[var(--border)]` → `border-variant`
+  - `bg-[var(--surface-overlay)]` → `bg-surface-overlay`
+  - `text-[var(--foreground-secondary)]` → `text-muted-foreground`
+- ✅ `api-manager/page.tsx` - All `tracking-normal` → `tracking-wider` for uppercase text
+
+**Tracking Values & Inline Styles Standardization (Phase 14):**
+- ✅ `OrchestrationSection.tsx` - All inline styles → CSS classes, `tracking-[0.2em]`/`[0.3em]` → `tracking-wider`
+- ✅ `InspectorStagePipeline.tsx` - 20+ inline styles → CSS classes, `tracking-[0.xem]` → `tracking-wider`
+- ✅ `ObservabilityDashboard.tsx` - 15+ inline styles → CSS classes, `tracking-[0.xem]` → `tracking-wider`
+- ✅ `SystemDashboard.tsx` - `tracking-[0.2em]` → `tracking-wider`, `text-[10px]` → `text-tiny`
+- ✅ `PerformanceMetrics.tsx` - `tracking-[0.1em]`/`[0.2em]` → `tracking-wider`
+- ✅ `SystemHealthChart.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `AlertChannelStatus.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `RecentErrors.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `RuleStatsCard.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `ErrorDistribution.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `DashboardPage.tsx` - `tracking-[0.3em]` → `tracking-wider`
+- ✅ `ExecutionTimeline.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `SpanNode.tsx` - `tracking-[0.2em]` → `tracking-wider`, inline style → CSS class
+- ✅ `RCAPanel.tsx` - `tracking-[0.1em]` → `tracking-wider`, inline styles → CSS classes
+- ✅ `CopilotPanel.tsx` - `tracking-[0.2em]` → `tracking-wider`
+- ✅ `PropertiesPanel.tsx` - `tracking-[0.1em]`/`[0.4em]` → `tracking-wider`, `text-[10px]` → `text-tiny`
+- ✅ `ComponentTreeView.tsx` - `tracking-[0.4em]` → `tracking-wider`, inline style → CSS class
+- ✅ `VisualEditor.tsx` - `tracking-[0.3em]` → `tracking-wider`, inline styles → CSS classes
+- ✅ `PublishedScreensList.tsx` - `tracking-[0.4em]` → `tracking-wider`
+- ✅ `BlockRenderer.tsx` - `tracking-[0.3em]` → `tracking-wider`, `text-[10px]` → `text-tiny`
+- ✅ `documents/page.tsx` - `tracking-[0.3em]` → `tracking-wider`, `text-[12px]` → `text-xs`
+
+**Key Patterns Fixed:**
+- All `tracking-[0.1em]`, `tracking-[0.2em]`, `tracking-[0.3em]`, `tracking-[0.4em]` → `tracking-wider`
+- All `style={{color: "var(--muted-foreground)"}}` → `text-muted-foreground` class
+- All `style={{color: "var(--foreground)"}}` → `text-foreground` class
+- All `style={{borderColor: "var(--border)"}}` → `border-variant` class
+- All `style={{backgroundColor: "var(--surface-...)"}}` → `bg-surface-*` classes
+
+**Answer Block & Core Components Inline Styles → CSS Classes:**
+- ✅ `BlockRenderer.tsx` - 40+ inline styles → CSS classes (`answer-section`, `answer-code`, `answer-button`, etc.)
+- ✅ `HttpFormBuilder.tsx` - 10+ inline styles → CSS classes (`api-input`, `api-select`, `api-textarea`, etc.)
+- ✅ `RealTimeSimulation.tsx` - Hardcoded border colors → CSS classes (`btn-error`, `btn-success`, `text-warning`)
+- ✅ `AssetTable.tsx` - `text-[10px]` → `text-tiny`, hardcoded colors → CSS variables
+- ✅ `ToolTable.tsx` - All inline styles removed, `tracking-[0.2em]` → `tracking-wider`
+
+**CSS Classes Used:**
+- `.answer-section`, `.answer-block`, `.answer-code`, `.answer-button`, `.answer-table`
+- `.text-label`, `.text-label-sm`, `.text-tiny`, `.text-muted-foreground`
+- `.api-input`, `.api-select`, `.api-textarea`
+- `.btn-error`, `.btn-success`, `.btn-warning`
+- `.border-variant`, `.bg-surface-elevated`, `.bg-surface-base`
+- `.insp-section`, `.text-label-sm`
+
+### Files Modified (2026-02-12)
 
 **Border Radius & Background Colors:**
 - ✅ `/apps/web/src/app/globals.css` - Added border-radius & background standard classes

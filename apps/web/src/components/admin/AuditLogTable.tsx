@@ -87,10 +87,10 @@ export function AuditLogDetailsModal({ log, onClose }: AuditLogDetailsModalProps
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
             <div className="rounded-lg border max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col border-variant bg-surface-base">
                 <div className="flex items-center justify-between p-4 border-b border-variant">
-                    <h2 className="text-lg font-semibold text-white">Audit Log Details</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Audit Log Details</h2>
                     <button
                         onClick={onClose}
-                        className="hover:text-white transition-colors text-muted-foreground"
+                        className="hover:text-foreground transition-colors text-muted-foreground"
                     >
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

@@ -144,23 +144,23 @@ export default function PreviewTab() {
   if (!screen) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="" style={{ color: "var(--muted-foreground)"  }}>Loading preview...</p>
+        <p className="">Loading preview...</p>
       </div>
     );
   }
 
   return (
     <div
-      className="h-full overflow-auto rounded-lg border p-6" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+      className="h-full overflow-auto rounded-lg border p-6"
       data-testid="preview-renderer"
     >
-      <div className="mb-6 rounded-lg border p-4 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}>
-        <p className="text-sm uppercase tracking-wider" style={{ color: "var(--muted-foreground)"  }}>Preview Data Overrides</p>
+      <div className="mb-6 rounded-lg border p-4 space-y-3">
+        <p className="text-sm uppercase tracking-wider">Preview Data Overrides</p>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           <div className="lg:col-span-1">
-            <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Viewport</p>
+            <p className="mb-1 text-xs">Viewport</p>
             <Select value={viewport} onValueChange={(val) => setViewport(val as PreviewViewport)}>
-              <SelectTrigger className="h-8 text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}>
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -173,19 +173,19 @@ export default function PreviewTab() {
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           <div>
-            <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>params (JSON)</p>
+            <p className="mb-1 text-xs">params (JSON)</p>
             <Textarea
               value={paramsText}
               onChange={(e) => setParamsText(e.target.value)}
-              className="min-h-28 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="min-h-28 font-mono text-xs"
             />
           </div>
           <div>
-            <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>bindings override (JSON)</p>
+            <p className="mb-1 text-xs">bindings override (JSON)</p>
             <Textarea
               value={bindingsText}
               onChange={(e) => setBindingsText(e.target.value)}
-              className="min-h-28 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="min-h-28 font-mono text-xs"
             />
           </div>
         </div>
@@ -204,13 +204,13 @@ export default function PreviewTab() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-lg border p-4 space-y-3" style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"  }}>
-        <p className="text-sm uppercase tracking-wider" style={{ color: "var(--muted-foreground)"  }}>Action Runner (Realtime Binding)</p>
+      <div className="mb-6 rounded-lg border p-4 space-y-3">
+        <p className="text-sm uppercase tracking-wider">Action Runner (Realtime Binding)</p>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
           <div className="lg:col-span-2">
-            <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Action</p>
+            <p className="mb-1 text-xs">Action</p>
             <Select value={selectedActionId} onValueChange={setSelectedActionId}>
-              <SelectTrigger className="h-8 text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}>
+              <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Select action" />
               </SelectTrigger>
               <SelectContent>
@@ -223,14 +223,14 @@ export default function PreviewTab() {
             </Select>
           </div>
           <div>
-            <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Auto-run interval(ms)</p>
+            <p className="mb-1 text-xs">Auto-run interval(ms)</p>
             <Input
               type="number"
               min={1000}
               step={500}
               value={autoRunMs}
               onChange={(e) => setAutoRunMs(Number(e.target.value || 1000))}
-              className="h-8 text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="h-8 text-xs"
             />
           </div>
           <div className="flex items-end gap-2">
@@ -257,26 +257,26 @@ export default function PreviewTab() {
           </div>
         </div>
         <div>
-          <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Action payload (JSON)</p>
+          <p className="mb-1 text-xs">Action payload (JSON)</p>
           <Textarea
             value={actionPayloadText}
             onChange={(e) => setActionPayloadText(e.target.value)}
-            className="min-h-24 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+            className="min-h-24 font-mono text-xs"
           />
         </div>
         {lastAutoRunAt && (
-          <p className="text-xs" style={{ color: "var(--muted-foreground)"  }}>
+          <p className="text-xs">
             Last auto-run: {new Date(lastAutoRunAt).toLocaleTimeString()}
           </p>
         )}
         {actionRunError && <p className="text-xs text-rose-300">{actionRunError}</p>}
         {actionRunResult && (
           <div>
-            <p className="mb-1 text-xs" style={{ color: "var(--foreground-secondary)"  }}>Latest action result</p>
+            <p className="mb-1 text-xs">Latest action result</p>
             <Textarea
               value={actionRunResult}
               readOnly
-              className="min-h-24 font-mono text-xs" style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)"  }}
+              className="min-h-24 font-mono text-xs"
             />
           </div>
         )}
@@ -302,7 +302,7 @@ export default function PreviewTab() {
       )}
 
       {/* Render screen using UIScreenRenderer - key forces re-render on screen changes */}
-      <div className="mx-auto transition-all" style={{ width: VIEWPORT_WIDTH[viewport], maxWidth: "100%" }}>
+      <div className="mx-auto transition-all">
         <UIScreenRenderer key={screenKey} block={previewBlock!} schemaOverride={screen} />
       </div>
     </div>

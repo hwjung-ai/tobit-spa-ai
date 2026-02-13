@@ -13,16 +13,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="rounded-md border p-2 transition"
-      style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = "var(--surface-elevated)";
-        e.currentTarget.style.borderColor = "var(--border-muted)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = "var(--surface-base)";
-        e.currentTarget.style.borderColor = "var(--border)";
-      }}
+      className="rounded-md border border-variant bg-surface-base text-foreground p-2 transition hover:bg-surface-elevated hover:border-border-muted"
       aria-label={currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       title={currentTheme === "dark" ? "Light mode" : "Dark mode"}
     >

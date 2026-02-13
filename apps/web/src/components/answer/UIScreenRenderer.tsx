@@ -1529,7 +1529,7 @@ export default function UIScreenRenderer({
         <div
           key={comp.id}
           className="w-full rounded-2xl border border-variant bg-surface-overlay p-3"
-          style={{ height: containerHeight }}
+
           data-testid={`component-chart-${comp.id}`}
         >
           <ResponsiveContainer width={isResponsive ? "100%" : "99%"} height="100%">

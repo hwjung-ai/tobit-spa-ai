@@ -148,7 +148,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
             <CardTitle className="text-xs">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm " style={{ color: "var(--foreground-secondary)" }}>
+            <p className="text-sm ">
               {asset.description}
             </p>
           </CardContent>
@@ -160,7 +160,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
           <CardTitle className="text-xs">Source</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm " style={{ color: "var(--foreground-secondary)" }}>
+          <p className="text-sm ">
             {getSourceName(catalog.source_ref)}
           </p>
         </CardContent>
@@ -178,12 +178,12 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
 
       {catalogMap.tables && catalogMap.tables.length > 0 && (
         <div className="space-y-3">
-          <div className="text-sm uppercase tracking-wider " style={{ color: "var(--muted-foreground)" }}>
+          <div className="text-sm uppercase tracking-wider ">
             Tables ({catalogMap.tables.length})
           </div>
           <div className="custom-scrollbar max-h-[400px] space-y-2 overflow-auto pr-1">
             {catalogMap.tables.map((table) => (
-              <Card key={table.name} className="" style={{ borderColor: "var(--border)" }}>
+              <Card key={table.name} className="">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-xs">
                     {table.schema_name}.{table.name}
@@ -191,20 +191,20 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
                 </CardHeader>
                 <CardContent className="space-y-1">
                   {table.description && (
-                    <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>{table.description}</p>
+                    <p className="text-xs ">{table.description}</p>
                   )}
-                  <div className="text-xs " style={{ color: "var(--foreground-secondary)" }}>
+                  <div className="text-xs ">
                     {table.columns.length} columns
                   </div>
                   {table.columns.slice(0, 3).map((col) => (
-                    <div key={col.name} className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                    <div key={col.name} className="text-xs ">
                       • {col.name}: {col.data_type}
                       {col.is_primary_key && " PK"}
                       {col.is_foreign_key && " FK"}
                     </div>
                   ))}
                   {table.columns.length > 3 && (
-                    <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                    <div className="text-xs ">
                       +{table.columns.length - 3} more columns
                     </div>
                   )}
@@ -236,7 +236,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
                 })}
                 rows={3}
               />
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs ">
                 Specify tables to include in the scan. Leave empty to scan all tables.
               </p>
             </div>
@@ -252,7 +252,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
                 })}
                 rows={3}
               />
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs ">
                 Specify tables to exclude from the scan.
               </p>
             </div>
@@ -274,7 +274,7 @@ export default function SchemaAssetForm({ asset, onSave }: SchemaAssetFormProps)
                 }}
                 rows={3}
               />
-              <p className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs ">
                 Additional scan options as JSON.
               </p>
             </div>

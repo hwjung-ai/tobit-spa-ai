@@ -3130,3 +3130,186 @@ html {
 .bg-muted-background {
   background-color: var(--muted-background);
 }
+
+/* ============================================================================
+ * RECHARTS THEME COLOR VARIABLES (Phase 1 - UI Consistency)
+ * ============================================================================ */
+
+/* Light mode Recharts colors */
+:root {
+  --chart-grid-color: #cbd5e1; /* slate-300 - grid lines */
+  --chart-text-color: #64748b; /* slate-500 - axis labels */
+  --chart-primary-color: #0284c7; /* sky-600 - primary chart lines */
+  --chart-success-color: #10b981; /* emerald-500 - success bars */
+  --chart-warning-color: #f59e0b; /* amber-500 - warning bars */
+  --chart-error-color: #ef4444; /* rose-500 - error bars */
+  --chart-secondary-color: #94a3b8; /* slate-400 - secondary lines */
+  --chart-tooltip-bg: #ffffff; /* white - tooltip background */
+  --chart-tooltip-border: #e2e8f0; /* slate-200 - tooltip border */
+}
+
+/* Dark mode Recharts colors */
+.dark {
+  --chart-grid-color: #1e293b; /* slate-800 - grid lines */
+  --chart-text-color: #94a3b8; /* slate-400 - axis labels */
+  --chart-primary-color: #38bdf8; /* sky-400 - primary chart lines */
+  --chart-success-color: #34d399; /* emerald-400 - success bars */
+  --chart-warning-color: #fbbf24; /* amber-400 - warning bars */
+  --chart-error-color: #f87171; /* red-400 - error bars */
+  --chart-secondary-color: #64748b; /* slate-500 - secondary lines */
+  --chart-tooltip-bg: #0f172a; /* slate-900 - tooltip background */
+  --chart-tooltip-border: #1e293b; /* slate-800 - tooltip border */
+}
+
+/* ============================================================================
+ * INLINE STYLE ELIMINATION - Common Style Patterns (Phase 2 - UI Consistency)
+ * ============================================================================ */
+
+/* Standard form field styles with CSS variables */
+.form-field {
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.form-field:focus {
+  border-color: var(--primary-light);
+  outline: none;
+}
+
+.form-field-overlay {
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.form-field-base {
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+/* Select/Dropdown styles */
+.select-trigger {
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.select-content {
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+/* Section container styles with variable colors */
+.section-overlay {
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+}
+
+.section-base {
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.section-elevated {
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+}
+
+/* Text color styles using CSS variables */
+.text-foreground-secondary {
+  color: var(--foreground-secondary, var(--muted-foreground));
+}
+
+.text-surface-base {
+  color: var(--surface-base);
+}
+
+/* Button styles with variable colors */
+.btn-overlay {
+  border-color: var(--border);
+  background-color: var(--surface-overlay);
+  color: var(--foreground);
+}
+
+.btn-base {
+  border-color: var(--border);
+  background-color: var(--surface-base);
+  color: var(--foreground);
+}
+
+.btn-overlay:hover {
+  background-color: var(--surface-elevated);
+}
+
+/* Dialog/Modal styles */
+.dialog-content {
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.dialog-header {
+  border-color: var(--border-muted);
+}
+
+/* Input label styles */
+.input-label {
+  color: var(--muted-foreground);
+}
+
+/* Badge/Tag styles */
+.badge-neutral {
+  border-color: var(--border);
+  background-color: var(--surface-elevated);
+  color: var(--foreground);
+}
+
+.badge-primary {
+  border-color: var(--primary);
+  background-color: rgba(2, 132, 199, 0.1);
+  color: var(--primary);
+}
+
+/* State indicator styles */
+.state-success {
+  color: var(--success);
+}
+
+.state-warning {
+  color: var(--warning);
+}
+
+.state-error {
+  color: var(--destructive);
+}
+
+/* Table row styles */
+.table-row-base {
+  border-color: var(--border);
+  background-color: var(--surface-base);
+}
+
+.table-row-hover {
+  background-color: var(--surface-elevated);
+}
+
+/* Panel/Card header styles */
+.panel-header {
+  border-color: var(--border-muted);
+  color: var(--foreground);
+}
+
+/* Loading skeleton styles */
+.skeleton-pulse {
+  background-color: var(--surface-elevated);
+}
+
+/* Transition helpers */
+.transition-border-color {
+  transition: border-color 0.15s ease;
+}
+
+.transition-bg-color {
+  transition: background-color 0.15s ease;
+}
+
+.transition-all-fast {
+  transition: all 0.15s ease;
+}

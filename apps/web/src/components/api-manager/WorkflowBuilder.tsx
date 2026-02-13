@@ -41,10 +41,10 @@ interface WorkflowNodeData {
 // Custom node types
 const SqlNode = ({ data }: { data: WorkflowNodeData }) => (
   <div className="rounded-2xl border-2 border-sky-600 bg-sky-500/10 px-4 py-2 text-center">
-    <div className="text-[10px] uppercase tracking-normal text-sky-400 font-semibold">
+    <div className="text-tiny uppercase tracking-normal text-sky-400 font-semibold">
       SQL
     </div>
-    <div className="mt-1 text-xs font-semibold text-white truncate max-w-48">
+    <div className="mt-1 text-xs font-semibold text-foreground truncate max-w-48">
       {data.label}
     </div>
   </div>
@@ -52,10 +52,10 @@ const SqlNode = ({ data }: { data: WorkflowNodeData }) => (
 
 const HttpNode = ({ data }: { data: WorkflowNodeData }) => (
   <div className="rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 px-4 py-2 text-center">
-    <div className="text-[10px] uppercase tracking-normal text-emerald-400 font-semibold">
+    <div className="text-tiny uppercase tracking-normal text-emerald-400 font-semibold">
       HTTP
     </div>
-    <div className="mt-1 text-xs font-semibold text-white truncate max-w-48">
+    <div className="mt-1 text-xs font-semibold text-foreground truncate max-w-48">
       {data.label}
     </div>
   </div>
@@ -63,10 +63,10 @@ const HttpNode = ({ data }: { data: WorkflowNodeData }) => (
 
 const PythonNode = ({ data }: { data: WorkflowNodeData }) => (
   <div className="rounded-2xl border-2 border-amber-500 bg-amber-500/10 px-4 py-2 text-center">
-    <div className="text-[10px] uppercase tracking-normal text-amber-400 font-semibold">
+    <div className="text-tiny uppercase tracking-normal text-amber-400 font-semibold">
       Python
     </div>
-    <div className="mt-1 text-xs font-semibold text-white truncate max-w-48">
+    <div className="mt-1 text-xs font-semibold text-foreground truncate max-w-48">
       {data.label}
     </div>
   </div>
@@ -235,7 +235,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
               key={type}
               onClick={() => addNode(type)}
               disabled={readOnly}
-              className={`flex-1 rounded-2xl border px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition ${
+              className={`flex-1 rounded-2xl border px-4 py-2 text-xs font-bold uppercase tracking-normal text-foreground transition ${
                 type === "sql"
                   ? "border-sky-500/50 bg-sky-600/80 hover:bg-sky-500 dark:hover:bg-sky-700"
                   : type === "http"
@@ -288,7 +288,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
             </h4>
             <button
               onClick={() => setSelectedNode(null)}
-              className="builder-button-secondary rounded-full border px-2 py-1 text-[10px]"
+              className="builder-button-secondary rounded-full border px-2 py-1 text-tiny"
             >
               Close
             </button>
@@ -296,7 +296,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
 
           {/* Node Label */}
           <div className="space-y-1">
-            <label className="builder-label-small text-[10px] uppercase tracking-normal">Label</label>
+            <label className="builder-label-small text-tiny uppercase tracking-normal">Label</label>
             <input
               type="text"
               value={selectedNode.data.label}
@@ -311,7 +311,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           {/* SQL Node Config */}
           {selectedNode.data.type === "sql" && (
             <div className="space-y-2">
-              <label className="builder-label-small text-[10px] uppercase tracking-normal">
+              <label className="builder-label-small text-tiny uppercase tracking-normal">
                 SQL Query
               </label>
               <textarea
@@ -324,7 +324,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                 disabled={readOnly}
                 rows={4}
                 placeholder="SELECT * FROM table WHERE condition = 'value'"
-                className="builder-textarea w-full rounded-xl border px-3 py-2 text-xs text-white outline-none transition focus:border-sky-500"
+                className="builder-textarea w-full rounded-xl border px-3 py-2 text-xs text-foreground outline-none transition focus:border-sky-500"
               />
             </div>
           )}
@@ -334,7 +334,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
             <div className="space-y-2">
               <div className="grid gap-2 grid-cols-2">
                 <div className="space-y-1">
-                  <label className="builder-label-small text-[10px] uppercase tracking-normal">
+                  <label className="builder-label-small text-tiny uppercase tracking-normal">
                     Method
                   </label>
                   <select
@@ -354,7 +354,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="builder-label-small text-[10px] uppercase tracking-normal">
+                  <label className="builder-label-small text-tiny uppercase tracking-normal">
                     URL
                   </label>
                   <input
@@ -377,7 +377,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           {/* Python Node Config */}
           {selectedNode.data.type === "python" && (
             <div className="space-y-2">
-              <label className="builder-label-small text-[10px] uppercase tracking-normal">
+              <label className="builder-label-small text-tiny uppercase tracking-normal">
                 Python Code
               </label>
               <textarea
@@ -420,7 +420,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <button
             onClick={() => generateWorkflowJSON()}
             disabled={readOnly}
-            className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+            className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-foreground transition hover:bg-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
           >
             <Save className="h-4 w-4" />
             Save

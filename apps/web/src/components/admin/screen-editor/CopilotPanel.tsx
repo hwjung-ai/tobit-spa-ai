@@ -106,11 +106,11 @@ export default function ScreenEditorCopilotPanel({
   const visibleError = localError || editorState.previewError;
 
   return (
-    <div className="flex h-full flex-col border-l transition-all duration-200" style={{borderLeft: "1px solid var(--border)"}} data-testid="copilot-panel">
-      <div className="flex items-center justify-between border-b px-4 py-3" style={{borderBottom: "1px solid var(--border)"}}>
+    <div className="flex h-full flex-col border-l transition-all duration-200" data-testid="copilot-panel">
+      <div className="flex items-center justify-between border-b px-4 py-3">
         <div>
           <p className="draft-panel-label">Copilot</p>
-          <p className="text-xs" style={{color: "var(--muted-foreground)"}}>Patch suggestions</p>
+          <p className="text-xs">Patch suggestions</p>
         </div>
         <span className="draft-panel-label">
           {previewStatusLabel}
@@ -120,7 +120,7 @@ export default function ScreenEditorCopilotPanel({
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
         <div className="draft-panel-section">
           <p className="draft-panel-label">Context</p>
-          <div className="mt-2 space-y-1 text-[10px]" style={{color: "var(--muted-foreground)"}}>
+          <div className="mt-2 space-y-1 text-[10px]">
             <p>Screen ID: {screenId}</p>
             <p>Stage: {stage}</p>
             <p>Summary: {schemaSummary}</p>
@@ -134,20 +134,20 @@ export default function ScreenEditorCopilotPanel({
           onChange={(event) => setInputValue(event.target.value)}
           placeholder="Describe what you want to change..."
           className="h-24 w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-sky-500"
-          style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)", color: "var(--foreground)"}}
+
         />
 
         <button
           onClick={handleGenerateProposal}
           disabled={!inputValue.trim()}
-          className="w-full rounded-2xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-sky-500 disabled:opacity-40"
+          className="w-full rounded-2xl bg-sky-600 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white transition hover:bg-sky-500 disabled:opacity-40"
         >
           Generate Proposal
         </button>
 
         <div className="draft-panel-section">
           <p className="draft-panel-label">Patch output (RFC6902)</p>
-          <p className="text-[10px] mt-2" style={{color: "var(--muted-foreground)"}}>
+          <p className="text-[10px] mt-2">
             Provide a JSON Patch array (or wrap it in {"{"} patch: [...] {"}"}) referencing ScreenSchemaV1.
           </p>
           <Textarea
@@ -158,7 +158,7 @@ export default function ScreenEditorCopilotPanel({
             }}
             placeholder='e.g. [{"op":"replace","path":"/components/0/props/label","value":"New"}]'
             className="code-block max-h-48 w-full rounded-xl px-3 py-2 text-[10px] font-mono outline-none"
-            style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)", color: "var(--foreground)"}}
+
           />
         </div>
 
@@ -169,7 +169,7 @@ export default function ScreenEditorCopilotPanel({
         )}
       </div>
 
-      <div className="px-4 py-3 space-y-2" style={{borderTop: "1px solid var(--border)"}}>
+      <div className="px-4 py-3 space-y-2">
         <button
           onClick={handlePreviewToggle}
           className="draft-panel-button w-full"
@@ -179,7 +179,7 @@ export default function ScreenEditorCopilotPanel({
         <button
           onClick={handleApply}
           className="draft-panel-button w-full bg-emerald-600 hover:bg-emerald-500 text-white"
-          style={{borderColor: "transparent"}}
+
         >
           Apply to Draft
         </button>

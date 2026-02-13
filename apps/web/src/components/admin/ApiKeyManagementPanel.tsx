@@ -192,7 +192,7 @@ export function ApiKeyManagementPanel() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium" style={{ color: "var(--muted-foreground)" }}>Total Keys</p>
+              <p className="text-sm font-medium">Total Keys</p>
               <p className="text-3xl font-bold">{apiKeys.length}</p>
             </div>
           </CardContent>
@@ -200,7 +200,7 @@ export function ApiKeyManagementPanel() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium" style={{ color: "var(--muted-foreground)" }}>Active Keys</p>
+              <p className="text-sm font-medium">Active Keys</p>
               <p className="text-3xl font-bold text-green-600">{activeKeysCount}</p>
             </div>
           </CardContent>
@@ -208,7 +208,7 @@ export function ApiKeyManagementPanel() {
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-2">
-              <p className="text-sm font-medium" style={{ color: "var(--muted-foreground)" }}>Revoked Keys</p>
+              <p className="text-sm font-medium">Revoked Keys</p>
               <p className="text-3xl font-bold text-red-600">{inactiveKeysCount}</p>
             </div>
           </CardContent>
@@ -254,7 +254,7 @@ export function ApiKeyManagementPanel() {
                   <div className="space-y-4">
                     {AVAILABLE_SCOPES.map((group) => (
                       <div key={group.category}>
-                        <h4 className="text-sm font-semibold mb-2" style={{ color: "var(--foreground)" }}>{group.category}</h4>
+                        <h4 className="text-sm font-semibold mb-2">{group.category}</h4>
                         <div className="space-y-2">
                           {group.scopes.map((scope) => (
                             <div key={scope} className="flex items-center space-x-2">
@@ -287,7 +287,7 @@ export function ApiKeyManagementPanel() {
                       setCreateForm({ ...createForm, expires_at: e.target.value || undefined })
                     }
                   />
-                  <p className="text-xs mt-1" style={{ color: "var(--muted-foreground)" }}>
+                  <p className="text-xs mt-1">
                     Leave empty for key that never expires
                   </p>
                 </div>
@@ -372,8 +372,8 @@ export function ApiKeyManagementPanel() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
-                            Key: <code className="px-2 py-1 rounded text-xs" style={{ backgroundColor: "var(--muted-background)" }}>{key.key_prefix}...</code>
+                          <p className="text-sm mt-1">
+                            Key: <code className="px-2 py-1 rounded text-xs">{key.key_prefix}...</code>
                           </p>
                         </div>
                         {key.is_active && (
@@ -401,7 +401,7 @@ export function ApiKeyManagementPanel() {
                       </div>
 
                       {/* Metadata */}
-                      <div className="grid grid-cols-2 gap-4 text-xs" style={{ color: "var(--muted-foreground)" }}>
+                      <div className="grid grid-cols-2 gap-4 text-xs">
                         <div>
                           Created: {new Date(key.created_at).toLocaleDateString()}
                         </div>
@@ -421,7 +421,7 @@ export function ApiKeyManagementPanel() {
                 </Card>
               ))
             ) : (
-              <div className="text-center py-8" style={{ color: "var(--muted-foreground)" }}>
+              <div className="text-center py-8">
                 No API keys yet. Create one to get started.
               </div>
             )}

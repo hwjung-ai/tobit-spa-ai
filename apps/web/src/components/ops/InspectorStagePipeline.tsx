@@ -37,11 +37,11 @@ interface StagePipelineProps {
 }
 
 const STATUS_STYLES: Record<StageStatusType, { badge: string; icon: React.ReactElement }> = {
-  pending: { badge: "bg-[var(--surface-elevated)] text-[var(--muted-foreground)]", icon: <Clock className="h-3 w-3" style={{color: "var(--muted-foreground)"}} /> },
+  pending: { badge: "bg-surface-elevated text-muted-foreground", icon: <Clock className="h-3 w-3 text-muted-foreground" /> },
   ok: { badge: "bg-emerald-500/10 text-emerald-400", icon: <CheckCircle className="h-3 w-3" /> },
   warning: { badge: "bg-amber-500/10 text-amber-400", icon: <AlertTriangle className="h-3 w-3" /> },
   error: { badge: "bg-rose-500/10 text-rose-400", icon: <AlertTriangle className="h-3 w-3" /> },
-  skipped: { badge: "bg-[var(--surface-elevated)] text-[var(--muted-foreground)]", icon: <Clock className="h-3 w-3" style={{color: "var(--muted-foreground)"}} /> },
+  skipped: { badge: "bg-surface-elevated text-muted-foreground", icon: <Clock className="h-3 w-3 text-muted-foreground" /> },
 };
 
 const STAGE_STYLES: Record<string, string> = {
@@ -57,7 +57,7 @@ const ASSET_CONFIG: Record<string, { icon: React.ReactElement; color: string; la
   policy: { icon: <Shield className="h-3 w-3" />, color: "text-emerald-400", label: "Policy" },
   query: { icon: <Search className="h-3 w-3" />, color: "text-purple-400", label: "Query" },
   mapping: { icon: <Map className="h-3 w-3" />, color: "text-amber-400", label: "Mapping" },
-  source: { icon: <Database className="h-3 w-3" />, color: "text-[var(--foreground-secondary)]", label: "Source" },
+  source: { icon: <Database className="h-3 w-3" />, color: "text-foreground", label: "Source" },
   schema: { icon: <Layers className="h-3 w-3" />, color: "text-fuchsia-300", label: "Schema" },
   resolver: { icon: <Sliders className="h-3 w-3" />, color: "text-orange-300", label: "Resolver" },
 };
@@ -90,7 +90,7 @@ interface AssetCardProps {
 }
 
 function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
-  const config = ASSET_CONFIG[type] || { icon: <FileText className="h-3 w-3" />, color: "text-[var(--muted-foreground)]", label: type };
+  const config = ASSET_CONFIG[type] || { icon: <FileText className="h-3 w-3" />, color: "text-muted-foreground", label: type };
   const displayName = getAssetName(value, assetNames);
   const version = getAssetVersion(value);
   const baseId = value.replace(/:v\d+$/, '').replace(/@[^:]+$/, '');
@@ -109,16 +109,16 @@ function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
     <div
       onClick={handleClick}
       className={cn(
-        "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left cursor-pointer transition-all group"
+        "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left cursor-pointer transition-all group",
+        "bg-surface-overlay border-variant"
       )}
-      style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
       title={`${config.label}: ${value}`}
     >
       <span className={config.color}>{config.icon}</span>
-      <span className="text-[10px]  capitalize min-w-[50px]" style={{color: "var(--muted-foreground)"}}>{config.label}:</span>
-      <span className="text-[10px]  font-medium truncate flex-1" style={{color: "var(--foreground-secondary)"}}>{displayName}</span>
-      <span className="text-[8px] " style={{color: "var(--muted-foreground)"}}>{version ? `v${version}` : ""}</span>
-      <Info className="h-3 w-3  opacity-0 group-hover:opacity-100 transition-opacity" style={{color: "var(--muted-foreground)"}} />
+      <span className="text-tiny capitalize min-w-[50px] text-muted-foreground">{config.label}:</span>
+      <span className="text-tiny font-medium truncate flex-1 text-foreground">{displayName}</span>
+      <span className="text-[8px] text-muted-foreground">{version ? `v${version}` : ""}</span>
+      <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
     </div>
   );
 }
@@ -138,7 +138,7 @@ function AppliedAssetsList({ appliedAssets, assetNames, onAssetClick }: AppliedA
   if (assets.length === 0) return null;
 
   return (
-    <div className="mt-2 pt-2 border-t /50 space-y-1" style={{borderColor: "var(--border)"}}>
+    <div className="mt-2 pt-2 border-t border-variant space-y-1">
       {assets.map(([type, value]) => (
         <AssetCard
           key={type}
@@ -159,7 +159,7 @@ function AssetLegend() {
       {Object.entries(ASSET_CONFIG).map(([type, config]) => (
         <div key={type} className="flex items-center gap-1.5">
           <span className={config.color}>{config.icon}</span>
-          <span className="text-[9px] " style={{color: "var(--muted-foreground)"}}>{config.label}</span>
+          <span className="text-[9px] text-muted-foreground">{config.label}</span>
         </div>
       ))}
     </div>
@@ -175,59 +175,59 @@ interface AssetDetailModalProps {
 function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
   if (!asset) return null;
 
-  const config = ASSET_CONFIG[asset.type] || { icon: <FileText className="h-4 w-4" />, color: "text-[var(--muted-foreground)]", label: asset.type, style: { color: "var(--muted-foreground)" } };
+  const config = ASSET_CONFIG[asset.type] || { icon: <FileText className="h-4 w-4" />, color: "text-muted-foreground", label: asset.type };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div
-        className="w-full max-w-md  rounded-2xl border  shadow-2xl p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+        className="w-full max-w-md rounded-2xl border border-variant bg-surface-base shadow-2xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg" style={{backgroundColor: "var(--surface-base)"}}>
+            <div className="p-2 rounded-lg bg-surface-base">
               {config.icon}
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">
-                {asset.name} <span className="" style={{color: "var(--muted-foreground)"}}>({asset.id})</span>
+              <h3 className="text-sm font-semibold text-foreground">
+                {asset.name} <span className="text-muted-foreground">({asset.id})</span>
               </h3>
-              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{config.label}</p>
+              <p className="text-xs text-muted-foreground">{config.label}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover: transition" style={{backgroundColor: "var(--surface-elevated)"}}
+            className="p-1 rounded-lg hover:bg-surface-elevated transition"
           >
-            <X className="h-4 w-4 " style={{color: "var(--muted-foreground)"}} />
+            <X className="h-4 w-4 text-muted-foreground" />
           </button>
         </div>
 
         <div className="space-y-3">
-          <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
-            <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Asset ID</p>
-            <p className="text-xs  font-mono break-all" style={{color: "var(--foreground-secondary)"}}>{asset.id}</p>
+          <div className="rounded-lg p-3 bg-surface-overlay">
+            <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Asset ID</p>
+            <p className="text-xs font-mono break-all text-foreground">{asset.id}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
-              <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Type</p>
-              <p className="text-xs  capitalize" style={{color: "var(--foreground-secondary)"}}>{asset.type}</p>
+            <div className="rounded-lg p-3 bg-surface-overlay">
+              <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Type</p>
+              <p className="text-xs capitalize text-foreground">{asset.type}</p>
             </div>
-            <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
-              <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Version</p>
-              <p className="text-xs " style={{color: "var(--foreground-secondary)"}}>v{asset.version}</p>
+            <div className="rounded-lg p-3 bg-surface-overlay">
+              <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Version</p>
+              <p className="text-xs text-foreground">v{asset.version}</p>
             </div>
           </div>
 
-          <div className=" rounded-lg p-3" style={{backgroundColor: "var(--surface-overlay)"}}>
-            <p className="text-[9px] uppercase tracking-[0.2em]  mb-1" style={{color: "var(--muted-foreground)"}}>Full Identifier</p>
-            <p className="text-xs  font-mono break-all" style={{color: "var(--muted-foreground)"}}>{asset.fullId}</p>
+          <div className="rounded-lg p-3 bg-surface-overlay">
+            <p className="text-[9px] uppercase tracking-wider mb-1 text-slate-500 dark:text-slate-400">Full Identifier</p>
+            <p className="text-xs font-mono break-all text-muted-foreground">{asset.fullId}</p>
           </div>
 
           <div className="bg-sky-500/5 border border-sky-400/20 rounded-lg p-3">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-sky-400 mb-1">Asset Registry</p>
-            <p className="text-xs " style={{color: "var(--foreground-secondary)"}}>
+            <p className="text-[9px] uppercase tracking-wider text-sky-400 mb-1">Asset Registry</p>
+            <p className="text-xs text-foreground">
               상세 정보는 Asset Registry 페이지에서 확인할 수 있습니다.
             </p>
           </div>
@@ -236,7 +236,7 @@ function AssetDetailModal({ asset, onClose }: AssetDetailModalProps) {
         <div className="mt-4 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2  hover: text-white text-xs rounded-lg transition" style={{backgroundColor: "var(--surface-elevated)"}}
+            className="px-4 py-2 hover:bg-surface-elevated text-foreground text-xs rounded-lg transition bg-surface-elevated"
           >
             닫기
           </button>
@@ -269,23 +269,23 @@ export default function InspectorStagePipeline({
 
   return (
     <>
-      <div className="flex flex-col rounded-2xl border" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-        <div className="p-4 border-b " style={{borderColor: "var(--border)"}}>
+      <div className="flex flex-col rounded-2xl border border-variant bg-surface-overlay">
+        <div className="p-4 border-b border-variant">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-white">Stage Pipeline</h2>
+              <h2 className="text-sm font-semibold text-foreground">Stage Pipeline</h2>
               {traceId && (
-                <p className="text-xs  mt-1 break-all" style={{color: "var(--muted-foreground)"}}>Trace ID: {traceId}</p>
+                <p className="text-xs mt-1 break-all text-muted-foreground">Trace ID: {traceId}</p>
               )}
             </div>
-            <div className="text-[10px]  uppercase tracking-[0.3em]" style={{color: "var(--muted-foreground)"}}>
+            <div className="text-tiny uppercase tracking-wider text-muted-foreground">
               {orderedStages.length} stages
             </div>
           </div>
 
           {/* Asset Legend */}
           {showAssets && (
-            <div className="mt-3 pt-3 border-t " style={{borderColor: "var(--border)"}}>
+            <div className="mt-3 pt-3 border-t border-variant">
               <AssetLegend />
             </div>
           )}
@@ -304,24 +304,25 @@ export default function InspectorStagePipeline({
                     onClick={() => handleStageClick(stage)}
                     className={cn(
                       "min-w-[160px] rounded-xl border px-3 py-2 text-left transition-all",
-                      isSelected && "ring-2"
+                      isSelected ? "border-primary bg-surface-elevated ring-2 ring-primary" : "border-variant bg-surface-overlay"
                     )}
-                    style={{
-                      borderColor: isSelected ? "var(--primary)" : "var(--border)",
-                      backgroundColor: isSelected ? "var(--surface-elevated)" : "var(--surface-overlay)",
-                      boxShadow: isSelected ? "0 0 0 2px var(--primary)" : "none",
-                    }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs uppercase tracking-[0.3em]" style={{color: isSelected ? "var(--foreground)" : "var(--muted-foreground)"}}>
+                      <span className={cn(
+                        "text-xs uppercase tracking-wider",
+                        isSelected ? "text-foreground" : "text-muted-foreground"
+                      )}>
                         {stage.label}
                       </span>
-                      <span className={cn("px-2 py-0.5 rounded-full text-[10px] flex items-center gap-1", statusStyle.badge)}>
+                      <span className={cn("px-2 py-0.5 rounded-full text-tiny flex items-center gap-1", statusStyle.badge)}>
                         {statusStyle.icon}
                         {stage.status}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between text-xs" style={{color: isSelected ? "var(--foreground-secondary)" : "var(--muted-foreground)"}}>
+                    <div className={cn(
+                      "mt-2 flex items-center justify-between text-xs",
+                      isSelected ? "text-foreground" : "text-muted-foreground"
+                    )}>
                       <span className="font-mono">{stage.name}</span>
                       <span>{stage.duration_ms ? `${stage.duration_ms}ms` : "-"}</span>
                     </div>
@@ -336,7 +337,7 @@ export default function InspectorStagePipeline({
                     )}
                   </button>
                   {index < orderedStages.length - 1 && (
-                    <div className="h-px w-6 " style={{backgroundColor: "var(--surface-elevated)"}} />
+                    <div className="h-px w-6 bg-surface-elevated" />
                   )}
                 </div>
               );
@@ -345,27 +346,27 @@ export default function InspectorStagePipeline({
         </div>
 
         {selectedStage && (
-          <div className="border-t   p-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+          <div className="border-t border-variant bg-surface-overlay p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white">{selectedStage.label} Details</h3>
+              <h3 className="text-sm font-semibold text-foreground">{selectedStage.label} Details</h3>
               <div className={cn("text-xs px-2 py-1 rounded-full", STATUS_STYLES[selectedStage.status].badge)}>
                 {selectedStage.status}
               </div>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <details className=" border  rounded-xl p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}} open>
-                <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
+              <details className="border border-variant bg-surface-overlay rounded-xl p-3" open>
+                <summary className="text-tiny uppercase tracking-wider cursor-pointer text-slate-500 dark:text-slate-400">
                   Stage Input
                 </summary>
-                <pre className="mt-2 text-xs  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
+                <pre className="mt-2 text-xs text-foreground overflow-auto max-h-56">
                   {selectedStage.input ? prettyJson(selectedStage.input) : "No input captured"}
                 </pre>
               </details>
-              <details className=" border  rounded-xl p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-                <summary className="text-[10px] uppercase tracking-[0.3em]  cursor-pointer" style={{color: "var(--muted-foreground)"}}>
+              <details className="border border-variant bg-surface-overlay rounded-xl p-3">
+                <summary className="text-tiny uppercase tracking-wider cursor-pointer text-slate-500 dark:text-slate-400">
                   Stage Output
                 </summary>
-                <pre className="mt-2 text-xs  overflow-auto max-h-56" style={{color: "var(--foreground-secondary)"}}>
+                <pre className="mt-2 text-xs text-foreground overflow-auto max-h-56">
                   {selectedStage.output ? prettyJson(selectedStage.output) : "No output captured"}
                 </pre>
               </details>

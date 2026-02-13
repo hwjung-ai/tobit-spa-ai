@@ -69,7 +69,7 @@ export default function RCAPanel({
 
   if (loading) {
     return (
-      <div className="rounded-2xl border   p-4 text-sm  animate-pulse" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="rounded-2xl border border-variant bg-surface-overlay p-4 text-sm text-muted-foreground animate-pulse">
         Loading RCA analysis...
       </div>
     );
@@ -86,7 +86,7 @@ export default function RCAPanel({
 
   if (!hypotheses || hypotheses.length === 0) {
     return (
-      <div className="rounded-2xl border   p-4 text-sm " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="rounded-2xl border border-variant bg-surface-overlay p-4 text-sm text-muted-foreground">
         No root causes identified.
       </div>
     );
@@ -94,7 +94,7 @@ export default function RCAPanel({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-white">Root Cause Analysis</h3>
+      <h3 className="text-lg font-semibold text-foreground">Root Cause Analysis</h3>
 
       {hypotheses.map((hyp, idx) => {
         const confidenceColor =
@@ -107,11 +107,11 @@ export default function RCAPanel({
         return (
           <article
             key={idx}
-            className="rounded-xl border   p-4 space-y-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+            className="rounded-xl border border-variant bg-surface-overlay p-4 space-y-3"
           >
             {/* Header */}
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-white">{hyp.title}</h4>
+              <h4 className="font-semibold text-foreground">{hyp.title}</h4>
               <span
                 className={`rounded-full border px-2 py-1 text-xs font-medium ${confidenceColor}`}
               >
@@ -121,23 +121,23 @@ export default function RCAPanel({
 
             {/* Description */}
             {hyp.description && (
-              <p className="text-sm " style={{color: "var(--foreground-secondary)"}}>{hyp.description}</p>
+              <p className="text-sm text-muted-foreground">{hyp.description}</p>
             )}
 
             {/* Evidence */}
             {hyp.evidence.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm uppercase tracking-wider text-muted-foreground">
                   Evidence
                 </p>
                 <ul className="space-y-1">
                   {hyp.evidence.map((ev, eidx) => (
-                    <li key={eidx} className="text-xs  flex items-start gap-2" style={{color: "var(--foreground-secondary)"}}>
-                      <span className=" flex-shrink-0" style={{color: "var(--muted-foreground)"}}>•</span>
+                    <li key={eidx} className="text-xs text-muted-foreground flex items-start gap-2">
+                      <span className="flex-shrink-0 text-muted-foreground">•</span>
                       <span className="flex-grow">
                         {ev.display || ev.path}
                         {ev.snippet && (
-                          <span className="block  text-[10px] mt-1" style={{color: "var(--muted-foreground)"}}>
+                          <span className="block text-tiny mt-1 text-muted-foreground">
                             Value: {ev.snippet}
                           </span>
                         )}
@@ -158,12 +158,12 @@ export default function RCAPanel({
             {/* Checks (Verification Steps) */}
             {hyp.checks.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm uppercase tracking-wider text-muted-foreground">
                   Verification Checklist
                 </p>
                 <ul className="space-y-1">
                   {hyp.checks.map((check, cidx) => (
-                    <li key={cidx} className="text-xs  flex items-start gap-2" style={{color: "var(--foreground-secondary)"}}>
+                    <li key={cidx} className="text-xs text-muted-foreground flex items-start gap-2">
                       <input
                         type="checkbox"
                         className="mt-0.5 cursor-pointer"
@@ -179,12 +179,12 @@ export default function RCAPanel({
             {/* Recommended Actions */}
             {hyp.recommended_actions.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm uppercase tracking-[0.1em] " style={{color: "var(--muted-foreground)"}}>
+                <p className="text-sm uppercase tracking-wider text-muted-foreground">
                   Recommended Actions
                 </p>
                 <ul className="space-y-1">
                   {hyp.recommended_actions.map((action, aidx) => (
-                    <li key={aidx} className="text-xs  flex items-start gap-2" style={{color: "var(--foreground-secondary)"}}>
+                    <li key={aidx} className="text-xs text-muted-foreground flex items-start gap-2">
                       <span className="text-emerald-400 flex-shrink-0">→</span>
                       <span>{action}</span>
                     </li>

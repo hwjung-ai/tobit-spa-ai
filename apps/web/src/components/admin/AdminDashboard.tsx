@@ -214,14 +214,14 @@ const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="flex h-screen " style={{ backgroundColor: "var(--surface-base)" }}>
+    <div className="flex h-screen ">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'}  text-foreground transition-all duration-300`} style={{ backgroundColor: "var(--surface-base)" }}>
+      <div className={`${sidebarOpen ? 'w-64' : 'w-20'}  text-foreground transition-all duration-300`}>
         <div className="p-4 flex items-center justify-between">
           {sidebarOpen && <span className="font-bold text-lg">Admin</span>}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 hover: rounded" style={{ backgroundColor: "var(--surface-elevated)" }}
+            className="p-1 hover: rounded"
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -236,7 +236,7 @@ const AdminDashboard: React.FC = () => {
                 activeTab === tab.id
                   ? 'bg-sky-600 text-white'
                   : ' hover:'
-              }`} style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground-secondary)" }}
+              }`}
             >
               {tab.icon}
               {sidebarOpen && <span>{tab.label}</span>}
@@ -247,8 +247,8 @@ const AdminDashboard: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        <header className="bg-[var(--background)] border-b  px-8 py-4 flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
-          <h1 className="text-2xl font-bold " style={{ color: "var(--foreground)" }}>Admin Dashboard</h1>
+        <header className="bg-[var(--background)] border-b  px-8 py-4 flex items-center justify-between">
+          <h1 className="text-2xl font-bold ">Admin Dashboard</h1>
           <button
             onClick={fetchDashboardData}
             disabled={loading}
@@ -308,20 +308,20 @@ const UserManagementPanel: React.FC = () => {
 
       <div className="bg-[var(--background)] rounded-lg border overflow-hidden">
         <table className="w-full">
-          <thead className=" border-b" style={{ backgroundColor: "var(--surface-base)" }}>
+          <thead className=" border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Username</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Email</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Last Login</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold " style={{ color: "var(--foreground)" }}>Actions</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold ">Username</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold ">Email</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold ">Status</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold ">Last Login</th>
+              <th className="px-6 py-3 text-left text-sm font-semibold ">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {users.map((user) => (
-              <tr key={user.user_id} className="hover:" style={{ backgroundColor: "var(--surface-base)" }}>
-                <td className="px-6 py-3 text-sm " style={{ color: "var(--foreground)" }}>{user.username}</td>
-                <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>{user.email}</td>
+              <tr key={user.user_id} className="hover:">
+                <td className="px-6 py-3 text-sm ">{user.username}</td>
+                <td className="px-6 py-3 text-sm ">{user.email}</td>
                 <td className="px-6 py-3 text-sm">
                   <span className={`px-2 py-1 rounded text-xs font-semibold ${
                     user.is_active
@@ -331,7 +331,7 @@ const UserManagementPanel: React.FC = () => {
                     {user.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-6 py-3 text-sm " style={{ color: "var(--muted-foreground)" }}>
+                <td className="px-6 py-3 text-sm ">
                   {user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}
                 </td>
                 <td className="px-6 py-3 text-sm">
@@ -358,7 +358,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
               <span>CPU Usage</span>
               <span className="font-semibold">{systemHealth?.resource?.cpu_percent ? systemHealth.resource.cpu_percent.toFixed(1) : 'N/A'}%</span>
             </div>
-            <div className="w-full  rounded-full h-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
+            <div className="w-full  rounded-full h-2">
               <div
                 className="bg-sky-600 h-2 rounded-full"
                 style={{ width: `${Math.min(systemHealth?.resource?.cpu_percent || 0, 100)}%` }}
@@ -370,7 +370,7 @@ const MonitoringPanel: React.FC<{ metrics: Metrics | null; systemHealth: SystemH
               <span>Memory Usage</span>
               <span className="font-semibold">{systemHealth?.resource?.memory_percent ? systemHealth.resource.memory_percent.toFixed(1) : 'N/A'}%</span>
             </div>
-            <div className="w-full  rounded-full h-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
+            <div className="w-full  rounded-full h-2">
               <div
                 className="bg-yellow-600 h-2 rounded-full"
                 style={{ width: `${Math.min(systemHealth?.resource?.memory_percent || 0, 100)}%` }}
@@ -414,7 +414,7 @@ const SettingsPanel: React.FC = () => (
   <div className="space-y-6">
     <h2 className="text-xl font-bold">System Settings</h2>
     <div className="bg-[var(--background)] p-6 rounded-lg border">
-      <p className="" style={{ color: "var(--muted-foreground)" }}>Settings management interface coming soon...</p>
+      <p className="">Settings management interface coming soon...</p>
     </div>
   </div>
 );

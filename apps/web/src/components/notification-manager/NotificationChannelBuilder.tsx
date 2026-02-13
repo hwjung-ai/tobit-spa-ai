@@ -169,7 +169,7 @@ export default function NotificationChannelBuilder({
                     <span className="text-xl">{getChannelIcon(channel.type)}</span>
                     <div>
                       <p className="font-medium">{channel.name}</p>
-                      <p className="text-sm " style={{ color: "var(--muted-foreground)" }}>
+                      <p className="text-sm ">
                         {channelTypes.find((c) => c.id === channel.type)?.description}
                       </p>
                     </div>

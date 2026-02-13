@@ -124,8 +124,8 @@ export default function VisualEditor() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p style={{ color: "var(--muted-foreground)" }}>Published screens are read-only</p>
-          <p className="text-sm" style={{ color: "var(--muted-foreground)" }}>Rollback to draft to edit</p>
+          <p>Published screens are read-only</p>
+          <p className="text-sm">Rollback to draft to edit</p>
         </div>
       </div>
     );
@@ -134,31 +134,31 @@ export default function VisualEditor() {
   return (
     <div
       className="h-full grid gap-4 relative"
-      style={{ gridTemplateColumns: "200px 1fr 220px 300px" }}
+
       data-testid="visual-editor"
     >
       {editorState.previewEnabled && (
-        <div className="absolute inset-x-6 top-6 z-10 rounded-lg border px-3 py-1 text-[10px] uppercase tracking-[0.3em]" style={{ borderColor: "rgba(14, 165, 233, 0.4)", backgroundColor: "rgba(12, 74, 110, 0.6)", color: "#bae6fd" }}>
+        <div className="absolute inset-x-6 top-6 z-10 rounded-lg border border-sky-500/40 bg-sky-900/60 px-3 py-1 text-tiny uppercase tracking-wider text-sky-300">
           Preview overlay active
         </div>
       )}
       {/* Left: Component Palette */}
-      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
+      <div className="border rounded-lg overflow-hidden flex flex-col">
         <ComponentPalette />
       </div>
 
       {/* Center: Canvas */}
-      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
+      <div className="border rounded-lg overflow-hidden flex flex-col">
         <Canvas />
       </div>
 
       {/* Tree: Component hierarchy */}
-      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
+      <div className="border rounded-lg overflow-hidden flex flex-col">
         <ComponentTreeView />
       </div>
 
       {/* Right: Properties Panel */}
-      <div className="border rounded-lg overflow-hidden flex flex-col" style={{ borderColor: "var(--border)" }}>
+      <div className="border rounded-lg overflow-hidden flex flex-col">
         <PropertiesPanel />
       </div>
     </div>

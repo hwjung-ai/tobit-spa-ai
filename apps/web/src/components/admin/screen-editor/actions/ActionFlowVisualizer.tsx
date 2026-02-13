@@ -29,14 +29,14 @@ interface ActionNodeData {
 
 function ActionNode({ data }: NodeProps<ActionNodeData>) {
   return (
-    <div className="min-w-[220px] rounded-lg border border-sky-500/60 px-3 py-2 shadow-md" style={{ backgroundColor: "var(--surface-base)" }}>
+    <div className="min-w-[220px] rounded-lg border border-sky-500/60 px-3 py-2 shadow-md">
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-sky-500" />
       <div className="text-sm font-semibold text-sky-300">{data.label}</div>
-      <div className="mt-1 text-xs" style={{ color: "var(--muted-foreground)" }}>{data.handler}</div>
+      <div className="mt-1 text-xs">{data.handler}</div>
       {data.policyText.length > 0 && (
         <div className="mt-2 space-y-1">
           {data.policyText.map((line) => (
-            <div key={`${data.handler}-${line}`} className="text-[10px]" style={{ color: "var(--foreground-secondary)" }}>
+            <div key={`${data.handler}-${line}`} className="text-[10px]">
               {line}
             </div>
           ))}
@@ -84,9 +84,9 @@ export default function ActionFlowVisualizer({ actions }: ActionFlowVisualizerPr
           source: action.id,
           target: actions[index + 1].id,
           label: "success",
-          labelStyle: { fill: "#4ade80", fontSize: 10 },
-          style: { stroke: "#4ade80", strokeWidth: 2 },
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#4ade80" },
+          labelStyle: { fill: "var(--chart-success-color)", fontSize: 10 },
+          style: { stroke: "var(--chart-success-color)", strokeWidth: 2 },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "var(--chart-success-color)" },
           animated: true,
         });
       }
@@ -108,9 +108,9 @@ export default function ActionFlowVisualizer({ actions }: ActionFlowVisualizerPr
           source: action.id,
           target: target.id,
           label: "error",
-          labelStyle: { fill: "#f87171", fontSize: 10 },
-          style: { stroke: "#f87171", strokeWidth: 2, strokeDasharray: "5 4" },
-          markerEnd: { type: MarkerType.ArrowClosed, color: "#f87171" },
+          labelStyle: { fill: "var(--chart-error-color)", fontSize: 10 },
+          style: { stroke: "var(--chart-error-color)", strokeWidth: 2, strokeDasharray: "5 4" },
+          markerEnd: { type: MarkerType.ArrowClosed, color: "var(--chart-error-color)" },
           type: "smoothstep",
         });
       });
@@ -120,11 +120,11 @@ export default function ActionFlowVisualizer({ actions }: ActionFlowVisualizerPr
   }, [actions]);
 
   if (actions.length === 0) {
-    return <div className="flex h-full items-center justify-center text-sm" style={{ color: "var(--muted-foreground)" }}>No actions to visualize</div>;
+    return <div className="flex h-full items-center justify-center text-sm">No actions to visualize</div>;
   }
 
   return (
-    <div className="h-full w-full rounded border" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+    <div className="h-full w-full rounded border">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -132,7 +132,7 @@ export default function ActionFlowVisualizer({ actions }: ActionFlowVisualizerPr
         fitView
         fitViewOptions={{ padding: 0.2 }}
       >
-        <Background color="#334155" gap={16} />
+        <Background color="var(--chart-tooltip-border)" gap={16} />
         <MiniMap
           nodeColor={() => "#0ea5e9"}
           maskColor="rgba(2, 6, 23, 0.6)"

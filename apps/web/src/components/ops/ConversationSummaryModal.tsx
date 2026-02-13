@@ -152,11 +152,11 @@ export default function ConversationSummaryModal({
         <div className="flex items-center justify-between border-b px-6 py-4 border-variant bg-surface-elevated">
           <div className="flex items-center gap-3">
             <span className="text-2xl">📋</span>
-            <h2 className="text-lg font-semibold text-white">대화 요약</h2>
+            <h2 className="text-lg font-semibold text-foreground">대화 요약</h2>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-1 transition hover:text-white text-muted-standard bg-surface-elevated"
+            className="rounded-full p-1 transition hover:text-foreground text-muted-standard bg-surface-elevated"
             aria-label="닫기"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,7 +166,7 @@ export default function ConversationSummaryModal({
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto p-6 custom-scrollbar" style={{maxHeight: "calc(80vh - 140px)"}}>
+        <div className="overflow-y-auto p-6 custom-scrollbar">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center">
@@ -191,19 +191,19 @@ export default function ConversationSummaryModal({
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-label">제목:</span>
-                    <p className="mt-1 font-medium text-white">{summaryData.title}</p>
+                    <p className="mt-1 font-medium text-foreground">{summaryData.title}</p>
                   </div>
                   <div>
                     <span className="text-label">주제:</span>
-                    <p className="mt-1 text-white">{summaryData.topic}</p>
+                    <p className="mt-1 text-foreground">{summaryData.topic}</p>
                   </div>
                   <div>
                     <span className="text-label">일자:</span>
-                    <p className="mt-1 text-white">{summaryData.date}</p>
+                    <p className="mt-1 text-foreground">{summaryData.date}</p>
                   </div>
                   <div>
                     <span className="text-label">질문 수:</span>
-                    <p className="mt-1 text-white">{summaryData.question_count}개</p>
+                    <p className="mt-1 text-foreground">{summaryData.question_count}개</p>
                   </div>
                 </div>
               </div>
@@ -232,7 +232,7 @@ export default function ConversationSummaryModal({
                           </span>
                         )}
                       </div>
-                      <p className="mb-2 line-clamp-2 text-sm text-white">{qa.question}</p>
+                      <p className="mb-2 line-clamp-2 text-sm text-foreground">{qa.question}</p>
                       {qa.summary && (
                         <p className="line-clamp-2 text-xs text-muted-standard">{qa.summary}</p>
                       )}

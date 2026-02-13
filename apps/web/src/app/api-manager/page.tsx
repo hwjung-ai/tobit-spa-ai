@@ -1377,7 +1377,7 @@ export default function ApiManagerPage() {
 
   const testResultsArea = (
     <div className="space-y-4">
-      <p className="text-sm font-semibold uppercase tracking-normal text-slate-600 dark:text-slate-400">
+      <p className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
         Execution result
       </p>
       {selectedApi?.logic_type === "workflow" ? (
@@ -1391,7 +1391,7 @@ export default function ApiManagerPage() {
                       [{step.node_type}] {step.node_id}
                     </span>
                     <span
-                      className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-normal ${
+                      className={`rounded-full border px-2 py-0.5 text-xs uppercase tracking-wider ${
                         step.status === "success"
                           ? "border-emerald-400 text-emerald-300"
                           : "border-rose-500 text-rose-300"
@@ -1410,13 +1410,13 @@ export default function ApiManagerPage() {
               ))}
             </div>
             <div>
-              <p className="text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+              <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Final output
               </p>
               <pre className="code-block mt-2 max-h-60 text-xs custom-scrollbar">
                 {JSON.stringify(workflowResult.final_output, null, 2)}
               </pre>
-              <p className="mt-2 text-xs uppercase tracking-normal text-slate-600 dark:text-slate-400">
+              <p className="mt-2 text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 References: {workflowReferences.length}
               </p>
             </div>
@@ -1435,7 +1435,7 @@ export default function ApiManagerPage() {
             </div>
             <button
               onClick={() => setShowJsonResult((prev) => !prev)}
-              className="text-xs uppercase tracking-normal underline text-slate-600 dark:text-slate-400"
+              className="text-xs uppercase tracking-wider underline text-slate-600 dark:text-slate-400"
             >
               {showJsonResult ? "Hide JSON" : "Show JSON"}
             </button>
@@ -1454,7 +1454,7 @@ export default function ApiManagerPage() {
                     {executionColumns.map((column) => (
                       <th
                         key={column}
-                        className="border-b px-2 py-1 uppercase tracking-normal border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
+                        className="border-b px-2 py-1 uppercase tracking-wider border-slate-200 text-slate-600 dark:border-slate-800 dark:text-slate-400"
                       >
                         {column}
                       </th>
@@ -1729,28 +1729,11 @@ export default function ApiManagerPage() {
                     key={type}
                     onClick={() => setLogicType(type)}
                     disabled={!!selectedId}
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""}`}
-                    style={
-                      logicType === type
-                        ? {
-                            borderColor: "rgb(14, 165, 233)",
-                            backgroundColor: "rgb(14, 165, 233)",
-                            color: "#ffffff",
-                          }
-                        : {
-                            borderColor: "var(--border)",
-                            backgroundColor: "var(--surface-base)",
-                            color: "rgb(71, 85, 105)",
-                          }
-                    }
-                    onMouseEnter={(e) => {
-                      if (logicType !== type)
-                        e.currentTarget.style.backgroundColor = "rgb(241, 245, 249)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (logicType !== type)
-                        e.currentTarget.style.backgroundColor = "rgb(248, 250, 252)";
-                    }}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-normal transition ${!!selectedId ? "opacity-40 cursor-not-allowed" : ""} ${
+                  logicType === type
+                    ? "border-sky-500 bg-sky-500 text-white"
+                    : "border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+                }`}
                   >
                     {logicTypeLabels[type]}
                   </button>
@@ -1885,27 +1868,10 @@ export default function ApiManagerPage() {
                 onClick={handleDryRunFromEditor}
                 disabled={isExecuting}
                 className={`rounded-full border px-5 py-2 text-sm font-bold uppercase tracking-wider transition ${
-                  isExecuting ? "opacity-60 cursor-not-allowed" : ""
-                }`}
-                style={
                   isExecuting
-                    ? {
-                        borderColor: "var(--border)",
-                        backgroundColor: "var(--surface-base)",
-                        color: "var(--muted-foreground)",
-                      }
-                    : {
-                        borderColor: "rgb(14, 165, 233)",
-                        backgroundColor: "rgb(14, 165, 233)",
-                        color: "#fff",
-                      }
-                }
-                onMouseEnter={(e) => {
-                  if (!isExecuting) e.currentTarget.style.backgroundColor = "rgb(14, 101, 192)";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isExecuting) e.currentTarget.style.backgroundColor = "rgb(14, 165, 233)";
-                }}
+                    ? "opacity-60 cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                    : "border-sky-500 bg-sky-500 text-white hover:bg-sky-700"
+                }`}
               >
                 {isExecuting ? "Running…" : `Test ${logicTypeLabels[logicType]} (Dry-run)`}
               </button>
@@ -1913,28 +1879,11 @@ export default function ApiManagerPage() {
           <button
             onClick={handleSave}
             disabled={isSaving || isSystemScope}
-            className="rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition"
-            style={
+            className={`rounded-full border px-6 py-2 text-sm font-bold uppercase tracking-wider transition ${
               isSaving || isSystemScope
-                ? {
-                    borderColor: "var(--border)",
-                    backgroundColor: "var(--surface-base)",
-                    color: "var(--muted-foreground)",
-                  }
-                : {
-                    borderColor: "rgb(16, 185, 129)",
-                    backgroundColor: "rgb(16, 185, 129)",
-                    color: "#fff",
-                  }
-            }
-            onMouseEnter={(e) => {
-              if (!isSaving && !isSystemScope)
-                e.currentTarget.style.backgroundColor = "rgb(5, 150, 105)";
-            }}
-            onMouseLeave={(e) => {
-              if (!isSaving && !isSystemScope)
-                e.currentTarget.style.backgroundColor = "rgb(16, 185, 129)";
-            }}
+                ? "opacity-60 cursor-not-allowed border-slate-300 bg-slate-100 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                : "border-emerald-500 bg-emerald-500 text-white hover:bg-emerald-600"
+            }`}
           >
             {isSaving ? "Saving…" : selectedApi ? "Update API" : "Create API"}
           </button>

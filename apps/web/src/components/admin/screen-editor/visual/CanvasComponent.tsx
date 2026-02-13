@@ -185,7 +185,7 @@ export default function CanvasComponent({
         onDragLeave={isGridItem ? undefined : handleDragLeave}
         onDrop={isGridItem ? undefined : handleDrop}
         className={`${isGridItem ? "" : "p-3 rounded-lg border-2 cursor-pointer transition-colors"} ${getDragClass()}`}
-        style={{marginLeft: depth > 0 ? 0 : undefined, borderColor: isContainer ? "var(--border)" : "", backgroundColor: isContainer ? "var(--surface-elevated)" : ""}}
+
         onMouseEnter={(e) => {
           if (isContainer && !isDragging && !isDragOver && !isSelected) {
             e.currentTarget.style.backgroundColor = "var(--surface-base)";
@@ -201,7 +201,7 @@ export default function CanvasComponent({
         <div className="flex items-start justify-between gap-2">
           {/* Drag handle */}
           {!isGridItem && (
-            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing 0 hover: pt-0.5" style={{color: "var(--foreground-secondary)"}}>
+            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing 0 hover: pt-0.5">
               <GripVertical className="w-4 h-4" />
             </div>
           )}
@@ -213,19 +213,19 @@ export default function CanvasComponent({
                   {component.type}
                 </span>
               )}
-              <div className="text-sm font-semibold truncate" style={{color: "var(--foreground)"}}>
+              <div className="text-sm font-semibold truncate">
                 {component.label || component.id}
               </div>
             </div>
             {!isContainer && (
-              <div className="text-xs font-mono" style={{color: "var(--muted-foreground)"}}>
+              <div className="text-xs font-mono">
                 {component.type}
               </div>
             )}
-            <div className="text-xs 0 mt-1" style={{color: "var(--foreground)"}}>
+            <div className="text-xs 0 mt-1">
               ID: {component.id}
               {isContainer && children.length > 0 && (
-                <span className="ml-2" style={{color: "var(--muted-foreground)"}}>
+                <span className="ml-2">
                   ({children.length} children)
                 </span>
               )}
@@ -264,7 +264,7 @@ export default function CanvasComponent({
         {isContainer && children.length > 0 && (
           <div
             className={`mt-3 pt-3 border-t  ${isRow ? "flex flex-row gap-2 flex-wrap" : "flex flex-col gap-2"
-              }`} style={{borderColor: "var(--border)"}}
+              }`}
           >
             {children.map((child, childIndex) => (
               <div key={child.id} className={isRow ? "flex-1 min-w-[120px]" : ""}>
@@ -286,10 +286,10 @@ export default function CanvasComponent({
 
         {/* Empty container placeholder */}
         {isContainer && children.length === 0 && (
-          <div className="mt-3 pt-3 border-t" style={{borderColor: "var(--border)"}}>
+          <div className="mt-3 pt-3 border-t">
             <div className={`text-center py-4 border-2 border-dashed rounded-lg transition-colors ${isDragOver ? "border-sky-500 bg-sky-950/30" : ""
-              }`} style={{borderColor: "var(--border)"}}>
-              <p className={`text-xs ${isDragOver ? "text-sky-300" : "0"}`} style={{color: "var(--foreground)"}}>
+              }`}>
+              <p className={`text-xs ${isDragOver ? "text-sky-300" : "0"}`}>
                 {isDragOver ? "Drop here to add" : `Drag or click to add components`}
               </p>
             </div>

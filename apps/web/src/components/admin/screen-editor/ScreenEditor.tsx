@@ -357,7 +357,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   if (!authCheckDone || loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div style={{ color: "var(--muted-foreground)" }}>Loading screen editor...</div>
+        <div>Loading screen editor...</div>
       </div>
     );
   }
@@ -376,7 +376,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
   if (!screen) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div style={{ color: "var(--muted-foreground)" }}>No screen data</div>
+        <div>No screen data</div>
       </div>
     );
   }
@@ -385,7 +385,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
     <div
       ref={containerRef}
       className="screen-editor-theme flex flex-col h-full"
-      style={{ backgroundColor: "var(--background)", color: "var(--foreground)", userSelect: isResizingRight ? "none" : "auto" }}
+
       data-testid="screen-editor"
     >
       <div className="flex flex-1 gap-0 overflow-hidden">
@@ -439,7 +439,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   )}
                   <button
                     type="button"
-                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider" style={{ borderColor: "var(--border)" }}
+                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider"
                     onClick={() => {
                       void (async () => {
                         try {
@@ -475,7 +475,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider" style={{ borderColor: "var(--border)" }}
+                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider"
                     onClick={() => clearDraftConflict()}
                   >
                     Dismiss
@@ -506,10 +506,10 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
         </div>
 
         <div className="flex-shrink-0 flex flex-col border-l" style={{ width: `${rightPanelWidth}px`, borderColor: "var(--border)" }}>
-          <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: "var(--border)" }}>
+          <div className="flex items-center justify-between border-b px-4 py-3">
             <div>
               <p className="draft-panel-label">Schema</p>
-              <p className="text-xs" style={{ color: "var(--foreground-secondary)" }}>{schemaSummary}</p>
+              <p className="text-xs">{schemaSummary}</p>
             </div>
           </div>
           <div className="flex-1 overflow-hidden">
@@ -523,12 +523,12 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
             />
           </div>
           {editorState.proposedPatch && (
-            <div className="border-t px-4 py-3 space-y-2" style={{ borderColor: "var(--border)" }}>
+            <div className="border-t px-4 py-3 space-y-2">
               {proposedPatchSummary.length > 0 && (
                 <div className="draft-panel-section">
                   <p className="draft-panel-label">Patch Diff</p>
                   {proposedPatchSummary.map((line) => (
-                    <p key={line} className="text-xs" style={{ color: "var(--foreground-secondary)" }}>{line}</p>
+                    <p key={line} className="text-xs">{line}</p>
                   ))}
                 </div>
               )}
@@ -547,7 +547,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                     }
                   }}
                   className="draft-panel-button flex-1 bg-emerald-600 hover:bg-emerald-500 text-white"
-                  style={{ borderColor: "transparent" }}
+
                 >
                   Apply
                 </button>
@@ -564,7 +564,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
           {livePreviewBlock && (
             <div className="draft-panel-section border-t rounded-none border-x-0 border-b-0">
               <p className="draft-panel-label">Live Preview</p>
-              <div className="max-h-60 overflow-auto rounded-lg border p-2" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)" }}>
+              <div className="max-h-60 overflow-auto rounded-lg border p-2">
                 <UIScreenRenderer block={livePreviewBlock} schemaOverride={screen} />
               </div>
             </div>

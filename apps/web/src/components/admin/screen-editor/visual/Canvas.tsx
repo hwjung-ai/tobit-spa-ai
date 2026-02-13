@@ -47,10 +47,10 @@ export default function Canvas() {
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "rgba(15, 23, 42, 0.5)" }}>
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="border-b p-3" style={{ borderColor: "var(--border)" }}>
-        <h3 className="text-sm font-semibold" style={{ color: "var(--foreground-secondary)" }}>
+      <div className="border-b p-3">
+        <h3 className="text-sm font-semibold">
           Canvas ({screen.components.length})
         </h3>
       </div>
@@ -69,10 +69,10 @@ export default function Canvas() {
           <div className={`flex items-center justify-center h-full text-center border-2 border-dashed rounded-lg`}
             style={isDragOver ? { borderColor: "rgba(14, 165, 233, 1)", backgroundColor: "rgba(12, 74, 110, 0.2)" } : { borderColor: "var(--border-muted)" }}>
             <div className="space-y-2 p-6">
-              <p className="text-sm" style={isDragOver ? { color: "#bae6fd" } : { color: "var(--muted-foreground)" }}>
+              <p className="text-sm" style={isDragOver ? { color: "var(--primary-light)" } : { color: "var(--muted-foreground)" }}>
                 {isDragOver ? "Drop here to add" : "No components yet"}
               </p>
-              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs">
                 {isDragOver ? "" : "Drag components from the palette or click to add"}
               </p>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { fetchApi } from "@/lib/adminUtils";
 
 interface CatalogAsset {
@@ -58,7 +59,7 @@ export default function CatalogTable({
   return (
     <div className="space-y-2">
       {catalogs.length === 0 ? (
-        <div className="text-center py-8   border  rounded-lg" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
+        <div className="text-center py-8 border border-variant rounded-lg text-muted-foreground bg-surface-overlay">
           No catalogs created yet
         </div>
       ) : (
@@ -66,28 +67,26 @@ export default function CatalogTable({
           <div
             key={catalog.asset_id}
             onClick={() => onSelect(catalog)}
-            className={`p-3 rounded-lg cursor-pointer transition-colors border ${
-              selectedCatalog?.asset_id === catalog.asset_id
-                ? "bg-sky-900/40 border-sky-500/50"
-                : "  hover:"
-            }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
+            className={cn(
+              "p-3 rounded-lg cursor-pointer transition-colors border border-variant bg-surface-overlay hover:bg-surface-elevated",
+              selectedCatalog?.asset_id === catalog.asset_id &&
+                "bg-sky-900/40 border-sky-500/50"
+            )}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate " style={{color: "var(--foreground)"}}>{catalog.name}</h4>
+                <h4 className="font-medium text-sm truncate text-foreground">{catalog.name}</h4>
                 {catalog.description && (
-                  <p className="text-xs  truncate mt-1" style={{color: "var(--muted-foreground)"}}>{catalog.description}</p>
+                  <p className="text-xs truncate mt-1 text-muted-foreground">{catalog.description}</p>
                 )}
-                <div className="flex items-center gap-2 mt-2 text-xs " style={{color: "var(--muted-foreground)"}}>
+                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
                   <span>Tables: {getTableCount(catalog)}</span>
                   <span>•</span>
-                  <span className={`px-2 py-0.5 rounded ${
-                    getScanStatus(catalog) === "completed"
-                      ? "bg-green-900/50 text-green-400"
-                      : getScanStatus(catalog) === "scanning"
-                      ? "bg-yellow-900/50 text-yellow-400"
-                      : " "
-                  }`} style={{backgroundColor: "var(--surface-overlay)", color: "var(--muted-foreground)"}}>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded bg-surface-overlay text-muted-foreground",
+                    getScanStatus(catalog) === "completed" && "bg-green-900/50 text-green-400",
+                    getScanStatus(catalog) === "scanning" && "bg-yellow-900/50 text-yellow-400"
+                  )}>
                     {getScanStatus(catalog)}
                   </span>
                 </div>

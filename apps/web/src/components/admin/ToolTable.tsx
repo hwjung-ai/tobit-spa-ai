@@ -43,7 +43,7 @@ interface ToolTableProps {
 
 const filterBtnClass = (active: boolean) =>
   cn(
-    "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition hover:border-sky-500",
+    "rounded-md px-3 py-1 text-tiny font-bold uppercase tracking-wider transition hover:border-sky-500",
     active
       ? "bg-sky-600 text-white"
       : "border text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
@@ -117,7 +117,7 @@ export default function ToolTable({
         cellRenderer: (params: ICellRendererParams<ToolAsset>) => {
           const label = String(params.value || "unknown").replace(/_/g, " ");
           return (
-            <span className="inline-flex rounded-md border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <span className="inline-flex rounded-md border border-variant bg-surface-elevated px-2 py-0.5 text-tiny font-bold uppercase tracking-wider text-muted-foreground">
               {label}
             </span>
           );
@@ -130,7 +130,7 @@ export default function ToolTable({
         minWidth: 200,
         cellRenderer: (params: ICellRendererParams<ToolAsset>) => (
           <span
-            className="block max-w-full truncate text-xs text-slate-600 dark:text-slate-400"
+            className="block max-w-full truncate text-xs text-muted-foreground"
             title={params.value || ""}
           >
             {params.value || "-"}
@@ -146,10 +146,10 @@ export default function ToolTable({
           return (
             <span
               className={cn(
-                "inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                "inline-flex rounded-md border px-2 py-0.5 text-tiny font-bold uppercase tracking-wider",
                 status === "published"
-                  ? "border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                  ? "border-success bg-success/10 text-success"
+                  : "border-variant bg-surface-elevated text-muted-foreground",
               )}
             >
               {status}
@@ -162,7 +162,7 @@ export default function ToolTable({
         field: "version",
         width: 90,
         cellRenderer: (params: ICellRendererParams<ToolAsset>) => (
-          <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
+          <span className="font-mono text-xs text-muted-foreground">
             v{params.value}
           </span>
         ),
@@ -173,7 +173,7 @@ export default function ToolTable({
         flex: 1,
         minWidth: 120,
         cellRenderer: (params: ICellRendererParams<ToolAsset>) => (
-          <span className="text-xs text-slate-600 dark:text-slate-400">
+          <span className="text-xs text-muted-foreground">
             {formatRelativeTime(params.value)}
           </span>
         ),
@@ -194,7 +194,7 @@ export default function ToolTable({
             <div className="flex items-center gap-2 pr-2">
               <button
                 onClick={() => onToolSelect?.(tool)}
-                className="text-[10px] font-bold uppercase tracking-wider text-slate-600 transition-colors hover:text-sky-500 dark:text-slate-400 dark:hover:text-sky-300"
+                className="text-tiny font-bold uppercase tracking-wider text-muted-foreground transition-colors hover:text-sky-500"
                 title="Test this tool"
               >
                 Test
@@ -203,7 +203,7 @@ export default function ToolTable({
                 <button
                   onClick={(e) => void handlePublish(tool, e)}
                   disabled={isPublishing}
-                  className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 transition-colors hover:text-emerald-500 disabled:opacity-50 dark:text-emerald-400 dark:hover:text-emerald-300"
+                  className="text-tiny font-bold uppercase tracking-wider text-emerald-600 transition-colors hover:text-emerald-500 disabled:opacity-50 dark:text-emerald-400 dark:hover:text-emerald-300"
                   title="Publish this tool"
                 >
                   {isPublishing ? "..." : "Publish"}
@@ -219,29 +219,20 @@ export default function ToolTable({
 
   if (loading) {
     return (
-      <div
-        className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-sm"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
-      >
-        <div
-          className="flex items-center justify-between border-b px-4 py-2"
-          style={{ borderColor: "var(--border)" }}
-        >
+      <div className="insp-section overflow-hidden flex h-full w-full flex-col shadow-sm">
+        <div className="flex items-center justify-between border-b border-variant px-4 py-2">
           <div className="flex items-center gap-3">
             <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            <span
-              className="text-[10px] font-bold uppercase tracking-[0.2em]"
-              style={{ color: "var(--muted-foreground)" }}
-            >
+            <span className="text-label-sm">
               Tool Registry
             </span>
           </div>
         </div>
 
-        <div className="relative h-[600px] w-full overflow-hidden" style={{ backgroundColor: "var(--surface-base)" }}>
+        <div className="relative h-[600px] w-full overflow-hidden bg-surface-base">
           <div className="absolute inset-0 flex items-center justify-center gap-3">
             <div className="h-8 w-8 rounded-full border-2 border-sky-500/20 border-t-sky-500 animate-spin" />
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--muted-foreground)" }}>
+            <span className="text-label text-muted-foreground">
               Loading Tools...
             </span>
           </div>
@@ -252,17 +243,10 @@ export default function ToolTable({
 
   if (tools.length === 0) {
     return (
-      <div
-        className="rounded-2xl border py-20 text-center shadow-sm"
-        style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
-      >
-        <div
-          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
-        >
+      <div className="insp-section py-20 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-variant bg-surface-elevated">
           <svg
-            className="h-6 w-6"
-            style={{ color: "var(--muted-foreground)" }}
+            className="h-6 w-6 text-muted-foreground"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -275,7 +259,7 @@ export default function ToolTable({
             />
           </svg>
         </div>
-        <p className="text-sm font-medium italic" style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-sm font-medium italic text-muted-foreground">
           No tools found
         </p>
       </div>
@@ -283,30 +267,14 @@ export default function ToolTable({
   }
 
   return (
-    <div
-      className="flex h-full w-full flex-col overflow-hidden rounded-2xl border shadow-sm"
-      style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)" }}
-    >
-      <div
-        className="flex items-center justify-between border-b px-4 py-2"
-        style={{ borderColor: "var(--border)" }}
-      >
+    <div className="insp-section overflow-hidden flex h-full w-full flex-col shadow-sm">
+      <div className="flex items-center justify-between border-b border-variant px-4 py-2">
         <div className="flex items-center gap-3">
           <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          <span
-            className="text-[10px] font-bold uppercase tracking-[0.2em]"
-            style={{ color: "var(--muted-foreground)" }}
-          >
+          <span className="text-label-sm">
             Tool Registry
           </span>
-          <span
-            className="rounded-full border px-2 py-0.5 text-[10px] font-mono font-bold"
-            style={{
-              borderColor: "var(--border)",
-              backgroundColor: "var(--surface-elevated)",
-              color: "var(--success)",
-            }}
-          >
+          <span className="badge-primary font-mono text-success">
             count: {tools.length}
           </span>
           {onStatusFilterChange && (
@@ -332,15 +300,12 @@ export default function ToolTable({
             </div>
           )}
         </div>
-        <div
-          className="text-[10px] font-medium italic"
-          style={{ color: "var(--muted-foreground)" }}
-        >
+        <div className="text-tiny font-medium italic text-muted-foreground">
           Click row to test • Click headers to sort
         </div>
       </div>
 
-      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static w-full overflow-hidden" style={{ height: "600px" }}>
+      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static w-full overflow-hidden">
         <AgGridReact
           theme="legacy"
           rowData={tools}

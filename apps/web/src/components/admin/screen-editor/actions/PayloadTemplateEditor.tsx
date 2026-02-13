@@ -105,22 +105,22 @@ export const PayloadTemplateEditor = React.forwardRef<
     return (
       <div ref={ref} className={`space-y-3 ${className}`}>
         {/* Instructions */}
-        <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+        <p className="text-xs">
           Define key-value pairs for the action payload. Values can be static or bound to state/context/inputs.
         </p>
 
         {/* Fields */}
-        <div className="space-y-2 max-h-60 overflow-y-auto border rounded p-3" style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}>
+        <div className="space-y-2 max-h-60 overflow-y-auto border rounded p-3">
           {fields.length === 0 ? (
-            <p className="text-xs text-center py-4" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs text-center py-4">
               No fields. Click &quot;Add Field&quot; to get started.
             </p>
           ) : (
             fields.map((field, index) => (
-              <div key={index} className="space-y-1 p-2 border rounded" style={{ backgroundColor: "var(--background)", borderColor: "var(--border)" }}>
+              <div key={index} className="space-y-1 p-2 border rounded">
                 {/* Key input */}
                 <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--foreground-secondary)" }}>
+                  <label className="block text-xs font-medium mb-1">
                     Key
                   </label>
                   <Input
@@ -133,7 +133,7 @@ export const PayloadTemplateEditor = React.forwardRef<
 
                 {/* Value input/binding editor */}
                 <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: "var(--foreground-secondary)" }}>
+                  <label className="block text-xs font-medium mb-1">
                     Value
                   </label>
                   {field.isBinding || (field.value.startsWith("{{") && field.value.endsWith("}}")) ? (
@@ -189,10 +189,10 @@ export const PayloadTemplateEditor = React.forwardRef<
 
         {/* JSON preview */}
         <details className="text-xs">
-          <summary className="cursor-pointer font-medium" style={{ color: "var(--foreground-secondary)" }}>
+          <summary className="cursor-pointer font-medium">
             View as JSON
           </summary>
-          <pre className="mt-2 p-2 rounded text-xs overflow-x-auto" style={{ backgroundColor: "var(--surface-base)" }}>
+          <pre className="mt-2 p-2 rounded text-xs overflow-x-auto">
             {JSON.stringify(
               fields.reduce((acc, field) => {
                 if (field.key) {

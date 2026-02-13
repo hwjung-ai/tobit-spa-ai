@@ -31,20 +31,19 @@ function SpanNode({ data, selected }: NodeProps<SpanNodeData>) {
 
   return (
     <div
-      className={`w-56 rounded-lg px-3 py-2 transition-all cursor-pointer ${nodeClass} ${statusClass}`}
-      style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
+      className={`w-56 rounded-lg px-3 py-2 transition-all cursor-pointer bg-slate-900/80 ${nodeClass} ${statusClass}`}
     >
       <Handle type="target" position={Position.Top} />
 
-      <div className="text-sm font-semibold truncate" style={{ color: "var(--foreground)" }}>{data.name}</div>
+      <div className="text-sm font-semibold truncate text-foreground">{data.name}</div>
 
       <div className="mt-1 flex items-center gap-2 justify-between">
-        <span className="text-[10px] uppercase tracking-[0.2em]" style={{ color: "var(--muted-foreground)" }}>{data.kind}</span>
-        <span className="text-[10px] font-mono" style={{ color: "var(--muted-foreground)" }}>{data.duration_ms}ms</span>
+        <span className="text-tiny uppercase tracking-wider text-muted-foreground">{data.kind}</span>
+        <span className="text-tiny font-mono text-muted-foreground">{data.duration_ms}ms</span>
       </div>
 
       {data.summary.error_message && (
-        <div className="mt-2 text-[10px] text-rose-300 truncate">{data.summary.error_message}</div>
+        <div className="mt-2 text-tiny text-rose-300 truncate">{data.summary.error_message}</div>
       )}
 
       <Handle type="source" position={Position.Bottom} />

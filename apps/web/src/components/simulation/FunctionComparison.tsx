@@ -108,18 +108,15 @@ export default function FunctionComparison({
     "cost",
   ];
 
-  const sectionClass = "ui-box";
-  const cardClass = "ui-subbox";
-
   return (
     <div className="space-y-6">
-      <section className={sectionClass}>
+      <section className="ui-box">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
+            <h1 className="text-2xl font-semibold text-foreground">
               Function Comparison
             </h1>
-            <p className="mt-2 text-sm" style={{ color: "var(--muted-foreground)" }}>
+            <p className="mt-2 text-sm text-muted-foreground">
               Compare simulation outputs across different functions side by side.
             </p>
           </div>
@@ -134,23 +131,17 @@ export default function FunctionComparison({
       </section>
 
       {loading ? (
-        <section className={cn(sectionClass, "text-center text-muted-standard")}>
+        <section className="ui-box text-center text-muted-standard">
           Running comparison...
         </section>
       ) : error ? (
-        <section
-          style={{ borderColor: "var(--error)", backgroundColor: "rgba(var(--error-rgb), 0.1)" }}
-          className="rounded-2xl border p-5"
-        >
-          <p style={{ color: "var(--error)" }}>{error}</p>
+        <section className="alert-box alert-error">
+          <p>{error}</p>
         </section>
       ) : (
         <>
-          <section className={sectionClass}>
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+          <section className="ui-box">
+            <h2 className="section-title">
               Confidence Comparison
             </h2>
             <div className="mt-4 h-48">
@@ -168,11 +159,8 @@ export default function FunctionComparison({
 
           <div className="grid gap-4 lg:grid-cols-2">
             {kpiNames.map((kpi) => (
-              <section key={kpi} className={sectionClass}>
-                <h2
-                  style={{ color: "var(--muted-foreground)" }}
-                  className="text-sm font-semibold uppercase tracking-wider"
-                >
+              <section key={kpi} className="ui-box">
+                <h2 className="section-title">
                   {kpi.replace(/([A-Z])/g, " $1").trim()} Comparison
                 </h2>
                 <div className="mt-4 h-48">
@@ -190,99 +178,64 @@ export default function FunctionComparison({
             ))}
           </div>
 
-          <section className={sectionClass}>
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+          <section className="ui-box">
+            <h2 className="section-title">
               Detailed Results
             </h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ borderColor: "var(--border)" }} className="border-b">
-                    <th
-                      className="px-4 py-2 text-left"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                  <tr className="border-b border-variant">
+                    <th className="px-4 py-2 text-left text-muted-foreground">
                       Function
                     </th>
-                    <th
-                      className="px-4 py-2 text-right"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <th className="px-4 py-2 text-right text-muted-foreground">
                       Confidence
                     </th>
-                    <th
-                      className="px-4 py-2 text-right"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <th className="px-4 py-2 text-right text-muted-foreground">
                       Latency (ms)
                     </th>
-                    <th
-                      className="px-4 py-2 text-right"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <th className="px-4 py-2 text-right text-muted-foreground">
                       Error Rate (%)
                     </th>
-                    <th
-                      className="px-4 py-2 text-right"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <th className="px-4 py-2 text-right text-muted-foreground">
                       Throughput (rps)
                     </th>
-                    <th
-                      className="px-4 py-2 text-right"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <th className="px-4 py-2 text-right text-muted-foreground">
                       Cost (USD/h)
                     </th>
-                    <th
-                      className="px-4 py-2 text-center"
-                      style={{ color: "var(--muted-foreground)" }}
-                    >
+                    <th className="px-4 py-2 text-center text-muted-foreground">
                       Status
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {comparisonData.map((row) => (
-                    <tr key={row.key} style={{ borderColor: "var(--border)" }} className="border-b">
-                      <td className="px-4 py-2" style={{ color: "var(--foreground)" }}>
+                    <tr key={row.key} className="border-b border-variant">
+                      <td className="px-4 py-2 text-foreground">
                         {row.function}
                       </td>
-                      <td className="px-4 py-2 text-right" style={{ color: "var(--primary)" }}>
+                      <td className="px-4 py-2 text-right text-primary">
                         {row.confidence.toFixed(0)}%
                       </td>
-                      <td className="px-4 py-2 text-right" style={{ color: "var(--foreground)" }}>
+                      <td className="px-4 py-2 text-right text-foreground">
                         {row.latency.toFixed(2)}
                       </td>
-                      <td className="px-4 py-2 text-right" style={{ color: "var(--foreground)" }}>
+                      <td className="px-4 py-2 text-right text-foreground">
                         {row.errorRate.toFixed(3)}
                       </td>
-                      <td className="px-4 py-2 text-right" style={{ color: "var(--foreground)" }}>
+                      <td className="px-4 py-2 text-right text-foreground">
                         {row.throughput.toFixed(2)}
                       </td>
-                      <td className="px-4 py-2 text-right" style={{ color: "var(--foreground)" }}>
+                      <td className="px-4 py-2 text-right text-foreground">
                         {row.cost.toFixed(2)}
                       </td>
                       <td className="px-4 py-2 text-center">
                         <span
                           className={cn(
                             "rounded-md px-2 py-1 text-xs font-semibold",
-                            row.success ? "text-white" : "",
+                            row.success ? "bg-success/40 text-success" : "bg-error/40 text-error",
                           )}
-                          style={
-                            row.success
-                              ? {
-                                  backgroundColor: "rgba(var(--success-rgb), 0.4)",
-                                  color: "var(--success)",
-                                }
-                              : {
-                                  backgroundColor: "rgba(var(--error-rgb), 0.4)",
-                                  color: "var(--error)",
-                                }
-                          }
                         >
                           {row.success ? "Success" : "Failed"}
                         </span>
@@ -294,36 +247,24 @@ export default function FunctionComparison({
             </div>
           </section>
 
-          <section
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-            className={sectionClass}
-          >
-            <h2
-              style={{ color: "var(--muted-foreground)" }}
-              className="text-sm font-semibold uppercase tracking-wider"
-            >
+          <section className="ui-box">
+            <h2 className="section-title">
               Baseline vs Simulated
             </h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-                className={cardClass}
-              >
-                <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+              <div className="ui-subbox">
+                <p className="text-xs text-muted-foreground">
                   Baseline Latency
                 </p>
-                <p style={{ color: "var(--foreground)" }} className="text-2xl font-semibold">
+                <p className="text-2xl font-semibold text-foreground">
                   {baseline.latency_ms || 50} ms
                 </p>
               </div>
-              <div
-                style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
-                className={cardClass}
-              >
-                <p style={{ color: "var(--muted-foreground)" }} className="text-xs">
+              <div className="ui-subbox">
+                <p className="text-xs text-muted-foreground">
                   Assumptions
                 </p>
-                <p style={{ color: "var(--foreground-secondary)" }} className="text-sm">
+                <p className="text-sm text-muted-foreground">
                   Traffic: {assumptions.traffic_change_pct || 0}% | CPU:{" "}
                   {assumptions.cpu_change_pct || 0}% | Memory: {assumptions.memory_change_pct || 0}%
                 </p>

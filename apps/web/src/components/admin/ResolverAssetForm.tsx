@@ -110,7 +110,7 @@ export default function ResolverAssetForm({ asset, onSave }: ResolverAssetFormPr
             <CardTitle className="text-xs">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm " style={{ color: "var(--foreground-secondary)" }}>
+            <p className="text-sm ">
               {asset.description}
             </p>
           </CardContent>
@@ -124,7 +124,7 @@ export default function ResolverAssetForm({ asset, onSave }: ResolverAssetFormPr
           </CardHeader>
           <CardContent className="space-y-2">
             {config.rules.map((rule, index) => (
-              <div key={index} className="flex items-center justify-between rounded border  p-2 text-xs" style={{ borderColor: "var(--border)" }}>
+              <div key={index} className="flex items-center justify-between rounded border  p-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{rule.name}</span>
                   <Badge variant="outline" className="text-xs">
@@ -136,7 +136,7 @@ export default function ResolverAssetForm({ asset, onSave }: ResolverAssetFormPr
                     </Badge>
                   )}
                 </div>
-                <div className="" style={{ color: "var(--muted-foreground)" }}>
+                <div className="">
                   Priority: {rule.priority}
                 </div>
               </div>
@@ -184,25 +184,25 @@ export default function ResolverAssetForm({ asset, onSave }: ResolverAssetFormPr
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="font-medium text-sm">{result.original_entity}</div>
-                      <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>
+                      <div className="text-xs ">
                         Confidence: {(result.confidence_score * 100).toFixed(1)}%
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="" style={{ color: "var(--muted-foreground)" }}>→</span>
+                      <span className="">→</span>
                       <span className="text-sm font-medium text-sky-400">{result.resolved_entity}</span>
                     </div>
                     {result.transformations_applied.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>Transformations:</div>
+                        <div className="text-xs ">Transformations:</div>
                         {result.transformations_applied.map((transform, i) => (
-                          <div key={i} className="text-xs " style={{ color: "var(--foreground-secondary)" }}>• {transform}</div>
+                          <div key={i} className="text-xs ">• {transform}</div>
                         ))}
                       </div>
                     )}
                     {result.matched_rules.length > 0 && (
                       <div className="space-y-1">
-                        <div className="text-xs " style={{ color: "var(--muted-foreground)" }}>Matched Rules:</div>
+                        <div className="text-xs ">Matched Rules:</div>
                         {result.matched_rules.map((rule, i) => (
                           <Badge key={i} variant="outline" className="text-xs">
                             {rule}

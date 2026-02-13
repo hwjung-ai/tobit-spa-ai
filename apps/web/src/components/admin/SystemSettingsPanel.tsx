@@ -137,7 +137,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-2.5"
-            style={{ color: "var(--muted-foreground)" }}
+
           >
             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
@@ -167,7 +167,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
             <button
               onClick={() => setChanges({})}
               className="px-4 py-2 rounded-lg hover:opacity-90"
-              style={{ color: "var(--foreground)", backgroundColor: "var(--muted-background)" }}
+
             >
               Cancel
             </button>
@@ -175,7 +175,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
           <button
             onClick={handleResetDefaults}
             className="px-4 py-2 flex items-center space-x-2 rounded-lg hover:opacity-90"
-            style={{ color: "var(--foreground)", backgroundColor: "var(--muted-background)" }}
+
           >
             <RotateCcw className="w-4 h-4" />
             <span>Reset Defaults</span>
@@ -228,7 +228,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600 mx-auto"></div>
               </div>
             ) : currentSettings.length === 0 ? (
-              <p className="text-center py-8" style={{ color: "var(--muted-foreground)" }}>No settings in this category</p>
+              <p className="text-center py-8">No settings in this category</p>
             ) : (
               currentSettings.map((setting) => {
                 const settingKey = setting.key;
@@ -238,7 +238,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
 
                 return (
                   <div key={settingKey} className="border-b pb-4 last:border-b-0">
-                    <label className="block text-sm font-semibold mb-2" style={{ color: "var(--foreground)" }}>
+                    <label className="block text-sm font-semibold mb-2">
                       {settingKey
                         .replace(/_/g, ' ')
                         .replace(/([A-Z])/g, ' $1')
@@ -252,7 +252,7 @@ const SystemSettingsPanel: React.FC<SystemSettingsPanelProps> = ({ onUpdate }) =
                           .slice(1)
                       }
                     </label>
-                    <p className="text-xs mb-2" style={{ color: "var(--muted-foreground)" }}>Setting: {settingKey}</p>
+                    <p className="text-xs mb-2">Setting: {settingKey}</p>
                     <div className={`mb-2 ${hasChanged ? 'p-3 bg-sky-50 rounded' : ''}`}>
                       {renderSettingInput(settingKey, settingValue, currentValue)}
                     </div>

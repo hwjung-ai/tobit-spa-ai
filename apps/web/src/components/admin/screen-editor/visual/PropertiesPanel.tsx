@@ -135,7 +135,7 @@ export default function PropertiesPanel() {
         return {
           name: String(obj.name || `Series ${index + 1}`),
           data_key: String(obj.data_key || obj.dataKey || (index === 0 ? "y" : `y${index + 1}`)),
-          color: String(obj.color || obj.stroke || "#38bdf8"),
+          color: String(obj.color || obj.stroke || "var(--primary-light)"),
         };
       });
   const rawConditionalStyles = formData.conditional_styles;
@@ -556,7 +556,7 @@ export default function PropertiesPanel() {
                             next[index] = { ...next[index], color: e.target.value };
                             handlePropChange("series", next);
                           }}
-                          placeholder="#38bdf8"
+                          placeholder="var(--primary-light)"
                           className="h-8 text-xs bg-slate-800 border-slate-700"
                         />
                       </div>
@@ -1532,20 +1532,20 @@ function FieldBindingControl({
             </p>
           )}
         </div>
-        <span className="text-[10px] uppercase tracking-[0.4em] text-slate-400">
+        <span className="text-tiny uppercase tracking-wider text-slate-400">
           {mode === "binding" ? "Binding" : "Static"}
         </span>
       </div>
       <Tabs value={mode} onValueChange={(val) => setMode(val as "binding" | "static")}>
         <TabsList className="grid grid-cols-2 gap-2 bg-slate-800/50">
           <TabsTrigger
-            className="h-8 text-[10px] uppercase tracking-[0.1em] px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+            className="h-8 text-tiny uppercase tracking-wider px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
             value="static"
           >
             Static
           </TabsTrigger>
           <TabsTrigger
-            className="h-8 text-[10px] uppercase tracking-[0.1em] px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
+            className="h-8 text-tiny uppercase tracking-wider px-2 data-[state=active]:!bg-sky-600 data-[state=active]:!text-white text-slate-400 hover:text-slate-200"
             value="binding"
           >
             Binding

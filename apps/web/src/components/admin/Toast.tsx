@@ -70,7 +70,7 @@ export default function Toast({ message, type = "success", onDismiss, duration =
 
     const toastContent = (
         <div
-            style={{position: "fixed", bottom: "24px", right: "24px", zIndex: 99999, maxWidth: "320px", width: "100%"}}
+
         >
             <div role="alert" aria-live="assertive" className={`rounded-2xl border ${bgColor} px-5 py-4 shadow-2xl`}>
                 <div className="flex items-start gap-3">

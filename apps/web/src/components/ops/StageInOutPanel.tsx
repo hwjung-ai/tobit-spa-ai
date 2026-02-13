@@ -104,22 +104,22 @@ const JsonViewer = ({ data, title }: { data: unknown; title: string }) => {
   return (
     <div className="relative">
       <div className="flex items-center justify-between mb-2">
-        <h4 className="text-sm font-medium text-white">{title}</h4>
+        <h4 className="text-sm font-medium text-foreground">{title}</h4>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded hover: transition" style={{backgroundColor: "var(--surface-elevated)"}}
+            className="p-1 rounded hover:bg-surface-elevated transition bg-surface-overlay text-muted-foreground"
           >
-            {expanded ? <Minimize2 className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} /> : <Maximize2 className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} />}
+            {expanded ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
           </button>
           <button
             onClick={handleCopy}
-            className="p-1 rounded hover: transition" style={{backgroundColor: "var(--surface-elevated)"}}
+            className="p-1 rounded hover:opacity-80 transition bg-surface-elevated"
           >
             {copied ? (
-              <CheckCircle className="h-3 w-3 text-emerald-400" />
+              <CheckCircle className="h-3 w-3 text-success" />
             ) : (
-              <Copy className="h-3 w-3 " style={{color: "var(--muted-foreground)"}} />
+              <Copy className="h-3 w-3 text-muted-foreground" />
             )}
           </button>
         </div>
@@ -127,11 +127,11 @@ const JsonViewer = ({ data, title }: { data: unknown; title: string }) => {
 
       <div
         className={cn(
-          "bg-[var(--surface-overlay)] border border-[var(--border)] rounded overflow-hidden",
+          "bg-surface-overlay border border-variant rounded overflow-hidden",
           expanded ? "max-h-96" : "max-h-24"
         )}
       >
-        <pre className="p-3 text-xs font-mono  overflow-auto" style={{color: "var(--foreground-secondary)"}}>
+        <pre className="p-3 text-xs font-mono text-muted-foreground overflow-auto">
           {formattedJson}
         </pre>
       </div>
@@ -187,16 +187,16 @@ export default function StageInOutPanel({
   };
 
   return (
-    <div className={cn("flex flex-col h-full rounded-2xl border border-[var(--border)] bg-[var(--surface-overlay)]", className)}>
+    <div className={cn("flex flex-col h-full rounded-2xl border border-variant bg-surface-overlay", className)}>
       {/* Header */}
-      <div className="p-4 border-b " style={{borderColor: "var(--border)"}}>
+      <div className="p-4 border-b border-variant">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
               Stage In/Out Panel
             </h2>
             {traceId && (
-              <p className="text-xs  mt-1" style={{color: "var(--muted-foreground)"}}>
+              <p className="text-xs text-muted-foreground mt-1">
                 Trace ID: {traceId.slice(0, 8)}...
               </p>
             )}
@@ -204,14 +204,14 @@ export default function StageInOutPanel({
           <div className="flex items-center gap-2">
             <button
               onClick={toggleAllStages}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border transition hover:bg-slate-200 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800"
             >
               {allExpanded ? "Collapse All" : "Expand All"}
               <ChevronDown className={`h-3 w-3 transition-transform ${allExpanded ? 'rotate-180' : ''}`} />
             </button>
             {compact && (
               <button
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs   border  transition hover:" style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs border border-variant transition hover:opacity-80 bg-surface-elevated text-muted-foreground"
               >
                 <RotateCcw className="h-3 w-3" />
                 Reset
@@ -235,10 +235,10 @@ export default function StageInOutPanel({
                 <div
                   onClick={() => handleStageToggle(stage.stage)}
                   className={cn(
-                    "p-3 rounded-lg border cursor-pointer transition-all hover:border-[var(--border)]",
+                    "p-3 rounded-lg border cursor-pointer transition-all hover:border-variant",
                     stageConfig.bg,
                     stageConfig.border,
-                    isExpanded && "border-[var(--border)]",
+                    isExpanded && "border-variant",
                     expandedStages.has(stage.stage) && "ring-1 ring-white/10"
                   )}
                 >
@@ -248,11 +248,11 @@ export default function StageInOutPanel({
                         <Eye className="h-4 w-4" />
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-white capitalize">
+                        <h3 className="text-sm font-semibold text-foreground capitalize">
                           {stage.stage.replace(/_/g, ' ')}
                         </h3>
                         {stage.timestamp && (
-                          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
+                          <p className="text-xs text-muted-foreground">
                             {new Date(stage.timestamp).toLocaleTimeString()}
                           </p>
                         )}
@@ -266,14 +266,14 @@ export default function StageInOutPanel({
                         </span>
                       </div>
                       {stage.duration_ms !== undefined && (
-                        <div className="text-xs  flex items-center gap-1" style={{color: "var(--muted-foreground)"}}>
+                        <div className="text-xs flex items-center gap-1 text-muted-foreground">
                           <Clock className="h-3 w-3" />
                           {stage.duration_ms}ms
                         </div>
                       )}
                       <ChevronDown
                         className={cn(
-                          "h-4 w-4 text-[var(--muted-foreground)] transition-transform",
+                          "h-4 w-4 text-muted-foreground transition-transform",
                           isExpanded && "rotate-180"
                         )}
                       />
@@ -284,19 +284,19 @@ export default function StageInOutPanel({
                   {stage.diagnostics && (
                     <div className="mt-2 flex items-center gap-4 text-xs">
                       {stage.diagnostics.warnings.length > 0 && (
-                        <div className="flex items-center gap-1 text-amber-400">
+                        <div className="flex items-center gap-1 text-warning">
                           <AlertTriangle className="h-3 w-3" />
                           {stage.diagnostics.warnings.length} warning(s)
                         </div>
                       )}
                       {stage.diagnostics.errors.length > 0 && (
-                        <div className="flex items-center gap-1 text-rose-400">
+                        <div className="flex items-center gap-1 text-error">
                           <AlertTriangle className="h-3 w-3" />
                           {stage.diagnostics.errors.length} error(s)
                         </div>
                       )}
                       {Object.keys(stage.diagnostics.counts).length > 0 && (
-                        <div className="" style={{color: "var(--muted-foreground)"}}>
+                        <div className="text-muted-foreground">
                           {Object.entries(stage.diagnostics.counts)
                             .map(([key, value]) => `${key}: ${value}`)
                             .join(", ")}
@@ -308,10 +308,10 @@ export default function StageInOutPanel({
 
                 {/* Stage Details */}
                 {isExpanded && (
-                  <div className="ml-4 space-y-3 p-3 rounded-lg border  " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                  <div className="ml-4 space-y-3 p-3 rounded-lg border border-variant bg-surface-elevated">
                     {/* Input Section */}
                     <div>
-                      <h4 className="text-xs font-medium  mb-2" style={{color: "var(--muted-foreground)"}}>INPUT</h4>
+                      <h4 className="text-label mb-2">INPUT</h4>
                       <JsonViewer
                         data={stage.input || {}}
                         title="Stage Input"
@@ -320,7 +320,7 @@ export default function StageInOutPanel({
 
                     {/* Output Section */}
                     <div>
-                      <h4 className="text-xs font-medium  mb-2" style={{color: "var(--muted-foreground)"}}>OUTPUT</h4>
+                      <h4 className="text-label mb-2">OUTPUT</h4>
                       <JsonViewer
                         data={stage.output || {}}
                         title="Stage Output"
@@ -330,20 +330,20 @@ export default function StageInOutPanel({
                     {/* References */}
                     {stage.references && stage.references.length > 0 && (
                       <div>
-                        <h4 className="text-xs font-medium  mb-2" style={{color: "var(--muted-foreground)"}}>
+                        <h4 className="text-label mb-2">
                           REFERENCES ({stage.references.length})
                         </h4>
                         <div className="space-y-2 max-h-32 overflow-auto">
                           {stage.references.slice(0, 5).map((ref, idx) => (
                             <div
                               key={idx}
-                              className="p-2 rounded  border  text-xs font-mono " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-overlay)"}}
+                              className="p-2 rounded border text-xs font-mono border-variant text-muted-foreground bg-surface-overlay"
                             >
                               {ref.ref_type || "Reference"}
                             </div>
                           ))}
                           {stage.references.length > 5 && (
-                            <div className="text-xs  text-center py-2" style={{color: "var(--muted-foreground)"}}>
+                            <div className="text-xs text-center py-2 text-muted-foreground">
                               +{stage.references.length - 5} more references
                             </div>
                           )}
@@ -356,7 +356,7 @@ export default function StageInOutPanel({
                 {/* Connection Line */}
                 {index < stages.length - 1 && (
                   <div className="flex justify-center py-2">
-                    <div className="w-px h-6 " style={{backgroundColor: "var(--surface-elevated)"}}></div>
+                    <div className="w-px h-6 bg-surface-elevated"></div>
                   </div>
                 )}
               </div>

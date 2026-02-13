@@ -3,6 +3,7 @@
 import type React from "react";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { cn } from "../../lib/utils";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
@@ -114,7 +115,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
         <section className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <div className="h-4 w-1 bg-sky-500 rounded-full" />
-            <h3 className="text-sm font-semibold  uppercase tracking-wider" style={{color: "var(--foreground-secondary)"}}>Basic Information</h3>
+            <h3 className="text-sm font-semibold  uppercase tracking-wider">Basic Information</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -125,7 +126,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                 value={editingSource.name || ""}
                 onChange={(e) => setEditingSource({ ...editingSource, name: e.target.value })}
                 placeholder="Database Production"
-                className="  focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+                className="  focus:border-sky-500/50 transition-colors"
               />
             </div>
 
@@ -138,10 +139,10 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                   source_type: value as SourceType
                 })}
               >
-                <SelectTrigger className=" " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+                <SelectTrigger className=" ">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
-                <SelectContent className=" " style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                <SelectContent className=" ">
                   {sourceTypes.map((type) => (
                     <SelectItem key={type} value={type}>
                       {SOURCE_TYPE_LABELS[type]}
@@ -160,19 +161,19 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
               onChange={(e) => setEditingSource({ ...editingSource, description: e.target.value })}
               placeholder="Primary analytical database for production metrics"
               rows={2}
-              className="  focus:border-sky-500/50 transition-colors resize-none" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}
+              className="  focus:border-sky-500/50 transition-colors resize-none"
             />
           </div>
         </section>
 
-        <section className="space-y-4 p-4 rounded-xl border   relative overflow-hidden" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <section className="space-y-4 p-4 rounded-xl border   relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-sky-500"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
           </div>
 
           <div className="flex items-center gap-2 mb-2">
             <div className="h-4 w-1 bg-sky-500 rounded-full" />
-            <h3 className="text-sm font-semibold  uppercase tracking-wider" style={{color: "var(--foreground-secondary)"}}>Connection Settings</h3>
+            <h3 className="text-sm font-semibold  uppercase tracking-wider">Connection Settings</h3>
           </div>
 
           {/* Database Connection Fields (PostgreSQL, MySQL, BigQuery, Snowflake) */}
@@ -193,7 +194,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="db.example.com"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
 
@@ -210,7 +211,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                         port: parseInt(e.target.value) || 5432
                       }
                     })}
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
               </div>
@@ -229,7 +230,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="admin"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
 
@@ -246,7 +247,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="production_db"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
               </div>
@@ -270,7 +271,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="neo4j.example.com"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
 
@@ -287,7 +288,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                         port: parseInt(e.target.value) || 7687
                       }
                     })}
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
               </div>
@@ -305,7 +306,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                     }
                   })}
                   placeholder="neo4j"
-                  className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                  className="/50 /80 focus:border-sky-500/50 transition-colors"
                 />
               </div>
             </>
@@ -327,7 +328,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                     }
                   })}
                   placeholder="https://api.example.com"
-                  className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                  className="/50 /80 focus:border-sky-500/50 transition-colors"
                 />
               </div>
 
@@ -345,7 +346,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="api_key_id"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
 
@@ -363,7 +364,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                       }
                     })}
                     placeholder="Bearer token or API secret"
-                    className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                    className="/50 /80 focus:border-sky-500/50 transition-colors"
                   />
                 </div>
               </div>
@@ -385,7 +386,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                     timeout: parseInt(e.target.value) || 30
                   }
                 })}
-                className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="/50 /80 focus:border-sky-500/50 transition-colors"
               />
             </div>
 
@@ -396,16 +397,16 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                 value={editingSource.scope || ""}
                 onChange={(e) => setEditingSource({ ...editingSource, scope: e.target.value })}
                 placeholder="e.g., production, staging"
-                className="/50 /80 focus:border-sky-500/50 transition-colors" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+                className="/50 /80 focus:border-sky-500/50 transition-colors"
               />
             </div>
           </div>
         </section>
 
-        <div className="flex justify-end gap-3 pt-4 border-t /50" style={{borderColor: "var(--border)"}}>
+        <div className="flex justify-end gap-3 pt-4 border-t /50">
           <Button
             variant="ghost"
-            className="hover:" style={{backgroundColor: "var(--surface-elevated)"}}
+            className="hover:"
             onClick={() => {
               setIsEditDialogOpen(false);
               setEditingSource(null);
@@ -434,11 +435,11 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <Card className="/50  " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
+        <Card className="/50  ">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs " style={{color: "var(--foreground-secondary)"}}>Connection Details</CardTitle>
+            <CardTitle className="text-xs ">Connection Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm " style={{color: "var(--foreground-secondary)"}}>
+          <CardContent className="space-y-1 text-sm ">
             <div>Type: {SOURCE_TYPE_LABELS[asset.source_type as SourceType]}</div>
             <div>Host: {asset.connection?.host}</div>
             <div>Port: {asset.connection?.port}</div>
@@ -448,11 +449,11 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           </CardContent>
         </Card>
 
-        <Card className="/50  " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
+        <Card className="/50  ">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs " style={{color: "var(--foreground-secondary)"}}>Metadata</CardTitle>
+            <CardTitle className="text-xs ">Metadata</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-1 text-sm " style={{color: "var(--foreground-secondary)"}}>
+          <CardContent className="space-y-1 text-sm ">
             <div>ID: {asset.asset_id}</div>
             <div>Version: {asset.version}</div>
             <div>Scope: {asset.scope || "None"}</div>
@@ -465,12 +466,12 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
       </div>
 
       {asset.description && (
-        <Card className="/50  " style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-base)"}}>
+        <Card className="/50  ">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs " style={{color: "var(--foreground-secondary)"}}>Description</CardTitle>
+            <CardTitle className="text-xs ">Description</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm " style={{color: "var(--foreground-secondary)"}}>
+            <p className="text-sm ">
               {asset.description}
             </p>
           </CardContent>
@@ -482,7 +483,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           variant="outline"
           size="sm"
           onClick={handleEditSource}
-          className=" /50  hover: hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
+          className=" /50  hover: hover:"
         >
           Edit Connection
         </Button>
@@ -491,7 +492,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           size="sm"
           onClick={handleTestConnection}
           disabled={testMutation.isPending}
-          className=" /50  hover: hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
+          className=" /50  hover: hover:"
         >
           {testMutation.isPending ? "Testing..." : "Test Connection"}
         </Button>
@@ -503,7 +504,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
           setEditingSource(null);
         }
       }}>
-        <DialogContent className="max-w-3xl    shadow-2xl" style={{borderColor: "var(--border)", color: "var(--foreground)", backgroundColor: "var(--surface-base)"}}>
+        <DialogContent className="max-w-3xl    shadow-2xl">
           <DialogHeader className="mb-4">
             <div className="flex items-center gap-3 mb-1">
               <div className="p-2 bg-sky-500/10 rounded-lg">
@@ -513,7 +514,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                 <DialogTitle className="text-xl font-bold tracking-tight">
                   Edit Source
                 </DialogTitle>
-                <DialogDescription className="" style={{color: "var(--muted-foreground)"}}>
+                <DialogDescription className="">
                   Update connection settings and metadata
                 </DialogDescription>
               </div>
@@ -550,12 +551,12 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
               {testResults.success && (
                 <div className="space-y-2">
                   {testResults.execution_time_ms && (
-                    <div className="text-sm " style={{color: "var(--foreground-secondary)"}}>
+                    <div className="text-sm ">
                       Execution time: {testResults.execution_time_ms}ms
                     </div>
                   )}
                   {testResults.test_result && (
-                    <div className="text-sm " style={{color: "var(--foreground-secondary)"}}>
+                    <div className="text-sm ">
                       Result: {JSON.stringify(testResults.test_result, null, 2)}
                     </div>
                   )}
@@ -568,7 +569,7 @@ export default function SourceAssetForm({ asset, onSave }: SourceAssetFormProps)
                 </div>
               )}
 
-              <div className="text-xs " style={{color: "var(--muted-foreground)"}}>
+              <div className="text-xs ">
                 {testResults.message}
               </div>
             </div>

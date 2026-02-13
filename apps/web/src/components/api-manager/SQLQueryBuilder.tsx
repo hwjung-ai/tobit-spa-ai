@@ -224,7 +224,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                     rules: [...prev.rules, { field: "", operator: "=", value: "" }],
                   }))
                 }
-                className="ml-auto rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-sky-400 transition hover:border-sky-500"
+                className="ml-auto rounded-lg border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-tiny uppercase tracking-normal text-sky-400 transition hover:border-sky-500"
               >
                 + Rule
               </button>
@@ -295,7 +295,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
                           }))
                         }
                         disabled={readOnly}
-                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
+                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-tiny uppercase tracking-normal text-rose-400 transition hover:border-rose-500"
                       >
                         ×
                       </button>
@@ -317,7 +317,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
               value={orderBy.column}
               onChange={(e) => setOrderBy({ ...orderBy, column: e.target.value })}
               disabled={readOnly}
-              className="builder-select-field flex-1 rounded-2xl border px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              className="builder-select-field flex-1 rounded-2xl border px-3 py-2 text-sm text-foreground outline-none transition focus:border-sky-500"
             >
               <option value="">-- Select column --</option>
               {TABLES[selectedTable].map((column) => (
@@ -330,7 +330,7 @@ export default function SQLQueryBuilder({ query, onChange, readOnly }: SQLQueryB
               value={orderBy.direction}
               onChange={(e) => setOrderBy({ ...orderBy, direction: e.target.value as "ASC" | "DESC" })}
               disabled={readOnly}
-              className="builder-select-field rounded-2xl border px-3 py-2 text-sm text-white outline-none transition focus:border-sky-500"
+              className="builder-select-field rounded-2xl border px-3 py-2 text-sm text-foreground outline-none transition focus:border-sky-500"
             >
               <option value="ASC">ASC</option>
               <option value="DESC">DESC</option>

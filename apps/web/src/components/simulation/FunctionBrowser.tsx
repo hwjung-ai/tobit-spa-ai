@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { authenticatedFetch } from "@/lib/apiClient";
+import { cn } from "@/lib/utils";
 
 type FunctionCategory = "rule" | "statistical" | "ml" | "domain";
 type FunctionComplexity = "basic" | "intermediate" | "advanced";
@@ -160,50 +161,40 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
     }
   };
 
-  const getCategoryColor = (category: FunctionCategory) => {
-    switch (category) {
-      case "rule": return "text-emerald-400";
-      case "statistical": return "text-sky-400";
-      case "ml": return "text-purple-400";
-      case "domain": return "text-amber-400";
-      default: return "text-muted-foreground";
-    }
-  };
-
   const getComplexityBadge = (complexity: FunctionComplexity) => {
     switch (complexity) {
       case "basic": return "bg-emerald-500/20 text-emerald-300";
       case "intermediate": return "bg-sky-500/20 text-sky-300";
       case "advanced": return "bg-purple-500/20 text-purple-300";
-      default: return "bg-[var(--muted-background)] text-[var(--foreground-secondary)]";
+      default: return "bg-slate-500/20 text-slate-300";
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section className="rounded-3xl border  /70 p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-        <h1 className="text-2xl font-semibold text-white">Simulation Function Library</h1>
-        <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>
+      <section className="br-panel p-6 bg-surface-elevated">
+        <h1 className="text-2xl font-semibold text-foreground">Simulation Function Library</h1>
+        <p className="mt-2 text-sm text-muted-standard">
           Browse and select simulation functions organized by category and complexity.
         </p>
       </section>
 
       {/* Filters */}
       <section className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="space-y-4 rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-          <h2 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Filters</h2>
+        <aside className="space-y-4 br-section p-5 bg-surface-overlay">
+          <h2 className="text-label">Filters</h2>
 
           {/* Search */}
-          <label className="block text-xs uppercase tracking-wider text-muted-foreground">
+          <label className="block text-label-sm">
             Search
           </label>
 
           {/* Category Filter */}
-          <label className="block text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
+          <label className="block text-label-sm">
             Category
             <select
-              className="mt-2 w-full rounded-xl border   px-3 py-2 text-sm text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+              className="mt-2 w-full br-card px-3 py-2 text-sm text-foreground border-variant bg-surface-elevated"
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
@@ -214,10 +205,10 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           </label>
 
           {/* Complexity Filter */}
-          <label className="block text-xs uppercase tracking-[0.2em] " style={{color: "var(--muted-foreground)"}}>
+          <label className="block text-label-sm">
             Complexity
             <select
-              className="mt-2 w-full rounded-xl border   px-3 py-2 text-sm text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+              className="mt-2 w-full br-card px-3 py-2 text-sm text-foreground border-variant bg-surface-elevated"
               value={complexityFilter}
               onChange={(e) => setComplexityFilter(e.target.value)}
             >
@@ -228,19 +219,19 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           </label>
 
           {/* Stats */}
-          <div className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
-            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Showing {filtered.length} of {functions.length} functions</p>
+          <div className="br-card p-3 bg-surface-elevated">
+            <p className="text-xs text-muted-standard">Showing {filtered.length} of {functions.length} functions</p>
           </div>
         </aside>
 
         {/* Function List */}
         <main className="space-y-4">
           {loading ? (
-            <div className="flex items-center justify-center p-12 " style={{color: "var(--muted-foreground)"}}>
+            <div className="flex items-center justify-center p-12 text-muted-standard">
               Loading function library...
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex items-center justify-center p-12 " style={{color: "var(--muted-foreground)"}}>
+            <div className="flex items-center justify-center p-12 text-muted-standard">
               No functions match your filters
             </div>
           ) : (
@@ -249,37 +240,38 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
                 <button
                   key={func.id}
                   onClick={() => handleFunctionClick(func)}
-                  className={`rounded-2xl border p-4 text-left transition ${
+                  className={cn(
+                    "br-section p-4 text-left transition bg-surface-overlay border-variant",
                     selectedFunction?.id === func.id
                       ? "border-sky-500 bg-sky-500/10"
-                      : "  hover:"
-                  }`} style={{backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)"}}
+                      : "hover:border-slate-400 dark:hover:border-slate-600"
+                  )}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className={`font-semibold ${getCategoryColor(func.category)}`}>
+                        <h3 className="font-semibold text-foreground">
                           {func.name}
                         </h3>
-                        <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded ${getComplexityBadge(func.complexity)}`}>
+                        <span className={cn("text-xs uppercase tracking-wider px-2 py-0.5 rounded-full", getComplexityBadge(func.complexity))}>
                           {func.complexity}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm " style={{color: "var(--muted-foreground)"}}>{func.description}</p>
+                      <p className="mt-1 text-sm text-muted-standard">{func.description}</p>
                       <div className="mt-2 flex flex-wrap gap-1">
                         {func.tags.slice(0, 3).map((tag) => (
-                          <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded  " style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}>
+                          <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full text-muted-foreground bg-surface-base border border-variant">
                             {tag}
                           </span>
                         ))}
                         {func.tags.length > 3 && (
-                          <span className="text-[10px] " style={{color: "var(--muted-foreground)"}}>+{func.tags.length - 3} more</span>
+                          <span className="text-xs text-muted-foreground">+{func.tags.length - 3} more</span>
                         )}
                       </div>
                     </div>
                     <div className="ml-4 text-right">
-                      <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Confidence</p>
-                      <p className="text-lg font-semibold text-white">{(func.confidence * 100).toFixed(0)}%</p>
+                      <p className="text-xs text-muted-foreground">Confidence</p>
+                      <p className="text-lg font-semibold text-foreground">{(func.confidence * 100).toFixed(0)}%</p>
                     </div>
                   </div>
                 </button>
@@ -291,23 +283,23 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
 
       {/* Function Detail Panel */}
       {selectedFunction && (
-        <section className="rounded-3xl border   p-6" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+        <section className="br-panel p-6 bg-surface-overlay border-variant">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-semibold text-white">{selectedFunction.name}</h2>
-                <span className={`text-xs uppercase tracking-[0.2em] px-2 py-1 rounded ${getComplexityBadge(selectedFunction.complexity)}`}>
+                <h2 className="text-xl font-semibold text-foreground">{selectedFunction.name}</h2>
+                <span className={cn("text-xs uppercase tracking-wider px-2 py-1 rounded-full", getComplexityBadge(selectedFunction.complexity))}>
                   {selectedFunction.complexity}
                 </span>
-                <span className={`text-xs uppercase tracking-[0.2em] ${getCategoryColor(selectedFunction.category)}`}>
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">
                   {selectedFunction.category}
                 </span>
               </div>
-              <p className="mt-2 text-sm " style={{color: "var(--foreground-secondary)"}}>{selectedFunction.description}</p>
-              <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>ID: {selectedFunction.id}</p>
+              <p className="mt-2 text-sm text-muted-standard">{selectedFunction.description}</p>
+              <p className="mt-1 text-xs text-muted-standard">ID: {selectedFunction.id}</p>
             </div>
             <div className="ml-6 text-right">
-              <p className="text-xs " style={{color: "var(--muted-foreground)"}}>Confidence</p>
+              <p className="text-xs text-muted-standard">Confidence</p>
               <p className="text-2xl font-semibold text-emerald-400">{(selectedFunction.confidence * 100).toFixed(0)}%</p>
             </div>
           </div>
@@ -315,21 +307,21 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           {/* Parameters */}
           {selectedFunction.parameters && selectedFunction.parameters.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Parameters</h3>
+              <h3 className="text-label">Parameters</h3>
               <div className="mt-3 grid gap-2">
                 {selectedFunction.parameters.map((param) => (
-                  <div key={param.name} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                  <div key={param.name} className="br-card p-3 bg-surface-base border-variant">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-white">{param.name}</p>
-                        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{param.description}</p>
+                        <p className="text-sm font-medium text-foreground">{param.name}</p>
+                        <p className="text-xs text-muted-standard">{param.description}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{param.type}</p>
-                        {param.unit && <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{param.unit}</p>}
+                        <p className="text-xs text-muted-standard">{param.type}</p>
+                        {param.unit && <p className="text-xs text-muted-standard">{param.unit}</p>}
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center gap-4 text-xs " style={{color: "var(--muted-foreground)"}}>
+                    <div className="mt-2 flex items-center gap-4 text-xs text-muted-standard">
                       {param.min !== undefined && <span>Min: {param.min}</span>}
                       {param.max !== undefined && <span>Max: {param.max}</span>}
                       {param.step !== undefined && <span>Step: {param.step}</span>}
@@ -345,15 +337,15 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           {/* Outputs */}
           {selectedFunction.outputs && selectedFunction.outputs.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Outputs</h3>
+              <h3 className="text-label">Outputs</h3>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {selectedFunction.outputs.map((output) => (
-                  <div key={output.name} className="rounded-xl border  /50 p-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+                  <div key={output.name} className="br-card p-3 bg-surface-base border-variant">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-white">{output.name}</p>
-                      <span className="text-xs " style={{color: "var(--muted-foreground)"}}>{output.unit}</span>
+                      <p className="text-sm font-medium text-foreground">{output.name}</p>
+                      <span className="text-xs text-muted-standard">{output.unit}</span>
                     </div>
-                    <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>{output.description}</p>
+                    <p className="mt-1 text-xs text-muted-standard">{output.description}</p>
                   </div>
                 ))}
               </div>
@@ -363,31 +355,31 @@ export default function FunctionBrowser({ onSelectFunction, selectedFunctionId }
           {/* Metadata */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Assumptions</h3>
+              <h3 className="text-label">Assumptions</h3>
               <ul className="mt-2 space-y-1">
                 {selectedFunction.assumptions.map((assumption, idx) => (
-                  <li key={idx} className="text-xs " style={{color: "var(--muted-foreground)"}}>• {assumption}</li>
+                  <li key={idx} className="text-xs text-muted-standard">• {assumption}</li>
                 ))}
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>References</h3>
+              <h3 className="text-label">References</h3>
               <ul className="mt-2 space-y-1">
                 {selectedFunction.references.map((ref, idx) => (
-                  <li key={idx} className="text-xs  truncate" style={{color: "var(--muted-foreground)"}}>{ref}</li>
+                  <li key={idx} className="text-xs text-muted-standard truncate">{ref}</li>
                 ))}
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>Version</h3>
-              <p className="mt-2 text-xs " style={{color: "var(--muted-foreground)"}}>{selectedFunction.version}</p>
+              <h3 className="text-label">Version</h3>
+              <p className="mt-2 text-xs text-muted-standard">{selectedFunction.version}</p>
             </div>
           </div>
         </section>
       )}
 
       {statusMessage && (
-        <div className="rounded-2xl border border-amber-700/40 bg-amber-950/20 p-4">
+        <div className="br-section border-amber-700/40 bg-amber-950/20 p-4">
           <p className="text-sm text-amber-300">{statusMessage}</p>
         </div>
       )}

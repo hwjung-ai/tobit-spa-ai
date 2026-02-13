@@ -277,7 +277,7 @@ export default function PythonBuilder({ code, onChange, readOnly }: PythonBuilde
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <div className="text-[10px] uppercase tracking-normal" style={{color: "var(--muted-foreground)"}}>
+        <div className="text-tiny uppercase tracking-normal text-muted-foreground">
           Python 3.11+ syntax
         </div>
         <button

@@ -93,7 +93,7 @@ export default function TopologyMap({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8 " style={{color: "var(--muted-foreground)"}}>
+      <div className="flex items-center justify-center p-8 text-muted-standard">
         Loading topology...
       </div>
     );
@@ -101,7 +101,7 @@ export default function TopologyMap({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center p-8 text-rose-400">
+      <div className="flex items-center justify-center p-8 text-error">
         {error}
       </div>
     );
@@ -109,7 +109,7 @@ export default function TopologyMap({
 
   if (!topology) {
     return (
-      <div className="flex items-center justify-center p-8 " style={{color: "var(--muted-foreground)"}}>
+      <div className="flex items-center justify-center p-8 text-muted-standard">
         {enabled ? "No topology data" : "Run Simulation to load topology"}
       </div>
     );
@@ -119,15 +119,15 @@ export default function TopologyMap({
   const nodePositions = calculateNodePositions(topology);
 
   return (
-    <div className="rounded-3xl border   p-5" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
-      <h2 className="text-sm font-semibold uppercase tracking-wider " style={{color: "var(--foreground-secondary)"}}>
+    <div className="ui-box">
+      <h2 className="text-label">
         System Topology Map
       </h2>
-      <p className="mt-1 text-xs " style={{color: "var(--muted-foreground)"}}>
+      <p className="mt-1 text-xs text-muted-standard">
         시뮬레이션 결과를 시스템 토폴로지에서 확인하세요.
       </p>
 
-      <div className="mt-4 h-[500px] overflow-hidden rounded-2xl border  /50" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+      <div className="mt-4 h-[500px] overflow-hidden rounded-2xl border border-variant bg-surface-elevated">
         <svg width="100%" height="100%" viewBox="0 0 800 500">
           {/* 링크 그리기 */}
           {topology.links.map((link, index) => {
@@ -145,7 +145,7 @@ export default function TopologyMap({
                 y1={source.y}
                 x2={target.x}
                 y2={target.y}
-                stroke={isTrafficLink ? "#38bdf8" : "#64748b"}
+                stroke={isTrafficLink ? "var(--primary)" : "var(--muted-foreground)"}
                 strokeWidth={strokeWidth}
                 strokeOpacity={0.6}
                 markerEnd={isTrafficLink ? "url(#arrowhead)" : undefined}
@@ -168,7 +168,7 @@ export default function TopologyMap({
                 x={midX}
                 y={midY - 10}
                 fontSize="10"
-                fill="#94a3b8"
+                fill="var(--muted-foreground)"
                 textAnchor="middle"
               >
                 {link.traffic_change_pct >= 0 ? "+" : ""}
@@ -183,12 +183,13 @@ export default function TopologyMap({
             if (!pos) return null;
 
             const radius = 25 + Math.abs(node.load_change_pct) / 5;
+            // Use semantic colors: critical=error, warning=warning, healthy=success
             const color =
               node.status === "critical"
-                ? "#ef4444"
+                ? "var(--error)"
                 : node.status === "warning"
-                ? "#f59e0b"
-                : "#22c55e";
+                ? "var(--warning)"
+                : "var(--success)";
 
             return (
               <g key={node.id}>
@@ -198,7 +199,7 @@ export default function TopologyMap({
                   cy={pos.y}
                   r={radius}
                   fill={color}
-                  stroke="#1e293b"
+                  stroke="var(--border)"
                   strokeWidth={2}
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setSelectedNode(node)}
@@ -222,7 +223,7 @@ export default function TopologyMap({
                   x={pos.x}
                   y={pos.y + radius + 15}
                   fontSize="10"
-                  fill="#e2e8f0"
+                  fill="var(--foreground)"
                   textAnchor="middle"
                   className="pointer-events-none"
                 >
@@ -235,7 +236,7 @@ export default function TopologyMap({
       </div>
 
       {/* 범례 */}
-      <div className="mt-3 flex items-center justify-between text-xs " style={{color: "var(--muted-foreground)"}}>
+      <div className="mt-3 flex items-center justify-between text-xs text-muted-standard">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-full bg-emerald-500" />
@@ -253,52 +254,52 @@ export default function TopologyMap({
         <div className="flex items-center gap-1">
           <div className="w-3 h-1 bg-sky-400" />
           <span>Traffic</span>
-          <div className="w-3 h-1 0" style={{backgroundColor: "var(--surface-base)"}} />
+          <div className="w-3 h-1 bg-slate-400" />
           <span>Dependency</span>
         </div>
       </div>
 
       {/* 선택된 노드 상세 정보 */}
       {selectedNode && (
-        <div className="mt-4 rounded-2xl border  /50 p-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+        <div className="mt-4 ui-subbox">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h3 className="font-semibold text-white text-lg">{selectedNode.name}</h3>
+              <h3 className="text-lg font-semibold text-foreground">{selectedNode.name}</h3>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="" style={{color: "var(--muted-foreground)"}}>Type:</span>
-                  <span className="ml-2 text-white capitalize">{selectedNode.type}</span>
+                  <span className="text-muted-standard">Type:</span>
+                  <span className="ml-2 text-foreground capitalize">{selectedNode.type}</span>
                 </div>
                 <div>
-                  <span className="" style={{color: "var(--muted-foreground)"}}>Status:</span>
+                  <span className="text-muted-standard">Status:</span>
                   <span
                     className={`ml-2 ${
                       selectedNode.status === "critical"
-                        ? "text-rose-400"
+                        ? "text-error"
                         : selectedNode.status === "warning"
-                        ? "text-amber-400"
-                        : "text-emerald-400"
+                        ? "text-warning"
+                        : "text-success"
                     }`}
                   >
                     {selectedNode.status}
                   </span>
                 </div>
                 <div>
-                  <span className="" style={{color: "var(--muted-foreground)"}}>Baseline:</span>
-                  <span className="ml-2 text-white">{selectedNode.baseline_load}%</span>
+                  <span className="text-muted-standard">Baseline:</span>
+                  <span className="ml-2 text-foreground">{selectedNode.baseline_load}%</span>
                 </div>
                 <div>
-                  <span className="" style={{color: "var(--muted-foreground)"}}>Simulated:</span>
-                  <span className="ml-2 text-white">{selectedNode.simulated_load}%</span>
+                  <span className="text-muted-standard">Simulated:</span>
+                  <span className="ml-2 text-foreground">{selectedNode.simulated_load}%</span>
                 </div>
               </div>
               <div className="mt-2">
-                <span className="" style={{color: "var(--muted-foreground)"}}>Change:</span>
+                <span className="text-muted-standard">Change:</span>
                 <span
                   className={`ml-2 font-semibold ${
                     selectedNode.load_change_pct >= 0
-                      ? "text-amber-400"
-                      : "text-emerald-400"
+                      ? "text-warning"
+                      : "text-success"
                   }`}
                 >
                   {selectedNode.load_change_pct >= 0 ? "+" : ""}
@@ -308,7 +309,7 @@ export default function TopologyMap({
             </div>
             <button
               onClick={() => setSelectedNode(null)}
-              className="ml-4  hover:text-white transition" style={{color: "var(--muted-foreground)"}}
+              className="ml-4 text-muted-standard hover:text-foreground transition"
             >
               ✕
             </button>

@@ -45,11 +45,11 @@ const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = fal
   if (loading) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6 animate-pulse">
-        <div className="h-6 rounded w-1/3 mb-4" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
+        <div className="h-6 rounded w-1/3 mb-4"></div>
         <div className="space-y-3">
-          <div className="h-4 rounded" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
-          <div className="h-4 rounded" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
-          <div className="h-4 rounded" style={{ backgroundColor: "var(--surface-elevated)"  }}></div>
+          <div className="h-4 rounded"></div>
+          <div className="h-4 rounded"></div>
+          <div className="h-4 rounded"></div>
         </div>
       </div>
     );
@@ -58,7 +58,7 @@ const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = fal
   if (!data) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-lg border dark:border-slate-700 p-6">
-        <p className="" style={{ color: "var(--muted-foreground)" }}>No health data available</p>
+        <p className="">No health data available</p>
       </div>
     );
   }
@@ -109,7 +109,7 @@ const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = fal
               <span>CPU Usage</span>
               <span className="font-semibold">{data.resource.cpu_percent.toFixed(1)}%</span>
             </div>
-            <div className="w-full rounded-full h-2 opacity-30" style={{ backgroundColor: "var(--surface-elevated)"  }}>
+            <div className="w-full rounded-full h-2 opacity-30">
               <div
                 className={`h-2 rounded-full ${getProgressBarColor(data.resource.cpu_percent)} transition-all`}
                 style={{ width: `${Math.min(data.resource.cpu_percent, 100)}%` }}
@@ -122,7 +122,7 @@ const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = fal
               <span>Memory Usage</span>
               <span className="font-semibold">{data.resource.memory_percent.toFixed(1)}%</span>
             </div>
-            <div className="w-full rounded-full h-2 opacity-30" style={{ backgroundColor: "var(--surface-elevated)"  }}>
+            <div className="w-full rounded-full h-2 opacity-30">
               <div
                 className={`h-2 rounded-full ${getProgressBarColor(data.resource.memory_percent)} transition-all`}
                 style={{ width: `${Math.min(data.resource.memory_percent, 100)}%` }}
@@ -138,7 +138,7 @@ const SystemHealthCard: React.FC<SystemHealthCardProps> = ({ data, loading = fal
               <span>Disk Usage</span>
               <span className="font-semibold">{data.resource.disk_percent.toFixed(1)}%</span>
             </div>
-            <div className="w-full rounded-full h-2 opacity-30" style={{ backgroundColor: "var(--surface-elevated)"  }}>
+            <div className="w-full rounded-full h-2 opacity-30">
               <div
                 className={`h-2 rounded-full ${getProgressBarColor(data.resource.disk_percent)} transition-all`}
                 style={{ width: `${Math.min(data.resource.disk_percent, 100)}%` }}

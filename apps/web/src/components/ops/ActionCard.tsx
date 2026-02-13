@@ -245,7 +245,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
             )}
           </CardHeader>
           <CardContent>
-            <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
+            <p className="text-xs ">
               Click to see available recovery actions
             </p>
           </CardContent>
@@ -262,7 +262,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
 
         {!selectedAction ? (
           <div className="space-y-4">
-            <div className="text-sm " style={{color: "var(--foreground-secondary)"}}>
+            <div className="text-sm ">
               {trigger ? (
                 <p>
                   Triggered by: <strong>{trigger.trigger_type}</strong> at {trigger.stage_name}
@@ -284,7 +284,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
                 {ACTION_TYPES.map((action) => (
                   <div
                     key={action.id}
-                    className="rounded-lg border  p-4 cursor-pointer hover: transition-colors" style={{borderColor: "var(--border)"}}
+                    className="rounded-lg border  p-4 cursor-pointer hover: transition-colors"
                     onClick={() => setSelectedAction(action.id)}
                   >
                     <div className="flex items-center justify-between mb-2">
@@ -293,7 +293,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
                         {action.id}
                       </Badge>
                     </div>
-                    <p className="text-xs " style={{color: "var(--muted-foreground)"}}>{action.description}</p>
+                    <p className="text-xs ">{action.description}</p>
                     {selectedAction === action.id && (
                       <div className="mt-2 text-xs text-sky-400">
                         ✓ Selected
@@ -304,7 +304,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
               </TabsContent>
 
               <TabsContent value="history" className="space-y-3">
-                <div className="text-sm " style={{color: "var(--muted-foreground)"}}>
+                <div className="text-sm ">
                   Recently executed actions will appear here
                 </div>
               </TabsContent>
@@ -323,7 +323,7 @@ export default function ActionCard({ trigger, stage, onAction }: ActionCardProps
               </Button>
             </div>
 
-            <div className="text-sm " style={{color: "var(--muted-foreground)"}}>
+            <div className="text-sm ">
               {selectedActionData?.description}
             </div>
 

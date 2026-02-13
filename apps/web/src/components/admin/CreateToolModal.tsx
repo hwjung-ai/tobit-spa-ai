@@ -327,12 +327,12 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
             <div className="rounded-2xl border max-w-2xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[90vh] bg-surface-base border-variant">
                 <div className="flex items-center justify-between p-6 border-b border-variant">
                     <div>
-                        <h2 className="text-xl font-bold text-white">Create New Tool</h2>
+                        <h2 className="text-xl font-bold text-foreground">Create New Tool</h2>
                         <p className="text-xs mt-1 text-muted-foreground">Define a new orchestration tool asset</p>
                     </div>
                     <button
                         onClick={onClose}
-                        className="hover:text-white transition-colors text-muted-foreground"
+                        className="hover:text-foreground transition-colors text-muted-foreground"
                     >
                         <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -447,7 +447,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                 <button
                                     onClick={handleMcpDiscover}
                                     disabled={mcpIsDiscovering || !mcpServerUrl.trim()}
-                                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
+                                    className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
                                 >
                                     {mcpIsDiscovering ? "Discovering..." : "Discover Tools"}
                                 </button>
@@ -492,7 +492,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                             isSelected ? "bg-cyan-500 border-cyan-500" : "border-slate-500"
                                                         }`}>
                                                             {isSelected && (
-                                                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <svg className="w-3 h-3 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                                                 </svg>
                                                             )}
@@ -529,7 +529,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                             <button
                                                 onClick={handleMcpImportSelected}
                                                 disabled={mcpIsImporting}
-                                                className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
+                                                className="w-full py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-foreground rounded-lg transition-all font-bold text-xs uppercase tracking-wider"
                                             >
                                                 {mcpIsImporting
                                                     ? "Importing..."
@@ -555,7 +555,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                     </div>
                                 )}
 
-                                <p className="text-xs" style={{color: "var(--muted-foreground)"}}>
+                                <p className="text-xs">
                                     MCP 서버에 접속하여 제공하는 tool 목록을 자동으로 가져옵니다. 선택한 tool을 일괄 import하거나, "Fill Form" 버튼으로 개별 등록할 수 있습니다.
                                 </p>
                             </div>
@@ -654,7 +654,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
+                            className="flex-1 py-3 hover:text-foreground transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
                         >
                             Cancel
                         </button>
@@ -673,7 +673,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                     <div className="p-6 border-t flex gap-3 border-variant">
                         <button
                             onClick={onClose}
-                            className="flex-1 py-3 hover:text-white transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
+                            className="flex-1 py-3 hover:text-foreground transition-colors font-bold uppercase tracking-widest text-xs text-muted-foreground"
                         >
                             Close
                         </button>

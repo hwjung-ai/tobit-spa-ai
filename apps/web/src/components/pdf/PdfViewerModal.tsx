@@ -499,7 +499,7 @@ export function PdfViewerModal({
     >
       <div
         ref={containerRef}
-        className={`absolute overflow-hidden  shadow-2xl ${isFullscreen ? "rounded-lg" : "rounded-2xl"}`} style={{backgroundColor: "var(--surface-base)", left: modalRect.x, top: modalRect.y, width: modalRect.width, height: modalRect.height}}
+        className={`absolute overflow-hidden shadow-2xl bg-surface-base ${isFullscreen ? "rounded-lg" : "rounded-2xl"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {!isFullscreen && (
@@ -516,40 +516,40 @@ export function PdfViewerModal({
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b   px-4 py-3" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-elevated)"}}>
+        <div className="flex items-center justify-between border-b border-variant bg-surface-elevated px-4 py-3">
           <div
             className="flex cursor-move select-none items-center gap-2"
             onMouseDown={startMove}
             onDragStart={(e) => e.preventDefault()}
           >
             <span className="text-lg">📄</span>
-            <span className="max-w-md truncate text-sm font-medium text-white">
+            <span className="max-w-md truncate text-sm font-medium text-foreground">
               {filename}
             </span>
           </div>
           <div className="flex items-center gap-2">
             {/* Page navigation */}
             {numPages > 1 && (
-              <div className="flex items-center gap-1 rounded-lg  px-2 py-1" style={{backgroundColor: "var(--surface-elevated)"}}>
+              <div className="flex items-center gap-1 rounded-lg bg-surface-elevated px-2 py-1">
                 <button
                   type="button"
                   onClick={goToPreviousPage}
                   disabled={currentPage <= 1}
-                  className="rounded p-1  transition hover: disabled:opacity-30 disabled:hover:bg-transparent" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
+                  className="rounded p-1 text-muted-foreground transition hover:bg-surface-overlay disabled:opacity-30 disabled:hover:bg-transparent"
                   aria-label="이전 페이지"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <span className="min-w-[60px] text-center text-xs " style={{color: "var(--foreground-secondary)"}}>
+                <span className="min-w-[60px] text-center text-xs text-muted-foreground">
                   {currentPage} / {numPages}
                 </span>
                 <button
                   type="button"
                   onClick={goToNextPage}
                   disabled={currentPage >= numPages}
-                  className="rounded p-1  transition hover: disabled:opacity-30 disabled:hover:bg-transparent" style={{color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
+                  className="rounded p-1 text-muted-foreground transition hover:bg-surface-overlay disabled:opacity-30 disabled:hover:bg-transparent"
                   aria-label="다음 페이지"
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -574,7 +574,7 @@ export function PdfViewerModal({
               <button
                 type="button"
                 onClick={() => window.open(viewerHref, "_blank", "noopener,noreferrer")}
-                className="rounded-lg border   p-1.5  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
+                className="rounded-lg border border-variant bg-surface-elevated p-1.5 text-muted-foreground transition hover:bg-surface-overlay"
                 aria-label="페이지 뷰어로 전환"
                 title="페이지 뷰어로 전환"
               >
@@ -590,7 +590,7 @@ export function PdfViewerModal({
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="rounded-lg border   p-1.5  transition hover:" style={{borderColor: "var(--border)", color: "var(--foreground-secondary)", backgroundColor: "var(--surface-elevated)"}}
+              className="rounded-lg border border-variant bg-surface-elevated p-1.5 text-muted-foreground transition hover:bg-surface-overlay"
               aria-label={isFullscreen ? "창 크기 복원" : "전체 화면"}
               title={isFullscreen ? "복원" : "전체 화면"}
             >
@@ -612,7 +612,7 @@ export function PdfViewerModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full p-1.5  transition hover: hover:text-white" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}
+              className="rounded-full bg-surface-elevated p-1.5 text-muted-foreground transition hover:bg-surface-overlay hover:text-foreground"
               aria-label="닫기"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -623,7 +623,7 @@ export function PdfViewerModal({
         </div>
 
         {/* Content */}
-        <div className="relative flex h-[calc(100%-60px)] items-center justify-center overflow-auto  p-4" style={{backgroundColor: "var(--surface-base)"}}>
+        <div className="relative flex h-[calc(100%-60px)] items-center justify-center overflow-auto bg-surface-base p-4">
 
           {pdfError && (
             <div className="text-center">
@@ -652,15 +652,15 @@ export function PdfViewerModal({
 
           {/* Loading overlay */}
           {pdfLoading && (pdfBlob || pdfBlobUrl || pdfFile) && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 /90" style={{backgroundColor: "var(--surface-base)"}}>
-              <div className="h-10 w-10 animate-spin rounded-full border-4  border-t-sky-500" style={{borderColor: "var(--border)"}} />
-              <p className="text-sm " style={{color: "var(--muted-foreground)"}}>PDF를 불러오는 중...</p>
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-surface-base/90">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-variant border-t-sky-500" />
+              <p className="text-sm text-muted-foreground">PDF를 불러오는 중...</p>
             </div>
           )}
         </div>
 
         {/* Footer hints */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full /80 px-4 py-1.5 text-xs  backdrop-blur-sm" style={{color: "var(--muted-foreground)", backgroundColor: "var(--surface-elevated)"}}>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-surface-elevated/80 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
           ESC로 닫기 • 방향키로 페이지 이동
         </div>
       </div>

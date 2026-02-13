@@ -159,7 +159,7 @@ const getBadgeStyle = (status: DocumentStatus): string => {
     case "failed":
       return `${base} bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/40`;
     default:
-      return `${base} border-slate-200 dark:border-slate-800`;
+      return `${base} border-variant`;
   }
 };
 
@@ -1230,7 +1230,7 @@ function DocumentsPageContent() {
                               onClick={() => setSelectedDocHistoryId(entry.id)}
                               className="text-left"
                             >
-                              <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
+                              <div className="flex items-center justify-between text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
                                 <span>{entry.status === "error" ? "Error" : "OK"}</span>
                                 <div className="flex items-center gap-2">
                                   <span>{formatTimestamp(entry.createdAt)}</span>
@@ -1251,7 +1251,7 @@ function DocumentsPageContent() {
                               <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-50">
                                 {entry.question}
                               </p>
-                              <p className="text-[12px] text-slate-600 dark:text-slate-400">
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
                                 {entry.summary}
                               </p>
                             </div>
@@ -1263,7 +1263,7 @@ function DocumentsPageContent() {
                   {selectedDocHistoryEntry ? (
                     <div className="group relative mt-3 rounded-2xl border p-3 text-sm bg-slate-100 border-slate-200 text-slate-900 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-50">
                       <div className="flex items-center justify-between">
-                        <p className="text-xs uppercase tracking-[0.3em] text-slate-600 dark:text-slate-400">
+                        <p className="text-xs uppercase tracking-wider text-slate-600 dark:text-slate-400">
                           Answer
                         </p>
                         <div className="flex items-center gap-3">

@@ -37,8 +37,7 @@ export const Dialog = ({ open, onOpenChange, children, ...rest }: DialogProps) =
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         aria-hidden="true"
-        className="fixed inset-0 backdrop-blur-sm animate-in fade-in duration-200"
-        style={{ backgroundColor: "rgba(15, 23, 42, 0.8)" }}
+        className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200"
         onClick={handleClose}
       />
       <div
@@ -58,10 +57,9 @@ export const DialogContent = (props: { children?: React.ReactNode } & React.HTML
   return (
     <div
       className={cn(
-        "border p-6 shadow-2xl rounded-2xl",
+        "border border-variant bg-surface-base p-6 shadow-2xl rounded-2xl",
         className
       )}
-      style={{ backgroundColor: "var(--surface-base)", borderColor: "var(--border)" }}
       {...rest}
     >
       {children}
@@ -73,8 +71,7 @@ export const DialogDescription = (props: { children?: React.ReactNode } & React.
   const { children, className, ...rest } = props;
   return (
     <div
-      className={cn("text-sm", className)}
-      style={{ color: "var(--muted-foreground)" }}
+      className={cn("text-sm text-muted-foreground", className)}
       {...rest}
     >
       {children}

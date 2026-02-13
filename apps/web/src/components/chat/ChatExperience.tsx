@@ -339,7 +339,7 @@ export default function ChatExperience({
               <div key={message.id} className="group mb-2 relative flex items-start gap-2 pr-8">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="text-tiny uppercase tracking-wider text-muted-foreground">
                       {message.role === "user" ? "User" : "Assistant"}
                     </span>
                     <span className="text-[9px] text-muted-foreground">
@@ -351,7 +351,7 @@ export default function ChatExperience({
                 <button
                   type="button"
                   onClick={() => removeMessage(message.id)}
-                  className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                  className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-tiny text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
                   aria-label="Delete message"
                 >
                   ✕
@@ -368,7 +368,7 @@ export default function ChatExperience({
             className="w-full rounded-2xl border px-3 py-2 text-sm outline-none transition focus:border-primary input-container"
             placeholder={inputPlaceholder}
           />
-          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground pt-1">
+          <div className="flex items-center justify-between text-tiny uppercase tracking-wider text-muted-foreground pt-1">
             <span className={status === "streaming" ? "animate-pulse text-sky-400 font-bold" : ""}>
               {status === "streaming" ? "Streaming…" : status === "error" ? "Error" : "Ready"}
             </span>
@@ -392,7 +392,7 @@ export default function ChatExperience({
     <div
       ref={containerRef}
       className="flex h-full w-full gap-0 overflow-visible"
-      style={{ userSelect: isResizing ? "none" : "auto" }}
+
     >
       {/* ── Left Panel: Conversation History ── */}
       <div
@@ -433,10 +433,10 @@ export default function ChatExperience({
                 }`}
               >
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span className="text-[10px] uppercase tracking-wider font-medium">
+                  <span className="text-tiny uppercase tracking-wider font-medium">
                     User
                   </span>
-                  <span className="text-[10px] tracking-normal">
+                  <span className="text-tiny tracking-normal">
                     {formatTimestamp(pair.userMsg.timestamp)}
                   </span>
                 </div>
@@ -454,7 +454,7 @@ export default function ChatExperience({
                     removeMessage(pair.userMsg.id);
                     if (pair.assistantMsg) removeMessage(pair.assistantMsg.id);
                   }}
-                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-[10px] text-rose-400 transition group-hover:flex"
+                  className="absolute right-2 top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-tiny text-rose-400 transition group-hover:flex"
                 >
                   ✕
                 </button>
@@ -508,7 +508,7 @@ export default function ChatExperience({
                   }`}
                 >
                   <div
-                    className={`mt-1 h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold uppercase ${
+                    className={`mt-1 h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-tiny font-bold uppercase ${
                       message.role === "user"
                         ? "bg-sky-600 text-white"
                         : "bg-emerald-600 text-white"
@@ -521,7 +521,7 @@ export default function ChatExperience({
                       <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                         {message.role === "user" ? "User" : "Assistant"}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-tiny text-muted-foreground">
                         {formatTimestamp(message.timestamp)}
                       </span>
                     </div>
@@ -532,7 +532,7 @@ export default function ChatExperience({
                   <button
                     type="button"
                     onClick={() => removeMessage(message.id)}
-                    className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-[10px] text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
+                    className="absolute right-0 top-0 hidden h-5 w-5 items-center justify-center rounded-full border border-rose-400 bg-surface-base text-tiny text-rose-300 transition hover:bg-rose-500/10 group-hover:flex"
                     aria-label="Delete message"
                   >
                     ✕
@@ -568,7 +568,7 @@ export default function ChatExperience({
                   : "Ready"}
             </span>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-tiny text-muted-foreground">
                 Shift+Enter: 줄바꿈
               </span>
               <button

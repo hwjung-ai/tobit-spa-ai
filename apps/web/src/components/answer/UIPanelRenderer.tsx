@@ -76,7 +76,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
   };
 
   return (
-    <div className=" border  rounded-2xl p-5 space-y-4" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)"}}>
+    <div className="container-section border-variant bg-surface-overlay space-y-4">
       {block.title && (
         <h3 className="text-sm font-semibold text-white">{block.title}</h3>
       )}
@@ -86,7 +86,7 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
         <div className="space-y-3">
           {block.inputs.map((input) => (
             <div key={input.id} className="space-y-2">
-              <Label htmlFor={input.id} className="text-xs " style={{color: "var(--foreground-secondary)"}}>
+              <Label htmlFor={input.id} className="text-xs text-muted-foreground">
                 {input.label}
                 {input.required && <span className="text-rose-400 ml-1">*</span>}
               </Label>
@@ -122,9 +122,9 @@ export default function UIPanelRenderer({ block, traceId, onResult }: UIPanelRen
 
       {/* Result */}
       {resultBlocks.length > 0 && (
-        <div className="mt-4 border-t  pt-4 space-y-3" style={{borderColor: "var(--border)"}}>
+        <div className="mt-4 border-t border-variant pt-4 space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-xs uppercase tracking-[0.3em] " style={{color: "var(--muted-foreground)"}}>Result</p>
+            <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Result</p>
             {actionTraceId && (
               <a
                 href={`/admin/inspector?trace_id=${encodeURIComponent(actionTraceId)}`}
@@ -157,7 +157,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder={input.placeholder}
-          className="/50  text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+          className="border border-slate-200/50 dark:border-slate-700/50 text-foreground bg-white dark:bg-slate-900"
         />
       );
 
@@ -169,7 +169,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           value={(value as string | number) || ""}
           onChange={(e) => onChange(parseFloat(e.target.value) || "")}
           placeholder={input.placeholder}
-          className="/50  text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+          className="border border-slate-200/50 dark:border-slate-700/50 text-foreground bg-white dark:bg-slate-900"
         />
       );
 
@@ -180,7 +180,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           type="date"
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
-          className="/50  text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+          className="border border-slate-200/50 dark:border-slate-700/50 text-foreground bg-white dark:bg-slate-900"
         />
       );
 
@@ -191,7 +191,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
           type="datetime-local"
           value={(value as string) || ""}
           onChange={(e) => onChange(e.target.value)}
-          className="/50  text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}
+          className="border border-slate-200/50 dark:border-slate-700/50 text-foreground bg-white dark:bg-slate-900"
         />
       );
 
@@ -209,7 +209,7 @@ function renderInput(input: UIInput, value: unknown, onChange: (value: unknown) 
     case "select":
       return (
         <Select value={(value as string) || ""} onValueChange={onChange}>
-          <SelectTrigger className="/50  text-white" style={{borderColor: "var(--border)", backgroundColor: "var(--surface-base)"}}>
+          <SelectTrigger className="border border-slate-200/50 dark:border-slate-700/50 text-foreground bg-white dark:bg-slate-900">
             <SelectValue placeholder={input.placeholder || "Select..."} />
           </SelectTrigger>
           <SelectContent>

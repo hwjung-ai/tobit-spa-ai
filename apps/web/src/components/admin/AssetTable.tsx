@@ -23,7 +23,7 @@ interface AssetTableProps {
 
 const filterBtnClass = (active: boolean) =>
   cn(
-    "rounded-md px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition hover:border-sky-500",
+    "rounded-md px-3 py-1 text-tiny font-bold uppercase tracking-wider transition hover:border-sky-500",
     active
       ? "bg-sky-600 text-white"
       : "border text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
@@ -86,7 +86,7 @@ export default function AssetTable({
         cellRenderer: (params: ICellRendererParams<Asset>) => {
           const type = String(params.value || "unknown");
           return (
-            <span className="inline-flex rounded-md border border-slate-300 bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <span className="inline-flex rounded-md border border-variant bg-surface-elevated px-2 py-0.5 text-tiny font-bold uppercase tracking-wider text-muted-foreground">
               {type}
             </span>
           );
@@ -102,10 +102,10 @@ export default function AssetTable({
           return (
             <span
               className={cn(
-                "inline-flex rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                "inline-flex rounded-md border px-2 py-0.5 text-tiny font-bold uppercase tracking-wider",
                 status === "published"
-                  ? "border-emerald-300 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-                  : "border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
+                  ? "border-success bg-success/10 text-success"
+                  : "border-variant bg-surface-elevated text-muted-foreground",
               )}
             >
               {status}
@@ -118,7 +118,7 @@ export default function AssetTable({
         field: "version",
         width: 100,
         cellRenderer: (params: ICellRendererParams<Asset>) => (
-          <span className="font-mono text-xs text-slate-600 dark:text-slate-400">
+          <span className="font-mono text-xs text-muted-foreground">
             v{params.value}
           </span>
         ),
@@ -129,7 +129,7 @@ export default function AssetTable({
         flex: 1,
         minWidth: 150,
         cellRenderer: (params: ICellRendererParams<Asset>) => (
-          <span className="text-xs text-slate-600 dark:text-slate-400">
+          <span className="text-xs text-muted-foreground">
             {formatRelativeTime(params.value)}
           </span>
         ),
@@ -254,7 +254,7 @@ export default function AssetTable({
         </div>
       </div>
 
-      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static w-full overflow-hidden" style={{ height: "600px" }}>
+      <div className="ag-theme-quartz ag-theme-cep ag-theme-cep-static w-full overflow-hidden">
         <AgGridReact
           theme="legacy"
           rowData={assets}

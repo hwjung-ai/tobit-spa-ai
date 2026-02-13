@@ -892,7 +892,7 @@ export default function CepBuilderPage() {
             key={type}
             onClick={() => setTriggerType(type)}
             className={cn(
-              "cep-builder-tab text-[10px]",
+              "cep-builder-tab text-tiny",
               triggerType === type && "cep-builder-tab-active",
             )}
           >
@@ -1054,7 +1054,7 @@ export default function CepBuilderPage() {
     <div className="space-y-4">
       <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
         Action endpoint:&nbsp;
-        <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+        <span className="font-mono text-tiny text-slate-500 dark:text-slate-400">
           {actionEndpointLabel}
         </span>
       </p>
@@ -1118,7 +1118,7 @@ export default function CepBuilderPage() {
               Duration {log.duration_ms} ms
             </p>
             {log.error_message ? (
-              <p className="mt-1 text-[10px] text-rose-400">Error: {log.error_message}</p>
+              <p className="mt-1 text-tiny text-rose-400">Error: {log.error_message}</p>
             ) : null}
           </div>
         ))
@@ -1134,7 +1134,7 @@ export default function CepBuilderPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "br-badge border px-3 py-1 text-[10px] uppercase tracking-wider transition",
+              "br-badge border px-3 py-1 text-tiny uppercase tracking-wider transition",
               activeTab === tab.id ? "bg-sky-500/10 border-sky-400 text-sky-400" : "bg-transparent",
             )}
           >
@@ -1176,7 +1176,7 @@ export default function CepBuilderPage() {
                 <p className="text-xs uppercase tracking-wider text-emerald-400 font-semibold">
                   Draft Simulation Result
                 </p>
-                <span className="text-[10px] br-badge border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">
+                <span className="text-tiny br-badge border border-emerald-400 bg-emerald-400/20 px-2 py-0.5 uppercase tracking-wider text-emerald-300">
                   Pass
                 </span>
               </div>
@@ -1219,7 +1219,7 @@ export default function CepBuilderPage() {
         <p className="left-panel-title">CEP rules</p>
         <button
           onClick={handleNew}
-          className="text-[10px] uppercase tracking-wider underline text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+          className="text-tiny uppercase tracking-wider underline text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
         >
           New
         </button>
@@ -1385,7 +1385,7 @@ export default function CepBuilderPage() {
         ) : null}
         {draftDiff && (
           <div className="space-y-1 rounded-2xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Auto Diff
             </p>
             {draftDiff.map((item) => (
@@ -1506,36 +1506,36 @@ export default function CepBuilderPage() {
             Debug
           </summary>
           <div className="mt-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Save target: {saveTarget ?? "none"}
             </p>
             {lastSaveError ? (
               <p className="text-xs text-rose-300">Save error: {lastSaveError}</p>
             ) : null}
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Selected rule
             </p>
             <p className="text-xs text-slate-600 dark:text-slate-400">
               {selectedRule ? `${selectedRule.rule_name} (${selectedRule.rule_id})` : "새 룰"}
             </p>
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Parse status: {lastParseStatus}
             </p>
             {lastParseError ? (
               <p className="text-xs text-rose-300">Error: {lastParseError}</p>
             ) : null}
-            <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
               Last assistant raw
             </p>
-            <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-[10px] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+            <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-tiny text-slate-900 dark:bg-slate-950 dark:text-slate-100">
               {lastAssistantRaw || "없음"}
             </pre>
             {draftApi ? (
               <>
-                <p className="text-[10px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                <p className="text-tiny uppercase tracking-wider text-slate-600 dark:text-slate-400">
                   Draft JSON
                 </p>
-                <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-[10px] text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+                <pre className="max-h-32 overflow-auto rounded-xl bg-white p-2 text-tiny text-slate-900 dark:bg-slate-950 dark:text-slate-100">
                   {JSON.stringify(draftApi, null, 2)}
                 </pre>
               </>

@@ -293,11 +293,11 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
         >
           <div
             className=" border  rounded-lg p-6 w-full max-w-md"
-            style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-base)" }}
+
             onClick={(e) => e.stopPropagation()}
             data-testid="modal-create-screen"
           >
-            <h3 className="text-lg font-semibold  mb-4" style={{ color: "var(--foreground)" }}>
+            <h3 className="text-lg font-semibold  mb-4">
               Create New Screen
             </h3>
 
@@ -305,7 +305,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               <div>
                 <label
                   className="block text-sm  mb-2"
-                  style={{ color: "var(--foreground-secondary)" }}
+
                 >
                   Choose Template (Optional)
                 </label>
@@ -328,7 +328,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                     <div className="font-semibold">Blank</div>
                     <div
                       className={`text-xs mt-1 ${selectedTemplate === null ? "text-sky-100" : ""}`}
-                      style={{ color: "var(--muted-foreground)" }}
+
                     >
                       Start from scratch
                     </div>
@@ -354,7 +354,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       <div className="font-semibold">{template.name}</div>
                       <div
                         className={`text-xs mt-1 line-clamp-2 ${selectedTemplate === template.id ? "text-sky-100" : ""}`}
-                        style={{ color: "var(--muted-foreground)" }}
+
                       >
                         {template.description}
                       </div>
@@ -366,7 +366,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               <div>
                 <label
                   className="block text-sm  mb-2"
-                  style={{ color: "var(--foreground-secondary)" }}
+
                 >
                   Screen ID *
                 </label>
@@ -390,7 +390,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               <div>
                 <label
                   className="block text-sm  mb-2"
-                  style={{ color: "var(--foreground-secondary)" }}
+
                 >
                   Screen Name *
                 </label>
@@ -412,7 +412,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               <div>
                 <label
                   className="block text-sm  mb-2"
-                  style={{ color: "var(--foreground-secondary)" }}
+
                 >
                   Description (Optional)
                 </label>
@@ -435,7 +435,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               <div>
                 <label
                   className="block text-sm  mb-2"
-                  style={{ color: "var(--foreground-secondary)" }}
+
                 >
                   Tags (Optional JSON)
                 </label>
@@ -459,7 +459,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2  hover:  rounded-lg transition-colors text-sm font-medium"
-                style={{ color: "var(--foreground)", backgroundColor: "var(--surface-elevated)" }}
+
                 data-testid="btn-cancel-create"
               >
                 Cancel
@@ -524,7 +524,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
         <div className="ui-subbox py-12 text-center">
           <svg
             className="w-12 h-12  mx-auto mb-3"
-            style={{ color: "var(--muted-foreground)" }}
+
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -536,7 +536,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
               d="M10 6H5a2 2 0 00-2 2v10a2 2 0 002 2h5M16 6h5a2 2 0 012 2v10a2 2 0 01-2 2h-5m-4-6h4"
             />
           </svg>
-          <p className=" text-sm" style={{ color: "var(--muted-foreground)" }}>
+          <p className=" text-sm">
             No screens found
           </p>
         </div>
@@ -576,20 +576,20 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       {screen.status}
                     </span>
                   </div>
-                  <p className=" text-sm mb-2" style={{ color: "var(--muted-foreground)" }}>
+                  <p className=" text-sm mb-2">
                     {screen.screen_id}
                   </p>
                   {screen.description && (
-                    <p className=" text-xs" style={{ color: "var(--muted-foreground)" }}>
+                    <p className=" text-xs">
                       {screen.description}
                     </p>
                   )}
                 </div>
                 <div className="text-right flex flex-col items-end">
-                  <p className=" text-xs font-mono" style={{ color: "var(--muted-foreground)" }}>
+                  <p className=" text-xs font-mono">
                     v{screen.version}
                   </p>
-                  <p className=" text-xs mb-3" style={{ color: "var(--muted-foreground)" }}>
+                  <p className=" text-xs mb-3">
                     {new Date(screen.updated_at).toLocaleDateString()}
                   </p>
                   <div className="flex gap-2 justify-end">

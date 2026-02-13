@@ -270,7 +270,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
   if (!asset) {
     return (
       <div className="text-center py-12">
-        <p className="mb-4" style={{color: "var(--muted-foreground)"}}>Screen not found</p>
+        <p className="mb-4">Screen not found</p>
         <Link href="/admin/screens" className="text-sky-400 hover:text-sky-300">
           Back to Screens
         </Link>
@@ -288,8 +288,8 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
           <Link href="/admin/screens" className="text-sky-400 hover:text-sky-300 text-sm mb-2 block">
             ← Back to Screens
           </Link>
-          <h1 className="text-2xl font-bold" style={{color: "var(--foreground)"}}>{asset.name}</h1>
-          <p className="text-sm" style={{color: "var(--muted-foreground)"}}>{asset.screen_id}</p>
+          <h1 className="text-2xl font-bold">{asset.name}</h1>
+          <p className="text-sm">{asset.screen_id}</p>
         </div>
         <div>
           <span className={`inline-flex px-3 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
@@ -330,7 +330,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
         {/* Left: Metadata */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2" style={{color: "var(--foreground)"}}>
+            <label className="block text-sm font-medium mb-2">
               Screen Name
             </label>
             <input
@@ -339,13 +339,13 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               disabled={!isDraft}
               className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+
               data-testid="input-screen-name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2" style={{color: "var(--foreground)"}}>
+            <label className="block text-sm font-medium mb-2">
               Description
             </label>
             <textarea
@@ -353,14 +353,14 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               onChange={e => setFormData({ ...formData, description: e.target.value })}
               disabled={!isDraft}
               className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-              style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+
               rows={6}
               data-testid="textarea-screen-description"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2" style={{color: "var(--foreground)"}}>
+            <label className="block text-sm font-medium mb-2">
               Tags (JSON)
             </label>
             <textarea
@@ -368,16 +368,16 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               onChange={e => setFormData({ ...formData, tags: e.target.value })}
               disabled={!isDraft}
               className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:border-sky-500 disabled:opacity-50 disabled:cursor-not-allowed resize-none"
-              style={{backgroundColor: "var(--surface-elevated)", borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+
               rows={2}
               placeholder='{"team":"ops","audience":"mobile"}'
               data-testid="textarea-screen-tags"
             />
           </div>
 
-          <div className="rounded-lg p-4 border" style={{backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "var(--border)"}}>
-            <h3 className="text-sm font-semibold mb-3" style={{color: "var(--foreground)"}}>Metadata</h3>
-            <div className="space-y-2 text-xs" style={{color: "var(--muted-foreground)"}}>
+          <div className="rounded-lg p-4 border">
+            <h3 className="text-sm font-semibold mb-3">Metadata</h3>
+            <div className="space-y-2 text-xs">
               <div><strong>Asset ID:</strong> {asset.asset_id}</div>
               <div><strong>Type:</strong> screen</div>
               <div><strong>Version:</strong> {asset.version}</div>
@@ -392,7 +392,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
                     <span
                       key={key}
                       className="rounded-full border px-2 py-0.5 text-[10px]"
-                      style={{borderColor: "var(--border-muted)", color: "var(--foreground)"}}
+
                     >
                       {key}: {String(value)}
                     </span>
@@ -406,7 +406,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
         {/* Right: Schema Editor */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2" style={{color: "var(--foreground)"}}>
+            <label className="block text-sm font-medium mb-2">
               Schema JSON (Read-only validation)
             </label>
             <textarea
@@ -414,7 +414,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               onChange={e => setFormData({ ...formData, schema_json: e.target.value })}
               disabled={!isDraft}
               className="w-full px-3 py-2 border rounded text-xs focus:outline-none font-mono resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: schemaErrors.length > 0 ? "#dc2626" : "var(--border-muted)"}}
+
               rows={16}
               data-testid="textarea-schema-json"
             />
@@ -441,7 +441,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
               onClick={handleSaveDraft}
               disabled={saving}
               className="px-4 py-2 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-80"
-              style={{backgroundColor: "#334155", color: "var(--foreground)"}}
+
               data-testid="btn-save-draft"
             >
               {saving ? "Saving..." : "Save Draft"}
@@ -470,7 +470,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
         <Link
           href="/admin/screens"
           className="ml-auto px-4 py-2 rounded-lg transition-colors text-sm font-medium inline-block hover:opacity-80"
-          style={{backgroundColor: "#334155", color: "var(--foreground)"}}
+
         >
           Back
         </Link>

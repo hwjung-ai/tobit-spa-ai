@@ -37,7 +37,7 @@ function getChangeTypeIcon(changeType: string) {
     case "modified":
       return <Edit className="w-4 h-4 text-amber-400" />;
     case "unchanged":
-      return <Check className="w-4 h-4 0" style={{ color: "var(--foreground)"  }} />;
+      return <Check className="w-4 h-4 0" />;
     default:
       return null;
   }
@@ -51,16 +51,16 @@ function DiffItemRenderer({ item }: { item: DiffItem }) {
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">{getChangeTypeIcon(changeType)}</div>
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-mono break-all" style={{ color: "var(--foreground-secondary)"  }}>{path}</div>
+          <div className="text-sm font-mono break-all">{path}</div>
 
           {before && !after && (
-            <div className="mt-2 text-xs font-mono text-red-300 p-2 rounded overflow-auto border border-red-900/50" style={{ backgroundColor: "var(--surface-base)"  }}>
+            <div className="mt-2 text-xs font-mono text-red-300 p-2 rounded overflow-auto border border-red-900/50">
               {JSON.stringify((before as Record<string, unknown>), null, 2)}
             </div>
           )}
 
           {after && !before && (
-            <div className="mt-2 text-xs font-mono text-green-300 p-2 rounded overflow-auto border border-green-900/50" style={{ backgroundColor: "var(--surface-base)"  }}>
+            <div className="mt-2 text-xs font-mono text-green-300 p-2 rounded overflow-auto border border-green-900/50">
               {JSON.stringify((after as Record<string, unknown>), null, 2)}
             </div>
           )}
@@ -69,7 +69,7 @@ function DiffItemRenderer({ item }: { item: DiffItem }) {
             <div className="mt-2 space-y-1">
               {Object.entries(changes).map(([key, change]: [string, { before: unknown, after: unknown }]) => (
                 <div key={key} className="text-xs">
-                  <span className="font-mono" style={{ color: "var(--muted-foreground)"  }}>{key}:</span>
+                  <span className="font-mono">{key}:</span>
                   <span className="ml-2 line-through text-red-400 opacity-70">
                     {JSON.stringify(change.before, null, 2)}
                   </span>
@@ -117,21 +117,21 @@ export default function DiffViewer({ diff }: DiffViewerProps) {
   ];
 
   return (
-    <div className="flex-1 overflow-auto" style={{ backgroundColor: "var(--surface-base)"  }}>
+    <div className="flex-1 overflow-auto">
       <Accordion type="multiple" defaultValue={sections.filter((s) => s.defaultOpen).map((s, i) => `section-${i}`)}>
         {sections.map((section, idx) => (
           <AccordionItem key={`section-${idx}`} value={`section-${idx}`} className="border-0">
-            <AccordionTrigger className="px-4 py-3 hover: font-medium text-sm" style={{ backgroundColor: "var(--surface-base)", color: "var(--foreground-secondary)"  }}>
+            <AccordionTrigger className="px-4 py-3 hover: font-medium text-sm">
               <div className="flex items-center gap-2">
                 <span>{section.title}</span>
-                <span className="text-xs px-2 py-0.5 rounded border" style={{ backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"  }}>
+                <span className="text-xs px-2 py-0.5 rounded border">
                   {section.count}
                 </span>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 py-3 space-y-2">
               {section.items.length === 0 ? (
-                <div className="text-sm 0 italic" style={{ color: "var(--foreground)"  }}>No items</div>
+                <div className="text-sm 0 italic">No items</div>
               ) : (
                 section.items.map((item, itemIdx) => (
                   <DiffItemRenderer key={`${section.title}-${itemIdx}`} item={item} />

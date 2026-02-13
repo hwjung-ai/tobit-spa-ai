@@ -58,7 +58,7 @@ export default function PublishedScreensList() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border   p-6 text-center " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="rounded-xl border p-6 text-center border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50">
         Loading published screens...
       </div>
     );
@@ -66,7 +66,7 @@ export default function PublishedScreensList() {
 
   if (error) {
     return (
-      <div className="rounded-xl border p-4 text-sm" style={{ borderColor: "rgba(var(--error-rgb), 0.4)", backgroundColor: "rgba(var(--error-rgb), 0.15)", color: "var(--error)" }}>
+      <div className="rounded-xl border p-4 text-sm border-rose-500/40 bg-rose-500/10 text-rose-400">
         <p className="font-semibold">Failed to load screens</p>
         <p>{error}</p>
       </div>
@@ -75,7 +75,7 @@ export default function PublishedScreensList() {
 
   if (!assets.length) {
     return (
-      <div className="rounded-xl border   p-6 text-center " style={{borderColor: "var(--border)", color: "var(--muted-foreground)", backgroundColor: "var(--surface-overlay)"}}>
+      <div className="rounded-xl border p-6 text-center border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50">
         No published screens available
       </div>
     );
@@ -87,26 +87,23 @@ export default function PublishedScreensList() {
         <Link
           key={asset.asset_id}
           href={`/ui/screens/${asset.asset_id}`}
-          className="block rounded-2xl border px-4 py-3 transition-all"
-          style={{ borderColor: "var(--border)", backgroundColor: "var(--surface-overlay)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-overlay)"; }}
+          className="block rounded-2xl border border-variant bg-surface-overlay hover:bg-surface-elevated px-4 py-3 transition-all"
         >
           <div className="flex items-baseline justify-between gap-2">
-            <h3 className="text-sm font-semibold  truncate" style={{color: "var(--foreground)"}}>
+            <h3 className="text-sm font-semibold text-foreground truncate">
               {asset.name || asset.screen_id}
             </h3>
-            <span className="text-[10px] uppercase tracking-[0.4em] " style={{color: "var(--muted-foreground)"}}>
+            <span className="text-tiny uppercase tracking-wider text-muted-foreground">
               v{asset.version}
             </span>
           </div>
-          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
+          <p className="text-xs text-muted-foreground">
             Screen ID: {asset.screen_id}
           </p>
-          <p className="text-xs " style={{color: "var(--muted-foreground)"}}>
+          <p className="text-xs text-muted-foreground">
             {asset.description || "No description available"}
           </p>
-          <p className="text-[10px] " style={{color: "var(--muted-foreground)"}}>
+          <p className="text-[10px] text-muted-foreground">
             Published: {formatTimestamp(asset.published_at)} · Updated: {formatTimestamp(asset.updated_at)}
           </p>
         </Link>

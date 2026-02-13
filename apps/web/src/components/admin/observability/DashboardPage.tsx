@@ -26,15 +26,14 @@ export default function DashboardPage() {
   }, [autoRefresh, refreshInterval]);
 
   return (
-    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto p-6 animate-in fade-in zoom-in-95 duration-300" : "space-y-6 relative"} style={{ backgroundColor: isFullScreen ? "var(--background)" : undefined }}>
+    <div className={isFullScreen ? "fixed inset-0 z-50 overflow-auto p-6 animate-in fade-in zoom-in-95 duration-300 bg-background" : "space-y-6 relative"}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div />
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border transition-colors"
-            style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.6)", color: "var(--muted-foreground)" }}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-variant bg-slate-950/60 text-muted-foreground transition-colors"
             title={isFullScreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           >
             {isFullScreen ? (
@@ -43,7 +42,7 @@ export default function DashboardPage() {
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
             )}
           </button>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg border" style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.6)" }}>
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg border border-variant bg-slate-950/60">
             <input
               type="checkbox"
               id="auto-refresh"
@@ -51,7 +50,7 @@ export default function DashboardPage() {
               onChange={(e) => setAutoRefresh(e.target.checked)}
               className="rounded"
             />
-            <label htmlFor="auto-refresh" className="text-sm cursor-pointer" style={{ color: "var(--foreground-secondary)" }}>
+            <label htmlFor="auto-refresh" className="text-sm cursor-pointer text-foreground">
               Auto-refresh
             </label>
           </div>
@@ -59,8 +58,7 @@ export default function DashboardPage() {
             <select
               value={refreshInterval}
               onChange={(e) => setRefreshInterval(Number(e.target.value))}
-              className="px-3 py-2 rounded-lg border text-sm"
-              style={{ borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.6)", color: "var(--foreground-secondary)" }}
+              className="px-3 py-2 rounded-lg border border-variant bg-slate-950/60 text-sm text-foreground"
             >
               <option value={10}>Every 10s</option>
               <option value={30}>Every 30s</option>
@@ -68,7 +66,7 @@ export default function DashboardPage() {
               <option value={300}>Every 5m</option>
             </select>
           )}
-          <span className="text-sm uppercase tracking-[0.3em] text-sky-400 animate-pulse">
+          <span className="text-sm uppercase tracking-wider text-sky-400 animate-pulse">
             Live
           </span>
         </div>
@@ -121,7 +119,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Footer Info */}
-      <div className="flex items-center justify-between text-xs px-4 py-3 rounded-lg border" style={{ color: "var(--muted-foreground)", borderColor: "var(--border)", backgroundColor: "rgba(2, 6, 23, 0.4)" }}>
+      <div className="flex items-center justify-between text-xs px-4 py-3 rounded-lg border border-variant bg-slate-950/40 text-muted-foreground">
         <div>
           Last updated: {new Date().toLocaleTimeString()}
         </div>

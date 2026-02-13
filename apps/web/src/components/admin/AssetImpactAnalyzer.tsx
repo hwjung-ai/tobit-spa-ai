@@ -229,37 +229,37 @@ export default function AssetImpactAnalyzer({
 
     return (
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: "var(--foreground)" }}>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-foreground">
                   <GitMerge className="h-5 w-5" />
           Version Comparison: {version1} vs {version2}
         </h3>
         <div className="overflow-x-auto">
-          <table className="w-full border rounded-lg" style={{ borderColor: "var(--border-muted)" }}>
+          <table className="w-full border rounded-lg border-border">
             <thead>
-              <tr className="border-b" style={{ backgroundColor: "rgba(2, 6, 23, 0.4)", borderColor: "var(--border-muted)" }}>
-                <th className="text-left p-3 text-sm font-medium" style={{ color: "var(--foreground)" }}>Metric</th>
-                <th className="text-left p-3 text-sm font-medium" style={{ color: "var(--foreground)" }}>
+              <tr className="border-b bg-slate-500/40 border-border">
+                <th className="text-left p-3 text-sm font-medium text-foreground">Metric</th>
+                <th className="text-left p-3 text-sm font-medium text-foreground">
                   {version1}
                 </th>
-                <th className="text-left p-3 text-sm font-medium" style={{ color: "var(--foreground)" }}>
+                <th className="text-left p-3 text-sm font-medium text-foreground">
                   {version2}
                 </th>
-                <th className="text-left p-3 text-sm font-medium" style={{ color: "var(--foreground)" }}>Change</th>
+                <th className="text-left p-3 text-sm font-medium text-foreground">Change</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b" style={{ borderColor: "var(--border)" }}>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>Duration</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics1.avg_duration_ms}ms</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics2.avg_duration_ms}ms</td>
+              <tr className="border-b border-border">
+                <td className="p-3 text-sm text-foreground">Duration</td>
+                <td className="p-3 text-sm text-foreground">{metrics1.avg_duration_ms}ms</td>
+                <td className="p-3 text-sm text-foreground">{metrics2.avg_duration_ms}ms</td>
                 <td className="p-3">
                   {formatImpactScore(metrics2.avg_duration_ms - metrics1.avg_duration_ms)}
                 </td>
               </tr>
-              <tr className="border-b" style={{ borderColor: "var(--border)" }}>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>Success Rate</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics1.success_rate}%</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics2.success_rate}%</td>
+              <tr className="border-b border-border">
+                <td className="p-3 text-sm text-foreground">Success Rate</td>
+                <td className="p-3 text-sm text-foreground">{metrics1.success_rate}%</td>
+                <td className="p-3 text-sm text-foreground">{metrics2.success_rate}%</td>
                 <td className={cn(
                   "p-3 flex items-center gap-1",
                   metrics2.success_rate > metrics1.success_rate ? "text-emerald-400" : "text-red-400"
@@ -270,10 +270,10 @@ export default function AssetImpactAnalyzer({
                   </span>
                 </td>
               </tr>
-              <tr className="border-b" style={{ borderColor: "var(--border)" }}>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>Errors</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics1.error_count}</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics2.error_count}</td>
+              <tr className="border-b border-border">
+                <td className="p-3 text-sm text-foreground">Errors</td>
+                <td className="p-3 text-sm text-foreground">{metrics1.error_count}</td>
+                <td className="p-3 text-sm text-foreground">{metrics2.error_count}</td>
                 <td className={cn(
                   "p-3 flex items-center gap-1",
                   metrics2.error_count < metrics1.error_count ? "text-emerald-400" : "text-red-400"
@@ -284,10 +284,10 @@ export default function AssetImpactAnalyzer({
                   </span>
                 </td>
               </tr>
-              <tr className="border-b" style={{ borderColor: "var(--border)" }}>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>Quality Score</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics1.quality_score}/100</td>
-                <td className="p-3 text-sm" style={{ color: "var(--foreground)" }}>{metrics2.quality_score}/100</td>
+              <tr className="border-b border-border">
+                <td className="p-3 text-sm text-foreground">Quality Score</td>
+                <td className="p-3 text-sm text-foreground">{metrics1.quality_score}/100</td>
+                <td className="p-3 text-sm text-foreground">{metrics2.quality_score}/100</td>
                 <td className={cn(
                   "p-3 flex items-center gap-1",
                   metrics2.quality_score > metrics1.quality_score ? "text-emerald-400" : "text-red-400"
@@ -307,10 +307,10 @@ export default function AssetImpactAnalyzer({
 
   if (loading) {
     return (
-      <div className={cn("flex items-center justify-center h-64 rounded-2xl border", className)} style={{ borderColor: "var(--border)" }}>
+      <div className={cn("flex items-center justify-center h-64 rounded-2xl border border-border", className)}>
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" style={{ color: "var(--muted-foreground)" }} />
-          <p style={{ color: "var(--muted-foreground)" }}>Analyzing asset impact...</p>
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2 text-muted-foreground" />
+          <p className="text-muted-foreground">Analyzing asset impact...</p>
         </div>
       </div>
     );
@@ -318,31 +318,30 @@ export default function AssetImpactAnalyzer({
 
   if (!impactData) {
     return (
-      <div className={cn("flex items-center justify-center h-64 rounded-2xl border", className)} style={{ borderColor: "var(--border)" }}>
-        <p style={{ color: "var(--muted-foreground)" }}>No impact data available</p>
+      <div className={cn("flex items-center justify-center h-64 rounded-2xl border border-border", className)}>
+        <p className="text-muted-foreground">No impact data available</p>
       </div>
     );
   }
 
   return (
-    <div className={cn("flex flex-col h-full rounded-2xl border", className)} style={{ backgroundColor: "var(--surface-overlay)", borderColor: "var(--border)" }}>
+    <div className={cn("flex flex-col h-full rounded-2xl border border-border bg-surface-overlay", className)}>
       {/* Header */}
-      <div className="p-6 border-b" style={{ borderColor: "var(--border)" }}>
+      <div className="p-6 border-b border-border">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-foreground">
               <Activity className="h-5 w-5" />
               Asset Impact Analysis
             </h2>
-            <p className="text-sm mt-1" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-sm mt-1 text-muted-foreground">
               {assetId} • {assetType}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => onExport?.(impactData)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition hover:opacity-80"
-              style={{ backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", border: "1px solid var(--border-muted)" }}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition hover:opacity-80 bg-surface-elevated text-muted-foreground border border-border"
             >
               <Download className="h-3 w-3" />
               Export
@@ -354,7 +353,7 @@ export default function AssetImpactAnalyzer({
       <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* Version Selection */}
         <div>
-          <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--foreground)" }}>Version History</h3>
+          <h3 className="text-lg font-semibold mb-3 text-foreground">Version History</h3>
           <div className="flex flex-wrap gap-2">
             {Object.keys(impactData.versions).map((version) => {
               const metrics = impactData.versions[version];
@@ -374,9 +373,8 @@ export default function AssetImpactAnalyzer({
                       ? "bg-purple-500/20 text-purple-400 border border-purple-400/30"
                       : isBaseline
                       ? "bg-emerald-500/20 text-emerald-400 border border-emerald-400/30"
-                      : ""
+                      : "bg-surface-elevated text-foreground"
                   )}
-                  style={!isSelected && !isInCompare && !isBaseline ? { backgroundColor: "var(--surface-elevated)", color: "var(--foreground)" } : undefined}
                 >
                   {isBaseline && <CheckCircle className="h-3 w-3" />}
                   {isInCompare && <Layers className="h-3 w-3" />}
@@ -393,43 +391,43 @@ export default function AssetImpactAnalyzer({
         {/* Current Version Metrics */}
         {selectedVersion && (
           <div>
-            <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--foreground)" }}>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">
               Current Version: v{selectedVersion}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="rounded-lg p-4" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
+              <div className="rounded-lg p-4 bg-slate-500/50">
                 <div className="flex items-center gap-2 text-emerald-400">
                   <CheckCircle className="h-4 w-4" />
                   <span className="text-xs">Success Rate</span>
                 </div>
-                <p className="text-2xl font-bold mt-1" style={{ color: "var(--foreground)" }}>
+                <p className="text-2xl font-bold mt-1 text-foreground">
                   {impactData.versions[selectedVersion].success_rate}%
                 </p>
               </div>
-              <div className="rounded-lg p-4" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
+              <div className="rounded-lg p-4 bg-slate-500/50">
                 <div className="flex items-center gap-2 text-sky-400">
                   <Clock className="h-4 w-4" />
                   <span className="text-xs">Avg Duration</span>
                 </div>
-                <p className="text-2xl font-bold mt-1" style={{ color: "var(--foreground)" }}>
+                <p className="text-2xl font-bold mt-1 text-foreground">
                   {impactData.versions[selectedVersion].avg_duration_ms}ms
                 </p>
               </div>
-              <div className="rounded-lg p-4" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
+              <div className="rounded-lg p-4 bg-slate-500/50">
                 <div className="flex items-center gap-2 text-amber-400">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="text-xs">Errors</span>
                 </div>
-                <p className="text-2xl font-bold mt-1" style={{ color: "var(--foreground)" }}>
+                <p className="text-2xl font-bold mt-1 text-foreground">
                   {impactData.versions[selectedVersion].error_count}
                 </p>
               </div>
-              <div className="rounded-lg p-4" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
+              <div className="rounded-lg p-4 bg-slate-500/50">
                 <div className="flex items-center gap-2 text-purple-400">
                   <Target className="h-4 w-4" />
                   <span className="text-xs">Quality Score</span>
                 </div>
-                <p className="text-2xl font-bold mt-1" style={{ color: "var(--foreground)" }}>
+                <p className="text-2xl font-bold mt-1 text-foreground">
                   {impactData.versions[selectedVersion].quality_score}/100
                 </p>
               </div>
@@ -440,7 +438,7 @@ export default function AssetImpactAnalyzer({
         {/* Regression Risk */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold" style={{ color: "var(--foreground)" }}>Regression Risk</h3>
+            <h3 className="text-lg font-semibold text-foreground">Regression Risk</h3>
             <div className={cn(
               "px-3 py-1 rounded-full text-sm font-medium",
               impactData.regression_risk === "low" ? "bg-emerald-500/20 text-emerald-400" :
@@ -450,11 +448,11 @@ export default function AssetImpactAnalyzer({
               {impactData.regression_risk.toUpperCase()}
             </div>
           </div>
-          <div className="rounded-lg p-4" style={{ backgroundColor: "rgba(30, 41, 59, 0.5)" }}>
-            <p className="text-sm mb-3" style={{ color: "var(--foreground)" }}>
+          <div className="rounded-lg p-4 bg-slate-500/50">
+            <p className="text-sm mb-3 text-foreground">
               Based on performance metrics and error patterns, this version has a {impactData.regression_risk} risk of introducing regressions.
             </p>
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-4 text-xs text-foreground">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
                 <span>Low Risk</span>
@@ -473,7 +471,7 @@ export default function AssetImpactAnalyzer({
 
         {/* Quality Radar Chart */}
         <div>
-          <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--foreground)" }}>Quality Metrics</h3>
+          <h3 className="text-lg font-semibold mb-3 text-foreground">Quality Metrics</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={QualityRadarData}>
@@ -497,13 +495,12 @@ export default function AssetImpactAnalyzer({
 
         {/* Related Assets */}
         <div>
-          <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--foreground)" }}>Related Assets</h3>
+          <h3 className="text-lg font-semibold mb-3 text-foreground">Related Assets</h3>
           <div className="flex flex-wrap gap-2">
             {impactData.related_assets.map((asset, index) => (
               <span
                 key={index}
-                className="px-3 py-1 rounded-full text-xs border"
-                style={{ backgroundColor: "var(--surface-elevated)", color: "var(--foreground)", borderColor: "var(--border-muted)" }}
+                className="px-3 py-1 rounded-full text-xs border bg-surface-elevated text-foreground border-border"
               >
                 {asset}
               </span>
@@ -513,12 +510,12 @@ export default function AssetImpactAnalyzer({
 
         {/* Recommendations */}
         <div>
-          <h3 className="text-lg font-semibold mb-3" style={{ color: "var(--foreground)" }}>Recommendations</h3>
+          <h3 className="text-lg font-semibold mb-3 text-foreground">Recommendations</h3>
           <div className="space-y-2">
             {impactData.recommendations.map((rec, index) => (
               <div key={index} className="flex items-start gap-2">
                 <div className="w-2 h-2 rounded-full bg-sky-400 mt-1.5"></div>
-                <p className="text-sm" style={{ color: "var(--foreground)" }}>{rec}</p>
+                <p className="text-sm text-foreground">{rec}</p>
               </div>
             ))}
           </div>

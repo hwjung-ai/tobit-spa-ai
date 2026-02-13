@@ -85,7 +85,7 @@ export default function JsonEditor() {
           onClick={handleFormat}
           variant="outline"
           size="sm"
-          className="bg-[var(--surface-elevated)] text-[var(--foreground-secondary)] border-[var(--border)] hover:bg-[var(--surface-elevated)] hover:text-white"
+          className="bg-[var(--surface-elevated)] text-[var(--foreground-secondary)] border-[var(--border)] hover:bg-[var(--surface-elevated)] hover:text-foreground"
           data-testid="btn-format-json"
         >
           Format

@@ -74,17 +74,17 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
       <div ref={ref} className={`space-y-3 ${className}`}>
         {showModeToggle && (
           <Tabs value={localMode} onValueChange={(val) => handleModeChange(val as "binding" | "static")}>
-            <TabsList className="grid w-full grid-cols-2" style={{ backgroundColor: "var(--surface-elevated)" }}>
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger
                 className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-[var(--foreground-secondary)]"
-                style={{ color: "var(--muted-foreground)" }}
+
                 value="binding"
               >
                 Binding
               </TabsTrigger>
               <TabsTrigger
                 className="data-[state=active]:!bg-sky-600 data-[state=active]:!text-white hover:text-[var(--foreground-secondary)]"
-                style={{ color: "var(--muted-foreground)" }}
+
                 value="static"
               >
                 Static
@@ -101,7 +101,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
                 placeholder={placeholder || "Select a binding path..."}
                 error={validationError}
               />
-              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs">
                 Select from state, context, inputs, or use trace_id
               </p>
             </TabsContent>
@@ -112,7 +112,7 @@ export const BindingEditor = React.forwardRef<HTMLDivElement, BindingEditorProps
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder || "Enter a static value..."}
               />
-              <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs">
                 Enter a literal value (string, number, etc.)
               </p>
             </TabsContent>

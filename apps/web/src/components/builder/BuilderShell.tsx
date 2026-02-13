@@ -60,7 +60,7 @@ export default function BuilderShell({
     <div
       ref={containerRef}
       className="flex h-full flex-col gap-3 overflow-hidden"
-      style={{ userSelect: userSelectStyle }}
+
     >
       <div className="flex h-full gap-0 overflow-hidden">
         {/* Left Pane */}

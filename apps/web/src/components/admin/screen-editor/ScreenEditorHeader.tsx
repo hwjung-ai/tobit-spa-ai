@@ -82,24 +82,24 @@ export default function ScreenEditorHeader({
   };
   return (
     <>
-      <div className="border-b px-6 py-4" style={{borderColor: "var(--border)", backgroundColor: "rgba(15, 23, 42, 0.5)"}}>
+      <div className="border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href="/admin/screens"
               className="transition-colors"
-              style={{color: "rgba(56, 189, 248, 1)"}}
+
             >
               ← Back to Screens
             </Link>
 
             {screenName && (
-              <div className="flex items-center gap-2 border-r pr-3 mr-1" style={{borderColor: "var(--border-muted)"}}>
-                <h1 className="text-lg font-semibold" style={{color: "var(--foreground)"}}>{screenName}</h1>
+              <div className="flex items-center gap-2 border-r pr-3 mr-1">
+                <h1 className="text-lg font-semibold">{screenName}</h1>
               </div>
             )}
 
-            <div className="flex items-center gap-1 border-r pr-3 mr-1" style={{borderColor: "var(--border-muted)"}}>
+            <div className="flex items-center gap-1 border-r pr-3 mr-1">
               <Button
                 size="sm"
                 variant="ghost"
@@ -107,7 +107,7 @@ export default function ScreenEditorHeader({
                 disabled={!canUndo}
                 title="Undo (Ctrl+Z)"
                 className="h-7 w-7 p-0 disabled:opacity-30"
-                style={{color: "var(--muted-foreground)"}}
+
               >
                 <Undo2 className="w-4 h-4" />
               </Button>
@@ -118,7 +118,7 @@ export default function ScreenEditorHeader({
                 disabled={!canRedo}
                 title="Redo (Ctrl+Shift+Z)"
                 className="h-7 w-7 p-0 disabled:opacity-30"
-                style={{color: "var(--muted-foreground)"}}
+
               >
                 <Redo2 className="w-4 h-4" />
               </Button>
@@ -130,14 +130,14 @@ export default function ScreenEditorHeader({
                   ? ""
                   : ""
                   }`}
-                style={status === "published" ? { backgroundColor: "rgba(6, 78, 59, 0.5)", color: "#86efac", borderColor: "rgba(16, 185, 129, 0.5)" } : { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "rgba(51, 65, 85, 0.5)" }}
+                style={status === "published" ? { backgroundColor: "rgba(16, 185, 129, 0.15)", color: "var(--success)", borderColor: "rgba(16, 185, 129, 0.5)" } : { backgroundColor: "rgba(30, 41, 59, 0.5)", color: "var(--muted-foreground)", borderColor: "var(--border-muted)" }}
                 data-testid="status-badge"
               >
                 {status}
               </span>
 
               {isDirty && (
-                <span className="text-xs font-medium" style={{color: "rgba(234, 179, 8, 1)"}}>
+                <span className="text-xs font-medium">
                   Unsaved changes
                 </span>
               )}
@@ -155,9 +155,9 @@ export default function ScreenEditorHeader({
                   className={`
                     ${isSaving || !isDirty
                       ? "cursor-not-allowed   /50"
-                      : "cursor-pointer  text-white 0 hover:"
+                      : "cursor-pointer  text-foreground 0 hover:"
                     }
-                  `} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                  `}
                   data-testid="btn-save-draft"
                 >
                   {isSaving ? "Saving..." : "Save Draft"}
@@ -197,8 +197,8 @@ export default function ScreenEditorHeader({
                 size="sm"
                 className={`flex items-center gap-1  ${status === "draft" || !assetId
                   ? "cursor-not-allowed  "
-                  : "  hover: hover:text-white hover:"
-                  }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                  : "  hover: hover:text-foreground hover:"
+                  }`}
                 disabled={status === "draft" || !assetId}
                 data-testid="btn-open-runtime"
               >
@@ -212,8 +212,8 @@ export default function ScreenEditorHeader({
                   size="sm"
                   className={`text-xs uppercase tracking-wider ${ctaDisabled
                     ? "cursor-not-allowed   border /50"
-                    : " hover: text-white border "
-                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                    : " hover: text-foreground border "
+                    }`}
                 >
                   Run Regression
                 </Button>
@@ -224,15 +224,15 @@ export default function ScreenEditorHeader({
                   size="sm"
                   className={`flex items-center gap-1 ${ctaDisabled
                     ? "cursor-not-allowed   /50"
-                    : "   hover: hover:text-white"
-                    }`} style={{backgroundColor: "var(--surface-elevated)", color: "var(--muted-foreground)", borderColor: "var(--border)"}}
+                    : "   hover: hover:text-foreground"
+                    }`}
                 >
                   <ExternalLink className="w-3 h-3" />
                   <span className="text-xs">Open Inspector</span>
                 </Button>
               </div>
               {publishHint && (
-                <p className="text-[10px] " style={{color: "var(--muted-foreground)"}}>{publishHint}</p>
+                <p className="text-[10px] ">{publishHint}</p>
               )}
             </div>
           </div>
