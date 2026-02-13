@@ -684,17 +684,19 @@ html {
 
 /* Custom scrollbar utility for non-grid containers */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--surface-base);
+  background: transparent;
+  margin-right: 2px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--border-muted);
-  border-radius: 10px;
+  border-radius: 4px;
+  margin-right: 2px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {

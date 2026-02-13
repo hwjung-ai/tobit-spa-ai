@@ -645,7 +645,7 @@ export default function SimPage() {
         <section className="flex gap-0 flex-1 overflow-hidden">
           {/* Left Panel - Scenario Builder */}
           <aside
-            className="space-y-4 container-section min-h-[320px] overflow-y-auto custom-scrollbar flex-shrink-0"
+            className="space-y-4 container-panel min-h-[320px] overflow-y-auto custom-scrollbar flex-shrink-0"
             style={{ width: `${leftPanelWidth}px` }}
           >
             <h2 className="left-panel-title">Scenario Builder</h2>
