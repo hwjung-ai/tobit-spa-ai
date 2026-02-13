@@ -2166,7 +2166,7 @@ html {
 
 /* CEP Builder - Rule List Item */
 .cep-builder-rule-item {
-  @apply w-full overflow-hidden rounded-lg p-3 text-left transition;
+  @apply w-full overflow-hidden rounded-lg p-3 text-left transition text-sm;
   border: 1px solid var(--border);
   background-color: var(--surface-base);
   color: var(--foreground);
@@ -2179,6 +2179,16 @@ html {
 .cep-builder-rule-item-selected {
   background-color: rgba(var(--primary-rgb), 0.1);
   border-color: var(--primary);
+}
+
+/* CEP Builder - Rule item text styles */
+.cep-builder-rule-item p:first-child {
+  @apply text-sm font-semibold line-clamp-2;
+}
+
+.cep-builder-rule-item p:last-child {
+  @apply text-xs uppercase tracking-wider line-clamp-1;
+  color: var(--muted-foreground);
 }
 
 /* CEP Builder - Log Entry */

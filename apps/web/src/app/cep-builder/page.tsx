@@ -1246,10 +1246,8 @@ export default function CepBuilderPage() {
                 selectedId === rule.rule_id && "cep-builder-rule-item-selected",
               )}
             >
-              <p className="font-semibold line-clamp-2 break-all">{rule.rule_name}</p>
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 line-clamp-1 break-all">
-                {rule.trigger_type}
-              </p>
+              <p>{rule.rule_name}</p>
+              <p>{rule.trigger_type}</p>
             </button>
           ))
         )}
