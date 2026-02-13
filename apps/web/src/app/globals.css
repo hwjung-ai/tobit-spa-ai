@@ -1443,7 +1443,7 @@ html {
 
 /* Left panel title standard (for sidebar/aside headers) */
 .left-panel-title {
-  @apply text-xs font-semibold uppercase tracking-wider;
+  @apply text-sm font-semibold uppercase tracking-wider;
   color: var(--muted-foreground);
 }
 
@@ -1677,15 +1677,27 @@ html {
 }
 
 .br-card {
-  @apply rounded-xl;
+  @apply rounded-xl border;
+  border-color: var(--border);
 }
 
 .br-section {
-  @apply rounded-2xl;
+  @apply rounded-2xl border;
+  border-color: var(--border);
 }
 
 .br-panel {
-  @apply rounded-3xl;
+  @apply rounded-3xl border;
+  border-color: var(--border);
+}
+
+/* State-specific border color classes */
+.br-card-success {
+  border-color: var(--border-success);
+}
+
+.br-card-primary {
+  border-color: var(--border-primary-hover);
 }
 
 /* Background Color Standard Classes */
