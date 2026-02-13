@@ -561,7 +561,7 @@ export default function ScreenAssetPanel({ onScreenUpdate }: ScreenAssetPanelPro
                       {screen.name}
                     </Link>
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                      className={`inline-flex px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                         screen.status === "published"
                           ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
                           : "  border /50"

@@ -31,11 +31,11 @@ interface ErrorData {
 }
 
 const colors: Record<string, string> = {
-  timeout: "#f87171",
-  connection: "#fb923c",
-  validation: "#facc15",
-  authentication: "#a78bfa",
-  other: "#94a3b8",
+  timeout: "var(--chart-error-color)",
+  connection: "var(--chart-accent-orange)",
+  validation: "var(--chart-accent-yellow)",
+  authentication: "var(--chart-accent-purple)",
+  other: "var(--chart-text-color)",
 };
 
 const colorList = ["var(--chart-error-color)", "var(--chart-accent-orange)", "var(--chart-accent-yellow)", "var(--chart-accent-purple)", "var(--chart-text-color)"];
@@ -164,7 +164,7 @@ export default function ErrorDistribution() {
 
                   <div className="h-2 rounded-full bg-surface-elevated overflow-hidden">
                     <div
-                      className="h-full"
+                      className="h-full transition-all"
                       style={{backgroundColor: colors[type] || "var(--chart-text-color)", width: `${percentage}%`}}
                     />
                   </div>

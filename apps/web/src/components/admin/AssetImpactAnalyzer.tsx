@@ -476,8 +476,8 @@ export default function AssetImpactAnalyzer({
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={QualityRadarData}>
                 <PolarGrid />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 150]} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+                <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--chart-text-color)', fontSize: 12 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 150]} tick={{ fill: 'var(--chart-text-color)', fontSize: 12 }} />
                 <Radar
                   name={selectedVersion || "Current"}
                   dataKey="A"

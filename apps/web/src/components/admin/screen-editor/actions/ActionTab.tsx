@@ -328,7 +328,7 @@ export default function ActionTab() {
                         </Select>
                       )}
                       {error && (
-                        <div className="mt-1 text-[10px] text-amber-400">Catalog: {error} (using fallback)</div>
+                        <div className="mt-1 text-xs text-amber-400">Catalog: {error} (using fallback)</div>
                       )}
                     </div>
 
@@ -387,7 +387,7 @@ export default function ActionTab() {
                             <summary className="cursor-pointer text-[var(--muted-foreground)]">
                               Sample Output
                             </summary>
-                            <pre className="mt-1 max-h-32 overflow-auto rounded p-1.5 font-mono text-[10px] bg-[var(--surface-overlay)] text-emerald-300">
+                            <pre className="mt-1 max-h-32 overflow-auto rounded p-1.5 font-mono text-xs bg-[var(--surface-overlay)] text-emerald-300">
                               {JSON.stringify(catalogItem.sample_output, null, 2)}
                             </pre>
                           </details>

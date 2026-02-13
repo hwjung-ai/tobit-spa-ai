@@ -382,7 +382,7 @@ export default function ScreenEditorTabs() {
             </span>
             <button
               type="button"
-              className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-wider"
+              className="rounded border border-amber-500/60 px-2 py-1 text-xs uppercase tracking-wider"
               onClick={() => {
                 if (!lockKey) return;
                 window.localStorage.setItem(

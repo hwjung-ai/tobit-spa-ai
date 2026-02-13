@@ -103,7 +103,7 @@ export default function PublishedScreensList() {
           <p className="text-xs text-muted-foreground">
             {asset.description || "No description available"}
           </p>
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Published: {formatTimestamp(asset.published_at)} · Updated: {formatTimestamp(asset.updated_at)}
           </p>
         </Link>

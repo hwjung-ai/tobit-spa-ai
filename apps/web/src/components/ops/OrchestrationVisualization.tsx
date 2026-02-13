@@ -140,7 +140,7 @@ export function OrchestrationVisualization({
                     {group.tools.length} tool{group.tools.length !== 1 ? 's' : ''}
                   </span>
                   {group.parallel_execution && (
-                    <div className="px-2 py-1 rounded text-[10px] bg-emerald-900/30 text-emerald-300">
+                    <div className="px-2 py-1 rounded text-xs bg-emerald-900/30 text-emerald-300">
                       Parallel
                     </div>
                   )}
@@ -148,7 +148,7 @@ export function OrchestrationVisualization({
 
                 {/* Dependency info if not first group */}
                 {groupIdx > 0 && group.tools[0]?.dependency_groups.length > 0 && (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Depends on group{group.tools[0].dependency_groups.length !== 1 ? 's' : ''}{' '}
                     {group.tools[0].dependency_groups.map((g) => `${g}`).join(', ')}
                   </span>
@@ -173,11 +173,11 @@ export function OrchestrationVisualization({
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-mono text-foreground">{tool.tool_id}</span>
-                        <span className="px-2 py-1 rounded text-[10px] border border-variant text-foreground-secondary bg-surface-overlay">
+                        <span className="px-2 py-1 rounded text-xs border border-variant text-foreground-secondary bg-surface-overlay">
                           {tool.tool_type}
                         </span>
                       </div>
-                      <span className="text-[10px] text-muted-foreground">#{toolIdx + 1}</span>
+                      <span className="text-xs text-muted-foreground">#{toolIdx + 1}</span>
                     </div>
 
                     {/* Tool details */}

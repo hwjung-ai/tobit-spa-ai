@@ -160,7 +160,7 @@ export default function ObservabilityDashboard() {
         {summaryLabels.map((item, idx) => (
           <article
             key={item.label}
-            className="rounded-2xl border border-variant bg-surface-overlay p-5 text-foreground dark:text-foreground shadow-[0_10px_40px_rgba(15,23,42,0.5)]"
+            className="rounded-2xl border border-variant bg-surface-overlay p-5 text-foreground dark:text-foreground shadow-lg"
           >
             <p className="text-sm uppercase tracking-wider text-muted-foreground">{item.label}</p>
             <p className="mt-3 text-3xl font-semibold">{item.value}</p>

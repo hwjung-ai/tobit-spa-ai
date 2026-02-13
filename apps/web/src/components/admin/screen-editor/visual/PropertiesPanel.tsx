@@ -1527,7 +1527,7 @@ function FieldBindingControl({
         <div>
           <p className="text-xs font-medium text-slate-300">{label}</p>
           {description && (
-            <p className="text-[10px] text-slate-500">
+            <p className="text-xs text-slate-500">
               {description}
             </p>
           )}
@@ -1560,7 +1560,7 @@ function FieldBindingControl({
               <button
                 key={option.value}
                 type="button"
-                className="rounded-full border border-slate-700 px-2 py-1 text-[10px] text-slate-200 hover:border-slate-500"
+                className="rounded-full border border-slate-700 px-2 py-1 text-xs text-slate-200 hover:border-slate-500"
                 onClick={() => handlePrefixInsert(option.value)}
               >
                 {option.label}

@@ -161,7 +161,7 @@ export default function CepEventBell() {
       </svg>
       {count > 0 ? (
         <span
-          className={`absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white ${pulse ? "animate-pulse" : ""
+          className={`absolute -right-1 -top-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 px-1 text-xs font-semibold text-white ${pulse ? "animate-pulse" : ""
             }`}
         >
           {count}

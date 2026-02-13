@@ -85,7 +85,7 @@ export default function ComponentPalette() {
       {/* Target indicator */}
       {selectedContainer && (
         <div className="border-b px-3 py-2">
-          <p className="text-[10px]">
+          <p className="text-xs">
             Adding to: <span className="font-semibold">{selectedContainer.label || selectedContainer.id}</span>
           </p>
         </div>
@@ -117,7 +117,7 @@ export default function ComponentPalette() {
               <GripVertical className="w-3 h-3 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold">{desc.label}</div>
-                <div className="text-[10px] mt-1">{desc.type}</div>
+                <div className="text-xs mt-1">{desc.type}</div>
               </div>
             </div>
           ))
@@ -126,7 +126,7 @@ export default function ComponentPalette() {
 
       {/* Info */}
       <div className="border-t p-3">
-        <p className="text-[10px]">
+        <p className="text-xs">
           {selectedContainer
             ? `Click or drag to add inside ${selectedContainer.type}`
             : "Click or drag to add component"

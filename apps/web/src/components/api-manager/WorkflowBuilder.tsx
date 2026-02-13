@@ -420,7 +420,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <button
             onClick={() => generateWorkflowJSON()}
             disabled={readOnly}
-            className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-foreground transition hover:bg-indigo-400 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+            className="flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-foreground transition hover:bg-indigo-400 hover:shadow-md"
           >
             <Save className="h-4 w-4" />
             Save
@@ -432,7 +432,7 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
               alert("Workflow execution would start here. (In production, integrate with Workflow Executor)");
             }}
             disabled={readOnly}
-            className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+            className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/80 px-4 py-2 text-xs font-bold uppercase tracking-normal text-white transition hover:bg-emerald-400 hover:shadow-md"
           >
             <Play className="h-4 w-4" />
             Execute

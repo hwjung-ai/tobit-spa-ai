@@ -162,7 +162,7 @@ class UIScreenErrorBoundary extends React.Component<
         <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-4 text-xs text-rose-200 space-y-2">
           <p className="font-semibold">Screen Rendering Error</p>
           <p className="text-rose-300">{this.state.error?.message || "Unknown error"}</p>
-          <p className="text-rose-400 text-[10px]">Check browser console for details</p>
+          <p className="text-rose-400 text-xs">Check browser console for details</p>
         </div>
       );
     }
@@ -922,7 +922,7 @@ export default function UIScreenRenderer({
       <div className="rounded-xl border border-rose-500/40 bg-rose-500/5 p-4 text-sm text-rose-200 space-y-2">
         <p className="font-semibold">Failed to load screen</p>
         <p className="text-rose-300 text-xs">{loadError}</p>
-        <p className="text-rose-400 text-[10px]">Screen ID: {screenId}</p>
+        <p className="text-rose-400 text-xs">Screen ID: {screenId}</p>
       </div>
     );
   }
@@ -1556,7 +1556,7 @@ export default function UIScreenRenderer({
       return (
         <span
           key={comp.id}
-          className={`inline-flex rounded-full border px-3 py-1 text-[10px] uppercase tracking-wider ${badgeVariantClass(
+          className={`inline-flex rounded-full border px-3 py-1 text-xs uppercase tracking-wider ${badgeVariantClass(
             badgeVariant
           )}`}
           style={badgeStyle}
@@ -1917,7 +1917,7 @@ export default function UIScreenRenderer({
                     </div>
                     <button
                       type="button"
-                      className="rounded border border-variant px-2 py-1 text-[10px] uppercase tracking-wider text-foreground"
+                      className="rounded border border-variant px-2 py-1 text-xs uppercase tracking-wider text-foreground"
                       onClick={() => toggleAutoRefreshPaused(config.key)}
                       disabled={!!status?.stopped}
                     >
@@ -1938,7 +1938,7 @@ export default function UIScreenRenderer({
               <p className="uppercase tracking-wider text-slate-500 dark:text-slate-400">Action Log</p>
               <button
                 type="button"
-                className="rounded border border-variant px-2 py-1 text-[10px] uppercase tracking-wider"
+                className="rounded border border-variant px-2 py-1 text-xs uppercase tracking-wider"
                 onClick={() => setActionLogs([])}
               >
                 Clear
@@ -1969,7 +1969,7 @@ export default function UIScreenRenderer({
             {Object.entries(streamStates).map(([id, ss]) => (
               <span
                 key={id}
-                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] border-variant bg-surface-overlay text-muted-foreground ${ss.status === "connected"
+                className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs border-variant bg-surface-overlay text-muted-foreground ${ss.status === "connected"
                   ? "bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
                   : ss.status === "connecting"
                     ? "bg-sky-950/50 text-sky-300 border border-sky-800/50"

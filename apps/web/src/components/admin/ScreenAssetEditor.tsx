@@ -391,7 +391,7 @@ export default function ScreenAssetEditor({ assetId }: ScreenAssetEditorProps) {
                   {Object.entries(asset.tags).map(([key, value]) => (
                     <span
                       key={key}
-                      className="rounded-full border px-2 py-0.5 text-[10px]"
+                      className="rounded-full border px-2 py-0.5 text-xs"
 
                     >
                       {key}: {String(value)}

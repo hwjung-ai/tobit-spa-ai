@@ -108,7 +108,7 @@ export default function SystemStatusIndicator() {
               {statusText}
             </span>
             <div
-              className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded px-2.5 py-1.5 text-[10px] text-foreground opacity-0 transition group-hover:opacity-100 z-50"
+              className="pointer-events-none absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded px-2.5 py-1.5 text-xs text-foreground opacity-0 transition group-hover:opacity-100 z-50"
 
             >
               <div className="absolute left-1/2 bottom-full -mb-1 -translate-x-1/2">

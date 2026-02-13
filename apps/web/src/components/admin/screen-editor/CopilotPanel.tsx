@@ -120,7 +120,7 @@ export default function ScreenEditorCopilotPanel({
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
         <div className="draft-panel-section">
           <p className="draft-panel-label">Context</p>
-          <div className="mt-2 space-y-1 text-[10px]">
+          <div className="mt-2 space-y-1 text-xs">
             <p>Screen ID: {screenId}</p>
             <p>Stage: {stage}</p>
             <p>Summary: {schemaSummary}</p>
@@ -147,7 +147,7 @@ export default function ScreenEditorCopilotPanel({
 
         <div className="draft-panel-section">
           <p className="draft-panel-label">Patch output (RFC6902)</p>
-          <p className="text-[10px] mt-2">
+          <p className="text-xs mt-2">
             Provide a JSON Patch array (or wrap it in {"{"} patch: [...] {"}"}) referencing ScreenSchemaV1.
           </p>
           <Textarea
@@ -157,7 +157,7 @@ export default function ScreenEditorCopilotPanel({
               setLocalError(null);
             }}
             placeholder='e.g. [{"op":"replace","path":"/components/0/props/label","value":"New"}]'
-            className="code-block max-h-48 w-full rounded-xl px-3 py-2 text-[10px] font-mono outline-none"
+            className="code-block max-h-48 w-full rounded-xl px-3 py-2 text-xs font-mono outline-none"
 
           />
         </div>

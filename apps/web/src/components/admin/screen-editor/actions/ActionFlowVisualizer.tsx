@@ -36,7 +36,7 @@ function ActionNode({ data }: NodeProps<ActionNodeData>) {
       {data.policyText.length > 0 && (
         <div className="mt-2 space-y-1">
           {data.policyText.map((line) => (
-            <div key={`${data.handler}-${line}`} className="text-[10px]">
+            <div key={`${data.handler}-${line}`} className="text-xs">
               {line}
             </div>
           ))}

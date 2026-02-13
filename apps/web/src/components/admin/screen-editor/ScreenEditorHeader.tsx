@@ -232,7 +232,7 @@ export default function ScreenEditorHeader({
                 </Button>
               </div>
               {publishHint && (
-                <p className="text-[10px] ">{publishHint}</p>
+                <p className="text-xs ">{publishHint}</p>
               )}
             </div>
           </div>

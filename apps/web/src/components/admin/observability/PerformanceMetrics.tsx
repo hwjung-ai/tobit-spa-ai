@@ -72,25 +72,25 @@ export default function PerformanceMetrics() {
       label: "Throughput",
       value: (stats.today_execution_count / 24).toFixed(1),
       unit: "exec/hour",
-      color: "rgba(56, 189, 248, 1)",
+      color: "var(--chart-primary-color)",
     },
     {
       label: "Avg Response",
       value: stats.today_avg_duration_ms.toFixed(0),
       unit: "ms",
-      color: "rgba(192, 132, 252, 1)",
+      color: "var(--chart-accent-purple)",
     },
     {
       label: "Error Rate",
       value: (stats.today_error_rate * 100).toFixed(1),
       unit: "%",
-      color: stats.today_error_rate < 0.05 ? "rgba(52, 211, 153, 1)" : "rgba(251, 146, 60, 1)",
+      color: stats.today_error_rate < 0.05 ? "var(--chart-success-color)" : "var(--chart-accent-orange)",
     },
     {
       label: "Success Rate",
       value: ((1 - stats.today_error_rate) * 100).toFixed(1),
       unit: "%",
-      color: "rgba(52, 211, 153, 1)",
+      color: "var(--chart-success-color)",
     },
   ];
 

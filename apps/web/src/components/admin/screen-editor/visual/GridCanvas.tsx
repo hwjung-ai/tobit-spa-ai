@@ -226,7 +226,7 @@ function GridItem({ component, colWidth, rowHeight, onStop, isSelected, onSelect
 
                 {/* Label for debugging/visual */}
                 {isSelected && (
-                    <div className="absolute -top-5 left-0 text-[10px] text-sky-300 font-mono px-1 rounded z-30">
+                    <div className="absolute -top-5 left-0 text-xs text-sky-300 font-mono px-1 rounded z-30">
                         x:{layout.x} y:{layout.y} w:{layout.w} h:{layout.h}
                     </div>
                 )}

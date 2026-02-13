@@ -80,7 +80,7 @@ export default function Neo4jGraphFlow({
           ? {
               border: "2px solid var(--primary-light)",
               background: "var(--chart-tooltip-bg)",
-              boxShadow: "0 0 10px rgba(56, 189, 248, 0.6)",
+              boxShadow: "var(--node-shadow-highlight)",
               color: "var(--primary-light)",
               fontWeight: 600,
             }
@@ -90,7 +90,7 @@ export default function Neo4jGraphFlow({
   const decoratedEdges = formattedEdges.map((edge) => ({
     ...edge,
     style: highlightEdgeIds?.has(edge.id ?? "")
-      ? { stroke: "#f97316", strokeWidth: 3 }
+      ? { stroke: "var(--chart-accent-orange)", strokeWidth: 3 }
       : edge.style,
   }));
 

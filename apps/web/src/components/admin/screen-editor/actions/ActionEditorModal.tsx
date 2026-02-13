@@ -360,7 +360,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel className="text-[10px]">Built-in Handlers</SelectLabel>
+                    <SelectLabel className="text-xs">Built-in Handlers</SelectLabel>
                     {builtinOptions.map((handler) => (
                       <SelectItem key={handler.value} value={handler.value}>
                         {handler.label}
@@ -369,7 +369,7 @@ export const ActionEditorModal = React.forwardRef<HTMLDivElement, ActionEditorMo
                   </SelectGroup>
                   {apiManagerOptions.length > 0 && (
                     <SelectGroup>
-                      <SelectLabel className="text-[10px]">API Manager</SelectLabel>
+                      <SelectLabel className="text-xs">API Manager</SelectLabel>
                       {apiManagerOptions.map((handler) => (
                         <SelectItem key={handler.value} value={handler.value}>
                           {handler.label}

@@ -1857,9 +1857,9 @@ function InspectorContent() {
                           <div
                             style={{
                               height: "400px",
-                              background: "#1e293b",
-                              borderRadius: "0.75rem",
-                              border: "1px solid #475569",
+                              background: "var(--surface-elevated)",
+                              borderRadius: "var(--radius-lg)",
+                              border: "1px solid var(--border)",
                             }}
                           >
                             <ReactFlow

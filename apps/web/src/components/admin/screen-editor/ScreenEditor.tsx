@@ -428,7 +428,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   {draftConflict.autoMergedScreen && (
                     <button
                       type="button"
-                      className="rounded border border-sky-500/60 px-2 py-1 text-[10px] uppercase tracking-wider"
+                      className="rounded border border-sky-500/60 px-2 py-1 text-xs uppercase tracking-wider"
                       onClick={() => {
                         applyAutoMergedConflict();
                         setToast({ message: "Auto-merge applied to draft", type: "success" });
@@ -439,7 +439,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   )}
                   <button
                     type="button"
-                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider"
+                    className="rounded border /60 px-2 py-1 text-xs uppercase tracking-wider"
                     onClick={() => {
                       void (async () => {
                         try {
@@ -457,7 +457,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded border border-amber-500/60 px-2 py-1 text-[10px] uppercase tracking-wider"
+                    className="rounded border border-amber-500/60 px-2 py-1 text-xs uppercase tracking-wider"
                     onClick={() => {
                       void (async () => {
                         try {
@@ -475,7 +475,7 @@ export default function ScreenEditor({ assetId }: ScreenEditorProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded border /60 px-2 py-1 text-[10px] uppercase tracking-wider"
+                    className="rounded border /60 px-2 py-1 text-xs uppercase tracking-wider"
                     onClick={() => clearDraftConflict()}
                   >
                     Dismiss

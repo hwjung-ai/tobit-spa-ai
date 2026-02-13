@@ -51,9 +51,9 @@ function generateOrchestrationNodes(trace: OrchestrationTrace): Node[] {
           type: 'default',
           style: {
             background: getToolColor(trace.strategy, group.parallel_execution),
-            border: '1px solid rgba(148, 163, 184, 0.5)',
-            borderRadius: '0.5rem',
-            padding: '10px',
+            border: '1px solid var(--border-muted)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--spacing-xs)',
             color: 'var(--foreground)',
             fontSize: '12px',
             minWidth: '120px',
@@ -87,7 +87,7 @@ function generateOrchestrationEdges(trace: OrchestrationTrace): Edge[] {
             target: tool.tool_id,
             animated: true,
             style: {
-              stroke: 'rgba(59, 130, 246, 0.5)',
+              stroke: 'var(--primary-light)',
               strokeWidth: 2,
             },
           });
@@ -105,12 +105,12 @@ function generateOrchestrationEdges(trace: OrchestrationTrace): Edge[] {
 function getToolColor(strategy: string, isParallel: boolean): string {
   switch (strategy) {
     case 'parallel':
-      return isParallel ? 'rgba(34, 197, 94, 0.1)' : 'rgba(59, 130, 246, 0.1)'; // emerald or blue
+      return isParallel ? 'var(--execution-color-parallel)' : 'var(--execution-color-serial)';
     case 'dag':
-      return isParallel ? 'rgba(34, 197, 94, 0.1)' : 'rgba(168, 85, 247, 0.1)'; // emerald or purple
+      return isParallel ? 'var(--execution-color-parallel)' : 'var(--execution-color-dag)';
     case 'serial':
     default:
-      return 'rgba(251, 191, 36, 0.1)'; // amber
+      return 'var(--execution-color-default)';
   }
 }
 
@@ -149,11 +149,11 @@ export function OrchestrationDependencyGraph({
           ...node.style,
           border:
             selectedTool === node.id
-              ? '2px solid rgba(59, 130, 246, 0.8)'
-              : '1px solid rgba(148, 163, 184, 0.5)',
+              ? '2px solid var(--primary-light)'
+              : '1px solid var(--border-muted)',
           boxShadow:
             selectedTool === node.id
-              ? '0 0 10px rgba(59, 130, 246, 0.3)'
+              ? 'var(--node-shadow-selected)'
               : 'none',
         },
       })),
@@ -170,7 +170,7 @@ export function OrchestrationDependencyGraph({
         onNodeClick={onNodeClick}
         fitView
       >
-        <Background color="rgba(148, 163, 184, 0.1)" gap={16} size={1} />
+        <Background color="var(--chart-grid-color)" gap={16} size={1} />
         <Controls position="top-right" />
       </ReactFlow>
 

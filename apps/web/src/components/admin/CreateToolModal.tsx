@@ -507,7 +507,7 @@ export default function CreateToolModal({ onClose, onSuccess }: CreateToolModalP
                                                                         e.stopPropagation();
                                                                         handleMcpSelectSingle(tool);
                                                                     }}
-                                                                    className="text-[10px] px-1.5 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
+                                                                    className="text-xs px-1.5 py-0.5 rounded border border-slate-600 hover:border-cyan-500 hover:text-cyan-400 transition-colors text-muted-foreground"
                                                                     title="Fill form with this tool's data"
                                                                 >
                                                                     Fill Form

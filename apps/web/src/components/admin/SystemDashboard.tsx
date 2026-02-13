@@ -157,7 +157,7 @@ export default function SystemDashboard() {
                 contentStyle={{
                   backgroundColor: "var(--chart-tooltip-bg)",
                   border: "1px solid var(--chart-tooltip-border)",
-                  borderRadius: "8px",
+                  borderRadius: "var(--radius-lg)",
                 }}
               />
               <Legend />

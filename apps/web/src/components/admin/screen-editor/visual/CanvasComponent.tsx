@@ -209,7 +209,7 @@ export default function CanvasComponent({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               {isContainer && (
-                <span className="text-[10px] uppercase tracking-wider text-sky-400 bg-sky-950 px-1.5 py-0.5 rounded">
+                <span className="text-xs uppercase tracking-wider text-sky-400 bg-sky-950 px-1.5 py-0.5 rounded">
                   {component.type}
                 </span>
               )}

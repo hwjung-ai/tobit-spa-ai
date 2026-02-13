@@ -117,7 +117,7 @@ function AssetCard({ type, value, assetNames, onClick }: AssetCardProps) {
       <span className={config.color}>{config.icon}</span>
       <span className="text-tiny capitalize min-w-[50px] text-muted-foreground">{config.label}:</span>
       <span className="text-tiny font-medium truncate flex-1 text-foreground">{displayName}</span>
-      <span className="text-[8px] text-muted-foreground">{version ? `v${version}` : ""}</span>
+      <span className="text-xs text-muted-foreground">{version ? `v${version}` : ""}</span>
       <Info className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
     </div>
   );

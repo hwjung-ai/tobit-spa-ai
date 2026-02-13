@@ -264,7 +264,7 @@ export default function TemplateGallery({ onSelect, onClose }: TemplateGalleryPr
                             .map((tag) => (
                               <span
                                 key={tag}
-                                className="inline-flex px-1.5 py-0.5 rounded text-[10px] border border-variant bg-surface-elevated text-muted-foreground"
+                                className="inline-flex px-1.5 py-0.5 rounded text-xs border border-variant bg-surface-elevated text-muted-foreground"
                               >
                                 {tag}
                               </span>

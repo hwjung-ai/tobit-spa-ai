@@ -159,6 +159,42 @@
   --chart-accent-yellow: #eab308; /* yellow-500 */
   --chart-accent-purple: #a855f7; /* purple-500 */
   --chart-accent-pink: #ec4899; /* pink-500 */
+
+  /* Execution strategy colors (light mode) */
+  --execution-color-parallel: rgba(34, 197, 94, 0.1); /* emerald */
+  --execution-color-serial: rgba(59, 130, 246, 0.1); /* blue */
+  --execution-color-dag: rgba(168, 85, 247, 0.1); /* purple */
+  --execution-color-default: rgba(251, 191, 36, 0.1); /* amber */
+
+  /* Surface interaction states */
+  --surface-muted-dark: rgba(15, 23, 42, 0.3);
+  --border-muted-dark: rgba(51, 65, 85, 0.3);
+
+  /* Canvas interaction colors */
+  --canvas-drag-over-bg: rgba(12, 74, 110, 0.3);
+  --canvas-drag-over-bg-light: rgba(12, 74, 110, 0.2);
+
+  /* Node shadows */
+  --node-shadow-highlight: 0 0 10px rgba(56, 189, 248, 0.6);
+  --node-shadow-selected: 0 0 10px rgba(59, 130, 246, 0.3);
+
+  /* Shadow system */
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 40px rgba(15, 23, 42, 0.15);
+  --shadow-inset-primary: inset 4px 0 20px -10px rgba(var(--primary-rgb), 0.2);
+
+  /* Additional spacing tokens */
+  --spacing-2xs: 4px;
+  --spacing-3xs: 2px;
+}
+
+/* Dark mode execution strategy colors */
+:root[data-theme="dark"],
+.dark {
+  --execution-color-parallel: rgba(34, 197, 94, 0.15); /* emerald-darker */
+  --execution-color-serial: rgba(99, 102, 241, 0.15); /* indigo-darker */
+  --execution-color-dag: rgba(168, 85, 247, 0.15); /* purple-darker */
+  --execution-color-default: rgba(217, 119, 6, 0.15); /* amber-darker */
 }
 
 /* Note: @theme inline removed - using direct CSS variables instead */
