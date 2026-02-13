@@ -261,9 +261,9 @@ export function getToolTypeColor(toolType: string): {
       };
     default:
       return {
-        bg: 'bg-[var(--surface-overlay)]', // Using CSS variable
-        border: 'border-[var(--border)]', // Using CSS variable
-        text: 'text-[var(--foreground-secondary)]', // Using CSS variable
+        bg: 'bg-surface-overlay',
+        border: 'border-border',
+        text: 'text-foreground-secondary',
       };
   }
 }

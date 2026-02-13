@@ -858,6 +858,36 @@ html {
   color: var(--warning);
 }
 
+.text-foreground-secondary {
+  color: var(--muted-foreground);
+}
+
+/* Background Color Classes */
+.bg-surface-base {
+  background-color: var(--surface-base);
+}
+
+.bg-surface-elevated {
+  background-color: var(--surface-elevated);
+}
+
+.bg-surface-overlay {
+  background-color: var(--surface-overlay);
+}
+
+.bg-muted-background {
+  background-color: var(--muted-background);
+}
+
+/* Border Color Classes */
+.border-border {
+  border-color: var(--border);
+}
+
+.border-border-muted {
+  border-color: var(--border-muted);
+}
+
 .card {
   @apply rounded-lg border;
   border-color: var(--border);
