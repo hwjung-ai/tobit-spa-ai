@@ -110,6 +110,10 @@
   --draft-panel-bg: var(--surface-overlay);
   --form-field-label-color: var(--muted-foreground);
   --form-field-help-color: var(--muted-foreground);
+
+  /* State-specific border colors (dark mode) */
+  --border-success: #34d399; /* emerald-400 */
+  --border-primary-hover: #38bdf8; /* sky-400 */
 }
 
 /* Light mode component variables */
@@ -119,6 +123,10 @@
   --draft-panel-bg: var(--surface-overlay);
   --form-field-label-color: var(--muted-foreground);
   --form-field-help-color: var(--muted-foreground);
+
+  /* State-specific border colors (light mode) */
+  --border-success: #10b981; /* emerald-500 */
+  --border-primary-hover: #0284c7; /* sky-600 */
 }
 
 /* Note: @theme inline removed - using direct CSS variables instead */

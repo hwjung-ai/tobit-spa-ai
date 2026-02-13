@@ -684,7 +684,7 @@ export default function SimPage() {
                 ))}
               </div>
               {selectedTemplate ? (
-                <div className="mt-3 br-card border px-3 py-2 border-emerald-500 bg-emerald-500/15">
+                <div className="mt-3 br-card border px-3 py-2 bg-emerald-500/15" style={{ borderColor: 'var(--border-success)' }}>
                   <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     Applied Template
                   </p>
@@ -744,7 +744,7 @@ export default function SimPage() {
                 return (
                   <label
                     key={key}
-                    className="block rounded-2xl border px-3 py-2 border bg-surface-base dark:border-slate-800 dark:bg-slate-900"
+                    className="block rounded-2xl border px-3 py-2 bg-surface-base"
                   >
                     <div className="mb-2 flex items-center justify-between">
                       <span className="text-xs text-foreground">{meta.label}</span>
@@ -765,7 +765,7 @@ export default function SimPage() {
                           [key]: Number(event.target.value),
                         }))
                       }
-                      className="w-full accent-sky-500"
+                      className="w-full accent-primary"
                     />
                   </label>
                 );
@@ -782,9 +782,9 @@ export default function SimPage() {
                   className={cn(
                     "rounded-2xl border px-3 py-2 text-left transition",
                     strategy === s
-                      ? "bg-sky-600 border-sky-600 text-white"
-                      : "border bg-surface-base text-foreground dark:border-slate-800 dark:bg-slate-900",
-                    strategy !== s && "hover:border-sky-600",
+                      ? "bg-primary border-primary text-white"
+                      : "border bg-surface-base text-foreground",
+                    strategy !== s && "hover:border-primary",
                   )}
                 >
                   <div className="flex items-center justify-between">
