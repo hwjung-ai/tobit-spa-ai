@@ -1349,7 +1349,7 @@ export default function CepBuilderPage() {
   );
 
   const rightPane = (
-    <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
+    <div className="flex flex-col h-full space-y-4 overflow-y-auto pr-1">
       <BuilderCopilotPanel
         builderSlug="cep-builder"
         instructionPrompt={COPILOT_INSTRUCTION}
