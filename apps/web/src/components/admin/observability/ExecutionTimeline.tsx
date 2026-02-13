@@ -127,7 +127,7 @@ export default function ExecutionTimeline() {
                 <YAxis stroke="var(--chart-text-color)" tick={{ fontSize: 12 }} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "var(--chart-tooltip-bg)", border: "1px solid var(--chart-tooltip-border)" }}
-                  cursor={{ stroke: "rgba(148, 163, 184, 0.2)" }}
+                  cursor={{ stroke: "var(--chart-grid-color)" }}
                   formatter={(value) => [value, "Errors"]}
                 />
                 <Legend />

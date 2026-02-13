@@ -66,9 +66,9 @@ interface AssetImpactAnalyzerProps {
 }
 
 const IMPACT_COLORS = {
-  low: "#10b981", // green
-  medium: "#f59e0b", // amber
-  high: "#ef4444", // red
+  low: "rgb(16, 185, 129)", // emerald-500 (var(--success))
+  medium: "rgb(245, 158, 11)", // amber-500 (var(--warning))
+  high: "rgb(239, 68, 68)", // red-500 (var(--destructive))
 };
 
 const QualityRadarData = [

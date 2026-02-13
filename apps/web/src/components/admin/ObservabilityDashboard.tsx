@@ -207,7 +207,7 @@ export default function ObservabilityDashboard() {
                   <YAxis stroke="var(--chart-text-color)" tick={{ fontSize: 12 }} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "var(--chart-tooltip-bg)", border: "1px solid var(--chart-tooltip-border)" }}
-                    cursor={{ fill: "rgba(148, 163, 184, 0.1)" }}
+                    cursor={{ fill: "var(--chart-grid-color)" }}
                   />
                   <Legend wrapperStyle={{ paddingTop: "20px" }} />
                   <Bar dataKey="PASS" fill="var(--chart-success-color)" />

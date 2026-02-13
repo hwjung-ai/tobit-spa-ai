@@ -111,20 +111,17 @@ function AssetDetailPageContent() {
     if (error || !asset) {
         return (
             <div className="min-h-screen px-6 py-10">
-                <div className="flex h-full flex-col items-center justify-center rounded-3xl border p-12" style={{backgroundColor: "rgb(255, 255, 255)", borderColor: "rgb(203, 213, 225)"}}>
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{backgroundColor: "rgba(var(--error-rgb), 0.15)", color: "var(--error)"}}>
+                <div className="flex h-full flex-col items-center justify-center rounded-3xl border p-12 bg-surface-base border-border">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-error/15 text-error">
                         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </div>
-                    <h2 className="text-xl font-bold mb-2" style={{color: "rgb(15, 23, 42)"}}>Error Loading Asset</h2>
-                    <p className="mb-8 max-w-xl text-center text-muted-foreground" style={{color: "rgb(71, 85, 105)"}}>{(error as Error)?.message || "The requested asset could not be found or retrieved from the server."}</p>
+                    <h2 className="text-xl font-bold mb-2 text-foreground">Error Loading Asset</h2>
+                    <p className="mb-8 max-w-xl text-center text-muted-foreground">{(error as Error)?.message || "The requested asset could not be found or retrieved from the server."}</p>
                     <Link
                         href={backUrl}
-                        className="px-6 py-2 text-white rounded-lg transition-all font-medium inline-block"
-                        style={{backgroundColor: "rgb(241, 245, 249)"}}
-                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "var(--primary)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "var(--surface-elevated)"; }}
+                        className="px-6 py-2 rounded-lg transition-all font-medium inline-block bg-surface-elevated text-foreground hover:bg-primary hover:text-white"
                     >
                         ← Return to Asset List
                     </Link>
