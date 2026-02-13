@@ -134,7 +134,7 @@ export default function ActionFlowVisualizer({ actions }: ActionFlowVisualizerPr
       >
         <Background color="var(--chart-tooltip-border)" gap={16} />
         <MiniMap
-          nodeColor={() => "#0ea5e9"}
+          nodeColor={() => "rgb(14, 165, 233)"}
           maskColor="rgba(2, 6, 23, 0.6)"
           pannable
           zoomable

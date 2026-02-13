@@ -267,10 +267,10 @@ export default function WorkflowBuilder({ workflow, onChange, readOnly }: Workfl
           <Controls />
           <MiniMap
             nodeColor={(n: Node) => {
-              if (n.type === "sql") return "#3b82f6";
-              if (n.type === "http") return "#10b981";
-              if (n.type === "python") return "#f59e0b";
-              return "#64748b";
+              if (n.type === "sql") return "rgb(59, 130, 246)";
+              if (n.type === "http") return "rgb(16, 185, 129)";
+              if (n.type === "python") return "rgb(245, 158, 11)";
+              return "rgb(100, 116, 139)";
             }}
             nodeStrokeWidth={3}
             zoomable
